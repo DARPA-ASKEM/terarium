@@ -10,9 +10,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesComponent {
-    @JsonAlias("interface")
-    private List<String> modelInterface;
+	@JsonAlias("interface")
+	private List<String> modelInterface;
 
-    private DecapodesExpression model;
-    private String _type;
+	private DecapodesExpression model;
+	private String _type;
 }

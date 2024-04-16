@@ -18,36 +18,36 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(
-        indexes = {
-            @Index(columnList = "timestampmillis"),
-            @Index(columnList = "projectid"),
-            @Index(columnList = "userid"),
-            @Index(columnList = "type"),
-            @Index(columnList = "value")
-        })
+		indexes = {
+			@Index(columnList = "timestampmillis"),
+			@Index(columnList = "projectid"),
+			@Index(columnList = "userid"),
+			@Index(columnList = "type"),
+			@Index(columnList = "value")
+		})
 public class Event implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 7337142167492880031L;
+	@Serial
+	private static final long serialVersionUID = 7337142167492880031L;
 
-    @Id
-    @TSOptional
-    private String id = UUID.randomUUID().toString();
+	@Id
+	@TSOptional
+	private String id = UUID.randomUUID().toString();
 
-    @Column(nullable = false)
-    @TSOptional
-    private Long timestampMillis = Instant.now().toEpochMilli();
+	@Column(nullable = false)
+	@TSOptional
+	private Long timestampMillis = Instant.now().toEpochMilli();
 
-    @TSOptional
-    private UUID projectId;
+	@TSOptional
+	private UUID projectId;
 
-    @Column(nullable = false)
-    @TSOptional
-    private String userId;
+	@Column(nullable = false)
+	@TSOptional
+	private String userId;
 
-    @Column(nullable = false)
-    private EventType type;
+	@Column(nullable = false)
+	private EventType type;
 
-    @Column(columnDefinition = "TEXT")
-    @TSOptional
-    private String value;
+	@Column(columnDefinition = "TEXT")
+	@TSOptional
+	private String value;
 }

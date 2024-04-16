@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class VariableStatementMetadata extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 114642246601146629L;
+	@Serial
+	private static final long serialVersionUID = 114642246601146629L;
 
-    private String type;
+	private String type;
 
-    private String value;
+	private String value;
 }

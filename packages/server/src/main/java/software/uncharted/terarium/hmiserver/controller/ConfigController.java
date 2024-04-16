@@ -13,11 +13,11 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequestMapping("/config")
 @RequiredArgsConstructor
 public class ConfigController {
-    private final Config config;
+	private final Config config;
 
-    @GetMapping
-    @Secured(Roles.USER)
-    public ResponseEntity<Config.ClientConfig> getConfig() {
-        return ResponseEntity.ok(config.getClientConfig());
-    }
+	@GetMapping
+	@Secured(Roles.USER)
+	public ResponseEntity<Config.ClientConfig> getConfig() {
+		return ResponseEntity.ok(config.getClientConfig());
+	}
 }

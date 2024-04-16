@@ -9,5 +9,5 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 @Repository
 public interface ActiveConceptRepository extends PSCrudRepository<ActiveConcept, UUID> {
 
-    Optional<ActiveConcept> getByCurie(String curie);
+	Optional<ActiveConcept> getByCurie(String curie);
 }

@@ -16,21 +16,21 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Observable extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -8367278228176339223L;
+	@Serial
+	private static final long serialVersionUID = -8367278228176339223L;
 
-    private String id;
+	private String id;
 
-    @TSOptional
-    private String name;
+	@TSOptional
+	private String name;
 
-    @TSOptional
-    private List<String> states;
+	@TSOptional
+	private List<String> states;
 
-    @TSOptional
-    private String expression;
+	@TSOptional
+	private String expression;
 
-    @TSOptional
-    @JsonProperty("expression_mathml")
-    private String expressionMathml;
+	@TSOptional
+	@JsonProperty("expression_mathml")
+	private String expressionMathml;
 }

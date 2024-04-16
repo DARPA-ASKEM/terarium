@@ -28,93 +28,93 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatu
 @RequiredArgsConstructor
 public class SimulationEventService {
 
-    private final ClientEventService clientEventService;
-    private final Config config;
-    private final RabbitAdmin rabbitAdmin;
+	private final ClientEventService clientEventService;
+	private final Config config;
+	private final RabbitAdmin rabbitAdmin;
 
-    private final Map<String, Set<String>> simulationIdToUserIds = new ConcurrentHashMap<>();
+	private final Map<String, Set<String>> simulationIdToUserIds = new ConcurrentHashMap<>();
 
-    @Value("${terarium.sciml-queue}")
-    private String SCIML_QUEUE;
+	@Value("${terarium.sciml-queue}")
+	private String SCIML_QUEUE;
 
-    @Value("${terarium.simulation-status}")
-    private String PYCIEMSS_QUEUE;
+	@Value("${terarium.simulation-status}")
+	private String PYCIEMSS_QUEUE;
 
-    Queue scimlQueue;
-    Queue pyciemssQueue;
+	Queue scimlQueue;
+	Queue pyciemssQueue;
 
-    @PostConstruct
-    void init() {
-        scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues(), false, false);
-        rabbitAdmin.declareQueue(scimlQueue);
+	@PostConstruct
+	void init() {
+		scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues(), false, false);
+		rabbitAdmin.declareQueue(scimlQueue);
 
-        pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues(), false, false);
-        rabbitAdmin.declareQueue(pyciemssQueue);
-    }
+		pyciemssQueue = new Queue(PYCIEMSS_QUEUE, config.getDurableQueues(), false, false);
+		rabbitAdmin.declareQueue(pyciemssQueue);
+	}
 
-    public void subscribe(final List<String> simulationIds, final User user) {
-        for (final String simulationId : simulationIds) {
-            if (!simulationIdToUserIds.containsKey(simulationId)) {
-                simulationIdToUserIds.put(simulationId, new HashSet<>());
-            }
-            simulationIdToUserIds.get(simulationId).add(user.getId());
-        }
-    }
+	public void subscribe(final List<String> simulationIds, final User user) {
+		for (final String simulationId : simulationIds) {
+			if (!simulationIdToUserIds.containsKey(simulationId)) {
+				simulationIdToUserIds.put(simulationId, new HashSet<>());
+			}
+			simulationIdToUserIds.get(simulationId).add(user.getId());
+		}
+	}
 
-    public void unsubscribe(final List<String> simulationIds, final User user) {
-        for (final String simulationId : simulationIds)
-            simulationIdToUserIds.get(simulationId).remove(user.getId());
-    }
+	public void unsubscribe(final List<String> simulationIds, final User user) {
+		for (final String simulationId : simulationIds)
+			simulationIdToUserIds.get(simulationId).remove(user.getId());
+	}
 
-    /**
-     * Listens for messages to send to a user and if we have the SSE connection, send it
-     *
-     * @param message the message to send
-     * @param channel the channel to send the message on
-     * @throws IOException if there was an error sending the message
-     */
-    // TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-    @RabbitListener(queues = "${terarium.sciml-queue}", concurrency = "1")
-    private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
+	/**
+	 * Listens for messages to send to a user and if we have the SSE connection, send it
+	 *
+	 * @param message the message to send
+	 * @param channel the channel to send the message on
+	 * @throws IOException if there was an error sending the message
+	 */
+	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(queues = "${terarium.sciml-queue}", concurrency = "1")
+	private void onScimlSendToUserEvent(final Message message, final Channel channel) throws IOException {
 
-        final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
-        if (update == null) return;
-        final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder()
-                .type(ClientEventType.SIMULATION_SCIML)
-                .data(update)
-                .build();
+		final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
+		if (update == null) return;
+		final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder()
+				.type(ClientEventType.SIMULATION_SCIML)
+				.data(update)
+				.build();
 
-        final String id = update.getId();
+		final String id = update.getId();
 
-        if (simulationIdToUserIds.containsKey(id)) {
-            simulationIdToUserIds.get(id).forEach(userId -> {
-                clientEventService.sendToUser(status, userId);
-            });
-        }
-    }
+		if (simulationIdToUserIds.containsKey(id)) {
+			simulationIdToUserIds.get(id).forEach(userId -> {
+				clientEventService.sendToUser(status, userId);
+			});
+		}
+	}
 
-    /**
-     * Lisens for messages to send to a user and if we have the SSE connection, send it
-     *
-     * @param message the message to send
-     * @param channel the channel to send the message on
-     * @throws IOException if there was an error sending the message
-     */
-    // TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-    @RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
-    private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
-        final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
-        if (update == null) return;
-        final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
-                .type(ClientEventType.SIMULATION_PYCIEMSS)
-                .data(update)
-                .build();
-        final String id = update.getJobId();
+	/**
+	 * Lisens for messages to send to a user and if we have the SSE connection, send it
+	 *
+	 * @param message the message to send
+	 * @param channel the channel to send the message on
+	 * @throws IOException if there was an error sending the message
+	 */
+	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	@RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
+	private void onPyciemssSendToUserEvent(final Message message, final Channel channel) throws IOException {
+		final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
+		if (update == null) return;
+		final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
+				.type(ClientEventType.SIMULATION_PYCIEMSS)
+				.data(update)
+				.build();
+		final String id = update.getJobId();
 
-        if (simulationIdToUserIds.containsKey(id)) {
-            simulationIdToUserIds.get(id).forEach(userId -> {
-                clientEventService.sendToUser(status, userId);
-            });
-        }
-    }
+		if (simulationIdToUserIds.containsKey(id)) {
+			simulationIdToUserIds.get(id).forEach(userId -> {
+				clientEventService.sendToUser(status, userId);
+			});
+		}
+	}
 }

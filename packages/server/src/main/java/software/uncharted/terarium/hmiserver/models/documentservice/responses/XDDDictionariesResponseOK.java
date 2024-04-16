@@ -11,5 +11,5 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Dictionary;
 @EqualsAndHashCode(callSuper = true)
 public class XDDDictionariesResponseOK extends XDDResponseOK {
 
-    private List<Dictionary> data;
+	private List<Dictionary> data;
 }

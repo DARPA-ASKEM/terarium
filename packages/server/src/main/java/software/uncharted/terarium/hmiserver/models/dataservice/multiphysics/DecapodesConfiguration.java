@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 public class DecapodesConfiguration extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = -4918948630082610185L;
+	@Serial
+	private static final long serialVersionUID = -4918948630082610185L;
 
-    private ConfigurationHeader header;
+	private ConfigurationHeader header;
 
-    private Configuration configuration;
+	private Configuration configuration;
 }

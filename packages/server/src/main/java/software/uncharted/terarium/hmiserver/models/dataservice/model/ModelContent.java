@@ -17,20 +17,20 @@ import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 @Accessors(chain = true)
 public class ModelContent extends SupportAdditionalProperties implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = -4384491876928940024L;
+	@Serial
+	private static final long serialVersionUID = -4384491876928940024L;
 
-    @JsonProperty("S")
-    private List<Species> S;
+	@JsonProperty("S")
+	private List<Species> S;
 
-    @JsonProperty("T")
-    private List<Map<String, Optional<String>>> T;
+	@JsonProperty("T")
+	private List<Map<String, Optional<String>>> T;
 
-    @JsonProperty("I")
-    private List<Map<String, Number>> I;
+	@JsonProperty("I")
+	private List<Map<String, Number>> I;
 
-    @JsonProperty("O")
-    private List<Map<String, Number>> O;
+	@JsonProperty("O")
+	private List<Map<String, Number>> O;
 
-    private Object metadata;
+	private Object metadata;
 }

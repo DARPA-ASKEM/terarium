@@ -14,55 +14,55 @@ import software.uncharted.terarium.hmiserver.util.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheServiceTests extends TerariumApplicationTests {
-    @Autowired
-    CacheService cacheService;
+	@Autowired
+	CacheService cacheService;
 
-    @Autowired
-    CacheableTestService testService;
+	@Autowired
+	CacheableTestService testService;
 
-    @Autowired
-    CacheManager cacheManager;
+	@Autowired
+	CacheManager cacheManager;
 
-    @AfterEach
-    public void afterEach() {
-        cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
-                .clear());
-    }
+	@AfterEach
+	public void afterEach() {
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
+				.clear());
+	}
 
-    // @Test
-    public void testItCanCacheAValue(final CapturedOutput output) {
-        final String value = testService.cachedMethod();
-        Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
+	// @Test
+	public void testItCanCacheAValue(final CapturedOutput output) {
+		final String value = testService.cachedMethod();
+		Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
 
-        final String cachedValue = testService.cachedMethod();
-        Assertions.assertEquals(cachedValue, CacheableTestService.RETURN_VALUE);
+		final String cachedValue = testService.cachedMethod();
+		Assertions.assertEquals(cachedValue, CacheableTestService.RETURN_VALUE);
 
-        Assertions.assertEquals(1L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
-    }
+		Assertions.assertEquals(1L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
+	}
 
-    // @Test
-    public void testItCanClearACache(final CapturedOutput output) {
-        final String value = testService.cachedMethod();
-        Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
+	// @Test
+	public void testItCanClearACache(final CapturedOutput output) {
+		final String value = testService.cachedMethod();
+		Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
 
-        cacheService.clear(CacheName.EXAMPLE);
+		cacheService.clear(CacheName.EXAMPLE);
 
-        final String secondValue = testService.cachedMethod();
-        Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
+		final String secondValue = testService.cachedMethod();
+		Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
 
-        Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
-    }
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
+	}
 
-    // @Test
-    public void testItCanClearAllCaches(final CapturedOutput output) {
-        final String value = testService.cachedMethod();
-        Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
+	// @Test
+	public void testItCanClearAllCaches(final CapturedOutput output) {
+		final String value = testService.cachedMethod();
+		Assertions.assertEquals(value, CacheableTestService.RETURN_VALUE);
 
-        cacheService.clear();
+		cacheService.clear();
 
-        final String secondValue = testService.cachedMethod();
-        Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
+		final String secondValue = testService.cachedMethod();
+		Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
 
-        Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
-    }
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
+	}
 }

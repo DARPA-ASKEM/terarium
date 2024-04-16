@@ -153,8 +153,10 @@ dependencyLocking {
 
 spotless {
     java {
+        target 'src/**/*.java'
         importOrder('*,|,javax.**,java.**,|,$*')
         palantirJavaFormat('2.43.0').formatJavadoc(true)
+        indentWithTabs()
         formatAnnotations()
         removeUnusedImports()
         trimTrailingWhitespace()

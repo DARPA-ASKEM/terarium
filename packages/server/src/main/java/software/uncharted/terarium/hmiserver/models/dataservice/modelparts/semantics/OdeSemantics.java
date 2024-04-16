@@ -17,20 +17,20 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @AMRSchemaType
 @Accessors(chain = true)
 public class OdeSemantics extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 8943488983879443909L;
+	@Serial
+	private static final long serialVersionUID = 8943488983879443909L;
 
-    private List<Rate> rates;
+	private List<Rate> rates;
 
-    @TSOptional
-    private List<Initial> initials;
+	@TSOptional
+	private List<Initial> initials;
 
-    @TSOptional
-    private List<ModelParameter> parameters;
+	@TSOptional
+	private List<ModelParameter> parameters;
 
-    @TSOptional
-    private List<Observable> observables;
+	@TSOptional
+	private List<Observable> observables;
 
-    @TSOptional
-    private JsonNode time;
+	@TSOptional
+	private JsonNode time;
 }

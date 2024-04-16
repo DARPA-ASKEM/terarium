@@ -15,13 +15,13 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 @TSModel
 public class RegNetModel extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -3141762199664068622L;
+	@Serial
+	private static final long serialVersionUID = -3141762199664068622L;
 
-    private List<RegNetVertex> vertices;
+	private List<RegNetVertex> vertices;
 
-    private List<RegNetEdge> edges;
+	private List<RegNetEdge> edges;
 
-    @TSOptional
-    private List<RegNetParameter> parameters;
+	@TSOptional
+	private List<RegNetParameter> parameters;
 }

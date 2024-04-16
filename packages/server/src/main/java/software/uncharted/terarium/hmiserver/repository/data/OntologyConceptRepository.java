@@ -9,13 +9,13 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
 public interface OntologyConceptRepository
-        extends PSCrudRepository<OntologyConcept, UUID>, OntologyConceptRepositoryCustom {
+		extends PSCrudRepository<OntologyConcept, UUID>, OntologyConceptRepositoryCustom {
 
-    List<OntologyConcept> findAllByCurieAndDeletedOnIsNull(String curieString);
+	List<OntologyConcept> findAllByCurieAndDeletedOnIsNull(String curieString);
 
-    List<OntologyConcept> findAllByDeletedOnIsNull();
+	List<OntologyConcept> findAllByDeletedOnIsNull();
 
-    List<OntologyConcept> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
+	List<OntologyConcept> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
 
-    Optional<OntologyConcept> getByIdAndDeletedOnIsNull(final UUID id);
+	Optional<OntologyConcept> getByIdAndDeletedOnIsNull(final UUID id);
 }

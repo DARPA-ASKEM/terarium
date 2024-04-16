@@ -16,11 +16,11 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 public class ActiveConcept extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = 3747098342861343228L;
+	@Serial
+	private static final long serialVersionUID = 3747098342861343228L;
 
-    @Column(unique = true)
-    private String curie;
+	@Column(unique = true)
+	private String curie;
 
-    private String name;
+	private String name;
 }

@@ -14,13 +14,13 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @Accessors(chain = true)
 @TSModel
 public class EnsembleSimulationCiemssRequest implements Serializable {
-    @JsonAlias("model_configs")
-    private List<EnsembleModelConfigs> modelConfigs;
+	@JsonAlias("model_configs")
+	private List<EnsembleModelConfigs> modelConfigs;
 
-    @JsonAlias("time_span")
-    private TimeSpan timespan;
+	@JsonAlias("time_span")
+	private TimeSpan timespan;
 
-    private Object extra;
+	private Object extra;
 
-    private String engine;
+	private String engine;
 }

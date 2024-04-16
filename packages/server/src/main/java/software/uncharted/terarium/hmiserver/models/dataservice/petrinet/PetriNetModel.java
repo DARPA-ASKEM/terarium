@@ -14,10 +14,10 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 @TSModel
 public class PetriNetModel extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -6590800889694442630L;
+	@Serial
+	private static final long serialVersionUID = -6590800889694442630L;
 
-    private List<PetriNetState> states;
+	private List<PetriNetState> states;
 
-    private List<PetriNetTransition> transitions;
+	private List<PetriNetTransition> transitions;
 }

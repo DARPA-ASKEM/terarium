@@ -11,11 +11,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class KnownEntities implements Serializable {
 
-    @JsonAlias("url_extractions")
-    private List<XDDUrlExtraction> urlExtractions;
+	@JsonAlias("url_extractions")
+	private List<XDDUrlExtraction> urlExtractions;
 
-    @JsonAlias("askem_object")
-    private List<Extraction> askemObjects;
+	@JsonAlias("askem_object")
+	private List<Extraction> askemObjects;
 
-    private List<JsonNode> summaries;
+	private List<JsonNode> summaries;
 }

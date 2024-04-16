@@ -10,24 +10,24 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.Code.Progra
 @Accessors(chain = true)
 @TSModel
 public class CodeFile {
-    private ProgrammingLanguage language;
-    private Dynamics dynamics;
+	private ProgrammingLanguage language;
+	private Dynamics dynamics;
 
-    @TSIgnore
-    public void setProgrammingLanguageFromFileName(final String fileName) {
-        // Given the extension of a file, return the programming language
-        final String[] parts = fileName.split("\\.");
-        final String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
+	@TSIgnore
+	public void setProgrammingLanguageFromFileName(final String fileName) {
+		// Given the extension of a file, return the programming language
+		final String[] parts = fileName.split("\\.");
+		final String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
 
-        final ProgrammingLanguage language =
-                switch (fileExtension) {
-                    case "py" -> ProgrammingLanguage.PYTHON;
-                    case "jl" -> ProgrammingLanguage.Julia;
-                    case "r" -> ProgrammingLanguage.R;
-                    case "zip" -> ProgrammingLanguage.ZIP;
-                    default -> null; // TODO: Do we need an "unknown" language?
-                };
+		final ProgrammingLanguage language =
+				switch (fileExtension) {
+					case "py" -> ProgrammingLanguage.PYTHON;
+					case "jl" -> ProgrammingLanguage.Julia;
+					case "r" -> ProgrammingLanguage.R;
+					case "zip" -> ProgrammingLanguage.ZIP;
+					default -> null; // TODO: Do we need an "unknown" language?
+				};
 
-        this.setLanguage(language);
-    }
+		this.setLanguage(language);
+	}
 }

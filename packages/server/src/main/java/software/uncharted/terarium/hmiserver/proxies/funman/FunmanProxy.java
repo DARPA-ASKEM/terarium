@@ -12,12 +12,12 @@ import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequ
 @FeignClient(name = "funman-api", url = "${funman-service.url}", path = "/api/queries")
 public interface FunmanProxy {
 
-    @GetMapping("/{queryId}/halt")
-    ResponseEntity<JsonNode> halt(@PathVariable("queryId") String queryId);
+	@GetMapping("/{queryId}/halt")
+	ResponseEntity<JsonNode> halt(@PathVariable("queryId") String queryId);
 
-    @GetMapping("/{queryId}")
-    ResponseEntity<JsonNode> getQueries(@PathVariable("queryId") String queryId);
+	@GetMapping("/{queryId}")
+	ResponseEntity<JsonNode> getQueries(@PathVariable("queryId") String queryId);
 
-    @PostMapping
-    ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody);
+	@PostMapping
+	ResponseEntity<JsonNode> postQueries(@RequestBody FunmanPostQueriesRequest requestBody);
 }

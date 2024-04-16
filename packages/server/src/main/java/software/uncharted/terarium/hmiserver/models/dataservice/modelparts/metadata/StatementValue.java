@@ -15,14 +15,14 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class StatementValue extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 3800270029449210997L;
+	@Serial
+	private static final long serialVersionUID = 3800270029449210997L;
 
-    private String value;
+	private String value;
 
-    private String type;
+	private String type;
 
-    @TSOptional
-    @JsonProperty("dkg_grounding")
-    private DKGConcept dkgGrounding;
+	@TSOptional
+	@JsonProperty("dkg_grounding")
+	private DKGConcept dkgGrounding;
 }
