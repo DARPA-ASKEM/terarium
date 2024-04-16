@@ -343,6 +343,7 @@ import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
 import { getInitials, getParameters } from '@/model-representation/service';
+import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -508,7 +509,7 @@ const extractConfigurationsFromInputs = async () => {
 					}
 					if (data?.status === TaskStatus.Success) {
 						logger.success('Model configured from document(s)');
-						const outputJSON = JSON.parse(atob(data.output));
+						const outputJSON = JSON.parse(b64DecodeUnicode(data.output));
 						console.debug('Task success', outputJSON);
 						closeConnection();
 					}
