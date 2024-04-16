@@ -21,35 +21,35 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class CacheConfiguration implements CachingConfigurer {
 
-    @Bean
-    public CacheManager cacheManager() {
-        SimpleCacheManager cacheManager = new SimpleCacheManager();
-        Cache usersCache = new ConcurrentMapCache("users");
-        Cache rolesCache = new ConcurrentMapCache("roles");
-        Cache authoriesCache = new ConcurrentMapCache("authorities");
-        cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache));
-        return cacheManager;
-    }
+	@Bean
+	public CacheManager cacheManager() {
+		SimpleCacheManager cacheManager = new SimpleCacheManager();
+		Cache usersCache = new ConcurrentMapCache("users");
+		Cache rolesCache = new ConcurrentMapCache("roles");
+		Cache authoriesCache = new ConcurrentMapCache("authorities");
+		cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache));
+		return cacheManager;
+	}
 
-    /**
-     * Overrides the default key generating for spring caching. This ensures that the fully qualified classname (with
-     * the package) and the method parameters are taken into account
-     *
-     * @return the {@link KeyGenerator} for caching
-     */
-    @Bean
-    public KeyGenerator keyGenerator() {
-        return (target, method, params) -> {
+	/**
+	 * Overrides the default key generating for spring caching. This ensures that the fully qualified classname (with
+	 * the package) and the method parameters are taken into account
+	 *
+	 * @return the {@link KeyGenerator} for caching
+	 */
+	@Bean
+	public KeyGenerator keyGenerator() {
+		return (target, method, params) -> {
 
-            // Generate a unique key based on the calling method and parameters supplied
-            String key = target.getClass().getName();
-            key += "_" + method.getName();
-            for (Object o : params) {
-                key += "_" + (o != null ? String.valueOf(o.toString().hashCode()) : "null");
-            }
+			// Generate a unique key based on the calling method and parameters supplied
+			String key = target.getClass().getName();
+			key += "_" + method.getName();
+			for (Object o : params) {
+				key += "_" + (o != null ? String.valueOf(o.toString().hashCode()) : "null");
+			}
 
-            // Return the key
-            return key;
-        };
-    }
+			// Return the key
+			return key;
+		};
+	}
 }

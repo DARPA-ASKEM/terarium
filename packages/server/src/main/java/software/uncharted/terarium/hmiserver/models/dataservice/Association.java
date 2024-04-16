@@ -10,19 +10,19 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Association implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 7927618258919445963L;
+	@Serial
+	private static final long serialVersionUID = 7927618258919445963L;
 
-    private String id;
+	private String id;
 
-    @JsonProperty("person_id")
-    private String personId;
+	@JsonProperty("person_id")
+	private String personId;
 
-    @JsonProperty("asset_id")
-    private String assetId;
+	@JsonProperty("asset_id")
+	private String assetId;
 
-    @JsonProperty("asset_type")
-    private AssetType assetType;
+	@JsonProperty("asset_type")
+	private AssetType assetType;
 
-    private Role role;
+	private Role role;
 }

@@ -14,17 +14,17 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 public class PetriNetTransition extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -2008912624078705413L;
+	@Serial
+	private static final long serialVersionUID = -2008912624078705413L;
 
-    private String id;
+	private String id;
 
-    private List<String> input;
+	private List<String> input;
 
-    private List<String> output;
+	private List<String> output;
 
-    @TSOptional
-    private ModelGrounding grounding;
+	@TSOptional
+	private ModelGrounding grounding;
 
-    private PetriNetTransitionProperties properties;
+	private PetriNetTransitionProperties properties;
 }

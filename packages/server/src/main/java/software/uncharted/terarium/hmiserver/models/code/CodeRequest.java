@@ -12,16 +12,16 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class CodeRequest implements Serializable {
-    private List<String> files = List.of("test");
-    private List<String> blobs;
+	private List<String> files = List.of("test");
+	private List<String> blobs;
 
-    @JsonProperty("system_name")
-    private String systemName = "";
+	@JsonProperty("system_name")
+	private String systemName = "";
 
-    @JsonProperty("root_name")
-    private String rootName = "";
+	@JsonProperty("root_name")
+	private String rootName = "";
 
-    public CodeRequest(final String code) {
-        blobs = List.of(code);
-    }
+	public CodeRequest(final String code) {
+		blobs = List.of(code);
+	}
 }

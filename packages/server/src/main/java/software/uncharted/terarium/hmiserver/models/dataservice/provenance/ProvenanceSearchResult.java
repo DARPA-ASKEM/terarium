@@ -11,6 +11,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class ProvenanceSearchResult implements Serializable {
 
-    private List<ProvenanceNode> nodes;
-    private List<ProvenanceEdge> edges;
+	private List<ProvenanceNode> nodes;
+	private List<ProvenanceEdge> edges;
 }

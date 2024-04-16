@@ -14,54 +14,54 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 @Service
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
-    public WorkflowService(
-            final Config config,
-            final ElasticsearchConfiguration elasticConfig,
-            final ElasticsearchService elasticService,
-            final ProjectAssetService projectAssetService,
-            final WorkflowRepository repository) {
-        super(config, elasticConfig, elasticService, projectAssetService, repository, Workflow.class);
-    }
+	public WorkflowService(
+			final Config config,
+			final ElasticsearchConfiguration elasticConfig,
+			final ElasticsearchService elasticService,
+			final ProjectAssetService projectAssetService,
+			final WorkflowRepository repository) {
+		super(config, elasticConfig, elasticService, projectAssetService, repository, Workflow.class);
+	}
 
-    @Override
-    protected String getAssetIndex() {
-        return elasticConfig.getWorkflowIndex();
-    }
+	@Override
+	protected String getAssetIndex() {
+		return elasticConfig.getWorkflowIndex();
+	}
 
-    @Override
-    public String getAssetAlias() {
-        return elasticConfig.getWorkflowAlias();
-    }
+	@Override
+	public String getAssetAlias() {
+		return elasticConfig.getWorkflowAlias();
+	}
 
-    @Override
-    public Workflow createAsset(final Workflow asset) throws IOException, IllegalArgumentException {
-        // ensure the workflow id is set correctly
-        if (asset.getNodes() != null) {
-            for (final WorkflowNode node : asset.getNodes()) {
-                node.setWorkflowId(asset.getId());
-            }
-        }
-        if (asset.getEdges() != null) {
-            for (final WorkflowEdge edge : asset.getEdges()) {
-                edge.setWorkflowId(asset.getId());
-            }
-        }
-        return super.createAsset(asset);
-    }
+	@Override
+	public Workflow createAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+		// ensure the workflow id is set correctly
+		if (asset.getNodes() != null) {
+			for (final WorkflowNode node : asset.getNodes()) {
+				node.setWorkflowId(asset.getId());
+			}
+		}
+		if (asset.getEdges() != null) {
+			for (final WorkflowEdge edge : asset.getEdges()) {
+				edge.setWorkflowId(asset.getId());
+			}
+		}
+		return super.createAsset(asset);
+	}
 
-    @Override
-    public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
-        // ensure the workflow id is set correctly
-        if (asset.getNodes() != null) {
-            for (final WorkflowNode node : asset.getNodes()) {
-                node.setWorkflowId(asset.getId());
-            }
-        }
-        if (asset.getEdges() != null) {
-            for (final WorkflowEdge edge : asset.getEdges()) {
-                edge.setWorkflowId(asset.getId());
-            }
-        }
-        return super.updateAsset(asset);
-    }
+	@Override
+	public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+		// ensure the workflow id is set correctly
+		if (asset.getNodes() != null) {
+			for (final WorkflowNode node : asset.getNodes()) {
+				node.setWorkflowId(asset.getId());
+			}
+		}
+		if (asset.getEdges() != null) {
+			for (final WorkflowEdge edge : asset.getEdges()) {
+				edge.setWorkflowId(asset.getId());
+			}
+		}
+		return super.updateAsset(asset);
+	}
 }

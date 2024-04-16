@@ -20,44 +20,44 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequiredArgsConstructor
 public class TransformController {
 
-    final SkemaRustProxy skemaProxy;
+	final SkemaRustProxy skemaProxy;
 
-    final SimulationServiceProxy simulationServiceProxy;
+	final SimulationServiceProxy simulationServiceProxy;
 
-    @PostMapping("/mathml-to-acset")
-    @Secured(Roles.USER)
-    public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody final List<String> list) {
-        try {
-            return skemaProxy.convertMathML2ACSet(list);
-        } catch (final FeignException error) {
-            log.error("Error posting MathML to ACSet", error);
-            throw new ResponseStatusException(
-                    error.status() < 100
-                            ? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
-                            : org.springframework.http.HttpStatus.valueOf(error.status()),
-                    "Error posting MathML to ACSet " + error.getMessage());
-        }
-    }
+	@PostMapping("/mathml-to-acset")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody final List<String> list) {
+		try {
+			return skemaProxy.convertMathML2ACSet(list);
+		} catch (final FeignException error) {
+			log.error("Error posting MathML to ACSet", error);
+			throw new ResponseStatusException(
+					error.status() < 100
+							? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+							: org.springframework.http.HttpStatus.valueOf(error.status()),
+					"Error posting MathML to ACSet " + error.getMessage());
+		}
+	}
 
-    @GetMapping("/model-to-latex/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<JsonNode> model2Latex(@PathVariable("id") final UUID id) {
-        try {
-            return ResponseEntity.ok(
-                    simulationServiceProxy.getModelEquation(id.toString()).getBody());
-        } catch (final FeignException error) {
-            log.error("Error getting latex from simulation service", error);
-            throw new ResponseStatusException(
-                    error.status() < 100
-                            ? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
-                            : org.springframework.http.HttpStatus.valueOf(error.status()),
-                    "Simulation Service is unable to provide the set of LaTeX equations from the Model. "
-                            + error.getMessage());
-        } catch (final Exception error) {
-            log.error("Error getting latex from simulation service", error);
-            throw new ResponseStatusException(
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Simulation Service is unable to provide the set of LaTeX equations from the Model.");
-        }
-    }
+	@GetMapping("/model-to-latex/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> model2Latex(@PathVariable("id") final UUID id) {
+		try {
+			return ResponseEntity.ok(
+					simulationServiceProxy.getModelEquation(id.toString()).getBody());
+		} catch (final FeignException error) {
+			log.error("Error getting latex from simulation service", error);
+			throw new ResponseStatusException(
+					error.status() < 100
+							? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+							: org.springframework.http.HttpStatus.valueOf(error.status()),
+					"Simulation Service is unable to provide the set of LaTeX equations from the Model. "
+							+ error.getMessage());
+		} catch (final Exception error) {
+			log.error("Error getting latex from simulation service", error);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Simulation Service is unable to provide the set of LaTeX equations from the Model.");
+		}
+	}
 }

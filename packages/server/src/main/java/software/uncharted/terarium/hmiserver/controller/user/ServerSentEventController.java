@@ -16,17 +16,17 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RestController
 public class ServerSentEventController {
 
-    // @Autowired
-    // @Channel("user-event") Publisher<UserEvent> userEvents;
+	// @Autowired
+	// @Channel("user-event") Publisher<UserEvent> userEvents;
 
-    /** Gets all user events */
-    @GetMapping(name = "/server-sent-events", produces = MediaType.SERVER_SENT_EVENTS)
-    @Secured(Roles.USER)
-    @SseElementType(MediaType.APPLICATION_JSON)
-    public ResponseEntity<Publisher<UserEvent>> stream() {
+	/** Gets all user events */
+	@GetMapping(name = "/server-sent-events", produces = MediaType.SERVER_SENT_EVENTS)
+	@Secured(Roles.USER)
+	@SseElementType(MediaType.APPLICATION_JSON)
+	public ResponseEntity<Publisher<UserEvent>> stream() {
 
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 
-        // return Multi.createFrom().publisher(userEvents);
-    }
+		// return Multi.createFrom().publisher(userEvents);
+	}
 }

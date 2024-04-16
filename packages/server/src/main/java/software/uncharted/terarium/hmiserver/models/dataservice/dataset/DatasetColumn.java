@@ -15,58 +15,58 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @TSModel
 public class DatasetColumn {
 
-    /** Name of the column */
-    private String name;
+	/** Name of the column */
+	private String name;
 
-    /**
-     * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
-     */
-    @JsonAlias("data_type")
-    private ColumnType dataType;
+	/**
+	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
+	 */
+	@JsonAlias("data_type")
+	private ColumnType dataType;
 
-    /** (Optional) String that describes the formatting of the value */
-    @TSOptional
-    @JsonAlias("format_str")
-    private String formatStr;
+	/** (Optional) String that describes the formatting of the value */
+	@TSOptional
+	@JsonAlias("format_str")
+	private String formatStr;
 
-    /** Column annotations from the MIT data profiling tool */
-    private List<String> annotations;
+	/** Column annotations from the MIT data profiling tool */
+	private List<String> annotations;
 
-    /** (Optional) Unformatted metadata about the dataset */
-    @TSOptional
-    private Map<String, Object> metadata;
+	/** (Optional) Unformatted metadata about the dataset */
+	@TSOptional
+	private Map<String, Object> metadata;
 
-    /** (Optional) Grounding of ontological concepts related to the column */
-    @TSOptional
-    private Grounding grounding;
+	/** (Optional) Grounding of ontological concepts related to the column */
+	@TSOptional
+	private Grounding grounding;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    enum ColumnType {
-        @JsonAlias("unknown")
-        UNKNOWN,
-        @JsonAlias("boolean")
-        BOOLEAN,
-        @JsonAlias("string")
-        STRING,
-        @JsonAlias("char")
-        CHAR,
-        @JsonAlias("integer")
-        INTEGER,
-        @JsonAlias("int")
-        INT,
-        @JsonAlias("float")
-        FLOAT,
-        @JsonAlias("double")
-        DOUBLE,
-        @JsonAlias("timestamp")
-        TIMESTAMP,
-        @JsonAlias("datetime")
-        DATETIME,
-        @JsonAlias("date")
-        DATE,
-        @JsonAlias("time")
-        TIME
-    }
+	enum ColumnType {
+		@JsonAlias("unknown")
+		UNKNOWN,
+		@JsonAlias("boolean")
+		BOOLEAN,
+		@JsonAlias("string")
+		STRING,
+		@JsonAlias("char")
+		CHAR,
+		@JsonAlias("integer")
+		INTEGER,
+		@JsonAlias("int")
+		INT,
+		@JsonAlias("float")
+		FLOAT,
+		@JsonAlias("double")
+		DOUBLE,
+		@JsonAlias("timestamp")
+		TIMESTAMP,
+		@JsonAlias("datetime")
+		DATETIME,
+		@JsonAlias("date")
+		DATE,
+		@JsonAlias("time")
+		TIME
+	}
 }

@@ -13,14 +13,14 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 public class PetriNetState extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 4168200741563747279L;
+	@Serial
+	private static final long serialVersionUID = 4168200741563747279L;
 
-    private String id;
+	private String id;
 
-    private String name;
+	private String name;
 
-    private ModelGrounding grounding;
+	private ModelGrounding grounding;
 
-    private ModelExpression initial;
+	private ModelExpression initial;
 }

@@ -6,6 +6,6 @@ import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataSubse
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 public interface ClimateDataSubsetTaskRepository extends PSCrudRepository<ClimateDataSubsetTask, UUID> {
-    ClimateDataSubsetTask findByEsgfIdAndEnvelopeAndTimestampsAndThinFactor(
-            @NotNull String esgfId, @NotNull String envelope, String timestamps, String thinFactor);
+	ClimateDataSubsetTask findByEsgfIdAndEnvelopeAndTimestampsAndThinFactor(
+			@NotNull String esgfId, @NotNull String envelope, String timestamps, String thinFactor);
 }

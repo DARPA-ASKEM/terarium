@@ -4,10 +4,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @TSModel
 public enum TaskStatus {
-    QUEUED,
-    RUNNING,
-    SUCCESS,
-    FAILED,
-    CANCELLING,
-    CANCELLED
+	QUEUED,
+	RUNNING,
+	SUCCESS,
+	FAILED,
+	CANCELLING,
+	CANCELLED
 }

@@ -25,13 +25,13 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 @Contract(threading = ThreadingBehavior.UNSAFE)
 public class HttpDelete extends HttpEntityEnclosingRequestBase {
 
-    public HttpDelete(final String uri) {
-        super();
-        setURI(URI.create(uri));
-    }
+	public HttpDelete(final String uri) {
+		super();
+		setURI(URI.create(uri));
+	}
 
-    @Override
-    public String getMethod() {
-        return "DELETE";
-    }
+	@Override
+	public String getMethod() {
+		return "DELETE";
+	}
 }

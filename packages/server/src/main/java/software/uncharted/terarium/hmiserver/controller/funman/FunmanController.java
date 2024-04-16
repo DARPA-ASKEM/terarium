@@ -20,59 +20,59 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 public class FunmanController {
 
-    private final FunmanProxy funmanProxy;
+	private final FunmanProxy funmanProxy;
 
-    @GetMapping("/{queryId}/halt")
-    @Secured(Roles.USER)
-    @ApiResponses(
-            value = {
-                @ApiResponse(responseCode = "200", description = "Query halted"),
-            })
-    public ResponseEntity<JsonNode> halt(@PathVariable final String queryId) {
-        try {
-            final ResponseEntity<JsonNode> response = funmanProxy.halt(queryId);
-            return ResponseEntity.ok(response.getBody());
-        } catch (final FeignException e) {
-            final String error = "Error halting";
-            final int status = e.status() >= 400 ? e.status() : 500;
-            log.error(error, e);
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-        }
-    }
+	@GetMapping("/{queryId}/halt")
+	@Secured(Roles.USER)
+	@ApiResponses(
+			value = {
+				@ApiResponse(responseCode = "200", description = "Query halted"),
+			})
+	public ResponseEntity<JsonNode> halt(@PathVariable final String queryId) {
+		try {
+			final ResponseEntity<JsonNode> response = funmanProxy.halt(queryId);
+			return ResponseEntity.ok(response.getBody());
+		} catch (final FeignException e) {
+			final String error = "Error halting";
+			final int status = e.status() >= 400 ? e.status() : 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
+	}
 
-    @GetMapping("/{queryId}")
-    @Secured(Roles.USER)
-    @ApiResponses(
-            value = {
-                @ApiResponse(responseCode = "200", description = "Query found"),
-            })
-    public ResponseEntity<JsonNode> getQueries(@PathVariable final String queryId) {
-        try {
-            final ResponseEntity<JsonNode> response = funmanProxy.getQueries(queryId);
-            return ResponseEntity.ok(response.getBody());
-        } catch (final FeignException e) {
-            final String error = "Error getting query";
-            final int status = e.status() >= 400 ? e.status() : 500;
-            log.error(error, e);
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-        }
-    }
+	@GetMapping("/{queryId}")
+	@Secured(Roles.USER)
+	@ApiResponses(
+			value = {
+				@ApiResponse(responseCode = "200", description = "Query found"),
+			})
+	public ResponseEntity<JsonNode> getQueries(@PathVariable final String queryId) {
+		try {
+			final ResponseEntity<JsonNode> response = funmanProxy.getQueries(queryId);
+			return ResponseEntity.ok(response.getBody());
+		} catch (final FeignException e) {
+			final String error = "Error getting query";
+			final int status = e.status() >= 400 ? e.status() : 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
+	}
 
-    @PostMapping
-    @Secured(Roles.USER)
-    @ApiResponses(
-            value = {
-                @ApiResponse(responseCode = "200", description = "Query posted"),
-            })
-    public ResponseEntity<JsonNode> postQueries(@RequestBody final FunmanPostQueriesRequest requestBody) {
-        try {
-            final ResponseEntity<JsonNode> response = funmanProxy.postQueries(requestBody);
-            return ResponseEntity.ok(response.getBody());
-        } catch (final FeignException e) {
-            final String error = "Error posting query";
-            final int status = e.status() >= 400 ? e.status() : 500;
-            log.error(error, e);
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-        }
-    }
+	@PostMapping
+	@Secured(Roles.USER)
+	@ApiResponses(
+			value = {
+				@ApiResponse(responseCode = "200", description = "Query posted"),
+			})
+	public ResponseEntity<JsonNode> postQueries(@RequestBody final FunmanPostQueriesRequest requestBody) {
+		try {
+			final ResponseEntity<JsonNode> response = funmanProxy.postQueries(requestBody);
+			return ResponseEntity.ok(response.getBody());
+		} catch (final FeignException e) {
+			final String error = "Error posting query";
+			final int status = e.status() >= 400 ? e.status() : 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
+	}
 }

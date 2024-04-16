@@ -23,80 +23,80 @@ import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 @Entity
 public class Simulation implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 5467224100686908152L;
+	@Serial
+	private static final long serialVersionUID = 5467224100686908152L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
 
-    @JsonAlias("execution_payload")
-    @Convert(converter = JpaConverterJson.class)
-    private Object executionPayload;
+	@JsonAlias("execution_payload")
+	@Convert(converter = JpaConverterJson.class)
+	private Object executionPayload;
 
-    @TSOptional
-    private String name;
+	@TSOptional
+	private String name;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    @JsonAlias("result_files")
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private List<String> resultFiles;
+	@JsonAlias("result_files")
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private List<String> resultFiles;
 
-    @Enumerated(EnumType.STRING)
-    private SimulationType type;
+	@Enumerated(EnumType.STRING)
+	private SimulationType type;
 
-    @Enumerated(EnumType.STRING)
-    private ProgressState status;
+	@Enumerated(EnumType.STRING)
+	private ProgressState status;
 
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private String statusMessage;
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private String statusMessage;
 
-    @JsonAlias("start_time")
-    @TSOptional
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.S")
-    private Timestamp startTime;
+	@JsonAlias("start_time")
+	@TSOptional
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.S")
+	private Timestamp startTime;
 
-    @JsonAlias("completed_time")
-    @TSOptional
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.S")
-    private Timestamp completedTime;
+	@JsonAlias("completed_time")
+	@TSOptional
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.S")
+	private Timestamp completedTime;
 
-    @Enumerated(EnumType.STRING)
-    private SimulationEngine engine;
+	@Enumerated(EnumType.STRING)
+	private SimulationEngine engine;
 
-    @JsonAlias("workflow_id")
-    private UUID workflowId;
+	@JsonAlias("workflow_id")
+	private UUID workflowId;
 
-    @JsonAlias("user_id")
-    @TSOptional
-    private String userId;
+	@JsonAlias("user_id")
+	@TSOptional
+	private String userId;
 
-    @JsonAlias("project_id")
-    @TSOptional
-    private UUID projectId;
+	@JsonAlias("project_id")
+	@TSOptional
+	private UUID projectId;
 
-    @TSOptional
-    @CreationTimestamp
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp createdOn;
+	@TSOptional
+	@CreationTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp createdOn;
 
-    @TSOptional
-    @UpdateTimestamp
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp updatedOn;
+	@TSOptional
+	@UpdateTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp updatedOn;
 
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp deletedOn;
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp deletedOn;
 }

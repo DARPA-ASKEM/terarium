@@ -13,24 +13,24 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class Neo4jService {
 
-    @Value("${spring.neo4j.uri}")
-    private String uri;
+	@Value("${spring.neo4j.uri}")
+	private String uri;
 
-    @Value("${spring.neo4j.authentication.username}")
-    private String username;
+	@Value("${spring.neo4j.authentication.username}")
+	private String username;
 
-    @Value("${spring.neo4j.authentication.password}")
-    private String password;
+	@Value("${spring.neo4j.authentication.password}")
+	private String password;
 
-    private Driver driver;
+	private Driver driver;
 
-    @PostConstruct
-    public void init() {
-        log.info("Connecting to Neo4j at {}", uri);
-        driver = GraphDatabase.driver(uri, AuthTokens.basic(username, password));
-    }
+	@PostConstruct
+	public void init() {
+		log.info("Connecting to Neo4j at {}", uri);
+		driver = GraphDatabase.driver(uri, AuthTokens.basic(username, password));
+	}
 
-    public Session getSession() {
-        return driver.session();
-    }
+	public Session getSession() {
+		return driver.session();
+	}
 }

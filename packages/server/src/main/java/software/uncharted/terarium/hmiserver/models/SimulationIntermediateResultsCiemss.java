@@ -8,13 +8,13 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class SimulationIntermediateResultsCiemss implements Serializable {
-    @JsonAlias("job_id")
-    private String jobId;
+	@JsonAlias("job_id")
+	private String jobId;
 
-    private Double progress;
+	private Double progress;
 
-    @Override
-    public String toString() {
-        return "{job_id: '" + this.jobId + "', progress: " + Double.toString(this.progress) + "}";
-    }
+	@Override
+	public String toString() {
+		return "{job_id: '" + this.jobId + "', progress: " + Double.toString(this.progress) + "}";
+	}
 }

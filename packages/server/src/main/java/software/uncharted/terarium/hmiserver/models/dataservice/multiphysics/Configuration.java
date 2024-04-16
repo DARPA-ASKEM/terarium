@@ -12,13 +12,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class Configuration implements Serializable {
 
-    private Map<String, ConfigurationParameter> parameters;
+	private Map<String, ConfigurationParameter> parameters;
 
-    @JsonAlias("initial_conditions")
-    private Map<String, ConfigurationCondition> initialConditions;
+	@JsonAlias("initial_conditions")
+	private Map<String, ConfigurationCondition> initialConditions;
 
-    @JsonAlias("boundary_conditions")
-    private Map<String, ConfigurationCondition> boundryConditions;
+	@JsonAlias("boundary_conditions")
+	private Map<String, ConfigurationCondition> boundryConditions;
 
-    private Map<String, ConfigurationDataset> datasets;
+	private Map<String, ConfigurationDataset> datasets;
 }

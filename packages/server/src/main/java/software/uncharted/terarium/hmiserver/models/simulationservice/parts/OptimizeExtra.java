@@ -12,27 +12,27 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeExtra implements Serializable {
-    @JsonAlias("num_samples")
-    private int numSamples;
+	@JsonAlias("num_samples")
+	private int numSamples;
 
-    @JsonAlias("inferred_parameters")
-    @TSOptional
-    private String inferredParameters;
+	@JsonAlias("inferred_parameters")
+	@TSOptional
+	private String inferredParameters;
 
-    @TSOptional
-    private int maxiter;
+	@TSOptional
+	private int maxiter;
 
-    @TSOptional
-    private int maxfeval;
+	@TSOptional
+	private int maxfeval;
 
-    @JsonAlias("is_minimized")
-    @TSOptional
-    private Boolean isMinimized;
+	@JsonAlias("is_minimized")
+	@TSOptional
+	private Boolean isMinimized;
 
-    @TSOptional
-    private Double alpha;
+	@TSOptional
+	private Double alpha;
 
-    @JsonAlias("solver_method")
-    @TSOptional
-    private String solverMethod;
+	@JsonAlias("solver_method")
+	@TSOptional
+	private String solverMethod;
 }

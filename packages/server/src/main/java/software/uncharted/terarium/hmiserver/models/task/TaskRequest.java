@@ -18,68 +18,68 @@ import lombok.experimental.Accessors;
 @Data
 public class TaskRequest implements Serializable {
 
-    public static enum TaskType {
-        @JsonAlias("gollm")
-        GOLLM("gollm"),
-        @JsonAlias("mira")
-        MIRA("mira");
+	public static enum TaskType {
+		@JsonAlias("gollm")
+		GOLLM("gollm"),
+		@JsonAlias("mira")
+		MIRA("mira");
 
-        private final String value;
+		private final String value;
 
-        TaskType(final String value) {
-            this.value = value;
-        }
+		TaskType(final String value) {
+			this.value = value;
+		}
 
-        public String toString() {
-            return value;
-        }
-    }
+		public String toString() {
+			return value;
+		}
+	}
 
-    protected TaskType type;
-    protected String script;
-    protected byte[] input;
-    protected int timeoutMinutes = 30;
+	protected TaskType type;
+	protected String script;
+	protected byte[] input;
+	protected int timeoutMinutes = 30;
 
-    // Sometimes we have context specific variables what we want to associate with a
-    // request but aren't actually used by the task on the other side but are
-    // necessary for the response to be processed correctly. This property is used
-    // to put those variables in. They aren't used by the taskrunner or the task
-    // itself, but are passed through to every response.
-    protected Object additionalProperties;
+	// Sometimes we have context specific variables what we want to associate with a
+	// request but aren't actually used by the task on the other side but are
+	// necessary for the response to be processed correctly. This property is used
+	// to put those variables in. They aren't used by the taskrunner or the task
+	// itself, but are passed through to every response.
+	protected Object additionalProperties;
 
-    public void setInput(final byte[] bytes) throws JsonProcessingException {
-        input = bytes;
-    }
+	public void setInput(final byte[] bytes) throws JsonProcessingException {
+		input = bytes;
+	}
 
-    public void setInput(final Object obj) throws JsonProcessingException {
-        final ObjectMapper mapper = new ObjectMapper();
-        input = mapper.writeValueAsBytes(obj);
-    }
+	public void setInput(final Object obj) throws JsonProcessingException {
+		final ObjectMapper mapper = new ObjectMapper();
+		input = mapper.writeValueAsBytes(obj);
+	}
 
-    public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
-    }
+	public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
+	}
 
-    @JsonIgnore
-    public String getSHA256() {
-        try {
-            // NOTE: do not include the task id in this hash, we want to determine if the
-            // body of the request is unique
-            final ObjectMapper objectMapper = new ObjectMapper();
-            // make sure the json serialization is deterministic
-            objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+	@JsonIgnore
+	public String getSHA256() {
+		try {
+			// NOTE: do not include the task id in this hash, we want to determine if the
+			// body of the request is unique
+			final ObjectMapper objectMapper = new ObjectMapper();
+			// make sure the json serialization is deterministic
+			objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
-            final String encodedInput = Base64.getEncoder().encodeToString(input);
-            final String encodedAdditionalProperties =
-                    Base64.getEncoder().encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
+			final String encodedInput = Base64.getEncoder().encodeToString(input);
+			final String encodedAdditionalProperties =
+					Base64.getEncoder().encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
 
-            final String strHash =
-                    String.format("%s-%s-%s-%s", type, script, encodedInput, encodedAdditionalProperties);
-            final MessageDigest md = MessageDigest.getInstance("SHA-256");
-            return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+			final String strHash =
+					String.format("%s-%s-%s-%s", type, script, encodedInput, encodedAdditionalProperties);
+			final MessageDigest md = MessageDigest.getInstance("SHA-256");
+			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

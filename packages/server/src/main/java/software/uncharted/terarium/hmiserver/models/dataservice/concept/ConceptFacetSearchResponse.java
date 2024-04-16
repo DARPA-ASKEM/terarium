@@ -12,29 +12,29 @@ import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 @Accessors(chain = true)
 public class ConceptFacetSearchResponse implements Serializable {
 
-    @Data
-    @Accessors(chain = true)
-    public static class Result {
-        private TaggableType type;
-        private UUID id;
-        private String curie;
-        private String name;
-    }
+	@Data
+	@Accessors(chain = true)
+	public static class Result {
+		private TaggableType type;
+		private UUID id;
+		private String curie;
+		private String name;
+	}
 
-    @Data
-    @Accessors(chain = true)
-    public static class Concept {
-        private Long count;
-        private String name;
-    }
+	@Data
+	@Accessors(chain = true)
+	public static class Concept {
+		private Long count;
+		private String name;
+	}
 
-    @Data
-    @Accessors(chain = true)
-    public static class Facets {
-        private Map<TaggableType, Long> types;
-        private Map<String, Concept> concepts;
-    }
+	@Data
+	@Accessors(chain = true)
+	public static class Facets {
+		private Map<TaggableType, Long> types;
+		private Map<String, Concept> concepts;
+	}
 
-    private Facets facets;
-    private List<Result> results;
+	private Facets facets;
+	private List<Result> results;
 }

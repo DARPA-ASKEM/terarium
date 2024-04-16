@@ -6,5 +6,5 @@ import software.uncharted.terarium.hmiserver.models.authority.Authority;
 
 @Repository
 public interface AuthorityRepository extends PSCrudRepository<Authority, Long> {
-    Optional<Authority> findFirstByName(String name);
+	Optional<Authority> findFirstByName(String name);
 }
