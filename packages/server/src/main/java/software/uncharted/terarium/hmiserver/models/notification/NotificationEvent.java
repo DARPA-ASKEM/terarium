@@ -1,7 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.notification;
 
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -11,15 +18,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
@@ -30,41 +30,45 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 @Entity
 public class NotificationEvent {
 
-    @Serial
-    private static final long serialVersionUID = -3382397588627700379L;
+	@Serial
+	private static final long serialVersionUID = -3382397588627700379L;
 
-    @Id
-    private UUID id = UUID.randomUUID();
+	@Id
+	private UUID id = UUID.randomUUID();
 
-    private Double progress = 0.0;
-    private ProgressState state = null;
+	private Double progress = 0.0;
+	private ProgressState state = null;
 
-    @ManyToOne
-    @JoinColumn(name = "notification_group_id", nullable = false)
-    private NotificationGroup notificationGroup;
+	@ManyToOne
+	@JoinColumn(name = "notification_group_id", nullable = false)
+	private NotificationGroup notificationGroup;
 
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    @NotNull private Timestamp timestamp;
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	@NotNull
+	private Timestamp createdOn;
 
-    @PrePersist
-    protected void onCreate() {
-        this.timestamp = this.timestamp != null
-                ? this.timestamp
-                : Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-    }
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp acknowledgedOn = null;
 
-    @Convert(converter = JsonConverter.class)
-    @JdbcTypeCode(SqlTypes.JSON)
-    private JsonNode data;
+	@PrePersist
+	protected void onCreate() {
+		this.createdOn = this.createdOn != null
+				? this.createdOn
+				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+	}
 
-    public NotificationEvent setData(final JsonNode arg) {
-        data = arg;
-        return this;
-    }
+	@Convert(converter = JsonConverter.class)
+	private JsonNode data;
 
-    public <T> NotificationEvent setData(final T arg) {
-        data = new ObjectMapper().valueToTree(arg);
-        return this;
-    }
+	public NotificationEvent setData(final JsonNode arg) {
+		data = arg;
+		return this;
+	}
+
+	public <T> NotificationEvent setData(final T arg) {
+		data = new ObjectMapper().valueToTree(arg);
+		return this;
+	}
 }

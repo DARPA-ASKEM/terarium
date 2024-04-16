@@ -4,10 +4,12 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,7 +40,7 @@ public class NotificationController {
 	@Operation(summary = "Return all recent notification groups for a user")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "Returned recent notifications successfully", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotificationGroup.class)))),
-			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications", content = @Content)
+			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
 	})
 	public ResponseEntity<List<NotificationGroup>> getNotificationGroups(
 			@RequestParam(value = "since", required = false, defaultValue = "2") final long sinceInHours) {
@@ -50,4 +52,20 @@ public class NotificationController {
 
 		return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
 	}
+
+	@GetMapping("/ack/{groupId}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Acknowledges all events in notification group")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Returned recent notifications successfully"),
+			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
+	})
+	public ResponseEntity<Void> acknowledgeNotificationGroup(
+			@PathVariable("groupId") final UUID groupId) {
+
+		notificationService.acknowledgeNotificationGroup(groupId);
+
+		return ResponseEntity.ok(null);
+	}
+
 }
