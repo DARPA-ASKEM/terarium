@@ -17,11 +17,6 @@ import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 
-/**
- * The workflow data structure is not very well defined. It is also meant to carry operations each with their own unique
- * representations. As such this is just a pass-thru class for the proxy. The UI has it's own typinging definition that
- * is not generated.
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -30,9 +25,6 @@ public class Workflow extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
-
-	@Schema(defaultValue = "My New Workflow")
-	private String name;
 
 	private String description;
 
@@ -46,12 +38,13 @@ public class Workflow extends TerariumAsset {
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
 
+	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
 
 		cloneSuperFields(clone);
 
-		clone.name = this.name;
+		clone.setName(getName());
 		clone.description = this.description;
 		if (this.transform != null) {
 			clone.transform = new Transform()
