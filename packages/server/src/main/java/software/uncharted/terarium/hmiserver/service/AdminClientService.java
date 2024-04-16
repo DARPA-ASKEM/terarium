@@ -33,26 +33,26 @@ public class AdminClientService {
 				.build();
 	}
 
-	public User getUserFromJwt(Jwt jwt) {
-		var user = User.fromJwt(jwt);
-		var representation = getUserRepresentationById(user.getId());
+	public User getUserFromJwt(final Jwt jwt) {
+		final var user = User.fromJwt(jwt);
+		final var representation = getUserRepresentationById(user.getId());
 		user.setEnabled(representation.isEnabled()); // for now.
 		return user;
 	}
 
-	private UserResource getUserResource(String id) {
+	private UserResource getUserResource(final String id) {
 		return keycloak.realm(config.getKeycloak().getRealm()).users().get(id);
 	}
 
-	private UserRepresentation getUserRepresentationById(String id) {
+	private UserRepresentation getUserRepresentationById(final String id) {
 		return getUserResource(id).toRepresentation();
 	}
 
 	// Updates the user representation in keycloak based on our internal user model
-	public Boolean updateUserRepresentation(User user) {
+	public Boolean updateUserRepresentation(final User user) {
 		try {
-			var resource = getUserResource(user.getId());
-			var representation = resource.toRepresentation();
+			final var resource = getUserResource(user.getId());
+			final var representation = resource.toRepresentation();
 
 			// update fields here
 			representation.setEmail(user.getEmail());
@@ -61,7 +61,7 @@ public class AdminClientService {
 			representation.setUsername(user.getUsername());
 			resource.update(representation);
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 	}

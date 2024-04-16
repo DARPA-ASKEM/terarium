@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -24,16 +25,19 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
 		return elasticConfig.getWorkflowIndex();
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public String getAssetAlias() {
 		return elasticConfig.getWorkflowAlias();
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public Workflow createAsset(final Workflow asset) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
@@ -50,6 +54,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {

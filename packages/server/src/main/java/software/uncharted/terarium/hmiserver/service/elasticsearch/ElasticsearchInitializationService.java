@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -135,6 +136,9 @@ public class ElasticsearchInitializationService {
 	private void pushMissingIndices() throws IOException {
 
 		final Map<String, String> indices = new HashMap<>() {
+			@Serial
+			private static final long serialVersionUID = -200876314045109854L;
+
 			{
 				put(config.getCodeIndex(), config.getCodeAlias());
 				put(config.getDatasetIndex(), config.getDatasetAlias());

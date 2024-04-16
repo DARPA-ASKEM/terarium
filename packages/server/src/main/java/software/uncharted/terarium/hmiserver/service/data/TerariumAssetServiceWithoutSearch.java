@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -51,6 +52,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param id The ID of the asset to get
 	 * @return The asset, if it exists
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> getAsset(final UUID id) {
 		return repository.getByIdAndDeletedOnIsNull(id);
 	}
@@ -61,6 +64,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param id
 	 * @return
 	 */
+	@Observed(name = "function_profile")
 	public boolean assetExists(final UUID id) {
 		return repository.getByIdAndDeletedOnIsNull(id).isPresent();
 	}
@@ -72,6 +76,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public List<T> getAssets(final Integer page, final Integer pageSize) {
 		final Pageable pageable = PageRequest.of(page, pageSize);
 		return repository.findAllByDeletedOnIsNull(pageable).getContent();
@@ -83,6 +89,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
@@ -100,6 +108,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public T createAsset(final T asset) throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
@@ -114,6 +124,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
@@ -132,6 +144,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
@@ -154,6 +168,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	/** Clone asset and return it, does not persist it. */
+	@Override
+	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
@@ -164,11 +180,13 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	/** Clone asset, write it to the db under a new id, and return it. */
+	@Observed(name = "function_profile")
 	public T cloneAndPersistAsset(final UUID id) throws IOException, IllegalArgumentException {
 		return createAsset(cloneAsset(id));
 	}
 
 	/** Returns the asset as a byte payload. */
+	@Observed(name = "function_profile")
 	public byte[] exportAsset(final UUID id) {
 		try {
 			return objectMapper.writeValueAsBytes(cloneAsset(id));
@@ -178,6 +196,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	/** Imports the asset from a byte payload. */
+	@Observed(name = "function_profile")
 	public T importAsset(final byte[] bytes) {
 		try {
 			final T asset = objectMapper.readValue(bytes, assetClass);

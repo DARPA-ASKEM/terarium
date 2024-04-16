@@ -64,14 +64,14 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
-			final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				final Model modelCopy = new Model(model);
 
 				// Map the parameters values to the model
-				ArrayNode gollmExtractions = objectMapper.createArrayNode();
+				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
 					final List<ModelParameter> modelParameters =
 							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
@@ -80,20 +80,20 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 								.getModel()
 								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 					}
-					gollmExtractions.addAll(
-							(ArrayNode) condition.get("parameters").deepCopy());
+					final ArrayNode parameters = condition.get("parameters").deepCopy();
+					gollmExtractions.addAll(parameters);
 				}
 
 				// Map the initials values to the model
-				ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
+				final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials =
 							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
-					gollmExtractions.addAll(
-							(ArrayNode) condition.get("initials").deepCopy());
+					final ArrayNode initials = condition.get("initials").deepCopy();
+					gollmExtractions.addAll(initials);
 				}
 
 				// Set the all the GoLLM extractions into the model metadata

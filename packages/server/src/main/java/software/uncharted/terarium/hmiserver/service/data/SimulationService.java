@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -27,14 +28,13 @@ import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 @RequiredArgsConstructor
 public class SimulationService {
 
+	private static final long HOUR_EXPIRATION = 60;
 	private final ElasticsearchConfiguration elasticConfig;
 	private final ElasticsearchService elasticService;
-
 	private final Config config;
 	private final S3ClientService s3ClientService;
 
-	private static final long HOUR_EXPIRATION = 60;
-
+	@Observed(name = "function_profile")
 	public List<Simulation> getSimulations(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getSimulationIndex())
@@ -46,6 +46,7 @@ public class SimulationService {
 		return elasticService.search(req, Simulation.class);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<Simulation> getSimulation(final UUID id) throws IOException {
 		final Simulation doc = elasticService.get(elasticConfig.getSimulationIndex(), id.toString(), Simulation.class);
 		if (doc != null && doc.getDeletedOn() == null) {
@@ -54,6 +55,7 @@ public class SimulationService {
 		return Optional.empty();
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteSimulation(final UUID id) throws IOException {
 
 		final Optional<Simulation> simulation = getSimulation(id);
@@ -64,6 +66,7 @@ public class SimulationService {
 		updateSimulation(simulation.get());
 	}
 
+	@Observed(name = "function_profile")
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
 		elasticService.index(
 				elasticConfig.getSimulationIndex(),
@@ -72,6 +75,7 @@ public class SimulationService {
 		return simulation;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
 		if (!elasticService.documentExists(
 				elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
@@ -87,6 +91,7 @@ public class SimulationService {
 		return String.join("/", config.getResultsPath(), id.toString(), filename);
 	}
 
+	@Observed(name = "function_profile")
 	public PresignedURL getUploadUrl(final UUID id, final String filename) {
 		final PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService
@@ -96,6 +101,7 @@ public class SimulationService {
 		return presigned;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
 		final Optional<String> url = s3ClientService
@@ -120,6 +126,7 @@ public class SimulationService {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
+	@Observed(name = "function_profile")
 	public void copySimulationResultToDataset(final Simulation simulation, final Dataset dataset) {
 		final UUID simId = simulation.getId();
 		if (simulation.getResultFiles() != null) {
