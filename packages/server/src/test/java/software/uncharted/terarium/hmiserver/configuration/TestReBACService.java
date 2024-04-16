@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
