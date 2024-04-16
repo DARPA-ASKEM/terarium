@@ -1,7 +1,11 @@
 <template>
 	<section>
 		<section class="matrix">
-			<div></div>
+			<h5>
+				<span>{{ subject }}</span>
+				<i class="pi pi-arrow-right" />
+				<span>{{ outcome }}</span>
+			</h5>
 			<div class="col-labels">
 				<label v-for="(col, colIdx) in matrix[0]" :key="colIdx">
 					{{ col.colCriteria }}
@@ -23,7 +27,7 @@
 				</template>
 			</div>
 		</section>
-		<span>Click to open</span>
+		<p>Click to open</p>
 	</section>
 </template>
 
@@ -43,6 +47,8 @@ const props = defineProps<{
 }>();
 
 const matrix = ref<any>([]);
+const subject = ref('');
+const outcome = ref('');
 
 const matrixColLen = computed(() => matrix.value[0]?.length ?? 0);
 
@@ -50,13 +56,25 @@ const matrixColLen = computed(() => matrix.value[0]?.length ?? 0);
 watch(
 	() => props.id,
 	() => {
-		const templatesMap = collapseTemplates(props.mmt).matrixMap;
+		const collapsedTemplates = collapseTemplates(props.mmt);
+
+		// Get the transition matrix for the current template
+		const templatesMap = collapsedTemplates.matrixMap;
 		const transitionMatrix = templatesMap.get(props.id);
 		if (!transitionMatrix) {
 			logger.error('Failed to generate transition matrix');
 			return;
 		}
 		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
+
+		// Get subject and outcome for the current template
+		const templateSummary = collapsedTemplates.templatesSummary.find(
+			(template) => template.name === props.id
+		);
+		if (templateSummary) {
+			subject.value = templateSummary.subject;
+			outcome.value = templateSummary.outcome;
+		}
 	},
 	{ immediate: true }
 );
@@ -118,7 +136,13 @@ section {
 	width: 2rem;
 }
 
-span {
+h5 {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+}
+
+p {
 	font-size: var(--font-caption);
 	color: var(--primary-color);
 	padding: var(--gap-small) 0;
