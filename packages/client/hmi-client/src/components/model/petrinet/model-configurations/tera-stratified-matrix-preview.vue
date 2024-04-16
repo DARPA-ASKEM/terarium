@@ -59,8 +59,7 @@ watch(
 		const collapsedTemplates = collapseTemplates(props.mmt);
 
 		// Get the transition matrix for the current template
-		const templatesMap = collapsedTemplates.matrixMap;
-		const transitionMatrix = templatesMap.get(props.id);
+		const transitionMatrix = collapsedTemplates.matrixMap.get(props.id);
 		if (!transitionMatrix) {
 			logger.error('Failed to generate transition matrix');
 			return;
