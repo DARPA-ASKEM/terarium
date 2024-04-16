@@ -158,9 +158,9 @@ const clientFilters = computed(() => queryStore.clientFilters);
 
 const assetType = ref(AssetType.Document);
 const assetOptions = ref([
-	{ label: `Documents`, value: AssetType.Document },
-	{ label: `Models`, value: AssetType.Model },
-	{ label: `Datasets`, value: AssetType.Dataset }
+	{ label: 'Documents', value: AssetType.Document },
+	{ label: 'Models', value: AssetType.Model },
+	{ label: 'Datasets', value: AssetType.Dataset }
 ]);
 // TODO: Get rid of this once we have fully moved to the new search (search-by-asset-type)
 // This is here now for preservation of the hacky services/data.ts
