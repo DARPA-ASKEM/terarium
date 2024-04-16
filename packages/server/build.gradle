@@ -153,9 +153,11 @@ dependencyLocking {
 
 spotless {
     java {
+        target 'src/main/java/**/*.java' // only target java files in src/main/java
         importOrder('*,|,javax.**,java.**,|,$*')
-        palantirJavaFormat('2.43.0').formatJavadoc(true)
-        formatAnnotations()
+        palantirJavaFormat('2.43.0').formatJavadoc(true) // set to 4 space indentation
+        indentWithTabs() // use tabs for indentation to match our .editorconfig
+        formatAnnotations() // format annotations to keep them consistent
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
