@@ -35,6 +35,7 @@ public class ModelService extends TerariumAssetService<Model> {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
+	@Observed(name = "function_profile")
 	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
 
 		final SourceConfig source = new SourceConfig.Builder()
@@ -58,6 +59,7 @@ public class ModelService extends TerariumAssetService<Model> {
 				.toList();
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
 		final ModelDescription md = ModelDescription.fromModel(
 				elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
@@ -65,6 +67,7 @@ public class ModelService extends TerariumAssetService<Model> {
 		return Optional.of(md);
 	}
 
+	@Observed(name = "function_profile")
 	public List<Model> searchModels(final Integer page, final Integer pageSize, final JsonNode queryJson)
 			throws IOException {
 		Query query = null;
@@ -101,6 +104,7 @@ public class ModelService extends TerariumAssetService<Model> {
 		return elasticService.search(req, Model.class);
 	}
 
+	@Observed(name = "function_profile")
 	public List<ModelConfiguration> getModelConfigurationsByModelId(
 			final UUID id, final Integer page, final Integer pageSize) throws IOException {
 
@@ -123,16 +127,19 @@ public class ModelService extends TerariumAssetService<Model> {
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
 		return elasticConfig.getModelIndex();
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public List<Model> getAssets(final Integer page, final Integer pageSize) throws IOException {
 		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public Model createAsset(final Model asset) throws IOException {
 		// Set default value for model parameters (0.0)
 		if (asset.getSemantics() != null

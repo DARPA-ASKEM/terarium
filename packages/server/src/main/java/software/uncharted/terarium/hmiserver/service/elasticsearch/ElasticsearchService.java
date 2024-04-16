@@ -94,7 +94,7 @@ public class ElasticsearchService {
 		this.restTemplate = builder.build();
 	}
 
-	public RuntimeException handleException(final ElasticsearchException e) {
+	public static RuntimeException handleException(final ElasticsearchException e) {
 		String error = "ElasticsearchException: " + e.response().error().reason();
 		if (e.response().error().rootCause() != null
 				&& e.response().error().rootCause().size() > 0) {

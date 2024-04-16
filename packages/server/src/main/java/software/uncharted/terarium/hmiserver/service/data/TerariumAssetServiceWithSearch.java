@@ -123,6 +123,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
+	@Override
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 
 		final Optional<T> deleted = super.deleteAsset(id);
@@ -142,6 +143,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	public T createAsset(final T asset) throws IOException {
 		final T created = super.createAsset(asset);
 
@@ -159,6 +161,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		final List<T> created = super.createAssets(assets);
@@ -179,6 +182,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
+	@Override
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> updated = super.updateAsset(asset);
@@ -194,7 +198,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		return updated;
 	}
 
-	private String getVersionFromIndex(final String index) {
+	private static String getVersionFromIndex(final String index) {
 		final String[] split = index.split("_");
 		if (split.length < 2) {
 			throw new RuntimeException("Unable to parse version from index name: " + index);
@@ -203,7 +207,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		return split[split.length - 1];
 	}
 
-	private String getIndexNameWithoutVersion(final String index) {
+	private static String getIndexNameWithoutVersion(final String index) {
 		final String[] split = index.split("_");
 		if (split.length < 2) {
 			throw new RuntimeException("Unable to parse index name: " + index);

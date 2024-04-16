@@ -51,13 +51,13 @@ public class ConceptService {
 		if (!ontologyConceptRepository.existsById(concept.getId())) {
 			return Optional.empty();
 		}
-		ActiveConcept active = markConceptAsActive(concept);
+		final ActiveConcept active = markConceptAsActive(concept);
 		concept.setActiveConcept(active);
 		return Optional.of(ontologyConceptRepository.save(concept));
 	}
 
 	public void deleteConcept(final UUID id) {
-		Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
+		final Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
 		if (concept.isEmpty()) {
 			return;
 		}
@@ -65,21 +65,23 @@ public class ConceptService {
 		updateConcept(concept.get());
 	}
 
-	public List<DKG> searchConceptDefinitions(String term, Integer limit, Integer offset) throws Exception {
+	public List<DKG> searchConceptDefinitions(final String term, final Integer limit, final Integer offset)
+			throws Exception {
 		return miraProxy.search(term, limit, offset).getBody();
 	}
 
-	public DKG getConceptDefinition(String curie) throws Exception {
+	public DKG getConceptDefinition(final String curie) throws Exception {
 		return miraProxy.getEntity(curie).getBody();
 	}
 
-	public ConceptFacetSearchResponse searchConceptsUsingFacets(List<TaggableType> types, List<String> curies) {
+	public ConceptFacetSearchResponse searchConceptsUsingFacets(
+			final List<TaggableType> types, final List<String> curies) {
 
 		return ontologyConceptRepository.facetQuery(types, curies);
 	}
 
 	private ActiveConcept markConceptAsActive(final OntologyConcept concept) {
-		Optional<ActiveConcept> activeOptional = activeConceptRespository.getByCurie(concept.getCurie());
+		final Optional<ActiveConcept> activeOptional = activeConceptRespository.getByCurie(concept.getCurie());
 		ActiveConcept active = null;
 		if (activeOptional.isEmpty()) {
 
@@ -87,9 +89,9 @@ public class ConceptService {
 			active.setCurie(concept.getCurie());
 
 			try {
-				DKG dkg = getConceptDefinition(concept.getCurie());
+				final DKG dkg = getConceptDefinition(concept.getCurie());
 				active.setName(dkg.getName());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				log.error("Unable to fetch from DKG", e);
 			}
 

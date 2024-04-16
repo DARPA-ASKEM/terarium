@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -33,12 +34,14 @@ public class ProjectAssetService {
 	 * @param types The types of assets to find
 	 * @return The list of active assets for the project
 	 */
+	@Observed(name = "function_profile")
 	public List<ProjectAsset> findActiveAssetsForProject(
 			@NotNull final UUID projectId, final Collection<@NotNull AssetType> types) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
 				projectId, types);
 	}
 
+	@Observed(name = "function_profile")
 	public boolean deleteByAssetId(
 			@NotNull final UUID projectId, @NotNull final AssetType type, @NotNull final UUID originalAssetId) {
 		final ProjectAsset asset =
@@ -51,6 +54,7 @@ public class ProjectAssetService {
 		return true;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> createProjectAsset(
 			final Project project, final AssetType assetType, final TerariumAsset asset) throws IOException {
 
@@ -69,6 +73,7 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset projectAsset) {
 		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
@@ -76,6 +81,7 @@ public class ProjectAssetService {
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
+	@Observed(name = "function_profile")
 	public void updateByAsset(final TerariumAsset asset) {
 		final List<ProjectAsset> projectAssets =
 				projectAssetRepository.findByAssetId(asset.getId()).orElse(Collections.emptyList());
@@ -91,17 +97,20 @@ public class ProjectAssetService {
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
 		return Optional.ofNullable(
 				projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(
 			final UUID projectId, final String assetName, final AssetType assetType) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
 				projectId, assetName, assetType));
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(final UUID id, final UUID assetId) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}

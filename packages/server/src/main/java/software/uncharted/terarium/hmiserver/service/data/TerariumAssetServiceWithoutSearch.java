@@ -51,6 +51,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param id The ID of the asset to get
 	 * @return The asset, if it exists
 	 */
+	@Override
 	public Optional<T> getAsset(final UUID id) {
 		return repository.getByIdAndDeletedOnIsNull(id);
 	}
@@ -72,6 +73,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
+	@Override
 	public List<T> getAssets(final Integer page, final Integer pageSize) {
 		final Pageable pageable = PageRequest.of(page, pageSize);
 		return repository.findAllByDeletedOnIsNull(pageable).getContent();
@@ -83,6 +85,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
+	@Override
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
@@ -100,6 +103,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	public T createAsset(final T asset) throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
@@ -114,6 +118,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
@@ -132,6 +137,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
+	@Override
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
@@ -154,6 +160,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	/** Clone asset and return it, does not persist it. */
+	@Override
 	@SuppressWarnings("unchecked")
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);

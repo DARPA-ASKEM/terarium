@@ -23,6 +23,7 @@ public class DecapodesContextService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
+	@Observed(name = "function_profile")
 	public List<DecapodesContext> getDecapodesContexts(final Integer page, final Integer pageSize) throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -40,6 +41,7 @@ public class DecapodesContextService {
 		return elasticService.search(req, DecapodesContext.class);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<DecapodesContext> getDecapodesContext(final UUID id) throws IOException {
 		final DecapodesContext doc =
 				elasticService.get(elasticConfig.getDecapodesContextIndex(), id.toString(), DecapodesContext.class);
@@ -49,6 +51,7 @@ public class DecapodesContextService {
 		return Optional.empty();
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteDecapodesContext(final UUID id) throws IOException {
 		final Optional<DecapodesContext> decapodesContext = getDecapodesContext(id);
 		if (decapodesContext.isEmpty()) {
@@ -58,6 +61,7 @@ public class DecapodesContextService {
 		updateDecapodesContext(decapodesContext.get());
 	}
 
+	@Observed(name = "function_profile")
 	public DecapodesContext createDecapodesContext(final DecapodesContext decapodesContext) throws IOException {
 		decapodesContext.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(
@@ -67,6 +71,7 @@ public class DecapodesContextService {
 		return decapodesContext;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<DecapodesContext> updateDecapodesContext(final DecapodesContext decapodesContext)
 			throws IOException {
 		if (!elasticService.documentExists(

@@ -40,7 +40,7 @@ public class FrameworkService {
 	}
 
 	public void deleteFramework(final UUID id) {
-		Optional<ModelFramework> framework = frameworkRepository.findById(id);
+		final Optional<ModelFramework> framework = frameworkRepository.findById(id);
 		if (framework.isEmpty()) {
 			return;
 		}

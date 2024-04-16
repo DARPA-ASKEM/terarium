@@ -71,7 +71,7 @@ public class ProvenanceService {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
 		}
 
-		try (Session session = neo4jService.getSession()) {
+		try (final Session session = neo4jService.getSession()) {
 			// if node 1 is not created yet create node
 			final String leftNodeQuery = String.format(
 					"MERGE (n:%s {id: '%s', concept: '%s'})",
@@ -102,7 +102,7 @@ public class ProvenanceService {
 	}
 
 	public void deleteHangingNodes() {
-		try (Session session = neo4jService.getSession()) {
+		try (final Session session = neo4jService.getSession()) {
 			final String query = "MATCH (n) WHERE NOT (n)--() DELETE n";
 			session.run(query);
 		}

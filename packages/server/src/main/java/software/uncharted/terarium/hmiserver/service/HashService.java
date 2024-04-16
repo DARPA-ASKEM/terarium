@@ -10,7 +10,7 @@ public class HashService {
 	 * @param input
 	 * @return
 	 */
-	public static String sha256(String input) {
+	public static String sha256(final String input) {
 		return sha256(input.getBytes());
 	}
 
@@ -20,12 +20,12 @@ public class HashService {
 	 * @param bytes The bytes to hash
 	 * @return The SHA-256 hash of the input as a hex string
 	 */
-	public static String sha256(byte[] bytes) {
+	public static String sha256(final byte[] bytes) {
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			byte[] digest = md.digest(bytes);
+			final MessageDigest md = MessageDigest.getInstance("SHA-256");
+			final byte[] digest = md.digest(bytes);
 			return DatatypeConverter.printHexBinary(digest).toLowerCase();
-		} catch (java.security.NoSuchAlgorithmException e) {
+		} catch (final java.security.NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
 	}

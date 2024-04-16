@@ -7,7 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionProject;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
@@ -44,7 +51,7 @@ public class GroupsController {
 	public ResponseEntity<PermissionGroup> getGroup(@PathVariable("groupId") final String groupId) {
 		try {
 			final RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).isMemberOf(rebacGroup)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).isMemberOf(rebacGroup)) {
 				final List<RebacPermissionRelationship> relationships =
 						reBACService.getRelationships(rebacGroup.getSchemaObject());
 				final PermissionRelationships permissions = new PermissionRelationships();
@@ -77,7 +84,7 @@ public class GroupsController {
 	public ResponseEntity<PermissionGroup> createGroup(@RequestParam(name = "name") final String name) {
 		try {
 			final RebacUser rebacUser =
-					new RebacUser(currentUserService.getToken().getSubject(), reBACService);
+					new RebacUser(CurrentUserService.getToken().getSubject(), reBACService);
 			try {
 				final PermissionGroup permissionGroup = rebacUser.createGroup(name);
 				return ResponseEntity.ok(permissionGroup);
@@ -99,7 +106,7 @@ public class GroupsController {
 		try {
 			final RebacGroup what = new RebacGroup(groupId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.setPermissionRelationships(who, relationship);
 					return ResponseEntity.ok().build();
@@ -127,7 +134,7 @@ public class GroupsController {
 			}
 			final RebacGroup what = new RebacGroup(groupId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.removePermissionRelationships(who, oldRelationship);
 					what.setPermissionRelationships(who, newRelationship);
@@ -152,7 +159,7 @@ public class GroupsController {
 		try {
 			final RebacGroup what = new RebacGroup(groupdId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(currentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).canAdministrate(what)) {
 				try {
 					what.removePermissionRelationships(who, relationship);
 					return ResponseEntity.ok().build();

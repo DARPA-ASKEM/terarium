@@ -54,6 +54,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @return The asset, if it exists
 	 * @throws IOException If there is an error retrieving the asset
 	 */
+	@Override
 	public Optional<T> getAsset(final UUID id) throws IOException {
 		final T asset = elasticService.get(getAssetIndex(), id.toString(), assetClass);
 		if (asset != null && asset.getDeletedOn() == null) {
@@ -95,6 +96,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
+	@Override
 	public List<T> getAssets(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(getAssetIndex())
@@ -113,6 +115,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
+	@Override
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
@@ -130,6 +133,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	public T createAsset(final T asset) throws IOException {
 		if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
 			throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
@@ -146,6 +150,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		for (final T asset : assets) {
 			if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
@@ -165,6 +170,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
+	@Override
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
@@ -187,10 +193,11 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	}
 
 	/** Clone asset on ES, retrieve and save document with a different id */
+	@Override
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
 		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
+			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id);
 		}
 		return createAsset(targetAsset.get());
 	}
