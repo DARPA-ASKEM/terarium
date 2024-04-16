@@ -13,7 +13,7 @@
 		>
 	</div>
 	<OverlayPanel class="notification-container" ref="panel" @hide="acknowledgeFinishedItems">
-		<div class="header">
+		<header>
 			<h1>Notifications</h1>
 			<Button
 				label="Clear notifications"
@@ -21,12 +21,12 @@
 				:disabled="!hasFinishedItems"
 				@click="clearFinishedItems"
 			/>
-		</div>
+		</header>
 		<ul class="notification-items-container" v-if="notificationItems.length > 0">
 			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
 				<p class="heading">
 					{{ getTitleText(item) }}
-					<tera-asset-link text-only :label="item.assetName" :asset-route="getAssetRoute(item)" />
+					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
 				<p class="msg">{{ item.msg }}</p>
 				<div v-if="item.status === 'Running'" class="progressbar-container">
@@ -145,7 +145,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 	border: 1px solid #c3ccd6;
 	border-radius: var(--border-radius-medium);
 }
-.header {
+header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -205,21 +205,21 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--gap-small);
-	}
-	.done-container .status-msg {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-	.done-container .status-msg.ok {
-		color: var(--primary-color);
-	}
-	.done-container .status-msg.error {
-		color: var(--error-color);
-	}
-	.done-container .time-msg {
-		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
+		.status-msg {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+		.status-msg.ok {
+			color: var(--primary-color);
+		}
+		.status-msg.error {
+			color: var(--error-color);
+		}
+		.time-msg {
+			font-size: var(--font-caption);
+			color: var(--text-color-secondary);
+		}
 	}
 }
 </style>
