@@ -5,20 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -54,6 +42,20 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -156,6 +158,7 @@ public class ExtractionService {
 		return filename;
 	}
 
+	@Observed(name = "function_profile")
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain) {
 
 		final String userId = currentUserService.get().getId();
@@ -403,6 +406,7 @@ public class ExtractionService {
 		});
 	}
 
+	@Observed(name = "function_profile")
 	private DocumentAsset runVariableExtraction(
 			final ClientEventInterface clientInterface,
 			final UUID documentId,
@@ -493,6 +497,7 @@ public class ExtractionService {
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public Future<DocumentAsset> extractVariables(
 			final UUID documentId, final List<UUID> modelIds, final String domain) {
 
@@ -509,6 +514,7 @@ public class ExtractionService {
 		});
 	}
 
+	@Observed(name = "function_profile")
 	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
 
 		final String userId = currentUserService.get().getId();
