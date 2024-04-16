@@ -208,7 +208,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			return ResponseEntity.ok(simulationCiemssServiceProxy.cancelJob(id).getBody());
 		}
-		catch (final FeignException.FeignClientException e) {
+		catch (final FeignException e) {
 			final String error = "Unable to cancel ciemss job " + id.toString();
 			final int status = e.status() >= 400 ? e.status() : 500;
 			log.error(error, e);
