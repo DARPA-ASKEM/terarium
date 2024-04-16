@@ -221,7 +221,8 @@ async function renderGraph() {
 					const relativeX =
 						transitionMatrixBounds.left -
 						diagramBounds.left -
-						(tooltipWidth + transitionMatrixWidth / 2) / 2;
+						(tooltipWidth + transitionMatrixWidth / 2) / 2 +
+						transitionMatrixBounds.width / 2;
 					const relativeY =
 						transitionMatrixBounds.top -
 						diagramBounds.top -
