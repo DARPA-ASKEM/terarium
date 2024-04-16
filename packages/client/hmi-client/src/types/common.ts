@@ -1,5 +1,6 @@
 import {
 	AssetType,
+	ClientEventType,
 	Dataset,
 	Document,
 	DocumentAsset,
@@ -197,4 +198,16 @@ export enum ModelServiceType {
 
 export interface CompareModelsResponseType {
 	response: string;
+}
+
+export interface NotificationItem {
+	id: string;
+	type: ClientEventType;
+	assetName: string;
+	status: 'Completed' | 'Failed' | 'Running';
+	msg: string;
+	error: string;
+	progress: number;
+	lastUpdated: number;
+	acknowledged: boolean;
 }
