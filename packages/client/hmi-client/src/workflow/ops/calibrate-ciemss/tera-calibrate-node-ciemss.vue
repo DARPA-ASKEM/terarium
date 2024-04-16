@@ -89,6 +89,9 @@ const pollResult = async (runId: string) => {
 	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressForecastId = '';
+		state.inProgressCalibrationId = '';
+		emit('update-state', state);
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

@@ -201,6 +201,10 @@
 				@click="runEnsemble"
 				:disabled="false"
 			/>
+			<tera-pyciemss-cancel-button
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
+			/>
 		</template>
 	</tera-drilldown>
 </template>
@@ -219,6 +223,7 @@ import InputNumber from 'primevue/inputnumber';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 
 import {
 	getRunResultCiemss,
@@ -263,7 +268,11 @@ const numSamples = ref<number>(props.node.state.numSamples);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-
+const cancelRunId = computed(() => {
+	if (props.node.state.inProgressSimulationId !== '')
+		return props.node.state.inProgressSimulationId;
+	return '';
+});
 // Preview selection
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {

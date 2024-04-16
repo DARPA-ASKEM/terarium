@@ -78,6 +78,8 @@ const getStatus = async (simulationId: string) => {
 	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressSimulationId = '';
+		emit('update-state', state);
 		return pollerResults;
 	}
 
