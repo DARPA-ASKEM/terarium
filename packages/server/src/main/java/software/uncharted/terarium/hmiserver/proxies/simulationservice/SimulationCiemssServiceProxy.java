@@ -10,36 +10,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationStatusMessage;
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
-
 @FeignClient(name = "ciemss-service", url = "${ciemss-service.url}")
 public interface SimulationCiemssServiceProxy {
 	@PostMapping("/simulate")
-	ResponseEntity<JobResponse> makeForecastRun(
-		@RequestBody JsonNode request
-	);
+	ResponseEntity<JobResponse> makeForecastRun(@RequestBody JsonNode request);
 
 	@PostMapping("/calibrate")
-	ResponseEntity<JobResponse> makeCalibrateJob(
-		@RequestBody JsonNode request
-	);
+	ResponseEntity<JobResponse> makeCalibrateJob(@RequestBody JsonNode request);
 
 	@PostMapping("/optimize")
-	ResponseEntity<JobResponse> makeOptimizeJob(
-		@RequestBody JsonNode request
-	);
+	ResponseEntity<JobResponse> makeOptimizeJob(@RequestBody JsonNode request);
 
 	@PostMapping("/ensemble-simulate")
-	ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
-		@RequestBody JsonNode request
-	);
+	ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(@RequestBody JsonNode request);
 
 	@PostMapping("/ensemble-calibrate")
-	ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
-		JsonNode request
-	);
+	ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(JsonNode request);
 
 	@GetMapping("/status/{runId}")
-	ResponseEntity<SimulationStatusMessage> getRunStatus(
-		@PathVariable("runId") String runId
-	);
+	ResponseEntity<SimulationStatusMessage> getRunStatus(@PathVariable("runId") String runId);
 }

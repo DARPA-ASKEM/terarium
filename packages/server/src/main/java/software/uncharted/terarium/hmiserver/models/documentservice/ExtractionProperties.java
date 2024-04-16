@@ -1,17 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-
 public class ExtractionProperties implements Serializable {
 	private String title;
 
@@ -31,7 +28,7 @@ public class ExtractionProperties implements Serializable {
 	private String contentText;
 
 	private Number indexInDocument;
-	//TODO fixme from object
+	// TODO fixme from object
 	private Object contentJSON;
 
 	private String image;
@@ -45,5 +42,4 @@ public class ExtractionProperties implements Serializable {
 	private String caption;
 
 	private Document documentBibjson;
-
 }

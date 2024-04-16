@@ -19,9 +19,10 @@ public enum ValueType {
 	 * @throws IllegalArgumentException if the ValueType is not found
 	 */
 	public static ValueType findByType(final String type) {
-		return Arrays.stream(values()).filter(
-			value -> type.equalsIgnoreCase(value.type)).findFirst().orElseThrow(() -> new IllegalArgumentException("No ValueType with type: " + type)
-		);
+		return Arrays.stream(values())
+				.filter(value -> type.equalsIgnoreCase(value.type))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No ValueType with type: " + type));
 	}
 
 	ValueType(final String type) {

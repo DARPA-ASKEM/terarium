@@ -1,21 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -23,17 +21,18 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
-	final public static String NAME = "gollm:dataset_configure";
+	public static final String NAME = "gollm:dataset_configure";
 
-	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
-	final private ModelConfigurationService modelConfigurationService;
-	final private ProvenanceService provenanceService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ProvenanceService provenanceService;
 
 	@Override
 	public String getName() {
@@ -47,6 +46,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 		@JsonProperty("amr")
 		Model amr;
+
+		@JsonProperty("matrix_str")
+		String matrixStr;
 	}
 
 	@Data
@@ -64,23 +66,18 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId())
-					.orElseThrow();
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
+
 			// Map the parameters values to the model
 			final Model modelCopy = new Model(model);
-			final List<ModelParameter> modelParameters = modelCopy.getParameters();
-			modelParameters.forEach((parameter) -> {
-				final JsonNode conditionParameters = configurations.getResponse().get("parameters");
-				conditionParameters.forEach((conditionParameter) -> {
-					if (parameter.getId().equals(conditionParameter.get("id").asText())) {
-						parameter.setValue(conditionParameter.get("value").doubleValue());
-					}
-				});
-			});
+			final JsonNode condition = configurations.getResponse().get("values");
+			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
+			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
 
 			if (modelCopy.isRegnet()) {
 				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+				modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 			}
 
 			// Create the new configuration

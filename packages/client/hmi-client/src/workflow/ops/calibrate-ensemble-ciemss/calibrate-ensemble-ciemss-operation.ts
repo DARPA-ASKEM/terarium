@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs } from '@/types/Types';
 
 export interface EnsembleCalibrateExtraCiemss {
@@ -7,7 +7,7 @@ export interface EnsembleCalibrateExtraCiemss {
 	numIterations: number;
 }
 
-export interface CalibrateEnsembleCiemssOperationState {
+export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	ensembleConfigs: EnsembleModelConfigs[];
 	timestampColName: string;
@@ -36,7 +36,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			timestampColName: '',
 			extra: {
 				solverMethod: 'dopri5',
-				numParticles: 10,
+				numParticles: 1,
 				numIterations: 100
 			},
 			inProgressCalibrationId: '',

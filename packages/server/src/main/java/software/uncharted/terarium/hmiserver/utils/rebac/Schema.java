@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.utils.rebac;
 
 public class Schema {
-	public static String schema = """
+	public static String schema =
+			"""
 		definition user {}
 
 		definition group {

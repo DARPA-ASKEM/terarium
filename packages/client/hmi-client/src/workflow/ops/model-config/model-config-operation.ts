@@ -1,5 +1,5 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
-import type { Initial, ModelParameter } from '@/types/Types';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import type { ModelConfiguration } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
@@ -8,14 +8,8 @@ export interface ModelEditCode {
 	timestamp: number;
 }
 
-export interface ModelConfigOperationState {
-	name: string;
-	description: string;
-	initials: Initial[];
-	parameters: ModelParameter[];
-	timeseries: { [key: string]: string };
-	initialsMetadata: { [key: string]: string };
-	parametersMetadata: { [key: string]: string };
+export interface ModelConfigOperationState extends BaseState {
+	transientModelConfig: ModelConfiguration;
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
 	tempConfigId: string; // This is used for beaker context when there is no output selected. It is a config id that is in TDS and marked as temp
@@ -27,7 +21,7 @@ export const ModelConfigOperation: Operation = {
 	description: 'Create model configurations.',
 	isRunnable: true,
 	inputs: [
-		{ type: 'modelId' },
+		{ type: 'modelId', label: 'Model' },
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
@@ -36,16 +30,15 @@ export const ModelConfigOperation: Operation = {
 
 	initState: () => {
 		const init: ModelConfigOperationState = {
-			name: '',
-			description: '',
 			modelEditCodeHistory: [],
 			hasCodeBeenRun: false,
 			tempConfigId: '',
-			initials: [],
-			parameters: [],
-			timeseries: {},
-			initialsMetadata: {},
-			parametersMetadata: {}
+			transientModelConfig: {
+				name: '',
+				description: '',
+				model_id: '',
+				configuration: {}
+			}
 		};
 		return init;
 	}

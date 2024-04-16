@@ -29,16 +29,19 @@ public class RebacGroup extends RebacObject {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
 	}
 
-	public void createCreatorRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
+	public void createCreatorRelationship(RebacObject rebacObject)
+			throws Exception, RelationshipAlreadyExistsException {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
-	public void setPermissionRelationships(RebacObject who, String relationship) throws Exception, RelationshipAlreadyExistsException {
+	public void setPermissionRelationships(RebacObject who, String relationship)
+			throws Exception, RelationshipAlreadyExistsException {
 		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
 		reBACService.createRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
 	}
 
-	public void removePermissionRelationships(RebacObject who, String relationship) throws Exception, RelationshipAlreadyExistsException {
+	public void removePermissionRelationships(RebacObject who, String relationship)
+			throws Exception, RelationshipAlreadyExistsException {
 		Schema.Relationship relationshipEnum = Schema.Relationship.valueOf(relationship.toUpperCase());
 		reBACService.removeRelationship(who.getSchemaObject(), getSchemaObject(), relationshipEnum);
 	}

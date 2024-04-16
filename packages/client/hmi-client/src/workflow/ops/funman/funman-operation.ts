@@ -1,4 +1,4 @@
-import { Operation, WorkflowOperationTypes } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
 export interface ConstraintGroup {
@@ -24,10 +24,11 @@ export interface RequestParameter {
 	label: string;
 }
 
-export interface FunmanOperationState {
+export interface FunmanOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSteps: number;
 	tolerance: number;
+	inProgressId: string;
 	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
@@ -48,7 +49,8 @@ export const FunmanOperation: Operation = {
 			tolerance: 0.2,
 			constraintGroups: [],
 			requestParameters: [],
-			useCompartmentalConstraint: true
+			useCompartmentalConstraint: true,
+			inProgressId: ''
 		};
 		return init;
 	}

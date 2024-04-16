@@ -1,6 +1,6 @@
 <template>
 	<a @click="openAsset(assetRoute)">
-		<span>
+		<span v-if="!textOnly">
 			<tera-asset-icon :asset-type="assetRoute.pageType as AssetType" />
 		</span>
 		{{ label }}</a
@@ -17,6 +17,7 @@ import TeraAssetIcon from './tera-asset-icon.vue';
 defineProps<{
 	assetRoute: AssetRoute;
 	label: string;
+	textOnly?: boolean;
 }>();
 
 const openAsset = (assetRoute: AssetRoute) => {

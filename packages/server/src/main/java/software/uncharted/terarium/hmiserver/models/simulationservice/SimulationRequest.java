@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -22,6 +20,7 @@ public class SimulationRequest implements Serializable {
 
 	@JsonAlias("time_span")
 	private TimeSpan timespan;
+
 	private Object extra;
 
 	private String engine;

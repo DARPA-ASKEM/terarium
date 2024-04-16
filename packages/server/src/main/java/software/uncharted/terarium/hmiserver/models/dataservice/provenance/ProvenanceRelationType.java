@@ -31,13 +31,13 @@ public enum ProvenanceRelationType {
 	 * @throws IllegalArgumentException if the RelationType is not found
 	 */
 	public static ProvenanceRelationType findByType(final String type) {
-		return Arrays.stream(values()).filter(
-				value -> type.equalsIgnoreCase(value.type)).findFirst()
+		return Arrays.stream(values())
+				.filter(value -> type.equalsIgnoreCase(value.type))
+				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No RelationType with type: " + type));
 	}
 
 	ProvenanceRelationType(final String type) {
 		this.type = type;
 	}
-
 }

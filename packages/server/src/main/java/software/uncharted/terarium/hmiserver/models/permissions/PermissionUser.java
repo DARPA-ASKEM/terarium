@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.util.List;
 
 @TSModel
 @Data
@@ -15,8 +14,10 @@ public class PermissionUser {
 	private String firstName;
 	private String lastName;
 	private String email;
+
 	@TSOptional
 	private List<PermissionRole> roles;
+
 	@TSOptional
 	private String relationship;
 

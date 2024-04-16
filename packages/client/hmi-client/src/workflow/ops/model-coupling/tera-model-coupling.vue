@@ -1,11 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="ModelCouplingTabgs.Wizard">
 			<tera-drilldown-section class="ml-4 mr-2 mt-3"
 				>Coming soon. Use the notebook tab for now.</tera-drilldown-section
@@ -112,7 +110,6 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import Dropdown from 'primevue/dropdown';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

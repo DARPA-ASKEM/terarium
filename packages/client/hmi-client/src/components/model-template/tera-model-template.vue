@@ -23,7 +23,8 @@
 		</section>
 		<ul>
 			<li
-				v-for="({ id }, index) in ports"
+				v-for="(port, index) in ports"
+				:id="id ? `${id}-${port.id}` : undefined"
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"
@@ -31,9 +32,9 @@
 				@mouseleave="emit('port-mouseleave')"
 				@focus="() => {}"
 				@blur="() => {}"
-				@click.stop="emit('port-selected', id)"
+				@click.stop="emit('port-selected', port.id)"
 			>
-				{{ id }}
+				{{ port.id }}
 			</li>
 		</ul>
 	</section>
@@ -51,6 +52,7 @@ const props = defineProps<{
 	model: any;
 	isEditable: boolean;
 	isDecomposed: boolean;
+	id?: string;
 	showParameters?: boolean;
 }>();
 

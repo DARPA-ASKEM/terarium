@@ -10,8 +10,12 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class CodeService extends S3BackedAssetService<Code> {
 
-
-	public CodeService(final ElasticsearchConfiguration elasticConfig, final Config config, final ElasticsearchService elasticService, final ProjectAssetService projectAssetService, final S3ClientService s3ClientService) {
+	public CodeService(
+			final ElasticsearchConfiguration elasticConfig,
+			final Config config,
+			final ElasticsearchService elasticService,
+			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService) {
 		super(elasticConfig, config, elasticService, projectAssetService, s3ClientService, Code.class);
 	}
 

@@ -37,7 +37,7 @@
 	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header
-				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '']"
+				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']"
 				:key="index"
 			>
 				{{ title }}
@@ -48,20 +48,21 @@
 			<div class="variables-row" v-if="parameterOptions.includes(parameter)">
 				<RadioButton v-model="selectedParam" :value="parameter" />
 				<div>{{ parameter }}</div>
-				<div>
-					{{ selectedBoxId === '' ? bound.lb.toFixed(4) : selectedBox[parameter][0].toFixed(4) }}
-				</div>
-				<div>
-					{{ selectedBoxId === '' ? bound.ub.toFixed(4) : selectedBox[parameter][1].toFixed(4) }}
-				</div>
+				<div>{{ formatNumber(bound.lb) }}</div>
+				<div>{{ formatNumber(bound.ub) }}</div>
 				<tera-funman-boundary-chart
-					:processed-data="processedData as FunmanProcessedData"
+					v-if="processedData"
+					:processed-data="processedData"
 					:param1="selectedParam"
 					:param2="parameter"
 					:timestep="timestep"
 					:selectedBoxId="selectedBoxId"
 					@click="selectedParam2 = parameter"
 				/>
+				<div v-if="selectedBoxId !== ''">
+					{{ formatNumber(selectedBox[parameter][0]) }} :
+					{{ formatNumber(selectedBox[parameter][1]) }}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -115,6 +116,14 @@ const drilldownChartOptions = ref<RenderOptions>({
 		}
 	}
 });
+
+// TODO: better range-bound logic
+const formatNumber = (v: number) => {
+	if (v.toString().includes('.')) {
+		return v.toFixed(4);
+	}
+	return v;
+};
 
 const initalizeParameters = async () => {
 	const funmanResult = await getQueries(props.funModelId);

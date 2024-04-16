@@ -5,10 +5,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 import software.uncharted.terarium.hmiserver.repository.data.FrameworkRepository;
 
@@ -49,5 +47,4 @@ public class FrameworkService {
 		framework.get().setDeletedOn(Timestamp.from(Instant.now()));
 		frameworkRepository.save(framework.get());
 	}
-
 }

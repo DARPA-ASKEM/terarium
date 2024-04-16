@@ -17,7 +17,7 @@ export async function getGithubRepositoryContent(
 		);
 
 		const response = await API.get('/code/repo-content', {
-			params: { repoOwnerAndName, path }
+			params: { 'repo-owner-and-name': repoOwnerAndName, path }
 		});
 		const { status, data } = response;
 		if (status !== 200) return { files: {} } as GithubRepo;
@@ -31,7 +31,7 @@ export async function getGithubRepositoryContent(
 export async function getGithubCode(repoOwnerAndName: string, path: string) {
 	try {
 		const response = await API.get('/code/repo-file-content', {
-			params: { repoOwnerAndName, path }
+			params: { 'repo-owner-and-name': repoOwnerAndName, path }
 		});
 		const { status, data } = response;
 		if (status !== 200) return null;
@@ -45,7 +45,7 @@ export async function getGithubCode(repoOwnerAndName: string, path: string) {
 export async function getGithubRepo(repoOwnerAndName: string) {
 	try {
 		const response = await API.get('/code/repo-zip', {
-			params: { repoOwnerAndName }
+			params: { 'repo-owner-and-name': repoOwnerAndName }
 		});
 		const { status, data } = response;
 		if (status !== 200) return null;

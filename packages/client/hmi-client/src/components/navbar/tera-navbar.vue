@@ -40,6 +40,8 @@
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
+			<tera-notification-panel v-if="isProjectPage" />
+
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
@@ -75,15 +77,17 @@
 							v-model="evaluationScenario"
 							:options="evalScenarios.scenarios"
 							optionLabel="name"
+							placeholder="Select a Scenario"
 							@change="onScenarioChange"
 						/>
 
 						<label class="text-sm" for="evaluation-scenario-task">Task</label>
 						<Dropdown
 							id="evaluation-scenario-task"
-							:options="evaluationScenario.questions"
+							:options="evaluationScenario?.questions ?? []"
 							v-model="evaluationScenarioTask"
 							optionLabel="task"
+							placeholder="Select a Task"
 							@change="onTaskChange"
 						/>
 
@@ -204,6 +208,7 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraNotificationPanel from '@/components/navbar/tera-notification-panel.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
@@ -346,21 +351,22 @@ const refreshEvaluationScenario = async () => {
 };
 
 const loadEvaluationScenario = async () => {
-	const scenarioName: string | null = window.localStorage.getItem('evaluationScenarioName');
-	const scenarioIndex: number = scenarioName
+	const scenarioName = window.localStorage.getItem('evaluationScenarioName');
+	const scenarioIndex = scenarioName
 		? evalScenarios.value.scenarios.findIndex((s) => s.name === scenarioName)
 		: 0;
 	evaluationScenario.value = evalScenarios.value.scenarios[scenarioIndex];
 
-	const taskName: string | null = window.localStorage.getItem('evaluationScenarioTask');
-	const taskIndex: number = taskName
-		? evaluationScenario.value?.questions.findIndex((q) => q.task === taskName)
-		: 0;
-	evaluationScenarioTask.value = evaluationScenario.value.questions[taskIndex];
+	const taskName = window.localStorage.getItem('evaluationScenarioTask');
+
+	let taskIndex: number = 0;
+	if (taskName && evaluationScenario.value?.questions) {
+		taskIndex = evaluationScenario.value.questions.findIndex((q) => q.task === taskName);
+		evaluationScenarioTask.value = evaluationScenario.value.questions[taskIndex];
+	}
+
 	evaluationScenarioDescription.value = evaluationScenarioTask.value.description;
-
 	evaluationScenarioNotes.value = window.localStorage.getItem('evaluationScenarioNotes') || '';
-
 	evaluationScenarioMultipleUsers.value =
 		window.localStorage.getItem('evaluationScenarioMultipleUsers') !== 'false';
 
@@ -404,6 +410,7 @@ const explorerItem: MenuItem = {
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
 const currentRoute = useCurrentRoute();
 const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
+const isProjectPage = computed(() => currentRoute.value.name === RouteName.Project);
 
 /*
  * User Menu

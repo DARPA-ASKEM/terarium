@@ -1,10 +1,13 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.Data;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,12 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 @FeignClient(name = "skema-unified", url = "${skema-unified.url}")
@@ -39,17 +36,14 @@ public interface SkemaUnifiedProxy {
 	ResponseEntity<String> base64EquationsToLatex(@RequestBody JsonNode request);
 
 	@PostMapping(value = "/workflows/code/llm-assisted-codebase-to-pn-amr", consumes = "multipart/form-data")
-	ResponseEntity<JsonNode> llmCodebaseToAMR(
-			@RequestPart("zip_file") MultipartFile file);
+	ResponseEntity<JsonNode> llmCodebaseToAMR(@RequestPart("zip_file") MultipartFile file);
 
 	@PostMapping(value = "/workflows/code/codebase-to-pn-amr", consumes = "multipart/form-data")
-	ResponseEntity<JsonNode> codebaseToAMR(
-			@RequestPart("zip_file") MultipartFile file);
+	ResponseEntity<JsonNode> codebaseToAMR(@RequestPart("zip_file") MultipartFile file);
 
 	@PostMapping(value = "/workflows/code/snippets-to-amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> snippetsToAMR(
-			@RequestPart("files") List<String> files,
-			@RequestPart("blobs") List<String> blobs);
+			@RequestPart("files") List<String> files, @RequestPart("blobs") List<String> blobs);
 
 	@PostMapping(value = "/metal/link_amr", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> linkAMRFile(
@@ -57,7 +51,7 @@ public interface SkemaUnifiedProxy {
 			@RequestPart("text_extractions_file") MultipartFile extractionsFile);
 
 	@Data
-	public static class IntegratedTextExtractionsBody {
+	class IntegratedTextExtractionsBody {
 
 		public IntegratedTextExtractionsBody(final String text) {
 			this.texts = Arrays.asList(text);
@@ -88,5 +82,4 @@ public interface SkemaUnifiedProxy {
 			@RequestParam(value = "annotate_mit", defaultValue = "true") Boolean annotateMit,
 			@RequestParam(value = "annotate_skema", defaultValue = "true") Boolean annotateSkema,
 			@RequestBody IntegratedTextExtractionsBody body);
-
 }

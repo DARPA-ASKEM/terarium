@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @RequiredArgsConstructor
 @Slf4j
 public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
-	final static public String NAME = "mira_task:sbml_to_petrinet";
+	public static final String NAME = "mira_task:sbml_to_petrinet";
 
-	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
 
 	@Override
 	public String getName() {

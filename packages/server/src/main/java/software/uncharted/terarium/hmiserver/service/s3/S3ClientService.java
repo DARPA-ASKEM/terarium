@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.s3;
 
+import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.springframework.stereotype.Service;
-
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -43,9 +41,10 @@ public class S3ClientService {
 	 */
 	AwsCredentials getAwsCredentials(String id) {
 		if (config.getAmazon().getCredentials().containsKey(id)) {
-			final Config.AmazonCredentials credentials = config.getAmazon().getCredentials().get(id);
-			return StaticCredentialsProvider
-					.create(AwsBasicCredentials.create(credentials.getAccessKey(), credentials.getSecretKey()))
+			final Config.AmazonCredentials credentials =
+					config.getAmazon().getCredentials().get(id);
+			return StaticCredentialsProvider.create(
+							AwsBasicCredentials.create(credentials.getAccessKey(), credentials.getSecretKey()))
 					.resolveCredentials();
 		}
 		throw new IllegalArgumentException("Could not find credentials '" + id + "'");
@@ -123,8 +122,8 @@ public class S3ClientService {
 	 */
 	public S3Service getS3Service(String id) {
 		if (getS3Client(id) != null) {
-			s3Services.putIfAbsent(id,
-					new S3Service(getS3Client(id), getS3Presigner(id), config.getMultipartFileBufferSize()));
+			s3Services.putIfAbsent(
+					id, new S3Service(getS3Client(id), getS3Presigner(id), config.getMultipartFileBufferSize()));
 			return s3Services.get(id);
 		}
 		throw new IllegalArgumentException("Could not find S3 client '" + id + "'");
@@ -134,25 +133,28 @@ public class S3ClientService {
 	 * Initialize an {@link S3Client} by id, and store it in {@link #s3Clients}
 	 *
 	 * @param id The id of the client to initialize
-	 * @return The initialized client, or null if the client could not be
-	 *         initialized
+	 * @return The initialized client, or null if the client could not be initialized
 	 */
 	S3Client initializeS3Client(String id) {
 		if (config.getAmazon().getS3().containsKey(id)) {
 			final Config.AmazonS3 s3Config = config.getAmazon().getS3().get(id);
 			final AwsCredentials credentials = getAwsCredentials(s3Config.getCredentialsId());
 			if (s3Config.getUrl() != null && !s3Config.getUrl().isEmpty()) {
-				s3Clients.put(id, S3Client.builder()
-						.credentialsProvider(StaticCredentialsProvider.create(credentials))
-						.region(Region.of(s3Config.getRegion()))
-						.forcePathStyle(true)
-						.endpointOverride(URI.create(s3Config.getUrl()))
-						.build());
+				s3Clients.put(
+						id,
+						S3Client.builder()
+								.credentialsProvider(StaticCredentialsProvider.create(credentials))
+								.region(Region.of(s3Config.getRegion()))
+								.forcePathStyle(true)
+								.endpointOverride(URI.create(s3Config.getUrl()))
+								.build());
 			} else {
-				s3Clients.put(id, S3Client.builder()
-						.credentialsProvider(StaticCredentialsProvider.create(credentials))
-						.region(Region.of(s3Config.getRegion()))
-						.build());
+				s3Clients.put(
+						id,
+						S3Client.builder()
+								.credentialsProvider(StaticCredentialsProvider.create(credentials))
+								.region(Region.of(s3Config.getRegion()))
+								.build());
 			}
 			return s3Clients.get(id);
 		} else {

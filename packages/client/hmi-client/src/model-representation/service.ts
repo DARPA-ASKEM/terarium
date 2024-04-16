@@ -3,7 +3,9 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Model } from '@/types/Types';
+import type { Initial, Model, ModelParameter } from '@/types/Types';
+import { getModelType } from '@/services/model';
+import { AMRSchemaNames } from '@/types/common';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -17,6 +19,12 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	if (miraModel.parameters[variableName]) {
 		return {
 			value: miraModel.parameters[variableName].value
+		};
+	}
+	const template = miraModel.templates.find((t) => t.name === variableName);
+	if (template) {
+		return {
+			value: template.rate_law
 		};
 	}
 	throw new Error(`${variableName} not found`);
@@ -145,3 +153,170 @@ export const getModelRenderer = (
 		dragSelector: 'no-drag'
 	});
 };
+
+/**
+ * Returns the model parameters based on the model type.
+ * @param {Model} model - The model object.
+ * @returns {ModelParameter[]} - The model parameters.
+ */
+export function getParameters(model: Model): ModelParameter[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.parameters ?? [];
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.parameters ?? [];
+	}
+}
+
+/**
+ * Returns the model parameter with the specified ID.
+ * @param {Model} model - The model object.
+ * @param {string} parameterId - The ID of the parameter.
+ * @returns {ModelParameter | null} - The model parameter or null if not found.
+ */
+export function getParameter(model: Model, parameterId: string): ModelParameter | undefined {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.parameters.find((p) => p.id === parameterId);
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.parameters?.find((p) => p.id === parameterId);
+	}
+}
+
+/**
+ * Retrieves the metadata for a specific initial in the model.
+ * @param {Model} model - The model object.
+ * @param {string} initialId - The ID of the initial.
+ * @returns {any} - The metadata for the specified initial or undefined if not found.
+ */
+export function getInitialMetadata(model: Model, parameterId: string) {
+	return model.metadata?.initials?.[parameterId];
+}
+
+/**
+ * Retrieves the metadata for a specific parameter in the model.
+ * @param {Model} model - The model object.
+ * @param {string} parameterId - The ID of the parameter.
+ * @returns {any} - The metadata for the specified parameter or undefined if not found.
+ */
+export function getParameterMetadata(model: Model, parameterId: string) {
+	return model.metadata?.parameters?.[parameterId];
+}
+
+/**
+ * Returns the model initials based on the model type.
+ * @param {Model} model - The model object.
+ * @returns {Initial[]} - The model initials.
+ */
+export function getInitials(model: Model): Initial[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.initials ?? [];
+	}
+}
+
+/**
+ * Returns the model initial with the specified ID.
+ * @param {Model} model - The model object.
+ * @param {string} initialId - The ID of the initial.
+ * @returns {Initial | null} - The model initial or null if not found.
+ */
+export function getInitial(model: Model, initialId: string): Initial | undefined {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices.find((i) => i.id === initialId);
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			return model.semantics?.ode?.initials?.find((i) => i.target === initialId);
+	}
+}
+
+/**
+ * Returns the timeseries for the specified semantic ID.
+ * @param {Model} model - The model object.
+ * @param {string} semanticId - The semantic ID.
+ * @returns {any} - The timeseries.
+ */
+export function getTimeseries(model: Model, semanticId: string) {
+	return model.metadata?.timeseries?.[semanticId];
+}
+
+/**
+ * Updates the metadata for a specific parameter in the model.
+ * @param {Model} model - The model object.
+ * @param {string} parameterId - The ID of the parameter.
+ * @param {string} metadataKey - The key of the metadata to update.
+ * @param {any} value - The new value for the metadata.
+ */
+export function updateParameterMetadata(
+	model: Model,
+	parameterId: string,
+	metadataKey: string,
+	value: any
+) {
+	if (!model.metadata?.parameters?.[parameterId]) {
+		model.metadata ??= {};
+		model.metadata.parameters ??= {};
+		model.metadata.parameters[parameterId] ??= {};
+	}
+	model.metadata.parameters[parameterId][metadataKey] = value;
+}
+
+/**
+ * Updates the metadata for a specific initial in the model.
+ * @param {Model} model - The model object.
+ * @param {string} initialId - The ID of the initial.
+ * @param {string} metadataKey - The key of the metadata to update.
+ * @param {any} value - The new value for the metadata.
+ */
+export function updateInitialMetadata(
+	model: Model,
+	initialId: string,
+	metadataKey: string,
+	value: any
+) {
+	if (!model.metadata?.initials?.[initialId]) {
+		model.metadata ??= {};
+		model.metadata.initials ??= {};
+		model.metadata.initials[initialId] ??= {};
+	}
+	model.metadata.initials[initialId][metadataKey] = value;
+}
+
+/**
+ * Validates the time series values.
+ * @param {string} values - The time series values.
+ * @returns {boolean} - True if the values are valid, false otherwise.
+ */
+export function validateTimeSeries(values: string) {
+	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
+	const isValid = values.split(',').every(isPairValid);
+	return isValid;
+}
+
+export function setParameters(model: Model, parameters: ModelParameter[]) {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			model.model.parameters = parameters;
+			break;
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			if (model.semantics) model.semantics.ode.parameters = parameters;
+			break;
+	}
+}

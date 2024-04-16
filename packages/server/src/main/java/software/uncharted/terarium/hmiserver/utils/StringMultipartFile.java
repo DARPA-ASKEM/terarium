@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.springframework.web.multipart.MultipartFile;
 
 public class StringMultipartFile implements MultipartFile {
@@ -14,8 +13,7 @@ public class StringMultipartFile implements MultipartFile {
 	private final String name;
 	private final String contentType;
 
-	public StringMultipartFile(final String content, final String name,
-			final String contentType) {
+	public StringMultipartFile(final String content, final String name, final String contentType) {
 		this.content = content.getBytes();
 		this.name = name;
 		this.contentType = contentType;

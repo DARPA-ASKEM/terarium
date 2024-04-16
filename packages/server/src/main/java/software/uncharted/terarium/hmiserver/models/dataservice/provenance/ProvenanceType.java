@@ -1,9 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.Arrays;
 
 public enum ProvenanceType {
 	@JsonAlias("Concept")
@@ -47,8 +46,9 @@ public enum ProvenanceType {
 	 * @throws IllegalArgumentException if the ProvenanceType is not found
 	 */
 	public static ProvenanceType findByType(final String type) {
-		return Arrays.stream(values()).filter(
-				value -> type.equalsIgnoreCase(value.type)).findFirst()
+		return Arrays.stream(values())
+				.filter(value -> type.equalsIgnoreCase(value.type))
+				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
 	}
 

@@ -10,6 +10,4 @@ public class SimulationStatusMessage {
 
 	@JsonAlias("error_msg")
 	private String errorMsg;
-
-
 }

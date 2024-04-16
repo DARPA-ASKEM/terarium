@@ -1,5 +1,9 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<!-- Geo boundaries -->
@@ -380,11 +384,11 @@ function updateState() {
 
 async function addSubsetToProject() {
 	const projectId = useProjects().activeProject.value?.id;
-	if (subset.value && projectId) {
+	if (subset.value?.id && projectId) {
 		await useProjects().addAsset(AssetType.Dataset, subset.value.id, projectId);
 		logger.info(`New dataset saved as ${subset.value.name}`);
 	} else {
-		logger.error('Subset not found');
+		logger.error('Subset ID not found.');
 	}
 }
 
@@ -536,7 +540,8 @@ code {
 	&:deep(.p-tabview-panels) {
 		flex: 1;
 		border: 1px solid var(--surface-border);
-		border-radius: var(--border-radius);
+		border-bottom-left-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
 		background-color: var(--surface-ground);
 	}
 }

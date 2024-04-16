@@ -1,18 +1,16 @@
 <template>
-	<tera-drilldown :title="node.displayName" @on-close-clicked="emit('close')">
-		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
-		</template>
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+	>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
 			<tera-drilldown-section class="ml-3 mr-2 pt-2">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
 							<!-- Turn this into a horizontal bar chart -->
-							<section class="ensemble-calibration-graph">
+							<section>
 								<table class="p-datatable-table">
 									<thead class="p-datatable-thead">
 										<th>Model config ID</th>
@@ -25,11 +23,10 @@
 												{{ id }}
 											</td>
 											<td>
-												<InputNumber
-													mode="decimal"
+												<tera-input-number
+													v-model="knobs.ensembleConfigs[i].weight"
 													:min-fraction-digits="0"
 													:max-fraction-digits="7"
-													v-model="knobs.ensembleConfigs[i].weight"
 												/>
 											</td>
 										</tr>
@@ -48,15 +45,15 @@
 					<AccordionTab header="Mapping">
 						<label> Dataset timestamp column </label>
 						<Dropdown
-							style="width: 50%"
 							v-model="knobs.timestampColName"
 							:options="datasetColumnNames"
 							placeholder="Timestamp column"
+							class="ml-2"
 						/>
 						<template v-if="knobs.ensembleConfigs.length > 0">
-							<table>
+							<table class="w-full mt-3">
 								<tr>
-									<th>Ensemble variables</th>
+									<th class="w-4">Ensemble variables</th>
 									<!-- Index matching listModelLabels and ensembleConfigs-->
 									<th v-for="(element, i) in listModelLabels" :key="i">
 										{{ element }}
@@ -79,6 +76,7 @@
 											<Dropdown
 												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
 												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
+												class="w-full mb-2 mt-2"
 											/>
 										</template>
 									</td>
@@ -86,7 +84,7 @@
 							</table>
 						</template>
 						<Dropdown
-							style="width: 50%"
+							class="mr-2"
 							v-model="newSolutionMappingKey"
 							:options="datasetColumnNames"
 							placeholder="Variable name"
@@ -152,6 +150,8 @@
 						}"
 						has-mean-line
 						@configuration-change="chartProxy.configurationChange(index, $event)"
+						@remove="chartProxy.removeChart(index)"
+						show-remove-button
 						:size="chartSize"
 						class="mb-2"
 					/>
@@ -193,9 +193,10 @@ import {
 	makeEnsembleCiemssCalibration
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import InputNumber from 'primevue/inputnumber';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
@@ -203,8 +204,8 @@ import TeraSimulateChart from '@/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import teraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+
 import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/workflow/util';
 import type {
 	CsvAsset,
@@ -305,16 +306,24 @@ function addMapping() {
 
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
-	const mapping = _.cloneDeep(knobs.value.ensembleConfigs[0].solutionMappings);
-	mapping[knobs.value.timestampColName] = 'Timestamp';
+	const datasetMapping: { [index: string]: string } = {};
+	datasetMapping[knobs.value.timestampColName] = 'timestamp';
+	// Each key used in the ensemble configs is a dataset column.
+	// add these columns used to the datasetMapping
+	Object.keys(knobs.value.ensembleConfigs[0].solutionMappings).forEach((key) => {
+		datasetMapping[key] = key;
+	});
 
-	const params: EnsembleCalibrationCiemssRequest = {
+	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: knobs.value.ensembleConfigs,
-		timespan: getTimespan(csvAsset.value),
+		timespan: getTimespan({
+			dataset: csvAsset.value,
+			timestampColName: knobs.value.timestampColName
+		}),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
-			mappings: mapping
+			mappings: datasetMapping
 		},
 		engine: 'ciemss',
 		extra: {
@@ -323,7 +332,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	const response = await makeEnsembleCiemssCalibration(params);
+	const response = await makeEnsembleCiemssCalibration(calibratePayload);
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
@@ -418,12 +427,6 @@ watch(
 	z-index: 1;
 }
 
-.ensemble-calibration-graph {
-	/* margin-left: 1rem; */
-	height: 200px;
-	/* width: 80%; */
-}
-
 .model-weights {
 	display: flex;
 }
@@ -439,7 +442,7 @@ th {
 
 th,
 td {
-	padding-left: 15px;
+	padding-left: 0;
 }
 
 .ensemble-header-label {

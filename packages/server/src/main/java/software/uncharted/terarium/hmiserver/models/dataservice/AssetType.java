@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,14 +43,14 @@ public enum AssetType {
 	NOTEBOOK_SESSION,
 	;
 
-	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper) throws ResponseStatusException {
+	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
+			throws ResponseStatusException {
 		try {
 			return objectMapper.convertValue(assetTypeName, AssetType.class);
 		} catch (final IllegalArgumentException iae) {
 			log.error("Error converting the string assetTypeName into a valid AssetType", iae);
 			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
-					"Failed to convert an AssetTypeName into an AssetType");
+					HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
 		}
 	}
 }

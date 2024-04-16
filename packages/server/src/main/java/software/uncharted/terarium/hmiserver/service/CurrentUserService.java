@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -9,10 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,7 +32,8 @@ public class CurrentUserService {
 			return (User) authentication.getPrincipal();
 		} else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
 			// Used in tests
-			org.springframework.security.core.userdetails.User u = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+			org.springframework.security.core.userdetails.User u =
+					(org.springframework.security.core.userdetails.User) authentication.getPrincipal();
 			User user = new User();
 			List<SimpleGrantedAuthority> auths = new ArrayList<>();
 			for (GrantedAuthority auth : u.getAuthorities()) {
@@ -44,8 +44,11 @@ public class CurrentUserService {
 			return user;
 		} else {
 			final Jwt jwt = (Jwt) (authentication.getPrincipal());
-			final User user = adminClientService.getUserFromJwt(jwt)
-				.setAuthorities(authentication.getAuthorities().stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList()));
+			final User user = adminClientService
+					.getUserFromJwt(jwt)
+					.setAuthorities(authentication.getAuthorities().stream()
+							.map(a -> new SimpleGrantedAuthority(a.getAuthority()))
+							.collect(Collectors.toList()));
 
 			final User storedUser = userService.getById(user.getId());
 			user.merge(storedUser);

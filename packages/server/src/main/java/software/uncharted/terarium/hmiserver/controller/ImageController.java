@@ -1,8 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -11,32 +10,33 @@ import software.uncharted.terarium.hmiserver.service.ImageService;
 
 @RestController
 @RequestMapping("/images")
+@RequiredArgsConstructor
 public class ImageController {
-    @Autowired
-    private ImageService imageService;
 
-    @GetMapping("/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<String> getImageUrl(@PathVariable UUID id) {
-        String url = imageService.getImageUrl(id);
+	private final ImageService imageService;
 
-        if (url == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(url);
-    }
+	@GetMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> getImageUrl(@PathVariable final UUID id) {
+		final String url = imageService.getImageUrl(id);
 
-    @PutMapping("/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<Void> storeImage(@PathVariable UUID id, @RequestBody final String base64Data) {
-        imageService.storeImage(id, base64Data);
-        return ResponseEntity.ok().build();
-    }
-
-		@DeleteMapping("/{id}")
-		@Secured(Roles.USER)
-		public ResponseEntity<Void> deleteImage(@PathVariable UUID id) {
-			imageService.deleteImage(id);
-			return ResponseEntity.ok().build();
+		if (url == null) {
+			return ResponseEntity.notFound().build();
 		}
+		return ResponseEntity.ok(url);
+	}
+
+	@PutMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Void> storeImage(@PathVariable final UUID id, @RequestBody final String base64Data) {
+		imageService.storeImage(id, base64Data);
+		return ResponseEntity.ok().build();
+	}
+
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Void> deleteImage(@PathVariable final UUID id) {
+		imageService.deleteImage(id);
+		return ResponseEntity.ok().build();
+	}
 }

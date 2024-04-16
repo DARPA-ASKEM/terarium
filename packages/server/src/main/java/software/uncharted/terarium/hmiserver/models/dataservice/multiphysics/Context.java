@@ -1,13 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.databind.JsonNode;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import java.io.Serializable;
-import java.util.Map;
-import java.util.List;
 
 @Data
 @Accessors(chain = true)

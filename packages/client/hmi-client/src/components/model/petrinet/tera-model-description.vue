@@ -57,7 +57,6 @@
 					:model="model"
 					:is-editable="!featureConfig?.isPreview"
 					:model-configuration="modelConfigurations?.[0]"
-					@update-model="updateModelContent"
 					@update-configuration="updateConfiguration"
 				/>
 			</AccordionTab>
@@ -212,10 +211,6 @@ const relatedTerariumDocuments = computed(
 
 function fetchAsset() {
 	emit('fetch-model');
-}
-
-function updateModelContent(updatedModel: Model) {
-	emit('update-model', updatedModel);
 }
 
 function updateConfiguration(updatedConfiguration: ModelConfiguration) {

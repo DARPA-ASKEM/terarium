@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/models")
 @RestController
@@ -33,11 +32,19 @@ public class FrameworkController {
 	@PostMapping("/frameworks")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model framework")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Model framework created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
-	})
-	ResponseEntity<ModelFramework> createFramework(
-			@RequestBody final ModelFramework framework) {
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Model framework created.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+			})
+	ResponseEntity<ModelFramework> createFramework(@RequestBody final ModelFramework framework) {
 		final ModelFramework modelFramework = frameworkService.createFramework(framework);
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(modelFramework);
@@ -46,12 +53,20 @@ public class FrameworkController {
 	@GetMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model framework by ID")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model framework found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
-			@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
-	})
-	ResponseEntity<ModelFramework> getFramework(
-			@PathVariable("id") final UUID id) {
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model framework found.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+				@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
+			})
+	ResponseEntity<ModelFramework> getFramework(@PathVariable("id") final UUID id) {
 
 		final Optional<ModelFramework> framework = frameworkService.getFramework(id);
 		if (framework.isEmpty()) {
@@ -63,13 +78,21 @@ public class FrameworkController {
 	@PutMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model framework")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Model framework updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class))),
-			@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model framework updated.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+				@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
+			})
 	ResponseEntity<ModelFramework> updateFramework(
-			@PathVariable("id") final UUID id,
-			@RequestBody final ModelFramework framework) {
+			@PathVariable("id") final UUID id, @RequestBody final ModelFramework framework) {
 
 		framework.setId(id);
 		final Optional<ModelFramework> updated = frameworkService.updateFramework(framework);
@@ -82,15 +105,22 @@ public class FrameworkController {
 	@DeleteMapping("/frameworks/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an model framework")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Deleted framework", content = {
-					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) })
-	})
-	ResponseEntity<ResponseDeleted> deleteFramework(
-			@PathVariable("id") final UUID id) {
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Deleted framework",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ResponseDeleted.class))
+						})
+			})
+	ResponseEntity<ResponseDeleted> deleteFramework(@PathVariable("id") final UUID id) {
 
 		frameworkService.deleteFramework(id);
 		return ResponseEntity.ok(new ResponseDeleted("ModelFramework", id));
 	}
-
 }

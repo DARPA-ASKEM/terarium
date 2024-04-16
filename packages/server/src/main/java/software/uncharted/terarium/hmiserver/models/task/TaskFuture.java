@@ -6,7 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
@@ -34,5 +33,4 @@ public class TaskFuture implements Serializable {
 			throws InterruptedException, ExecutionException, TimeoutException {
 		return future.get(timeout, unit);
 	}
-
 }

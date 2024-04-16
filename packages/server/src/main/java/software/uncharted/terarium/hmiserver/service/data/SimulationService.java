@@ -1,6 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -12,17 +18,10 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 /**
- * Service class for handling simulations.  Note that this does not extend TerariumAssetService, as Simulations
- * do not extend TerariumAsset. This is because simulations have special considerations around their date/time fields
- * when it comes to formatting.
+ * Service class for handling simulations. Note that this does not extend TerariumAssetService, as Simulations do not
+ * extend TerariumAsset. This is because simulations have special considerations around their date/time fields when it
+ * comes to formatting.
  */
 @Service
 @RequiredArgsConstructor
@@ -41,9 +40,8 @@ public class SimulationService {
 				.index(elasticConfig.getSimulationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b
-					.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-					.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Simulation.class);
 	}
@@ -67,17 +65,21 @@ public class SimulationService {
 	}
 
 	public Simulation createSimulation(final Simulation simulation) throws IOException {
-		elasticService.index(elasticConfig.getSimulationIndex(), simulation.setId(UUID.randomUUID()).getId().toString(),
+		elasticService.index(
+				elasticConfig.getSimulationIndex(),
+				simulation.setId(UUID.randomUUID()).getId().toString(),
 				simulation);
 		return simulation;
 	}
 
 	public Optional<Simulation> updateSimulation(final Simulation simulation) throws IOException {
-		if (!elasticService.contains(elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
+		if (!elasticService.documentExists(
+				elasticConfig.getSimulationIndex(), simulation.getId().toString())) {
 			return Optional.empty();
 		}
 		simulation.setUpdatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
+		elasticService.index(
+				elasticConfig.getSimulationIndex(), simulation.getId().toString(), simulation);
 		return Optional.of(simulation);
 	}
 
@@ -87,20 +89,18 @@ public class SimulationService {
 
 	public PresignedURL getUploadUrl(final UUID id, final String filename) {
 		final PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
-				config.getFileStorageS3BucketName(),
-				getPath(id, filename),
-				HOUR_EXPIRATION));
+		presigned.setUrl(s3ClientService
+				.getS3Service()
+				.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), HOUR_EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
 
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
-		final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
-				config.getFileStorageS3BucketName(),
-				getPath(id, filename),
-				HOUR_EXPIRATION);
+		final Optional<String> url = s3ClientService
+				.getS3Service()
+				.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), HOUR_EXPIRATION);
 
 		if (url.isEmpty()) {
 			return Optional.empty();
@@ -127,9 +127,13 @@ public class SimulationService {
 				final String filename = S3Service.parseFilename(resultFile);
 				final String srcPath = getResultsPath(simId, filename);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
-				s3ClientService.getS3Service().copyObject(config.getFileStorageS3BucketName(), srcPath,
-						config.getFileStorageS3BucketName(), destPath);
-
+				s3ClientService
+						.getS3Service()
+						.copyObject(
+								config.getFileStorageS3BucketName(),
+								srcPath,
+								config.getFileStorageS3BucketName(),
+								destPath);
 			}
 		}
 	}

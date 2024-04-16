@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.util.List;
 
 //////
 // Note: Decapode term can be one of many different types. As in

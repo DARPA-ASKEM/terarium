@@ -1,5 +1,12 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Objects;
+import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,17 +18,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.io.Resource;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Objects;
-
 /**
- * This configuration class ensures that hibernate runs BEFORE flyway. This is to preserve the schema generation provided
- * by Hibernate, but still get the benefits of having a proper version migration system in Flyway
+ * This configuration class ensures that hibernate runs BEFORE flyway. This is to preserve the schema generation
+ * provided by Hibernate, but still get the benefits of having a proper version migration system in Flyway
  */
 @Configuration
 @RequiredArgsConstructor
@@ -36,7 +35,7 @@ public class FlywayConfiguration {
 	Resource[] migrations;
 
 	/**
-	 * Set the baseline version to be the latest script.  In the case where flyway is not initialized, we assume
+	 * Set the baseline version to be the latest script. In the case where flyway is not initialized, we assume
 	 * hibernate correctly sets up the database
 	 */
 	@Bean
@@ -52,12 +51,10 @@ public class FlywayConfiguration {
 	 */
 	@Bean
 	FlywayMigrationInitializer flywayInitializer(final Flyway flyway) {
-		return new FlywayMigrationInitializer(flyway, (f) -> {
-		});
+		return new FlywayMigrationInitializer(flyway, (f) -> {});
 	}
 
-	static class FlywayVoid {
-	}
+	static class FlywayVoid {}
 
 	/**
 	 * Once the entityManagerFactory (aka, Hibernate) has been created it's safe to run migrations
@@ -98,12 +95,12 @@ public class FlywayConfiguration {
 	 */
 	private String getBaselineVersion() {
 		return Arrays.stream(migrations)
-			.map(Resource::getFilename)
-			.filter(Objects::nonNull)
-			.map(filename -> filename.split("__")[0].substring(1))
-			.map(Integer::parseInt)
-			.max(Integer::compareTo)
-			.orElseThrow()
-			.toString();
+				.map(Resource::getFilename)
+				.filter(Objects::nonNull)
+				.map(filename -> filename.split("__")[0].substring(1))
+				.map(Integer::parseInt)
+				.max(Integer::compareTo)
+				.orElseThrow()
+				.toString();
 	}
 }

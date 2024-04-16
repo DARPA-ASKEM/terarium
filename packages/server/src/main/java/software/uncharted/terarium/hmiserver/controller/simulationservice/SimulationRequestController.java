@@ -2,12 +2,22 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -16,7 +26,13 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
-import software.uncharted.terarium.hmiserver.models.simulationservice.*;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestJulia;
+import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
+import software.uncharted.terarium.hmiserver.models.simulationservice.OptimizeRequestCiemss;
+import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
@@ -24,12 +40,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/simulation-request")
 @RestController
@@ -51,11 +61,9 @@ public class SimulationRequestController implements SnakeCaseController {
 	@Value("${terarium.sciml-queue}")
 	private String SCIML_QUEUE;
 
-
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> getSimulation(
-			@PathVariable("id") final UUID id) {
+	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
 
 		try {
 			final Optional<Simulation> sim = simulationService.getSimulation(id);
@@ -66,17 +74,15 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRun(
-			@RequestBody final SimulationRequest request) {
-		final JobResponse res = simulationServiceProxy.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
+	public ResponseEntity<Simulation> makeForecastRun(@RequestBody final SimulationRequest request) {
+		final JobResponse res = simulationServiceProxy
+				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
 				.getBody();
 
 		final Simulation sim = new Simulation();
@@ -106,23 +112,20 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-
 	}
 
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRunCiemss(
-			@RequestBody final SimulationRequest request) {
+	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
 
 		if (request.getInterventions() == null) {
 			request.setInterventions(getInterventionFromId(request.getModelConfigId()));
 		}
 
-		final JobResponse res = simulationCiemssServiceProxy.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
+		final JobResponse res = simulationCiemssServiceProxy
+				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
 				.getBody();
 
 		final Simulation sim = new Simulation();
@@ -152,34 +155,32 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@PostMapping("/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJob(
-			@RequestBody final CalibrationRequestJulia request) {
+	public ResponseEntity<JobResponse> makeCalibrateJob(@RequestBody final CalibrationRequestJulia request) {
 		return ResponseEntity.ok(simulationServiceProxy
-				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request)).getBody());
+				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request))
+				.getBody());
 	}
 
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
-			@RequestBody final CalibrationRequestCiemss request) {
-		return ResponseEntity
-				.ok(simulationCiemssServiceProxy.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(@RequestBody final CalibrationRequestCiemss request) {
+		return ResponseEntity.ok(simulationCiemssServiceProxy
+				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request))
+				.getBody());
 	}
 
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
-			@RequestBody final OptimizeRequestCiemss request) {
-		return ResponseEntity
-				.ok(simulationCiemssServiceProxy.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(@RequestBody final OptimizeRequestCiemss request) {
+		return ResponseEntity.ok(simulationCiemssServiceProxy
+				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request))
+				.getBody());
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
@@ -187,7 +188,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 			@RequestBody final EnsembleSimulationCiemssRequest request) {
 		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+				.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request))
+				.getBody());
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
@@ -195,7 +197,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 			@RequestBody final EnsembleCalibrationCiemssRequest request) {
 		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request)).getBody());
+				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request))
+				.getBody());
 	}
 
 	// Get modelConfigId
@@ -220,15 +223,18 @@ public class SimulationRequestController implements SnakeCaseController {
 			// This will later be scrapped after a redesign where our AMR -> configuration
 			// -> metadata -> timeseries -> parameter name -> value should be more typed.
 			if (configuration.get("metadata").get("timeseries") != null) {
-				final JsonNode timeseries = mapper.convertValue(configuration.get("metadata").get("timeseries"),
-						JsonNode.class);
+				final JsonNode timeseries =
+						mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
 				final List<String> fieldNames = new ArrayList<>();
 				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
 				for (int i = 0; i < fieldNames.size(); i++) {
 					// Eg) Beta
 					final String interventionName = fieldNames.get(i).replaceAll("\"", ",");
 					// Eg) "1:0.14, 10:0.1, 20:0.2, 30:0.3"
-					final String tempString = timeseries.findValue(fieldNames.get(i)).toString().replaceAll("\"", "")
+					final String tempString = timeseries
+							.findValue(fieldNames.get(i))
+							.toString()
+							.replaceAll("\"", "")
 							.replaceAll(" ", "");
 					final String[] tempList = tempString.split(",");
 					for (final String ele : tempList) {
@@ -246,11 +252,8 @@ public class SimulationRequestController implements SnakeCaseController {
 			final String error = String.format(
 					"Unable to parse model.configuration.metadata.timeseries for model config id: %s", modelConfigId);
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 		return interventionList;
 	}
-
 }

@@ -14,6 +14,7 @@ public class ClientLog {
 	private String level;
 	private long timestampMillis;
 	private String message;
+
 	@TSOptional
 	private String[] args;
 }

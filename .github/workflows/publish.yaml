@@ -31,6 +31,10 @@ jobs:
   test-client:
     uses: ./.github/workflows/test-client.yaml
 
+  # Lint Server Code
+  lint-server:
+    uses: ./.github/workflows/lint-server.yaml
+
   # Run Server Tests
   test-server:
     uses: ./.github/workflows/test-server.yaml
@@ -45,7 +49,7 @@ jobs:
     steps:
       # 1.1 - checkout the files
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
 
@@ -78,9 +82,10 @@ jobs:
     needs:
       - targets
       - lint
+      - lint-server
+      - test-server
       - lint-client
       - test-client
-      - test-server
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
@@ -105,7 +110,7 @@ jobs:
 
       - name: Validate GradleW JAR
         if: matrix.target != 'hmi-client'
-        uses: gradle/wrapper-validation-action@b231772637bb498f11fdbc86052b6e8a8dc9fc92
+        uses: gradle/wrapper-validation-action@460a3ca55fc5d559238a0efc7fa9f7465df8585d
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'

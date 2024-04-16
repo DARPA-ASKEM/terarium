@@ -94,8 +94,14 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { createParameterMatrix, createInitialMatrix } from '@/model-representation/mira/mira';
+import {
+	createParameterMatrix,
+	createInitialMatrix,
+	collapseTemplates
+} from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
+import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	mmt: MiraModel;
@@ -111,6 +117,8 @@ const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers
 const matrixType = ref('subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
+
+const currentMatrixtype = ref('');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -176,6 +184,12 @@ function generateMatrix() {
 		};
 
 		// Find a default
+		if (currentMatrixtype.value) {
+			matrix.value = matrixMap.value[currentMatrixtype.value];
+			matrixType.value = currentMatrixtype.value;
+			return;
+		}
+
 		for (let i = 0; i < matrixTypes.length; i++) {
 			const typeStr = matrixTypes[i];
 
@@ -185,8 +199,15 @@ function generateMatrix() {
 				break;
 			}
 		}
-	} else {
-		console.log('TODO template!!!');
+	} else if (stratifiedType === StratifiedMatrix.Rates) {
+		const templatesMap = collapseTemplates(props.mmt).matrixMap;
+
+		const transitionMatrix = templatesMap.get(props.id);
+		if (!transitionMatrix) {
+			logger.error('Failed to generate transition matrix');
+			return;
+		}
+		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
 	}
 }
 
@@ -195,6 +216,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
+	currentMatrixtype.value = matrixType.value;
 	emit('update-cell-value', { variableName, newValue, mathml });
 }
 

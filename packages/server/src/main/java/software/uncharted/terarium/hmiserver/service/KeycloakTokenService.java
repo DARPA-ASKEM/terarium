@@ -1,23 +1,20 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.KeycloakTokenRequest;
 import software.uncharted.terarium.hmiserver.proxies.KeycloakProxy;
@@ -39,8 +36,7 @@ public class KeycloakTokenService {
 	}
 
 	/**
-	 * Get a token from keycloak. If the token is cached, it will be returned. If
-	 * the token is expired, it will be
+	 * Get a token from keycloak. If the token is cached, it will be returned. If the token is expired, it will be
 	 * refreshed and returned.
 	 *
 	 * @param username The username
@@ -106,15 +102,15 @@ public class KeycloakTokenService {
 	/**
 	 * Tests if a token is valid
 	 *
-	 * @param token the token to test for validity. Obtained from the access_token
-	 *              field of the response from keycloak
+	 * @param token the token to test for validity. Obtained from the access_token field of the response from keycloak
 	 * @return true if the token is valid, false otherwise
 	 */
 	private boolean isValidToken(String token) {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// Add a buffer of a second for the request to get to the server
-			return jwt.getExpiresAt() != null && jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS));
+			return jwt.getExpiresAt() != null
+					&& jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS));
 		} catch (Exception e) {
 			log.error("Error decoding token", e);
 			return false;
@@ -124,9 +120,8 @@ public class KeycloakTokenService {
 	/**
 	 * Tests if a token has a given realm role
 	 *
-	 * @param token the token to test for validity. Obtained from the access_token
-	 *              field of the response from keycloak
-	 * @param role  the role to test for
+	 * @param token the token to test for validity. Obtained from the access_token field of the response from keycloak
+	 * @param role the role to test for
 	 * @return true if the token has the role, false otherwise
 	 */
 	public boolean hasRealmRole(String token, String role) {

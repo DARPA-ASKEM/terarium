@@ -16,24 +16,22 @@
  */
 package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 public class Header {
 
-    private String name;
-    private String value;
+	private String name;
+	private String value;
 
-    public Header(String key, String value) {
-        this.name = key;
-        this.value = value;
-    }
+	public Header(String key, String value) {
+		this.name = key;
+		this.value = value;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 }

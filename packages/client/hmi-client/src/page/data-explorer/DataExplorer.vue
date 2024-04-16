@@ -22,25 +22,18 @@
 					<nav>
 						<SelectButton
 							:model-value="assetType"
-							@change="if ($event.value) assetType = $event.value;"
+							@change="if ($event.value) changeAssetType($event.value);"
 							:options="assetOptions"
 							option-value="value"
 							option-label="label"
 						/>
-						<div class="toggles" v-if="assetType === AssetType.Document">
-							<span>
-								<label class="mr-2">Source</label>
-								<Dropdown v-model="chosenSource" :options="sourceOptions" />
-							</span>
-							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
-						</div>
-						<div class="toggles" v-if="assetType === AssetType.Dataset">
+						<div class="toggles" v-if="assetType !== AssetType.Model">
 							<span>
 								<label class="mr-2">Source</label>
 								<Dropdown
-									v-model="chosenDatasetSource"
-									:options="datasetSourceOptions"
-									@change="executeNewQuery"
+									v-model="chosenSource"
+									:options="sourceOptions"
+									@change="if (assetType === AssetType.Dataset) executeNewQuery();"
 								/>
 							</span>
 							<tera-filter-bar :topic-options="topicOptions" @filter-changed="executeNewQuery" />
@@ -79,14 +72,13 @@
 				:source="chosenSource"
 				:resource-type="resourceType"
 				:search-term="searchTerm"
-				:dataset-source="chosenDatasetSource"
 			/>
 		</section>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, Ref, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
@@ -100,6 +92,8 @@ import {
 	SearchResults,
 	ViewType
 } from '@/types/common';
+import { DocumentSource, DatasetSource } from '@/types/search';
+import type { Source } from '@/types/search';
 import { getFacets } from '@/utils/facets';
 import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
@@ -119,7 +113,7 @@ import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.v
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
-import { DatasetSearchParams, DatasetSource } from '@/types/Dataset';
+import { DatasetSearchParams } from '@/types/Dataset';
 import { ModelSearchParams } from '@/types/Model';
 import { useSearchByExampleOptions } from './search-by-example';
 import TeraFilterBar from './components/tera-filter-bar.vue';
@@ -150,6 +144,9 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 // facets
 const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
+let modelTotal: number = 0;
+let documentTotal: number = 0;
+let datasetTotal: number = 0;
 const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 
 const viewType = ref<string>(ViewType.LIST);
@@ -183,11 +180,8 @@ const topicOptions = ref([
 	{ label: 'Climate Weather', value: 'climate-change-modeling' }
 ]);
 
-const sourceOptions = ref(['xDD', 'Terarium']);
-const chosenSource = ref('xDD');
-
-const datasetSourceOptions: Ref<DatasetSource[]> = ref(Object.values(DatasetSource));
-const chosenDatasetSource: Ref<DatasetSource> = ref(DatasetSource.TERARIUM);
+const sourceOptions = ref<Source[]>(Object.values(DocumentSource));
+const chosenSource = ref<Source>(DocumentSource.XDD);
 
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
@@ -196,7 +190,7 @@ const sliderWidth = computed(() =>
 // Chooses source for search
 const resultsToShow = computed(() => {
 	if (
-		(assetType.value === AssetType.Document && chosenSource.value === 'Terarium') ||
+		(assetType.value === AssetType.Document && chosenSource.value === DocumentSource.TERARIUM) ||
 		assetType.value === AssetType.Model
 	) {
 		return searchResults.value;
@@ -210,6 +204,18 @@ watch(isSliderResourcesOpen, () => {
 		previewItem.value = null;
 	}
 });
+
+function changeAssetType(type: AssetType) {
+	assetType.value = type;
+
+	if (assetType.value === AssetType.Document) {
+		sourceOptions.value = Object.values(DocumentSource);
+		chosenSource.value = DocumentSource.XDD;
+	} else if (assetType.value === AssetType.Dataset) {
+		sourceOptions.value = Object.values(DatasetSource);
+		chosenSource.value = DatasetSource.TERARIUM;
+	}
+}
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
@@ -280,7 +286,7 @@ const executeSearch = async () => {
 		},
 		model: {},
 		[ResourceType.DATASET]: {
-			source: chosenDatasetSource.value,
+			source: chosenSource.value as DatasetSource,
 			topic: 'covid-19'
 		}
 	};
@@ -367,7 +373,7 @@ const executeSearch = async () => {
 	} else {
 		datasetSearchParams = {
 			filters: clientFilters.value,
-			source: chosenDatasetSource.value,
+			source: chosenSource.value as DatasetSource,
 			topic: 'covid-19' // TODO - this should be dynamic
 		};
 	}
@@ -413,7 +419,35 @@ const executeSearch = async () => {
 		const count = res?.hits ?? res?.results.length;
 		total += count;
 	});
+
+	// Note that we only do xDD document and Dataset searches on demand and don't have a way of knowing in advance how many results there are
+	if (chosenSource.value === DocumentSource.XDD && resourceType.value === ResourceType.XDD) {
+		documentTotal = total ?? 0;
+	} else if (resourceType.value === ResourceType.DATASET) {
+		datasetTotal = total ?? 0;
+	}
+
+	// Models and terarium documents are fetched in the same search on every search so these will always be accurate.
+	for (let i = 0; i < searchResults.value.length; i++) {
+		if (searchResults.value[i].searchSubsystem === ResourceType.MODEL) {
+			modelTotal = searchResults.value[i].results.length ?? 0;
+		} else if (
+			searchResults.value[i].searchSubsystem === ResourceType.XDD &&
+			chosenSource.value === DocumentSource.TERARIUM &&
+			resourceType.value === ResourceType.XDD
+		) {
+			// Note on the above, when we say XDD here we apparently don't actually mean XDD we mean Terarium Documents.
+			documentTotal = searchResults.value[i].results.length ?? 0;
+		}
+	}
+
 	docCount.value = total;
+
+	assetOptions.value = [
+		{ label: `Documents (${documentTotal})`, value: AssetType.Document },
+		{ label: `Models (${modelTotal})`, value: AssetType.Model },
+		{ label: `Datasets (${datasetTotal})`, value: AssetType.Dataset }
+	];
 
 	isLoading.value = false;
 };
