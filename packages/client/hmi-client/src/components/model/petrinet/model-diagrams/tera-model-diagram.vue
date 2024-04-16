@@ -212,24 +212,20 @@ async function renderGraph() {
 				const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
 				const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
 
-				console.log(selection.datum());
-
 				if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
+					const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
+					const transitionMatrixY = transitionMatrixBounds.top - diagramBounds.top;
 					const transitionMatrixHeight = selection.datum().height;
 					const transitionMatrixWidth = selection.datum().width;
 
-					const relativeX =
-						transitionMatrixBounds.left -
-						diagramBounds.left -
+					// Shift tooltip to the top center of the transition matrix
+					const x =
+						transitionMatrixX -
 						(tooltipWidth + transitionMatrixWidth / 2) / 2 +
 						transitionMatrixBounds.width / 2;
-					const relativeY =
-						transitionMatrixBounds.top -
-						diagramBounds.top -
-						tooltipHeight -
-						transitionMatrixHeight / 2;
+					const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
 
-					hoveredTransitionPosition.value = { x: relativeX, y: relativeY };
+					hoveredTransitionPosition.value = { x, y };
 				}
 			}
 		});
