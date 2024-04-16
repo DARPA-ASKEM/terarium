@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -68,6 +69,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
+	@Observed(name = "function_profile")
 	public PresignedURL getUploadUrl(final UUID id, final String filename) {
 
 		final PresignedURL presigned = new PresignedURL();
@@ -85,6 +87,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
+	@Observed(name = "function_profile")
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
 		final Optional<String> url = s3ClientService
@@ -101,6 +104,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		return Optional.of(presigned);
 	}
 
+	@Observed(name = "function_profile")
 	public ResponseEntity<Void> getUploadStream(final UUID uuid, final String filename, final MultipartFile file)
 			throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
@@ -109,6 +113,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		return s3ClientService.getS3Service().getUploadStream(bucket, key, file);
 	}
 
+	@Observed(name = "function_profile")
 	public ResponseEntity<StreamingResponseBody> getDownloadStream(final UUID uuid, final String filename) {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
@@ -116,6 +121,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		return s3ClientService.getS3Service().getDownloadStream(bucket, key);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<String> fetchFileAsString(final UUID uuid, final String filename) throws IOException {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
@@ -131,6 +137,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
@@ -146,6 +153,7 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public void uploadFile(
 			final UUID uuid, final String filename, final HttpEntity fileEntity, final ContentType contentType)
 			throws IOException {

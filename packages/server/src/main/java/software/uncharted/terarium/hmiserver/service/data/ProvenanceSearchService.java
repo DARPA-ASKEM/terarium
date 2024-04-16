@@ -1,6 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.util.*;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.driver.Result;
@@ -8,7 +17,12 @@ import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.*;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceEdge;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceSearchResult;
+import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.service.neo4j.Graph;
 import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
 
@@ -305,6 +319,9 @@ public class ProvenanceSearchService {
 
 	public String returnNodeAbbr(final ProvenanceType nodeType) {
 		final Map<ProvenanceType, String> provenanceTypeToAbbr = new HashMap<>() {
+			@Serial
+			private static final long serialVersionUID = -2033583374684450222L;
+
 			{
 				put(ProvenanceType.DATASET, "Ds");
 				put(ProvenanceType.MODEL, "Md");
