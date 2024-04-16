@@ -10,17 +10,17 @@ import lombok.Data;
 @Entity
 public class DataMigration {
 
-    public enum MigrationState {
-        SUCCESS,
-        FAILED
-    }
+	public enum MigrationState {
+		SUCCESS,
+		FAILED
+	}
 
-    @Serial
-    private static final long serialVersionUID = 235234532542455464L;
+	@Serial
+	private static final long serialVersionUID = 235234532542455464L;
 
-    @Id
-    private String tableName;
+	@Id
+	private String tableName;
 
-    private MigrationState state;
-    private Timestamp timestamp;
+	private MigrationState state;
+	private Timestamp timestamp;
 }

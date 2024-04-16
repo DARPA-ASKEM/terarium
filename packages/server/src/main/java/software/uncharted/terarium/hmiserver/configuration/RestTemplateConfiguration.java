@@ -13,17 +13,17 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @RequiredArgsConstructor
 public class RestTemplateConfiguration {
-    public final Config config;
-    private final ObjectMapper objectMapper;
+	public final Config config;
+	private final ObjectMapper objectMapper;
 
-    @Bean
-    public RestTemplate createRestTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-        MappingJackson2HttpMessageConverter jsonMessageConverter = new MappingJackson2HttpMessageConverter();
-        jsonMessageConverter.setObjectMapper(objectMapper);
-        messageConverters.add(jsonMessageConverter);
-        restTemplate.setMessageConverters(messageConverters);
-        return restTemplate;
-    }
+	@Bean
+	public RestTemplate createRestTemplate() {
+		RestTemplate restTemplate = new RestTemplate();
+		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
+		MappingJackson2HttpMessageConverter jsonMessageConverter = new MappingJackson2HttpMessageConverter();
+		jsonMessageConverter.setObjectMapper(objectMapper);
+		messageConverters.add(jsonMessageConverter);
+		restTemplate.setMessageConverters(messageConverters);
+		return restTemplate;
+	}
 }

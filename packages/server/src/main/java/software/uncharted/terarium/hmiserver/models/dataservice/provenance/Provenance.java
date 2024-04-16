@@ -15,41 +15,41 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @TSModel
 public class Provenance extends TerariumAsset {
-    @Serial
-    private static final long serialVersionUID = 8443258388173011137L;
+	@Serial
+	private static final long serialVersionUID = 8443258388173011137L;
 
-    private String concept;
+	private String concept;
 
-    @JsonAlias("relation_type")
-    private ProvenanceRelationType relationType;
+	@JsonAlias("relation_type")
+	private ProvenanceRelationType relationType;
 
-    @Column(name = "left_node")
-    private UUID left;
+	@Column(name = "left_node")
+	private UUID left;
 
-    @JsonAlias("left_type")
-    private ProvenanceType leftType;
+	@JsonAlias("left_type")
+	private ProvenanceType leftType;
 
-    @Column(name = "right_node")
-    private UUID right;
+	@Column(name = "right_node")
+	private UUID right;
 
-    @JsonAlias("right_type")
-    private ProvenanceType rightType;
+	@JsonAlias("right_type")
+	private ProvenanceType rightType;
 
-    @JsonAlias("user_id")
-    private String userId;
+	@JsonAlias("user_id")
+	private String userId;
 
-    public Provenance() {}
+	public Provenance() {}
 
-    public Provenance(
-            final ProvenanceRelationType extractedFrom,
-            final UUID left,
-            final ProvenanceType leftType,
-            final UUID right,
-            final ProvenanceType rightType) {
-        this.relationType = extractedFrom;
-        this.left = left;
-        this.leftType = leftType;
-        this.right = right;
-        this.rightType = rightType;
-    }
+	public Provenance(
+			final ProvenanceRelationType extractedFrom,
+			final UUID left,
+			final ProvenanceType leftType,
+			final UUID right,
+			final ProvenanceType rightType) {
+		this.relationType = extractedFrom;
+		this.left = left;
+		this.leftType = leftType;
+		this.right = right;
+		this.rightType = rightType;
+	}
 }

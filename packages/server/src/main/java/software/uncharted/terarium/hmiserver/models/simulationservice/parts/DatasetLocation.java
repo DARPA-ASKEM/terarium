@@ -10,9 +10,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 // Used to specify the location of a dataset for simulation-service
 public class DatasetLocation {
-    private String id;
-    private String filename;
+	private String id;
+	private String filename;
 
-    @TSOptional
-    private Object mappings;
+	@TSOptional
+	private Object mappings;
 }

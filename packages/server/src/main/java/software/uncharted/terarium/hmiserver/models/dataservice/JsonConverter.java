@@ -9,23 +9,23 @@ import java.io.IOException;
 @Converter
 public class JsonConverter implements AttributeConverter<Object, String> {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public String convertToDatabaseColumn(final Object attribute) {
-        try {
-            return objectMapper.writeValueAsString(attribute);
-        } catch (final JsonProcessingException e) {
-            throw new RuntimeException("Error converting Object to JSON", e);
-        }
-    }
+	@Override
+	public String convertToDatabaseColumn(final Object attribute) {
+		try {
+			return objectMapper.writeValueAsString(attribute);
+		} catch (final JsonProcessingException e) {
+			throw new RuntimeException("Error converting Object to JSON", e);
+		}
+	}
 
-    @Override
-    public Object convertToEntityAttribute(final String dbData) {
-        try {
-            return objectMapper.readValue(dbData, Object.class);
-        } catch (final IOException e) {
-            throw new RuntimeException("Error converting JSON to Object", e);
-        }
-    }
+	@Override
+	public Object convertToEntityAttribute(final String dbData) {
+		try {
+			return objectMapper.readValue(dbData, Object.class);
+		} catch (final IOException e) {
+			throw new RuntimeException("Error converting JSON to Object", e);
+		}
+	}
 }

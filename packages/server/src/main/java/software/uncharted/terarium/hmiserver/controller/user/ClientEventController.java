@@ -15,12 +15,12 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @RequestMapping("/client-event")
 @RequiredArgsConstructor
 public class ClientEventController {
-    private final ClientEventService clientEventService;
-    private final CurrentUserService currentUserService;
+	private final ClientEventService clientEventService;
+	private final CurrentUserService currentUserService;
 
-    @GetMapping
-    @IgnoreRequestLogging
-    public SseEmitter subscribe() {
-        return clientEventService.connect(currentUserService.get());
-    }
+	@GetMapping
+	@IgnoreRequestLogging
+	public SseEmitter subscribe() {
+		return clientEventService.connect(currentUserService.get());
+	}
 }

@@ -14,19 +14,19 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class Context implements Serializable {
 
-    private Map<String, ContextConstant> constants;
+	private Map<String, ContextConstant> constants;
 
-    @JsonAlias("spatial_constraints")
-    private JsonNode spatialConstraints;
+	@JsonAlias("spatial_constraints")
+	private JsonNode spatialConstraints;
 
-    @JsonAlias("temporal_constraints")
-    private JsonNode temporalConstraints;
+	@JsonAlias("temporal_constraints")
+	private JsonNode temporalConstraints;
 
-    @JsonAlias("primal_dual_relations")
-    private List<ContextPrimalDualRelation> primalDualRelations;
+	@JsonAlias("primal_dual_relations")
+	private List<ContextPrimalDualRelation> primalDualRelations;
 
-    @JsonAlias("mesh_submesh_relations")
-    private List<ContextMeshSubmeshRelation> meshSubmeshRelations;
+	@JsonAlias("mesh_submesh_relations")
+	private List<ContextMeshSubmeshRelation> meshSubmeshRelations;
 
-    private List<ContextMesh> meshes;
+	private List<ContextMesh> meshes;
 }

@@ -15,13 +15,13 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 public class NotebookSession extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = 9176019416379347233L;
+	@Serial
+	private static final long serialVersionUID = 9176019416379347233L;
 
-    private String name;
+	private String name;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    private JsonNode data;
+	private JsonNode data;
 }

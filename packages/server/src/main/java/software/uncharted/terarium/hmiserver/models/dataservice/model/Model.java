@@ -28,83 +28,83 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @TSModel
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
-    @Serial
-    private static final long serialVersionUID = 398195277271188277L;
+	@Serial
+	private static final long serialVersionUID = 398195277271188277L;
 
-    private ModelHeader header;
+	private ModelHeader header;
 
-    @TSOptional
-    private String userId;
+	@TSOptional
+	private String userId;
 
-    private Map<String, JsonNode> model;
+	private Map<String, JsonNode> model;
 
-    @TSOptional
-    private JsonNode properties;
+	@TSOptional
+	private JsonNode properties;
 
-    @TSOptional
-    private ModelSemantics semantics;
+	@TSOptional
+	private ModelSemantics semantics;
 
-    @TSOptional
-    private ModelMetadata metadata;
+	@TSOptional
+	private ModelMetadata metadata;
 
-    public Model() {
-        super();
-    }
+	public Model() {
+		super();
+	}
 
-    // Copy constructor
-    public Model(final Model other) {
-        super();
-        this.setId(other.getId());
-        this.setName(other.getName());
-        this.setTemporary(other.getTemporary());
-        this.setPublicAsset(other.getPublicAsset());
+	// Copy constructor
+	public Model(final Model other) {
+		super();
+		this.setId(other.getId());
+		this.setName(other.getName());
+		this.setTemporary(other.getTemporary());
+		this.setPublicAsset(other.getPublicAsset());
 
-        if (other.getCreatedOn() != null) {
-            this.setCreatedOn((Timestamp) other.getCreatedOn());
-        }
+		if (other.getCreatedOn() != null) {
+			this.setCreatedOn((Timestamp) other.getCreatedOn());
+		}
 
-        if (other.getUpdatedOn() != null) {
-            this.setUpdatedOn((Timestamp) other.getUpdatedOn());
-        }
+		if (other.getUpdatedOn() != null) {
+			this.setUpdatedOn((Timestamp) other.getUpdatedOn());
+		}
 
-        if (other.getDeletedOn() != null) {
-            this.setDeletedOn((Timestamp) other.getDeletedOn());
-        }
+		if (other.getDeletedOn() != null) {
+			this.setDeletedOn((Timestamp) other.getDeletedOn());
+		}
 
-        this.header = other.header;
-        this.userId = other.userId;
-        this.model = new HashMap<>(other.model);
-        this.properties = other.properties;
-        this.semantics = other.semantics;
-        this.metadata = other.metadata;
-    }
+		this.header = other.header;
+		this.userId = other.userId;
+		this.model = new HashMap<>(other.model);
+		this.properties = other.properties;
+		this.semantics = other.semantics;
+		this.metadata = other.metadata;
+	}
 
-    @JsonIgnore
-    @TSIgnore
-    public List<ModelParameter> getParameters() {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        if (this.isRegnet()) {
-            return objectMapper.convertValue(
-                    this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
-        } else {
-            return this.getSemantics().getOde().getParameters();
-        }
-    }
+	@JsonIgnore
+	@TSIgnore
+	public List<ModelParameter> getParameters() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			return objectMapper.convertValue(
+					this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
+		} else {
+			return this.getSemantics().getOde().getParameters();
+		}
+	}
 
-    @JsonIgnore
-    @TSIgnore
-    public List<Initial> getInitials() {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        if (this.isRegnet()) {
-            return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {});
-        } else {
-            return this.getSemantics().getOde().getInitials();
-        }
-    }
+	@JsonIgnore
+	@TSIgnore
+	public List<Initial> getInitials() {
+		final ObjectMapper objectMapper = new ObjectMapper();
+		if (this.isRegnet()) {
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {});
+		} else {
+			return this.getSemantics().getOde().getInitials();
+		}
+	}
 
-    @JsonIgnore
-    @TSIgnore
-    public boolean isRegnet() {
-        return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
-    }
+	@JsonIgnore
+	@TSIgnore
+	public boolean isRegnet() {
+		return this.getHeader().getSchemaName().equalsIgnoreCase("regnet");
+	}
 }

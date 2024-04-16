@@ -15,12 +15,12 @@ import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdd
 @TSModel
 public class ModelFramework extends TerariumAssetThatSupportsAdditionalProperties {
 
-    @Serial
-    private static final long serialVersionUID = -2375250471839320328L;
+	@Serial
+	private static final long serialVersionUID = -2375250471839320328L;
 
-    private String name;
+	private String name;
 
-    private String version;
+	private String version;
 
-    private String semantics;
+	private String semantics;
 }

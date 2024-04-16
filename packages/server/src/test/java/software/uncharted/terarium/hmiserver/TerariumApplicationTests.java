@@ -17,16 +17,16 @@ import org.springframework.web.context.WebApplicationContext;
 @Transactional
 @ActiveProfiles({"local", "test"})
 public class TerariumApplicationTests {
-    @Autowired
-    private WebApplicationContext context;
+	@Autowired
+	private WebApplicationContext context;
 
-    @Autowired
-    public MockMvc mockMvc;
+	@Autowired
+	public MockMvc mockMvc;
 
-    @BeforeEach
-    public void beforeEach() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
-                .apply(springSecurity())
-                .build();
-    }
+	@BeforeEach
+	public void beforeEach() {
+		mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
+				.apply(springSecurity())
+				.build();
+	}
 }

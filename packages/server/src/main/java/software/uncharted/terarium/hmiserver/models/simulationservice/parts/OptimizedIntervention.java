@@ -12,21 +12,21 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 // Used to specify any interventions provided by the AMR and given to the simulation-service.
 public class OptimizedIntervention {
-    private String selection;
+	private String selection;
 
-    @JsonAlias("param_names")
-    private List<String> paramNames;
+	@JsonAlias("param_names")
+	private List<String> paramNames;
 
-    @TSOptional
-    @JsonAlias("param_values")
-    private List<Integer> paramValues;
+	@TSOptional
+	@JsonAlias("param_values")
+	private List<Integer> paramValues;
 
-    @TSOptional
-    @JsonAlias("start_time")
-    private List<Integer> startTime;
+	@TSOptional
+	@JsonAlias("start_time")
+	private List<Integer> startTime;
 
-    @Override
-    public String toString() {
-        return " { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ";
-    }
+	@Override
+	public String toString() {
+		return " { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ";
+	}
 }

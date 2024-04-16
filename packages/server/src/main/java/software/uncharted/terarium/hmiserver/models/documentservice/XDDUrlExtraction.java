@@ -10,11 +10,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class XDDUrlExtraction implements Serializable {
 
-    private String url;
+	private String url;
 
-    @JsonAlias("resource_title")
-    private String resourceTitle;
+	@JsonAlias("resource_title")
+	private String resourceTitle;
 
-    @JsonAlias("extracted_from")
-    private List<String> extractedFrom;
+	@JsonAlias("extracted_from")
+	private List<String> extractedFrom;
 }

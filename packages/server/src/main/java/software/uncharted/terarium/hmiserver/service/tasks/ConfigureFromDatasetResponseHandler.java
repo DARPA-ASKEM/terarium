@@ -27,89 +27,89 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
-    public static final String NAME = "gollm:dataset_configure";
+	public static final String NAME = "gollm:dataset_configure";
 
-    private final ObjectMapper objectMapper;
-    private final ModelService modelService;
-    private final ModelConfigurationService modelConfigurationService;
-    private final ProvenanceService provenanceService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ProvenanceService provenanceService;
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
+	@Override
+	public String getName() {
+		return NAME;
+	}
 
-    @Data
-    public static class Input {
-        @JsonProperty("datasets")
-        List<String> datasets;
+	@Data
+	public static class Input {
+		@JsonProperty("datasets")
+		List<String> datasets;
 
-        @JsonProperty("amr")
-        Model amr;
+		@JsonProperty("amr")
+		Model amr;
 
-        @JsonProperty("matrix_str")
-        String matrixStr;
-    }
+		@JsonProperty("matrix_str")
+		String matrixStr;
+	}
 
-    @Data
-    public static class Response {
-        JsonNode response;
-    }
+	@Data
+	public static class Response {
+		JsonNode response;
+	}
 
-    @Data
-    public static class Properties {
-        List<UUID> datasetIds;
-        UUID modelId;
-    }
+	@Data
+	public static class Properties {
+		List<UUID> datasetIds;
+		UUID modelId;
+	}
 
-    @Override
-    public TaskResponse onSuccess(final TaskResponse resp) {
-        try {
-            final Properties props = resp.getAdditionalProperties(Properties.class);
-            final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
-            final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
+	@Override
+	public TaskResponse onSuccess(final TaskResponse resp) {
+		try {
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
-            // Map the parameters values to the model
-            final Model modelCopy = new Model(model);
-            final JsonNode condition = configurations.getResponse().get("values");
-            final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
-            final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
+			// Map the parameters values to the model
+			final Model modelCopy = new Model(model);
+			final JsonNode condition = configurations.getResponse().get("values");
+			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
+			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
 
-            if (modelCopy.isRegnet()) {
-                modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-                modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
-            }
+			if (modelCopy.isRegnet()) {
+				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+				modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
+			}
 
-            // Create the new configuration
-            final ModelConfiguration configuration = new ModelConfiguration();
-            configuration.setModelId(model.getId());
-            configuration.setName("New configuration from dataset");
-            configuration.setDescription("");
-            configuration.setConfiguration(modelCopy);
+			// Create the new configuration
+			final ModelConfiguration configuration = new ModelConfiguration();
+			configuration.setModelId(model.getId());
+			configuration.setName("New configuration from dataset");
+			configuration.setDescription("");
+			configuration.setConfiguration(modelCopy);
 
-            try {
-                for (final UUID datasetId : props.datasetIds) {
-                    final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-                    // add provenance
-                    provenanceService.createProvenance(new Provenance()
-                            .setLeft(newConfig.getId())
-                            .setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-                            .setRight(datasetId)
-                            .setRightType(ProvenanceType.DATASET)
-                            .setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-                }
+			try {
+				for (final UUID datasetId : props.datasetIds) {
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					// add provenance
+					provenanceService.createProvenance(new Provenance()
+							.setLeft(newConfig.getId())
+							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+							.setRight(datasetId)
+							.setRightType(ProvenanceType.DATASET)
+							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+				}
 
-            } catch (final IOException e) {
-                log.error("Failed to set model configuration", e);
-                throw new RuntimeException(e);
-            }
+			} catch (final IOException e) {
+				log.error("Failed to set model configuration", e);
+				throw new RuntimeException(e);
+			}
 
-        } catch (final Exception e) {
-            log.error("Failed to configure model", e);
-            throw new RuntimeException(e);
-        }
-        log.info("Model configured successfully");
+		} catch (final Exception e) {
+			log.error("Failed to configure model", e);
+			throw new RuntimeException(e);
+		}
+		log.info("Model configured successfully");
 
-        return resp;
-    }
+		return resp;
+	}
 }

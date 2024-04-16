@@ -13,30 +13,30 @@ import software.uncharted.terarium.hmiserver.service.ImageService;
 @RequiredArgsConstructor
 public class ImageController {
 
-    private final ImageService imageService;
+	private final ImageService imageService;
 
-    @GetMapping("/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<String> getImageUrl(@PathVariable final UUID id) {
-        final String url = imageService.getImageUrl(id);
+	@GetMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> getImageUrl(@PathVariable final UUID id) {
+		final String url = imageService.getImageUrl(id);
 
-        if (url == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(url);
-    }
+		if (url == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(url);
+	}
 
-    @PutMapping("/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<Void> storeImage(@PathVariable final UUID id, @RequestBody final String base64Data) {
-        imageService.storeImage(id, base64Data);
-        return ResponseEntity.ok().build();
-    }
+	@PutMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Void> storeImage(@PathVariable final UUID id, @RequestBody final String base64Data) {
+		imageService.storeImage(id, base64Data);
+		return ResponseEntity.ok().build();
+	}
 
-    @DeleteMapping("/{id}")
-    @Secured(Roles.USER)
-    public ResponseEntity<Void> deleteImage(@PathVariable final UUID id) {
-        imageService.deleteImage(id);
-        return ResponseEntity.ok().build();
-    }
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<Void> deleteImage(@PathVariable final UUID id) {
+		imageService.deleteImage(id);
+		return ResponseEntity.ok().build();
+	}
 }

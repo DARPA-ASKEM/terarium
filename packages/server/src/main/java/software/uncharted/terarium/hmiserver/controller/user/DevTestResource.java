@@ -14,18 +14,18 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequestMapping("/dev-tests")
 @RestController
 public class DevTestResource {
-    // @Broadcast
-    // @Channel("user-event")
-    // Emitter<UserEvent> userEventEmitter;
+	// @Broadcast
+	// @Channel("user-event")
+	// Emitter<UserEvent> userEventEmitter;
 
-    @PutMapping("/user-event")
-    @Secured(Roles.TEST)
-    public ResponseEntity<JsonNode> createModel() {
-        final UUID id = UUID.randomUUID();
-        final UserEvent event = new UserEvent();
-        // event.setId(id);
-        // userEventEmitter.send(event);
-        // return Response.ok(Map.of("id", id.toString())).build();
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-    }
+	@PutMapping("/user-event")
+	@Secured(Roles.TEST)
+	public ResponseEntity<JsonNode> createModel() {
+		final UUID id = UUID.randomUUID();
+		final UserEvent event = new UserEvent();
+		// event.setId(id);
+		// userEventEmitter.send(event);
+		// return Response.ok(Map.of("id", id.toString())).build();
+		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+	}
 }

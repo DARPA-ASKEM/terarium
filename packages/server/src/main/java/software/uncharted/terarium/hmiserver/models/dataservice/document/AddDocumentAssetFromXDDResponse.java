@@ -10,9 +10,9 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 public class AddDocumentAssetFromXDDResponse {
 
-    private UUID documentAssetId;
+	private UUID documentAssetId;
 
-    private boolean pdfUploadError;
+	private boolean pdfUploadError;
 
-    private String extractionJobId;
+	private String extractionJobId;
 }

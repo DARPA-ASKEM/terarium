@@ -21,47 +21,47 @@ import software.uncharted.terarium.hmiserver.service.EventService;
 @RequiredArgsConstructor
 public class EventController {
 
-    private final EventService eventService;
+	private final EventService eventService;
 
-    private final CurrentUserService currentUserService;
+	private final CurrentUserService currentUserService;
 
-    /**
-     * Gets a list of events sorted by timestamp descending
-     *
-     * @param type the {@link EventType} of the events to fetch
-     * @param projectId the projectId to fetch events for
-     * @param limit the number of events to fetch
-     * @return a list of {@link Event} for the given user/project/type sorted by most to least recent
-     */
-    @GetMapping
-    @Secured(Roles.USER)
-    public ResponseEntity<List<Event>> getEvents(
-            @RequestParam(value = "type") final EventType type,
-            @RequestParam(value = "projectId", required = false) final UUID projectId,
-            @RequestParam(value = "search", required = false) final String likeValue,
-            @RequestParam(value = "limit", defaultValue = "10") final int limit) {
-        return ResponseEntity.ok(eventService.findEvents(
-                type, projectId, currentUserService.get().getId(), likeValue, limit));
-    }
+	/**
+	 * Gets a list of events sorted by timestamp descending
+	 *
+	 * @param type the {@link EventType} of the events to fetch
+	 * @param projectId the projectId to fetch events for
+	 * @param limit the number of events to fetch
+	 * @return a list of {@link Event} for the given user/project/type sorted by most to least recent
+	 */
+	@GetMapping
+	@Secured(Roles.USER)
+	public ResponseEntity<List<Event>> getEvents(
+			@RequestParam(value = "type") final EventType type,
+			@RequestParam(value = "projectId", required = false) final UUID projectId,
+			@RequestParam(value = "search", required = false) final String likeValue,
+			@RequestParam(value = "limit", defaultValue = "10") final int limit) {
+		return ResponseEntity.ok(eventService.findEvents(
+				type, projectId, currentUserService.get().getId(), likeValue, limit));
+	}
 
-    /**
-     * Create an event
-     *
-     * @param event the {@link Event} instance
-     * @return the persisted event instance
-     */
-    @PostMapping
-    @Secured(Roles.USER)
-    @Transactional
-    @IgnoreRequestLogging
-    public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
-        event.setUserId(currentUserService.get().getId());
+	/**
+	 * Create an event
+	 *
+	 * @param event the {@link Event} instance
+	 * @return the persisted event instance
+	 */
+	@PostMapping
+	@Secured(Roles.USER)
+	@Transactional
+	@IgnoreRequestLogging
+	public ResponseEntity<Event> postEvent(@RequestBody final Event event) {
+		event.setUserId(currentUserService.get().getId());
 
-        // Do not save the event to the database if the type is not specified as persistent
-        if (!event.getType().isPersistent()) {
-            return ResponseEntity.ok(null);
-        }
+		// Do not save the event to the database if the type is not specified as persistent
+		if (!event.getType().isPersistent()) {
+			return ResponseEntity.ok(null);
+		}
 
-        return ResponseEntity.ok(eventService.save(event));
-    }
+		return ResponseEntity.ok(eventService.save(event));
+	}
 }
