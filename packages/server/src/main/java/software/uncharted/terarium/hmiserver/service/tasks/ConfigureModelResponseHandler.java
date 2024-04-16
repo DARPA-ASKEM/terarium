@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import java.util.List;
-import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +20,9 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationServ
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
+
+import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -80,7 +81,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 								.getModel()
 								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 					}
-					gollmExtractions.addAll(condition.get("parameters").deepCopy());
+					final ArrayNode parameters = condition.get("parameters").deepCopy();
+					gollmExtractions.addAll(parameters);
 				}
 
 				// Map the initials values to the model
@@ -91,7 +93,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
-					gollmExtractions.addAll(condition.get("initials").deepCopy());
+					final ArrayNode initials = condition.get("initials").deepCopy();
+					gollmExtractions.addAll(initials);
 				}
 
 				// Set the all the GoLLM extractions into the model metadata
