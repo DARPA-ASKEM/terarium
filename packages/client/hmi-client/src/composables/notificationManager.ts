@@ -3,7 +3,7 @@ import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Ty
 import { NotificationItem } from '@/types/common';
 import { ref, computed } from 'vue';
 import { getDocumentAsset } from '@/services/document-assets';
-import { useToastService } from '@/services/toast';
+import { logger } from '@/utils/logger';
 import { useProjects } from './project';
 
 let initialized = false;
@@ -31,9 +31,15 @@ const displayToast = (
 	if (!findAsset(assetId)) return; // Check if the asset is in the active project
 
 	if (status === 'Completed')
-		useToastService().success(toastTitle[eventType]?.success ?? 'Process Completed', msg);
+		logger.success(msg, {
+			showToast: true,
+			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
+		});
 	if (status === 'Failed')
-		useToastService().error(toastTitle[eventType]?.error ?? 'Process Failed', error);
+		logger.error(error, {
+			showToast: true,
+			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
+		});
 };
 
 const getStatus = (data: { error: string; t: number }) => {
