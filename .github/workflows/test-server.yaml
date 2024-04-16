@@ -42,6 +42,7 @@ jobs:
         with:
           distribution: "temurin"
           java-version: 17
+          cache: gradle
 
       # Start containers
       - name: Start containers
@@ -49,13 +50,7 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@8baac4c8ef753599f92eeb509c246d09d6250fa6
-        with:
-          gradle-version: wrapper
-          build-root-directory: packages/server
-          arguments: |
-            test
-            --info
+        run: ./gradlew test --info
 
       # Run test reporter
       - name: Test Report
