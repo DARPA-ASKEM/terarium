@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 public class JsonUtil {
-	static public void recursiveSetAll(final ObjectNode node1, final JsonNode node2) {
+	public static void recursiveSetAll(final ObjectNode node1, final JsonNode node2) {
 		if (node2.isObject()) {
 			final Iterator<Map.Entry<String, JsonNode>> fields = node2.fields();
 			while (fields.hasNext()) {

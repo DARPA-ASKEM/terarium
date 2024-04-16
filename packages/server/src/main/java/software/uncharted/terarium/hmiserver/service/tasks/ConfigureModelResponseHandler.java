@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.util.List;
-import java.util.UUID;
-
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -30,12 +27,12 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
-	final public static String NAME = "gollm:configure_model";
+	public static final String NAME = "gollm:configure_model";
 
-	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
-	final private ModelConfigurationService modelConfigurationService;
-	final private ProvenanceService provenanceService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ProvenanceService provenanceService;
 
 	@Override
 	public String getName() {
@@ -76,21 +73,27 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Map the parameters values to the model
 				ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
+					final List<ModelParameter> modelParameters =
+							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
 					if (modelCopy.isRegnet()) {
-						modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+						modelCopy
+								.getModel()
+								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
 					}
-					gollmExtractions.addAll((ArrayNode) condition.get("parameters").deepCopy());
+					gollmExtractions.addAll(
+							(ArrayNode) condition.get("parameters").deepCopy());
 				}
 
 				// Map the initials values to the model
 				ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					final List<Initial> modelInitials =
+							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
-					gollmExtractions.addAll((ArrayNode) condition.get("initials").deepCopy());
+					gollmExtractions.addAll(
+							(ArrayNode) condition.get("initials").deepCopy());
 				}
 
 				// Set the all the GoLLM extractions into the model metadata

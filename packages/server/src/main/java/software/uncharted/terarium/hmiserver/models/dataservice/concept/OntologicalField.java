@@ -16,8 +16,9 @@ public enum OntologicalField {
 	 * @throws IllegalArgumentException if the OntologicalField is not found
 	 */
 	public static OntologicalField findByType(final String type) {
-		return Arrays.stream(values()).filter(
-				value -> type.equalsIgnoreCase(value.type)).findFirst()
+		return Arrays.stream(values())
+				.filter(value -> type.equalsIgnoreCase(value.type))
+				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException("No OntologicalField with type: " + type));
 	}
 

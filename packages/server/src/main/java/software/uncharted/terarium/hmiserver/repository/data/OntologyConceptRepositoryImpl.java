@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.repository.data;
 
+import com.querydsl.core.Tuple;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import com.querydsl.core.Tuple;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.ConceptFacetSearchResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
@@ -83,7 +80,8 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 		 * GROUP BY oc.curie, ac.name
 		 */
 		List<Tuple> conceptCounts = query.select(ontologyConcept.curie, activeConcept.name, ontologyConcept.count())
-				.leftJoin(activeConcept).on(ontologyConcept.curie.eq(activeConcept.curie))
+				.leftJoin(activeConcept)
+				.on(ontologyConcept.curie.eq(activeConcept.curie))
 				.groupBy(ontologyConcept.curie, activeConcept.name)
 				.fetch();
 
@@ -107,7 +105,8 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 		 * WHERE oc.type IN (%s)
 		 */
 		List<Tuple> activeConceptResults = query.select(ontologyConcept, activeConcept.name)
-				.leftJoin(activeConcept).on(ontologyConcept.curie.eq(activeConcept.curie))
+				.leftJoin(activeConcept)
+				.on(ontologyConcept.curie.eq(activeConcept.curie))
 				.groupBy(ontologyConcept.id)
 				.fetch();
 
@@ -132,5 +131,4 @@ public class OntologyConceptRepositoryImpl implements OntologyConceptRepositoryC
 
 		return response;
 	}
-
 }

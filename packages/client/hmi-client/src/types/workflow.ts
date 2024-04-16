@@ -145,17 +145,18 @@ export enum WorkflowDirection {
 	FROM_OUTPUT
 }
 
+export interface Transform {
+	x: number;
+	y: number;
+	k: number;
+}
 export interface Workflow {
 	id: string;
 	name: string;
 	description: string;
 
 	// zoom x-y translate and zoom
-	transform: {
-		x: number;
-		y: number;
-		k: number;
-	};
+	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 }
@@ -163,6 +164,13 @@ export interface Workflow {
 export interface Size {
 	width: number;
 	height: number;
+}
+
+export interface WorkflowTransformations {
+	workflows: Transformations;
+}
+export interface Transformations {
+	[key: string]: Transform;
 }
 
 export enum ProgressState {

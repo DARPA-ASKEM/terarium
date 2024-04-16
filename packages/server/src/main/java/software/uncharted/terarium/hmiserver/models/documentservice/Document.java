@@ -1,17 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
-/**
- * XDD Document representation
- */
+/** XDD Document representation */
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor

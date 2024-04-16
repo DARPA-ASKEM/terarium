@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.elasticsearch;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 
 @Service
@@ -59,9 +56,7 @@ public class ElasticsearchInitializationService {
 		return false;
 	}
 
-	/**
-	 * For each system template resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each system template resource, add it to the cluster if it doesn't exist */
 	private void pushMissingComponentTemplates() throws IOException {
 		for (final Resource resource : resourceComponentTemplates) {
 			final String filename = resource.getFilename();
@@ -71,8 +66,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putComponentTemplate(componentTemplateName,
-								templateJson.toString());
+						final boolean acknowledged = elasticsearchService.putComponentTemplate(
+								componentTemplateName, templateJson.toString());
 						if (acknowledged) {
 							log.info("Added component template: {}", componentTemplateName);
 						} else {
@@ -86,9 +81,7 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each system template resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each system template resource, add it to the cluster if it doesn't exist */
 	private void pushMissingIndexTemplates() throws IOException {
 		for (final Resource resource : resourceIndexTemplates) {
 			final String filename = resource.getFilename();
@@ -98,8 +91,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putIndexTemplate(indexTemplateName,
-								templateJson.toString());
+						final boolean acknowledged =
+								elasticsearchService.putIndexTemplate(indexTemplateName, templateJson.toString());
 						if (acknowledged) {
 							log.info("Added index template: {}", indexTemplateName);
 						} else {
@@ -113,9 +106,7 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each pipeline resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each pipeline resource, add it to the cluster if it doesn't exist */
 	private void pushMissingPipelines() throws IOException {
 		for (final Resource resource : resourcePipelines) {
 			final String filename = resource.getFilename();
@@ -125,8 +116,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode pipelineJson;
 					try {
 						pipelineJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putPipeline(pipelineName,
-								pipelineJson.toString());
+						final boolean acknowledged =
+								elasticsearchService.putPipeline(pipelineName, pipelineJson.toString());
 						if (acknowledged) {
 							log.info("Added pipeline: {}", pipelineName);
 						} else {
@@ -140,10 +131,7 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
-	 * doesn't exist
-	 */
+	/** For each index in the ElasticsearchConfiguration, add it to the cluster if it doesn't exist */
 	private void pushMissingIndices() throws IOException {
 
 		final Map<String, String> indices = new HashMap<>() {

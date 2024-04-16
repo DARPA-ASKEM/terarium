@@ -935,7 +935,6 @@ export interface ProvenanceNode {
 }
 
 export interface ProvenanceEdge {
-    id: string;
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;

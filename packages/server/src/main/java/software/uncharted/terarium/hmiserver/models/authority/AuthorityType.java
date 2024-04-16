@@ -7,15 +7,15 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Slf4j
 @TSModel
 public enum AuthorityType {
-  GRANT_AUTHORITY("Allows the user to grant authorities to other users"),
-  USERS("Generic user authority");
+	GRANT_AUTHORITY("Allows the user to grant authorities to other users"),
+	USERS("Generic user authority");
 
-  @TSOptional
-  private final String description;
+	@TSOptional
+	private final String description;
 
-  AuthorityType(final String description) {
-    this.description = description;
-  }
+	AuthorityType(final String description) {
+		this.description = description;
+	}
 
 	public static AuthorityType get(final String type) {
 		try {

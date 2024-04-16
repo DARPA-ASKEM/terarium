@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Configuration
 @ConfigurationProperties(prefix = "terarium.elasticsearch")
@@ -137,6 +136,5 @@ public class ElasticsearchConfiguration {
 			String simulationRoot,
 			String workflowRoot,
 			String decapodesConfigurationRoot,
-			String decapodesContextRoot) {
-	}
+			String decapodesContextRoot) {}
 }

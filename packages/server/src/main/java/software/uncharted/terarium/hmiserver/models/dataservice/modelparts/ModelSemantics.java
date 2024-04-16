@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;

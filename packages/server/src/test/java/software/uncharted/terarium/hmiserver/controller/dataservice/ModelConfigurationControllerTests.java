@@ -3,10 +3,10 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -52,15 +49,14 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService
-				.createAsset(new ModelConfiguration()
-						.setName("test-framework")
-						.setModelId(UUID.randomUUID())
-						.setDescription("test-desc")
-						.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
+				.setName("test-framework")
+				.setModelId(UUID.randomUUID())
+				.setDescription("test-desc")
+				.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -75,9 +71,9 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setConfiguration(Map.of("key", "value"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(modelConfiguration)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(modelConfiguration)))
 				.andExpect(status().isCreated());
 	}
 
@@ -85,17 +81,16 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService
-				.createAsset(new ModelConfiguration()
-						.setName("test-framework")
-						.setModelId(UUID.randomUUID())
-						.setDescription("test-desc")
-						.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
+				.setName("test-framework")
+				.setModelId(UUID.randomUUID())
+				.setDescription("test-desc")
+				.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(modelConfiguration)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(modelConfiguration)))
 				.andExpect(status().isOk());
 	}
 
@@ -103,18 +98,17 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService
-				.createAsset(new ModelConfiguration()
-						.setName("test-framework")
-						.setModelId(UUID.randomUUID())
-						.setDescription("test-desc")
-						.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
+				.setName("test-framework")
+				.setModelId(UUID.randomUUID())
+				.setDescription("test-desc")
+				.setConfiguration(Map.of("key", "value")));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
+		Assertions.assertTrue(
+				modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
 	}
-
 }

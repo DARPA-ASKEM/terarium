@@ -4,28 +4,26 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 	/*
-		{
-			"sname": "S",
-			"mira_ids": "[('identity', 'ido:0000514'), ('identity', 'ido:0000511')]",
-			"mira_context": [('identity', 'ido:0000514')]",
-		}
-	 */
+	{
+		"sname": "S",
+		"mira_ids": "[('identity', 'ido:0000514'), ('identity', 'ido:0000511')]",
+		"mira_context": [('identity', 'ido:0000514')]",
+	}
+	*/
 
 	@Override
 	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
 		JsonNode node = p.getCodec().readTree(p);
 
 		final Species species = new Species();
-		species
-			.setSname(node.get("sname").asText())
-			.setMiraIds(new ArrayList<>())
-			.setMiraContext(new ArrayList<>());
+		species.setSname(node.get("sname").asText())
+				.setMiraIds(new ArrayList<>())
+				.setMiraContext(new ArrayList<>());
 
 		if (node.get("mira_ids") != null) {
 			final String nodeMiraIds = node.get("mira_ids").asText();

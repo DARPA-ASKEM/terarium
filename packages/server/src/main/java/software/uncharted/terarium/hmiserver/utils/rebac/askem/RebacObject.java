@@ -14,5 +14,4 @@ public abstract class RebacObject {
 	}
 
 	public abstract SchemaObject getSchemaObject();
-
 }

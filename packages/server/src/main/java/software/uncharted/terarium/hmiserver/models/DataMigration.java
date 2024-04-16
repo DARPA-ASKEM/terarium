@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import java.io.Serial;
-import java.sql.Timestamp;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import java.io.Serial;
+import java.sql.Timestamp;
 import lombok.Data;
 
 @Data
@@ -12,7 +11,8 @@ import lombok.Data;
 public class DataMigration {
 
 	public enum MigrationState {
-		SUCCESS, FAILED
+		SUCCESS,
+		FAILED
 	}
 
 	@Serial
@@ -20,7 +20,7 @@ public class DataMigration {
 
 	@Id
 	private String tableName;
+
 	private MigrationState state;
 	private Timestamp timestamp;
-
 }

@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 

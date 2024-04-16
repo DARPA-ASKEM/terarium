@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.permissions;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @TSModel
 @Data

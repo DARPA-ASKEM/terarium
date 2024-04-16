@@ -4,12 +4,19 @@ import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUti
 import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doDeleteJSON;
 import static software.uncharted.terarium.hmiserver.utils.rebac.httputil.HttpUtil.doPostJSON;
 
+import com.authzed.api.v1.Core;
+import com.authzed.api.v1.PermissionService.Consistency;
+import com.authzed.grpcutil.BearerToken;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.inprocess.InProcessChannelBuilder;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import javax.ws.rs.core.Response;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
@@ -26,17 +33,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import com.authzed.api.v1.Core;
-import com.authzed.api.v1.PermissionService.Consistency;
-import com.authzed.grpcutil.BearerToken;
-
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
@@ -57,10 +53,13 @@ public class ReBACService {
 
 	@Value("${terarium.keycloak.realm}")
 	String REALM_NAME;
+
 	@Value("${spicedb.shared-key}")
 	String SPICEDB_PRESHARED_KEY;
+
 	@Value("${spicedb.target}")
 	String SPICEDB_TARGET;
+
 	@Value("${spicedb.launchmode}")
 	String SPICEDB_LAUNCHMODE;
 
@@ -92,9 +91,7 @@ public class ReBACService {
 
 		spiceDbBearerToken = new BearerToken(SPICEDB_PRESHARED_KEY);
 		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
-			channel = InProcessChannelBuilder
-					.forName("TestSpiceDB")
-					.build();
+			channel = InProcessChannelBuilder.forName("TestSpiceDB").build();
 			return;
 		} else {
 			ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(SPICEDB_TARGET);
@@ -123,7 +120,8 @@ public class ReBACService {
 			UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 			List<UserRepresentation> users = usersResource.list();
 			for (UserRepresentation userRepresentation : users) {
-				if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
+				if (userRepresentation.getEmail() == null
+						|| userRepresentation.getEmail().isBlank()) {
 					continue;
 				}
 				UserResource userResource = usersResource.get(userRepresentation.getId());
@@ -132,7 +130,8 @@ public class ReBACService {
 				SchemaObject publicGroup = new SchemaObject(Schema.Type.GROUP, PUBLIC_GROUP_ID);
 				SchemaObject adminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
 
-				for (RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+				for (RoleRepresentation roleRepresentation :
+						userResource.roles().getAll().getRealmMappings()) {
 					if (roleRepresentation.getDescription().isBlank()) {
 						switch (roleRepresentation.getName()) {
 							case "user":
@@ -177,8 +176,8 @@ public class ReBACService {
 	}
 
 	private String getGroupId(String name) {
-		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE,
-				true);
+		List<GroupRepresentation> groups =
+				keycloak.realm(REALM_NAME).groups().groups(name, true, 0, Integer.MAX_VALUE, true);
 		for (GroupRepresentation group : groups) {
 			if (group.getPath().equals("/" + name)) {
 				return group.getId();
@@ -203,9 +202,7 @@ public class ReBACService {
 		Response response = createGroupMaybeParent(parentId, groupRepresentation);
 		switch (response.getStatus()) {
 			case 201:
-				return new PermissionGroup(
-						CreatedResponseUtil.getCreatedId(response),
-						name);
+				return new PermissionGroup(CreatedResponseUtil.getCreatedId(response), name);
 			case 409:
 				log.error("Conflicting Name");
 				return null;
@@ -236,19 +233,20 @@ public class ReBACService {
 		Integer maxUsers = usersResource.count();
 		List<UserRepresentation> users = usersResource.list(0, maxUsers + 1);
 		for (UserRepresentation userRepresentation : users) {
-			if (userRepresentation.getEmail() == null || userRepresentation.getEmail().isBlank()) {
+			if (userRepresentation.getEmail() == null
+					|| userRepresentation.getEmail().isBlank()) {
 				continue;
 			}
 			UserResource userResource = usersResource.get(userRepresentation.getId());
 
 			List<PermissionRole> roles = new ArrayList<>();
-			for (RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
+			for (RoleRepresentation roleRepresentation :
+					userResource.roles().getAll().getRealmMappings()) {
 				if (roleRepresentation.getDescription().isBlank()) {
 					PermissionRole role = new PermissionRole(
-							roleRepresentation.getId(),
-							roleRepresentation.getName()
-					// no users are acquired (to avoid circular references etc)
-					);
+							roleRepresentation.getId(), roleRepresentation.getName()
+							// no users are acquired (to avoid circular references etc)
+							);
 					roles.add(role);
 				}
 			}
@@ -279,19 +277,16 @@ public class ReBACService {
 								userRepresentation.getFirstName(),
 								userRepresentation.getLastName(),
 								userRepresentation.getEmail()
-						// no roles are acquired (to avoid circular references etc)
-						);
+								// no roles are acquired (to avoid circular references etc)
+								);
 						users.add(user);
 					}
 				}
 
-				PermissionRole role = new PermissionRole(
-						roleRepresentation.getId(),
-						roleRepresentation.getName(),
-						users);
+				PermissionRole role =
+						new PermissionRole(roleRepresentation.getId(), roleRepresentation.getName(), users);
 				response.add(role);
 			}
-
 		}
 
 		return response;
@@ -302,9 +297,7 @@ public class ReBACService {
 
 		List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups();
 		for (GroupRepresentation groupRepresentation : groups) {
-			PermissionGroup group = new PermissionGroup(
-					groupRepresentation.getId(),
-					groupRepresentation.getName());
+			PermissionGroup group = new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
 			response.add(group);
 		}
 
@@ -314,9 +307,8 @@ public class ReBACService {
 	public PermissionGroup getGroup(String id) {
 		GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
 		GroupRepresentation groupRepresentation = groupResource.toRepresentation();
-		PermissionGroup permissionGroup = new PermissionGroup(
-				groupRepresentation.getId(),
-				groupRepresentation.getName());
+		PermissionGroup permissionGroup =
+				new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
 
 		return permissionGroup;
 	}
@@ -362,7 +354,8 @@ public class ReBACService {
 		if (CURRENT_ZED_TOKEN == null) {
 			return Consistency.newBuilder().setFullyConsistent(true).build();
 		}
-		Core.ZedToken zedToken = Core.ZedToken.newBuilder().setToken(CURRENT_ZED_TOKEN).build();
+		Core.ZedToken zedToken =
+				Core.ZedToken.newBuilder().setToken(CURRENT_ZED_TOKEN).build();
 		return Consistency.newBuilder().setAtLeastAsFresh(zedToken).build();
 	}
 
@@ -397,9 +390,7 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-				config.getKeycloak().getUrl() + "/admin/",
-				REALM_NAME,
-				"users/" + userId + "/role-mappings/realm");
+				config.getKeycloak().getUrl() + "/admin/", REALM_NAME, "users/" + userId + "/role-mappings/realm");
 
 		List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToRemove);
@@ -433,7 +424,8 @@ public class ReBACService {
 				for (UserRepresentation user : roleResource.getRoleUserMembers()) {
 					if (user.getId().equals(userId)) {
 						log.debug("Add Role To User: already belongs");
-						return ResponseEntity.status(HttpStatusCode.valueOf(304)).build();
+						return ResponseEntity.status(HttpStatusCode.valueOf(304))
+								.build();
 					}
 				}
 			}
@@ -445,9 +437,7 @@ public class ReBACService {
 		}
 
 		String resourceUrl = composeResourceUrl(
-				config.getKeycloak().getUrl() + "/admin/",
-				REALM_NAME,
-				"users/" + userId + "/role-mappings/realm");
+				config.getKeycloak().getUrl() + "/admin/", REALM_NAME, "users/" + userId + "/role-mappings/realm");
 
 		List<RoleRepresentation> roles = new ArrayList<>();
 		roles.add(roleToAdd);

@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import feign.FeignException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,7 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -22,15 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import feign.FeignException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -88,7 +85,10 @@ public class ExtractionService {
 		private final String userId;
 		final ClientEventService clientEventService;
 
-		ClientEventInterface(final ClientEventService clientEventService, final UUID documentId, final String userId,
+		ClientEventInterface(
+				final ClientEventService clientEventService,
+				final UUID documentId,
+				final String userId,
 				final Double halfTimeSeconds) {
 			this.clientEventService = clientEventService;
 			this.documentId = documentId;
@@ -105,14 +105,16 @@ public class ExtractionService {
 			return (System.currentTimeMillis() / 1000.0) - startSeconds;
 		}
 
-		private void updateClient(final UUID documentId, final Double t, final String message, final String error,
-				final String userId) {
+		private void updateClient(
+				final UUID documentId, final Double t, final String message, final String error, final String userId) {
 
 			log.info("t: {}, {}", t, message);
 
 			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
 			final ClientEvent<ExtractionStatusUpdate> status = ClientEvent.<ExtractionStatusUpdate>builder()
-					.type(ClientEventType.EXTRACTION).data(update).build();
+					.type(ClientEventType.EXTRACTION)
+					.data(update)
+					.build();
 			clientEventService.sendToUser(status, userId);
 		}
 
@@ -127,7 +129,6 @@ public class ExtractionService {
 		public void sendError(final String msg) {
 			updateClient(documentId, estimateT(), null, msg, userId);
 		}
-
 	}
 
 	public static String removeFileExtension(final String filename) {
@@ -141,8 +142,8 @@ public class ExtractionService {
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain) {
 
 		final String userId = currentUserService.get().getId();
-		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
-				HALFTIME_SECONDS);
+		final ClientEventInterface clientInterface =
+				new ClientEventInterface(clientEventService, documentId, userId, HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {
@@ -159,16 +160,17 @@ public class ExtractionService {
 
 				final String filename = document.getFileNames().get(0);
 
-				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+				final byte[] documentContents =
+						documentService.fetchFileAsBytes(documentId, filename).get();
 				clientInterface.sendMessage("File fetched, processing PDF extraction...");
 
-				final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
-						"application/pdf");
+				final ByteMultipartFile documentFile =
+						new ByteMultipartFile(documentContents, filename, "application/pdf");
 
 				final boolean compressImages = false;
 				final boolean useCache = false;
-				final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-						useCache, documentFile);
+				final ResponseEntity<JsonNode> extractionResp =
+						extractionProxy.processPdfExtraction(compressImages, useCache, documentFile);
 
 				final JsonNode body = extractionResp.getBody();
 				final UUID jobId = UUID.fromString(body.get("job_id").asText());
@@ -197,7 +199,8 @@ public class ExtractionService {
 					}
 
 					log.info("Polled status endpoint {} times:\n{}", i + 1, statusData);
-					jobDone = statusData.get("error").asBoolean() || statusData.get("job_completed").asBoolean();
+					jobDone = statusData.get("error").asBoolean()
+							|| statusData.get("job_completed").asBoolean();
 					if (jobDone) {
 						clientInterface.sendMessage("COSMOS extraction complete; processing results...");
 						break;
@@ -220,7 +223,10 @@ public class ExtractionService {
 
 				clientInterface.sendMessage("Uploading COSMOS extraction results...");
 				final String zipFileName = documentId + "_cosmos.zip";
-				documentService.uploadFile(documentId, zipFileName, new ByteArrayEntity(zipFileResp.getBody()),
+				documentService.uploadFile(
+						documentId,
+						zipFileName,
+						new ByteArrayEntity(zipFileResp.getBody()),
 						ContentType.APPLICATION_OCTET_STREAM);
 
 				document.getFileNames().add(zipFileName);
@@ -229,8 +235,7 @@ public class ExtractionService {
 				clientInterface.sendMessage("Extracting COSMOS extraction results...");
 				final Map<String, HttpEntity> fileMap = new HashMap<>();
 				try {
-					final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
-							zipFileResp.getBody());
+					final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
 					final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
 
 					ZipEntry entry = zipInputStream.getNextEntry();
@@ -263,8 +268,8 @@ public class ExtractionService {
 				int totalUploads = 0;
 
 				for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-					final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
-							extractionType.toStringPlural());
+					final ResponseEntity<JsonNode> response =
+							extractionProxy.extraction(jobId, extractionType.toStringPlural());
 					log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
 					if (!response.getStatusCode().is2xxSuccessful()) {
 						log.warn("Unable to fetch the {} extractions", extractionType);
@@ -297,12 +302,11 @@ public class ExtractionService {
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
 						extraction.setMetadata(
-								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {
-								}));
+								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {}));
 
 						document.getAssets().add(extraction);
-						clientInterface
-								.sendMessage(String.format("Add COSMOS extraction %s to Document...", assetFileName));
+						clientInterface.sendMessage(
+								String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
 				}
 
@@ -327,7 +331,8 @@ public class ExtractionService {
 					// run variable extraction
 					try {
 						clientInterface.sendMessage("Dispatching variable extraction request...");
-						document = extractVariables(documentId, new ArrayList<>(), domain).get();
+						document = extractVariables(documentId, new ArrayList<>(), domain)
+								.get();
 						clientInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						clientInterface.sendMessage("Variable extraction failed, continuing");
@@ -335,7 +340,8 @@ public class ExtractionService {
 
 					// check for input length
 					if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-						log.warn("Document {} text too long for GoLLM model card task, not sendingh request",
+						log.warn(
+								"Document {} text too long for GoLLM model card task, not sendingh request",
 								documentId);
 					} else {
 						// dispatch GoLLM model card request
@@ -378,27 +384,25 @@ public class ExtractionService {
 				final String error = "Unable to extract pdf";
 				log.error(error, e);
 				clientInterface.sendError("Extraction failed, unexpected error.");
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		});
 	}
 
-	public Future<DocumentAsset> extractVariables(final UUID documentId, final List<UUID> modelIds,
-			final String domain) {
+	public Future<DocumentAsset> extractVariables(
+			final UUID documentId, final List<UUID> modelIds, final String domain) {
 
 		// Set up the client interface
 		final String userId = currentUserService.get().getId();
-		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
-				HALFTIME_SECONDS);
+		final ClientEventInterface clientInterface =
+				new ClientEventInterface(clientEventService, documentId, userId, HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
-
 			clientInterface.sendMessage("Starting variable extraction.");
 			try {
 				// Fetch the text from the document
-				final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+				final DocumentAsset document =
+						documentService.getAsset(documentId).orElseThrow();
 				clientInterface.sendMessage("Document found, fetching text.");
 				if (document.getText() == null || document.getText().isEmpty()) {
 					throw new RuntimeException("No text found in paper document");
@@ -416,9 +420,8 @@ public class ExtractionService {
 
 				clientInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
 
-				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(
-						document.getText(),
-						models);
+				final IntegratedTextExtractionsBody body =
+						new IntegratedTextExtractionsBody(document.getText(), models);
 
 				log.info("Sending variable extraction request to SKEMA");
 				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, true, body);
@@ -475,13 +478,11 @@ public class ExtractionService {
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
 			} catch (final Exception e) {
-				final String error = "SKEMA unified integrated-text-extractions request from document: "
-						+ documentId + " failed.";
+				final String error =
+						"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
 				log.error(error, e);
 				clientInterface.sendError(error + " — " + e.getMessage());
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		});
 	}
@@ -489,14 +490,15 @@ public class ExtractionService {
 	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
 
 		final String userId = currentUserService.get().getId();
-		final ClientEventInterface clientInterface = new ClientEventInterface(clientEventService, documentId, userId,
-				HALFTIME_SECONDS);
+		final ClientEventInterface clientInterface =
+				new ClientEventInterface(clientEventService, documentId, userId, HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {
 				clientInterface.sendMessage("Starting model alignment...");
 
-				final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+				final DocumentAsset document =
+						documentService.getAsset(documentId).orElseThrow();
 
 				final Model model = modelService.getAsset(modelId).orElseThrow();
 
@@ -509,21 +511,18 @@ public class ExtractionService {
 					throw new RuntimeException("No attributes found in document");
 				}
 
-				final JsonNode attributes = objectMapper.valueToTree(document.getMetadata().get("attributes"));
+				final JsonNode attributes =
+						objectMapper.valueToTree(document.getMetadata().get("attributes"));
 
 				final ObjectNode extractions = objectMapper.createObjectNode();
 				extractions.set("attributes", attributes);
 
 				final String extractionsString = objectMapper.writeValueAsString(extractions);
 
-				final StringMultipartFile amrFile = new StringMultipartFile(
-						modelString,
-						"amr.json",
-						"application/json");
-				final StringMultipartFile extractionFile = new StringMultipartFile(
-						extractionsString,
-						"extractions.json",
-						"application/json");
+				final StringMultipartFile amrFile =
+						new StringMultipartFile(modelString, "amr.json", "application/json");
+				final StringMultipartFile extractionFile =
+						new StringMultipartFile(extractionsString, "extractions.json", "application/json");
 
 				final ResponseEntity<JsonNode> res;
 				try {
@@ -536,9 +535,7 @@ public class ExtractionService {
 							error + ": " + e.getMessage());
 				}
 				if (!res.getStatusCode().is2xxSuccessful()) {
-					throw new ResponseStatusException(
-							res.getStatusCode(),
-							"Unable to link AMR file");
+					throw new ResponseStatusException(res.getStatusCode(), "Unable to link AMR file");
 				}
 
 				final JsonNode modelJson = objectMapper.valueToTree(model);
@@ -550,9 +547,12 @@ public class ExtractionService {
 				modelService.updateAsset(model);
 
 				// create provenance
-				final Provenance provenance = new Provenance(ProvenanceRelationType.EXTRACTED_FROM, modelId,
+				final Provenance provenance = new Provenance(
+						ProvenanceRelationType.EXTRACTED_FROM,
+						modelId,
 						ProvenanceType.MODEL,
-						documentId, ProvenanceType.DOCUMENT);
+						documentId,
+						ProvenanceType.DOCUMENT);
 				provenanceService.createProvenance(provenance);
 
 				return model;
@@ -564,13 +564,10 @@ public class ExtractionService {
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
 			} catch (final Exception e) {
-				final String error = "SKEMA link_amr request from document: "
-						+ documentId + " failed.";
+				final String error = "SKEMA link_amr request from document: " + documentId + " failed.";
 				log.error(error, e);
 				clientInterface.sendError(error + " — " + e.getMessage());
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		});
 	}

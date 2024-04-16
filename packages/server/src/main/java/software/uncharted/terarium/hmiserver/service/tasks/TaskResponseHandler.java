@@ -46,5 +46,4 @@ public abstract class TaskResponseHandler {
 		}
 		throw new IllegalArgumentException("Unknown status: " + response.getStatus());
 	}
-
 }

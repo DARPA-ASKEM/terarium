@@ -1,12 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.persistence.Column;
 import java.io.Serial;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -14,12 +11,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 @EqualsAndHashCode(callSuper = true)
-@Entity
 @Data
 @Accessors(chain = true)
 @TSModel
 public class Provenance extends TerariumAsset {
-
 	@Serial
 	private static final long serialVersionUID = 8443258388173011137L;
 
@@ -43,8 +38,7 @@ public class Provenance extends TerariumAsset {
 	@JsonAlias("user_id")
 	private String userId;
 
-	public Provenance() {
-	}
+	public Provenance() {}
 
 	public Provenance(
 			final ProvenanceRelationType extractedFrom,

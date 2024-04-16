@@ -1,16 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.neo4j;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Value;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Data
 public class Graph {
@@ -24,7 +23,8 @@ public class Graph {
 			final Record r = result.next();
 
 			final List<Node> recordNodes = r.get("nodes").asList(Value::asNode);
-			final List<Relationship> recordRelationships = r.get("relationships").asList(Value::asRelationship);
+			final List<Relationship> recordRelationships =
+					r.get("relationships").asList(Value::asRelationship);
 
 			nodes.addAll(recordNodes);
 			relationships.addAll(recordRelationships);

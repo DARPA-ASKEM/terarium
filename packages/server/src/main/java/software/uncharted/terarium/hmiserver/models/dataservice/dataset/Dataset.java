@@ -2,6 +2,9 @@ package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -10,13 +13,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.List;
-
-/**
- * Represents a dataset document from TDS
- */
+/** Represents a dataset document from TDS */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -25,80 +22,56 @@ public class Dataset extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = 6927286281160755696L;
-	/**
-	 * UserId of the user who created the dataset
-	 **/
+	/** UserId of the user who created the dataset */
 	@TSOptional
 	private String userId;
 
-	/**
-	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
-	 **/
+	/** ESGF id of the dataset. This will be null for datasets that are not from ESGF */
 	@TSOptional
 	private String esgfId;
 
-	/**
-	 * Name of the dataset
-	 **/
+	/** Name of the dataset */
 	private String name;
 
-	/**
-	 * (Optional) textual description of the dataset
-	 **/
+	/** (Optional) textual description of the dataset */
 	@TSOptional
 	private String description;
 
-	/**
-	 * (Optional) data source date
-	 **/
+	/** (Optional) data source date */
 	@TSOptional
 	@JsonAlias("data_source_date")
 	private Timestamp dataSourceDate;
 
-	/**
-	 * (Optional) list of file names associated with the dataset
-	 **/
+	/** (Optional) list of file names associated with the dataset */
 	@TSOptional
 	@JsonAlias("file_names")
 	private List<String> fileNames;
 
 	/**
-	 * (Optional) Url from which the dataset can be downloaded/fetched
-	 * TODO: IS THIS NEEDED? IS THIS FROM OLD TDS? https://github.com/DARPA-ASKEM/terarium/issues/3194
-	 **/
+	 * (Optional) Url from which the dataset can be downloaded/fetched TODO: IS THIS NEEDED? IS THIS FROM OLD TDS?
+	 * https://github.com/DARPA-ASKEM/terarium/issues/3194
+	 */
 	@TSOptional
 	@JsonAlias("dataset_url")
 	private String datasetUrl;
 
-	/**
-	 *  (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets
-	 */
+	/** (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets */
 	@TSOptional
 	private List<String> datasetUrls;
 
-	/**
-	 * Information regarding the columns that make up the dataset
-	 **/
+	/** Information regarding the columns that make up the dataset */
 	@TSOptional
 	private List<DatasetColumn> columns;
 
-	/**
-	 * (Optional) Unformatted metadata about the dataset
-	 **/
+	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
 	private JsonNode metadata;
 
-
-	/**
-	 * (Optional) Source of dataset
-	 **/
+	/** (Optional) Source of dataset */
 	@TSOptional
 	private String source;
 
-	/**
-	 * (Optional) Grounding of ontological concepts related to the dataset as a
-	 * whole
-	 **/
+	/** (Optional) Grounding of ontological concepts related to the dataset as a whole */
 	@TSOptional
 	private Grounding grounding;
 }

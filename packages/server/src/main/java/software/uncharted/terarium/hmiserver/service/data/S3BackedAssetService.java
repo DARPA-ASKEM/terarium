@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -17,7 +16,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -32,22 +30,26 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
  */
 public abstract class S3BackedAssetService<T extends TerariumAsset> extends TerariumAssetService<T> {
 	/** The expiration time for the presigned URLs in minutes */
-	private final static long EXPIRATION = 60;
+	private static final long EXPIRATION = 60;
 	/** The S3 client service */
 	private final S3ClientService s3ClientService;
 
 	/**
 	 * Create a new S3BackedAssetService
 	 *
-	 * @param elasticConfig   The configuration for the Elasticsearch service
-	 * @param config          The configuration for the application
-	 * @param elasticService  The Elasticsearch service
+	 * @param elasticConfig The configuration for the Elasticsearch service
+	 * @param config The configuration for the application
+	 * @param elasticService The Elasticsearch service
 	 * @param s3ClientService The S3 client service
-	 * @param assetClass      The class of the asset this service manages
+	 * @param assetClass The class of the asset this service manages
 	 */
-	public S3BackedAssetService(final ElasticsearchConfiguration elasticConfig, final Config config,
-			final ElasticsearchService elasticService, final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService, final Class<T> assetClass) {
+	public S3BackedAssetService(
+			final ElasticsearchConfiguration elasticConfig,
+			final Config config,
+			final ElasticsearchService elasticService,
+			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
+			final Class<T> assetClass) {
 		super(elasticConfig, config, elasticService, projectAssetService, assetClass);
 		this.s3ClientService = s3ClientService;
 	}
@@ -62,17 +64,16 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	/**
 	 * Get a presigned URL for uploading a file to S3
 	 *
-	 * @param id       The ID of the asset to upload to
+	 * @param id The ID of the asset to upload to
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
 	public PresignedURL getUploadUrl(final UUID id, final String filename) {
 
 		final PresignedURL presigned = new PresignedURL();
-		presigned.setUrl(s3ClientService.getS3Service().getS3PreSignedPutUrl(
-				config.getFileStorageS3BucketName(),
-				getPath(id, filename),
-				EXPIRATION));
+		presigned.setUrl(s3ClientService
+				.getS3Service()
+				.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
@@ -80,16 +81,15 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	/**
 	 * Get a presigned URL for downloading a file from S3
 	 *
-	 * @param id       The ID of the asset to download from
+	 * @param id The ID of the asset to download from
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
-		final Optional<String> url = s3ClientService.getS3Service().getS3PreSignedGetUrl(
-				config.getFileStorageS3BucketName(),
-				getPath(id, filename),
-				EXPIRATION);
+		final Optional<String> url = s3ClientService
+				.getS3Service()
+				.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION);
 
 		if (url.isEmpty()) {
 			return Optional.empty();
@@ -117,9 +117,8 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	}
 
 	public Optional<String> fetchFileAsString(final UUID uuid, final String filename) throws IOException {
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
+		try (final CloseableHttpClient httpclient =
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
 			if (url.isEmpty()) {
@@ -133,9 +132,8 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 	}
 
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
+		try (final CloseableHttpClient httpclient =
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
 			if (url.isEmpty()) {
@@ -148,11 +146,11 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 		}
 	}
 
-	public void uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity,
-			final ContentType contentType) throws IOException {
-		try (final CloseableHttpClient httpclient = HttpClients.custom()
-				.disableRedirectHandling()
-				.build()) {
+	public void uploadFile(
+			final UUID uuid, final String filename, final HttpEntity fileEntity, final ContentType contentType)
+			throws IOException {
+		try (final CloseableHttpClient httpclient =
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final PresignedURL presignedURL = getUploadUrl(uuid, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
@@ -160,7 +158,8 @@ public abstract class S3BackedAssetService<T extends TerariumAsset> extends Tera
 			put.setHeader("Content-Type", contentType.toString());
 			final HttpResponse response = httpclient.execute(put);
 			if (response.getStatusLine().getStatusCode() >= 300) {
-				throw new IOException("Failed to upload file to S3: " + response.getStatusLine().getReasonPhrase());
+				throw new IOException("Failed to upload file to S3: "
+						+ response.getStatusLine().getReasonPhrase());
 			}
 		}
 	}

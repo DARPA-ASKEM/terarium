@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
@@ -8,16 +10,14 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 
-import java.time.Instant;
-import java.util.concurrent.TimeUnit;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
 	private final UserRepository userRepository;
-	@Cacheable(value="users", key="#id", unless="#result == null")
+
+	@Cacheable(value = "users", key = "#id", unless = "#result == null")
 	public User getById(final String id) {
 		final User user = userRepository.findById(id).orElse(null);
 		if (user == null) {
@@ -39,7 +39,7 @@ public class UserService {
 		return user;
 	}
 
-	@CachePut(value="users", key="#user.id")
+	@CachePut(value = "users", key = "#user.id")
 	public User save(final User user) {
 		return userRepository.save(user);
 	}

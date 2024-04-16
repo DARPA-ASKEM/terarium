@@ -26,5 +26,7 @@ public class PermissionRole {
 		return name;
 	}
 
-	public List<PermissionUser> getUsers() { return users; }
+	public List<PermissionUser> getUsers() {
+		return users;
+	}
 }

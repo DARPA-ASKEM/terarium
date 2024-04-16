@@ -2,11 +2,10 @@ package software.uncharted.terarium.hmiserver.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.authority.*;
-
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,26 +38,51 @@ public class DataInitializationService {
 
 		for (RoleType roleType : roleTypesMissing) {
 			switch (roleType) {
-				case ADMIN -> roleService.createRole(RoleType.ADMIN, Map.of(
-					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
-					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
-				));
-				case USER -> roleService.createRole(RoleType.USER, Map.of(
-					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
-				));
-				case GROUP -> roleService.createRole(RoleType.GROUP, Map.of(
-					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)
-				));
-				case TEST -> roleService.createRole(RoleType.TEST, Map.of(
-					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
-				));
-				case SERVICE -> roleService.createRole(RoleType.SERVICE, Map.of(
-					AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
-					AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
-				));
+				case ADMIN -> roleService.createRole(
+						RoleType.ADMIN,
+						Map.of(
+								AuthorityType.GRANT_AUTHORITY,
+										List.of(
+												AuthorityLevel.READ,
+												AuthorityLevel.CREATE,
+												AuthorityLevel.UPDATE,
+												AuthorityLevel.DELETE),
+								AuthorityType.USERS,
+										List.of(
+												AuthorityLevel.READ,
+												AuthorityLevel.CREATE,
+												AuthorityLevel.UPDATE,
+												AuthorityLevel.DELETE)));
+				case USER -> roleService.createRole(
+						RoleType.USER,
+						Map.of(
+								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+				case GROUP -> roleService.createRole(
+						RoleType.GROUP,
+						Map.of(
+								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+								AuthorityType.USERS, List.of(AuthorityLevel.READ, AuthorityLevel.UPDATE)));
+				case TEST -> roleService.createRole(
+						RoleType.TEST,
+						Map.of(
+								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+								AuthorityType.USERS,
+										List.of(
+												AuthorityLevel.READ,
+												AuthorityLevel.CREATE,
+												AuthorityLevel.UPDATE,
+												AuthorityLevel.DELETE)));
+				case SERVICE -> roleService.createRole(
+						RoleType.SERVICE,
+						Map.of(
+								AuthorityType.GRANT_AUTHORITY, List.of(AuthorityLevel.READ),
+								AuthorityType.USERS,
+										List.of(
+												AuthorityLevel.READ,
+												AuthorityLevel.CREATE,
+												AuthorityLevel.UPDATE,
+												AuthorityLevel.DELETE)));
 			}
 		}
 	}

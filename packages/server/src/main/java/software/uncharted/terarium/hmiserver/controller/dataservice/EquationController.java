@@ -6,6 +6,10 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,15 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equatio
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.EquationService;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-/**
- * Rest controller for storing, retrieving, modifying and deleting equation
- * assets in the dataservice
- */
+/** Rest controller for storing, retrieving, modifying and deleting equation assets in the dataservice */
 @RequestMapping("/equations")
 @RestController
 @Slf4j
@@ -40,16 +36,29 @@ public class EquationController {
 	 * Retrieve the list of Equations
 	 *
 	 * @param pageSize number of equations per page
-	 * @param page     current page number
+	 * @param page current page number
 	 * @return list of equations
 	 */
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all equations")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Equations found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class)))),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving equations from the data store", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Equations found.",
+						content =
+								@Content(
+										array =
+												@ArraySchema(
+														schema =
+																@io.swagger.v3.oas.annotations.media.Schema(
+																		implementation = Equation.class)))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving equations from the data store",
+						content = @Content)
+			})
 	ResponseEntity<List<Equation>> getEquations(
 			@RequestParam(name = "page-size", defaultValue = "100") final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
@@ -59,9 +68,7 @@ public class EquationController {
 		} catch (final IOException e) {
 			final String error = "Unable to get equations";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -74,10 +81,22 @@ public class EquationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new equation")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Equation created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
-			@ApiResponse(responseCode = "500", description = "There was an issue creating the equation", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Equation created.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Equation.class))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue creating the equation",
+						content = @Content)
+			})
 	ResponseEntity<Equation> createEquation(@RequestBody Equation equation) {
 
 		try {
@@ -86,9 +105,7 @@ public class EquationController {
 		} catch (final IOException e) {
 			final String error = "Unable to create equation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -101,54 +118,74 @@ public class EquationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets equation by ID")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Equation found.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
-			@ApiResponse(responseCode = "404", description = "There was no equation found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the equation from the data store", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Equation found.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Equation.class))),
+				@ApiResponse(responseCode = "404", description = "There was no equation found", content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving the equation from the data store",
+						content = @Content)
+			})
 	ResponseEntity<Equation> getEquation(@PathVariable("id") final UUID id) {
 
 		try {
 			final Optional<Equation> equation = equationService.getAsset(id);
-			return equation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+			return equation.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get equation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	/**
 	 * Update an equation
 	 *
-	 * @param id       id of equation to update
+	 * @param id id of equation to update
 	 * @param equation equation to update with
 	 * @return ID of updated equation
 	 */
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a equation")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Equation updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Equation.class))),
-			@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue updating the equation", content = @Content)
-	})
-	ResponseEntity<Equation> updateEquation(
-			@PathVariable("id") final UUID id,
-			@RequestBody final Equation equation) {
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Equation updated.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Equation.class))),
+				@ApiResponse(responseCode = "404", description = "Equation could not be found", content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue updating the equation",
+						content = @Content)
+			})
+	ResponseEntity<Equation> updateEquation(@PathVariable("id") final UUID id, @RequestBody final Equation equation) {
 
 		try {
 			equation.setId(id);
 			final Optional<Equation> updated = equationService.updateAsset(equation);
-			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return updated.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update equation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -161,11 +198,20 @@ public class EquationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an equation")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Deleted equation", content = {
-					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)) }),
-			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Deleted equation",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ResponseDeleted.class))
+						}),
+				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+			})
 	ResponseEntity<ResponseDeleted> deleteEquation(@PathVariable("id") final UUID id) {
 
 		try {
@@ -174,10 +220,7 @@ public class EquationController {
 		} catch (final IOException e) {
 			final String error = "Unable to delete equation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
-
 }

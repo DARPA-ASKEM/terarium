@@ -1,17 +1,16 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -40,7 +39,8 @@ public abstract class TerariumAsset implements Serializable {
 	// transaction is committed.
 	@PrePersist
 	protected void onCreate() {
-		this.createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.createdOn =
+				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
 	@TSOptional
@@ -52,7 +52,8 @@ public abstract class TerariumAsset implements Serializable {
 	// transaction is committed.
 	@PreUpdate
 	protected void onUpdate() {
-		this.updatedOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.updatedOn =
+				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
 	@TSOptional

@@ -1,14 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.UUID;
-
-import org.springframework.data.neo4j.core.schema.Id;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.data.neo4j.core.schema.Id;
 
 @Data
 @Accessors(chain = true)

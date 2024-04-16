@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,11 +18,6 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.service.data.EquationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class EquationControllerTests extends TerariumApplicationTests {
 
@@ -48,13 +47,12 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEquation() throws Exception {
 
-		final Equation equation = new Equation()
-				.setName("test-equation-name");
+		final Equation equation = new Equation().setName("test-equation-name");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/equations")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(equation)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(equation)))
 				.andExpect(status().isCreated());
 	}
 
@@ -62,11 +60,10 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquation() throws Exception {
 
-		final Equation equation = equationService.createAsset(new Equation()
-				.setName("test-equation-name"));
+		final Equation equation = equationService.createAsset(new Equation().setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/equations/" + equation.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -74,15 +71,11 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquations() throws Exception {
 
-		equationService.createAsset(new Equation()
-				.setName("test-equation-name"));
-		equationService.createAsset(new Equation()
-				.setName("test-equation-name"));
-		equationService.createAsset(new Equation()
-				.setName("test-equation-name"));
+		equationService.createAsset(new Equation().setName("test-equation-name"));
+		equationService.createAsset(new Equation().setName("test-equation-name"));
+		equationService.createAsset(new Equation().setName("test-equation-name"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/equations")
-				.with(csrf()))
+		mockMvc.perform(MockMvcRequestBuilders.get("/equations").with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 	}
@@ -91,14 +84,12 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteEquation() throws Exception {
 
-		final Equation equation = equationService.createAsset(new Equation()
-				.setName("test-equation-name"));
+		final Equation equation = equationService.createAsset(new Equation().setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/equations/" + equation.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(equationService.getAsset(equation.getId()).isEmpty());
 	}
-
 }

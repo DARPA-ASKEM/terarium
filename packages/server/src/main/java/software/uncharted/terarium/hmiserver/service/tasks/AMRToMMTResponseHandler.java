@@ -1,22 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AMRToMMTResponseHandler extends TaskResponseHandler {
-	final static public String NAME = "mira_task:amr_to_mmt";
+	public static final String NAME = "mira_task:amr_to_mmt";
 
-	final private ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public String getName() {

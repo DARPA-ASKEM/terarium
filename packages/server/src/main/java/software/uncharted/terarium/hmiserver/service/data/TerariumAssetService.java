@@ -1,18 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -36,6 +34,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 
 	/** Services */
 	protected final ElasticsearchService elasticService;
+
 	protected final ProjectAssetService projectAssetService;
 
 	/** The class of the asset this service manages */
@@ -69,9 +68,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/**
 	 * Get a list of assets
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
-	 * @param query    The query to filter the assets
+	 * @param query The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -80,8 +79,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 				.index(getAssetIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b
-						.must(query)
+				.query(q -> q.bool(b -> b.must(query)
 						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
 						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
 						.mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
@@ -92,7 +90,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/**
 	 * Get a list of assets
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
@@ -102,8 +100,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 				.index(getAssetIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b
-						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
 						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
 						.mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))))
 				.build();
@@ -165,9 +162,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
@@ -190,9 +186,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 		return Optional.of(asset);
 	}
 
-	/**
-	 * Clone asset on ES, retrieve and save document with a different id
-	 */
+	/** Clone asset on ES, retrieve and save document with a different id */
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
 		if (targetAsset.isEmpty()) {

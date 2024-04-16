@@ -1,16 +1,14 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.equation.Equation;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -35,8 +33,7 @@ public class EquationService {
 				.index(elasticConfig.getEquationIndex())
 				.from(page)
 				.size(pageSize)
-				.query(q -> q.bool(b -> b
-						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
 						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))))
 				.build();
 		return elasticService.search(req, Equation.class);
@@ -53,13 +50,16 @@ public class EquationService {
 
 	public Equation createAsset(final Equation equation) throws IOException {
 		equation.setCreatedOn(Timestamp.from(Instant.now()));
-		elasticService.index(elasticConfig.getEquationIndex(), equation.setId(UUID.randomUUID()).getId().toString(),
+		elasticService.index(
+				elasticConfig.getEquationIndex(),
+				equation.setId(UUID.randomUUID()).getId().toString(),
 				equation);
 		return equation;
 	}
 
 	public Optional<Equation> updateAsset(final Equation equation) throws IOException {
-		if (!elasticService.documentExists(elasticConfig.getEquationIndex(), equation.getId().toString())) {
+		if (!elasticService.documentExists(
+				elasticConfig.getEquationIndex(), equation.getId().toString())) {
 			return Optional.empty();
 		}
 
@@ -67,5 +67,4 @@ public class EquationService {
 		elasticService.index(elasticConfig.getEquationIndex(), equation.getId().toString(), equation);
 		return Optional.of(equation);
 	}
-
 }

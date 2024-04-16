@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serial;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -8,11 +12,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -23,11 +22,10 @@ public class ModelDescription extends SupportAdditionalProperties implements Ser
 	@Serial
 	private static final long serialVersionUID = 7664512323130188442L;
 
-	static public ModelDescription fromModel(final Model model) {
+	public static ModelDescription fromModel(final Model model) {
 
-		final ModelDescription desc = new ModelDescription()
-				.setUserId(model.getUserId())
-				.setTimestamp(model.getCreatedOn());
+		final ModelDescription desc =
+				new ModelDescription().setUserId(model.getUserId()).setTimestamp(model.getCreatedOn());
 
 		if (model.getId() != null) {
 			desc.setId(model.getId());

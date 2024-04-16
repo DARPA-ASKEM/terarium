@@ -5,13 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.annotation.PostConstruct;
-
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
@@ -19,9 +16,9 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
-import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 @Service
@@ -45,28 +42,19 @@ public class TestReBACService extends ReBACService {
 		for (User user : USERS) {
 			List<PermissionRole> roles = new ArrayList<>();
 			for (Role role : user.getRoles()) {
-				PermissionRole r = new PermissionRole(
-						role.getId().toString(),
-						role.getName());
+				PermissionRole r = new PermissionRole(role.getId().toString(), role.getName());
 				roles.add(r);
 			}
 
-			PermissionUser permissionUser = new PermissionUser(
-					user.getId(),
-					user.getGivenName(),
-					user.getFamilyName(),
-					user.getEmail(),
-					roles);
+			PermissionUser permissionUser =
+					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail(), roles);
 
 			users.put(user.getId(), permissionUser);
 		}
 
 		for (User user : USERS) {
-			PermissionUser permissionUser = new PermissionUser(
-					user.getId(),
-					user.getGivenName(),
-					user.getFamilyName(),
-					user.getEmail());
+			PermissionUser permissionUser =
+					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail());
 
 			for (Role r : user.getRoles()) {
 
@@ -74,10 +62,7 @@ public class TestReBACService extends ReBACService {
 				if (roles.containsKey(r.getId().toString())) {
 					role = roles.get(r.getId().toString());
 				} else {
-					role = new PermissionRole(
-							r.getId().toString(),
-							r.getName(),
-							new ArrayList<>());
+					role = new PermissionRole(r.getId().toString(), r.getName(), new ArrayList<>());
 				}
 
 				role.getUsers().add(permissionUser);
@@ -113,9 +98,7 @@ public class TestReBACService extends ReBACService {
 	public List<PermissionGroup> getGroups() {
 		List<PermissionGroup> response = new ArrayList<>();
 		for (Map.Entry<String, String> group : groups.entrySet()) {
-			PermissionGroup permissionGroup = new PermissionGroup(
-					group.getKey(),
-					group.getValue());
+			PermissionGroup permissionGroup = new PermissionGroup(group.getKey(), group.getValue());
 			response.add(permissionGroup);
 		}
 		return response;
@@ -149,12 +132,10 @@ public class TestReBACService extends ReBACService {
 	}
 
 	public void createRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-	}
+			throws Exception, RelationshipAlreadyExistsException {}
 
 	public void removeRelationship(SchemaObject who, SchemaObject what, Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-	}
+			throws Exception, RelationshipAlreadyExistsException {}
 
 	public List<RebacPermissionRelationship> getRelationships(SchemaObject what) throws Exception {
 		return new ArrayList<>();
@@ -177,7 +158,6 @@ public class TestReBACService extends ReBACService {
 		}
 
 		return ResponseEntity.notFound().build();
-
 	}
 
 	public ResponseEntity<Void> addRoleToUser(String roleName, String userId) {
@@ -205,14 +185,9 @@ public class TestReBACService extends ReBACService {
 		PermissionUser user = users.get(userId);
 		user.getRoles().add(new PermissionRole(roleId, roleName));
 
-		role.getUsers().add(new PermissionUser(
-				user.getId(),
-				user.getFirstName(),
-				user.getLastName(),
-				user.getEmail()));
+		role.getUsers().add(new PermissionUser(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail()));
 
 		return ResponseEntity.ok().build();
-
 	}
 
 	public List<UUID> lookupResources(SchemaObject who, Schema.Permission permission, Schema.Type type)

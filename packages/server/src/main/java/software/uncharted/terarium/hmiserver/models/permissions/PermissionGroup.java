@@ -11,8 +11,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 public class PermissionGroup {
 	private String id;
 	private String name;
+
 	@TSOptional
 	private String relationship;
+
 	@TSOptional
 	private PermissionRelationships permissionRelationships;
 
@@ -20,5 +22,4 @@ public class PermissionGroup {
 		this.id = id;
 		this.name = name;
 	}
-
 }

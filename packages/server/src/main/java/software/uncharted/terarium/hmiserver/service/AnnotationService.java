@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -8,8 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.user.Annotation;
 import software.uncharted.terarium.hmiserver.repository.AnnotationRepository;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -34,5 +33,4 @@ public class AnnotationService {
 	public void delete(final String artifactId) {
 		annotationRepository.deleteByArtifactId(artifactId);
 	}
-
 }

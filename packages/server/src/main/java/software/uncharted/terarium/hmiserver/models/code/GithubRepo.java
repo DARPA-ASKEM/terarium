@@ -2,18 +2,16 @@ package software.uncharted.terarium.hmiserver.models.code;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
-import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 /**
- * Github repository
- * This is a convenience class for the front end to use to display a github repository.  It
- * contains a list of files, and a count of the total number of files in the repo.
+ * Github repository This is a convenience class for the front end to use to display a github repository. It contains a
+ * list of files, and a count of the total number of files in the repo.
  */
 @TSModel
 public class GithubRepo {
@@ -22,14 +20,13 @@ public class GithubRepo {
 	private static final List<String> CODE_TYPES = new ArrayList<>(List.of(".py", ".R", ".jl"));
 
 	@TSIgnore
-	private static final List<String> DATA_TYPES = new ArrayList<>(List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml"));
+	private static final List<String> DATA_TYPES =
+			new ArrayList<>(List.of(".csv", ".json", ".tsv", ".xml", ".yaml", ".yml"));
 
 	@TSIgnore
 	private static final List<String> DOCUMENT_TYPES = new ArrayList<>(List.of(".pdf", ".txt", ".md"));
 
-	/**
-	 * Categories of files
-	 */
+	/** Categories of files */
 	public Map<FileCategory, List<GithubFile>> files;
 
 	public Number totalFiles;
@@ -41,16 +38,15 @@ public class GithubRepo {
 	 */
 	public GithubRepo(List<GithubFile> files) {
 
-		//Initialize our map by adding an empty list for each category
+		// Initialize our map by adding an empty list for each category
 		this.files = Map.of(
-			FileCategory.DIRECTORY, new ArrayList<>(),
-			FileCategory.CODE, new ArrayList<>(),
-			FileCategory.DATA, new ArrayList<>(),
-			FileCategory.DOCUMENTS, new ArrayList<>(),
-			FileCategory.OTHER, new ArrayList<>()
-		);
+				FileCategory.DIRECTORY, new ArrayList<>(),
+				FileCategory.CODE, new ArrayList<>(),
+				FileCategory.DATA, new ArrayList<>(),
+				FileCategory.DOCUMENTS, new ArrayList<>(),
+				FileCategory.OTHER, new ArrayList<>());
 
-		//Add data to our map by iterating over our given files and adding them to the appropriate category
+		// Add data to our map by iterating over our given files and adding them to the appropriate category
 		for (GithubFile file : files) {
 			if (file.type == GithubFile.FileType.FILE) {
 				if (CODE_TYPES.stream().anyMatch(file.name.toLowerCase()::endsWith)) {
@@ -72,14 +68,14 @@ public class GithubRepo {
 			}
 		}
 
-		//Alphabetically sort the sublists inside our map
+		// Alphabetically sort the sublists inside our map
 		for (List<GithubFile> fileList : this.files.values()) {
 			fileList.sort(Comparator.comparing(a -> a.name));
 		}
 
-		//Sums the total number of files in our map, excluding directories
-		this.totalFiles = this.files.values().stream().mapToInt(List::size).sum() - this.files.get(FileCategory.DIRECTORY).size();
-
+		// Sums the total number of files in our map, excluding directories
+		this.totalFiles = this.files.values().stream().mapToInt(List::size).sum()
+				- this.files.get(FileCategory.DIRECTORY).size();
 	}
 
 	public enum FileCategory {
@@ -95,7 +91,6 @@ public class GithubRepo {
 		@JsonAlias("other")
 		OTHER("Other");
 
-
 		public final String fileCategory;
 
 		FileCategory(final String type) {
@@ -108,5 +103,4 @@ public class GithubRepo {
 			return fileCategory;
 		}
 	}
-
 }

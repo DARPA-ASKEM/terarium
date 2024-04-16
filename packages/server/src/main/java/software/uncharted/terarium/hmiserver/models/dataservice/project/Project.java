@@ -1,24 +1,21 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
-import java.io.Serial;
-import java.sql.Types;
-import java.util.List;
-import java.util.Map;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Where;
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
+import java.io.Serial;
+import java.sql.Types;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -70,18 +67,13 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
-	/**
-	 * Information for the front-end to display/filter the project accordingly.
-	 */
+	/** Information for the front-end to display/filter the project accordingly. */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
-	/**
-	 * Information for the front-end to enable/disable features based on user
-	 * permissions (Read/Write).
-	 */
+	/** Information for the front-end to enable/disable features based on user permissions (Read/Write). */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)

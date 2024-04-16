@@ -1,30 +1,25 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import javax.ws.rs.NotFoundException;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 
 /**
- * Base class for services that manage TerariumAssets without syncing to
- * Elasticsearch.
+ * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
@@ -33,7 +28,8 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteReposito
 @Data
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+public abstract class TerariumAssetServiceWithoutSearch<
+				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		implements ITerariumAssetService<T> {
 
 	protected final ObjectMapper objectMapper = new ObjectMapper();
@@ -72,7 +68,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	/**
 	 * Get a list of assets, this includes all assets, not just searchable ones.
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
@@ -122,8 +118,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
 		if (existing.size() > 0) {
-			throw new IllegalArgumentException(
-					"Asset already exists for id:" + ids.stream().map(UUID::toString).toList());
+			throw new IllegalArgumentException("Asset already exists for id:"
+					+ ids.stream().map(UUID::toString).toList());
 		}
 		return repository.saveAll(assets);
 	}
@@ -133,16 +129,16 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
 
 		if (oldAsset.isEmpty()) {
-			throw new NotFoundException("Asset not found for id: " + asset.getId().toString());
+			throw new NotFoundException(
+					"Asset not found for id: " + asset.getId().toString());
 		}
 
 		if (asset.getTemporary() && !oldAsset.get().getTemporary()) {
@@ -157,9 +153,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		return Optional.of(updated);
 	}
 
-	/**
-	 * Clone asset and return it, does not persist it.
-	 */
+	/** Clone asset and return it, does not persist it. */
 	@SuppressWarnings("unchecked")
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
@@ -169,16 +163,12 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		return (T) targetAsset.get().clone();
 	}
 
-	/**
-	 * Clone asset, write it to the db under a new id, and return it.
-	 */
+	/** Clone asset, write it to the db under a new id, and return it. */
 	public T cloneAndPersistAsset(final UUID id) throws IOException, IllegalArgumentException {
 		return createAsset(cloneAsset(id));
 	}
 
-	/**
-	 * Returns the asset as a byte payload.
-	 */
+	/** Returns the asset as a byte payload. */
 	public byte[] exportAsset(final UUID id) {
 		try {
 			return objectMapper.writeValueAsBytes(cloneAsset(id));
@@ -187,9 +177,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		}
 	}
 
-	/**
-	 * Imports the asset from a byte payload.
-	 */
+	/** Imports the asset from a byte payload. */
 	public T importAsset(final byte[] bytes) {
 		try {
 			final T asset = objectMapper.readValue(bytes, assetClass);

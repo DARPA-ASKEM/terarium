@@ -1,8 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
@@ -38,5 +37,4 @@ public class TerariumAssetServices {
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};
 	}
-
 }

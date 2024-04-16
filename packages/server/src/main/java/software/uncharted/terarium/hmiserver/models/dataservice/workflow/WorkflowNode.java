@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import java.io.Serializable;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;

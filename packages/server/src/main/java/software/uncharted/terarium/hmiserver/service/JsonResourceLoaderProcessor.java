@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -13,11 +17,6 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -41,14 +40,21 @@ public class JsonResourceLoaderProcessor implements ResourceLoaderAware, BeanPos
 					if (resources.length == 0) {
 						setField(fieldValue, field, bean);
 					} else if (resources.length == 1) {
-						String resourceString = loadResourceToString(resources[0].getURI().toString());
+						String resourceString =
+								loadResourceToString(resources[0].getURI().toString());
 						fieldValue = mapper.readValue(resourceString, field.getType());
 						setField(fieldValue, field, bean);
 					} else {
-						final Object deserializedResources = Array.newInstance(field.getType().getComponentType(), resources.length);
+						final Object deserializedResources =
+								Array.newInstance(field.getType().getComponentType(), resources.length);
 						for (int i = 0; i < resources.length; i++) {
-							String resourceString = loadResourceToString(resources[i].getURI().toString());
-							Array.set(deserializedResources, i, mapper.readValue(resourceString, field.getType().getComponentType()));
+							String resourceString =
+									loadResourceToString(resources[i].getURI().toString());
+							Array.set(
+									deserializedResources,
+									i,
+									mapper.readValue(
+											resourceString, field.getType().getComponentType()));
 						}
 						setField(deserializedResources, field, bean);
 					}

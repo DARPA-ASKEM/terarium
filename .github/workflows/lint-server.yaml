@@ -1,19 +1,21 @@
-name: Lint Generated Types
+---
+# This workflow will run Spotless with Java configuration to format the Java codebase
+name: Lint Server
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
   push:
     paths:
-      - 'packages/client/hmi-client/src/types/Types.ts'
       - 'packages/server/**'
-    branches: ['main']
+    branches: [ 'main' ]
   pull_request:
     paths:
-      - 'packages/client/hmi-client/src/types/Types.ts'
       - 'packages/server/**'
-    branches: ['main']
+    branches: [ 'main' ]
+
 jobs:
-  lintTypes:
-    name: Lint Generated Types
+  lintServer:
+    name: Lint Server
     runs-on: ubuntu-22.04
 
     permissions:
@@ -22,20 +24,21 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Java v17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: 17
           cache: gradle
 
-      - name: Check Generated Types
+      - name: Run Spotless
         run: |
-          ./gradlew generateTypeScript
+          ./gradlew spotlessApply
 
       - name: Commit all changed files
         uses: stefanzweifel/git-auto-commit-action@4b8a201e31cadd9829df349894b28c54e6c19fe6
         with:
-          commit_message: "chore: update generated types"
+          commit_message: "chore: lint server codebase"
