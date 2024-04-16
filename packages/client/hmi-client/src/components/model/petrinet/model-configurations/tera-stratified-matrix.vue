@@ -94,8 +94,14 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { createParameterMatrix, createInitialMatrix } from '@/model-representation/mira/mira';
+import {
+	createParameterMatrix,
+	createInitialMatrix,
+	collapseTemplates
+} from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
+import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	mmt: MiraModel;
@@ -193,8 +199,15 @@ function generateMatrix() {
 				break;
 			}
 		}
-	} else {
-		console.log('TODO template!!!');
+	} else if (stratifiedType === StratifiedMatrix.Rates) {
+		const templatesMap = collapseTemplates(props.mmt).matrixMap;
+
+		const transitionMatrix = templatesMap.get(props.id);
+		if (!transitionMatrix) {
+			logger.error('Failed to generate transition matrix');
+			return;
+		}
+		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
 	}
 }
 
