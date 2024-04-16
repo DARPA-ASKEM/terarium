@@ -212,13 +212,22 @@ async function renderGraph() {
 				const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
 				const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
 
+				console.log(selection.datum());
+
 				if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
-					const relativeX = transitionMatrixBounds.left - diagramBounds.left - tooltipWidth / 2;
+					const transitionMatrixHeight = selection.datum().height;
+					const transitionMatrixWidth = selection.datum().width;
+
+					const relativeX =
+						transitionMatrixBounds.left -
+						diagramBounds.left -
+						(tooltipWidth + transitionMatrixWidth / 2) / 2;
 					const relativeY =
 						transitionMatrixBounds.top -
 						diagramBounds.top -
 						tooltipHeight -
-						transitionMatrixBounds.height;
+						transitionMatrixHeight / 2;
+
 					hoveredTransitionPosition.value = { x: relativeX, y: relativeY };
 				}
 			}
