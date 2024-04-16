@@ -21,38 +21,39 @@ public class XDDTests extends TerariumApplicationTests {
 	public void canSearchForTermUnauthorized() throws Exception {
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/documents")
-						.queryParam("dataset", "xdd-covid-19")
-						.queryParam("term", "covid")
-						.queryParam("max", "20")
-						.queryParam("per_page", "20"))
-				.andExpect(status().isUnauthorized());
+				.queryParam("dataset", "xdd-covid-19")
+				.queryParam("term", "covid")
+				.queryParam("max", "20")
+				.queryParam("per_page", "20"))
+			.andExpect(status().isUnauthorized());
 	}
 
 	@Test
 	@WithMockUser(
-			username = "ursula",
-			authorities = {Roles.USER})
+		username = "ursula",
+		authorities = {Roles.USER})
 	public void canStandardDocSearch() throws Exception {
 
 		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
-						.queryParam("dataset", "xdd-covid-19")
-						.queryParam("term", "covid")
-						.queryParam("include_score", "true")
-						.queryParam("include_highlights", "true")
-						.queryParam("facets", "true")
-						.queryParam("max", "20")
-						.queryParam("additional_fields", "title,abstract")
-						.queryParam("known_entities", "url_extractions,askem_object")
-						.queryParam("per_page", "20"))
-				.andExpect(status().isOk())
-				.andReturn();
+				.queryParam("dataset", "xdd-covid-19")
+				.queryParam("term", "covid")
+				.queryParam("include_score", "true")
+				.queryParam("include_highlights", "true")
+				.queryParam("facets", "true")
+				.queryParam("max", "20")
+				.queryParam("additional_fields", "title,abstract")
+				.queryParam("known_entities", "url_extractions,askem_object")
+				.queryParam("per_page", "20"))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		ObjectMapper m = new ObjectMapper();
 		XDDResponse<DocumentsResponseOK> res = null;
 		try {
 			res = m.readValue(
-					result.getResponse().getContentAsByteArray(),
-					new TypeReference<XDDResponse<DocumentsResponseOK>>() {});
+				result.getResponse().getContentAsByteArray(),
+				new TypeReference<XDDResponse<DocumentsResponseOK>>() {
+				});
 
 		} catch (Exception e) {
 			Assertions.fail("Unable to parse response", e);
@@ -68,38 +69,39 @@ public class XDDTests extends TerariumApplicationTests {
 
 		// verify abstracts are there
 		Assertions.assertTrue(res.getSuccess().getData().get(0).getAbstractText() != null
-				&& !res.getSuccess().getData().get(0).getAbstractText().isEmpty());
+			&& !res.getSuccess().getData().get(0).getAbstractText().isEmpty());
 
 		// verify highlights are there
 		Assertions.assertTrue(res.getSuccess().getData().get(0).getHighlight() != null
-				&& !res.getSuccess().getData().get(0).getHighlight().isEmpty());
+			&& !res.getSuccess().getData().get(0).getHighlight().isEmpty());
 	}
 
 	@Test
 	@WithMockUser(
-			username = "ursula",
-			authorities = {Roles.USER})
+		username = "ursula",
+		authorities = {Roles.USER})
 	public void canSearchWithDateFacet() throws Exception {
 
 		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
-						.queryParam("dataset", "xdd-covid-19")
-						.queryParam("term", "covid")
-						.queryParam("include_score", "true")
-						.queryParam("include_highlights", "true")
-						.queryParam("facets", "true")
-						.queryParam("max", "50")
-						.queryParam("additional_fields", "title,abstract")
-						.queryParam("known_entities", "url_extractions,askem_object")
-						.queryParam("per_page", "50")
-						.queryParam("min_published", "2022-01-01")
-						.queryParam("max_published", "2022-12-31"))
-				.andExpect(status().isOk())
-				.andReturn();
+				.queryParam("dataset", "xdd-covid-19")
+				.queryParam("term", "covid")
+				.queryParam("include_score", "true")
+				.queryParam("include_highlights", "true")
+				.queryParam("facets", "true")
+				.queryParam("max", "50")
+				.queryParam("additional_fields", "title,abstract")
+				.queryParam("known_entities", "url_extractions,askem_object")
+				.queryParam("per_page", "50")
+				.queryParam("min_published", "2022-01-01")
+				.queryParam("max_published", "2022-12-31"))
+			.andExpect(status().isOk())
+			.andReturn();
 
 		ObjectMapper m = new ObjectMapper();
 		XDDResponse<DocumentsResponseOK> res = null;
 		try {
-			res = m.readValue(result.getResponse().getContentAsByteArray(), new TypeReference<>() {});
+			res = m.readValue(result.getResponse().getContentAsByteArray(), new TypeReference<>() {
+			});
 
 		} catch (Exception e) {
 			Assertions.fail("Unable to parse response", e);
@@ -117,40 +119,4 @@ public class XDDTests extends TerariumApplicationTests {
 			}
 		}
 	}
-	/*
-	 * @Test
-	 *
-	 * @WithMockUser(username = "ursula", authorities = { Roles.USER })
-	 * public void canItLimitExtractionsReturned() throws Exception {
-	 *
-	 * private static final String TEST_DOI = "10.1101/2020.08.18.20176354";
-	 *
-	 * ObjectMapper m = new ObjectMapper();
-	 *
-	 * MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
-	 * .queryParam("doi", TEST_DOI)
-	 * .queryParam("known_entities", "askem_object"))
-	 * .andExpect(status().isOk()).andReturn();
-	 *
-	 * XDDResponse<DocumentsResponseOK> res = null;
-	 * try {
-	 * res = m.readValue(result.getResponse().getContentAsByteArray(), new
-	 * TypeReference<>() {
-	 * });
-	 *
-	 * } catch (Exception e) {
-	 * Assertions.fail("Unable to parse response", e);
-	 * }
-	 *
-	 * Assertions.assertNotNull(res);
-	 * // Erroring - commenting this out
-	 * //Assertions.assertEquals(res.getSuccess().getData().get(0).getKnownEntities(
-	 * ).getAskemObjects().size(), 5);
-	 *
-	 * // At the time of writing this was 49, but, its possible this number changes.
-	 * // Whats important is its more than 5!!
-	 * Assertions.assertTrue(res.getSuccess().getData().get(0).
-	 * getKnownEntitiesCounts().getAskemObjectCount() > 5);
-	 * }
-	 */
 }
