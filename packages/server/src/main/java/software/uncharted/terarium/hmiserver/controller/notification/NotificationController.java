@@ -43,14 +43,19 @@ public class NotificationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
 	})
 	public ResponseEntity<List<NotificationGroup>> getNotificationGroups(
-			@RequestParam(value = "since", required = false, defaultValue = "2") final long sinceInHours) {
+			@RequestParam(value = "since", required = false, defaultValue = "2") final long sinceInHours,
+			@RequestParam(value = "include-unack", required = false, defaultValue = "false") final boolean includeUnack) {
 
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(sinceInHours);
 		final Timestamp since = Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		final String userId = currentUserService.get().getId().toString();
 
-		return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
+		if (includeUnack) {
+			return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
+		} else {
+			return ResponseEntity.ok(notificationService.getUnAckedNotificationGroupsCreatedSince(userId, since));
+		}
 	}
 
 	@GetMapping("/ack/{groupId}")
