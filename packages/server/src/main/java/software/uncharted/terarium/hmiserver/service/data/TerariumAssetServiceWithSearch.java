@@ -2,12 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +13,13 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
@@ -105,6 +107,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
+	@Observed(name = "function_profile")
 	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
 		final SearchRequest.Builder builder =
 				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
@@ -124,6 +127,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error deleting the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 
 		final Optional<T> deleted = super.deleteAsset(id);
@@ -144,6 +148,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error creating the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public T createAsset(final T asset) throws IOException {
 		final T created = super.createAsset(asset);
 
@@ -162,6 +167,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error creating the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		final List<T> created = super.createAssets(assets);
@@ -183,6 +189,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> updated = super.updateAsset(asset);
@@ -215,7 +222,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		return String.join("_", Arrays.asList(split).subList(0, split.length - 1));
 	}
 
-	private String incrementVersion(final String version) {
+	private static String incrementVersion(final String version) {
 		final String[] parts = version.split("\\.");
 		if (parts.length != 2) {
 			throw new IllegalArgumentException("Invalid version format: " + version);
@@ -225,7 +232,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		return parts[0] + "." + secondPart;
 	}
 
-	private String generateNextIndexName(final String previousIndex) {
+	private static String generateNextIndexName(final String previousIndex) {
 		return getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex));
 	}
 

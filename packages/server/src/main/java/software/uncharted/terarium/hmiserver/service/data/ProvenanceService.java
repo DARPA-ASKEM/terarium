@@ -2,11 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.PostConstruct;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Values;
@@ -19,6 +15,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.service.neo4j.Neo4jService;
+
+import javax.annotation.PostConstruct;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,7 @@ public class ProvenanceService {
 		graphValidations = loadGraphValidations();
 	}
 
+	@Observed(name = "function_profile")
 	public Map<String, List<List<String>>> loadGraphValidations() throws Exception {
 		final Resource resource = resourceLoader.getResource("classpath:graph_relations.json");
 		final InputStream inputStream = resource.getInputStream();
@@ -66,6 +69,7 @@ public class ProvenanceService {
 		return false;
 	}
 
+	@Observed(name = "function_profile")
 	public Provenance createProvenance(final Provenance provenance) {
 		if (!validateRelationship(provenance.getLeftType(), provenance.getRightType(), provenance.getRelationType())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
@@ -101,6 +105,7 @@ public class ProvenanceService {
 		return provenance;
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteHangingNodes() {
 		try (final Session session = neo4jService.getSession()) {
 			final String query = "MATCH (n) WHERE NOT (n)--() DELETE n";

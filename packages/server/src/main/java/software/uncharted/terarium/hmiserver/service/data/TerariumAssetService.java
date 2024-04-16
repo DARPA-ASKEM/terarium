@@ -2,12 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +10,13 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -55,6 +57,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error retrieving the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> getAsset(final UUID id) throws IOException {
 		final T asset = elasticService.get(getAssetIndex(), id.toString(), assetClass);
 		if (asset != null && asset.getDeletedOn() == null) {
@@ -75,6 +78,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
+	@Observed(name = "function_profile")
 	public List<T> getAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(getAssetIndex())
@@ -97,6 +101,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public List<T> getAssets(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(getAssetIndex())
@@ -116,6 +121,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error deleting the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> deleteAsset(final UUID id) throws IOException {
 		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
@@ -134,6 +140,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IOException If there is an error creating the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public T createAsset(final T asset) throws IOException {
 		if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
 			throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
@@ -146,11 +153,12 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/**
 	 * Create new assets and saves to ES
 	 *
-	 * @param asset The asset to create
+	 * @param assets The assets to create
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public List<T> createAssets(final List<T> assets) throws IOException {
 		for (final T asset : assets) {
 			if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
@@ -171,6 +179,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	@Override
+	@Observed(name = "function_profile")
 	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
@@ -194,6 +203,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 
 	/** Clone asset on ES, retrieve and save document with a different id */
 	@Override
+	@Observed(name = "function_profile")
 	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id);
 		if (targetAsset.isEmpty()) {

@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +13,12 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.repository.data.ActiveConceptRepository;
 import software.uncharted.terarium.hmiserver.repository.data.OntologyConceptRepository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -26,27 +28,33 @@ public class ConceptService {
 	final ActiveConceptRepository activeConceptRespository;
 	final MIRAProxy miraProxy;
 
+	@Observed(name = "function_profile")
 	public List<OntologyConcept> getConcepts() {
 		return ontologyConceptRepository.findAllByDeletedOnIsNull();
 	}
 
+	@Observed(name = "function_profile")
 	public List<OntologyConcept> getConcepts(final List<UUID> ids) {
 		return ontologyConceptRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
+	@Observed(name = "function_profile")
 	public List<OntologyConcept> searchConcept(final String curie) {
 		return ontologyConceptRepository.findAllByCurieAndDeletedOnIsNull(curie);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<OntologyConcept> getConcept(final UUID id) {
 		return ontologyConceptRepository.getByIdAndDeletedOnIsNull(id);
 	}
 
+	@Observed(name = "function_profile")
 	public OntologyConcept createConcept(final OntologyConcept concept) {
 		markConceptAsActive(concept);
 		return ontologyConceptRepository.save(concept);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<OntologyConcept> updateConcept(final OntologyConcept concept) {
 		if (!ontologyConceptRepository.existsById(concept.getId())) {
 			return Optional.empty();
@@ -56,6 +64,7 @@ public class ConceptService {
 		return Optional.of(ontologyConceptRepository.save(concept));
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteConcept(final UUID id) {
 		final Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
 		if (concept.isEmpty()) {
@@ -65,15 +74,18 @@ public class ConceptService {
 		updateConcept(concept.get());
 	}
 
+	@Observed(name = "function_profile")
 	public List<DKG> searchConceptDefinitions(final String term, final Integer limit, final Integer offset)
 			throws Exception {
 		return miraProxy.search(term, limit, offset).getBody();
 	}
 
+	@Observed(name = "function_profile")
 	public DKG getConceptDefinition(final String curie) throws Exception {
 		return miraProxy.getEntity(curie).getBody();
 	}
 
+	@Observed(name = "function_profile")
 	public ConceptFacetSearchResponse searchConceptsUsingFacets(
 			final List<TaggableType> types, final List<String> curies) {
 

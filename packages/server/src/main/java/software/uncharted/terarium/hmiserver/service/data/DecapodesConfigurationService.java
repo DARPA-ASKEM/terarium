@@ -4,17 +4,19 @@ import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import io.micrometer.observation.annotation.Observed;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.multiphysics.DecapodesConfiguration;
+import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.multiphysics.DecapodesConfiguration;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
 @RequiredArgsConstructor
