@@ -111,6 +111,7 @@ public class ExtractionService {
 		private Double estimateT() {
 			// Make sure this value never reaches 1.0 since 1.0 is reserved for the final message
 			final double t = 0.9 - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds));
+			return t;
 		}
 
 		private Double getElapsedSeconds() {
