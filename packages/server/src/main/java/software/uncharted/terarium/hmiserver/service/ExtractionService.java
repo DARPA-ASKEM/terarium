@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
+import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,12 +71,20 @@ public class ExtractionService {
 	private final CurrentUserService currentUserService;
 
 	// time the progress takes to reach each subsequent half
-	final Double HALFTIME_SECONDS = 2.0;
+	final Double HALFTIME_SECONDS = 5.0;
+
+	@Value("${terarium.extractionService.poolSize:10}")
+	private int POOL_SIZE;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
 
-	private final ExecutorService executor = Executors.newFixedThreadPool(1);
+	private ExecutorService executor;
+
+	@PostConstruct
+	void init() {
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
 
 	private static class ClientEventInterface {
 
@@ -84,6 +93,8 @@ public class ExtractionService {
 		private final UUID documentId;
 		private final String userId;
 		final ClientEventService clientEventService;
+
+		private ClientEventType eventType = ClientEventType.EXTRACTION;
 
 		ClientEventInterface(
 				final ClientEventService clientEventService,
@@ -98,7 +109,8 @@ public class ExtractionService {
 		}
 
 		private Double estimateT() {
-			return 1.0f - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds));
+			// Make sure this value never reaches 1.0 since 1.0 is reserved for the final message
+			final double t = 0.9 - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds));
 		}
 
 		private Double getElapsedSeconds() {
@@ -112,10 +124,15 @@ public class ExtractionService {
 
 			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
 			final ClientEvent<ExtractionStatusUpdate> status = ClientEvent.<ExtractionStatusUpdate>builder()
-					.type(ClientEventType.EXTRACTION)
+					.type(this.eventType)
 					.data(update)
 					.build();
 			clientEventService.sendToUser(status, userId);
+		}
+
+		public ClientEventInterface setEventType(final ClientEventType type) {
+			this.eventType = type;
+			return this;
 		}
 
 		public void sendMessage(final String msg) {
@@ -142,9 +159,11 @@ public class ExtractionService {
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain) {
 
 		final String userId = currentUserService.get().getId();
-		final ClientEventInterface clientInterface =
-				new ClientEventInterface(clientEventService, documentId, userId, HALFTIME_SECONDS);
+		final ClientEventInterface clientInterface = new ClientEventInterface(
+						clientEventService, documentId, userId, HALFTIME_SECONDS)
+				.setEventType(ClientEventType.EXTRACTION_PDF);
 
+		clientInterface.sendMessage("PDF extraction task submitted...");
 		return executor.submit(() -> {
 			try {
 				clientInterface.sendMessage("Starting extraction...");
@@ -180,21 +199,19 @@ public class ExtractionService {
 				final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
 
 				boolean jobDone = false;
-				clientInterface.sendMessage("COSMOS extraction in progress...");
 
 				for (int i = 0; i < MAX_ITERATIONS; i++) {
+					clientInterface.sendMessage("COSMOS extraction in progress...");
 
 					final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
 					if (!statusResp.getStatusCode().is2xxSuccessful()) {
 						final String errorMsg = "Unable to poll status endpoint";
-						clientInterface.sendError(errorMsg);
 						throw new RuntimeException(errorMsg);
 					}
 
 					final JsonNode statusData = statusResp.getBody();
 					if (!statusData.get("error").isNull()) {
 						final String errorMsg = "Extraction job failed: " + statusData.has("error");
-						clientInterface.sendError(errorMsg);
 						throw new RuntimeException(errorMsg);
 					}
 
@@ -210,14 +227,12 @@ public class ExtractionService {
 
 				if (!jobDone) {
 					final String errorMsg = "Extraction job did not complete within the expected time";
-					clientInterface.sendError(errorMsg);
 					throw new RuntimeException(errorMsg);
 				}
 
 				final ResponseEntity<byte[]> zipFileResp = extractionProxy.result(jobId);
 				if (!zipFileResp.getStatusCode().is2xxSuccessful()) {
 					final String errorMsg = "Unable to fetch the extraction result";
-					clientInterface.sendError(errorMsg);
 					throw new RuntimeException(errorMsg);
 				}
 
@@ -250,14 +265,12 @@ public class ExtractionService {
 					zipInputStream.close();
 				} catch (final IOException e) {
 					final String errorMsg = "Unable to extract the contents of the zip file";
-					clientInterface.sendError(errorMsg);
 					throw new RuntimeException(errorMsg, e);
 				}
 
 				final ResponseEntity<JsonNode> textResp = extractionProxy.text(jobId);
 				if (!textResp.getStatusCode().is2xxSuccessful()) {
 					final String errorMsg = "Unable to fetch the text extractions";
-					clientInterface.sendError(errorMsg);
 					throw new RuntimeException(errorMsg);
 				}
 
@@ -301,8 +314,7 @@ public class ExtractionService {
 						final DocumentExtraction extraction = new DocumentExtraction();
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
-						extraction.setMetadata(
-								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {}));
+						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
 
 						document.getAssets().add(extraction);
 						clientInterface.sendMessage(
@@ -331,8 +343,7 @@ public class ExtractionService {
 					// run variable extraction
 					try {
 						clientInterface.sendMessage("Dispatching variable extraction request...");
-						document = extractVariables(documentId, new ArrayList<>(), domain)
-								.get();
+						document = runVariableExtraction(clientInterface, documentId, new ArrayList<>(), domain);
 						clientInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						clientInterface.sendMessage("Variable extraction failed, continuing");
@@ -362,7 +373,6 @@ public class ExtractionService {
 						final TaskResponse resp = taskService.runTaskSync(req);
 						if (resp.getStatus() != TaskStatus.SUCCESS) {
 							final String errorMsg = "GoLLM model card task failed";
-							clientInterface.sendError(errorMsg);
 							throw new RuntimeException(errorMsg);
 						}
 						clientInterface.sendMessage("Model Card created");
@@ -380,6 +390,10 @@ public class ExtractionService {
 				throw new ResponseStatusException(
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
+			} catch (final RuntimeException e) {
+				clientInterface.sendError(e.getMessage());
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 			} catch (final Exception e) {
 				final String error = "Unable to extract pdf";
 				log.error(error, e);
@@ -389,6 +403,96 @@ public class ExtractionService {
 		});
 	}
 
+	private DocumentAsset runVariableExtraction(
+			final ClientEventInterface clientInterface,
+			final UUID documentId,
+			final List<UUID> modelIds,
+			final String domain) {
+
+		clientInterface.sendMessage("Starting variable extraction.");
+		try {
+			// Fetch the text from the document
+			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+			clientInterface.sendMessage("Document found, fetching text.");
+			if (document.getText() == null || document.getText().isEmpty()) {
+				throw new RuntimeException("No text found in paper document");
+			}
+
+			// add optional models
+			final List<Model> models = new ArrayList<>();
+			for (final UUID modelId : modelIds) {
+				models.add(modelService.getAsset(modelId).orElseThrow());
+			}
+			clientInterface.sendMessage("Model(s) found, added to extraction request.");
+
+			// Create a collection to hold the variable extractions
+			JsonNode collection = null;
+
+			clientInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
+
+			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
+
+			log.info("Sending variable extraction request to SKEMA");
+			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, true, body);
+
+			clientInterface.sendMessage("Response received.");
+			if (resp.getStatusCode().is2xxSuccessful()) {
+				for (final JsonNode output : resp.getBody().get("outputs")) {
+					if (!output.has("errors") || output.get("errors").isEmpty()) {
+						collection = output.get("data");
+						break;
+					}
+				}
+			} else {
+				throw new RuntimeException("non successful response.");
+			}
+
+			if (collection == null) {
+				throw new RuntimeException("No variables extractions returned");
+			}
+
+			clientInterface.sendMessage("Organizing and saving the extractions.");
+			final List<JsonNode> attributes = new ArrayList<>();
+			for (final JsonNode attribute : collection.get("attributes")) {
+				attributes.add(attribute);
+			}
+
+			// add the attributes to the metadata
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			document.getMetadata().put("attributes", attributes);
+
+			if (modelIds.size() > 0) {
+				for (final UUID modelId : modelIds) {
+					clientInterface.sendMessage("Attempting to align models for model: " + modelId);
+					try {
+						alignAMR(documentId, modelId).get();
+						clientInterface.sendMessage("Model " + modelId + " aligned successfully");
+					} catch (final Exception e) {
+						clientInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
+					}
+				}
+			}
+
+			// update the document
+			return documentService.updateAsset(document).orElseThrow();
+
+		} catch (final FeignException e) {
+			final String error = "Transitive service failure";
+			log.error(error, e.contentUTF8(), e);
+			throw new ResponseStatusException(
+					e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
+		} catch (final Exception e) {
+			final String error =
+					"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
+			log.error(error, e);
+			clientInterface.sendError(error + " — " + e.getMessage());
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
 	public Future<DocumentAsset> extractVariables(
 			final UUID documentId, final List<UUID> modelIds, final String domain) {
 
@@ -396,94 +500,12 @@ public class ExtractionService {
 		final String userId = currentUserService.get().getId();
 		final ClientEventInterface clientInterface =
 				new ClientEventInterface(clientEventService, documentId, userId, HALFTIME_SECONDS);
+		clientInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			clientInterface.sendMessage("Starting variable extraction.");
-			try {
-				// Fetch the text from the document
-				final DocumentAsset document =
-						documentService.getAsset(documentId).orElseThrow();
-				clientInterface.sendMessage("Document found, fetching text.");
-				if (document.getText() == null || document.getText().isEmpty()) {
-					throw new RuntimeException("No text found in paper document");
-				}
-
-				// add optional models
-				final List<Model> models = new ArrayList<>();
-				for (final UUID modelId : modelIds) {
-					models.add(modelService.getAsset(modelId).orElseThrow());
-				}
-				clientInterface.sendMessage("Model(s) found, added to extraction request.");
-
-				// Create a collection to hold the variable extractions
-				JsonNode collection = null;
-
-				clientInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
-
-				final IntegratedTextExtractionsBody body =
-						new IntegratedTextExtractionsBody(document.getText(), models);
-
-				log.info("Sending variable extraction request to SKEMA");
-				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, true, body);
-
-				clientInterface.sendMessage("Response received.");
-				if (resp.getStatusCode().is2xxSuccessful()) {
-					for (final JsonNode output : resp.getBody().get("outputs")) {
-						if (!output.has("errors") || output.get("errors").isEmpty()) {
-							collection = output.get("data");
-							break;
-						}
-					}
-				} else {
-					throw new RuntimeException("non successful response.");
-				}
-
-				if (collection == null) {
-					throw new RuntimeException("No variables extractions returned");
-				}
-
-				clientInterface.sendMessage("Organizing and saving the extractions.");
-				final List<JsonNode> attributes = new ArrayList<>();
-				for (final JsonNode attribute : collection.get("attributes")) {
-					attributes.add(attribute);
-				}
-
-				// add the attributes to the metadata
-				if (document.getMetadata() == null) {
-					document.setMetadata(new HashMap<>());
-				}
-				document.getMetadata().put("attributes", attributes);
-
-				if (modelIds.size() > 0) {
-					for (final UUID modelId : modelIds) {
-						clientInterface.sendMessage("Attempting to align models for model: " + modelId);
-						try {
-							alignAMR(documentId, modelId).get();
-							clientInterface.sendMessage("Model " + modelId + " aligned successfully");
-						} catch (final Exception e) {
-							clientInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
-						}
-					}
-				}
-
-				clientInterface.sendFinalMessage("Extraction complete");
-
-				// update the document
-				return documentService.updateAsset(document).orElseThrow();
-
-			} catch (final FeignException e) {
-				final String error = "Transitive service failure";
-				log.error(error, e.contentUTF8(), e);
-				throw new ResponseStatusException(
-						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-						error + ": " + e.getMessage());
-			} catch (final Exception e) {
-				final String error =
-						"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
-				log.error(error, e);
-				clientInterface.sendError(error + " — " + e.getMessage());
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-			}
+			final DocumentAsset doc = runVariableExtraction(clientInterface, documentId, modelIds, domain);
+			clientInterface.sendFinalMessage("Extraction complete");
+			return doc;
 		});
 	}
 
