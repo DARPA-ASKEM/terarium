@@ -15,12 +15,12 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 public class ExternalPublication extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = -1717000256225044631L;
+	@Serial
+	private static final long serialVersionUID = -1717000256225044631L;
 
-    @JsonProperty("xdd_uri")
-    private String xddUri;
+	@JsonProperty("xdd_uri")
+	private String xddUri;
 
-    @Schema(defaultValue = "Article title")
-    private String title;
+	@Schema(defaultValue = "Article title")
+	private String title;
 }

@@ -11,9 +11,9 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 @Accessors(chain = true)
 public class AddDocumentAssetFromXDDRequest {
 
-    private Document document;
+	private Document document;
 
-    private UUID projectId;
+	private UUID projectId;
 
-    private String domain = "epi"; // default value
+	private String domain = "epi"; // default value
 }

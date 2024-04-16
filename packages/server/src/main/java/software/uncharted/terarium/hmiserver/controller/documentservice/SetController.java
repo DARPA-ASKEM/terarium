@@ -21,29 +21,29 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequiredArgsConstructor
 public class SetController {
 
-    final DocumentProxy proxy;
+	final DocumentProxy proxy;
 
-    @GetMapping("/sets")
-    @Secured(Roles.USER)
-    public ResponseEntity<XDDSetsResponse> getAvailableSets() {
+	@GetMapping("/sets")
+	@Secured(Roles.USER)
+	public ResponseEntity<XDDSetsResponse> getAvailableSets() {
 
-        try {
-            final XDDSetsResponse response = proxy.getAvailableSets();
+		try {
+			final XDDSetsResponse response = proxy.getAvailableSets();
 
-            if (response.getAvailableSets() == null
-                    || response.getAvailableSets().isEmpty())
-                return ResponseEntity.noContent().build();
+			if (response.getAvailableSets() == null
+					|| response.getAvailableSets().isEmpty())
+				return ResponseEntity.noContent().build();
 
-            return ResponseEntity.ok(response);
+			return ResponseEntity.ok(response);
 
-        } catch (final FeignException e) {
-            log.error("xDD returned an exception for set search:", e);
-            throw new ResponseStatusException(
-                    HttpStatusCode.valueOf(e.status()), "There was an issue with the request to xDD");
-        } catch (final Exception e) {
-            log.error("Unable to find sets, an error occurred", e);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find documents, an error occurred");
-        }
-    }
+		} catch (final FeignException e) {
+			log.error("xDD returned an exception for set search:", e);
+			throw new ResponseStatusException(
+					HttpStatusCode.valueOf(e.status()), "There was an issue with the request to xDD");
+		} catch (final Exception e) {
+			log.error("Unable to find sets, an error occurred", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find documents, an error occurred");
+		}
+	}
 }

@@ -22,44 +22,44 @@ import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
 @TSModel
 public class OntologyConcept implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 5877193452400957711L;
+	@Serial
+	private static final long serialVersionUID = 5877193452400957711L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private UUID id;
 
-    @TSOptional
-    @CreationTimestamp
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp createdOn;
+	@TSOptional
+	@CreationTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp createdOn;
 
-    @TSOptional
-    @UpdateTimestamp
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp updatedOn;
+	@TSOptional
+	@UpdateTimestamp
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp updatedOn;
 
-    @TSOptional
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private Timestamp deletedOn;
+	@TSOptional
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+	private Timestamp deletedOn;
 
-    private String curie;
+	private String curie;
 
-    @ManyToOne
-    @JoinColumn(name = "activeConceptId", nullable = true)
-    @JsonBackReference
-    @JsonAlias("active_concept")
-    private ActiveConcept activeConcept;
+	@ManyToOne
+	@JoinColumn(name = "activeConceptId", nullable = true)
+	@JsonBackReference
+	@JsonAlias("active_concept")
+	private ActiveConcept activeConcept;
 
-    private TaggableType type;
+	private TaggableType type;
 
-    @JsonAlias("object_id")
-    private UUID objectId;
+	@JsonAlias("object_id")
+	private UUID objectId;
 
-    private OntologicalField status;
+	private OntologicalField status;
 }

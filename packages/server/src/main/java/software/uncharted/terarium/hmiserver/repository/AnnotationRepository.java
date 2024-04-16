@@ -8,10 +8,10 @@ import software.uncharted.terarium.hmiserver.models.user.Annotation;
 @Repository
 public interface AnnotationRepository extends PSCrudRepository<Annotation, String> {
 
-    List<Annotation> findAllByArtifactTypeAndArtifactId(
-            final String artifactType, final String artifactId, Pageable pagable);
+	List<Annotation> findAllByArtifactTypeAndArtifactId(
+			final String artifactType, final String artifactId, Pageable pagable);
 
-    Annotation findByArtifactId(final String artifactId);
+	Annotation findByArtifactId(final String artifactId);
 
-    void deleteByArtifactId(final String artifactId);
+	void deleteByArtifactId(final String artifactId);
 }

@@ -9,8 +9,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class XDDSetsResponse {
 
-    private String description;
+	private String description;
 
-    @JsonProperty("available_sets")
-    private List<String> availableSets;
+	@JsonProperty("available_sets")
+	private List<String> availableSets;
 }

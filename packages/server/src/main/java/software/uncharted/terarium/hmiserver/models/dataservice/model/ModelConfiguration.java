@@ -16,16 +16,16 @@ import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdd
 @TSModel
 public class ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
 
-    @Serial
-    private static final long serialVersionUID = -4109896135386019667L;
+	@Serial
+	private static final long serialVersionUID = -4109896135386019667L;
 
-    private String name;
+	private String name;
 
-    @TSOptional
-    private String description;
+	@TSOptional
+	private String description;
 
-    @JsonProperty("model_id")
-    private UUID modelId;
+	@JsonProperty("model_id")
+	private UUID modelId;
 
-    private Object configuration;
+	private Object configuration;
 }

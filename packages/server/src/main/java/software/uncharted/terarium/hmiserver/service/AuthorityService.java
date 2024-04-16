@@ -11,13 +11,13 @@ import software.uncharted.terarium.hmiserver.repository.AuthorityRepository;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthorityService {
-    private final AuthorityRepository authorityRepository;
+	private final AuthorityRepository authorityRepository;
 
-    public long count() {
-        return authorityRepository.count();
-    }
+	public long count() {
+		return authorityRepository.count();
+	}
 
-    public Authority createAuthority(final AuthorityType type) {
-        return authorityRepository.save(new Authority().setName(type.name()));
-    }
+	public Authority createAuthority(final AuthorityType type) {
+		return authorityRepository.save(new Authority().setName(type.name()));
+	}
 }

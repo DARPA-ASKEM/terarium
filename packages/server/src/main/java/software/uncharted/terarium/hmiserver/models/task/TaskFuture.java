@@ -13,24 +13,24 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 public class TaskFuture implements Serializable {
 
-    protected UUID id;
-    protected TaskResponse latestResponse;
-    protected CompletableFuture<TaskResponse> future;
+	protected UUID id;
+	protected TaskResponse latestResponse;
+	protected CompletableFuture<TaskResponse> future;
 
-    public UUID getId() {
-        return id;
-    }
+	public UUID getId() {
+		return id;
+	}
 
-    public synchronized TaskResponse poll() {
-        return latestResponse;
-    }
+	public synchronized TaskResponse poll() {
+		return latestResponse;
+	}
 
-    public TaskResponse get() throws InterruptedException, ExecutionException {
-        return future.get();
-    }
+	public TaskResponse get() throws InterruptedException, ExecutionException {
+		return future.get();
+	}
 
-    public TaskResponse get(final long timeout, final TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        return future.get(timeout, unit);
-    }
+	public TaskResponse get(final long timeout, final TimeUnit unit)
+			throws InterruptedException, ExecutionException, TimeoutException {
+		return future.get(timeout, unit);
+	}
 }

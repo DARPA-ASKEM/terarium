@@ -14,11 +14,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Species implements Serializable {
 
-    private String sname;
+	private String sname;
 
-    @JsonAlias("mira_ids")
-    private List<Ontology> miraIds;
+	@JsonAlias("mira_ids")
+	private List<Ontology> miraIds;
 
-    @JsonAlias("mira_context")
-    private List<Ontology> miraContext;
+	@JsonAlias("mira_context")
+	private List<Ontology> miraContext;
 }

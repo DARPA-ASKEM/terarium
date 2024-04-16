@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final CurrentUserService currentUserService;
+	private final CurrentUserService currentUserService;
 
-    @GetMapping("/me")
-    public ResponseEntity<User> getWhoAmI() {
-        return ResponseEntity.ok(currentUserService.get());
-    }
+	@GetMapping("/me")
+	public ResponseEntity<User> getWhoAmI() {
+		return ResponseEntity.ok(currentUserService.get());
+	}
 }

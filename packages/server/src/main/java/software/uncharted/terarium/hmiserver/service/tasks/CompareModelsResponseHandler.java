@@ -11,26 +11,26 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CompareModelsResponseHandler extends TaskResponseHandler {
-    public static final String NAME = "gollm:compare_models";
+	public static final String NAME = "gollm:compare_models";
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
+	@Override
+	public String getName() {
+		return NAME;
+	}
 
-    @Data
-    public static class Input {
-        @JsonProperty("model_cards")
-        List<String> modelCards;
-    }
+	@Data
+	public static class Input {
+		@JsonProperty("model_cards")
+		List<String> modelCards;
+	}
 
-    @Data
-    public static class Properties {
-        List<UUID> modelIds;
-    }
+	@Data
+	public static class Properties {
+		List<UUID> modelIds;
+	}
 
-    @Data
-    public static class Response {
-        JsonNode response;
-    }
+	@Data
+	public static class Response {
+		JsonNode response;
+	}
 }

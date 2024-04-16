@@ -15,14 +15,14 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 @EqualsAndHashCode(callSuper = true)
 @TSModel
 public class DocumentsResponseOK extends XDDResponseOK implements Serializable {
-    private List<Document> data;
+	private List<Document> data;
 
-    @JsonAlias("next_page")
-    private String nextPage;
+	@JsonAlias("next_page")
+	private String nextPage;
 
-    private String scrollId;
+	private String scrollId;
 
-    private Number hits;
+	private Number hits;
 
-    private Map<String, XDDFacetsItemResponse> facets;
+	private Map<String, XDDFacetsItemResponse> facets;
 }

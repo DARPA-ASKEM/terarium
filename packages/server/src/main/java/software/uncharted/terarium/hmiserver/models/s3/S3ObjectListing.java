@@ -12,6 +12,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @NoArgsConstructor
 @TSModel
 public class S3ObjectListing {
-    private boolean isTruncated;
-    private List<S3Object> contents = new ArrayList<>();
+	private boolean isTruncated;
+	private List<S3Object> contents = new ArrayList<>();
 }
