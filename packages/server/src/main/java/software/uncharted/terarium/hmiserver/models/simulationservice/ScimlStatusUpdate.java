@@ -11,22 +11,22 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class ScimlStatusUpdate {
 
-    /** Error or loss after each iteration * */
-    private Number loss;
+	/** Error or loss after each iteration * */
+	private Number loss;
 
-    /** Current iteration * */
-    private Number iter;
+	/** Current iteration * */
+	private Number iter;
 
-    /** New values calulated after each iteration * */
-    private Map<String, Number> params;
+	/** New values calulated after each iteration * */
+	private Map<String, Number> params;
 
-    /** The simulation id associated with this run * */
-    private String id;
+	/** The simulation id associated with this run * */
+	private String id;
 
-    /** New state variables calulated after each iteration * */
-    @JsonAlias("sol_data")
-    private Map<String, JsonNode> solData;
+	/** New state variables calulated after each iteration * */
+	@JsonAlias("sol_data")
+	private Map<String, JsonNode> solData;
 
-    /** List of timesteps * */
-    private List<Number> timesteps;
+	/** List of timesteps * */
+	private List<Number> timesteps;
 }

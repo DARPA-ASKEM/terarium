@@ -9,6 +9,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ContextFile implements Serializable {
-    private String uri;
-    private String format;
+	private String uri;
+	private String format;
 }

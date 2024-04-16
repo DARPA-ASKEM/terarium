@@ -12,14 +12,14 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Accessors(chain = true)
 public class WorkflowNode extends SupportAdditionalProperties implements Serializable {
 
-    private UUID id;
-    private UUID workflowId;
+	private UUID id;
+	private UUID workflowId;
 
-    public WorkflowNode clone(final UUID workflowId) {
-        final WorkflowNode clone = new WorkflowNode();
-        clone.setId(UUID.randomUUID());
-        clone.setWorkflowId(workflowId);
-        clone.setAdditionalProperties(this.getAdditionalProperties());
-        return clone;
-    }
+	public WorkflowNode clone(final UUID workflowId) {
+		final WorkflowNode clone = new WorkflowNode();
+		clone.setId(UUID.randomUUID());
+		clone.setWorkflowId(workflowId);
+		clone.setAdditionalProperties(this.getAdditionalProperties());
+		return clone;
+	}
 }

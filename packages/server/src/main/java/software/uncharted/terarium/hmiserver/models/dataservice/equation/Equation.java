@@ -18,28 +18,28 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 public class Equation extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = -5769056715284691520L;
-    /** The userId of the user that created the equation * */
-    @TSOptional
-    private String userId;
+	@Serial
+	private static final long serialVersionUID = -5769056715284691520L;
+	/** The userId of the user that created the equation * */
+	@TSOptional
+	private String userId;
 
-    /** (Optional) Display/human name for the equation * */
-    @TSOptional
-    private String name;
+	/** (Optional) Display/human name for the equation * */
+	@TSOptional
+	private String name;
 
-    /** The type of equation (mathml or latex) * */
-    @JsonAlias("equation_type")
-    private EquationType equationType;
+	/** The type of equation (mathml or latex) * */
+	@JsonAlias("equation_type")
+	private EquationType equationType;
 
-    /** String representation of the equation * */
-    private String content;
+	/** String representation of the equation * */
+	private String content;
 
-    /** (Optional) Unformatted metadata about the equation * */
-    @TSOptional
-    private Map<String, JsonNode> metadata;
+	/** (Optional) Unformatted metadata about the equation * */
+	@TSOptional
+	private Map<String, JsonNode> metadata;
 
-    /** (Optional) Source of the equation, whether a document or HMI generated * */
-    @TSOptional
-    private EquationSource source;
+	/** (Optional) Source of the equation, whether a document or HMI generated * */
+	@TSOptional
+	private EquationSource source;
 }

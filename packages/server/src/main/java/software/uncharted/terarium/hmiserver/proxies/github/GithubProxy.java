@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.models.code.GithubFile;
 
 @FeignClient(name = "github", url = "${github.url}")
 public interface GithubProxy {
-    @GetMapping("/repos/{repoOwnerAndName}/contents/{path}")
-    ResponseEntity<List<GithubFile>> getGithubRepositoryContent(
-            @PathVariable("repoOwnerAndName") String repoOwnerAndName, @PathVariable("path") String path);
+	@GetMapping("/repos/{repoOwnerAndName}/contents/{path}")
+	ResponseEntity<List<GithubFile>> getGithubRepositoryContent(
+			@PathVariable("repoOwnerAndName") String repoOwnerAndName, @PathVariable("path") String path);
 }

@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocum
 @Accessors(chain = true)
 public class XDDRelatedDocumentsResponse {
 
-    private String status;
+	private String status;
 
-    private List<RelatedDocument> data;
+	private List<RelatedDocument> data;
 }

@@ -12,6 +12,6 @@ import lombok.experimental.Accessors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EntitySuggestFuzzy implements Serializable {
 
-    // We don't care what this is here, we just need to know how many it is, hence Object
-    private List<Map<String, Object>> options;
+	// We don't care what this is here, we just need to know how many it is, hence Object
+	private List<Map<String, Object>> options;
 }

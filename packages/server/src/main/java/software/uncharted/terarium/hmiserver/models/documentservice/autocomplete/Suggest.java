@@ -12,6 +12,6 @@ import lombok.experimental.Accessors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Suggest implements Serializable {
 
-    @JsonAlias("entity-suggest-fuzzy")
-    private List<EntitySuggestFuzzy> entitySuggestFuzzy;
+	@JsonAlias("entity-suggest-fuzzy")
+	private List<EntitySuggestFuzzy> entitySuggestFuzzy;
 }

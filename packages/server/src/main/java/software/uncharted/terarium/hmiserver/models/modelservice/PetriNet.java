@@ -10,15 +10,15 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class PetriNet implements Serializable {
-    @JsonProperty("S")
-    private List<Map<String, String>> s;
+	@JsonProperty("S")
+	private List<Map<String, String>> s;
 
-    @JsonProperty("T")
-    private List<Map<String, String>> t;
+	@JsonProperty("T")
+	private List<Map<String, String>> t;
 
-    @JsonProperty("I")
-    private List<Map<String, Integer>> i;
+	@JsonProperty("I")
+	private List<Map<String, Integer>> i;
 
-    @JsonProperty("O")
-    private List<Map<String, Integer>> o;
+	@JsonProperty("O")
+	private List<Map<String, Integer>> o;
 }

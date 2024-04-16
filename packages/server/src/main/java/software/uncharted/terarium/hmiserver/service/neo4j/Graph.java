@@ -14,28 +14,28 @@ import org.neo4j.driver.types.Relationship;
 @Data
 public class Graph {
 
-    public Graph(final Result result) {
-        nodes = new ArrayList<>();
-        nodesById = new HashMap<>();
-        relationships = new ArrayList<>();
+	public Graph(final Result result) {
+		nodes = new ArrayList<>();
+		nodesById = new HashMap<>();
+		relationships = new ArrayList<>();
 
-        while (result.hasNext()) {
-            final Record r = result.next();
+		while (result.hasNext()) {
+			final Record r = result.next();
 
-            final List<Node> recordNodes = r.get("nodes").asList(Value::asNode);
-            final List<Relationship> recordRelationships =
-                    r.get("relationships").asList(Value::asRelationship);
+			final List<Node> recordNodes = r.get("nodes").asList(Value::asNode);
+			final List<Relationship> recordRelationships =
+					r.get("relationships").asList(Value::asRelationship);
 
-            nodes.addAll(recordNodes);
-            relationships.addAll(recordRelationships);
-        }
+			nodes.addAll(recordNodes);
+			relationships.addAll(recordRelationships);
+		}
 
-        for (final Node node : nodes) {
-            nodesById.put(node.elementId(), node);
-        }
-    }
+		for (final Node node : nodes) {
+			nodesById.put(node.elementId(), node);
+		}
+	}
 
-    private List<Node> nodes;
-    private Map<String, Node> nodesById;
-    private List<Relationship> relationships;
+	private List<Node> nodes;
+	private Map<String, Node> nodesById;
+	private List<Relationship> relationships;
 }

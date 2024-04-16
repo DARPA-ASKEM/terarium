@@ -8,17 +8,17 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 @Deprecated
 public interface SnakeCaseController {
 
-    /**
-     * Serialize a given object to be in snake-case instead of camelCase, as may be required by the proxied endpoint.
-     *
-     * @param object
-     * @return
-     */
-    default JsonNode convertObjectToSnakeCaseJsonNode(Object object) {
+	/**
+	 * Serialize a given object to be in snake-case instead of camelCase, as may be required by the proxied endpoint.
+	 *
+	 * @param object
+	 * @return
+	 */
+	default JsonNode convertObjectToSnakeCaseJsonNode(Object object) {
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        return mapper.convertValue(object, JsonNode.class);
-    }
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+		return mapper.convertValue(object, JsonNode.class);
+	}
 }

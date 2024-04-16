@@ -13,12 +13,12 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class DKGConcept extends SupportAdditionalProperties implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 8605126700128460881L;
+	@Serial
+	private static final long serialVersionUID = 8605126700128460881L;
 
-    private String id;
+	private String id;
 
-    private String name;
+	private String name;
 
-    private Double score;
+	private Double score;
 }

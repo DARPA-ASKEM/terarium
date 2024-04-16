@@ -10,12 +10,12 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Software implements Serializable {
 
-    private String id;
+	private String id;
 
-    private Instant timestamp;
+	private Instant timestamp;
 
-    private String source;
+	private String source;
 
-    @JsonProperty("storage_uri")
-    private String storageUri;
+	@JsonProperty("storage_uri")
+	private String storageUri;
 }

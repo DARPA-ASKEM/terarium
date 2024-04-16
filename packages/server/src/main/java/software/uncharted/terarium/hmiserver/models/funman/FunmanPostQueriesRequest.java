@@ -11,6 +11,6 @@ import software.uncharted.terarium.hmiserver.models.funman.parts.FunmanWorkReque
 @Accessors(chain = true)
 @TSModel
 public class FunmanPostQueriesRequest implements Serializable {
-    private Model model;
-    private FunmanWorkRequest request;
+	private Model model;
+	private FunmanWorkRequest request;
 }

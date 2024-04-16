@@ -10,8 +10,8 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ConfigurationDatasetFile implements Serializable {
-    private String _type;
-    private String uri;
-    private String format;
-    private List<Number> shape;
+	private String _type;
+	private String uri;
+	private String format;
+	private List<Number> shape;
 }

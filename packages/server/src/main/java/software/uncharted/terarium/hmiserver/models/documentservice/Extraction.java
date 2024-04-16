@@ -14,22 +14,22 @@ import lombok.experimental.Accessors;
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 public class Extraction implements Serializable {
 
-    private Long id;
+	private Long id;
 
-    @JsonAlias("ASKEM_CLASS")
-    private String askemClass;
+	@JsonAlias("ASKEM_CLASS")
+	private String askemClass;
 
-    private ExtractionProperties properties;
+	private ExtractionProperties properties;
 
-    @JsonAlias({"askem_id", "ASKEM_ID"})
-    private String askemId;
+	@JsonAlias({"askem_id", "ASKEM_ID"})
+	private String askemId;
 
-    @JsonAlias("_xdd_created")
-    private Date xddCreated;
+	@JsonAlias("_xdd_created")
+	private Date xddCreated;
 
-    @JsonAlias("_xdd_registrant")
-    private Number xddRegistrant;
+	@JsonAlias("_xdd_registrant")
+	private Number xddRegistrant;
 
-    @JsonAlias("_highlight")
-    private List<String> highlight;
+	@JsonAlias("_highlight")
+	private List<String> highlight;
 }
