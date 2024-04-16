@@ -289,7 +289,7 @@ export async function pollAction(id: string) {
 	}
 
 	if (simResponse.status === ProgressState.Cancelled) {
-		return { data: simResponse, progress: null, error: null, cancelled: true };
+		return { data: null, progress: null, error: null, cancelled: true };
 	}
 	return { data: simResponse, progress: null, error: null };
 }
