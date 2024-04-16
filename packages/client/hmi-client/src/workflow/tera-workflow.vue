@@ -12,6 +12,7 @@
 		@drop="onDrop"
 		@dragover.prevent
 		@dragenter.prevent
+		:lastTransform="canvasTransform"
 	>
 		<!-- toolbar -->
 		<template #foreground>
@@ -219,6 +220,7 @@ import * as d3 from 'd3';
 import { AssetType, EventType } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
+import { getLocalStorageTransform, setLocalStorageTransform } from '@/utils/localStorage';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
@@ -670,7 +672,6 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
-	workflowDirty = true;
 }
 
 const isCreatingNewEdge = computed(
@@ -889,6 +890,11 @@ watch(
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		isWorkflowLoading.value = true;
+
+		const transform = getLocalStorageTransform(workflowId);
+		if (transform) {
+			canvasTransform = transform;
+		}
 		wf.value = await workflowService.getWorkflow(workflowId);
 		isWorkflowLoading.value = false;
 
@@ -923,6 +929,9 @@ onUnmounted(() => {
 	}
 	if (saveTimer) {
 		clearInterval(saveTimer);
+	}
+	if (canvasTransform) {
+		setLocalStorageTransform(wf.value.id, canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);

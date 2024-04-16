@@ -62,7 +62,10 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 	container.attr('transform', e.transform);
 
 	d3.select(dataLayerRef.value as HTMLDivElement)
-		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
+		.style(
+			'transform',
+			`translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`
+		)
 		.style('transform-origin', '0 0');
 
 	if (props.debugMode) {
@@ -157,8 +160,7 @@ onMounted(() => {
 	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
 	// Draw dot pattern in background
-	svg
-		.append('defs')
+	svg.append('defs')
 		.append('pattern')
 		.attr('id', 'dotPattern')
 		.attr('width', 12)
@@ -170,8 +172,7 @@ onMounted(() => {
 		.attr('cy', 12)
 		.attr('r', 2);
 
-	svg
-		.append('rect')
+	svg.append('rect')
 		.attr('x', 0)
 		.attr('y', 0)
 		.attr('width', '100%')
@@ -188,8 +189,9 @@ onMounted(() => {
 
 	// Initialize starting position
 	if (props.lastTransform) {
-		zoom.scaleTo(svg as any, props.lastTransform.k);
-		zoom.translateTo(svg as any, props.lastTransform.x, props.lastTransform.y);
+		const tr = props.lastTransform;
+		zoom.scaleTo(svg as any, tr.k);
+		zoom.translateTo(svg as any, -tr.x / tr.k, -tr.y / tr.k);
 	} else {
 		// Default position - triggers handleZoom which in turn sets currentTransform
 		svg.transition().call(zoom.transform as any, d3.zoomIdentity);
