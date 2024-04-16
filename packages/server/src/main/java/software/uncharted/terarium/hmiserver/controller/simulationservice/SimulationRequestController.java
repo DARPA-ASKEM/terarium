@@ -203,9 +203,7 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@GetMapping("ciemss/cancel/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> cancelCiemssJob(
-		@PathVariable("id") final UUID id
-	){
+	public ResponseEntity<JobResponse> cancelCiemssJob(@PathVariable("id") final UUID id) {
 		return ResponseEntity.ok(simulationCiemssServiceProxy.cancelJob(id).getBody());
 	}
 
