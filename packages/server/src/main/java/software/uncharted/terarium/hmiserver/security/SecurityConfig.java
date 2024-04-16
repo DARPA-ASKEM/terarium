@@ -24,10 +24,10 @@ import software.uncharted.terarium.hmiserver.filters.ServiceRequestFilter;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 @EnableGlobalMethodSecurity(
-		securedEnabled = true
-		// jsr250Enabled = true,
-		// prePostEnabled = true
-		)
+	securedEnabled = true
+	// jsr250Enabled = true,
+	// prePostEnabled = true
+)
 public class SecurityConfig {
 
 	private final KeycloakLogoutHandler keycloakLogoutHandler;
@@ -55,26 +55,27 @@ public class SecurityConfig {
 	public SecurityFilterChain initialSecurityFilterChain(final HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests((authorize) -> {
 			authorize
-					.requestMatchers(swaggerRequestMatcher)
-					.permitAll()
-					.requestMatchers(unauthenticatedUrlRequestMatcher)
-					.permitAll()
-					.anyRequest()
-					.authenticated();
+				.requestMatchers(swaggerRequestMatcher)
+				.permitAll()
+				.requestMatchers(unauthenticatedUrlRequestMatcher)
+				.permitAll()
+				.anyRequest()
+				.authenticated();
 		});
 		http.oauth2ResourceServer(configurer ->
-				configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)));
+			configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)));
 		http.addFilterBefore(
-				new ServiceRequestFilter(applicationContext), AbstractPreAuthenticatedProcessingFilter.class);
+			new ServiceRequestFilter(applicationContext), AbstractPreAuthenticatedProcessingFilter.class);
 
 		// Disable session management and CSRF. Since we do not use cookies for any
 		// authentication, we do not need to worry about CSRF.
 		http.sessionManagement(httpSecuritySessionManagementConfigurer ->
-						httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.csrf(AbstractHttpConfigurer::disable)
-				.exceptionHandling()
-				.accessDeniedHandler(accessDeniedHandler())
-				.authenticationEntryPoint(authenticationEntryPoint());
+				httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.csrf(AbstractHttpConfigurer::disable)
+			.exceptionHandling(httpSecurityExceptionHandlingConfigurer ->
+				httpSecurityExceptionHandlingConfigurer
+					.accessDeniedHandler(accessDeniedHandler())
+					.authenticationEntryPoint(authenticationEntryPoint()));
 
 		return http.build();
 	}
