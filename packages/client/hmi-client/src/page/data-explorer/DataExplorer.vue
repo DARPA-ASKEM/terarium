@@ -144,6 +144,9 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 // facets
 const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
+let modelTotal: number = 0;
+let documentTotal: number = 0;
+let datasetTotal: number = 0;
 const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 
 const viewType = ref<string>(ViewType.LIST);
@@ -416,7 +419,35 @@ const executeSearch = async () => {
 		const count = res?.hits ?? res?.results.length;
 		total += count;
 	});
+
+	// Note that we only do xDD document and Dataset searches on demand and don't have a way of knowing in advance how many results there are
+	if (chosenSource.value === DocumentSource.XDD && resourceType.value === ResourceType.XDD) {
+		documentTotal = total ?? 0;
+	} else if (resourceType.value === ResourceType.DATASET) {
+		datasetTotal = total ?? 0;
+	}
+
+	// Models and terarium documents are fetched in the same search on every search so these will always be accurate.
+	for (let i = 0; i < searchResults.value.length; i++) {
+		if (searchResults.value[i].searchSubsystem === ResourceType.MODEL) {
+			modelTotal = searchResults.value[i].results.length ?? 0;
+		} else if (
+			searchResults.value[i].searchSubsystem === ResourceType.XDD &&
+			chosenSource.value === DocumentSource.TERARIUM &&
+			resourceType.value === ResourceType.XDD
+		) {
+			// Note on the above, when we say XDD here we apparently don't actually mean XDD we mean Terarium Documents.
+			documentTotal = searchResults.value[i].results.length ?? 0;
+		}
+	}
+
 	docCount.value = total;
+
+	assetOptions.value = [
+		{ label: `Documents (${documentTotal})`, value: AssetType.Document },
+		{ label: `Models (${modelTotal})`, value: AssetType.Model },
+		{ label: `Datasets (${datasetTotal})`, value: AssetType.Dataset }
+	];
 
 	isLoading.value = false;
 };
