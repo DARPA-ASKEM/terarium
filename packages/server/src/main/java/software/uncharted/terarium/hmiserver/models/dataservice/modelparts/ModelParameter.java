@@ -35,5 +35,5 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private ModelDistribution distribution;
 
 	@TSOptional
-	private ModelUnit unit;
+	private ModelUnit units;
 }

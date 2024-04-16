@@ -10,7 +10,7 @@ import type {
 } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
-import { Model, Initial, ModelUnit } from '@/types/Types';
+import { Model, Initial } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
@@ -29,7 +29,7 @@ interface AddTemplateArguments {
 	controller_initial_value?: string;
 	parameter_name?: string;
 	parameter_value?: number;
-	parameter_units?: ModelUnit;
+	parameter_units?: string;
 	parameter_description?: string;
 	template_expression?: string;
 	template_name?: string;
@@ -252,8 +252,10 @@ export function addDecomposedTemplateInKernel(
 			if (parameters) {
 				addTemplateArguments.parameter_name = parameters[0].id;
 				addTemplateArguments.parameter_value = parameters[0].value;
-				addTemplateArguments.parameter_units = parameters[0].unit ?? undefined;
+				addTemplateArguments.parameter_units = parameters[0]?.units?.expression;
 				addTemplateArguments.parameter_description = parameters[0].description;
+
+				console.log(addTemplateArguments, parameters);
 			}
 
 			// Add intial related arguments
