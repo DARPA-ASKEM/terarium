@@ -148,6 +148,13 @@ jobs:
       # - arm64-macos
       - arm64-emulation
     steps:
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+  
       - name: Create, inspect and publish manifest
         run: |
           docker manifest create ${{ needs.image-name.outputs.name }} \
