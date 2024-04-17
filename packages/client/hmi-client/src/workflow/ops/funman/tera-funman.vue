@@ -172,10 +172,6 @@ import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
 
-import TeraConstraintGroupForm from '@/components/funman/tera-constraint-group-form.vue';
-import TeraCompartmentConstraint from '@/components/funman/tera-compartment-constraint.vue';
-
-import TeraFunmanOutput from '@/components/funman/tera-funman-output.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -194,6 +190,9 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
+import TeraFunmanOutput from '@/workflow/ops/funman/tera-funman-output.vue';
+import TeraCompartmentConstraint from '@/workflow/ops/funman/tera-compartment-constraint.vue';
+import TeraConstraintGroupForm from '@/workflow/ops/funman/tera-constraint-group-form.vue';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
