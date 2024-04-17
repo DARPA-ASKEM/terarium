@@ -254,8 +254,6 @@ export function addDecomposedTemplateInKernel(
 				addTemplateArguments.parameter_value = parameters[0].value;
 				addTemplateArguments.parameter_units = parameters[0]?.units?.expression;
 				addTemplateArguments.parameter_description = parameters[0].description;
-
-				console.log(addTemplateArguments, parameters);
 			}
 
 			// Add intial related arguments
