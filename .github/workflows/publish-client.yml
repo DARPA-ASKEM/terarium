@@ -36,10 +36,10 @@ jobs:
             fi
           fi
           TAG=test-to-be-deleted
-          echo "$TAG"
-          image=${{ env.REGISTRY }}/darpa-askem/hmi-client:${TAG,,}
-          echo "$image"
-          echo "$image" >> $GITHUB_OUTPUT
+
+          IMAGE=${{ env.REGISTRY }}/darpa-askem/hmi-client:${TAG,,}
+          echo "$IMAGE"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
   amd64:
     runs-on: ubuntu-22.04
