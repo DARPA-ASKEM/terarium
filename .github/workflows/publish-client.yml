@@ -13,7 +13,7 @@ on:
 
 jobs:
   image-name:
-    name: Create the name of the Image
+    name: Create image name
     runs-on: ubuntu-22.04
     outputs:
       name: ${{ steps.define.outputs.name }}
@@ -140,7 +140,7 @@ jobs:
           tags: ${{ needs.image-name.outputs.name }}--arm64
 
   merge-images:
-    name: Merge images into one multi-arch manifest
+    name: Merge into one manifest
     runs-on: ubuntu-22.04
     needs:
       - image-name
@@ -154,7 +154,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-  
+
       - name: Create, inspect and publish manifest
         run: |
           docker manifest create ${{ needs.image-name.outputs.name }} \
