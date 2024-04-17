@@ -37,7 +37,13 @@
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
 			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
-				<Column field="id" header="Symbol" />
+				<Column field="id" header="Symbol">
+					<template #body="slotProps">
+						<span class="latin-modern-font">
+							{{ slotProps.data.id }}
+						</span>
+					</template>
+				</Column>
 				<Column field="name" header="Name" />
 				<Column field="expression" header="Expression">
 					<template #body="{ data }">
@@ -56,10 +62,28 @@
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
 			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
-				<Column field="id" header="Symbol" />
+				<Column field="id" header="Symbol">
+					<template #body="slotProps">
+						<span class="latin-modern-font">
+							{{ slotProps.data.id }}
+						</span>
+					</template>
+				</Column>
 				<Column field="name" header="Name" />
-				<Column field="input" header="Input" />
-				<Column field="output" header="Output" />
+				<Column field="input" header="Input">
+					<template #body="slotProps">
+						<span class="latin-modern-font">
+							{{ slotProps.data.id }}
+						</span>
+					</template>
+				</Column>
+				<Column field="output" header="Output">
+					<template #body="slotProps">
+						<span class="latin-modern-font">
+							{{ slotProps.data.id }}
+						</span>
+					</template>
+				</Column>
 				<Column field="expression" header="Expression">
 					<template #body="{ data }">
 						<katex-element
@@ -88,7 +112,13 @@
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
 			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
-				<Column field="id" header="Symbol" />
+				<Column field="id" header="Symbol">
+					<template #body="slotProps">
+						<span class="latin-modern-font">
+							{{ slotProps.data.id }}
+						</span>
+					</template>
+				</Column>
 				<Column field="units.expression" header="Unit" />
 			</DataTable>
 		</AccordionTab>

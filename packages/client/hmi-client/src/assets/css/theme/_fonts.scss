@@ -21,4 +21,48 @@ h5 {
 
 h6 {
     font-size: $fontBodySmall;
-} 
+}
+
+
+/*
+The Latin Modern fonts are released under the GUST font license, which is
+legally equivalent to the LaTeX Project Public License. See the files in this
+directory for details. The fonts can be obtained from several TeX distributions
+or package managers.
+
+The WOFF fonts have been obtained from
+http://www.gust.org.pl/projects/e-foundry/
+*/
+
+@font-face {
+    font-family: 'latin-modern-math';
+    src: local('Latin Modern Math'),
+         local('LatinModernMath-Regular'),
+         url('@/assets/fonts/latinModern/latinmodern-math.woff2'), 
+         url('@/assets/fonts/latinModern/latinmodern-math.woff');
+}
+
+@font-face {
+    font-family: 'latin-modern-roman12';
+    src: url('@/assets/fonts/latinModern/lmroman12-regular.woff2'), 
+         url('@/assets/fonts/latinModern/lmroman12-regular.woff');
+}
+
+@font-face {
+    font-family: 'latin-modern-roman12';
+    src: url('@/assets/fonts/latinModern/lmroman12-bold.woff2'), 
+         url('@/assets/fonts/latinModern/lmroman12-bold.woff');
+    font-weight: bold;
+}
+@font-face {
+    font-family: 'latin-modern-roman12';
+    src: url('@/assets/fonts/latinModern/lmroman12-italic.woff2'), 
+         url('@/assets/fonts/latinModern/lmroman12-italic.woff');
+    font-style: italic;
+}
+
+.latin-modern-font {
+    font-family: 'latin-modern-math, latin-modern-roman12';
+    font-style: italic;
+	font-size: medium;
+}
