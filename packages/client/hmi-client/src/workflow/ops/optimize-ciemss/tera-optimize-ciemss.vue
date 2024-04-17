@@ -408,7 +408,7 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(
-	() => props.node.state.inProgressOptimizeId || props.node.state.inProgressForecastId
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
 );
 
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {

@@ -239,7 +239,7 @@ const modelConfig = ref<ModelConfiguration>();
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const cancelRunId = computed(
-	() => props.node.state.inProgressCalibrationId || props.node.state.inProgressForecastId
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
 );
 const currentDatasetFileName = ref<string>();
 
