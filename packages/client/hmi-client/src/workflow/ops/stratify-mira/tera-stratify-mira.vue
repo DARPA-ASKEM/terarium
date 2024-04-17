@@ -140,7 +140,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 
-import TeraStratificationGroupForm from '@/components/stratification/tera-stratification-group-form.vue';
+import TeraStratificationGroupForm from '@/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
 import { createModel, getModel } from '@/services/model';
