@@ -190,9 +190,9 @@ import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
-import TeraFunmanOutput from './tera-funman-output.vue';
-import TeraCompartmentConstraint from './tera-compartment-constraint.vue';
-import TeraConstraintGroupForm from './tera-constraint-group-form.vue';
+import TeraFunmanOutput from '@/workflow/ops/funman/tera-funman-output.vue';
+import TeraCompartmentConstraint from '@/workflow/ops/funman/tera-compartment-constraint.vue';
+import TeraConstraintGroupForm from '@/workflow/ops/funman/tera-constraint-group-form.vue';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
