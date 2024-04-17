@@ -2,10 +2,12 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.io.Serial;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -14,6 +16,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @EqualsAndHashCode(callSuper = true)
@@ -28,7 +31,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("execution_payload")
 	@Convert(converter = JpaConverterJson.class)
-	private Object executionPayload;
+	private SimulationRequest executionPayload;
 
 	@TSOptional
 	private String description;
@@ -36,6 +39,7 @@ public class Simulation extends TerariumAsset {
 	@JsonAlias("result_files")
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@ElementCollection
 	private List<String> resultFiles;
 
 	@Enumerated(EnumType.STRING)
@@ -64,7 +68,7 @@ public class Simulation extends TerariumAsset {
 	private SimulationEngine engine;
 
 	@JsonAlias("workflow_id")
-	private UUID workflowId;
+	private UUID workflowId; //TODO JOIN
 
 	@JsonAlias("user_id")
 	@TSOptional
@@ -72,6 +76,30 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("project_id")
 	@TSOptional
+	//TODO JOIN
 	private UUID projectId;
+
+	@Override
+	public Simulation clone() {
+		final Simulation clone = new Simulation();
+
+		cloneSuperFields(clone);
+
+		clone.setDescription(this.description); //done
+
+		clone.setResultFiles(new ArrayList<>(this.resultFiles)); //done
+		clone.setType(SimulationType.valueOf(this.type.name())); //done
+		clone.setStatus(ProgressState.valueOf(this.status.name())); //done
+		clone.setStatusMessage(this.statusMessage); //done
+		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null); //done
+		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); //done
+		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); //done
+		clone.setUserId(this.userId); // done
+		clone.setWorkflowId(this.workflowId); //TODO
+		clone.setProjectId(this.projectId); // TODO
+		clone.setExecutionPayload(this.executionPayload); //TODO
+
+		return clone;
+	}
 
 }

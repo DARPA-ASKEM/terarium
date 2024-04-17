@@ -44,7 +44,6 @@ public class Workflow extends TerariumAsset {
 
 		cloneSuperFields(clone);
 
-		clone.setName(getName());
 		clone.description = this.description;
 		if (this.transform != null) {
 			clone.transform = new Transform()

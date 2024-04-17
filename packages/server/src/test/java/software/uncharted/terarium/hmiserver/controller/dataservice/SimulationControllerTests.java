@@ -47,8 +47,9 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateSimulation() throws Exception {
 
-		final Simulation simulationAsset =
-				new Simulation().setName("test-simulation-name").setDescription("my description");
+		final Simulation simulationAsset = new Simulation();
+		simulationAsset.setName("test-simulation-name");
+		simulationAsset.setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/simulations")
 						.with(csrf())
@@ -60,9 +61,10 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulation() throws Exception {
-
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
 						.with(csrf()))
@@ -73,14 +75,17 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteSimulation() throws Exception {
 
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
+
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				simulationAssetService.getSimulation(simulationAsset.getId()).isEmpty());
+				simulationAssetService.getAsset(simulationAsset.getId()).isEmpty());
 	}
 }

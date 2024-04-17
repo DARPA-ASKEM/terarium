@@ -66,7 +66,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
 
 		try {
-			final Optional<Simulation> sim = simulationService.getSimulation(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -104,7 +104,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.SCIML);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -147,7 +147,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.CIEMSS);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
