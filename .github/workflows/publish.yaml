@@ -110,11 +110,11 @@ jobs:
 
       - name: Validate GradleW JAR
         if: matrix.target != 'hmi-client'
-        uses: gradle/wrapper-validation-action@460a3ca55fc5d559238a0efc7fa9f7465df8585d
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17

@@ -66,7 +66,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 			}
 		}
 
-		return roleService.getAuthorities(databaseUser.getRoles()).stream()
+		return RoleService.getAuthorities(databaseUser.getRoles()).stream()
 				.map(SimpleGrantedAuthority::new)
 				.collect(Collectors.toSet());
 	}
@@ -76,7 +76,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 		final User user = adminClientService.getUserFromJwt(jwt);
 
 		final Set<RoleType> roleTypes = KeycloakRole.get(keycloakRoles).stream()
-				.map(keycloakRole -> dataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
+				.map(keycloakRole -> DataInitializationService.getRoleTypesForKeycloakRole(keycloakRole))
 				.flatMap(Collection::stream)
 				.collect(toSet());
 
@@ -85,6 +85,6 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
 		user.setRoles(roles);
 
-		return userService.createUser(user);
+		return UserService.createUser(user);
 	}
 }
