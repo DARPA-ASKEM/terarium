@@ -17,6 +17,7 @@ env:
 
 jobs:
   set-tag:
+    name: Create and Set Tag
     runs-on: ubuntu-22.04
     steps:
       - name: Define Tag
@@ -37,11 +38,10 @@ jobs:
 
   amd64:
     runs-on: ubuntu-22.04
-
+    needs: set-tag
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
@@ -75,11 +75,10 @@ jobs:
     # Disabled until macOS GitHub runners uses M2 that can do nested virtualization
     # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
     runs-on: macos-14
-
+    needs: set-tag
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Setup Docker on macOS
         uses: douglascamata/setup-docker-macos-action@v1-alpha
@@ -107,11 +106,10 @@ jobs:
 
   arm64-emulation:
     runs-on: ubuntu-22.04
-
+    needs: set-tag
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Login to registry
         uses: docker/login-action@v3
@@ -127,7 +125,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.10.0
-          cache: 'yarn'
 
       - name: Checkout the repository
         uses: actions/checkout@v4
