@@ -542,10 +542,7 @@ function getPortPosition(
 	return { x, y };
 }
 
-/**
- * Flattened to decomposed
- */
-export async function flattenedToDecomposedInView(
+export async function populateDecomposedCanvas(
 	decomposedCanvas: ModelTemplateCanvas,
 	templatesToAdd: Model[],
 	interpolatePointsFn?: Function
@@ -634,7 +631,8 @@ export async function flattenedToDecomposedInView(
 	});
 }
 
-export async function getDecomposedTemplates(kernelManager: KernelSessionManager) {
+// Flattened to decomposed
+export async function getModelTemplates(kernelManager: KernelSessionManager) {
 	return new Promise<Model[]>((resolve) => {
 		kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
 			resolve(d.content.templates as Model[]);

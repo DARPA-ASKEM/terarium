@@ -13,8 +13,8 @@
 							:model="model"
 							:is-editable="false"
 							is-decomposed
-							:style="areDecomposedTemplatesLoading && { cursor: 'wait' }"
-							:draggable="!areDecomposedTemplatesLoading"
+							:style="areModelTemplatesLoading && { cursor: 'wait' }"
+							:draggable="!areModelTemplatesLoading"
 							@dragstart="sidebarTemplateToAdd = model"
 						/>
 					</li>
@@ -48,7 +48,7 @@
 					>
 						<template #option="{ option }">
 							<i
-								v-if="areDecomposedTemplatesLoading && option === EditorFormat.Decomposed"
+								v-if="areModelTemplatesLoading && option === EditorFormat.Decomposed"
 								class="pi pi-spin pi-spinner p-button-icon-left"
 							/>
 							<span class="p-button-label">{{ option }}</span>
@@ -172,7 +172,7 @@ enum EditorFormat {
 	Flattened = 'Flattened'
 }
 
-let decomposedTemplates: Model[] = [];
+let modelTemplates: Model[] = [];
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -185,7 +185,7 @@ const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initial
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
-const areDecomposedTemplatesLoading = ref(true);
+const areModelTemplatesLoading = ref(true);
 
 const currentCanvas = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
@@ -448,12 +448,12 @@ function refreshFlattenedCanvas() {
 function renderDecomposedCanvas() {
 	if (
 		isEmpty(decomposedCanvas.value.models) &&
-		!isEmpty(decomposedTemplates) &&
+		!isEmpty(modelTemplates) &&
 		currentModelFormat.value === EditorFormat.Decomposed
 	)
-		modelTemplatingService.flattenedToDecomposedInView(
+		modelTemplatingService.populateDecomposedCanvas(
 			decomposedCanvas.value,
-			decomposedTemplates,
+			modelTemplates,
 			interpolatePointsForCurve
 		);
 }
@@ -483,8 +483,8 @@ onMounted(async () => {
 		// Create flattened view of model
 		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 		// Create decomposed view of model
-		decomposedTemplates = await modelTemplatingService.getDecomposedTemplates(props.kernelManager);
-		areDecomposedTemplatesLoading.value = false;
+		modelTemplates = await modelTemplatingService.getModelTemplates(props.kernelManager);
+		areModelTemplatesLoading.value = false;
 		renderDecomposedCanvas();
 	}
 });
