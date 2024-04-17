@@ -625,8 +625,8 @@ export interface NotificationEvent {
     id: string;
     progress: number;
     state: ProgressState;
-    notificationGroup: NotificationGroup;
-    timestamp: Date;
+    createdOn: Date;
+    acknowledgedOn: Date;
     data: any;
 }
 
@@ -634,7 +634,7 @@ export interface NotificationGroup {
     id: string;
     userId: string;
     type: string;
-    timestamp: Date;
+    createdOn: Date;
     notificationEvents: NotificationEvent[];
 }
 
