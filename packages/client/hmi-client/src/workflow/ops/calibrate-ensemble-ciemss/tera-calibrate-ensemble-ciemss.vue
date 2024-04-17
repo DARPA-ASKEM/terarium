@@ -264,12 +264,9 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
 const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
-const cancelRunId = computed(() => {
-	if (props.node.state.inProgressForecastId !== '') return props.node.state.inProgressForecastId;
-	if (props.node.state.inProgressCalibrationId !== '')
-		return props.node.state.inProgressCalibrationId;
-	return '';
-});
+const cancelRunId = computed(
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressForecastId
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 

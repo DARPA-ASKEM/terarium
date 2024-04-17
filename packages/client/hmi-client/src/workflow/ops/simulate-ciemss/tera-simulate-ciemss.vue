@@ -215,11 +215,7 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
-const cancelRunId = computed(() => {
-	if (props.node.state.inProgressSimulationId !== '')
-		return props.node.state.inProgressSimulationId;
-	return '';
-});
+const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 

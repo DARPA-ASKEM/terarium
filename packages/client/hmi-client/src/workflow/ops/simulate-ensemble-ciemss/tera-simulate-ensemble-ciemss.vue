@@ -268,11 +268,7 @@ const numSamples = ref<number>(props.node.state.numSamples);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
-const cancelRunId = computed(() => {
-	if (props.node.state.inProgressSimulationId !== '')
-		return props.node.state.inProgressSimulationId;
-	return '';
-});
+const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
 // Preview selection
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {

@@ -407,11 +407,9 @@ const knobs = ref<BasicKnobs>({
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
-const cancelRunId = computed(() => {
-	if (props.node.state.inProgressForecastId !== '') return props.node.state.inProgressForecastId;
-	if (props.node.state.inProgressOptimizeId !== '') return props.node.state.inProgressOptimizeId;
-	return '';
-});
+const cancelRunId = computed(
+	() => props.node.state.inProgressOptimizeId || props.node.state.inProgressForecastId
+);
 
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);

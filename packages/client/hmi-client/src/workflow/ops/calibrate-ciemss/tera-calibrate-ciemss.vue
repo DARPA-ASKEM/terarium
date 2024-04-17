@@ -238,12 +238,9 @@ const modelConfig = ref<ModelConfiguration>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
-const cancelRunId = computed(() => {
-	if (props.node.state.inProgressForecastId !== '') return props.node.state.inProgressForecastId;
-	if (props.node.state.inProgressCalibrationId !== '')
-		return props.node.state.inProgressCalibrationId;
-	return '';
-});
+const cancelRunId = computed(
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressForecastId
+);
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
