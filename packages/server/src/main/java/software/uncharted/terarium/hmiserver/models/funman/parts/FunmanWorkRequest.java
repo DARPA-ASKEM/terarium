@@ -11,18 +11,18 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class FunmanWorkRequest {
-    @TSOptional
-    private JsonNode query;
+	@TSOptional
+	private JsonNode query;
 
-    @TSOptional
-    private JsonNode constraints;
+	@TSOptional
+	private JsonNode constraints;
 
-    @TSOptional
-    private List<FunmanParameter> parameters;
+	@TSOptional
+	private List<FunmanParameter> parameters;
 
-    @TSOptional
-    private FunmanConfig config;
+	@TSOptional
+	private FunmanConfig config;
 
-    @TSOptional
-    private JsonNode structure_parameters;
+	@TSOptional
+	private JsonNode structure_parameters;
 }

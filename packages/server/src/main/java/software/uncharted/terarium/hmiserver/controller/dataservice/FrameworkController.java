@@ -25,102 +25,102 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 @RequiredArgsConstructor
 public class FrameworkController {
 
-    final FrameworkService frameworkService;
+	final FrameworkService frameworkService;
 
-    final ObjectMapper objectMapper;
+	final ObjectMapper objectMapper;
 
-    @PostMapping("/frameworks")
-    @Secured(Roles.USER)
-    @Operation(summary = "Create a new model framework")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "201",
-                        description = "Model framework created.",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema =
-                                                @io.swagger.v3.oas.annotations.media.Schema(
-                                                        implementation = ModelFramework.class))),
-            })
-    ResponseEntity<ModelFramework> createFramework(@RequestBody final ModelFramework framework) {
-        final ModelFramework modelFramework = frameworkService.createFramework(framework);
+	@PostMapping("/frameworks")
+	@Secured(Roles.USER)
+	@Operation(summary = "Create a new model framework")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Model framework created.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+			})
+	ResponseEntity<ModelFramework> createFramework(@RequestBody final ModelFramework framework) {
+		final ModelFramework modelFramework = frameworkService.createFramework(framework);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(modelFramework);
-    }
+		return ResponseEntity.status(HttpStatus.CREATED).body(modelFramework);
+	}
 
-    @GetMapping("/frameworks/{id}")
-    @Secured(Roles.USER)
-    @Operation(summary = "Gets a model framework by ID")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Model framework found.",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema =
-                                                @io.swagger.v3.oas.annotations.media.Schema(
-                                                        implementation = ModelFramework.class))),
-                @ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
-            })
-    ResponseEntity<ModelFramework> getFramework(@PathVariable("id") final UUID id) {
+	@GetMapping("/frameworks/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a model framework by ID")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model framework found.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+				@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
+			})
+	ResponseEntity<ModelFramework> getFramework(@PathVariable("id") final UUID id) {
 
-        final Optional<ModelFramework> framework = frameworkService.getFramework(id);
-        if (framework.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
-        }
-        return ResponseEntity.ok(framework.get());
-    }
+		final Optional<ModelFramework> framework = frameworkService.getFramework(id);
+		if (framework.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
+		}
+		return ResponseEntity.ok(framework.get());
+	}
 
-    @PutMapping("/frameworks/{id}")
-    @Secured(Roles.USER)
-    @Operation(summary = "Update a model framework")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Model framework updated.",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema =
-                                                @io.swagger.v3.oas.annotations.media.Schema(
-                                                        implementation = ModelFramework.class))),
-                @ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
-            })
-    ResponseEntity<ModelFramework> updateFramework(
-            @PathVariable("id") final UUID id, @RequestBody final ModelFramework framework) {
+	@PutMapping("/frameworks/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Update a model framework")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model framework updated.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = ModelFramework.class))),
+				@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content),
+			})
+	ResponseEntity<ModelFramework> updateFramework(
+			@PathVariable("id") final UUID id, @RequestBody final ModelFramework framework) {
 
-        framework.setId(id);
-        final Optional<ModelFramework> updated = frameworkService.updateFramework(framework);
-        if (updated.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updated.get());
-    }
+		framework.setId(id);
+		final Optional<ModelFramework> updated = frameworkService.updateFramework(framework);
+		if (updated.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(updated.get());
+	}
 
-    @DeleteMapping("/frameworks/{id}")
-    @Secured(Roles.USER)
-    @Operation(summary = "Deletes an model framework")
-    @ApiResponses(
-            value = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Deleted framework",
-                        content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    schema =
-                                            @io.swagger.v3.oas.annotations.media.Schema(
-                                                    implementation = ResponseDeleted.class))
-                        })
-            })
-    ResponseEntity<ResponseDeleted> deleteFramework(@PathVariable("id") final UUID id) {
+	@DeleteMapping("/frameworks/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Deletes an model framework")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Deleted framework",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ResponseDeleted.class))
+						})
+			})
+	ResponseEntity<ResponseDeleted> deleteFramework(@PathVariable("id") final UUID id) {
 
-        frameworkService.deleteFramework(id);
-        return ResponseEntity.ok(new ResponseDeleted("ModelFramework", id));
-    }
+		frameworkService.deleteFramework(id);
+		return ResponseEntity.ok(new ResponseDeleted("ModelFramework", id));
+	}
 }

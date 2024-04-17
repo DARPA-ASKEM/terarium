@@ -7,5 +7,5 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class XDDResponseError implements Serializable {
-    private String message;
+	private String message;
 }

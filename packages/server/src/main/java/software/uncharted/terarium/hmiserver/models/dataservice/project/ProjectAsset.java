@@ -24,21 +24,21 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 @Entity
 public class ProjectAsset extends TerariumAsset {
 
-    @Serial
-    private static final long serialVersionUID = -3382397588627700379L;
+	@Serial
+	private static final long serialVersionUID = -3382397588627700379L;
 
-    @ManyToOne
-    @JoinColumn(name = "project_id", nullable = false)
-    @JsonBackReference
-    @NotNull private Project project;
+	@ManyToOne
+	@JoinColumn(name = "project_id", nullable = false)
+	@JsonBackReference
+	@NotNull private Project project;
 
-    @NotNull private UUID assetId;
+	@NotNull private UUID assetId;
 
-    @NotNull @Enumerated(EnumType.STRING)
-    private AssetType assetType;
+	@NotNull @Enumerated(EnumType.STRING)
+	private AssetType assetType;
 
-    @NotNull private String assetName;
+	@NotNull private String assetName;
 
-    @TSOptional
-    private String externalRef;
+	@TSOptional
+	private String externalRef;
 }

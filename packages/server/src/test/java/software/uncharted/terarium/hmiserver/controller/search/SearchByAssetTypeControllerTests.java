@@ -18,30 +18,30 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 @Slf4j
 public class SearchByAssetTypeControllerTests extends TerariumApplicationTests {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    private static final String TEST_INDEX = "tds_document_tera_2.0";
-    private static final String TEST_ASSET = "DOCUMENT";
+	private static final String TEST_INDEX = "tds_document_tera_2.0";
+	private static final String TEST_ASSET = "DOCUMENT";
 
-    // @Test
-    @WithUserDetails(MockUser.ADAM)
-    public void testKnnSearch() throws Exception {
+	// @Test
+	@WithUserDetails(MockUser.ADAM)
+	public void testKnnSearch() throws Exception {
 
-        MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
-                        .param("text", "Was COVID-19 invented by aliens?")
-                        .param("page", "100")
-                        .param("page-size", "100")
-                        .param("index", TEST_INDEX) // index override
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andReturn();
+		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
+						.param("text", "Was COVID-19 invented by aliens?")
+						.param("page", "100")
+						.param("page-size", "100")
+						.param("index", TEST_INDEX) // index override
+						.with(csrf()))
+				.andExpect(status().isOk())
+				.andReturn();
 
-        List<JsonNode> docs =
-                objectMapper.readValue(res.getResponse().getContentAsString(), new TypeReference<List<JsonNode>>() {});
+		List<JsonNode> docs =
+				objectMapper.readValue(res.getResponse().getContentAsString(), new TypeReference<List<JsonNode>>() {});
 
-        for (JsonNode doc : docs) {
-            log.info("doc: {}", doc);
-        }
-    }
+		for (JsonNode doc : docs) {
+			log.info("doc: {}", doc);
+		}
+	}
 }

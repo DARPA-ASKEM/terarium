@@ -14,23 +14,23 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
  */
 public class SupportAdditionalProperties {
 
-    @TSIgnore
-    protected Map<String, Object> additionalProperties = new HashMap<>();
+	@TSIgnore
+	protected Map<String, Object> additionalProperties = new HashMap<>();
 
-    @JsonAnyGetter
-    @TSIgnore
-    public Map<String, Object> getAdditionalProperties() {
-        return additionalProperties;
-    }
+	@JsonAnyGetter
+	@TSIgnore
+	public Map<String, Object> getAdditionalProperties() {
+		return additionalProperties;
+	}
 
-    @JsonAnySetter
-    @TSIgnore
-    public void setAdditionalProperty(final String name, final Object value) {
-        additionalProperties.put(name, value);
-    }
+	@JsonAnySetter
+	@TSIgnore
+	public void setAdditionalProperty(final String name, final Object value) {
+		additionalProperties.put(name, value);
+	}
 
-    @TSIgnore
-    public void setAdditionalProperties(final Map<String, Object> props) {
-        additionalProperties = props;
-    }
+	@TSIgnore
+	public void setAdditionalProperties(final Map<String, Object> props) {
+		additionalProperties = props;
+	}
 }

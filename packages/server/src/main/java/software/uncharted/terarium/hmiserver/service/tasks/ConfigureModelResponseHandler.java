@@ -27,100 +27,100 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
-    public static final String NAME = "gollm:configure_model";
+	public static final String NAME = "gollm:configure_model";
 
-    private final ObjectMapper objectMapper;
-    private final ModelService modelService;
-    private final ModelConfigurationService modelConfigurationService;
-    private final ProvenanceService provenanceService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ProvenanceService provenanceService;
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
+	@Override
+	public String getName() {
+		return NAME;
+	}
 
-    @Data
-    public static class Input {
-        @JsonProperty("research_paper")
-        String researchPaper;
+	@Data
+	public static class Input {
+		@JsonProperty("research_paper")
+		String researchPaper;
 
-        @JsonProperty("amr")
-        Model amr;
-    }
+		@JsonProperty("amr")
+		Model amr;
+	}
 
-    @Data
-    public static class Response {
-        JsonNode response;
-    }
+	@Data
+	public static class Response {
+		JsonNode response;
+	}
 
-    @Data
-    public static class Properties {
-        UUID documentId;
-        UUID modelId;
-    }
+	@Data
+	public static class Properties {
+		UUID documentId;
+		UUID modelId;
+	}
 
-    @Override
-    public TaskResponse onSuccess(final TaskResponse resp) {
-        try {
-            final Properties props = resp.getAdditionalProperties(Properties.class);
-            final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
-            final Response configurations = objectMapper.readValue(((TaskResponse) resp).getOutput(), Response.class);
+	@Override
+	public TaskResponse onSuccess(final TaskResponse resp) {
+		try {
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
-            // For each configuration, create a new model configuration with parameters set
-            for (final JsonNode condition : configurations.response.get("conditions")) {
-                final Model modelCopy = new Model(model);
+			// For each configuration, create a new model configuration with parameters set
+			for (final JsonNode condition : configurations.response.get("conditions")) {
+				final Model modelCopy = new Model(model);
 
-                // Map the parameters values to the model
-                ArrayNode gollmExtractions = objectMapper.createArrayNode();
-                if (condition.has("parameters")) {
-                    final List<ModelParameter> modelParameters =
-                            ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
-                    if (modelCopy.isRegnet()) {
-                        modelCopy
-                                .getModel()
-                                .put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-                    }
-                    gollmExtractions.addAll(
-                            (ArrayNode) condition.get("parameters").deepCopy());
-                }
+				// Map the parameters values to the model
+				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
+				if (condition.has("parameters")) {
+					final List<ModelParameter> modelParameters =
+							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
+					if (modelCopy.isRegnet()) {
+						modelCopy
+								.getModel()
+								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+					}
+					final ArrayNode parameters = condition.get("parameters").deepCopy();
+					gollmExtractions.addAll(parameters);
+				}
 
-                // Map the initials values to the model
-                ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
-                if (condition.has("initials")) {
-                    final List<Initial> modelInitials =
-                            ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
-                    if (modelCopy.isRegnet()) {
-                        modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
-                    }
-                    gollmExtractions.addAll(
-                            (ArrayNode) condition.get("initials").deepCopy());
-                }
+				// Map the initials values to the model
+				final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
+				if (condition.has("initials")) {
+					final List<Initial> modelInitials =
+							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					if (modelCopy.isRegnet()) {
+						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
+					}
+					final ArrayNode initials = condition.get("initials").deepCopy();
+					gollmExtractions.addAll(initials);
+				}
 
-                // Set the all the GoLLM extractions into the model metadata
-                // FIXME - It is not what we should do, this is a hack for the March 2024 Evaluation
-                model.getMetadata().setGollmExtractions(gollmExtractions);
+				// Set the all the GoLLM extractions into the model metadata
+				// FIXME - It is not what we should do, this is a hack for the March 2024 Evaluation
+				model.getMetadata().setGollmExtractions(gollmExtractions);
 
-                // Create the new configuration
-                final ModelConfiguration configuration = new ModelConfiguration();
-                configuration.setModelId(model.getId());
-                configuration.setName(condition.get("name").asText());
-                configuration.setDescription(condition.get("description").asText());
-                configuration.setConfiguration(modelCopy);
+				// Create the new configuration
+				final ModelConfiguration configuration = new ModelConfiguration();
+				configuration.setModelId(model.getId());
+				configuration.setName(condition.get("name").asText());
+				configuration.setDescription(condition.get("description").asText());
+				configuration.setConfiguration(modelCopy);
 
-                final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
-                // add provenance
-                provenanceService.createProvenance(new Provenance()
-                        .setLeft(newConfig.getId())
-                        .setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-                        .setRight(props.documentId)
-                        .setRightType(ProvenanceType.DOCUMENT)
-                        .setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-            }
-        } catch (final Exception e) {
-            log.error("Failed to configure model", e);
-            throw new RuntimeException(e);
-        }
-        log.info("Model configured successfully");
-        return resp;
-    }
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+				// add provenance
+				provenanceService.createProvenance(new Provenance()
+						.setLeft(newConfig.getId())
+						.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
+						.setRight(props.documentId)
+						.setRightType(ProvenanceType.DOCUMENT)
+						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+			}
+		} catch (final Exception e) {
+			log.error("Failed to configure model", e);
+			throw new RuntimeException(e);
+		}
+		log.info("Model configured successfully");
+		return resp;
+	}
 }

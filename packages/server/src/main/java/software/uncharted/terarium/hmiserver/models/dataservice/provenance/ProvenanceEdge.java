@@ -8,9 +8,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class ProvenanceEdge implements Serializable {
 
-    private ProvenanceRelationType relationType;
+	private ProvenanceRelationType relationType;
 
-    private ProvenanceNode left;
+	private ProvenanceNode left;
 
-    private ProvenanceNode right;
+	private ProvenanceNode right;
 }

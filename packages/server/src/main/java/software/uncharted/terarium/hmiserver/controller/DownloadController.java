@@ -22,29 +22,29 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 public class DownloadController {
 
-    @GetMapping
-    @Secured(Roles.USER)
-    public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
-        final byte[] pdfBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
-        if (pdfBytes != null) {
+	@GetMapping
+	@Secured(Roles.USER)
+	public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
+		final byte[] pdfBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
+		if (pdfBytes != null) {
 
-            return ResponseEntity.ok()
-                    .headers(new HttpHeaders())
-                    .contentLength(pdfBytes.length)
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(new ByteArrayResource(pdfBytes));
-        } else {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+			return ResponseEntity.ok()
+					.headers(new HttpHeaders())
+					.contentLength(pdfBytes.length)
+					.contentType(MediaType.APPLICATION_OCTET_STREAM)
+					.body(new ByteArrayResource(pdfBytes));
+		} else {
+			return ResponseEntity.internalServerError().build();
+		}
+	}
 
-    @GetMapping("/url")
-    @Secured(Roles.USER)
-    public ResponseEntity<String> getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
-        final String pdfLink = DownloadService.getPDFURL("https://unpaywall.org/" + url);
-        if (pdfLink != null) {
-            return ResponseEntity.ok(pdfLink);
-        }
-        return ResponseEntity.noContent().build();
-    }
+	@GetMapping("/url")
+	@Secured(Roles.USER)
+	public ResponseEntity<String> getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
+		final String pdfLink = DownloadService.getPDFURL("https://unpaywall.org/" + url);
+		if (pdfLink != null) {
+			return ResponseEntity.ok(pdfLink);
+		}
+		return ResponseEntity.noContent().build();
+	}
 }

@@ -19,40 +19,40 @@ import software.uncharted.terarium.hmiserver.util.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheControllerTests extends TerariumApplicationTests {
-    @Autowired
-    private CacheableTestService testService;
+	@Autowired
+	private CacheableTestService testService;
 
-    @Autowired
-    private CacheManager cacheManager;
+	@Autowired
+	private CacheManager cacheManager;
 
-    @AfterEach
-    public void afterEach() {
-        cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
-                .clear());
-    }
+	@AfterEach
+	public void afterEach() {
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
+				.clear());
+	}
 
-    // @Test
-    // @WithUserDetails(MockUser.ADAM)
-    public void testItCanClearACache(final CapturedOutput output) throws Exception {
-        testService.cachedMethod();
+	// @Test
+	// @WithUserDetails(MockUser.ADAM)
+	public void testItCanClearACache(final CapturedOutput output) throws Exception {
+		testService.cachedMethod();
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/cache").with(csrf())).andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.delete("/cache").with(csrf())).andExpect(status().isOk());
 
-        testService.cachedMethod();
+		testService.cachedMethod();
 
-        Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
-    }
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
+	}
 
-    // @Test
-    // @WithUserDetails(MockUser.ADAM)
-    public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
-        testService.cachedMethod();
-        mockMvc.perform(MockMvcRequestBuilders.delete("/cache")
-                        .param("name", CacheName.EXAMPLE)
-                        .with(csrf()))
-                .andExpect(status().isOk());
-        testService.cachedMethod();
+	// @Test
+	// @WithUserDetails(MockUser.ADAM)
+	public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
+		testService.cachedMethod();
+		mockMvc.perform(MockMvcRequestBuilders.delete("/cache")
+						.param("name", CacheName.EXAMPLE)
+						.with(csrf()))
+				.andExpect(status().isOk());
+		testService.cachedMethod();
 
-        Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
-    }
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
+	}
 }

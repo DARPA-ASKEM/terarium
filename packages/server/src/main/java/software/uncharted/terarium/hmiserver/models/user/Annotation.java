@@ -22,27 +22,27 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Table(indexes = {@Index(columnList = "artifactType, artifactId")})
 @TSModel
 public class Annotation implements Serializable {
-    @Serial
-    private static final long serialVersionUID = 4939620703969267901L;
+	@Serial
+	private static final long serialVersionUID = 4939620703969267901L;
 
-    @Id
-    private String id = UUID.randomUUID().toString();
+	@Id
+	private String id = UUID.randomUUID().toString();
 
-    @Column(nullable = false)
-    private Long timestampMillis = Instant.now().toEpochMilli();
+	@Column(nullable = false)
+	private Long timestampMillis = Instant.now().toEpochMilli();
 
-    @Column()
-    private UUID projectId;
+	@Column()
+	private UUID projectId;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+	@Column(columnDefinition = "TEXT")
+	private String content;
 
-    @Column(nullable = false)
-    private String userId;
+	@Column(nullable = false)
+	private String userId;
 
-    private String artifactId;
+	private String artifactId;
 
-    private String artifactType;
+	private String artifactType;
 
-    private String section;
+	private String section;
 }

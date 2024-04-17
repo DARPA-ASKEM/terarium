@@ -17,41 +17,41 @@ import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrate
 
 @RestControllerAdvice
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
-    private ObjectMapper mapper;
+	private ObjectMapper mapper;
 
-    @PostConstruct
-    public void init() {
-        mapper = new ObjectMapper()
-                .setPropertyNamingStrategy(
-                        new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
-    }
+	@PostConstruct
+	public void init() {
+		mapper = new ObjectMapper()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+	}
 
-    @Override
-    public boolean supports(MethodParameter returnType, Class converterType) {
-        return returnType.getParameterType().isAssignableFrom(ResponseEntity.class);
-    }
+	@Override
+	public boolean supports(MethodParameter returnType, Class converterType) {
+		return returnType.getParameterType().isAssignableFrom(ResponseEntity.class);
+	}
 
-    private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
-        return headers.keySet().stream().anyMatch(k -> k.equalsIgnoreCase(key));
-    }
+	private boolean containsKeyIgnoreCase(HttpHeaders headers, String key) {
+		return headers.keySet().stream().anyMatch(k -> k.equalsIgnoreCase(key));
+	}
 
-    @Override
-    public Object beforeBodyWrite(
-            Object body,
-            MethodParameter returnType,
-            MediaType selectedContentType,
-            Class selectedConverterType,
-            ServerHttpRequest request,
-            ServerHttpResponse response) {
+	@Override
+	public Object beforeBodyWrite(
+			Object body,
+			MethodParameter returnType,
+			MediaType selectedContentType,
+			Class selectedConverterType,
+			ServerHttpRequest request,
+			ServerHttpResponse response) {
 
-        if (body != null
-                && selectedContentType == MediaType.APPLICATION_JSON
-                && containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
-            try {
-                return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
-            } catch (JsonProcessingException ignored) {
-            }
-        }
-        return body;
-    }
+		if (body != null
+				&& selectedContentType == MediaType.APPLICATION_JSON
+				&& containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
+			try {
+				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
+			} catch (JsonProcessingException ignored) {
+			}
+		}
+		return body;
+	}
 }

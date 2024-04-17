@@ -14,30 +14,30 @@ import software.uncharted.terarium.hmiserver.models.CacheName;
 @RequiredArgsConstructor
 public class CacheService {
 
-    private final CacheManager cacheManager;
-    private final Config config;
+	private final CacheManager cacheManager;
+	private final Config config;
 
-    @PostConstruct
-    void init() {
-        if (config.getCaching().getClearOnStartup()) {
-            clear();
-        }
-    }
+	@PostConstruct
+	void init() {
+		if (config.getCaching().getClearOnStartup()) {
+			clear();
+		}
+	}
 
-    /**
-     * Clears a cache by name
-     *
-     * @param name the name of the cache
-     */
-    public void clear(final String name) {
-        final Cache cache = cacheManager.getCache(name);
-        if (cache != null) {
-            cache.clear();
-        }
-    }
+	/**
+	 * Clears a cache by name
+	 *
+	 * @param name the name of the cache
+	 */
+	public void clear(final String name) {
+		final Cache cache = cacheManager.getCache(name);
+		if (cache != null) {
+			cache.clear();
+		}
+	}
 
-    /** Clears all caches */
-    public void clear() {
-        CacheName.getAll().forEach(this::clear);
-    }
+	/** Clears all caches */
+	public void clear() {
+		CacheName.getAll().forEach(this::clear);
+	}
 }

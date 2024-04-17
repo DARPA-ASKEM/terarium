@@ -21,30 +21,30 @@ import software.uncharted.terarium.hmiserver.models.dataservice.concept.Ontology
 @Accessors(chain = true)
 @TSModel
 public class Artifact extends TerariumAsset {
-    @Serial
-    private static final long serialVersionUID = -1122602270904707476L;
+	@Serial
+	private static final long serialVersionUID = -1122602270904707476L;
 
-    /* The id of the artifact. */
+	/* The id of the artifact. */
 
-    /* UserId of who created this asset */
-    private String userId;
+	/* UserId of who created this asset */
+	private String userId;
 
-    /* The name of the artifact. */
-    private String name;
+	/* The name of the artifact. */
+	private String name;
 
-    /* A description of the artifact. */
-    @TSOptional
-    private String description;
+	/* A description of the artifact. */
+	@TSOptional
+	private String description;
 
-    /* The name of the file(s) in this artifact */
-    @JsonAlias("file_names")
-    private List<String> fileNames;
+	/* The name of the file(s) in this artifact */
+	@JsonAlias("file_names")
+	private List<String> fileNames;
 
-    /* metadata for these files */
-    @TSOptional
-    private JsonNode metadata;
+	/* metadata for these files */
+	@TSOptional
+	private JsonNode metadata;
 
-    /* concepts associated with these files */
-    @TSOptional
-    private List<OntologyConcept> concepts;
+	/* concepts associated with these files */
+	@TSOptional
+	private List<OntologyConcept> concepts;
 }

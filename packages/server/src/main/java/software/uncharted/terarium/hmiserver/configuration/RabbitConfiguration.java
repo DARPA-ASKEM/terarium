@@ -10,24 +10,24 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfiguration {
-    @Value("${spring.rabbitmq.addresses}")
-    String rabbitAddresses;
+	@Value("${spring.rabbitmq.addresses}")
+	String rabbitAddresses;
 
-    @Value("${spring.rabbitmq.username}")
-    String username;
+	@Value("${spring.rabbitmq.username}")
+	String username;
 
-    @Value("${spring.rabbitmq.password}")
-    String password;
+	@Value("${spring.rabbitmq.password}")
+	String password;
 
-    @Bean
-    public RabbitAdmin rabbitAdmin() throws URISyntaxException {
+	@Bean
+	public RabbitAdmin rabbitAdmin() throws URISyntaxException {
 
-        URI rabbitAddress = new URI(rabbitAddresses);
+		URI rabbitAddress = new URI(rabbitAddresses);
 
-        final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setUri(rabbitAddress);
-        connectionFactory.setUsername(username);
-        connectionFactory.setPassword(password);
-        return new RabbitAdmin(connectionFactory);
-    }
+		final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+		connectionFactory.setUri(rabbitAddress);
+		connectionFactory.setUsername(username);
+		connectionFactory.setPassword(password);
+		return new RabbitAdmin(connectionFactory);
+	}
 }

@@ -14,13 +14,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 public class Grounding implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 302308407252037615L;
+	@Serial
+	private static final long serialVersionUID = 302308407252037615L;
 
-    /** Ontological identifier per DKG */
-    private Map<String, String> identifiers;
+	/** Ontological identifier per DKG */
+	private Map<String, String> identifiers;
 
-    /** (Optional) Additional context that informs the grounding */
-    @TSOptional
-    private Map<String, Object> context;
+	/** (Optional) Additional context that informs the grounding */
+	@TSOptional
+	private Map<String, Object> context;
 }

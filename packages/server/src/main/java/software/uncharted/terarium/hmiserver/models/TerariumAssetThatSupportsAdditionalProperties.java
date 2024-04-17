@@ -8,18 +8,18 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
 public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 
-    @TSIgnore
-    private Map<String, Object> additionalProperties = new HashMap<>();
+	@TSIgnore
+	private Map<String, Object> additionalProperties = new HashMap<>();
 
-    @JsonAnyGetter
-    @TSIgnore
-    public Map<String, Object> getAdditionalProperties() {
-        return additionalProperties;
-    }
+	@JsonAnyGetter
+	@TSIgnore
+	public Map<String, Object> getAdditionalProperties() {
+		return additionalProperties;
+	}
 
-    @JsonAnySetter
-    @TSIgnore
-    public void setAdditionalProperties(final String name, final Object value) {
-        additionalProperties.put(name, value);
-    }
+	@JsonAnySetter
+	@TSIgnore
+	public void setAdditionalProperties(final String name, final Object value) {
+		additionalProperties.put(name, value);
+	}
 }

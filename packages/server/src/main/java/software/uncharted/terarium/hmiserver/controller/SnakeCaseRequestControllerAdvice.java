@@ -21,56 +21,56 @@ import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrate
 @RestControllerAdvice
 @Slf4j
 public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
-    private ObjectMapper snakecaseMapper;
-    private ObjectMapper camelcaseMapper;
+	private ObjectMapper snakecaseMapper;
+	private ObjectMapper camelcaseMapper;
 
-    @PostConstruct
-    public void init() {
-        camelcaseMapper = new ObjectMapper()
-                .setPropertyNamingStrategy(
-                        new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
-        snakecaseMapper = new ObjectMapper()
-                .setPropertyNamingStrategy(
-                        new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
-    }
+	@PostConstruct
+	public void init() {
+		camelcaseMapper = new ObjectMapper()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
+		snakecaseMapper = new ObjectMapper()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+	}
 
-    @Override
-    public boolean supports(
-            final MethodParameter methodParameter,
-            final Type targetType,
-            final Class<? extends HttpMessageConverter<?>> converterType) {
-        return true;
-    }
+	@Override
+	public boolean supports(
+			final MethodParameter methodParameter,
+			final Type targetType,
+			final Class<? extends HttpMessageConverter<?>> converterType) {
+		return true;
+	}
 
-    private boolean containsKeyIgnoreCase(final HttpHeaders headers, final String key) {
-        return headers.keySet().stream().anyMatch(k -> k.equalsIgnoreCase(key));
-    }
+	private boolean containsKeyIgnoreCase(final HttpHeaders headers, final String key) {
+		return headers.keySet().stream().anyMatch(k -> k.equalsIgnoreCase(key));
+	}
 
-    @Override
-    public HttpInputMessage beforeBodyRead(
-            final HttpInputMessage inputMessage,
-            final MethodParameter parameter,
-            final Type targetType,
-            final Class<? extends HttpMessageConverter<?>> converterType)
-            throws IOException {
+	@Override
+	public HttpInputMessage beforeBodyRead(
+			final HttpInputMessage inputMessage,
+			final MethodParameter parameter,
+			final Type targetType,
+			final Class<? extends HttpMessageConverter<?>> converterType)
+			throws IOException {
 
-        if (containsKeyIgnoreCase(inputMessage.getHeaders(), "X-Enable-Snake-Case")) {
-            final JsonNode root = snakecaseMapper.readTree(inputMessage.getBody());
-            final String body = camelcaseMapper.writeValueAsString(root);
-            final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            return new HttpInputMessage() {
-                @Override
-                public InputStream getBody() throws IOException {
-                    return new ByteArrayInputStream(bytes);
-                }
+		if (containsKeyIgnoreCase(inputMessage.getHeaders(), "X-Enable-Snake-Case")) {
+			final JsonNode root = snakecaseMapper.readTree(inputMessage.getBody());
+			final String body = camelcaseMapper.writeValueAsString(root);
+			final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+			return new HttpInputMessage() {
+				@Override
+				public InputStream getBody() throws IOException {
+					return new ByteArrayInputStream(bytes);
+				}
 
-                @Override
-                public HttpHeaders getHeaders() {
-                    // Preserve the original headers
-                    return inputMessage.getHeaders();
-                }
-            };
-        }
-        return inputMessage;
-    }
+				@Override
+				public HttpHeaders getHeaders() {
+					// Preserve the original headers
+					return inputMessage.getHeaders();
+				}
+			};
+		}
+		return inputMessage;
+	}
 }

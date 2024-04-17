@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Transform implements Serializable {
 
-    Number x;
-    Number y;
-    Number k;
+	Number x;
+	Number y;
+	Number k;
 }

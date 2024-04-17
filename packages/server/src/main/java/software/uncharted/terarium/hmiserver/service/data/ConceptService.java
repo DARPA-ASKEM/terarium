@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -22,81 +23,93 @@ import software.uncharted.terarium.hmiserver.repository.data.OntologyConceptRepo
 @Slf4j
 public class ConceptService {
 
-    final OntologyConceptRepository ontologyConceptRepository;
-    final ActiveConceptRepository activeConceptRespository;
-    final MIRAProxy miraProxy;
+	final OntologyConceptRepository ontologyConceptRepository;
+	final ActiveConceptRepository activeConceptRespository;
+	final MIRAProxy miraProxy;
 
-    public List<OntologyConcept> getConcepts() {
-        return ontologyConceptRepository.findAllByDeletedOnIsNull();
-    }
+	@Observed(name = "function_profile")
+	public List<OntologyConcept> getConcepts() {
+		return ontologyConceptRepository.findAllByDeletedOnIsNull();
+	}
 
-    public List<OntologyConcept> getConcepts(final List<UUID> ids) {
-        return ontologyConceptRepository.findAllByIdInAndDeletedOnIsNull(ids);
-    }
+	@Observed(name = "function_profile")
+	public List<OntologyConcept> getConcepts(final List<UUID> ids) {
+		return ontologyConceptRepository.findAllByIdInAndDeletedOnIsNull(ids);
+	}
 
-    public List<OntologyConcept> searchConcept(final String curie) {
-        return ontologyConceptRepository.findAllByCurieAndDeletedOnIsNull(curie);
-    }
+	@Observed(name = "function_profile")
+	public List<OntologyConcept> searchConcept(final String curie) {
+		return ontologyConceptRepository.findAllByCurieAndDeletedOnIsNull(curie);
+	}
 
-    public Optional<OntologyConcept> getConcept(final UUID id) {
-        return ontologyConceptRepository.getByIdAndDeletedOnIsNull(id);
-    }
+	@Observed(name = "function_profile")
+	public Optional<OntologyConcept> getConcept(final UUID id) {
+		return ontologyConceptRepository.getByIdAndDeletedOnIsNull(id);
+	}
 
-    public OntologyConcept createConcept(final OntologyConcept concept) {
-        markConceptAsActive(concept);
-        return ontologyConceptRepository.save(concept);
-    }
+	@Observed(name = "function_profile")
+	public OntologyConcept createConcept(final OntologyConcept concept) {
+		markConceptAsActive(concept);
+		return ontologyConceptRepository.save(concept);
+	}
 
-    public Optional<OntologyConcept> updateConcept(final OntologyConcept concept) {
-        if (!ontologyConceptRepository.existsById(concept.getId())) {
-            return Optional.empty();
-        }
-        ActiveConcept active = markConceptAsActive(concept);
-        concept.setActiveConcept(active);
-        return Optional.of(ontologyConceptRepository.save(concept));
-    }
+	@Observed(name = "function_profile")
+	public Optional<OntologyConcept> updateConcept(final OntologyConcept concept) {
+		if (!ontologyConceptRepository.existsById(concept.getId())) {
+			return Optional.empty();
+		}
+		final ActiveConcept active = markConceptAsActive(concept);
+		concept.setActiveConcept(active);
+		return Optional.of(ontologyConceptRepository.save(concept));
+	}
 
-    public void deleteConcept(final UUID id) {
-        Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
-        if (concept.isEmpty()) {
-            return;
-        }
-        concept.get().setDeletedOn(Timestamp.from(Instant.now()));
-        updateConcept(concept.get());
-    }
+	@Observed(name = "function_profile")
+	public void deleteConcept(final UUID id) {
+		final Optional<OntologyConcept> concept = ontologyConceptRepository.findById(id);
+		if (concept.isEmpty()) {
+			return;
+		}
+		concept.get().setDeletedOn(Timestamp.from(Instant.now()));
+		updateConcept(concept.get());
+	}
 
-    public List<DKG> searchConceptDefinitions(String term, Integer limit, Integer offset) throws Exception {
-        return miraProxy.search(term, limit, offset).getBody();
-    }
+	@Observed(name = "function_profile")
+	public List<DKG> searchConceptDefinitions(final String term, final Integer limit, final Integer offset)
+			throws Exception {
+		return miraProxy.search(term, limit, offset).getBody();
+	}
 
-    public DKG getConceptDefinition(String curie) throws Exception {
-        return miraProxy.getEntity(curie).getBody();
-    }
+	@Observed(name = "function_profile")
+	public DKG getConceptDefinition(final String curie) throws Exception {
+		return miraProxy.getEntity(curie).getBody();
+	}
 
-    public ConceptFacetSearchResponse searchConceptsUsingFacets(List<TaggableType> types, List<String> curies) {
+	@Observed(name = "function_profile")
+	public ConceptFacetSearchResponse searchConceptsUsingFacets(
+			final List<TaggableType> types, final List<String> curies) {
 
-        return ontologyConceptRepository.facetQuery(types, curies);
-    }
+		return ontologyConceptRepository.facetQuery(types, curies);
+	}
 
-    private ActiveConcept markConceptAsActive(final OntologyConcept concept) {
-        Optional<ActiveConcept> activeOptional = activeConceptRespository.getByCurie(concept.getCurie());
-        ActiveConcept active = null;
-        if (activeOptional.isEmpty()) {
+	private ActiveConcept markConceptAsActive(final OntologyConcept concept) {
+		final Optional<ActiveConcept> activeOptional = activeConceptRespository.getByCurie(concept.getCurie());
+		ActiveConcept active = null;
+		if (activeOptional.isEmpty()) {
 
-            active = new ActiveConcept();
-            active.setCurie(concept.getCurie());
+			active = new ActiveConcept();
+			active.setCurie(concept.getCurie());
 
-            try {
-                DKG dkg = getConceptDefinition(concept.getCurie());
-                active.setName(dkg.getName());
-            } catch (Exception e) {
-                log.error("Unable to fetch from DKG", e);
-            }
+			try {
+				final DKG dkg = getConceptDefinition(concept.getCurie());
+				active.setName(dkg.getName());
+			} catch (final Exception e) {
+				log.error("Unable to fetch from DKG", e);
+			}
 
-            activeConceptRespository.save(active);
-        } else {
-            active = activeOptional.get();
-        }
-        return active;
-    }
+			activeConceptRespository.save(active);
+		} else {
+			active = activeOptional.get();
+		}
+		return active;
+	}
 }

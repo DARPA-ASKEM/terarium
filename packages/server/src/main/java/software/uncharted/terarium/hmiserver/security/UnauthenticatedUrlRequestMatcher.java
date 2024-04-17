@@ -16,19 +16,19 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 @RequiredArgsConstructor
 public class UnauthenticatedUrlRequestMatcher implements RequestMatcher {
 
-    private final Config config;
+	private final Config config;
 
-    private RequestMatcher pathMatcher;
+	private RequestMatcher pathMatcher;
 
-    @PostConstruct
-    public void init() {
-        this.pathMatcher = new OrRequestMatcher(config.getUnauthenticatedUrlPatterns().stream()
-                .map(p -> new AntPathRequestMatcher(p))
-                .collect(Collectors.toList()));
-    }
+	@PostConstruct
+	public void init() {
+		this.pathMatcher = new OrRequestMatcher(config.getUnauthenticatedUrlPatterns().stream()
+				.map(p -> new AntPathRequestMatcher(p))
+				.collect(Collectors.toList()));
+	}
 
-    @Override
-    public boolean matches(HttpServletRequest request) {
-        return pathMatcher.matches(request);
-    }
+	@Override
+	public boolean matches(HttpServletRequest request) {
+		return pathMatcher.matches(request);
+	}
 }

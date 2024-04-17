@@ -1123,7 +1123,7 @@ export interface ModelParameter {
     value?: number;
     grounding?: ModelGrounding;
     distribution?: ModelDistribution;
-    unit?: ModelUnit;
+    units?: ModelUnit;
 }
 
 export interface Observable {
@@ -1267,6 +1267,7 @@ export enum ClientEventType {
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
+    ExtractionPdf = "EXTRACTION_PDF",
 }
 
 export enum FileType {

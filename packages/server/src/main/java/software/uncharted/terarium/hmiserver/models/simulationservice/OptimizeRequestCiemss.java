@@ -17,34 +17,34 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @TSModel
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeRequestCiemss implements Serializable {
-    @JsonAlias("model_config_id")
-    private String modelConfigId;
+	@JsonAlias("model_config_id")
+	private String modelConfigId;
 
-    private TimeSpan timespan;
+	private TimeSpan timespan;
 
-    @TSOptional
-    // FIXME: make pluraal more consistent here:
-    // https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-    private OptimizedIntervention interventions;
+	@TSOptional
+	// FIXME: make pluraal more consistent here:
+	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
+	private OptimizedIntervention interventions;
 
-    @JsonAlias("step_size")
-    @TSOptional
-    private Double stepSize;
+	@JsonAlias("step_size")
+	@TSOptional
+	private Double stepSize;
 
-    private OptimizeQoi qoi;
+	private OptimizeQoi qoi;
 
-    @JsonAlias("risk_bound")
-    private Double riskBound;
+	@JsonAlias("risk_bound")
+	private Double riskBound;
 
-    @JsonAlias("initial_guess_interventions")
-    private List<Double> initialGuessInterventions;
+	@JsonAlias("initial_guess_interventions")
+	private List<Double> initialGuessInterventions;
 
-    @JsonAlias("bounds_interventions")
-    private List<List<Double>> boundsInterventions;
+	@JsonAlias("bounds_interventions")
+	private List<List<Double>> boundsInterventions;
 
-    private OptimizeExtra extra;
-    private String engine;
+	private OptimizeExtra extra;
+	private String engine;
 
-    @JsonAlias("user_id")
-    private String userId;
+	@JsonAlias("user_id")
+	private String userId;
 }

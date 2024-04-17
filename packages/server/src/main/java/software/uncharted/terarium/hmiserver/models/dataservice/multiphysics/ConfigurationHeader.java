@@ -12,15 +12,15 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class ConfigurationHeader implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1449501982399992143L;
+	@Serial
+	private static final long serialVersionUID = 1449501982399992143L;
 
-    private String id;
+	private String id;
 
-    private String description;
+	private String description;
 
-    private String name;
+	private String name;
 
-    @JsonAlias("parent_context")
-    private String parentContext;
+	@JsonAlias("parent_context")
+	private String parentContext;
 }

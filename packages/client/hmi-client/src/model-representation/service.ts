@@ -21,6 +21,12 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 			value: miraModel.parameters[variableName].value
 		};
 	}
+	const template = miraModel.templates.find((t) => t.name === variableName);
+	if (template) {
+		return {
+			value: template.rate_law
+		};
+	}
 	throw new Error(`${variableName} not found`);
 };
 
@@ -299,4 +305,18 @@ export function validateTimeSeries(values: string) {
 	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
 	const isValid = values.split(',').every(isPairValid);
 	return isValid;
+}
+
+export function setParameters(model: Model, parameters: ModelParameter[]) {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			model.model.parameters = parameters;
+			break;
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			if (model.semantics) model.semantics.ode.parameters = parameters;
+			break;
+	}
 }

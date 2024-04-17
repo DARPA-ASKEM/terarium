@@ -11,10 +11,10 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TSModel
 public class DKG {
-    @JsonAlias("id")
-    private String curie;
+	@JsonAlias("id")
+	private String curie;
 
-    private String name;
-    private String description;
-    private String link;
+	private String name;
+	private String description;
+	private String link;
 }

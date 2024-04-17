@@ -10,16 +10,16 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 
 public class UserControllerTests extends TerariumApplicationTests {
 
-    @Test
-    public void testItReturns401OnUnAuthorized() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/user/me")).andExpect(status().isUnauthorized());
-    }
+	@Test
+	public void testItReturns401OnUnAuthorized() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders.get("/user/me")).andExpect(status().isUnauthorized());
+	}
 
-    @Test
-    @WithMockUser(
-            username = "ursula",
-            authorities = {Roles.USER})
-    public void testItReturnsOkOnAuthorized() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/user/me")).andExpect(status().isOk());
-    }
+	@Test
+	@WithMockUser(
+			username = "ursula",
+			authorities = {Roles.USER})
+	public void testItReturnsOkOnAuthorized() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders.get("/user/me")).andExpect(status().isOk());
+	}
 }
