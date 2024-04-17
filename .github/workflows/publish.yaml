@@ -54,7 +54,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # 1.2 - Generate a matrix output of all the targets for the specified group
-      # if its not triggered by tag use `staging` bake group instead
+      # if it's not triggered by tag use `staging` bake group instead
       - name: Create matrix
         id: targets
         run: |
@@ -70,6 +70,7 @@ jobs:
       - name: Show matrix
         run: |
           echo ${{ steps.targets.outputs.matrix }}
+
 
   build-push:
     name: build-bake-push
