@@ -3,6 +3,10 @@ package software.uncharted.terarium.hmiserver.service.elasticsearch;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
+import java.io.Serial;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +14,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -55,9 +57,7 @@ public class ElasticsearchInitializationService {
 		return false;
 	}
 
-	/**
-	 * For each system template resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each system template resource, add it to the cluster if it doesn't exist */
 	private void pushMissingComponentTemplates() throws IOException {
 		for (final Resource resource : resourceComponentTemplates) {
 			final String filename = resource.getFilename();
@@ -67,8 +67,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putComponentTemplate(componentTemplateName,
-							templateJson.toString());
+						final boolean acknowledged = elasticsearchService.putComponentTemplate(
+								componentTemplateName, templateJson.toString());
 						if (acknowledged) {
 							log.info("Added component template: {}", componentTemplateName);
 						} else {
@@ -82,9 +82,7 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each system template resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each system template resource, add it to the cluster if it doesn't exist */
 	private void pushMissingIndexTemplates() throws IOException {
 		for (final Resource resource : resourceIndexTemplates) {
 			final String filename = resource.getFilename();
@@ -94,8 +92,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putIndexTemplate(indexTemplateName,
-								templateJson.toString());
+						final boolean acknowledged =
+								elasticsearchService.putIndexTemplate(indexTemplateName, templateJson.toString());
 						if (acknowledged) {
 							log.info("Added index template: {}", indexTemplateName);
 						} else {
@@ -109,9 +107,7 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each pipeline resource, add it to the cluster if it doesn't exist
-	 */
+	/** For each pipeline resource, add it to the cluster if it doesn't exist */
 	private void pushMissingPipelines() throws IOException {
 		for (final Resource resource : resourcePipelines) {
 			final String filename = resource.getFilename();
@@ -121,8 +117,8 @@ public class ElasticsearchInitializationService {
 					final JsonNode pipelineJson;
 					try {
 						pipelineJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged = elasticsearchService.putPipeline(pipelineName,
-								pipelineJson.toString());
+						final boolean acknowledged =
+								elasticsearchService.putPipeline(pipelineName, pipelineJson.toString());
 						if (acknowledged) {
 							log.info("Added pipeline: {}", pipelineName);
 						} else {
@@ -136,30 +132,44 @@ public class ElasticsearchInitializationService {
 		}
 	}
 
-	/**
-	 * For each index in the ElasticsearchConfiguration, add it to the cluster if it
-	 * doesn't exist
-	 */
+	/** For each index in the ElasticsearchConfiguration, add it to the cluster if it doesn't exist */
 	private void pushMissingIndices() throws IOException {
-		final String[] indices = new String[] {
-			config.getCodeIndex(),
-			config.getDatasetIndex(),
-			config.getDecapodesConfigurationIndex(),
-			config.getDecapodesContextIndex(),
-			config.getDocumentIndex(),
-			config.getEquationIndex(),
-			config.getModelIndex(),
-			config.getModelConfigurationIndex(),
-			config.getNotebookSessionIndex(),
-			config.getSimulationIndex(),
-			config.getWorkflowIndex()
+
+		final Map<String, String> indices = new HashMap<>() {
+			@Serial
+			private static final long serialVersionUID = -200876314045109854L;
+
+			{
+				put(config.getCodeIndex(), config.getCodeAlias());
+				put(config.getDatasetIndex(), config.getDatasetAlias());
+				put(config.getDecapodesConfigurationIndex(), config.getDecapodesConfigurationAlias());
+				put(config.getDecapodesContextIndex(), config.getDecapodesContextAlias());
+				put(config.getDocumentIndex(), config.getDocumentAlias());
+				put(config.getEquationIndex(), config.getEquationAlias());
+				put(config.getModelIndex(), config.getModelAlias());
+				put(config.getModelConfigurationIndex(), config.getModelConfigurationAlias());
+				put(config.getNotebookSessionIndex(), config.getNotebookSessionAlias());
+				put(config.getSimulationIndex(), config.getSimulationAlias());
+				put(config.getWorkflowIndex(), config.getWorkflowAlias());
+			}
 		};
-		for (final String index : indices) {
-			if (!elasticsearchService.containsIndex(index)) {
+
+		for (final Map.Entry<String, String> entry : indices.entrySet()) {
+			final String index = entry.getKey();
+			final String alias = entry.getValue();
+			if (!elasticsearchService.indexExists(index)) {
 				try {
 					elasticsearchService.createIndex(index);
 				} catch (final IOException e) {
 					log.error("Error creating index {}", index, e);
+				}
+			}
+
+			if (!elasticsearchService.aliasExists(alias)) {
+				try {
+					elasticsearchService.createAlias(index, alias);
+				} catch (final IOException e) {
+					log.error("Error creating alias {}", alias, e);
 				}
 			}
 		}

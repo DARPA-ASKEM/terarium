@@ -1,12 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.multiphysics;
 
+import java.io.Serial;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-
-import java.io.Serial;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

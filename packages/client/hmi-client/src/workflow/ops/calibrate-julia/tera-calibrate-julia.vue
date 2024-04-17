@@ -144,7 +144,7 @@
 				</div>
 				<div class="form-section">
 					<h5>Loss function</h5>
-					<div v-if="inProgressSimulationId || selectedRunId" ref="lossPlot"></div>
+					<div ref="lossPlot"></div>
 				</div>
 				<div class="form-section">
 					<h5>Variables</h5>
@@ -190,7 +190,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -440,11 +440,50 @@ async function getAutoMapping() {
 	emit('update-state', state);
 }
 
+const initialize = async () => {
+	// Set up model config + dropdown names
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	modelConfig.value = modelConfiguration;
+	modelStateOptions.value = modelOptions;
+
+	// Set up csv + dropdown names
+	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
+	currentDatasetFileName.value = filename;
+	csvAsset.value = csv;
+	datasetColumns.value = datasetOptions;
+
+	const node = props.node;
+	if (!node.active) return;
+
+	selectedOutputId.value = node.active;
+	selectedRunId.value = node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0];
+
+	if (!selectedRunId.value) return;
+	lazyLoadCalibrationData(selectedRunId.value as string);
+
+	const lossVals = _.cloneDeep(node.state.intermediateLoss);
+
+	if (lossVals && lossPlot.value) {
+		const width = lossPlot.value?.offsetWidth as number;
+		renderLossGraph(lossPlot.value, lossVals, { width, height: 150 });
+	}
+
+	// Update Wizard form fields with current selected output state extras
+	extra.value = props.node.state.extra;
+};
+
+onMounted(() => {
+	initialize();
+});
+
 watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
 		if (id === '') {
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
+			const state = _.cloneDeep(props.node.state);
+			state.intermediateLoss = lossValues;
+			emit('update-state', state);
 		} else {
 			subscribeToUpdateMessages([id], ClientEventType.SimulationSciml, messageHandler);
 		}
@@ -454,48 +493,8 @@ watch(
 watch(
 	() => props.node.active,
 	() => {
-		const node = props.node;
-		if (!node.active) return;
-
-		selectedOutputId.value = node.active;
-		selectedRunId.value = node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0];
-
-		if (!selectedRunId.value) return;
-		lazyLoadCalibrationData(selectedRunId.value as string);
-
-		const lossVals = node.state.intermediateLoss;
-		if (lossVals && lossPlot) {
-			const width = lossPlot.value?.offsetWidth as number;
-			renderLossGraph(lossPlot.value as HTMLElement, lossVals, { width, height: 150 });
-		}
-
-		// Update Wizard form fields with current selected output state extras
-		extra.value = props.node.state.extra;
-	},
-	{ immediate: true }
-);
-
-// Set up model config + dropdown names
-watch(
-	() => modelConfigId.value,
-	async () => {
-		const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
-		modelConfig.value = modelConfiguration;
-		modelStateOptions.value = modelOptions;
-	},
-	{ immediate: true }
-);
-
-// Set up csv + dropdown names
-watch(
-	() => datasetId.value,
-	async () => {
-		const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
-		currentDatasetFileName.value = filename;
-		csvAsset.value = csv;
-		datasetColumns.value = datasetOptions;
-	},
-	{ immediate: true }
+		initialize();
+	}
 );
 </script>
 

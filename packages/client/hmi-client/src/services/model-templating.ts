@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { nextTick } from 'vue';
 import { cloneDeep, uniq, isEmpty, snakeCase, isEqual } from 'lodash';
 import type { Position } from '@/types/common';
 import type {
@@ -9,7 +10,7 @@ import type {
 } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
-import { Model, Initial, ModelUnit } from '@/types/Types';
+import { Model, Initial } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import naturalConversionTemplate from './model-templates/natural-conversion.json';
 import naturalProductionTemplate from './model-templates/natural-production.json';
@@ -28,7 +29,7 @@ interface AddTemplateArguments {
 	controller_initial_value?: string;
 	parameter_name?: string;
 	parameter_value?: number;
-	parameter_units?: ModelUnit;
+	parameter_units?: string;
 	parameter_description?: string;
 	template_expression?: string;
 	template_name?: string;
@@ -251,7 +252,7 @@ export function addDecomposedTemplateInKernel(
 			if (parameters) {
 				addTemplateArguments.parameter_name = parameters[0].id;
 				addTemplateArguments.parameter_value = parameters[0].value;
-				addTemplateArguments.parameter_units = parameters[0].unit ?? undefined;
+				addTemplateArguments.parameter_units = parameters[0]?.units?.expression;
 				addTemplateArguments.parameter_description = parameters[0].description;
 			}
 
@@ -571,6 +572,9 @@ export async function flattenedToDecomposedInView(
 		})
 	);
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add junctions and edges based on initials
 	// If an initial is repeated create a junction and two edges to connect them
 	const repeatedInitialTargets = uniq(
@@ -704,6 +708,9 @@ export async function reflectFlattenedEditInDecomposedView(
 			})
 	);
 
+	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
+	await nextTick();
+
 	// Add edges and potential junctions from flattened view to decomposed view
 	flattenedCanvas.junctions.forEach((flatJunction: ModelTemplateJunction) => {
 		const sharedPortId = flatJunction.edges[0].target.portId; // The state id shared by all ports is always the first port id
@@ -718,7 +725,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
 
-			const portPosition = getPortPosition(templateCard, sharedPortId, decomposedPortElements);
+			const portPosition = getPortPosition(templateCard, sharedPortId, decomposedPortElements); // FIXME: Decomposed ports can't be referenced at this stage since we are in the flattened view
 
 			addJunction(decomposedCanvas, portPosition);
 			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;
@@ -742,7 +749,7 @@ export async function reflectFlattenedEditInDecomposedView(
 				flatEdge.target.portId
 			);
 			if (!templateCard) return;
-			const portPosition = getPortPosition(templateCard, flatEdge.target.portId);
+			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card will exist in both views and the offset values for the ports are the same
 
 			addEdgeInKernel(
 				kernelManager,

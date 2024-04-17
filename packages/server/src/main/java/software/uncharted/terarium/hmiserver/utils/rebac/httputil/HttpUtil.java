@@ -29,9 +29,8 @@ import java.security.cert.CertificateException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.net.ssl.SSLContext;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -50,16 +49,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-//import org.keycloak.client.admin.cli.httpcomponents.HttpDelete;
-//import org.keycloak.client.admin.cli.operations.LocalSearch;
-//import org.keycloak.client.admin.cli.operations.RoleOperations;
 import org.keycloak.util.JsonSerialization;
 
-import lombok.extern.slf4j.Slf4j;
-
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 @Slf4j
 public class HttpUtil {
 
@@ -82,8 +74,8 @@ public class HttpUtil {
 		}
 	}
 
-	public static InputStream doPost(String url, String contentType, String acceptType, String content,
-			String authorization) {
+	public static InputStream doPost(
+			String url, String contentType, String acceptType, String content, String authorization) {
 		try {
 			return doPostOrPut(contentType, acceptType, content, authorization, new HttpPost(url));
 		} catch (IOException e) {
@@ -91,8 +83,8 @@ public class HttpUtil {
 		}
 	}
 
-	public static InputStream doPut(String url, String contentType, String acceptType, String content,
-			String authorization) {
+	public static InputStream doPut(
+			String url, String contentType, String acceptType, String content, String authorization) {
 		try {
 			return doPostOrPut(contentType, acceptType, content, authorization, new HttpPut(url));
 		} catch (IOException e) {
@@ -187,8 +179,13 @@ public class HttpUtil {
 		}
 	}
 
-	private static InputStream doPostOrPut(String contentType, String acceptType, String content, String authorization,
-			HttpEntityEnclosingRequestBase request) throws IOException {
+	private static InputStream doPostOrPut(
+			String contentType,
+			String acceptType,
+			String content,
+			String authorization,
+			HttpEntityEnclosingRequestBase request)
+			throws IOException {
 		request.setHeader(HttpHeaders.CONTENT_TYPE, contentType);
 		request.setHeader(HttpHeaders.ACCEPT, acceptType);
 		if (content != null) {
@@ -223,15 +220,17 @@ public class HttpUtil {
 				if (responseStream != null) {
 					responseStream.close();
 				}
-
 			}
 
 			String message = null;
 			if (error != null) {
 				message = error.get("error_description") + " [" + error.get("error") + "]";
 			}
-			throw new RuntimeException(message != null ? message
-					: response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
+			throw new RuntimeException(
+					message != null
+							? message
+							: response.getStatusLine().getStatusCode() + " "
+									+ response.getStatusLine().getReasonPhrase());
 		}
 	}
 
@@ -244,7 +243,10 @@ public class HttpUtil {
 	public static HttpClient getHttpClient() {
 		if (httpClient == null) {
 			if (sslsf != null) {
-				httpClient = HttpClientBuilder.create().useSystemProperties().setSSLSocketFactory(sslsf).build();
+				httpClient = HttpClientBuilder.create()
+						.useSystemProperties()
+						.setSSLSocketFactory(sslsf)
+						.build();
 			} else {
 				httpClient = HttpClientBuilder.create().useSystemProperties().build();
 			}
@@ -260,15 +262,16 @@ public class HttpUtil {
 		}
 	}
 
-	public static void setTruststore(File file, String password) throws CertificateException, NoSuchAlgorithmException,
-			KeyStoreException, IOException, KeyManagementException {
+	public static void setTruststore(File file, String password)
+			throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException,
+					KeyManagementException {
 		if (!file.isFile()) {
 			throw new RuntimeException("Truststore file not found: " + file.getAbsolutePath());
 		}
 		SSLContext theContext = SSLContexts.custom()
 				.setProtocol("TLS")
-				.loadTrustMaterial(file, password == null ? null : password.toCharArray(),
-						TrustSelfSignedStrategy.INSTANCE)
+				.loadTrustMaterial(
+						file, password == null ? null : password.toCharArray(), TrustSelfSignedStrategy.INSTANCE)
 				.build();
 		sslsf = new SSLConnectionSocketFactory(theContext);
 	}
@@ -412,8 +415,8 @@ public class HttpUtil {
 		}
 
 		try {
-			response = HttpUtil.doRequest("post", resourceUrl,
-					new HeadersBody(headers, new ByteArrayInputStream(body)));
+			response =
+					HttpUtil.doRequest("post", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
 		} catch (IOException e) {
 			throw new RuntimeException("HTTP request failed: POST " + resourceUrl + "\n" + new String(body), e);
 		}
@@ -438,8 +441,8 @@ public class HttpUtil {
 		}
 
 		try {
-			response = HttpUtil.doRequest("delete", resourceUrl,
-					new HeadersBody(headers, new ByteArrayInputStream(body)));
+			response =
+					HttpUtil.doRequest("delete", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
 		} catch (IOException e) {
 			throw new RuntimeException("HTTP request failed: DELETE " + resourceUrl + "\n" + new String(body), e);
 		}

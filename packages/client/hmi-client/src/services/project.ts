@@ -4,6 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
+import { b64EncodeUnicode } from '@/utils/binary';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
@@ -51,7 +52,7 @@ async function update(project: Project): Promise<Project | null> {
 			id,
 			name,
 			description,
-			overviewContent: btoa(overviewContent)
+			overviewContent: b64EncodeUnicode(overviewContent)
 		});
 		const { status, data } = response;
 		if (status !== 200) {
@@ -83,15 +84,15 @@ async function remove(projectId: Project['id']): Promise<boolean> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<Project[] | null> {
+async function getAll(): Promise<Project[]> {
 	try {
 		const response = await API.get(`/projects`);
 		const { status, data } = response;
-		if (status !== 200 || !data) return null;
+		if (status !== 200 || !data) return [];
 		return (data as Project[]).reverse();
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return [];
 	}
 }
 

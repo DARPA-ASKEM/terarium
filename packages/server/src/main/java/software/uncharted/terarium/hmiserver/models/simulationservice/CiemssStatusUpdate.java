@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 

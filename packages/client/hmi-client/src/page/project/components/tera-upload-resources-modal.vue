@@ -221,29 +221,29 @@ function importCompleted(newResults: { id: string; name: string; assetType: Asse
 
 async function upload() {
 	if (results.value) {
-		await Promise.all(
-			results.value?.map(({ id, assetType, name }): Promise<any> => {
-				const newAsset = useProjects().addAsset(assetType, id);
-				if (name && name.toLowerCase().endsWith('.pdf')) {
-					extractPDF(id);
-				} else if (
-					(name && name.toLowerCase().endsWith('.txt')) ||
-					(name && name.toLowerCase().endsWith('.md'))
-				) {
-					modelCard(id);
-				}
-				return newAsset;
-			})
-		).then((resolved) => {
-			emit('close');
-			const resourceMsg = resolved.length > 1 ? 'resources were' : 'resource was';
-			useToastService().success(
-				'Success!',
-				`${resolved.length} ${resourceMsg} successfuly added to this project`
-			);
-			importedFiles.value = [];
-			results.value = null;
+		const createAssetsPromises = (results.value ?? []).map(({ id, assetType }) =>
+			useProjects().addAsset(assetType, id)
+		);
+		const createdAssets = await Promise.all(createAssetsPromises);
+		createdAssets.forEach((_, index) => {
+			const { name, id } = (results.value ?? [])[index];
+			if (name && name.toLowerCase().endsWith('.pdf')) {
+				extractPDF(id);
+			} else if (
+				name &&
+				(name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))
+			) {
+				modelCard(id);
+			}
 		});
+		emit('close');
+		const resourceMsg = createdAssets.length > 1 ? 'resources were' : 'resource was';
+		useToastService().success(
+			'Success!',
+			`${createdAssets.length} ${resourceMsg} successfully added to this project`
+		);
+		importedFiles.value = [];
+		results.value = null;
 	} else if (urlToUpload.value) {
 		isImportGithubFileModalVisible.value = true;
 	} else {

@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
-
 @Data
 @Accessors(chain = true)
 @TSModel

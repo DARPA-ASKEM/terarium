@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
@@ -14,14 +15,9 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Arrays;
-
 @Configuration
 @EnableCaching
-@ImportAutoConfiguration(classes = {
-	CacheAutoConfiguration.class,
-	RedisAutoConfiguration.class
-})
+@ImportAutoConfiguration(classes = {CacheAutoConfiguration.class, RedisAutoConfiguration.class})
 @Slf4j
 public class CacheConfiguration implements CachingConfigurer {
 
@@ -36,8 +32,8 @@ public class CacheConfiguration implements CachingConfigurer {
 	}
 
 	/**
-	 * Overrides the default key generating for spring caching.  This ensures that the fully qualified classname (with the
-	 * package) and the method parameters are taken into account
+	 * Overrides the default key generating for spring caching. This ensures that the fully qualified classname (with
+	 * the package) and the method parameters are taken into account
 	 *
 	 * @return the {@link KeyGenerator} for caching
 	 */

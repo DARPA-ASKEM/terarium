@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,10 +16,6 @@ import software.uncharted.terarium.hmiserver.models.ClientLog;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @RestController
 @RequestMapping("/logs")
@@ -34,7 +33,8 @@ public class LogController {
 	@Secured(Roles.USER)
 	public ResponseEntity<HttpStatus> log(@RequestBody List<ClientLog> logList) {
 		logList.forEach(clientLog -> {
-			List<String> parts = new ArrayList<>(List.of(clientLog.getTimestampMillis() + "", getCurrentUserId(), clientLog.getMessage()));
+			List<String> parts = new ArrayList<>(
+					List.of(clientLog.getTimestampMillis() + "", getCurrentUserId(), clientLog.getMessage()));
 			if (clientLog.getArgs() != null && clientLog.getArgs().length > 0) {
 				parts.addAll(Arrays.asList(clientLog.getArgs()));
 			}
@@ -45,15 +45,13 @@ public class LogController {
 				case "debug" -> log.debug(message);
 				default -> log.info(message);
 			}
-
-
 		});
 		return ResponseEntity.ok(HttpStatus.OK);
 	}
 
 	/**
-	 * Get the current user id, or "Anonymous" if no user is logged in (eg/ this is a log message from
-	 * a system or scheduled event)
+	 * Get the current user id, or "Anonymous" if no user is logged in (eg/ this is a log message from a system or
+	 * scheduled event)
 	 *
 	 * @return the current user id
 	 */

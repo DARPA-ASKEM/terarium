@@ -28,8 +28,7 @@ public class RelatedController {
 	@GetMapping("/document")
 	@Secured(Roles.USER)
 	public ResponseEntity<XDDRelatedDocumentsResponse> getRelatedDocuments(
-			@RequestParam("set") final String set,
-			@RequestParam("docid") final String docid) {
+			@RequestParam("set") final String set, @RequestParam("docid") final String docid) {
 		try {
 			final XDDRelatedDocumentsResponse response = proxy.getRelatedDocuments(set, docid);
 			if (response.getData() == null || response.getData().isEmpty())
@@ -39,18 +38,19 @@ public class RelatedController {
 
 		} catch (final FeignException e) {
 			log.error("xDD returned an exception for related document search:", e);
-			throw new ResponseStatusException(HttpStatusCode.valueOf(e.status()), "There was an issue with the related request to xDD");
+			throw new ResponseStatusException(
+					HttpStatusCode.valueOf(e.status()), "There was an issue with the related request to xDD");
 		} catch (final Exception e) {
 			log.error("Unable to find related documents, an error occurred", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find related documents, an error occurred");
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find related documents, an error occurred");
 		}
 	}
 
 	@GetMapping("/word")
 	@Secured(Roles.USER)
 	public ResponseEntity<XDDRelatedWordsResponse> getRelatedWords(
-			@RequestParam("set") final String set,
-			@RequestParam("word") final String word) {
+			@RequestParam("set") final String set, @RequestParam("word") final String word) {
 		try {
 			final XDDRelatedWordsResponse response = proxy.getRelatedWords(set, word);
 			if (response.getData() == null || response.getData().isEmpty()) {
@@ -61,10 +61,12 @@ public class RelatedController {
 
 		} catch (final FeignException e) {
 			log.error("xDD returned an exception for related word search:", e);
-			throw new ResponseStatusException(HttpStatusCode.valueOf(e.status()), "There was an issue with the related word request to xDD");
+			throw new ResponseStatusException(
+					HttpStatusCode.valueOf(e.status()), "There was an issue with the related word request to xDD");
 		} catch (final Exception e) {
 			log.error("Unable to find related words, an error occurred", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find related words, an error occurred");
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find related words, an error occurred");
 		}
 	}
 }

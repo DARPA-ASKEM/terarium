@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -20,21 +21,22 @@ public class TerariumAssetServices {
 
 	/**
 	 * Get the service for a given asset type
+	 *
 	 * @param type The type of asset to get the service for
 	 * @return The service for the given asset type
 	 */
-	public TerariumAssetService<? extends TerariumAsset> getServiceByType(final AssetType type) {
-        return switch (type) {
-            case ARTIFACT -> artifactService;
-            case CODE -> codeService;
-            case DATASET -> datasetService;
-            case DOCUMENT -> documentAssetService;
-            case MODEL_CONFIGURATION -> modelConfigurationService;
-            case MODEL -> modelService;
-            case NOTEBOOK_SESSION -> notebookSessionService;
-            case WORKFLOW -> workflowService;
-            default -> throw new IllegalArgumentException("Invalid asset type: " + type);
-        };
+	@Observed(name = "function_profile")
+	public ITerariumAssetService<? extends TerariumAsset> getServiceByType(final AssetType type) {
+		return switch (type) {
+			case ARTIFACT -> artifactService;
+			case CODE -> codeService;
+			case DATASET -> datasetService;
+			case DOCUMENT -> documentAssetService;
+			case MODEL_CONFIGURATION -> modelConfigurationService;
+			case MODEL -> modelService;
+			case NOTEBOOK_SESSION -> notebookSessionService;
+			case WORKFLOW -> workflowService;
+			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
+		};
 	}
-
 }

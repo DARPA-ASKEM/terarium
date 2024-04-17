@@ -1,8 +1,22 @@
 package software.uncharted.terarium.hmiserver.controller.search;
 
+import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,25 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.ErrorCause;
-import co.elastic.clients.elasticsearch._types.KnnQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -46,19 +41,18 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 @RequiredArgsConstructor
 public class SearchByAssetTypeController {
 
-	final private ObjectMapper objectMapper;
-	final private TaskService taskService;
-	final private ElasticsearchService esService;
-	final private ElasticsearchConfiguration esConfig;
+	private final ObjectMapper objectMapper;
+	private final TaskService taskService;
+	private final ElasticsearchService esService;
+	private final ElasticsearchConfiguration esConfig;
 
-	static final private long CACHE_TTL_SECONDS = 60 * 60 * 2; // 2 hours
-	static final private long REQUEST_TIMEOUT_SECONDS = 30;
-	static final private String EMBEDDING_MODEL = "text-embedding-ada-002";
+	private static final long REQUEST_TIMEOUT_SECONDS = 30;
+	private static final String EMBEDDING_MODEL = "text-embedding-ada-002";
 
-	static final private List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
+	private static final List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
 
 	@Data
-	static public class GoLLMSearchRequest {
+	public static class GoLLMSearchRequest {
 		private String text;
 
 		@JsonProperty("embedding_model")
@@ -73,11 +67,23 @@ public class SearchByAssetTypeController {
 	@GetMapping("/{asset-type}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Query results", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Query results",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = JsonNode.class))),
+				@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving the concept from the data store",
+						content = @Content)
+			})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
 			@PathVariable("asset-type") final String assetTypeName,
 			@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
@@ -87,14 +93,14 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
 			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
-		AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
+		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		try {
 
 			if (index.equals("")) {
 				index = esConfig.getIndex(assetType.toString().toLowerCase());
 			}
 
-			if (!esService.containsIndex(index)) {
+			if (!esService.indexExists(index)) {
 				log.error("Unsupported asset type: {}, index {} does not exist", assetType, index);
 				return ResponseEntity.badRequest().build();
 			}
@@ -127,8 +133,7 @@ public class SearchByAssetTypeController {
 				final byte[] outputBytes = resp.getOutput();
 				final JsonNode output = objectMapper.readTree(outputBytes);
 
-				final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output,
-						EmbeddingsResponse.class);
+				final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
 
 				final List<Float> vector = embeddingResp.getResponse();
 
@@ -141,13 +146,12 @@ public class SearchByAssetTypeController {
 			}
 
 			final Query query = new Query.Builder()
-					.bool(b -> b
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+					.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
 							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 
-			final SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, page, pageSize, EXCLUDE_FIELDS,
-					JsonNode.class);
+			final SearchResponse<JsonNode> res =
+					esService.knnSearch(index, knn, query, page, pageSize, EXCLUDE_FIELDS, JsonNode.class);
 
 			final List<JsonNode> docs = new ArrayList<>();
 			for (final Hit<JsonNode> hit : res.hits().hits()) {
@@ -160,25 +164,11 @@ public class SearchByAssetTypeController {
 
 			return ResponseEntity.ok(docs);
 
-		} catch (final ElasticsearchException e) {
-			String error = "Unable to get execute knn search: " + e.response().error().reason();
-			final ErrorCause causedBy = e.response().error().causedBy();
-			if (causedBy != null) {
-				error += ", caused by: " + causedBy.reason();
-			}
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
 		} catch (final Exception e) {
 
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-
 	}
-
 }

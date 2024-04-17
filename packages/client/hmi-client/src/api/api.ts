@@ -271,10 +271,15 @@ export class TaskHandler {
 				retry: 3000
 			});
 			this.eventSource.onmessage = (message: MessageEvent) => {
-				const data = message?.data;
-				const parsedData = JSON.parse(data);
-				const closeConnection = this.closeConnection.bind(this);
-				this.handlers.ondata(parsedData, closeConnection);
+				try {
+					const data = message?.data;
+					const parsedData = JSON.parse(data);
+					const closeConnection = this.closeConnection.bind(this);
+					this.handlers.ondata(parsedData, closeConnection);
+				} catch (error) {
+					logger.error(error, { showToast: false });
+					this.closeConnection();
+				}
 			};
 			this.eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
@@ -288,8 +293,8 @@ export class TaskHandler {
 				if (handlers.onopen) handlers.onopen(response);
 			};
 		} catch (error: unknown) {
-			this.isRunning.value = false;
-			logger.error(error);
+			logger.error(error, { showToast: false });
+			this.closeConnection();
 		}
 	}
 }

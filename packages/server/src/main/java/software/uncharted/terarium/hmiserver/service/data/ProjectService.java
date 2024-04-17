@@ -1,15 +1,14 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
@@ -23,18 +22,22 @@ public class ProjectService {
 	final ProjectRepository projectRepository;
 	final UserRepository userRepository;
 
+	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
 		return projectRepository.findAll();
 	}
 
+	@Observed(name = "function_profile")
 	public List<Project> getProjects(final List<UUID> ids) {
 		return projectRepository.findAllById(ids);
 	}
 
+	@Observed(name = "function_profile")
 	public List<Project> getActiveProjects(final List<UUID> ids) {
 		return projectRepository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<Project> getProject(final UUID id) {
 		final Optional<Project> project = projectRepository.getByIdAndDeletedOnIsNull(id);
 		if (project.isPresent() && project.get().getUserId() != null) {
@@ -44,10 +47,12 @@ public class ProjectService {
 		return project;
 	}
 
+	@Observed(name = "function_profile")
 	public Project createProject(final Project project) {
 		return projectRepository.save(project);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<Project> updateProject(final Project project) {
 		if (!projectRepository.existsById(project.getId())) {
 			return Optional.empty();
@@ -55,10 +60,10 @@ public class ProjectService {
 		return Optional.of(projectRepository.save(project));
 	}
 
+	@Observed(name = "function_profile")
 	public boolean delete(final UUID id) {
 		final Optional<Project> project = getProject(id);
-		if (project.isEmpty())
-			return false;
+		if (project.isEmpty()) return false;
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
 		return true;

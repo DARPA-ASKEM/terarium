@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -13,10 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -68,7 +65,9 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.get();
 	}
 
 	// @Test
@@ -91,7 +90,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi")
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi")
 				.get();
 	}
 
@@ -106,7 +106,9 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
@@ -133,10 +135,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity,
-				ContentType.create("application/pdf"));
+		documentAssetService.uploadFile(
+				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
 
-		documentAsset = extractionService.extractPDF(documentAsset.getId(), "epi").get();
+		documentAsset =
+				extractionService.extractPDF(documentAsset.getId(), "epi").get();
 	}
-
 }

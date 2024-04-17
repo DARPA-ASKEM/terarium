@@ -1,16 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.List;
-import java.util.UUID;
 
 @Data
 @Accessors(chain = true)
@@ -53,5 +52,4 @@ public class ProvenanceQueryParam implements Serializable {
 
 	@TSOptional
 	private Boolean verbose;
-
 }

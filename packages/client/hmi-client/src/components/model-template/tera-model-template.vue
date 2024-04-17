@@ -24,7 +24,7 @@
 		<ul>
 			<li
 				v-for="(port, index) in ports"
-				:id="`${id ?? ''}-${port.id}`"
+				:id="id ? `${id}-${port.id}` : undefined"
 				class="port"
 				:class="{ selectable: isEditable }"
 				:key="index"

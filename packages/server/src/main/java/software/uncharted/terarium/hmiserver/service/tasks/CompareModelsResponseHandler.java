@@ -2,17 +2,16 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
 public class CompareModelsResponseHandler extends TaskResponseHandler {
-	final public static String NAME = "gollm:compare_models";
+	public static final String NAME = "gollm:compare_models";
 
 	@Override
 	public String getName() {
@@ -34,5 +33,4 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	public static class Response {
 		JsonNode response;
 	}
-
 }

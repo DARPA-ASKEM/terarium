@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.extractionservice;
 
 import java.util.UUID;
-
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 

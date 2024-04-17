@@ -3,11 +3,10 @@ package software.uncharted.terarium.hmiserver.models.petrinet;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Data;
-import lombok.experimental.Accessors;
-
 import java.io.Serializable;
 import java.util.List;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -3,16 +3,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.code;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serial;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-
-import java.io.Serial;
-import java.util.Map;
-
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -44,7 +42,6 @@ public class Code extends TerariumAsset {
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
-
 
 	public enum ProgrammingLanguage {
 		PYTHON("python"),

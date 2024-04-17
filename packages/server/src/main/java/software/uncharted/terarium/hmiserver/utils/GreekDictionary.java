@@ -6,11 +6,11 @@ import com.google.common.collect.HashBiMap;
 /**
  * A class to store the Greek alphabet in a BiMap
  *
- * englishToGreek("beta")); // Output: β
- * greekToEnglish("β")); // Output: beta
+ * <p>englishToGreek("beta")); // Output: β greekToEnglish("β")); // Output: beta
  */
 public class GreekDictionary {
 	private static BiMap<String, String> englishGreek = HashBiMap.create();
+
 	static {
 		englishGreek.put("alpha", "α");
 		englishGreek.put("beta", "β");
@@ -41,9 +41,8 @@ public class GreekDictionary {
 	public static String englishToGreek(String english) {
 		return englishGreek.get(english);
 	}
+
 	public static String greekToEnglish(String greek) {
 		return englishGreek.inverse().get(greek);
 	}
 }
-
-

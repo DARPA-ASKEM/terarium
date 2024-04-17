@@ -3,9 +3,7 @@ package software.uncharted.terarium.hmiserver.repository.data;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.stereotype.Repository;
-
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 

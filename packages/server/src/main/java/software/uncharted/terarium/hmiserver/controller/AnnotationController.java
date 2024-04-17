@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,9 +15,6 @@ import software.uncharted.terarium.hmiserver.models.user.Annotation;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AnnotationService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-
-import java.time.Instant;
-import java.util.List;
 
 @RequestMapping("/annotations")
 @RestController
@@ -33,8 +32,7 @@ public class AnnotationController {
 			@RequestParam("artifact-id") final String artifactId,
 			@RequestParam(value = "limit", defaultValue = "100", required = false) final int limit) {
 
-		return ResponseEntity
-				.ok(annotationService.findArtifacts(artifactType, artifactId, limit));
+		return ResponseEntity.ok(annotationService.findArtifacts(artifactType, artifactId, limit));
 	}
 
 	@PostMapping
@@ -43,8 +41,7 @@ public class AnnotationController {
 	public ResponseEntity<Annotation> postEvent(@RequestBody final Annotation annotation) {
 		annotation.setUserId(currentUserService.get().getId());
 
-		return ResponseEntity
-				.ok(annotationService.save(annotation));
+		return ResponseEntity.ok(annotationService.save(annotation));
 	}
 
 	@PatchMapping
@@ -55,8 +52,7 @@ public class AnnotationController {
 		final String content = newAnnotation.getContent();
 		final String section = newAnnotation.getSection();
 		if (id == null || content == null || section == null) {
-			return ResponseEntity.badRequest()
-					.build();
+			return ResponseEntity.badRequest().build();
 		}
 		final Annotation annotation = annotationService.findArtifact(id);
 		if (annotation == null) {
@@ -65,8 +61,7 @@ public class AnnotationController {
 		annotation.setContent(content);
 		annotation.setSection(section);
 		annotation.setTimestampMillis(Instant.now().toEpochMilli());
-		return ResponseEntity
-				.ok(annotationService.save(annotation));
+		return ResponseEntity.ok(annotationService.save(annotation));
 	}
 
 	@DeleteMapping

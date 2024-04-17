@@ -70,7 +70,7 @@
 										<Button
 											class="use-button"
 											label="Apply configuration values"
-											@click="useSuggestedConfig(data)"
+											@click="applyConfigValues(data)"
 											text
 										/>
 									</template>
@@ -98,13 +98,13 @@
 						<InputText
 							class="context-item"
 							placeholder="Enter a name for this configuration"
-							v-model="knobs.name"
+							v-model="knobs.transientModelConfig.name"
 						/>
 						<p class="text-sm mb-1 mt-3">Description</p>
 						<Textarea
 							class="context-item"
 							placeholder="Enter a description"
-							v-model="knobs.description"
+							v-model="knobs.transientModelConfig.description"
 						/>
 					</AccordionTab>
 					<AccordionTab header="Diagram">
@@ -116,8 +116,8 @@
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
 							<tera-initial-table
-								v-if="modelConfiguration"
-								:model="modelConfiguration.configuration"
+								v-if="!isEmpty(knobs.transientModelConfig)"
+								:model="knobs.transientModelConfig.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
 								config-view
@@ -158,9 +158,9 @@
 							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
 						<tera-parameter-table
-							v-if="modelConfiguration"
+							v-if="!isEmpty(knobs.transientModelConfig)"
 							:model-configurations="suggestedConfigurationContext.tableData"
-							:model="modelConfiguration.configuration"
+							:model="knobs.transientModelConfig.configuration"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
 							config-view
@@ -227,7 +227,7 @@
 				/>
 				<template #footer>
 					<InputText
-						v-model="knobs.name"
+						v-model="knobs.transientModelConfig.name"
 						placeholder="Configuration Name"
 						type="text"
 						class="input-small"
@@ -342,6 +342,8 @@ import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
+import { getInitials, getParameters } from '@/model-representation/service';
+import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -368,29 +370,22 @@ const outputs = computed(() => {
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
-	name: string;
-	description: string;
-	initials: Initial[];
-	parameters: ModelParameter[];
-	timeseries: { [index: string]: any };
-	initialsMetadata: { [index: string]: any };
-	parametersMetadata: { [index: string]: any };
 	tempConfigId: string;
+	transientModelConfig: ModelConfiguration;
 }
 
 const knobs = ref<BasicKnobs>({
-	name: '',
-	description: '',
-	initials: [],
-	parameters: [],
-	timeseries: {},
-	initialsMetadata: {},
-	parametersMetadata: {},
-	tempConfigId: ''
+	tempConfigId: '',
+	transientModelConfig: {
+		name: '',
+		description: '',
+		model_id: '',
+		configuration: {}
+	}
 });
 
 const sanityCheckErrors = ref<string[]>([]);
-const isSaveDisabled = computed(() => knobs.value.name === '');
+const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
@@ -469,8 +464,10 @@ const runFromCode = () => {
 			};
 		});
 };
-const edges = computed(() => modelConfiguration?.value?.configuration?.model?.edges ?? []);
-const vertices = computed(() => modelConfiguration?.value?.configuration.model?.vertices ?? []);
+const edges = computed(() => knobs?.value?.transientModelConfig.configuration?.model?.edges ?? []);
+const vertices = computed(
+	() => knobs?.value?.transientModelConfig?.configuration.model?.vertices ?? []
+);
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
@@ -512,7 +509,7 @@ const extractConfigurationsFromInputs = async () => {
 					}
 					if (data?.status === TaskStatus.Success) {
 						logger.success('Model configured from document(s)');
-						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
+						const outputJSON = JSON.parse(b64DecodeUnicode(data.output));
 						console.debug('Task success', outputJSON);
 						closeConnection();
 					}
@@ -571,15 +568,12 @@ const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	const ode = model.value?.semantics?.ode;
-	knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-	knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
-	knobs.value.timeseries =
-		model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-	knobs.value.initialsMetadata =
-		model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
-	knobs.value.parametersMetadata =
-		model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
+	knobs.value.transientModelConfig = {
+		name: '',
+		description: '',
+		model_id: model.value.id ?? '',
+		configuration: model.value
+	};
 };
 
 const selectedOutputId = ref<string>('');
@@ -613,42 +607,6 @@ const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const modelConfiguration = computed<ModelConfiguration | null>(() => {
-	if (!model.value) return null;
-
-	const cloneModel = cloneDeep(model.value);
-
-	const modelConfig: ModelConfiguration = {
-		id: '',
-		name: '',
-		model_id: cloneModel.id ?? '',
-		configuration: cloneModel
-	};
-
-	if (!cloneModel.metadata || !cloneModel.metadata.timeseries) {
-		cloneModel.metadata = {};
-	}
-
-	if (isPetriNet.value || isStockFlow.value) {
-		if (cloneModel.semantics) {
-			cloneModel.semantics.ode.initials = knobs.value.initials;
-			cloneModel.semantics.ode.parameters = knobs.value.parameters;
-			cloneModel.metadata.timeseries = knobs.value.timeseries;
-			cloneModel.metadata.initials = knobs.value.initialsMetadata;
-			cloneModel.metadata.parameters = knobs.value.parametersMetadata;
-		}
-		modelConfig.configuration = cloneModel;
-	} else if (isRegNet.value) {
-		cloneModel.model.parameters = knobs.value.parameters;
-		cloneModel.metadata.timeseries = knobs.value.timeseries;
-		cloneModel.metadata.initials = knobs.value.initialsMetadata;
-		cloneModel.metadata.parameters = knobs.value.parametersMetadata;
-		modelConfig.configuration = cloneModel;
-	}
-
-	return modelConfig;
-});
-
 const numParameters = computed(() => {
 	if (!mmt.value) return 0;
 	return Object.keys(mmt.value.parameters).length;
@@ -665,51 +623,38 @@ const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
 const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const updateConfigParam = (params: ModelParameter[]) => {
-	for (let i = 0; i < knobs.value.parameters.length; i++) {
-		const foundParam = params.find((p) => p.id === knobs.value.parameters![i].id);
+	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
+	for (let i = 0; i < parameters.length; i++) {
+		const foundParam = params.find((p) => p.id === parameters[i].id);
 		if (foundParam) {
-			knobs.value.parameters[i] = foundParam;
+			parameters[i] = foundParam;
 		}
 	}
 };
 
 const updateConfigInitial = (inits: Initial[]) => {
-	for (let i = 0; i < knobs.value.initials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === knobs.value.initials![i].target);
+	const initials = getInitials(knobs.value.transientModelConfig.configuration);
+	for (let i = 0; i < initials.length; i++) {
+		const foundInitial = inits.find((init) => init.target === initials![i].target);
 		if (foundInitial) {
-			knobs.value.initials[i] = foundInitial;
+			initials[i] = foundInitial;
 		}
 	}
 };
 
 const updateConfigFromModel = (inputModel: Model) => {
-	if (isPetriNet.value || isStockFlow.value) {
-		knobs.value.initials = inputModel.semantics?.ode.initials ?? [];
-		knobs.value.parameters = inputModel.semantics?.ode.parameters ?? [];
-	} else if (isRegNet.value) {
-		knobs.value.parameters = inputModel.model?.parameters ?? [];
-	}
-	knobs.value.timeseries = inputModel.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = inputModel.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = inputModel.metadata?.parameters ?? {};
+	if (knobs.value.transientModelConfig) knobs.value.transientModelConfig.configuration = inputModel;
 };
 
 const runSanityCheck = () => {
 	const errors: string[] = [];
-	const modelToCheck = modelConfiguration.value?.configuration as Model;
+	const modelToCheck = knobs.value?.transientModelConfig?.configuration as Model;
 	if (!modelToCheck) {
 		errors.push('no model defined in configuration');
 		return errors;
 	}
 
-	let parameters: ModelParameter[] = [];
-	if (isPetriNet.value || isStockFlow.value) {
-		if (modelToCheck.semantics?.ode?.parameters) {
-			parameters = modelToCheck.semantics?.ode?.parameters;
-		}
-	} else if (modelToCheck.model.parameters) {
-		parameters = modelToCheck.model.parameters;
-	}
+	const parameters: ModelParameter[] = getParameters(modelToCheck);
 
 	parameters.forEach((p) => {
 		const val = p.value || 0;
@@ -747,9 +692,9 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const data = await createModelConfiguration(
 		model.value.id,
-		knobs.value.name,
-		knobs.value.description,
-		modelConfiguration.value?.configuration
+		knobs.value?.transientModelConfig?.name,
+		knobs.value?.transientModelConfig?.description ?? '',
+		knobs.value?.transientModelConfig?.configuration
 	);
 
 	if (!data) {
@@ -760,7 +705,7 @@ const createConfiguration = async (force: boolean = false) => {
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
-		label: state.name,
+		label: state.transientModelConfig.name,
 		value: data.id,
 		isSelected: false,
 		state
@@ -802,42 +747,28 @@ const initialize = async () => {
 	if (!modelId) return;
 	fetchConfigurations(modelId);
 	model.value = await getModel(modelId);
-
-	knobs.value.name = state.name;
-	knobs.value.description = state.description;
 	knobs.value.tempConfigId = state.tempConfigId;
 
 	// State has never been set up:
 	if (knobs.value.tempConfigId === '') {
 		// Grab these values from model to initialize them
-		const ode = model.value?.semantics?.ode;
-		knobs.value.initials = ode?.initials !== undefined ? ode?.initials : [];
-		if (isPetriNet.value || isStockFlow.value) {
-			knobs.value.parameters = ode?.parameters !== undefined ? ode?.parameters : [];
-		} else if (isRegNet.value) {
-			knobs.value.parameters =
-				model.value?.model?.parameters !== undefined ? model.value?.model?.parameters : [];
-		}
+		knobs.value.transientModelConfig = {
+			name: '',
+			description: '',
+			model_id: modelId,
+			configuration: model.value
+		};
 
-		knobs.value.timeseries =
-			model.value?.metadata?.timeseries !== undefined ? model.value?.metadata?.timeseries : {};
-		knobs.value.initialsMetadata =
-			model.value?.metadata?.initials !== undefined ? model.value?.metadata?.initials : {};
-		knobs.value.parametersMetadata =
-			model.value?.metadata?.parameters !== undefined ? model.value?.metadata?.parameters : {};
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
 	else {
-		knobs.value.initials = state.initials;
-		knobs.value.parameters = state.parameters;
-		knobs.value.timeseries = state.timeseries;
-		knobs.value.initialsMetadata = state.initialsMetadata;
-		knobs.value.parametersMetadata = state.parametersMetadata;
+		knobs.value.transientModelConfig = state.transientModelConfig;
 	}
 
 	// Ensure the parameters have constant and distributions for editing in children components
-	knobs.value.parameters.forEach((param) => {
+	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
+	parameters.forEach((param) => {
 		if (!param.distribution) {
 			// provide a non-zero range, unless val is itself 0
 			const val = param.value;
@@ -873,20 +804,36 @@ const initialize = async () => {
 	}
 };
 
-const useSuggestedConfig = (config: ModelConfiguration) => {
-	const amr = config.configuration;
+const applyConfigValues = (config: ModelConfiguration) => {
+	const state = cloneDeep(props.node.state);
 
-	knobs.value.name = config.name;
-	knobs.value.description = config.description ?? '';
-	if (isPetriNet.value || isStockFlow.value) {
-		knobs.value.initials = amr.semantics.ode.initials;
-		knobs.value.parameters = amr.semantics.ode.parameters;
-	} else if (isRegNet.value) {
-		knobs.value.parameters = amr.model.parameters;
+	knobs.value.transientModelConfig = config;
+
+	// Update output port:
+	if (!config.id) {
+		logger.error('Model configuration not found');
+		return;
 	}
-	knobs.value.timeseries = amr.metadata?.timeseries ?? {};
-	knobs.value.initialsMetadata = amr.metadata?.initials ?? {};
-	knobs.value.parametersMetadata = amr.metadata?.parameters ?? {};
+	const listOfConfigIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
+	// Check if this output already exists
+	if (listOfConfigIds.includes(config.id)) {
+		// Select the existing output
+		const output = props.node.outputs.find((ele) => ele.value?.[0] === config.id);
+		emit('select-output', output?.id);
+	}
+	// If the output does not already exist
+	else {
+		// Append this config to the output.
+		state.transientModelConfig = knobs.value.transientModelConfig;
+		state.tempConfigId = knobs.value.tempConfigId;
+		emit('append-output', {
+			type: ModelConfigOperation.outputs[0].type,
+			label: config.name,
+			value: config.id,
+			isSelected: false,
+			state
+		});
+	}
 	logger.success(`Configuration applied ${config.name}`);
 };
 
@@ -905,9 +852,9 @@ onMounted(async () => {
 });
 
 watch(
-	() => modelConfiguration.value,
+	() => knobs.value.transientModelConfig,
 	async (config) => {
-		if (!config) return;
+		if (isEmpty(config)) return;
 		const response: any = await getMMT(config.configuration);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
@@ -919,13 +866,7 @@ watch(
 	() => knobs.value,
 	async () => {
 		const state = cloneDeep(props.node.state);
-		state.name = knobs.value.name;
-		state.description = knobs.value.description;
-		state.initials = knobs.value.initials;
-		state.parameters = knobs.value.parameters;
-		state.timeseries = knobs.value.timeseries;
-		state.initialsMetadata = knobs.value.initialsMetadata;
-		state.parametersMetadata = knobs.value.parametersMetadata;
+		state.transientModelConfig = knobs.value.transientModelConfig;
 		state.tempConfigId = knobs.value.tempConfigId;
 
 		emit('update-state', state);

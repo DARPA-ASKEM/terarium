@@ -26,9 +26,10 @@ public enum TaggableType {
 	 * @throws IllegalArgumentException if the TaggableType is not found
 	 */
 	public static TaggableType findByType(final String type) {
-		return Arrays.stream(values()).filter(
-			value -> type.equalsIgnoreCase(value.type)).findFirst().orElseThrow(() -> new IllegalArgumentException("No TaggableType with type: " + type)
-		);
+		return Arrays.stream(values())
+				.filter(value -> type.equalsIgnoreCase(value.type))
+				.findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No TaggableType with type: " + type));
 	}
 
 	TaggableType(final String type, final AssetType assetType) {

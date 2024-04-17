@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +21,6 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class DocumentControllerTests extends TerariumApplicationTests {
 
@@ -51,14 +50,13 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateDocument() throws Exception {
 
-		final DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description");
+		final DocumentAsset documentAsset =
+				new DocumentAsset().setName("test-document-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/document-asset")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(documentAsset)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(documentAsset)))
 				.andExpect(status().isCreated());
 	}
 
@@ -66,12 +64,11 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDocument() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -79,20 +76,16 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDocuments() throws Exception {
 
-		documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
-		documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
-		documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset")
-				.with(csrf()))
+		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset").with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 	}
@@ -101,24 +94,23 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDocument() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(documentAssetService.getAsset(documentAsset.getId()).isEmpty());
+		Assertions.assertTrue(
+				documentAssetService.getAsset(documentAsset.getId()).isEmpty());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDocument() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -126,11 +118,11 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				"file content".getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+		mockMvc.perform(MockMvcRequestBuilders.multipart(
+								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -146,12 +138,11 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadDocumentFromGithub() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
-		mockMvc.perform(
-				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
+		mockMvc.perform(MockMvcRequestBuilders.put(
+								"/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
 						.with(csrf())
 						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -164,9 +155,8 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDocument() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
@@ -176,11 +166,11 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				content.getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+		mockMvc.perform(MockMvcRequestBuilders.multipart(
+								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -191,10 +181,10 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		final MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/download-document")
-						.queryParam("filename", "filename.txt")
-						.with(csrf()))
+		final MvcResult res = mockMvc.perform(
+						MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId() + "/download-document")
+								.queryParam("filename", "filename.txt")
+								.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
@@ -207,9 +197,8 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDocumentAsText() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
@@ -219,11 +208,11 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				content.getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
+		mockMvc.perform(MockMvcRequestBuilders.multipart(
+								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -234,9 +223,8 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		final MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders
-						.get("/document-asset/" + documentAsset.getId() + "/download-document-as-text")
+		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get(
+								"/document-asset/" + documentAsset.getId() + "/download-document-as-text")
 						.queryParam("filename", "filename.txt")
 						.with(csrf()))
 				.andExpect(status().isOk())
