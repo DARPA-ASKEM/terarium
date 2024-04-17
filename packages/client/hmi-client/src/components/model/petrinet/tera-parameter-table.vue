@@ -86,11 +86,11 @@
 				<InputText
 					v-if="slotProps.data.type !== ParamType.MATRIX"
 					class="w-full"
-					v-model.lazy="slotProps.data.units"
+					v-model.lazy="slotProps.data.unit"
 					:disabled="readonly"
 					@update:model-value="
 						updateParamValue(slotProps.data.value, 'unit', {
-							...slotProps.data.value.units,
+							...slotProps.data.value.unit,
 							expression: $event
 						})
 					"
@@ -550,7 +550,7 @@ const buildParameterTable = () => {
 				type: paramType,
 				description: param.description ?? '',
 				concept: param.grounding ?? { identifiers: {} },
-				units: param.units?.expression,
+				unit: param.units?.expression,
 				value: param,
 				source: sourceValue,
 				visibility: false,
@@ -571,7 +571,7 @@ const buildParameterTable = () => {
 				type: paramType,
 				description: aux.description,
 				concept: aux.grounding,
-				units: aux.units?.expression,
+				unit: aux.units?.expression,
 				value: aux,
 				source: sourceValue,
 				visibility: false,
