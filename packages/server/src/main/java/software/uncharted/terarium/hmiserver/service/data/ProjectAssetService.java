@@ -58,11 +58,13 @@ public class ProjectAssetService {
 	public Optional<ProjectAsset> createProjectAsset(
 			final Project project, final AssetType assetType, final TerariumAsset asset) throws IOException {
 
-		final ProjectAsset projectAsset = new ProjectAsset();
+		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
+
+		projectAsset = projectAssetRepository.save(projectAsset);
 
 		if (project.getProjectAssets() == null) {
 			project.setProjectAssets(new ArrayList<>(List.of(projectAsset)));
@@ -70,7 +72,7 @@ public class ProjectAssetService {
 			project.getProjectAssets().add(projectAsset);
 		}
 
-		return Optional.of(projectAssetRepository.save(projectAsset));
+		return Optional.of(projectAsset);
 	}
 
 	@Observed(name = "function_profile")
