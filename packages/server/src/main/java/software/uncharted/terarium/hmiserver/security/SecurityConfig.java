@@ -72,9 +72,9 @@ public class SecurityConfig {
 		http.sessionManagement(httpSecuritySessionManagementConfigurer ->
 						httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.csrf(AbstractHttpConfigurer::disable)
-				.exceptionHandling()
-				.accessDeniedHandler(accessDeniedHandler())
-				.authenticationEntryPoint(authenticationEntryPoint());
+				.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer
+						.accessDeniedHandler(accessDeniedHandler())
+						.authenticationEntryPoint(authenticationEntryPoint()));
 
 		return http.build();
 	}
