@@ -78,7 +78,6 @@ const pollResult = async (runId: string) => {
 	emit('update-state', state);
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state = _.cloneDeep(props.node.state);
 		state.inProgressSimulationId = '';
 		emit('update-state', state);
 		return pollerResults;
