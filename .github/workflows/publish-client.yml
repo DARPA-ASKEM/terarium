@@ -16,81 +16,9 @@ env:
   REGISTRY_ORG: darpa-askem
 
 jobs:
-#  amd64:
-#    runs-on: ubuntu-22.04
-#
-#    permissions:
-#      contents: read
-#      packages: write
-#
-#    steps:
-#      - name: Checkout the repository
-#        uses: actions/checkout@v4
-#
-#      - name: Setup Node 20.10.0 LTS
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: 20.10.0
-#          cache: 'yarn'
-#
-#      - name: Build image using Makefile
-#        run: make image-hmi-client
-#
-#      - name: Login to registry
-#        uses: docker/login-action@v3
-#        with:
-#          registry: ${{ env.REGISTRY }}
-#          username: ${{ github.repository_owner }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Define Tag
-#        run: |
-#          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
-#            TAG=latest
-#          else
-#            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
-#            if [[ -n $SEMVER ]]; then
-#              TAG=${SEMVER}
-#            else
-#              TAG=${{ github.ref_name }}
-#            fi
-#          fi
-#          TAG=test-to-be-deleted
-#          echo "$TAG"
-#          echo "TAG=${TAG,,}" >> ${GITHUB_ENV}
-#
-#      - name: Build and push
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: packages/client/hmi-client/docker
-#          platforms: linux/amd64
-#          push: true
-#          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--amd64
-
-  arm64:
-    runs-on: macos-14
-
-    permissions:
-      contents: read
-      packages: write
-
+  set-tag:
+    runs-on: ubuntu-22.04
     steps:
-      # Setup Docker and use Colima to run Docker engine without Docker Desktop
-      # info used: https://aalonso.dev/blog/2024/how-to-use-docker-engine-without-docker-desktop-macos-colima
-      # macos-14 runner capacity: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-      - name: Setup Docker
-        run: |
-          brew install docker-credential-helper docker colima docker-buildx
-          colima start
-          colima start -c 2 -m 4 -d 2
-
-      - name: Login to registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Define Tag
         run: |
           if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
@@ -103,11 +31,103 @@ jobs:
               TAG=${{ github.ref_name }}
             fi
           fi
-
           TAG=test-to-be-deleted
-          LOWER_TAG=$(echo "$TAG" | tr '[:upper:]' '[:lower:]')
-          echo "$LOWER_TAG"
-          echo "TAG=${LOWER_TAG}" >> ${GITHUB_ENV}
+          echo "$TAG"
+          echo "TAG=${TAG,,}" >> ${GITHUB_ENV}
+
+  amd64:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20.10.0 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: 'yarn'
+
+      - name: Build image using Makefile
+        run: make image-hmi-client
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: packages/client/hmi-client/docker
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--amd64
+
+  arm64-macos:
+    if: false
+    # Disabled until macOS GitHub runners uses M2 that can do nested virtualization
+    # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
+    runs-on: macos-14
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Setup Docker on macOS
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Build image using Makefile
+        run: make image-hmi-client
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: packages/client/hmi-client/docker
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--arm64
+
+  arm64-emulation:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Node 20.10.0 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: 'yarn'
 
       - name: Checkout the repository
         uses: actions/checkout@v4
