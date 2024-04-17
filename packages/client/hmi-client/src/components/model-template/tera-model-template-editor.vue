@@ -13,8 +13,8 @@
 							:model="model"
 							:is-editable="false"
 							is-decomposed
-							:style="isDecomposedLoading && { cursor: 'wait' }"
-							:draggable="!isDecomposedLoading"
+							:style="areDecomposedTemplatesLoading && { cursor: 'wait' }"
+							:draggable="!areDecomposedTemplatesLoading"
 							@dragstart="sidebarTemplateToAdd = model"
 						/>
 					</li>
@@ -48,7 +48,7 @@
 					>
 						<template #option="{ option }">
 							<i
-								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
+								v-if="areDecomposedTemplatesLoading && option === EditorFormat.Decomposed"
 								class="pi pi-spin pi-spinner p-button-icon-left"
 							/>
 							<span class="p-button-label">{{ option }}</span>
@@ -172,6 +172,7 @@ enum EditorFormat {
 	Flattened = 'Flattened'
 }
 
+let decomposedTemplates: Model[] = [];
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -184,6 +185,7 @@ const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initial
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]);
 const currentModelFormat = ref(EditorFormat.Decomposed);
+const areDecomposedTemplatesLoading = ref(true);
 
 const currentCanvas = computed(() =>
 	currentModelFormat.value === EditorFormat.Decomposed
@@ -198,7 +200,6 @@ const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.ju
 const sidebarTemplateToAdd = ref<Model | null>(null);
 const newEdge = ref();
 
-const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.models));
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
@@ -444,9 +445,23 @@ function refreshFlattenedCanvas() {
 	}
 }
 
+function renderDecomposedCanvas() {
+	if (
+		isEmpty(decomposedCanvas.value.models) &&
+		!isEmpty(decomposedTemplates) &&
+		currentModelFormat.value === EditorFormat.Decomposed
+	)
+		modelTemplatingService.flattenedToDecomposedInView(
+			decomposedCanvas.value,
+			decomposedTemplates,
+			interpolatePointsForCurve
+		);
+}
+
 async function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
 	if (newFormat === EditorFormat.Decomposed) {
+		renderDecomposedCanvas(); // This is useful in the case we never rendered the decomposed view (i.e. switched to the flattened view right when we enter the editor)
 		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
 	} else {
 		// Save port elements from decomposed view so their positions can be referenced when doing flattened edits
@@ -461,18 +476,16 @@ watch(
 	() => refreshFlattenedCanvas() // Triggered after syncWithMiraModel() in parent
 );
 
-onMounted(() => {
+onMounted(async () => {
 	document.addEventListener('mousemove', mouseUpdate);
 
 	if (props.model) {
 		// Create flattened view of model
 		modelTemplatingService.updateFlattenedTemplateInView(flattenedCanvas.value, props.model);
 		// Create decomposed view of model
-		modelTemplatingService.flattenedToDecomposedInKernel(
-			props.kernelManager,
-			decomposedCanvas.value,
-			interpolatePointsForCurve
-		);
+		decomposedTemplates = await modelTemplatingService.getDecomposedTemplates(props.kernelManager);
+		areDecomposedTemplatesLoading.value = false;
+		renderDecomposedCanvas();
 	}
 });
 

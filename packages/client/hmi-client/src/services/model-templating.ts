@@ -535,7 +535,10 @@ function getPortPosition(
 		x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
 		y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
 	}
-	console.log(potentialElements, portElement?.getBoundingClientRect());
+	console.log(
+		potentialElements?.find((element) => element.id === id)?.getBoundingClientRect(),
+		portElement?.getBoundingClientRect()
+	);
 	return { x, y };
 }
 
@@ -631,17 +634,11 @@ export async function flattenedToDecomposedInView(
 	});
 }
 
-export function flattenedToDecomposedInKernel(
-	kernelManager: KernelSessionManager,
-	decomposedCanvas: ModelTemplateCanvas,
-	interpolatePointsFn?: Function
-) {
-	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
-		flattenedToDecomposedInView(
-			decomposedCanvas,
-			d.content.templates as Model[],
-			interpolatePointsFn
-		);
+export async function getDecomposedTemplates(kernelManager: KernelSessionManager) {
+	return new Promise<Model[]>((resolve) => {
+		kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
+			resolve(d.content.templates as Model[]);
+		});
 	});
 }
 
@@ -665,6 +662,8 @@ function findTemplateCardForNewEdge(
 	return templateCard;
 }
 
+// Whatever edit is done in the flattened view is also done in the decomposed view
+// This way the decomposed view syncs with flattened without the need to run and wait for flattenedToDecomposedInKernel() again
 export async function reflectFlattenedEditInDecomposedView(
 	kernelManager: KernelSessionManager,
 	flattenedCanvas: ModelTemplateCanvas,
