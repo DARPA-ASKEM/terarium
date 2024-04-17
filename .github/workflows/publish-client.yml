@@ -43,9 +43,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Name of the image
-        run: echo ${{ needs.image-name.outputs.name }}
-
       - name: Login to registry
         uses: docker/login-action@v3
         with:
@@ -146,11 +143,13 @@ jobs:
     name: Merge images into one multi-arch manifest
     runs-on: ubuntu-22.04
     needs:
+      - image-name
       - amd64
       # - arm64-macos
       - arm64-emulation
     steps:
-      - run: |
+      - name: Create, inspect and publish manifest
+        run: |
           docker manifest create ${{ needs.image-name.outputs.name }} \
             --amend ${{ needs.image-name.outputs.name }}-amd64 \
             --amend ${{ needs.image-name.outputs.name }}-arm64
