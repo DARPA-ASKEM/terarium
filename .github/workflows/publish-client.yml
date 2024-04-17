@@ -146,3 +146,20 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ needs.set-tag.outputs.image }}--arm64
+
+  merge-images:
+    name: Merge images into one multi-arch manifest
+    runs-on: ubuntu-22.04
+    needs:
+      - amd64
+      - arm64-macos
+      - arm64-emulation
+    steps:
+      - run: |
+          docker manifest create ${{ needs.set-tag.outputs.image }} \
+            --amend ${{ needs.set-tag.outputs.image }}-amd64 \
+            --amend ${{ needs.set-tag.outputs.image }}-arm64
+          docker manifest annotate --arch amd64 --os linux ${{ needs.set-tag.outputs.image }} ${{ needs.set-tag.outputs.image }}-amd64
+          docker manifest annotate --arch arm64 --os linux ${{ needs.set-tag.outputs.image }} ${{ needs.set-tag.outputs.image }}-arm64
+          docker manifest inspect ${{ needs.set-tag.outputs.image }}
+          docker manifest push ${{ needs.set-tag.outputs.image }}
