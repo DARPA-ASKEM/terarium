@@ -56,7 +56,7 @@ public class UserServiceTests extends TerariumApplicationTests {
 		Mockito.when(mockRepository.findById(targetId)).thenReturn(Optional.ofNullable(mockUser));
 
 		// Create user
-		userService.createUser(mockUser);
+		UserService.createUser(mockUser);
 
 		// Call the user service twice
 		userService.getById(targetId);
@@ -80,7 +80,7 @@ public class UserServiceTests extends TerariumApplicationTests {
 		Mockito.when(mockRepository.findById(targetId)).thenReturn(Optional.ofNullable(mockUser));
 
 		// Create user
-		userService.createUser(mockUser);
+		UserService.createUser(mockUser);
 
 		// Update user
 		mockUser.setGivenName("King");

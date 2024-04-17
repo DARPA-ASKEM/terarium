@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +50,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 @RequiredArgsConstructor
 public class TaskService {
 
-	public static enum TaskMode {
+	public enum TaskMode {
 		@JsonAlias("sync")
 		SYNC("sync"),
 		@JsonAlias("async")
@@ -61,6 +62,7 @@ public class TaskService {
 			this.value = value;
 		}
 
+		@Override
 		public String toString() {
 			return value;
 		}
@@ -74,6 +76,9 @@ public class TaskService {
 	@Data
 	@EqualsAndHashCode(callSuper = true)
 	private static class TaskRequestWithId extends TaskRequest {
+		@Serial
+		private static final long serialVersionUID = 2344373001617309558L;
+
 		private UUID id;
 
 		TaskRequestWithId(final TaskRequest req) {
@@ -97,6 +102,9 @@ public class TaskService {
 	// This private subclass exists to prevent anything outside of this service from
 	// mucking with the futures internal state.
 	private static class CompletableTaskFuture extends TaskFuture {
+
+		@Serial
+		private static final long serialVersionUID = -7596695803007848183L;
 
 		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
 			this.id = id;
@@ -355,7 +363,7 @@ public class TaskService {
 				if (emitter != null) {
 					try {
 						emitter.send(resp);
-					} catch (IllegalStateException | ClientAbortException e) {
+					} catch (final IllegalStateException | ClientAbortException e) {
 						log.warn("Error sending task response for task {}. User likely disconnected", resp.getId());
 						taskIdToEmitter.remove(resp.getId());
 					} catch (final IOException e) {
@@ -531,11 +539,7 @@ public class TaskService {
 			final String requestQueue = String.format(
 					"%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-			log.info(
-					"Readying task: {} with SHA: {} to send on queue: {}",
-					req.getId(),
-					hash,
-					req.getType().toString());
+			log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType());
 
 			// ensure the request queue exists
 			declareQueue(requestQueue);

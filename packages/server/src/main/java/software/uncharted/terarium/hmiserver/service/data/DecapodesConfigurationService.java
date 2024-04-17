@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -23,6 +24,7 @@ public class DecapodesConfigurationService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
+	@Observed(name = "function_profile")
 	public List<DecapodesConfiguration> getDecapodesConfigurations(final Integer page, final Integer pageSize)
 			throws IOException {
 
@@ -41,6 +43,7 @@ public class DecapodesConfigurationService {
 		return elasticService.search(req, DecapodesConfiguration.class);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<DecapodesConfiguration> getDecapodesConfiguration(final UUID id) throws IOException {
 		final DecapodesConfiguration doc = elasticService.get(
 				elasticConfig.getDecapodesConfigurationIndex(), id.toString(), DecapodesConfiguration.class);
@@ -50,6 +53,7 @@ public class DecapodesConfigurationService {
 		return Optional.empty();
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteDecapodesConfiguration(final UUID id) throws IOException {
 		final Optional<DecapodesConfiguration> decapodesConfiguration = getDecapodesConfiguration(id);
 		if (decapodesConfiguration.isEmpty()) {
@@ -59,6 +63,7 @@ public class DecapodesConfigurationService {
 		updateDecapodesConfiguration(decapodesConfiguration.get());
 	}
 
+	@Observed(name = "function_profile")
 	public DecapodesConfiguration createDecapodesConfiguration(final DecapodesConfiguration decapodesConfiguration)
 			throws IOException {
 		decapodesConfiguration.setCreatedOn(Timestamp.from(Instant.now()));
@@ -69,6 +74,7 @@ public class DecapodesConfigurationService {
 		return decapodesConfiguration;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<DecapodesConfiguration> updateDecapodesConfiguration(
 			final DecapodesConfiguration decapodesConfiguration) throws IOException {
 		if (!elasticService.documentExists(

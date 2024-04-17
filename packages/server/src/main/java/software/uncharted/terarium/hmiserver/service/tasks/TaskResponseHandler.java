@@ -5,19 +5,19 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 public abstract class TaskResponseHandler {
 	public abstract String getName();
 
-	public TaskResponse onQueued(final TaskResponse response) {
+	public static TaskResponse onQueued(final TaskResponse response) {
 		return response;
 	}
 
-	public TaskResponse onRunning(final TaskResponse response) {
+	public static TaskResponse onRunning(final TaskResponse response) {
 		return response;
 	}
 
-	public TaskResponse onCancelling(final TaskResponse response) {
+	public static TaskResponse onCancelling(final TaskResponse response) {
 		return response;
 	}
 
-	public TaskResponse onCancelled(final TaskResponse response) {
+	public static TaskResponse onCancelled(final TaskResponse response) {
 		return response;
 	}
 
@@ -25,7 +25,7 @@ public abstract class TaskResponseHandler {
 		return response;
 	}
 
-	public TaskResponse onFailure(final TaskResponse response) {
+	public static TaskResponse onFailure(final TaskResponse response) {
 		return response;
 	}
 

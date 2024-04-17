@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -20,11 +21,13 @@ public class DocumentAssetService extends S3BackedAssetService<DocumentAsset> {
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	protected String getAssetPath() {
 		return config.getDocumentPath();
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
 		return elasticConfig.getDocumentIndex();
 	}
