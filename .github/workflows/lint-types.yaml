@@ -1,4 +1,7 @@
+---
 name: Lint Generated Types
+
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
   push:

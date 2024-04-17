@@ -7,9 +7,9 @@ name: Build and Publish hmi-client
 # yamllint disable-line rule:truthy
 on:
   push:
-    #paths: ['packages/client/**']
-    branches: ['use-mac-os-to-build-arm-images'] #, 'main']
-    tags: ['*']
+    # paths: ['packages/client/**']
+    branches: [ 'use-mac-os-to-build-arm-images', 'main' ]
+    tags: [ '*' ]
 
 env:
   REGISTRY: ghcr.io
@@ -20,7 +20,7 @@ jobs:
     name: Create and Set Tag
     runs-on: ubuntu-22.04
     outputs:
-        image: ${{ steps.define-tag.outputs.image }}
+      image: ${{ steps.define-tag.outputs.image }}
     steps:
       - name: Define Tag
         id: define-tag
@@ -112,7 +112,6 @@ jobs:
           tags: ${{ needs.set-tag.outputs.image }}--arm64
 
   arm64-emulation:
-    if: false
     runs-on: ubuntu-22.04
     needs: set-tag
     permissions:
