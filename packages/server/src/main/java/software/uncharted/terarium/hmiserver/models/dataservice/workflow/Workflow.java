@@ -1,29 +1,25 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
 /**
- * The workflow data structure is not very well defined. It is also meant to
- * carry operations each with their own unique
- * representations. As such this is just a pass-thru class for the proxy. The UI
- * has it's own typinging definition that
+ * The workflow data structure is not very well defined. It is also meant to carry operations each with their own unique
+ * representations. As such this is just a pass-thru class for the proxy. The UI has it's own typinging definition that
  * is not generated.
  */
 @EqualsAndHashCode(callSuper = true)

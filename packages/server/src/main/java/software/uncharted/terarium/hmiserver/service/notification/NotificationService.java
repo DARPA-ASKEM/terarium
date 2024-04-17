@@ -6,11 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
@@ -52,7 +50,8 @@ public class NotificationService {
 
 	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 
-		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
+		final NotificationGroup group =
+				notificationGroupRepository.findById(groupId).orElseThrow();
 
 		// add group to event
 		notificationEvent.setNotificationGroup(group);
