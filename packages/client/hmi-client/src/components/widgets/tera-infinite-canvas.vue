@@ -62,10 +62,7 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 	container.attr('transform', e.transform);
 
 	d3.select(dataLayerRef.value as HTMLDivElement)
-		.style(
-			'transform',
-			`translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`
-		)
+		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
 		.style('transform-origin', '0 0');
 
 	if (props.debugMode) {
@@ -160,7 +157,8 @@ onMounted(() => {
 	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
 	// Draw dot pattern in background
-	svg.append('defs')
+	svg
+		.append('defs')
 		.append('pattern')
 		.attr('id', 'dotPattern')
 		.attr('width', 12)
@@ -172,7 +170,8 @@ onMounted(() => {
 		.attr('cy', 12)
 		.attr('r', 2);
 
-	svg.append('rect')
+	svg
+		.append('rect')
 		.attr('x', 0)
 		.attr('y', 0)
 		.attr('width', '100%')
