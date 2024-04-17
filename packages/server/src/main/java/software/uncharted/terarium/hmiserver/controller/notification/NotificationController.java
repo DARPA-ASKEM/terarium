@@ -35,7 +35,7 @@ public class NotificationController {
 	private final CurrentUserService currentUserService;
 	private final NotificationService notificationService;
 
-	@GetMapping("/user")
+	@GetMapping()
 	@Secured(Roles.USER)
 	@Operation(summary = "Return all recent notification groups for a user")
 	@ApiResponses(value = {
@@ -43,7 +43,7 @@ public class NotificationController {
 			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
 	})
 	public ResponseEntity<List<NotificationGroup>> getNotificationGroups(
-			@RequestParam(value = "since", required = false, defaultValue = "2") final long sinceInHours,
+			@RequestParam(value = "since", required = false, defaultValue = "48") final long sinceInHours,
 			@RequestParam(value = "include-unack", required = false, defaultValue = "false") final boolean includeUnack) {
 
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(sinceInHours);
@@ -53,9 +53,9 @@ public class NotificationController {
 
 		if (includeUnack) {
 			return ResponseEntity.ok(notificationService.getNotificationGroupsCreatedSince(userId, since));
-		} else {
-			return ResponseEntity.ok(notificationService.getUnAckedNotificationGroupsCreatedSince(userId, since));
 		}
+		return ResponseEntity.ok(
+				notificationService.getUnAckedNotificationGroupsCreatedSince(userId, since));
 	}
 
 	@GetMapping("/ack/{groupId}")
@@ -65,12 +65,10 @@ public class NotificationController {
 			@ApiResponse(responseCode = "200", description = "Returned recent notifications successfully"),
 			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
 	})
-	public ResponseEntity<Void> acknowledgeNotificationGroup(
-			@PathVariable("groupId") final UUID groupId) {
+	public ResponseEntity<Void> acknowledgeNotificationGroup(@PathVariable("groupId") final UUID groupId) {
 
 		notificationService.acknowledgeNotificationGroup(groupId);
 
 		return ResponseEntity.ok(null);
 	}
-
 }

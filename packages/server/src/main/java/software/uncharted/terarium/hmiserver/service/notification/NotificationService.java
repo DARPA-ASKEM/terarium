@@ -31,11 +31,9 @@ public class NotificationService {
 		return notificationGroupRepository.findAllByUserIdOrderByCreatedOnDesc(userId);
 	}
 
-	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(final String userId,
-			final Timestamp since) {
-		return notificationGroupRepository
-				.findAllByUserIdAndCreatedOnGreaterThanAndWhereAtLeastOneNotificationEventAcknowledgedOnIsNullOrderByCreatedOnDesc(
-						userId, since);
+	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(
+			final String userId, final Timestamp since) {
+		return notificationGroupRepository.findAllUnackedByUserReturnAllEvents(userId, since);
 	}
 
 	public List<NotificationGroup> getNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
@@ -52,30 +50,34 @@ public class NotificationService {
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
-	public NotificationEvent createNotificationEvent(
-			final NotificationGroup group, final NotificationEvent notificationEvent) {
+	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 
-		// add the event to the group
-		if (group.getNotificationEvents() == null) {
-			group.setNotificationEvents(new ArrayList<>(List.of(notificationEvent)));
-		} else {
-			group.getNotificationEvents().add(notificationEvent);
-		}
+		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
 
 		// add group to event
 		notificationEvent.setNotificationGroup(group);
 
-		return notificationEventRepository.save(notificationEvent);
+		final NotificationEvent created = notificationEventRepository.save(notificationEvent);
+
+		// add the event to the group
+		if (group.getNotificationEvents() == null) {
+			group.setNotificationEvents(List.of(created));
+		} else {
+			// spring likes to inject immutable lists everywhere for some reason so we have
+			// to do
+			// this so the code doesnt explode
+			final List<NotificationEvent> combined = new ArrayList<>();
+			combined.addAll(group.getNotificationEvents());
+			combined.addAll(List.of(created));
+			group.setNotificationEvents(combined);
+		}
+
+		return created;
 	}
 
 	public void acknowledgeNotificationGroup(final UUID groupId) {
-		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(groupId,
-				Timestamp.from(Instant.now()));
-	}
-
-	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
-		return createNotificationEvent(
-				notificationGroupRepository.findById(groupId).orElseThrow(), notificationEvent);
+		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(
+				groupId, Timestamp.from(Instant.now()));
 	}
 
 	public Optional<NotificationGroup> delete(final UUID id) {

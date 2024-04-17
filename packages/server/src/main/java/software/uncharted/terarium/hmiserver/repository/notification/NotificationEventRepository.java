@@ -17,6 +17,5 @@ public interface NotificationEventRepository extends PSCrudRepository<Notificati
 	@Modifying
 	@Query("UPDATE NotificationEvent e SET e.acknowledgedOn = :acknowledgedOn WHERE e.notificationGroup.id = :notificationGroupId")
 	void setAcknowledgedOnWhereNotificationGroupIdEquals(
-			@Param("notificationGroupId") UUID notificationGroupId,
-			@Param("acknowledgedOn") Timestamp acknowledgedOn);
+			@Param("notificationGroupId") UUID notificationGroupId, @Param("acknowledgedOn") Timestamp acknowledgedOn);
 }

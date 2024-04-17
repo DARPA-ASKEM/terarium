@@ -54,8 +54,8 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		final NotificationGroup group = notificationService
 				.createNotificationGroup(new NotificationGroup().setType("test"));
 
-		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
-		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
 		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
@@ -73,8 +73,8 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		final NotificationGroup group = notificationService
 				.createNotificationGroup(new NotificationGroup().setType("test"));
 
-		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
-		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
 		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
@@ -83,12 +83,18 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(after.getCreatedOn());
 		Assertions.assertNotNull(after.getNotificationEvents());
 		Assertions.assertEquals(3, after.getNotificationEvents().size());
+		for (final NotificationEvent event : after.getNotificationEvents()) {
+			Assertions.assertNotNull(event.getId());
+			Assertions.assertNotNull(event.getCreatedOn());
+			Assertions.assertNotNull(event.getData());
+			Assertions.assertNull(event.getAcknowledgedOn());
+		}
 
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(2);
 		final Timestamp since = Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
-		final List<NotificationGroup> resp1 = notificationService
-				.getUnAckedNotificationGroupsCreatedSince(currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp1 = notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(), since);
 
 		Assertions.assertEquals(1, resp1.size());
 		Assertions.assertNotNull(resp1.get(0).getNotificationEvents());
@@ -97,16 +103,16 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		// ack the group
 		notificationService.acknowledgeNotificationGroup(group.getId());
 
-		final List<NotificationGroup> resp2 = notificationService
-				.getUnAckedNotificationGroupsCreatedSince(currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp2 = notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(), since);
 
 		Assertions.assertEquals(0, resp2.size());
 
 		// create a new event
-		notificationService.createNotificationEvent(group, new NotificationEvent().setData(getData()));
+		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
-		final List<NotificationGroup> resp3 = notificationService
-				.getUnAckedNotificationGroupsCreatedSince(currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp3 = notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(), since);
 
 		Assertions.assertEquals(1, resp3.size());
 		Assertions.assertNotNull(resp3.get(0).getNotificationEvents());
