@@ -1106,7 +1106,7 @@ export interface ModelParameter {
     value?: number;
     grounding?: ModelGrounding;
     distribution?: ModelDistribution;
-    unit?: ModelUnit;
+    units?: ModelUnit;
 }
 
 export interface Observable {
