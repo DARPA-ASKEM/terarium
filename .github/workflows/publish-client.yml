@@ -16,14 +16,13 @@ env:
   DOCKERFILE_CONTEXT: packages/client/hmi-client/docker
 
 jobs:
-  set-tag:
-    name: Create and Set Tag
+  image-name:
+    name: Create the name of the Image
     runs-on: ubuntu-22.04
     outputs:
-      image: ${{ steps.define-tag.outputs.image }}
+      image: ${{ steps.define.outputs.name }}
     steps:
-      - name: Define Tag
-        id: define-tag
+      - id: define
         run: |
           if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
@@ -39,17 +38,17 @@ jobs:
 
           IMAGE=${{ env.REGISTRY }}/darpa-askem/hmi-client:${TAG,,}
           echo "$IMAGE"
-          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "name=$IMAGE" >> $GITHUB_OUTPUT
 
   amd64:
     runs-on: ubuntu-22.04
-    needs: set-tag
+    needs: image-name
     permissions:
       contents: read
       packages: write
     steps:
       - name: Name of the image
-        run: echo ${{ needs.set-tag.outputs.image }}
+        run: echo ${{ needs.image-name.outputs.name }}
 
       - name: Login to registry
         uses: docker/login-action@v3
@@ -75,14 +74,14 @@ jobs:
           context: ${{ env.DOCKERFILE_CONTEXT }}
           platforms: linux/amd64
           push: true
-          tags: ${{ needs.set-tag.outputs.image }}--amd64
+          tags: ${{ needs.image-name.outputs.name }}--amd64
 
   arm64-macos:
     if: false
     # Disabled until macOS GitHub runners uses M2 that can do nested virtualization
     # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
     runs-on: macos-14
-    needs: set-tag
+    needs: image-name
     permissions:
       contents: read
       packages: write
@@ -109,11 +108,11 @@ jobs:
           context: ${{ env.DOCKERFILE_CONTEXT }}
           platforms: linux/arm64
           push: true
-          tags: ${{ needs.set-tag.outputs.image }}--arm64
+          tags: ${{ needs.image-name.outputs.name }}--arm64
 
   arm64-emulation:
     runs-on: ubuntu-22.04
-    needs: set-tag
+    needs: image-name
     permissions:
       contents: read
       packages: write
@@ -145,21 +144,21 @@ jobs:
           context: ${{ env.DOCKERFILE_CONTEXT }}
           platforms: linux/arm64
           push: true
-          tags: ${{ needs.set-tag.outputs.image }}--arm64
+          tags: ${{ needs.image-name.outputs.name }}--arm64
 
   merge-images:
     name: Merge images into one multi-arch manifest
     runs-on: ubuntu-22.04
     needs:
       - amd64
-      - arm64-macos
+      # - arm64-macos
       - arm64-emulation
     steps:
       - run: |
-          docker manifest create ${{ needs.set-tag.outputs.image }} \
-            --amend ${{ needs.set-tag.outputs.image }}-amd64 \
-            --amend ${{ needs.set-tag.outputs.image }}-arm64
-          docker manifest annotate --arch amd64 --os linux ${{ needs.set-tag.outputs.image }} ${{ needs.set-tag.outputs.image }}-amd64
-          docker manifest annotate --arch arm64 --os linux ${{ needs.set-tag.outputs.image }} ${{ needs.set-tag.outputs.image }}-arm64
-          docker manifest inspect ${{ needs.set-tag.outputs.image }}
-          docker manifest push ${{ needs.set-tag.outputs.image }}
+          docker manifest create ${{ needs.image-name.outputs.name }} \
+            --amend ${{ needs.image-name.outputs.name }}-amd64 \
+            --amend ${{ needs.image-name.outputs.name }}-arm64
+          docker manifest annotate --arch amd64 --os linux ${{ needs.image-name.outputs.name }} ${{ needs.image-name.outputs.name }}-amd64
+          docker manifest annotate --arch arm64 --os linux ${{ needs.image-name.outputs.name }} ${{ needs.image-name.outputs.name }}-arm64
+          docker manifest inspect ${{ needs.image-name.outputs.name }}
+          docker manifest push ${{ needs.image-name.outputs.name }}
