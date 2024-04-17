@@ -78,7 +78,6 @@ jobs:
       - name: Setup Docker on macOS
         run: |
           brew install docker
-          colima start
           docker run -e "ACCEPT_EULA=Y"
 
       - name: Login to registry
