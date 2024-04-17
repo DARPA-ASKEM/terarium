@@ -32,7 +32,7 @@ export interface ModelConfigTableData {
 	type: ParamType;
 	description: string;
 	concept: ModelGrounding;
-	unit?: string;
+	units?: string;
 	value: any;
 	source: string;
 	visibility: boolean;
