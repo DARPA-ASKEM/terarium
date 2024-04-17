@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.repository.notification;
 
+import jakarta.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import jakarta.validation.constraints.NotNull;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
@@ -20,7 +18,8 @@ public interface NotificationGroupRepository extends PSCrudRepository<Notificati
 	List<NotificationGroup> findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(
 			@NotNull String userId, @NotNull Timestamp createdOn);
 
-	@Query("""
+	@Query(
+			"""
 			SELECT ng
 			FROM NotificationGroup ng
 			JOIN ng.notificationEvents ne ON ne.notificationGroup.id = ng.id
@@ -34,5 +33,4 @@ public interface NotificationGroupRepository extends PSCrudRepository<Notificati
 			""")
 	List<NotificationGroup> findAllUnackedByUserReturnAllEvents(
 			@Param("userId") @NotNull String userId, @Param("createdOn") @NotNull Timestamp createdOn);
-
 }
