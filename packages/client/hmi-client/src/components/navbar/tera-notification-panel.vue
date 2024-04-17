@@ -12,7 +12,7 @@
 			{{ unacknowledgedFinishedItems.length }}</span
 		>
 	</div>
-	<OverlayPanel class="notification-container" ref="panel" @hide="acknowledgeFinishedItems">
+	<OverlayPanel class="notification-panel-container" ref="panel" @hide="acknowledgeFinishedItems">
 		<header>
 			<h1>Notifications</h1>
 			<Button
@@ -107,6 +107,31 @@ const getElapsedTimeText = (item: NotificationItem) => {
 </script>
 
 <style>
+/*
+ * Reset the default overlay component container style.
+ * Note that this style block isn't scoped since the overlay component is appended to the body html dynamically when opened
+ * and is placed outside of this component's scope and the scoped styles aren't applied to it.
+ */
+.notification-panel-container.p-overlaypanel {
+	top: 51px !important;
+	width: 540px;
+	box-shadow: 0px 4px 4px 0px #00000040;
+	padding: var(--content-padding);
+	padding-bottom: 1.5rem;
+	gap: var(--gap);
+	border: 1px solid #c3ccd6;
+	border-radius: var(--border-radius-medium);
+	.p-overlaypanel-content {
+		padding: 0;
+	}
+	&:after,
+	&:before {
+		content: none;
+	}
+}
+</style>
+
+<style scoped>
 .notification-button {
 	position: relative;
 	.p-button.p-button-secondary.p-button-text {
@@ -126,24 +151,6 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		border-radius: 10px;
 		padding: 2px 5px;
 	}
-}
-/* Reset default overlay component style */
-.notification-container.p-overlaypanel .p-overlaypanel-content {
-	padding: 0;
-}
-.notification-container.p-overlaypanel:after,
-.notification-container.p-overlaypanel:before {
-	content: none;
-}
-.notification-container.p-overlaypanel {
-	top: 51px !important;
-	width: 540px;
-	box-shadow: 0px 4px 4px 0px #00000040;
-	padding: var(--content-padding);
-	padding-bottom: 1.5rem;
-	gap: var(--gap);
-	border: 1px solid #c3ccd6;
-	border-radius: var(--border-radius-medium);
 }
 header {
 	display: flex;
