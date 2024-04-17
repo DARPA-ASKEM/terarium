@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,6 +56,9 @@ public class ClientEventService {
 	@Accessors(chain = true)
 	@NoArgsConstructor
 	public static class UserClientEvent<T> implements Serializable {
+		@Serial
+		private static final long serialVersionUID = -7617118669979761035L;
+
 		private String userId;
 		private ClientEvent<T> event;
 	}

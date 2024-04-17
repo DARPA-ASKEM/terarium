@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -37,6 +38,7 @@ public class ProvenanceService {
 		graphValidations = loadGraphValidations();
 	}
 
+	@Observed(name = "function_profile")
 	public Map<String, List<List<String>>> loadGraphValidations() throws Exception {
 		final Resource resource = resourceLoader.getResource("classpath:graph_relations.json");
 		final InputStream inputStream = resource.getInputStream();
@@ -66,12 +68,13 @@ public class ProvenanceService {
 		return false;
 	}
 
+	@Observed(name = "function_profile")
 	public Provenance createProvenance(final Provenance provenance) {
 		if (!validateRelationship(provenance.getLeftType(), provenance.getRightType(), provenance.getRelationType())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
 		}
 
-		try (Session session = neo4jService.getSession()) {
+		try (final Session session = neo4jService.getSession()) {
 			// if node 1 is not created yet create node
 			final String leftNodeQuery = String.format(
 					"MERGE (n:%s {id: '%s', concept: '%s'})",
@@ -101,8 +104,9 @@ public class ProvenanceService {
 		return provenance;
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteHangingNodes() {
-		try (Session session = neo4jService.getSession()) {
+		try (final Session session = neo4jService.getSession()) {
 			final String query = "MATCH (n) WHERE NOT (n)--() DELETE n";
 			session.run(query);
 		}

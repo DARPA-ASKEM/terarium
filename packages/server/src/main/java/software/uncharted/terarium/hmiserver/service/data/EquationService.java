@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -20,6 +21,7 @@ public class EquationService {
 	private final ElasticsearchService elasticService;
 	private final ElasticsearchConfiguration elasticConfig;
 
+	@Observed(name = "function_profile")
 	public Optional<Equation> getAsset(final UUID id) throws IOException {
 		final Equation doc = elasticService.get(elasticConfig.getEquationIndex(), id.toString(), Equation.class);
 		if (doc != null && doc.getDeletedOn() == null) {
@@ -28,6 +30,7 @@ public class EquationService {
 		return Optional.empty();
 	}
 
+	@Observed(name = "function_profile")
 	public List<Equation> getAssets(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(elasticConfig.getEquationIndex())
@@ -39,6 +42,7 @@ public class EquationService {
 		return elasticService.search(req, Equation.class);
 	}
 
+	@Observed(name = "function_profile")
 	public void deleteAsset(final UUID id) throws IOException {
 		final Optional<Equation> equation = getAsset(id);
 		if (equation.isEmpty()) {
@@ -48,6 +52,7 @@ public class EquationService {
 		updateAsset(equation.get());
 	}
 
+	@Observed(name = "function_profile")
 	public Equation createAsset(final Equation equation) throws IOException {
 		equation.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(
@@ -57,6 +62,7 @@ public class EquationService {
 		return equation;
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<Equation> updateAsset(final Equation equation) throws IOException {
 		if (!elasticService.documentExists(
 				elasticConfig.getEquationIndex(), equation.getId().toString())) {
