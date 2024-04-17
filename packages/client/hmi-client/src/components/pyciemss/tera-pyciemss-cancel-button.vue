@@ -3,7 +3,6 @@
 		:disabled="disabled"
 		outlined
 		severity="secondary"
-		title="Saves the current version of the model as a new Terarium asset"
 		@click="cancelSimulation"
 		label="Cancel"
 		icon="pi pi-times"
