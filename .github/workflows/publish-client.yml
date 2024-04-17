@@ -11,16 +11,12 @@ on:
     branches: [ 'use-mac-os-to-build-arm-images', 'main' ]
     tags: [ '*' ]
 
-env:
-  REGISTRY: ghcr.io
-  DOCKERFILE_CONTEXT: packages/client/hmi-client/docker
-
 jobs:
   image-name:
     name: Create the name of the Image
     runs-on: ubuntu-22.04
     outputs:
-      image: ${{ steps.define.outputs.name }}
+      name: ${{ steps.define.outputs.name }}
     steps:
       - id: define
         run: |
@@ -36,7 +32,7 @@ jobs:
           fi
           TAG=test-to-be-deleted
 
-          IMAGE=${{ env.REGISTRY }}/darpa-askem/hmi-client:${TAG,,}
+          IMAGE=ghcr.io/darpa-askem/hmi-client:${TAG,,}
           echo "$IMAGE"
           echo "name=$IMAGE" >> $GITHUB_OUTPUT
 
@@ -53,7 +49,7 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -71,7 +67,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.DOCKERFILE_CONTEXT }}
+          context: packages/client/hmi-client/docker
           platforms: linux/amd64
           push: true
           tags: ${{ needs.image-name.outputs.name }}--amd64
@@ -92,7 +88,7 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -105,7 +101,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.DOCKERFILE_CONTEXT }}
+          context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
           tags: ${{ needs.image-name.outputs.name }}--arm64
@@ -120,7 +116,7 @@ jobs:
       - name: Login to registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -141,7 +137,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.DOCKERFILE_CONTEXT }}
+          context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
           tags: ${{ needs.image-name.outputs.name }}--arm64
