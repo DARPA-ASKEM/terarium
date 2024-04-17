@@ -13,14 +13,17 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REGISTRY_ORG: darpa-askem
+  DOCKER_CONTEXT: packages/client/hmi-client/docker
 
 jobs:
   set-tag:
     name: Create and Set Tag
     runs-on: ubuntu-22.04
+    outputs:
+        image: ${{ steps.define-tag.outputs.image }}
     steps:
       - name: Define Tag
+        id: define-tag
         run: |
           if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
@@ -34,7 +37,8 @@ jobs:
           fi
           TAG=test-to-be-deleted
           echo "$TAG"
-          echo "TAG=${TAG,,}" >> ${GITHUB_ENV}
+          echo "image=${{ env.REGISTRY }}/darpa-askem/hmi-client:${TAG,,}" >> $GITHUB_OUTPUT
+          echo "$image"
 
   amd64:
     runs-on: ubuntu-22.04
@@ -65,10 +69,10 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: packages/client/hmi-client/docker
+          context: ${{ env.DOCKER_CONTEXT }}
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--amd64
+          tags: ${{ needs.set-tag.outputs.image }}--amd64
 
   arm64-macos:
     if: false
@@ -99,12 +103,13 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: packages/client/hmi-client/docker
+          context: ${{ env.DOCKER_CONTEXT }}
           platforms: linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--arm64
+          tags: ${{ needs.set-tag.outputs.image }}--arm64
 
   arm64-emulation:
+    if: false
     runs-on: ubuntu-22.04
     needs: set-tag
     permissions:
@@ -135,7 +140,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: packages/client/hmi-client/docker
+          context: ${{ env.DOCKER_CONTEXT }}
           platforms: linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_ORG }}/hmi-client:${{ env.TAG }}--arm64
+          tags: ${{ needs.set-tag.outputs.image }}--arm64
