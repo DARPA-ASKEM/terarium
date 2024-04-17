@@ -7,7 +7,7 @@ name: Build and Publish hmi-client
 # yamllint disable-line rule:truthy
 on:
   push:
-    paths: ['packages/client/**']
+    paths: [ 'packages/client/**' ]
     branches: [ 'main' ]
     tags: [ '*' ]
 
