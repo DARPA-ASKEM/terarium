@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
@@ -37,8 +40,8 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotificationGroup() throws Exception {
 
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService
+				.createNotificationGroup(new NotificationGroup().setType("test"));
 
 		Assertions.assertNotNull(group.getId());
 		Assertions.assertNotNull(group.getCreatedOn());
@@ -48,15 +51,14 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotificationEvent() throws Exception {
 
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService
+				.createNotificationGroup(new NotificationGroup().setType("test"));
 
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
-		final NotificationGroup after =
-				notificationService.getNotificationGroup(group.getId()).orElseThrow();
+		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
 
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
@@ -68,15 +70,14 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanAckNotificationGroup() throws Exception {
 
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService
+				.createNotificationGroup(new NotificationGroup().setType("test"));
 
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(getData()));
 
-		final NotificationGroup after =
-				notificationService.getNotificationGroup(group.getId()).orElseThrow();
+		final NotificationGroup after = notificationService.getNotificationGroup(group.getId()).orElseThrow();
 
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
@@ -90,8 +91,7 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		}
 
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(2);
-		final Timestamp since =
-				Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final Timestamp since = Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		final List<NotificationGroup> resp1 = notificationService.getUnAckedNotificationGroupsCreatedSince(
 				currentUserService.get().getId(), since);

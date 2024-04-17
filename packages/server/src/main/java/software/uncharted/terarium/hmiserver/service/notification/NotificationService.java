@@ -2,13 +2,14 @@ package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
@@ -50,26 +51,13 @@ public class NotificationService {
 
 	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 
-		final NotificationGroup group =
-				notificationGroupRepository.findById(groupId).orElseThrow();
+		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
 
-		// add group to event
 		notificationEvent.setNotificationGroup(group);
 
 		final NotificationEvent created = notificationEventRepository.save(notificationEvent);
 
-		// add the event to the group
-		if (group.getNotificationEvents() == null) {
-			group.setNotificationEvents(List.of(created));
-		} else {
-			// spring likes to inject immutable lists everywhere for some reason so we have
-			// to do
-			// this so the code doesnt explode
-			final List<NotificationEvent> combined = new ArrayList<>();
-			combined.addAll(group.getNotificationEvents());
-			combined.addAll(List.of(created));
-			group.setNotificationEvents(combined);
-		}
+		group.getNotificationEvents().add(created);
 
 		return created;
 	}
