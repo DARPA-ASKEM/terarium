@@ -35,34 +35,35 @@ http://www.gust.org.pl/projects/e-foundry/
 */
 
 @font-face {
-    font-family: 'latin-modern-math';
-    src: local('Latin Modern Math'),
-         local('LatinModernMath-Regular'),
-         url('@/assets/fonts/latinModern/latinmodern-math.woff2'), 
-         url('@/assets/fonts/latinModern/latinmodern-math.woff');
+    font-family: 'latex-math';
+    src:    local('Latin Modern Math'),
+            local('LatinModernMath-Regular'),
+            url('@/assets/fonts/latinModern/latinmodern-math.woff2'), 
+            url('@/assets/fonts/latinModern/latinmodern-math.woff');
 }
 
 @font-face {
-    font-family: 'latin-modern-roman12';
-    src: url('@/assets/fonts/latinModern/lmroman12-regular.woff2'), 
-         url('@/assets/fonts/latinModern/lmroman12-regular.woff');
+    font-family: 'latex-roman12';
+    src:    url('@/assets/fonts/latinModern/lmroman12-regular.woff2'), 
+            url('@/assets/fonts/latinModern/lmroman12-regular.woff');
 }
 
 @font-face {
-    font-family: 'latin-modern-roman12';
-    src: url('@/assets/fonts/latinModern/lmroman12-bold.woff2'), 
-         url('@/assets/fonts/latinModern/lmroman12-bold.woff');
+    font-family: 'latex-roman12';
     font-weight: bold;
-}
-@font-face {
-    font-family: 'latin-modern-roman12';
-    src: url('@/assets/fonts/latinModern/lmroman12-italic.woff2'), 
-         url('@/assets/fonts/latinModern/lmroman12-italic.woff');
-    font-style: italic;
+    src:    url('@/assets/fonts/latinModern/lmroman12-bold.woff2'), 
+            url('@/assets/fonts/latinModern/lmroman12-bold.woff');
 }
 
-.latin-modern-font {
-    font-family: 'latin-modern-math, latin-modern-roman12';
+@font-face {
+    font-family: 'latex-roman12';
+    font-style: italic;
+    src:    url('@/assets/fonts/latinModern/lmroman12-italic.woff2'), 
+            url('@/assets/fonts/latinModern/lmroman12-italic.woff');
+}
+
+.latex-font {
+    font-family: 'latex-math, latex-roman12';
     font-style: italic;
 	font-size: medium;
 }

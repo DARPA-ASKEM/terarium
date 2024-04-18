@@ -39,7 +39,7 @@
 			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
-						<span class="latin-modern-font">
+						<span class="latex-font">
 							{{ slotProps.data.id }}
 						</span>
 					</template>
@@ -64,7 +64,7 @@
 			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
-						<span class="latin-modern-font">
+						<span class="latex-font">
 							{{ slotProps.data.id }}
 						</span>
 					</template>
@@ -72,14 +72,14 @@
 				<Column field="name" header="Name" />
 				<Column field="input" header="Input">
 					<template #body="slotProps">
-						<span class="latin-modern-font">
+						<span class="latex-font">
 							{{ slotProps.data.id }}
 						</span>
 					</template>
 				</Column>
 				<Column field="output" header="Output">
 					<template #body="slotProps">
-						<span class="latin-modern-font">
+						<span class="latex-font">
 							{{ slotProps.data.id }}
 						</span>
 					</template>
@@ -114,7 +114,7 @@
 			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
-						<span class="latin-modern-font">
+						<span class="latex-font">
 							{{ slotProps.data.id }}
 						</span>
 					</template>

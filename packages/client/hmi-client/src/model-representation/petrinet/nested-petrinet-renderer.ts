@@ -235,7 +235,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latin-modern-font', true)
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
@@ -258,7 +258,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		species
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
-			.classed('latin-modern-font', true)
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
