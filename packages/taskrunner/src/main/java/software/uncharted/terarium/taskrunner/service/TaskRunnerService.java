@@ -147,7 +147,7 @@ public class TaskRunnerService {
 
 			while (true) {
 				// block and wait for progress from the task
-				final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
+				final byte[] output = task.readProgressWithTimeout(req.getTimeoutMinutes());
 				if (output == null) {
 					// no more progress
 					break;

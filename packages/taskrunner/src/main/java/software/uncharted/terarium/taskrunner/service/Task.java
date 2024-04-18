@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Data;
@@ -105,7 +106,7 @@ public class Task {
 					progressPipeName);
 		}
 
-		log.debug("Creating input, output, and progress pipes: {}, {}, {} for task {}", inputPipeName, outputPipeName,
+		log.info("Creating input, output, and progress pipes: {}, {}, {} for task {}", inputPipeName, outputPipeName,
 				progressPipeName, req.getId());
 
 		// Create the named pipes
@@ -130,15 +131,15 @@ public class Task {
 
 	public void writeInputWithTimeout(final byte[] bytes, final int timeoutMinutes)
 			throws IOException, InterruptedException, TimeoutException {
-		log.debug("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
+		log.info("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
 
 		final CompletableFuture<Void> future = new CompletableFuture<>();
 		new Thread(() -> {
 			try {
 				// Write to the named pipe in a separate thread
-				log.debug("Opening input pipe: {} for task: {}", inputPipeName, req.getId());
+				log.info("Opening input pipe: {} for task: {}", inputPipeName, req.getId());
 				try (FileOutputStream fos = new FileOutputStream(inputPipeName)) {
-					log.debug("Writing to input pipe: {} for task: {}", inputPipeName, req.getId());
+					log.info("Writing to input pipe: {} for task: {}", inputPipeName, req.getId());
 					fos.write(bytes);
 				}
 				future.complete(null);
@@ -173,18 +174,18 @@ public class Task {
 
 	public byte[] readOutputWithTimeout(final int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.debug("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
+		log.info("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
-			log.debug("Opening output pipe: {} for task: {}", outputPipeName, req.getId());
+			log.info("Opening output pipe: {} for task: {}", outputPipeName, req.getId());
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputPipeName))) {
-				log.debug("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
+				log.info("Reading from output pipe: {} for task: {}", outputPipeName, req.getId());
 				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.debug("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
+					log.info("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName,
 							req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
@@ -223,18 +224,18 @@ public class Task {
 
 	public byte[] readProgressWithTimeout(final int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.debug("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
+		log.info("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
-			log.debug("Opening progress pipe: {} for task: {}", progressPipeName, req.getId());
+			log.info("Opening progress pipe: {} for task: {}", progressPipeName, req.getId());
 			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(progressPipeName))) {
-				log.debug("Reading from progress pipe: {} for task: {}", progressPipeName, req.getId());
+				log.info("Reading from progress pipe: {} for task: {}", progressPipeName, req.getId());
 				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.debug("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName,
+					log.info("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName,
 							req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
@@ -258,6 +259,15 @@ public class Task {
 
 		if (result instanceof byte[]) {
 			// we got our response
+			try {
+				final JsonNode progress = mapper.readTree((byte[]) result);
+				if (progress.has("done")) {
+					// finished reading progress
+					return null;
+				}
+			} catch (final Exception e) {
+				// do nothing
+			}
 			return (byte[]) result;
 		}
 		if (result instanceof Integer) {
@@ -326,7 +336,7 @@ public class Task {
 			processFuture = new CompletableFuture<>();
 			new Thread(() -> {
 				try {
-					log.debug("Begin waiting for process to exit for task {}");
+					log.info("Begin waiting for process to exit for task {}", req.getId());
 					final int exitCode = process.waitFor();
 					log.info("Process exited with code {} for task {}", exitCode, req.getId());
 					lock.lock(() -> {
@@ -340,7 +350,7 @@ public class Task {
 							status = TaskStatus.SUCCESS;
 						}
 					});
-					log.debug("Finalized process status for task {}", exitCode, req.getId());
+					log.info("Finalized process status for task {}", exitCode, req.getId());
 					processFuture.complete(exitCode);
 				} catch (final InterruptedException e) {
 					log.warn("Process failed to exit cleanly for task {}: {}", req.getId(), e);
@@ -412,7 +422,7 @@ public class Task {
 		return lock.lock(() -> {
 			if (status == TaskStatus.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
-				log.debug("Cancelled task {} before starting it", req.getId());
+				log.info("Cancelled task {} before starting it", req.getId());
 				status = TaskStatus.CANCELLED;
 				return false;
 			}

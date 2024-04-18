@@ -27,6 +27,7 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 public class TaskTests extends TaskRunnerApplicationTests {
 
 	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS = "{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 
@@ -67,7 +68,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -82,7 +83,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			int progressCount = 0;
 			while (true) {
 				// block and wait for progress from the task
-				final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
+				final byte[] output = task.readProgressWithTimeout(ONE_MINUTE);
 				if (output == null) {
 					// no more progress
 					break;

@@ -3,6 +3,7 @@ import json
 import time
 import signal
 import sys
+import os
 import concurrent.futures
 
 
@@ -58,6 +59,15 @@ def write_progress_with_timeout(progress_pipe: str, output: dict, timeout_second
 			print('Writing to progress pipe {} timed out'.format(progress_pipe), flush=True)
 			raise TimeoutError('Writing to output pipe timed out')
 
+def finish_progress_with_timeout(progress_pipe: str, timeout_seconds: int):
+	with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+		future = executor.submit(write_progress, progress_pipe, {"done":True})
+		try:
+			return future.result(timeout=timeout_seconds)
+		except concurrent.futures.TimeoutError:
+			print('Writing to progress pipe {} timed out'.format(progress_pipe), flush=True)
+			raise TimeoutError('Writing to output pipe timed out')
+
 def signal_handler(sig, frame):
 	print('Process cancelled, cleanup logic goes here', flush=True)
 	sys.exit(1)
@@ -82,12 +92,14 @@ def main():
 		print("Task {} : failing".format(args.id), flush=True)
 		sys.exit(1)
 
-
 	for i in range(5):
 		print("Task {}: {}".format(args.id, i), flush=True)
 		if "include_progress" in input:
 			write_progress_with_timeout(args.progress_pipe, {"progress": i}, 5)
 		time.sleep(1)
+
+	# remove the progress pipe
+	finish_progress_with_timeout(args.progress_pipe, 5)
 
 	print("Task {} : attemping to write output to {}".format(args.id, args.output_pipe), flush=True)
 	write_output_with_timeout(args.output_pipe, input, 5)
