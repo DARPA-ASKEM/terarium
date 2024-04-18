@@ -91,7 +91,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
-import TeraWorkflow from '@/workflow/tera-workflow.vue';
+import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import Button from 'primevue/button';
 import TeraModelModal from './components/tera-model-modal.vue';
 import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
