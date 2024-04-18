@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -30,11 +30,11 @@ public class Workflow extends TerariumAsset {
 
 	private Transform transform;
 
-	@Convert(converter = JsonConverter.class)
+	@Convert(converter = ObjectConverter.class)
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = JsonConverter.class)
+	@Convert(converter = ObjectConverter.class)
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
 
