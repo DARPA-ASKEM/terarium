@@ -31,19 +31,19 @@ import { watch, ref } from 'vue';
 import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
-import TeraModelWorkflowWrapper from '@/workflow/ops/model/tera-model-workflow-wrapper.vue';
-import TeraDatasetDrilldown from '@/workflow/ops/dataset/tera-dataset-drilldown.vue';
-import TeraRegriddingDrilldown from '@/workflow/ops/regridding/tera-regridding.vue';
-import TeraDatasetTransformer from '@/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
-import TeraCalibrateJulia from '@/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
-import TeraSimulateJulia from '@/workflow/ops/simulate-julia/tera-simulate-julia.vue';
-import TeraCalibrateCiemss from '@/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
-import TeraCalibrateEnsembleCiemss from '@/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
-import TeraSimulateCiemss from '@/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
-import TeraSimulateEnsembleCiemss from '@/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
-import TeraFunman from '@/workflow/ops/funman/tera-funman.vue';
-import teraStratifyMira from '@/workflow/ops/stratify-mira/tera-stratify-mira.vue';
-import TeraCodeAssetWrapper from '@/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
+import TeraModelWorkflowWrapper from '@/components/workflow/ops/model/tera-model-workflow-wrapper.vue';
+import TeraDatasetDrilldown from '@/components/workflow/ops/dataset/tera-dataset-drilldown.vue';
+import TeraRegriddingDrilldown from '@/components/workflow/ops/regridding/tera-regridding.vue';
+import TeraDatasetTransformer from '@/components/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
+import TeraCalibrateJulia from '@/components/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
+import TeraSimulateJulia from '@/components/workflow/ops/simulate-julia/tera-simulate-julia.vue';
+import TeraCalibrateCiemss from '@/components/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
+import TeraCalibrateEnsembleCiemss from '@/components/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
+import TeraSimulateCiemss from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
+import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';
+import TeraFunman from '@/components/workflow/ops/funman/tera-funman.vue';
+import teraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
+import TeraCodeAssetWrapper from '@/components/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
 
 const props = defineProps<{ nodeId: string; workflowId: string }>();
 

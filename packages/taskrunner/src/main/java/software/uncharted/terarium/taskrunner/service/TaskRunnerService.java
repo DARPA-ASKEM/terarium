@@ -102,7 +102,7 @@ public class TaskRunnerService {
 			// ensure that the cancellation queue exists
 			declareCancellationQueue(req);
 
-			// lets see if its already been cancelled
+			// lets see if the task has already been cancelled
 			final boolean wasCancelled = checkForCancellation(req);
 			if (wasCancelled) {
 				// send cancellation response and return
@@ -145,7 +145,7 @@ public class TaskRunnerService {
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
 
-			// block and wait for input
+			// block and wait for output from the task
 			final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
 
 			// wait for the process to finish
@@ -160,12 +160,12 @@ public class TaskRunnerService {
 			if (task.getStatus() == TaskStatus.FAILED) {
 				log.error("Task {} failed", task.getId(), e);
 			} else if (task.getStatus() != TaskStatus.CANCELLED) {
-				// only log exception if it failed
 				log.error("Unexpected failure for task {}", task.getId(), e);
 			}
 
 			final TaskResponse failedResp = task
-					.createResponse(task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
+					.createResponse(
+							task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.FAILED);
 			if (task.getStatus() == TaskStatus.FAILED) {
 				// append error
 				failedResp.setOutput(e.getMessage().getBytes());
