@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import feign.FeignException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,7 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -22,15 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import feign.FeignException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -117,8 +114,8 @@ public class ExtractionService {
 
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain) {
 
-		final ExtractionGroupInstance notificationInterface = new ExtractionGroupInstance(this, documentId,
-				HALFTIME_SECONDS);
+		final ExtractionGroupInstance notificationInterface =
+				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS);
 
 		final String userId = currentUserService.get().getId();
 
@@ -137,16 +134,17 @@ public class ExtractionService {
 
 				final String filename = document.getFileNames().get(0);
 
-				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+				final byte[] documentContents =
+						documentService.fetchFileAsBytes(documentId, filename).get();
 				notificationInterface.sendMessage("File fetched, processing PDF extraction...");
 
-				final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
-						"application/pdf");
+				final ByteMultipartFile documentFile =
+						new ByteMultipartFile(documentContents, filename, "application/pdf");
 
 				final boolean compressImages = false;
 				final boolean useCache = false;
-				final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
-						useCache, documentFile);
+				final ResponseEntity<JsonNode> extractionResp =
+						extractionProxy.processPdfExtraction(compressImages, useCache, documentFile);
 
 				final JsonNode body = extractionResp.getBody();
 				final UUID jobId = UUID.fromString(body.get("job_id").asText());
@@ -244,8 +242,8 @@ public class ExtractionService {
 				int totalUploads = 0;
 
 				for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-					final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
-							extractionType.toStringPlural());
+					final ResponseEntity<JsonNode> response =
+							extractionProxy.extraction(jobId, extractionType.toStringPlural());
 					log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
 					if (!response.getStatusCode().is2xxSuccessful()) {
 						log.warn("Unable to fetch the {} extractions", extractionType);
@@ -278,8 +276,7 @@ public class ExtractionService {
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
 						extraction.setMetadata(
-								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {
-								}));
+								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {}));
 
 						document.getAssets().add(extraction);
 						notificationInterface.sendMessage(
@@ -371,15 +368,16 @@ public class ExtractionService {
 			final UUID documentId, final List<UUID> modelIds, final String domain) {
 
 		// Set up the client interface
-		final ExtractionGroupInstance notificationInterface = new ExtractionGroupInstance(this, documentId,
-				HALFTIME_SECONDS);
+		final ExtractionGroupInstance notificationInterface =
+				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {
 				notificationInterface.sendMessage("Starting variable extraction.");
 
 				// Fetch the text from the document
-				final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+				final DocumentAsset document =
+						documentService.getAsset(documentId).orElseThrow();
 				notificationInterface.sendMessage("Document found, fetching text.");
 				if (document.getText() == null || document.getText().isEmpty()) {
 					throw new RuntimeException("No text found in paper document");
@@ -397,8 +395,8 @@ public class ExtractionService {
 
 				notificationInterface.sendMessage("Sending request to be processes by SKEMA and MIT.");
 
-				final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(),
-						models);
+				final IntegratedTextExtractionsBody body =
+						new IntegratedTextExtractionsBody(document.getText(), models);
 
 				log.info("Sending variable extraction request to SKEMA");
 				final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, true, body);
@@ -455,8 +453,8 @@ public class ExtractionService {
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
 			} catch (final Exception e) {
-				final String error = "SKEMA unified integrated-text-extractions request from document: " + documentId
-						+ " failed.";
+				final String error =
+						"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
 				log.error(error, e);
 				notificationInterface.sendError(error + " — " + e.getMessage());
 				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -466,14 +464,15 @@ public class ExtractionService {
 
 	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
 
-		final ExtractionGroupInstance notificationInterface = new ExtractionGroupInstance(this, documentId,
-				HALFTIME_SECONDS);
+		final ExtractionGroupInstance notificationInterface =
+				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {
 				notificationInterface.sendMessage("Starting model alignment...");
 
-				final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+				final DocumentAsset document =
+						documentService.getAsset(documentId).orElseThrow();
 
 				final Model model = modelService.getAsset(modelId).orElseThrow();
 
@@ -486,17 +485,18 @@ public class ExtractionService {
 					throw new RuntimeException("No attributes found in document");
 				}
 
-				final JsonNode attributes = objectMapper.valueToTree(document.getMetadata().get("attributes"));
+				final JsonNode attributes =
+						objectMapper.valueToTree(document.getMetadata().get("attributes"));
 
 				final ObjectNode extractions = objectMapper.createObjectNode();
 				extractions.set("attributes", attributes);
 
 				final String extractionsString = objectMapper.writeValueAsString(extractions);
 
-				final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json",
-						"application/json");
-				final StringMultipartFile extractionFile = new StringMultipartFile(extractionsString,
-						"extractions.json", "application/json");
+				final StringMultipartFile amrFile =
+						new StringMultipartFile(modelString, "amr.json", "application/json");
+				final StringMultipartFile extractionFile =
+						new StringMultipartFile(extractionsString, "extractions.json", "application/json");
 
 				final ResponseEntity<JsonNode> res;
 				try {
