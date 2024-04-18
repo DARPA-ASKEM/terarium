@@ -95,9 +95,10 @@ public class Simulation extends TerariumAsset {
 		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); //done
 		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); //done
 		clone.setUserId(this.userId); // done
+		clone.setExecutionPayload(this.executionPayload.clone()); //done
 		clone.setWorkflowId(this.workflowId); //TODO
 		clone.setProjectId(this.projectId); // TODO
-		clone.setExecutionPayload(this.executionPayload); //TODO
+
 
 		return clone;
 	}
