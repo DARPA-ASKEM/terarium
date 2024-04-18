@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from taskrunner import TaskRunnerInterface
+from core.taskrunner import TaskRunnerInterface
 
 # Funman imports
 from funman import Funman
@@ -89,19 +89,19 @@ def taskrunner_wrapper():
 
 
 def debug_wrapper():
-		f = open("funman-apr-12.json", "r")
-		test = json.loads(f.read())
-		model = adapter.validate_python(test["model"])
-		model = _wrap_with_internal_model(model)
-		request = test["request"]
-		run_validate(model, request)
+    f = open("funman-apr-12.json", "r")
+    test = json.loads(f.read())
+    model = adapter.validate_python(test["model"])
+    model = _wrap_with_internal_model(model)
+    request = test["request"]
+    run_validate(model, request)
 
 
 def main():
     if os.getenv("TASKRUNNER_DEBUG") == "1":
-				debug_wrapper()
+        debug_wrapper()
     else:
-				taskrunner_wrapper()
+        taskrunner_wrapper()
 
 
 if __name__ == "__main__":

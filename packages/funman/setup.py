@@ -7,7 +7,7 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "funamn_task:amr_to_mmt=tasks.validate_modelconfig:main",
+            "funman_task:validate_modelconfig=tasks.validate_modelconfig:main",
         ],
     },
     python_requires=">=3.8",
