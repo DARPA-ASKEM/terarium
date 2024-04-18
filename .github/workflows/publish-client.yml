@@ -30,7 +30,6 @@ jobs:
               TAG=${{ github.ref_name }}
             fi
           fi
-          TAG=test-to-be-deleted
 
           IMAGE=ghcr.io/darpa-askem/hmi-client:${TAG,,}
           echo "$IMAGE"
