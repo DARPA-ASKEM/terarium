@@ -37,6 +37,7 @@ public class Task {
 	private Process process;
 	private CompletableFuture<Integer> processFuture;
 	private String inputPipeName;
+	private String progressPipeName;
 	private String outputPipeName;
 	private TaskStatus status = TaskStatus.QUEUED;
 	private ScopedLock lock = new ScopedLock();
@@ -52,6 +53,7 @@ public class Task {
 
 		this.req = req;
 		inputPipeName = "/tmp/input-" + req.getId();
+		progressPipeName = "/tmp/progress-" + req.getId();
 		outputPipeName = "/tmp/output-" + req.getId();
 
 		try {
@@ -88,16 +90,23 @@ public class Task {
 			processBuilder = new ProcessBuilder("python", req.getScript(), "--id", req.getId().toString(),
 					"--input_pipe",
 					inputPipeName,
-					"--output_pipe", outputPipeName);
+					"--output_pipe",
+					outputPipeName,
+					"--progress_pipe",
+					progressPipeName);
 		} else {
 			// executable command, execute it directly
 			processBuilder = new ProcessBuilder(req.getScript(), "--id", req.getId().toString(),
 					"--input_pipe",
 					inputPipeName,
-					"--output_pipe", outputPipeName);
+					"--output_pipe",
+					outputPipeName,
+					"--progress_pipe",
+					progressPipeName);
 		}
 
-		log.debug("Creating input and output pipes: {} {} for task {}", inputPipeName, outputPipeName, req.getId());
+		log.debug("Creating input, output, and progress pipes: {}, {}, {} for task {}", inputPipeName, outputPipeName,
+				progressPipeName, req.getId());
 
 		// Create the named pipes
 		final Process inputPipe = new ProcessBuilder("mkfifo", inputPipeName).start();
@@ -108,6 +117,12 @@ public class Task {
 
 		final Process outputPipe = new ProcessBuilder("mkfifo", outputPipeName).start();
 		exitCode = outputPipe.waitFor();
+		if (exitCode != 0) {
+			throw new RuntimeException("Error creating input pipe");
+		}
+
+		final Process progressPipe = new ProcessBuilder("mkfifo", progressPipeName).start();
+		exitCode = progressPipe.waitFor();
 		if (exitCode != 0) {
 			throw new RuntimeException("Error creating input pipe");
 		}
@@ -158,7 +173,7 @@ public class Task {
 
 	public byte[] readOutputWithTimeout(final int timeoutMinutes)
 			throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.debug("Dispatching read thread for input pipe: {} for task: {}", outputPipeName, req.getId());
+		log.debug("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
@@ -177,11 +192,53 @@ public class Task {
 			} catch (final IOException e) {
 				future.completeExceptionally(e);
 			}
+		}).start();
 
-			try (BufferedReader reader = new BufferedReader(
-					new InputStreamReader(new FileInputStream(outputPipeName)))) {
-				log.debug("Reading on output pipe: {} for task {}", outputPipeName, req.getId());
-				future.complete(reader.readLine().getBytes());
+		Object result;
+		try {
+			result = CompletableFuture.anyOf(future, processFuture).get(timeoutMinutes, TimeUnit.MINUTES);
+		} catch (final TimeoutException e) {
+			future.cancel(true);
+			throw new TimeoutException("Reading from pipe took too long for task " + req.getId());
+		}
+
+		if (result == null) {
+			throw new RuntimeException("Unexpected null result for task " + req.getId());
+		}
+
+		if (result instanceof byte[]) {
+			// we got our response
+			return (byte[]) result;
+		}
+		if (result instanceof Integer) {
+			// process has exited early
+			if (getStatus() == TaskStatus.CANCELLED) {
+				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
+			}
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
+		}
+
+		throw new RuntimeException("Unexpected result type: " + result.getClass());
+	}
+
+	public byte[] readProgressWithTimeout(final int timeoutMinutes)
+			throws IOException, InterruptedException, ExecutionException, TimeoutException {
+		log.debug("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
+
+		final CompletableFuture<byte[]> future = new CompletableFuture<>();
+		new Thread(() -> {
+			log.debug("Opening progress pipe: {} for task: {}", progressPipeName, req.getId());
+			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(progressPipeName))) {
+				log.debug("Reading from progress pipe: {} for task: {}", progressPipeName, req.getId());
+				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
+				int bytesRead;
+				while ((bytesRead = bis.read(buffer)) != -1) {
+					log.debug("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName,
+							req.getId());
+					bos.write(buffer, 0, bytesRead);
+				}
+				future.complete(bos.toByteArray());
 			} catch (final IOException e) {
 				future.completeExceptionally(e);
 			}
@@ -225,6 +282,12 @@ public class Task {
 			Files.deleteIfExists(Paths.get(outputPipeName));
 		} catch (final Exception e) {
 			log.warn("Exception occurred while cleaning up the task output pipe:" + e);
+		}
+
+		try {
+			Files.deleteIfExists(Paths.get(progressPipeName));
+		} catch (final Exception e) {
+			log.warn("Exception occurred while cleaning up the task progress pipe:" + e);
 		}
 
 		try {

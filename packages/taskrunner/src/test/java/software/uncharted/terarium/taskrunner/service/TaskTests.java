@@ -62,10 +62,55 @@ public class TaskTests extends TaskRunnerApplicationTests {
 	}
 
 	@Test
+	public void testTaskSuccessWithProgress() throws Exception {
+
+		final TaskRequest req = new TaskRequest();
+		req.setId(UUID.randomUUID());
+		req.setScript(SCRIPT_PATH);
+		req.setInput(new String(TEST_INPUT).getBytes());
+
+		final int ONE_MINUTE = 1;
+
+		final Task task = new Task(req);
+		try {
+			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			task.start();
+
+			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
+
+			int progressCount = 0;
+			while (true) {
+				// block and wait for progress from the task
+				final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
+				if (output == null) {
+					// no more progress
+					break;
+				}
+				progressCount++;
+			}
+
+			Assertions.assertEquals(5, progressCount);
+
+			final byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
+			Assertions.assertArrayEquals(req.getInput(), output);
+
+			task.waitFor(ONE_MINUTE);
+			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+
+		} catch (final Exception e) {
+			throw e;
+		} finally {
+			task.cleanup();
+		}
+	}
+
+	@Test
 	public void testTaskLargeInputOutput() throws Exception {
 
 		final ClassPathResource resource = new ClassPathResource("test_input.json");
-		final String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
+		final String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()),
+				StandardCharsets.UTF_8);
 
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
