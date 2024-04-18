@@ -11,11 +11,12 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class ClientEvent<T> implements Serializable {
 	@Builder.Default
-	private String id = UUID.randomUUID().toString();
+	private UUID id = UUID.randomUUID();
 
 	@Builder.Default
 	private long createdAtMs = System.currentTimeMillis();
 
 	private ClientEventType type;
+
 	private T data;
 }
