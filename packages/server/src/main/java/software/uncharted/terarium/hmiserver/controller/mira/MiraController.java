@@ -1,24 +1,34 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -30,8 +40,13 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.tasks.*;
+import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
 @RequestMapping("/mira")
 @RestController
@@ -46,6 +61,7 @@ public class MiraController {
 	private final StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
+	private final CurrentUserService currentUserService;
 
 	@Data
 	public static class ModelConversionRequest {
@@ -81,28 +97,17 @@ public class MiraController {
 	@PostMapping("/amr-to-mmt")
 	@Secured(Roles.USER)
 	@Operation(summary = "convert AMR to MIRA model template")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
 		try {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 			req.setScript(AMRToMMTResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 
 			// send the request
 			final TaskResponse resp = taskService.runTaskSync(req);
@@ -120,22 +125,10 @@ public class MiraController {
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
 
 		try {
@@ -153,8 +146,8 @@ public class MiraController {
 
 			final String filename = artifact.get().getFileNames().get(0);
 
-			final Optional<String> fileContents =
-					artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
+			final Optional<String> fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId,
+					filename);
 			if (fileContents.isEmpty()) {
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.BAD_REQUEST, "Unable to fetch file contents");
@@ -167,6 +160,7 @@ public class MiraController {
 			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
 			req.setAdditionalProperties(additionalProperties);
+			req.setUserId(currentUserService.get().getId());
 
 			if (endsWith(filename, List.of(".mdl"))) {
 				req.setScript(MdlToStockflowResponseHandler.NAME);
@@ -193,22 +187,10 @@ public class MiraController {
 
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a Mira task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched cancellation successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Void.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the cancellation",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched cancellation successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the cancellation", content = @Content)
+	})
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
@@ -216,18 +198,9 @@ public class MiraController {
 
 	@GetMapping("/{task-id}")
 	@Operation(summary = "Subscribe for updates on a Mira task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Subscribed successfully",
-						content =
-								@Content(
-										mediaType = "text/event-stream",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Subscribed successfully", content = @Content(mediaType = "text/event-stream", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+	})
 	@IgnoreRequestLogging
 	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
 		return taskService.subscribe(taskId);

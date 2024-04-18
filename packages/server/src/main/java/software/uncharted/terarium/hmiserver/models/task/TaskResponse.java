@@ -1,9 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Serializable;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -18,6 +20,7 @@ public class TaskResponse implements Serializable {
 	private String script;
 	private TaskStatus status;
 	private byte[] output;
+	protected String userId;
 
 	// The value of this will be whatever it was set to on the TaskRequest.
 	private Object additionalProperties;
