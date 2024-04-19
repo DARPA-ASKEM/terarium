@@ -801,6 +801,7 @@ export interface TaskResponse {
     script: string;
     status: TaskStatus;
     output: any;
+    userId: string;
     additionalProperties: any;
     stdout: string;
     stderr: string;

@@ -42,8 +42,15 @@ public class NotificationService {
 	}
 
 	public NotificationGroup createNotificationGroup(final NotificationGroup notificationGroup) {
-		final User user = currentUserService.get();
-		notificationGroup.setUserId(user != null ? user.getId() : "anonymous");
+		if (notificationGroup.getUserId() == null
+				|| notificationGroup.getUserId().isEmpty()) {
+			try {
+				final User user = currentUserService.get();
+				notificationGroup.setUserId(user != null ? user.getId() : "anonymous");
+			} catch (final Exception e) {
+				log.error("Error getting current user", e);
+			}
+		}
 		return notificationGroupRepository.save(notificationGroup);
 	}
 

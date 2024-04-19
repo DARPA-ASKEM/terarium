@@ -84,6 +84,7 @@ public class TaskService {
 			type = req.getType();
 			script = req.getScript();
 			input = req.getInput();
+			userId = req.getUserId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
@@ -92,6 +93,7 @@ public class TaskService {
 			return new TaskResponse()
 					.setId(id)
 					.setStatus(status)
+					.setUserId(userId)
 					.setScript(getScript())
 					.setAdditionalProperties(getAdditionalProperties());
 		}
@@ -549,6 +551,7 @@ public class TaskService {
 			final NotificationGroup group = new NotificationGroup();
 			group.setId(req.getId()); // use the task id
 			group.setType(req.getType().toString());
+			group.setUserId(req.getUserId());
 			notificationService.createNotificationGroup(group);
 
 			// now send request
