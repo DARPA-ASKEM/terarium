@@ -83,13 +83,13 @@ export async function init(): Promise<void> {
  */
 setInterval(async () => {
 	if (!reconnecting) {
+		reconnecting = true;
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
 		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
-			reconnecting = true;
 			await init();
-			reconnecting = false;
 		}
+		reconnecting = false;
 	}
 }, 1000);
 
