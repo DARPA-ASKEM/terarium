@@ -145,6 +145,20 @@ public class TaskRunnerService {
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
 
+			while (true) {
+				// block and wait for progress from the task
+				final byte[] output = task.readProgressWithTimeout(req.getTimeoutMinutes());
+				if (output == null) {
+					// no more progress
+					break;
+				}
+
+				final TaskResponse progressResp = task.createResponse(TaskStatus.RUNNING);
+				progressResp.setOutput(output);
+				final String progressJson = mapper.writeValueAsString(progressResp);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", progressJson);
+			}
+
 			// block and wait for output from the task
 			final byte[] output = task.readOutputWithTimeout(req.getTimeoutMinutes());
 
