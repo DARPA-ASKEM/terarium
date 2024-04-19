@@ -88,9 +88,7 @@ section {
 	& > .btn-group {
 		display: flex;
 		justify-content: end;
-		& > :last-child:deep(.p-button-icon) {
-			color: var(--primary-color);
-		}
+		color: var(--primary-color);
 	}
 
 	& > .annotation {
