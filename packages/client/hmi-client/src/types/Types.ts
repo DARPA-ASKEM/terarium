@@ -550,6 +550,7 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
+    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;

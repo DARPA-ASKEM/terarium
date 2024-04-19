@@ -48,6 +48,26 @@ const getStatus = (data: { error: string; t: number }) => {
 	return 'Running';
 };
 
+// const createNewNotificationItem = (event: ClientEvent<ExtractionStatusUpdate>) => {
+// 	const newItem: NotificationItem = {
+// 		id: event.data?.documentId || '',
+// 		type: ClientEventType.ExtractionPdf,
+// 		assetName: '',
+// 		status: getStatus(event.data),
+// 		msg: event.data?.message || '',
+// 		progress: event.data?.t || 0,
+// 		lastUpdated: Date.now(),
+// 		error: event.data?.error || '',
+// 		acknowledged: false
+// 	};
+// 	items.value.push(newItem);
+// 	// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
+// 	// Update the asset name asynchronously on the next tick to avoid blocking the event handler
+// 	getDocumentAsset(event.data?.documentId || '').then((document) =>
+// 		Object.assign(newItem, { assetName: document?.name || '' })
+// 	);
+// };
+
 const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
 	if (!event.data) return;
 
@@ -105,9 +125,30 @@ export function useNotificationManager() {
 		)
 	);
 
-	function init() {
+	// 	export interface NotificationEvent {
+	//     id: string;
+	//     progress: number;
+	//     state: ProgressState;
+	//     createdOn: Date;
+	//     acknowledgedOn: Date;
+	//     data: any;
+	// }
+
+	// export interface NotificationGroup {
+	//     id: string;
+	//     userId: string;
+	//     type: string;
+	//     createdOn: Date;
+	//     notificationEvents: NotificationEvent[];
+	// }
+
+	async function init() {
 		// Make sure this init function gets called only once for the lifetime of the app
 		if (initialized) return;
+		// const initialEvents = await getLatestUnacknowledgedNotificationEvents([ClientEventType.ExtractionPdf]);
+		// initialEvents.forEach(extractionEventHandler);
+		// const notifications = await getNotification()
+		// console.log(notifications);
 		// Initialize SSE event handlers for the notification manager
 		subscribe(ClientEventType.ExtractionPdf, extractionEventHandler);
 		initialized = true;
