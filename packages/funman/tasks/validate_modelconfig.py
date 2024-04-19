@@ -68,7 +68,7 @@ def run_validate(model: PetrinetModel, request):
 def taskrunner_wrapper():
     print("Taskrunner wrapper")
     try:
-        taskrunner = TaskRunnerInterface(description="AMR to MMT")
+        taskrunner = TaskRunnerInterface(description="Validate model configuration")
         taskrunner.on_cancellation(cleanup)
 
         # Input wrangling
