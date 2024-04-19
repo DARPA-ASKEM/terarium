@@ -15,7 +15,7 @@
 		<!-- Symbol -->
 		<Column header="Symbol" class="w-2">
 			<template #body="slotProps">
-				<span class="truncate-text">
+				<span class="truncate-text latex-font">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
