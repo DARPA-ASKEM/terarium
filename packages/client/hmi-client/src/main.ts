@@ -50,7 +50,7 @@ authStore.setKeycloak(window.keycloak);
 // Initialize user
 await authStore.init();
 logger.info('Authenticated');
-init();
+await init();
 // Token Refresh
 setInterval(async () => {
 	await window.keycloak.updateToken(70);
