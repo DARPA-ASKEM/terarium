@@ -16,7 +16,6 @@ import {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
@@ -229,18 +228,6 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 		return null;
 	}
 }
-
-// This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
-	const state = node.state;
-	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
-		// return all run ids on the node
-		return state.simulationsInProgress;
-	}
-
-	// return an empty array if no run ids are present
-	return [];
-};
 
 export async function subscribeToUpdateMessages(
 	simulationIds: string[],
