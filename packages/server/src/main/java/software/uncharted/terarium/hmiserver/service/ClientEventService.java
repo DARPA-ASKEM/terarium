@@ -138,18 +138,12 @@ public class ClientEventService {
 			// Send the message to each user connected and remove disconnected users
 			final Set<String> userIdsToRemove = new HashSet<>();
 			userIdToEmitter.forEach((userId, emitterList) -> {
-				List<SseEmitter> emittersToRemove = send(messageJson, emitterList, userId);
-				emittersToRemove.forEach((emitter) -> {
-					userIdToEmitter.get(userId).remove(emitter);
-					if (userIdToEmitter.get(userId).size() == 0) {
-						userIdToEmitter.remove(userId);
-					}
-				});
+				send(messageJson, emitterList, userId);
 			});
 		}
 	}
 
-	private List<SseEmitter> send(Object message, List<SseEmitter> emitterList, String userId) {
+	private void send(Object message, List<SseEmitter> emitterList, String userId) {
 		List<SseEmitter> emittersToRemove = new ArrayList<>();
 		emitterList.forEach((emitter) -> {
 			try {
@@ -161,7 +155,12 @@ public class ClientEventService {
 				log.error("Error sending all users message to user {}", userId, e);
 			}
 		});
-		return emittersToRemove;
+		emittersToRemove.forEach((emitter) -> {
+			userIdToEmitter.get(userId).remove(emitter);
+			if (userIdToEmitter.get(userId).size() == 0) {
+				userIdToEmitter.remove(userId);
+			}
+		});
 	}
 
 	/**
@@ -183,13 +182,7 @@ public class ClientEventService {
 		final String userId = messageJson.at("/userId").asText();
 		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
 		synchronized (userIdToEmitter) {
-			List<SseEmitter> emittersToRemove = send(messageJson.at("/event"), emitterList, userId);
-			emittersToRemove.forEach((emitter) -> {
-				userIdToEmitter.get(userId).remove(emitter);
-				if (userIdToEmitter.get(userId).size() == 0) {
-					userIdToEmitter.remove(userId);
-				}
-			});
+			send(messageJson.at("/event"), emitterList, userId);
 		}
 	}
 
