@@ -343,7 +343,7 @@ public class ExtractionService {
 				notificationInterface.sendFinalMessage("Extraction complete");
 
 				// return the final document
-				return documentService.updateAsset(document).orElseThrow();
+				return documentService.getAsset(documentId).orElseThrow();
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
