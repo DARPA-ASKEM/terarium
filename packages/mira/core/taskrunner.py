@@ -53,6 +53,12 @@ class TaskRunnerInterface:
             help="The name of the output pipe",
         )
         parser.add_argument(
+            "--progress_pipe",
+            type=str,
+            required=False,
+            help="The name of the progress pipe",
+        )
+        parser.add_argument(
             "--self_destruct_timeout_seconds",
             type=int,
             default=60 * 60 * 24,
@@ -64,6 +70,8 @@ class TaskRunnerInterface:
         self.input = args.input
         self.input_pipe = args.input_pipe
         self.output_pipe = args.output_pipe
+        self.progress_pipe = args.progress_pipe
+        self.has_written_output = False
 
         if self.input is None and self.input_pipe is None:
             raise ValueError("Either `input` or `input_pipe` must be specified")
@@ -101,6 +109,27 @@ class TaskRunnerInterface:
             except concurrent.futures.TimeoutError:
                 raise TimeoutError("Reading from input pipe timed out")
 
+    def write_progress_with_timeout(self, progress: dict, timeout_seconds: int):
+        def write_progress(progress_pipe: str, progress: dict):
+            bs = json.dumps(progress, separators=(',', ':')).encode()
+            with open(progress_pipe, 'wb') as f_out:
+                f_out.write(bs)
+                return
+
+        # if no progress pipe is specified, just print the progress to stdout
+        if self.progress_pipe is None:
+            self.log("Writing progress to stdout")
+            print(json.dumps(progress))
+            return
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(write_progress, self.progress_pipe, progress)
+            try:
+                return future.result(timeout=timeout_seconds)
+            except concurrent.futures.TimeoutError:
+                print('Writing to progress pipe {} timed out'.format(self.progress_pipe), flush=True)
+                raise TimeoutError('Writing to output pipe timed out')
+
     def write_output_with_timeout(self, output: dict, timeout_seconds: int = 30):
         def write_output(output: dict):
             self.log("Writing output to output pipe")
@@ -109,11 +138,20 @@ class TaskRunnerInterface:
                 f_out.write(bs)
                 return
 
+        # output should only be written once
+        if self.has_written_output:
+            raise ValueError("Output has already been written")
+
+        self.has_written_output = True
+
         # if no output pipe is specified, just print the output to stdout
         if self.output_pipe is None:
             self.log("Writing output to stdout")
             print(json.dumps(output))
             return
+
+        # signal to the taskrunner that it should stop consuming progress
+        self.write_progress_with_timeout(self, {'done':True}, timeout_seconds)
 
         # otherwise use the output pipe
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
