@@ -8,7 +8,9 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +49,7 @@ public class ClientEventService {
 	@Value("${terarium.client-all-user-event-queue}")
 	private String CLIENT_ALL_USERS_EVENT_QUEUE;
 
-	final Map<String, SseEmitter> userIdToEmitter = new ConcurrentHashMap<>();
+	final Map<String, List<SseEmitter>> userIdToEmitter = new ConcurrentHashMap<>();
 
 	Queue allUsersQueue;
 	Queue userQueue;
@@ -80,13 +82,10 @@ public class ClientEventService {
 	 */
 	public SseEmitter connect(final User user) {
 		final SseEmitter emitter = new SseEmitter();
-		if (userIdToEmitter.containsKey(user.getId())) {
-			try {
-				userIdToEmitter.get(user.getId()).complete();
-			} catch (final IllegalStateException ignored) {
-			}
+		if (!userIdToEmitter.containsKey(user.getId())) {
+			userIdToEmitter.put(user.getId(), new ArrayList<>());
 		}
-		userIdToEmitter.put(user.getId(), emitter);
+		userIdToEmitter.get(user.getId()).add(emitter);
 		return emitter;
 	}
 
@@ -138,20 +137,31 @@ public class ClientEventService {
 		synchronized (userIdToEmitter) {
 			// Send the message to each user connected and remove disconnected users
 			final Set<String> userIdsToRemove = new HashSet<>();
-			userIdToEmitter.forEach((userId, emitter) -> {
-				try {
-					emitter.send(messageJson);
-				} catch (final IllegalStateException | ClientAbortException e) {
-					log.warn("Error sending all users message to user {}. User likely disconnected", userId);
-					userIdsToRemove.add(userId);
-				} catch (final IOException e) {
-					log.error("Error sending all users message to user {}", userId, e);
-				}
+			userIdToEmitter.forEach((userId, emitterList) -> {
+				List<SseEmitter> emittersToRemove = send(messageJson, emitterList, userId);
+				emittersToRemove.forEach((emitter) -> {
+					userIdToEmitter.get(userId).remove(emitter);
+					if (userIdToEmitter.get(userId).size() == 0) {
+						userIdToEmitter.remove(userId);
+					}
+				});
 			});
-
-			// Clean up and remove disconnected users
-			userIdsToRemove.forEach(userIdToEmitter::remove);
 		}
+	}
+
+	private List<SseEmitter> send(Object message, List<SseEmitter> emitterList, String userId) {
+		List<SseEmitter> emittersToRemove = new ArrayList<>();
+		emitterList.forEach((emitter) -> {
+			try {
+				emitter.send(message);
+			} catch (final IllegalStateException | ClientAbortException e) {
+				log.warn("Error sending all users message to user {}. User likely disconnected", userId);
+				emittersToRemove.add(emitter);
+			} catch (final IOException e) {
+				log.error("Error sending all users message to user {}", userId, e);
+			}
+		});
+		return emittersToRemove;
 	}
 
 	/**
@@ -170,19 +180,16 @@ public class ClientEventService {
 		if (messageJson == null) {
 			return;
 		}
-		final SseEmitter emitter = userIdToEmitter.get(messageJson.at("/userId").asText());
+		final String userId = messageJson.at("/userId").asText();
+		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
 		synchronized (userIdToEmitter) {
-			if (emitter != null) {
-				final String userId = messageJson.at("/userId").asText();
-				try {
-					emitter.send(messageJson.at("/event"));
-				} catch (final IllegalStateException | ClientAbortException e) {
-					log.warn("Error sending user message to user {}. User likely disconnected", userId);
+			List<SseEmitter> emittersToRemove = send(messageJson.at("/event"), emitterList, userId);
+			emittersToRemove.forEach((emitter) -> {
+				userIdToEmitter.get(userId).remove(emitter);
+				if (userIdToEmitter.get(userId).size() == 0) {
 					userIdToEmitter.remove(userId);
-				} catch (final IOException e) {
-					log.error("Error sending user message to user {}", userId, e);
 				}
-			}
+			});
 		}
 	}
 
