@@ -83,10 +83,8 @@ public class ClientEventService {
 	public SseEmitter connect(final User user) {
 		final SseEmitter emitter = new SseEmitter();
 		if (!userIdToEmitter.containsKey(user.getId())) {
-			System.out.println("New user connected creating new Arraylist");
 			userIdToEmitter.put(user.getId(), new ArrayList<>());
 		}
-		System.out.println("Adding new emitter to ArrayList");
 		userIdToEmitter.get(user.getId()).add(emitter);
 		return emitter;
 	}
@@ -136,7 +134,6 @@ public class ClientEventService {
 		if (messageJson == null) {
 			return;
 		}
-		System.out.println("Sending an event to all users - locking HashMap");
 		synchronized (userIdToEmitter) {
 			// Send the message to each user connected and remove disconnected users
 			final Set<String> userIdsToRemove = new HashSet<>();
@@ -156,7 +153,6 @@ public class ClientEventService {
 		List<SseEmitter> emittersToRemove = new ArrayList<>();
 		emitterList.forEach((emitter) -> {
 			try {
-				System.out.println("Sending an event to user:" + userId + " for an emitter");
 				emitter.send(message);
 			} catch (final IllegalStateException | ClientAbortException e) {
 				log.warn("Error sending all users message to user {}. User likely disconnected", userId);
@@ -186,7 +182,6 @@ public class ClientEventService {
 		}
 		final String userId = messageJson.at("/userId").asText();
 		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
-		System.out.println("Sending an event to one user - locking HashMap");
 		synchronized (userIdToEmitter) {
 			List<SseEmitter> emittersToRemove = send(messageJson.at("/event"), emitterList, userId);
 			emittersToRemove.forEach((emitter) -> {
