@@ -12,7 +12,13 @@
 				v-model.lazy="newName"
 				placeholder="Title of new model"
 				@keyup.enter="updateModelName"
+				@keyup.esc="updateModelName"
+				v-focus
 			/>
+
+			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
+				<Button icon="pi pi-check" rounded text @click="updateModelName" />
+			</div>
 		</template>
 		<template #edit-buttons>
 			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
