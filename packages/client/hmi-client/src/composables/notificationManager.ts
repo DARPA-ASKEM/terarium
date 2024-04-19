@@ -1,10 +1,23 @@
 import { subscribe } from '@/services/ClientEventService';
-import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Types';
+// import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Types';
 import { NotificationItem } from '@/types/common';
 import { ref, computed } from 'vue';
-import { getDocumentAsset } from '@/services/document-assets';
-import { logger } from '@/utils/logger';
+// import { getDocumentAsset } from '@/services/document-assets';
+// import { logger } from '@/utils/logger';
+import {
+	convertToClientEvents,
+	getLatestUnacknowledgedNotifications
+} from '@/services/notification';
+import {
+	createNotificationEventHandlers,
+	SUPPORTED_CLIENT_EVENT_TYPES
+} from '@/services/notificatoinEventHandlers';
 import { useProjects } from './project';
+
+// // Supported client event types for the notification manager
+// const SUPPORTED_CLIENT_EVENT_TYPES = [
+// 	ClientEventType.ExtractionPdf
+// ];
 
 let initialized = false;
 
@@ -13,106 +26,94 @@ const { findAsset } = useProjects();
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
 
-const toastTitle = {
-	[ClientEventType.ExtractionPdf]: {
-		success: 'PDF Extraction Completed',
-		error: 'PDF Extraction Error'
-	}
-};
-
-const displayToast = (
-	assetId: string,
-	eventType: ClientEventType,
-	status: string,
-	msg: string,
-	error: string
-) => {
-	if (!['Completed', 'Failed'].includes(status)) return;
-	if (!findAsset(assetId)) return; // Check if the asset is in the active project
-
-	if (status === 'Completed')
-		logger.success(msg, {
-			showToast: true,
-			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
-		});
-	if (status === 'Failed')
-		logger.error(error, {
-			showToast: true,
-			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
-		});
-};
-
-const getStatus = (data: { error: string; t: number }) => {
-	if (data.error) return 'Failed';
-	if (data.t >= 1.0) return 'Completed';
-	return 'Running';
-};
-
-// const createNewNotificationItem = (event: ClientEvent<ExtractionStatusUpdate>) => {
-// 	const newItem: NotificationItem = {
-// 		id: event.data?.documentId || '',
-// 		type: ClientEventType.ExtractionPdf,
-// 		assetName: '',
-// 		status: getStatus(event.data),
-// 		msg: event.data?.message || '',
-// 		progress: event.data?.t || 0,
-// 		lastUpdated: Date.now(),
-// 		error: event.data?.error || '',
-// 		acknowledged: false
-// 	};
-// 	items.value.push(newItem);
-// 	// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
-// 	// Update the asset name asynchronously on the next tick to avoid blocking the event handler
-// 	getDocumentAsset(event.data?.documentId || '').then((document) =>
-// 		Object.assign(newItem, { assetName: document?.name || '' })
-// 	);
+// const toastTitle = {
+// 	[ClientEventType.ExtractionPdf]: {
+// 		success: 'PDF Extraction Completed',
+// 		error: 'PDF Extraction Error'
+// 	}
 // };
 
-const extractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
-	if (!event.data) return;
+// const displayToast = (
+// 	assetId: string,
+// 	eventType: ClientEventType,
+// 	status: string,
+// 	msg: string,
+// 	error: string
+// ) => {
+// 	if (!['Completed', 'Failed'].includes(status)) return;
+// 	if (!findAsset(assetId)) return; // Check if the asset is in the active project
 
-	displayToast(
-		event.data.documentId,
-		ClientEventType.ExtractionPdf,
-		getStatus(event.data),
-		event.data.message,
-		event.data.error
-	);
+// 	if (status === 'Completed')
+// 		logger.success(msg, {
+// 			showToast: true,
+// 			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
+// 		});
+// 	if (status === 'Failed')
+// 		logger.error(error, {
+// 			showToast: true,
+// 			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
+// 		});
+// };
 
-	const existingItem = items.value.find((item) => item.id === event.data.documentId);
-	if (!existingItem) {
-		// Create a new notification item
-		const newItem: NotificationItem = {
-			id: event.data.documentId,
-			type: ClientEventType.ExtractionPdf,
-			assetName: '',
-			status: getStatus(event.data),
-			msg: event.data.message,
-			progress: event.data.t,
-			lastUpdated: Date.now(),
-			error: event.data.error,
-			acknowledged: false
-		};
-		items.value.push(newItem);
-		// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
-		// Update the asset name asynchronously on the next tick to avoid blocking the event handler
-		getDocumentAsset(event.data.documentId).then((document) =>
-			Object.assign(newItem, { assetName: document?.name || '' })
-		);
-		return;
-	}
-	// Update the existing item
-	Object.assign(existingItem, {
-		status: getStatus(event.data),
-		msg: event.data.message,
-		progress: event.data.t,
-		lastUpdated: Date.now(),
-		error: event.data.error
-	});
-};
+// const getStatus = (data: { error: string; t: number }) => {
+// 	if (data.error) return 'Failed';
+// 	if (data.t >= 1.0) return 'Completed';
+// 	return 'Running';
+// };
+
+// const pdfExtractionEventHandler = (event: ClientEvent<ExtractionStatusUpdate>) => {
+// 	if (!event.data) return;
+
+// 	displayToast(
+// 		event.data.documentId,
+// 		ClientEventType.ExtractionPdf,
+// 		getStatus(event.data),
+// 		event.data.message,
+// 		event.data.error
+// 	);
+
+// 	const existingItem = items.value.find((item) => item.notificationGroupId === event.data.notificationGroupId);
+// 	if (!existingItem) {
+// 		// Create a new notification item
+// 		const newItem: NotificationItem = {
+// 			notificationGroupId: event.data.notificationGroupId,
+// 			type: ClientEventType.ExtractionPdf,
+// 			assetId: event.data.documentId,
+// 			assetName: '',
+// 			status: getStatus(event.data),
+// 			msg: event.data.message,
+// 			progress: event.data.t,
+// 			lastUpdated: new Date(event.createdAtMs).getTime(),
+// 			error: event.data.error,
+// 			acknowledged: false
+// 		};
+// 		items.value.push(newItem);
+// 		// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
+// 		// Update the asset name asynchronously on the next tick to avoid blocking the event handler
+// 		getDocumentAsset(event.data.documentId).then((document) =>
+// 			Object.assign(newItem, { assetName: document?.name || '' })
+// 		);
+// 		return;
+// 	}
+// 	// Update the existing item
+// 	Object.assign(existingItem, {
+// 		status: getStatus(event.data),
+// 		msg: event.data.message,
+// 		progress: event.data.t,
+// 		lastUpdated: new Date(event.createdAtMs).getTime(),
+// 		error: event.data.error
+// 	});
+// };
+
+// const clientEventHandlers = {
+// 	[ClientEventType.ExtractionPdf]: pdfExtractionEventHandler
+// };
+// const getEventHandler = (eventType: ClientEventType) => clientEventHandlers[eventType] ?? (() => {});
 
 export function useNotificationManager() {
-	const itemsForActiveProject = computed(() => items.value.filter((item) => !!findAsset(item.id)));
+	const itemsForActiveProject = computed(() =>
+		items.value.filter((item) => !!findAsset(item.assetId))
+	);
 	const hasFinishedItems = computed(() =>
 		itemsForActiveProject.value.some(
 			(item: NotificationItem) => item.status === 'Completed' || item.status === 'Failed'
@@ -125,37 +126,29 @@ export function useNotificationManager() {
 		)
 	);
 
-	// 	export interface NotificationEvent {
-	//     id: string;
-	//     progress: number;
-	//     state: ProgressState;
-	//     createdOn: Date;
-	//     acknowledgedOn: Date;
-	//     data: any;
-	// }
-
-	// export interface NotificationGroup {
-	//     id: string;
-	//     userId: string;
-	//     type: string;
-	//     createdOn: Date;
-	//     notificationEvents: NotificationEvent[];
-	// }
-
 	async function init() {
 		// Make sure this init function gets called only once for the lifetime of the app
 		if (initialized) return;
-		// const initialEvents = await getLatestUnacknowledgedNotificationEvents([ClientEventType.ExtractionPdf]);
-		// initialEvents.forEach(extractionEventHandler);
-		// const notifications = await getNotification()
-		// console.log(notifications);
-		// Initialize SSE event handlers for the notification manager
-		subscribe(ClientEventType.ExtractionPdf, extractionEventHandler);
+		const handlers = createNotificationEventHandlers(items);
+
+		const initialEvents = (await getLatestUnacknowledgedNotifications(SUPPORTED_CLIENT_EVENT_TYPES))
+			.map(convertToClientEvents)
+			.flat();
+		initialEvents.forEach((event) => handlers.get(event.type)(event));
+
+		// Initialize SSE event handlers for the subsequent events for the notification manager
+		SUPPORTED_CLIENT_EVENT_TYPES.forEach((eventType) =>
+			subscribe(eventType, handlers.get(eventType))
+		);
+		// Attach handlers for logging
+		// SUPPORTED_CLIENT_EVENT_TYPES.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		initialized = true;
 	}
 
 	function clearFinishedItems() {
-		items.value = items.value.filter((item) => !!findAsset(item.id) && item.status === 'Running');
+		items.value = items.value.filter(
+			(item) => !!findAsset(item.notificationGroupId) && item.status === 'Running'
+		);
 	}
 
 	function acknowledgeFinishedItems() {

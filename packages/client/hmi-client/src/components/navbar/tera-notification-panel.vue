@@ -23,7 +23,11 @@
 			/>
 		</header>
 		<ul class="notification-items-container" v-if="notificationItems.length > 0">
-			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
+			<li
+				class="notification-item"
+				v-for="item in notificationItems"
+				:key="item.notificationGroupId"
+			>
 				<p class="heading">
 					{{ getTitleText(item) }}
 					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
@@ -93,9 +97,9 @@ const getActionText = (item: NotificationItem) => {
 const getAssetRoute = (item: NotificationItem) => {
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
-			return { assetId: item.id, pageType: AssetType.Document };
+			return { assetId: item.assetId, pageType: AssetType.Document };
 		default:
-			return { assetId: item.id, pageType: AssetType.Document };
+			return { assetId: item.assetId, pageType: AssetType.Document };
 	}
 };
 
