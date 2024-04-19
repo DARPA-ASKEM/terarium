@@ -9,8 +9,8 @@ import {
 	getLatestUnacknowledgedNotifications
 } from '@/services/notification';
 import {
-	createNotificationEventHandlers,
-	SUPPORTED_CLIENT_EVENT_TYPES
+	createNotificationEventHandlers
+	// SUPPORTED_CLIENT_EVENT_TYPES
 } from '@/services/notificatoinEventHandlers';
 import { useProjects } from './project';
 
@@ -131,15 +131,17 @@ export function useNotificationManager() {
 		if (initialized) return;
 		const handlers = createNotificationEventHandlers(items);
 
-		const initialEvents = (await getLatestUnacknowledgedNotifications(SUPPORTED_CLIENT_EVENT_TYPES))
+		const initialEvents = (
+			await getLatestUnacknowledgedNotifications(handlers.getSupportedEventTypes())
+		)
 			.map(convertToClientEvents)
 			.flat();
 		initialEvents.forEach((event) => handlers.get(event.type)(event));
 
 		// Initialize SSE event handlers for the subsequent events for the notification manager
-		SUPPORTED_CLIENT_EVENT_TYPES.forEach((eventType) =>
-			subscribe(eventType, handlers.get(eventType))
-		);
+		handlers
+			.getSupportedEventTypes()
+			.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		// Attach handlers for logging
 		// SUPPORTED_CLIENT_EVENT_TYPES.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		initialized = true;
