@@ -431,10 +431,14 @@ public class TaskService {
 				rLock.unlock();
 			}
 
-			// create the notification event
-			final NotificationEvent event = new NotificationEvent();
-			event.setData(resp);
-			notificationService.createNotificationEvent(resp.getId(), event);
+			try {
+				// create the notification event
+				final NotificationEvent event = new NotificationEvent();
+				event.setData(resp);
+				notificationService.createNotificationEvent(resp.getId(), event);
+			} catch (final Exception e) {
+				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			}
 
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
