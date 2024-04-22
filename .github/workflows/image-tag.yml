@@ -3,15 +3,21 @@
 name: image-tag.yml
 on:
   workflow_call:
+    inputs:
+      image-name:
+        required: true
+        description: 'The name of the image to be built'
+        type: string
     outputs:
-      tag:
-        description: 'The tag of the image to be built'
-        value: ${{ jobs.image-tag.outputs.tag }}
+      tagged-image-name:
+        description: 'The tagged name of the image to be built'
+        value: ${{ jobs.image-tag.outputs.name }}
 jobs:
   image-tag:
+    name: Define image tag
     runs-on: ubuntu-22.04
     outputs:
-      tag: ${{ steps.define.outputs.tag }}
+      name: ${{ steps.define.outputs.name }}
     steps:
       - id: define
         run: |
@@ -25,5 +31,7 @@ jobs:
               TAG=${{ github.ref_name }}
             fi
           fi
-          echo "${TAG,,}"
-          echo "tag=${TAG,,}" >> $GITHUB_OUTPUT
+
+          IMAGE=${{ inputs.image-name }}:${TAG,,}
+          echo "$IMAGE"
+          echo "name=$IMAGE" >> $GITHUB_OUTPUT

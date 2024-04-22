@@ -5,13 +5,9 @@ name: merge-images.yml
 on:
   workflow_call:
     inputs:
-      image_name:
+      name:
         required: true
         description: 'The name of the image to be merged'
-        type: string
-      image_tag:
-        required: true
-        description: 'The tag of the image to be merged'
         type: string
 
 jobs:
@@ -27,10 +23,10 @@ jobs:
 
       - name: Create, inspect and publish manifest
         run: |
-          docker manifest create ${{ inputs.image_name }}:${{ inputs.image_tag }} \
-            --amend ${{ inputs.image_name }}:${{ inputs.image_tag }}--amd64 \
-            --amend ${{ inputs.image_name }}:${{ inputs.image_tag }}--arm64
-          docker manifest annotate --arch amd64 --os linux ${{ inputs.image_name }}:${{ inputs.image_tag }} ${{ inputs.image_name }}:${{ inputs.image_tag }}--amd64
-          docker manifest annotate --arch arm64 --os linux ${{ inputs.image_name }}:${{ inputs.image_tag }} ${{ inputs.image_name }}:${{ inputs.image_tag }}}--arm64
-          docker manifest inspect ${{ inputs.image_name }}:${{ inputs.image_tag }}
-          docker manifest push ${{ inputs.image_name }}:${{ inputs.image_tag }}
+          docker manifest create ${{ inputs.name }} \
+            --amend ${{ inputs.name }}--amd64 \
+            --amend ${{ inputs.name }}--arm64
+          docker manifest annotate --arch amd64 --os linux ${{ inputs.name }} ${{ inputs.name }}--amd64
+          docker manifest annotate --arch arm64 --os linux ${{ inputs.name }} ${{ inputs.name }}--arm64
+          docker manifest inspect ${{ inputs.name }}
+          docker manifest push ${{ inputs.name }}

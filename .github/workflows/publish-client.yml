@@ -13,8 +13,10 @@ on:
 
 jobs:
   image-tag:
-    name: Create image tag
+    name: Get tagged image name
     uses: ./.github/workflows/image-tag.yml
+    with:
+      image-name: ghcr.io/darpa-askem/hmi-client
 
   amd64:
     if: false
@@ -122,14 +124,12 @@ jobs:
           tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
 
   merge-images:
-    name: Merge into one manifest
+    name: Merge AMD64 and ARM64 images under one manifest
     needs:
       - image-tag
-      # - amd64
+      - amd64
       # - arm64-macos
-      # - arm64-emulation
+      - arm64-emulation
     uses: ./.github/workflows/merge-images.yml
     with:
-      image_name: ghcr.io/darpa-askem/hmi-client
-      image_tag: ${{ needs.image-tag.outputs.tag }}
-      #secrets: inherit
+      name: ${{ needs.image-tag.outputs.tagged-image-name }}
