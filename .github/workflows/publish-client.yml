@@ -40,7 +40,7 @@ jobs:
 
   amd64:
     runs-on: ubuntu-22.04
-    needs: image-name
+    needs: image-tag
     permissions:
       contents: read
       packages: write
@@ -76,7 +76,7 @@ jobs:
     # Disabled until macOS GitHub runners uses M2 that can do nested virtualization
     # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
     runs-on: macos-14
-    needs: image-name
+    needs: image-tag
     permissions:
       contents: read
       packages: write
@@ -107,7 +107,7 @@ jobs:
 
   arm64-emulation:
     runs-on: ubuntu-22.04
-    needs: image-name
+    needs: image-tag
     permissions:
       contents: read
       packages: write
