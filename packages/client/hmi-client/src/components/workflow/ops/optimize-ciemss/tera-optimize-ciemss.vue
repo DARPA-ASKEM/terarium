@@ -260,7 +260,7 @@
 				@click="runOptimize"
 			/>
 			<tera-pyciemss-cancel-button
-				:style="{ marginRight: 'auto' }"
+				class="mr-auto"
 				:disabled="cancelRunId === ''"
 				:simulation-run-id="cancelRunId"
 			/>
