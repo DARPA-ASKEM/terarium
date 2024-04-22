@@ -50,7 +50,7 @@
 				</section>
 				<tera-progress-spinner
 					v-if="isDecomposedLoading"
-					class="align-spinner"
+					class="spinner-gap"
 					is-centered
 					:font-size="2"
 				>
@@ -496,7 +496,7 @@ onUnmounted(() => {
 	pointer-events: auto;
 }
 
-.align-spinner {
+.spinner-gap {
 	margin-top: 15rem;
 }
 
