@@ -7,16 +7,19 @@ name: Build and Publish hmi-client
 # yamllint disable-line rule:truthy
 on:
   push:
-    paths: [ 'packages/client/**' ]
-    branches: [ 'main' ]
+    #paths: [ 'packages/client/**' ]
+    branches: [ 'main', 'use-mac-os-to-build-arm-images' ]
     tags: [ '*' ]
 
+env:
+  IMAGE_NAME: ghcr.io/darpa-askem/hmi-client
+
 jobs:
-  image-name:
-    name: Create image name
+  image-tag:
+    name: Create image tag
     runs-on: ubuntu-22.04
     outputs:
-      name: ${{ steps.define.outputs.name }}
+      tag: ${{ steps.define.outputs.tag }}
     steps:
       - id: define
         run: |
@@ -32,8 +35,8 @@ jobs:
           fi
 
           IMAGE=ghcr.io/darpa-askem/hmi-client:${TAG,,}
-          echo "$IMAGE"
-          echo "name=$IMAGE" >> $GITHUB_OUTPUT
+          echo "${TAG,,}"
+          echo "tag=${TAG,,}" >> $GITHUB_OUTPUT
 
   amd64:
     runs-on: ubuntu-22.04
@@ -66,7 +69,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/amd64
           push: true
-          tags: ${{ needs.image-name.outputs.name }}--amd64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--amd64
 
   arm64-macos:
     if: false
@@ -100,7 +103,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ${{ needs.image-name.outputs.name }}--arm64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
 
   arm64-emulation:
     runs-on: ubuntu-22.04
@@ -136,7 +139,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ${{ needs.image-name.outputs.name }}--arm64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
 
   merge-images:
     name: Merge into one manifest
@@ -147,19 +150,7 @@ jobs:
       # - arm64-macos
       - arm64-emulation
     steps:
-      - name: Login to registry
-        uses: docker/login-action@v3
+      - uses: ./.github/workflows/merge-images.yaml
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create, inspect and publish manifest
-        run: |
-          docker manifest create ${{ needs.image-name.outputs.name }} \
-            --amend ${{ needs.image-name.outputs.name }}--amd64 \
-            --amend ${{ needs.image-name.outputs.name }}--arm64
-          docker manifest annotate --arch amd64 --os linux ${{ needs.image-name.outputs.name }} ${{ needs.image-name.outputs.name }}--amd64
-          docker manifest annotate --arch arm64 --os linux ${{ needs.image-name.outputs.name }} ${{ needs.image-name.outputs.name }}--arm64
-          docker manifest inspect ${{ needs.image-name.outputs.name }}
-          docker manifest push ${{ needs.image-name.outputs.name }}
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ needs.image-tag.outputs.tag }}
