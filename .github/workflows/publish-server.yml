@@ -56,12 +56,13 @@ jobs:
       - name: Create image and push
         uses: docker/build-push-action@v5
         with:
-          context: packages/server/docker
+          context: .
           platforms: linux/amd64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
 
   arm64-emulation:
+    if: false
     runs-on: ubuntu-22.04
     needs: image-tag
     permissions:
@@ -97,7 +98,7 @@ jobs:
       - name: Create image and push
         uses: docker/build-push-action@v5
         with:
-          context: packages/server/docker
+          context: .
           platforms: linux/arm64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--arm64
