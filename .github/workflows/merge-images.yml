@@ -21,12 +21,20 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create, inspect and publish manifest
+      - name: Create manifest
         run: |
           docker manifest create ${{ inputs.name }} \
             --amend ${{ inputs.name }}--amd64 \
             --amend ${{ inputs.name }}--arm64
           docker manifest annotate --arch amd64 --os linux ${{ inputs.name }} ${{ inputs.name }}--amd64
           docker manifest annotate --arch arm64 --os linux ${{ inputs.name }} ${{ inputs.name }}--arm64
+
+      - name: Inspect and push the manifest
+        run: |
           docker manifest inspect ${{ inputs.name }}
           docker manifest push ${{ inputs.name }}
+
+      - name: Delete the AMD64 and ARM64 manifest
+        run: |
+          docker manifest rm ${{ inputs.name }}--amd64
+          docker manifest rm ${{ inputs.name }}--arm64

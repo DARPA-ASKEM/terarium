@@ -10,8 +10,10 @@ on:
     paths:
       - 'packages/taskrunner/**'
       - 'packages/funman/**'
+      - '.github/workflows/**'
     branches:
       - 'main'
+      - 'use-mac-os-to-build-arm-images'
     tags:
       - '*'
 
