@@ -164,6 +164,10 @@
 				@click="runCalibrate"
 				:disabled="disableRunButton"
 			/>
+			<tera-pyciemss-cancel-button
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
+			/>
 			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
@@ -187,7 +191,7 @@ import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import {
@@ -234,6 +238,9 @@ const modelConfig = ref<ModelConfiguration>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
+const cancelRunId = computed(
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
+);
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();

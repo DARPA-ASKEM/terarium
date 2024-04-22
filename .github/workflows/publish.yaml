@@ -39,6 +39,10 @@ jobs:
   test-server:
     uses: ./.github/workflows/test-server.yaml
 
+  # Run Taskrunner Tests
+  test-taskrunner:
+    uses: ./.github/workflows/test-taskrunner.yaml
+
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
