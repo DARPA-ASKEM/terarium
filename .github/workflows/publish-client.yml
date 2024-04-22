@@ -7,9 +7,12 @@ name: Build and Publish hmi-client
 # yamllint disable-line rule:truthy
 on:
   push:
-    #paths: [ 'packages/client/**' ]
-    branches: [ 'main', 'use-mac-os-to-build-arm-images' ]
-    tags: [ '*' ]
+    paths:
+      - 'packages/client/**'
+    branches:
+      - 'main'
+    tags:
+      - '*'
 
 jobs:
   image-tag:
