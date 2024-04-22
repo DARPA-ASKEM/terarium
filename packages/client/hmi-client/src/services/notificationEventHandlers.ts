@@ -4,8 +4,12 @@ import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
-// Supported client event types for the notification manager
-export const SUPPORTED_CLIENT_EVENT_TYPES = [ClientEventType.ExtractionPdf];
+type NotificationEventData = {
+	notificationGroupId: string;
+	t: number;
+	message: string;
+	error: string;
+};
 
 const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return 'Failed';
@@ -37,18 +41,12 @@ const displayToast = (eventType: ClientEventType, status: string, msg: string, e
 
 // Creates notification event handlers for each type of client events that manipulates given notification items ref
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
-	const handlers: { [eventType in ClientEventType]?: (event: ClientEvent<any>) => void } = {};
+	const handlers:
+		| Record<ClientEventType, <T extends NotificationEventData>(event: ClientEvent<T>) => void>
+		| {} = {};
 
 	handlers[ClientEventType.ExtractionPdf] = (event: ClientEvent<ExtractionStatusUpdate>) => {
 		if (!event.data) return;
-
-		// TODO: extract this logic to a separate function and generalize
-		displayToast(
-			ClientEventType.ExtractionPdf,
-			getStatus(event.data),
-			event.data.message,
-			event.data.error
-		);
 
 		const existingItem = notificationItems.value.find(
 			(item) => item.notificationGroupId === event.data.notificationGroupId
@@ -93,14 +91,20 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	};
 };
 
-// export const createNotificationEventLoggers = (visibleNotificationItems: Ref<NotificationItem[]>) => {
-// 	const handleLogging = (event: ClientEvent<{data: {notificationGroupId: string, status: string, msg: string, error: string }}>) => {
-// 		if ('notificationGroupId' in event.data) {
-// 			const exist = visibleNotificationItems.value.find(item => item.notificationGroupId === event.data.notificationGroupId);
-// 			if (!exist) return;
-
-// 		}
-
-// 	}
-
-// }
+/**
+ * Creates notification event logger for the provided visible notification items.
+ * @param visibleNotificationItems
+ * @returns
+ */
+export const createNotificationEventLogger = (
+	visibleNotificationItems: Ref<NotificationItem[]>
+) => {
+	const handleLogging = <T extends NotificationEventData>(event: ClientEvent<T>) => {
+		const found = visibleNotificationItems.value.find(
+			(item) => item.notificationGroupId === event.data.notificationGroupId
+		);
+		if (!found) return;
+		displayToast(event.type, getStatus(event.data), event.data.message, event.data.error);
+	};
+	return handleLogging;
+};

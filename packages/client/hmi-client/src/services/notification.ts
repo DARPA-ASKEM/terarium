@@ -49,9 +49,7 @@ export function convertToClientEvents<T>(notificationGroup: NotificationGroup) {
 /**
  * Acknowledge notification
  * @param notificationGroupId - the notification group id
- * @return Notification - the acknowledged notification
  */
 export async function acknowledgeNotification(notificationGroupId: string) {
-	const { data } = await API.put(`/notification/ack/${notificationGroupId}`);
-	return data;
+	await API.put(`/notification/ack/${notificationGroupId}`);
 }
