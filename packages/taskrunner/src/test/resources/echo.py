@@ -99,7 +99,8 @@ def main():
 		time.sleep(1)
 
 	# remove the progress pipe
-	finish_progress_with_timeout(args.progress_pipe, 5)
+	if "include_progress" in input:
+		finish_progress_with_timeout(args.progress_pipe, 5)
 
 	print("Task {} : attemping to write output to {}".format(args.id, args.output_pipe), flush=True)
 	write_output_with_timeout(args.output_pipe, input, 5)
