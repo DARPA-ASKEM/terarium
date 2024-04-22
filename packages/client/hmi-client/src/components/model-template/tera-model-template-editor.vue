@@ -26,6 +26,7 @@
 			</section>
 		</aside>
 		<tera-infinite-canvas
+			:is-disabled="isDecomposedLoading"
 			@click="onCanvasClick"
 			@save-transform="saveTransform"
 			@mouseenter="setMouseOverCanvas(true)"
@@ -497,7 +498,7 @@ onUnmounted(() => {
 }
 
 .spinner-gap {
-	margin-top: 15rem;
+	margin-bottom: 15rem;
 }
 
 aside {
