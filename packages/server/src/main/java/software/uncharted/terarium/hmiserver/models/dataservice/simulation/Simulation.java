@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,6 +17,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
@@ -70,13 +72,19 @@ public class Simulation extends TerariumAsset {
 	@JsonAlias("workflow_id")
 	private UUID workflowId; //TODO JOIN
 
+	@OneToOne
+	@JoinColumn(name = "workflowActual_id", nullable = true)
+	@JsonBackReference
+	private Workflow workflowActual;
+
+
 	@JsonAlias("user_id")
 	@TSOptional
 	private String userId;
 
 	@JsonAlias("project_id")
 	@TSOptional
-	//TODO JOIN
+	//TODO JOIN?
 	private UUID projectId;
 
 	@Override
