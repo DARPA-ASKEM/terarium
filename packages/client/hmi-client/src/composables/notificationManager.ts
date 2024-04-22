@@ -5,6 +5,7 @@ import { ref, computed } from 'vue';
 // import { getDocumentAsset } from '@/services/document-assets';
 // import { logger } from '@/utils/logger';
 import {
+	acknowledgeNotification,
 	convertToClientEvents,
 	getLatestUnacknowledgedNotifications
 } from '@/services/notification';
@@ -146,9 +147,12 @@ export function useNotificationManager() {
 	}
 
 	function clearFinishedItems() {
-		items.value = items.value.filter(
-			(item) => !!findAsset(item.notificationGroupId) && item.status === 'Running'
-		);
+		const isRunning = (item: NotificationItem) =>
+			!!findAsset(item.notificationGroupId) && item.status === 'Running';
+		items.value.forEach((item) => {
+			if (!isRunning(item)) acknowledgeNotification(item.notificationGroupId);
+		});
+		items.value = items.value.filter(isRunning);
 	}
 
 	function acknowledgeFinishedItems() {

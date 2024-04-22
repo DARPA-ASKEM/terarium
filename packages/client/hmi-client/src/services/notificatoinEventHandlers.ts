@@ -37,60 +37,59 @@ const displayToast = (eventType: ClientEventType, status: string, msg: string, e
 
 // Creates notification event handlers for each type of client events that manipulates given notification items ref
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
-	const clientEventHandlers = {
-		[ClientEventType.ExtractionPdf]: (event: ClientEvent<ExtractionStatusUpdate>) => {
-			if (!event.data) return;
+	const handlers: { [eventType in ClientEventType]?: (event: ClientEvent<any>) => void } = {};
 
-			// TODO: extract this logic to a separate function and generalize
-			displayToast(
-				ClientEventType.ExtractionPdf,
-				getStatus(event.data),
-				event.data.message,
-				event.data.error
-			);
+	handlers[ClientEventType.ExtractionPdf] = (event: ClientEvent<ExtractionStatusUpdate>) => {
+		if (!event.data) return;
 
-			const existingItem = notificationItems.value.find(
-				(item) => item.notificationGroupId === event.data.notificationGroupId
-			);
-			if (!existingItem) {
-				// Create a new notification item
-				const newItem: NotificationItem = {
-					notificationGroupId: event.data.notificationGroupId,
-					type: ClientEventType.ExtractionPdf,
-					assetId: event.data.documentId,
-					assetName: '',
-					status: getStatus(event.data),
-					msg: event.data.message,
-					progress: event.data.t,
-					lastUpdated: new Date(event.createdAtMs).getTime(),
-					error: event.data.error,
-					acknowledged: false
-				};
-				notificationItems.value.push(newItem);
-				// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
-				// Update the asset name asynchronously on the next tick to avoid blocking the event handler
-				getDocumentAsset(event.data.documentId).then((document) =>
-					Object.assign(newItem, { assetName: document?.name || '' })
-				);
-				return;
-			}
-			// Update the existing item
-			Object.assign(existingItem, {
+		// TODO: extract this logic to a separate function and generalize
+		displayToast(
+			ClientEventType.ExtractionPdf,
+			getStatus(event.data),
+			event.data.message,
+			event.data.error
+		);
+
+		const existingItem = notificationItems.value.find(
+			(item) => item.notificationGroupId === event.data.notificationGroupId
+		);
+		if (!existingItem) {
+			// Create a new notification item
+			const newItem: NotificationItem = {
+				notificationGroupId: event.data.notificationGroupId,
+				type: ClientEventType.ExtractionPdf,
+				assetId: event.data.documentId,
+				assetName: '',
 				status: getStatus(event.data),
 				msg: event.data.message,
 				progress: event.data.t,
 				lastUpdated: new Date(event.createdAtMs).getTime(),
-				error: event.data.error
-			});
-		},
-
-		[ClientEventType.Extraction]: (/* event: ClientEvent<ExtractionStatusUpdate> */) => {}
+				error: event.data.error,
+				acknowledged: false
+			};
+			notificationItems.value.push(newItem);
+			// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
+			// Update the asset name asynchronously on the next tick to avoid blocking the event handler
+			getDocumentAsset(event.data.documentId).then((document) =>
+				Object.assign(newItem, { assetName: document?.name || '' })
+			);
+			return;
+		}
+		// Update the existing item
+		Object.assign(existingItem, {
+			status: getStatus(event.data),
+			msg: event.data.message,
+			progress: event.data.t,
+			lastUpdated: new Date(event.createdAtMs).getTime(),
+			error: event.data.error
+		});
 	};
-	const getHandler = (eventType: ClientEventType) => clientEventHandlers[eventType] ?? (() => {});
+
+	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
 	return {
 		get: getHandler,
-		getSupportedEventTypes: () => Object.keys(clientEventHandlers) as ClientEventType[]
+		getSupportedEventTypes: () => Object.keys(handlers) as ClientEventType[]
 	};
 };
 
