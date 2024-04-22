@@ -151,7 +151,7 @@ class TaskRunnerInterface:
             return
 
         # signal to the taskrunner that it should stop consuming progress
-        self.write_progress_with_timeout(self, {'done':True}, timeout_seconds)
+        self.write_progress_with_timeout({'done':True}, timeout_seconds)
 
         # otherwise use the output pipe
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
