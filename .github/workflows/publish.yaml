@@ -91,6 +91,7 @@ jobs:
       - test-server
       - lint-client
       - test-client
+      - test-taskrunner
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
