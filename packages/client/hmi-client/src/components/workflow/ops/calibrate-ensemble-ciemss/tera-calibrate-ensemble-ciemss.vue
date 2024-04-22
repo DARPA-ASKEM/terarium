@@ -179,6 +179,10 @@
 				icon="pi pi-play"
 				@click="runEnsemble"
 			/>
+			<tera-pyciemss-cancel-button
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
+			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
@@ -205,6 +209,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 
 import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/components/workflow/util';
 import type {
@@ -259,6 +264,9 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
 const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
+const cancelRunId = computed(
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 

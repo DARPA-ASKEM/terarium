@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -199,6 +200,19 @@ public class SimulationRequestController implements SnakeCaseController {
 		return ResponseEntity.ok(simulationCiemssServiceProxy
 				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request))
 				.getBody());
+	}
+
+	@GetMapping("ciemss/cancel/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<JobResponse> cancelCiemssJob(@PathVariable("id") final UUID id) {
+		try {
+			return ResponseEntity.ok(simulationCiemssServiceProxy.cancelJob(id).getBody());
+		} catch (final FeignException e) {
+			final String error = "Unable to cancel ciemss job " + id.toString();
+			final int status = e.status() >= 400 ? e.status() : 500;
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+		}
 	}
 
 	// Get modelConfigId

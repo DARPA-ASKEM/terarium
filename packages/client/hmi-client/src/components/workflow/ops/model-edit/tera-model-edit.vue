@@ -178,12 +178,12 @@ const executeResponse = ref({
 });
 
 const appendCode = (data: any, property: string) => {
-	const code = data.content[property] as string;
-	if (code) {
-		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', code);
+	const newCode = data.content[property] as string;
+	if (newCode) {
+		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', newCode);
 
 		if (property === 'executed_code') {
-			saveCodeToState(code, true);
+			saveCodeToState(codeText.value, true);
 		}
 	} else {
 		logger.error('No code to append');

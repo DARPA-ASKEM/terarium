@@ -1,7 +1,7 @@
 ---
-# This workflow tests the HMI Server
+# This workflow tests the Taskrunner
 
-name: Server Tests
+name: Taskrunner Tests
 
 # Controls when the action will run.
 on:
@@ -9,17 +9,17 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "packages/server/**"
+      - "packages/taskrunner/**"
   pull_request:
     branches: ["main"]
     paths:
-      - "packages/server/**"
+      - "packages/taskrunner/**"
   # Allow for triggering from other workflows
   workflow_call:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  server-tests:
+  taskrunner-tests:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
@@ -51,7 +51,7 @@ jobs:
       # Run the tests
       - name: Run tests
         run: ./gradlew test --info
-        working-directory: packages/server
+        working-directory: packages/taskrunner
 
       # Run test reporter
       - name: Test Report
