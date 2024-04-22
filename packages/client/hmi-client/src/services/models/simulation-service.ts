@@ -19,6 +19,17 @@ import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
+export async function cancelCiemssJob(runId: String) {
+	try {
+		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation-request/forecast', simulationParam);
@@ -262,6 +273,10 @@ export async function pollAction(id: string) {
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
 		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
 		return { data: null, progress: null, error: errorMessage };
+	}
+
+	if (simResponse.status === ProgressState.Cancelled) {
+		return { data: null, progress: null, error: null, cancelled: true };
 	}
 	return { data: simResponse, progress: null, error: null };
 }
