@@ -5,7 +5,6 @@ on:
   workflow_call:
     outputs:
       tag:
-        type: string
         description: 'The tag of the image to be built'
         value: ${{ jobs.image-tag.outputs.tag }}
 jobs:
