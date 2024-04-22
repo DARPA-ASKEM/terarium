@@ -4,8 +4,7 @@
 		outlined
 		severity="secondary"
 		@click="cancelSimulation"
-		label="Cancel"
-		icon="pi pi-times"
+		label="Stop"
 	/>
 </template>
 

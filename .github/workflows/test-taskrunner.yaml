@@ -59,7 +59,7 @@ jobs:
         if: always()
         with:
           name: Server JUnit Tests
-          path: packages/server/build/test-results/test/*.xml    # Path to test results
+          path: packages/taskrunner/build/test-results/test/*.xml    # Path to test results
           reporter: java-junit        # Format of test results
 
       # Stop containers
