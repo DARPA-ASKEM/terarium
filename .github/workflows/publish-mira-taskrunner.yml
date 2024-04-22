@@ -1,6 +1,6 @@
 ---
-# Automatically build and publish the server to the container registry.
-# This workflow is triggered on changes to the server directory.
+# Automatically build and publish the mira-taskrunner to the container registry.
+# This workflow is triggered on changes to the mira-taskrunner directory.
 
 name: Build and Publish mira-taskrunner
 
