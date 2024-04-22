@@ -11,9 +11,6 @@ on:
     branches: [ 'main', 'use-mac-os-to-build-arm-images' ]
     tags: [ '*' ]
 
-env:
-  IMAGE_NAME: 'ghcr.io/darpa-askem/hmi-client'
-
 jobs:
   image-tag:
     name: Create image tag
@@ -42,16 +39,16 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Build image using Makefile
+      - name: Build hmi-client using Makefile
         run: make image-hmi-client
 
-      - name: Build and push
+      - name: Create image and push
         uses: docker/build-push-action@v5
         with:
           context: packages/client/hmi-client/docker
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--amd64
+          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--amd64
 
   arm64-macos:
     if: false
@@ -76,16 +73,16 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Build image using Makefile
+      - name: Build hmi-client using Makefile
         run: make image-hmi-client
 
-      - name: Build and push
+      - name: Create image and push
         uses: docker/build-push-action@v5
         with:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
 
   arm64-emulation:
     if: false
@@ -113,16 +110,16 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Build image using Makefile
+      - name: Build hmi-client using Makefile
         run: make image-hmi-client
 
-      - name: Build and push
+      - name: Create image and push
         uses: docker/build-push-action@v5
         with:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
 
   merge-images:
     name: Merge into one manifest
@@ -133,6 +130,6 @@ jobs:
       # - arm64-emulation
     uses: ./.github/workflows/merge-images.yml
     with:
-      image_name: ${{ env.IMAGE_NAME }}
+      image_name: ghcr.io/darpa-askem/hmi-client
       image_tag: ${{ needs.image-tag.outputs.tag }}
       #secrets: inherit
