@@ -25,7 +25,8 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Java v17
         uses: actions/setup-java@v4
@@ -35,8 +36,7 @@ jobs:
           cache: gradle
 
       - name: Check Generated Types
-        run: |
-          ./gradlew generateTypeScript
+        run: ./gradlew generateTypeScript
 
       - name: Commit all changed files
         uses: stefanzweifel/git-auto-commit-action@4b8a201e31cadd9829df349894b28c54e6c19fe6
