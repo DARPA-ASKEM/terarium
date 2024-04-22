@@ -1,8 +1,8 @@
-import { EventSource } from 'extended-eventsource';
+import getConfiguration from '@/services/ConfigService';
+import useAuthStore from '@/stores/auth';
 import type { ClientEvent, ExtractionStatusUpdate } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
-import useAuthStore from '@/stores/auth';
-import getConfiguration from '@/services/ConfigService';
+import { EventSource } from 'extended-eventsource';
 
 /**
  * A map of event types to message handlers
@@ -25,6 +25,8 @@ let backoffMs = 1000;
  */
 let reconnecting = false;
 
+let eventSource: EventSource | null = null;
+
 /**
  * An error that can be retried
  */
@@ -36,7 +38,11 @@ class RetriableError extends Error {}
 export async function init(): Promise<void> {
 	const authStore = useAuthStore();
 
-	const eventSource = new EventSource('/api/client-event', {
+	if (eventSource !== null) {
+		eventSource.close();
+	}
+
+	eventSource = new EventSource('/api/client-event', {
 		headers: {
 			Authorization: `Bearer ${authStore.token}`
 		},
@@ -83,13 +89,13 @@ export async function init(): Promise<void> {
  */
 setInterval(async () => {
 	if (!reconnecting) {
+		reconnecting = true;
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
 		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
-			reconnecting = true;
 			await init();
-			reconnecting = false;
 		}
+		reconnecting = false;
 	}
 }, 1000);
 
