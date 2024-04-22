@@ -9,10 +9,8 @@ on:
   push:
     paths:
       - 'packages/server/**'
-      - '.github/workflows/**'
     branches:
       - 'main'
-      - 'use-mac-os-to-build-arm-images'
     tags:
       - '*'
 
