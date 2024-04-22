@@ -260,6 +260,10 @@
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
+			<tera-pyciemss-cancel-button
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
+			/>
 			<Button
 				outlined
 				severity="secondary"
@@ -312,6 +316,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraInterventionPolicyGroupForm from '@/components/workflow/ops/optimize-ciemss/tera-intervention-policy-group-form.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 // Services:
 import {
 	getModelConfigurationById,
@@ -402,6 +407,9 @@ const knobs = ref<BasicKnobs>({
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
+const cancelRunId = computed(
+	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
+);
 
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);

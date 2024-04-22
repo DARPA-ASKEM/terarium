@@ -16,9 +16,19 @@ import {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+
+export async function cancelCiemssJob(runId: String) {
+	try {
+		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -230,18 +240,6 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 	}
 }
 
-// This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
-	const state = node.state;
-	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
-		// return all run ids on the node
-		return state.simulationsInProgress;
-	}
-
-	// return an empty array if no run ids are present
-	return [];
-};
-
 export async function subscribeToUpdateMessages(
 	simulationIds: string[],
 	eventType: ClientEventType,
@@ -275,6 +273,10 @@ export async function pollAction(id: string) {
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
 		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
 		return { data: null, progress: null, error: errorMessage };
+	}
+
+	if (simResponse.status === ProgressState.Cancelled) {
+		return { data: null, progress: null, error: null, cancelled: true };
 	}
 	return { data: simResponse, progress: null, error: null };
 }

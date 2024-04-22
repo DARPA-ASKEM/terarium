@@ -86,6 +86,10 @@ const pollResult = async (runId: string) => {
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		const state = _.cloneDeep(props.node.state);
+		state.inProgressForecastId = '';
+		state.inProgressCalibrationId = '';
+		emit('update-state', state);
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {

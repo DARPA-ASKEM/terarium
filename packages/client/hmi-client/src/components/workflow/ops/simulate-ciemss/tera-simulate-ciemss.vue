@@ -127,6 +127,10 @@
 				@click="run"
 				:disabled="showSpinner"
 			/>
+			<tera-pyciemss-cancel-button
+				:disabled="cancelRunId === ''"
+				:simulation-run-id="cancelRunId"
+			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
 			<Button label="Close" @click="emit('close')" />
 		</template>
@@ -156,7 +160,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
-
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
@@ -211,6 +215,7 @@ const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
+const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 

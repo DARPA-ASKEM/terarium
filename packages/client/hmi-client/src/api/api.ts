@@ -80,6 +80,7 @@ export interface PollResponse<T> {
 	error: any;
 	progress?: any;
 	data: T | null;
+	cancelled?: boolean;
 }
 
 type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
@@ -128,11 +129,12 @@ export class Poller<T> {
 		return this;
 	}
 
-	// Start polling, there are 4 foreseeable exit conditions
+	// Start polling, there are 5 foreseeable exit conditions
 	// 1. Done, we have the result
 	// 2. Failed, request returned with 4xx or 5xx status
 	// 3. Failed, any unexpected errors
 	// 4. ExceedThreshold, took longer than allotted time
+	// 5. Cancelled, the user has cancelled this
 	async start(): Promise<PollerResult<T>> {
 		this.keepGoing = true;
 		this.numPolls = 0;
@@ -153,11 +155,18 @@ export class Poller<T> {
 			try {
 				// eslint-disable-next-line no-await-in-loop
 				response = (await this.poll()) as PollResponse<T>;
-				const { error, progress, data } = response;
+				const { error, progress, data, cancelled } = response;
 
 				if (error) {
 					return {
 						state: PollerState.Failed,
+						data: null
+					};
+				}
+
+				if (cancelled) {
+					return {
+						state: PollerState.Cancelled,
 						data: null
 					};
 				}
