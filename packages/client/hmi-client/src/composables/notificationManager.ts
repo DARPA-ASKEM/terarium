@@ -36,7 +36,7 @@ const displayToast = (
 		useToastService().error(toastTitle[eventType]?.error ?? 'Process Failed', error);
 };
 
-const getStatus = (data: { error: string; t: number }) => {
+export const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return 'Failed';
 	if (data.t >= 1.0) return 'Completed';
 	return 'Running';
