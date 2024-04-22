@@ -35,6 +35,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -56,6 +57,7 @@ public class GoLLMController {
 	private final DocumentAssetService documentAssetService;
 	private final DatasetService datasetService;
 	private final ModelService modelService;
+	private final CurrentUserService currentUserService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
@@ -127,6 +129,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ModelCardResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
@@ -203,6 +206,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureModelResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
@@ -316,6 +320,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ConfigureFromDatasetResponseHandler.Properties props =
@@ -389,6 +394,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelsResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
