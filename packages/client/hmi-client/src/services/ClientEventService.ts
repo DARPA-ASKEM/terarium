@@ -1,8 +1,8 @@
-import { EventSource } from 'extended-eventsource';
+import getConfiguration from '@/services/ConfigService';
+import useAuthStore from '@/stores/auth';
 import type { ClientEvent, ExtractionStatusUpdate } from '@/types/Types';
 import { ClientEventType } from '@/types/Types';
-import useAuthStore from '@/stores/auth';
-import getConfiguration from '@/services/ConfigService';
+import { EventSource } from 'extended-eventsource';
 
 /**
  * A map of event types to message handlers
@@ -25,7 +25,7 @@ let backoffMs = 1000;
  */
 let reconnecting = false;
 
-let eventSource: EventSource = null;
+let eventSource: EventSource | null = null;
 
 /**
  * An error that can be retried
