@@ -16,7 +16,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
@@ -30,8 +37,13 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.tasks.*;
+import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
 @RequestMapping("/mira")
 @RestController
@@ -46,6 +58,7 @@ public class MiraController {
 	private final StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
+	private final CurrentUserService currentUserService;
 
 	@Data
 	public static class ModelConversionRequest {
@@ -103,6 +116,7 @@ public class MiraController {
 			req.setType(TaskType.MIRA);
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 			req.setScript(AMRToMMTResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 
 			// send the request
 			final TaskResponse resp = taskService.runTaskSync(req);
@@ -167,6 +181,7 @@ public class MiraController {
 			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
 			req.setAdditionalProperties(additionalProperties);
+			req.setUserId(currentUserService.get().getId());
 
 			if (endsWith(filename, List.of(".mdl"))) {
 				req.setScript(MdlToStockflowResponseHandler.NAME);

@@ -32,6 +32,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
@@ -45,6 +46,7 @@ public class SearchByAssetTypeController {
 	private final TaskService taskService;
 	private final ElasticsearchService esService;
 	private final ElasticsearchConfiguration esConfig;
+	private final CurrentUserService currentUserService;
 
 	private static final long REQUEST_TIMEOUT_SECONDS = 30;
 	private static final String EMBEDDING_MODEL = "text-embedding-ada-002";
@@ -121,6 +123,7 @@ public class SearchByAssetTypeController {
 				req.setType(TaskType.GOLLM);
 				req.setInput(embeddingRequest);
 				req.setScript("gollm:embedding");
+				req.setUserId(currentUserService.get().getId());
 
 				final TaskResponse resp = taskService.runTaskSync(req, REQUEST_TIMEOUT_SECONDS);
 
