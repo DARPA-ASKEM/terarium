@@ -39,6 +39,7 @@ public class TaskRequest implements Serializable {
 	protected String script;
 	protected byte[] input;
 	protected int timeoutMinutes = 30;
+	protected String userId;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are

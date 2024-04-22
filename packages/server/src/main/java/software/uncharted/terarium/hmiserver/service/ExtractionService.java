@@ -69,9 +69,10 @@ public class ExtractionService {
 	private final NotificationService notificationService;
 	private final TaskService taskService;
 	private final ProvenanceService provenanceService;
+	private final CurrentUserService currentUserService;
 
 	// time the progress takes to reach each subsequent half
-	final Double HALFTIME_SECONDS = 5.0;
+	final Double HALFTIME_SECONDS = 2.0;
 
 	// @Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE = 10;
@@ -121,6 +122,8 @@ public class ExtractionService {
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
 
+		final String userId = currentUserService.get().getId();
+
 		return executor.submit(() -> {
 			try {
 				notificationInterface.sendMessage("Starting extraction...");
@@ -154,10 +157,9 @@ public class ExtractionService {
 				final int MAX_ITERATIONS = MAX_EXECUTION_TIME_SECONDS / POLLING_INTERVAL_SECONDS;
 
 				boolean jobDone = false;
+				notificationInterface.sendMessage("COSMOS extraction in progress...");
 
 				for (int i = 0; i < MAX_ITERATIONS; i++) {
-					notificationInterface.sendMessage("COSMOS extraction in progress...");
-
 					final ResponseEntity<JsonNode> statusResp = extractionProxy.status(jobId);
 					if (!statusResp.getStatusCode().is2xxSuccessful()) {
 						throw new RuntimeException("Unable to poll status endpoint");
@@ -314,6 +316,7 @@ public class ExtractionService {
 						req.setType(TaskRequest.TaskType.GOLLM);
 						req.setScript(ModelCardResponseHandler.NAME);
 						req.setInput(objectMapper.writeValueAsBytes(input));
+						req.setUserId(userId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 						props.setDocumentId(documentId);
@@ -331,7 +334,7 @@ public class ExtractionService {
 				notificationInterface.sendFinalMessage("Extraction complete");
 
 				// return the final document
-				return documentService.updateAsset(document).orElseThrow();
+				return documentService.getAsset(documentId).orElseThrow();
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
@@ -339,10 +342,6 @@ public class ExtractionService {
 				throw new ResponseStatusException(
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
-			} catch (final RuntimeException e) {
-				notificationInterface.sendError(e.getMessage());
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 			} catch (final Exception e) {
 				final String error = "Unable to extract pdf";
 				log.error(error, e);

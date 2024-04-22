@@ -51,6 +51,7 @@ jobs:
       # Run the tests
       - name: Run tests
         run: ./gradlew test --info
+        working-directory: packages/server
 
       # Run test reporter
       - name: Test Report
