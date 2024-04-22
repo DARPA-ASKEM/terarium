@@ -135,4 +135,4 @@ jobs:
     with:
       image_name: $IMAGE_NAME
       image_tag: ${{ needs.image-tag.outputs.tag }}
-      secrets: inherit
+      #secrets: inherit
