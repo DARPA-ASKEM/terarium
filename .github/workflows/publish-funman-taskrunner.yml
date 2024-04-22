@@ -1,17 +1,19 @@
 ---
-# Automatically build and publish the mira-taskrunner to the container registry.
-# This workflow is triggered on changes to the mira-taskrunner directory.
+# Automatically build and publish the funman-taskrunner to the container registry.
+# This workflow is triggered on changes to the funman-taskrunner directory.
 
-name: Build and Publish mira-taskrunner
+name: Build and Publish funman-taskrunner
 
 # yamllint disable-line rule:truthy
 on:
   push:
     paths:
       - 'packages/taskrunner/**'
-      - 'packages/mira/**'
+      - 'packages/funman/**'
+      - '.github/workflows/**'
     branches:
       - 'main'
+      - 'use-mac-os-to-build-arm-images'
     tags:
       - '*'
 
@@ -20,7 +22,7 @@ jobs:
     name: Get tagged image name
     uses: ./.github/workflows/image-tag.yml
     with:
-      image-name: ghcr.io/darpa-askem/mira-taskrunner
+      image-name: ghcr.io/darpa-askem/funman-taskrunner
 
   amd64:
     runs-on: ubuntu-22.04
@@ -49,14 +51,14 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Build mira-taskrunner using Makefile
-        run: make image-mira-taskrunner
+      - name: Build funman-taskrunner using Makefile
+        run: make image-funman-taskrunner
 
       - name: Create image and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./packages/taskrunner/docker/Dockerfile.Mira
+          file: ./packages/taskrunner/docker/Dockerfile.funman
           platforms: linux/amd64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
@@ -91,14 +93,14 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Build mira-taskrunner using Makefile
-        run: make image-mira-taskrunner
+      - name: Build funman-taskrunner using Makefile
+        run: make image-funman-taskrunner
 
       - name: Create image and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./packages/taskrunner/docker/Dockerfile.Mira
+          file: ./packages/taskrunner/docker/Dockerfile.funman
           platforms: linux/arm64
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--arm64
