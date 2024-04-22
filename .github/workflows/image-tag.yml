@@ -9,7 +9,6 @@ on:
         value: ${{ jobs.image-tag.outputs.tag }}
 jobs:
   image-tag:
-    name: Create image tag
     runs-on: ubuntu-22.04
     outputs:
       tag: ${{ steps.define.outputs.tag }}

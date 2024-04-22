@@ -12,7 +12,7 @@ on:
     tags: [ '*' ]
 
 env:
-  IMAGE_NAME: ghcr.io/darpa-askem/hmi-client
+  IMAGE_NAME: 'ghcr.io/darpa-askem/hmi-client'
 
 jobs:
   image-tag:
@@ -51,7 +51,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/amd64
           push: true
-          tags: $IMAGE_NAME:${{ needs.image-tag.outputs.tag }}--amd64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--amd64
 
   arm64-macos:
     if: false
@@ -85,7 +85,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: $IMAGE_NAME:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
 
   arm64-emulation:
     if: false
@@ -122,7 +122,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: $IMAGE_NAME:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ${{ env.IMAGE_NAME }}:${{ needs.image-tag.outputs.tag }}--arm64
 
   merge-images:
     name: Merge into one manifest
@@ -133,6 +133,6 @@ jobs:
       # - arm64-emulation
     uses: ./.github/workflows/merge-images.yml
     with:
-      image_name: $IMAGE_NAME
+      image_name: ${{ env.IMAGE_NAME }}
       image_tag: ${{ needs.image-tag.outputs.tag }}
       #secrets: inherit

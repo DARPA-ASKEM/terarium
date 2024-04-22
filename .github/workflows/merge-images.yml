@@ -16,7 +16,6 @@ on:
 
 jobs:
   merge-images:
-    name: Merge into one manifest
     runs-on: ubuntu-22.04
     steps:
       - name: Login to registry
