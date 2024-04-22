@@ -70,7 +70,7 @@ public class Simulation extends TerariumAsset {
 	private SimulationEngine engine;
 
 	@JsonAlias("workflow_id")
-	private UUID workflowId; //TODO JOIN
+	private UUID workflowId; //TODO can we get rid of this now or is this coming in from somewhere else?
 
 	@OneToOne
 	@JoinColumn(name = "workflowActual_id", nullable = true)
@@ -84,8 +84,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("project_id")
 	@TSOptional
-	//TODO JOIN?
-	private UUID projectId;
+	private UUID projectId; //TODO this can probably be joined to the project table soon?
 
 	@Override
 	public Simulation clone() {
