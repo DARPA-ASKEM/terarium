@@ -16,7 +16,12 @@
 				v-model.lazy="newDatasetName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
+				@keyup.esc="updateDatasetName"
+				v-focus
 			/>
+			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
+				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
+			</div>
 		</template>
 		<template #edit-buttons>
 			<template v-if="!featureConfig.isPreview">

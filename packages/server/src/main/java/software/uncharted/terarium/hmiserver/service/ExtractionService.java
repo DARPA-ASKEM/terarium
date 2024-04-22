@@ -68,6 +68,7 @@ public class ExtractionService {
 	private final NotificationService notificationService;
 	private final TaskService taskService;
 	private final ProvenanceService provenanceService;
+	private final CurrentUserService currentUserService;
 
 	// time the progress takes to reach each subsequent half
 	final Double HALFTIME_SECONDS = 2.0;
@@ -115,6 +116,8 @@ public class ExtractionService {
 
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS);
+
+		final String userId = currentUserService.get().getId();
 
 		return executor.submit(() -> {
 			try {
@@ -324,6 +327,7 @@ public class ExtractionService {
 						req.setType(TaskRequest.TaskType.GOLLM);
 						req.setScript(ModelCardResponseHandler.NAME);
 						req.setInput(objectMapper.writeValueAsBytes(input));
+						req.setUserId(userId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 						props.setDocumentId(documentId);
@@ -343,7 +347,7 @@ public class ExtractionService {
 				notificationInterface.sendFinalMessage("Extraction complete");
 
 				// return the final document
-				return documentService.updateAsset(document).orElseThrow();
+				return documentService.getAsset(documentId).orElseThrow();
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
