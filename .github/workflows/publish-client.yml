@@ -49,7 +49,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--amd64
+          tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
 
   arm64-macos:
     if: false
@@ -83,7 +83,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ${{ needs.image-tag.outputs.tagged-image-name }}--arm64
 
   arm64-emulation:
     runs-on: ubuntu-22.04
@@ -119,7 +119,7 @@ jobs:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64
           push: true
-          tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
+          tags: ${{ needs.image-tag.outputs.tagged-image-name }}--arm64
 
   merge-images:
     name: Merge AMD64 and ARM64 images under one manifest
