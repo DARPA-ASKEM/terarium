@@ -174,12 +174,12 @@
 			<Button
 				:disabled="isRunDisabled"
 				outlined
-				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runEnsemble"
 			/>
 			<tera-pyciemss-cancel-button
+				class="mr-auto"
 				:disabled="cancelRunId === ''"
 				:simulation-run-id="cancelRunId"
 			/>
