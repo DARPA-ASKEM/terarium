@@ -145,7 +145,7 @@ jobs:
     name: Merge into one manifest
     runs-on: ubuntu-22.04
     needs:
-      - image-name
+      - image-tag
       - amd64
       # - arm64-macos
       - arm64-emulation
