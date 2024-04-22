@@ -255,12 +255,12 @@
 				:disabled="isRunDisabled"
 				outlined
 				severity="secondary"
-				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runOptimize"
 			/>
 			<tera-pyciemss-cancel-button
+				class="mr-auto"
 				:disabled="cancelRunId === ''"
 				:simulation-run-id="cancelRunId"
 			/>
