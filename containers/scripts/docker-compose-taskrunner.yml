@@ -32,3 +32,20 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  funman-taskrunner:
+    container_name: funman-taskrunner
+    image: ghcr.io/darpa-askem/funman-taskrunner:latest
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ-PASSWORD: "terarium123"
+      TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST-TYPE: "funman"
+      OPENAI_API_KEY: "${secret_gollm_openai_key}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
