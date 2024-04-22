@@ -45,16 +45,17 @@
 						:model-value="currentModelFormat"
 						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
-					>
-						<template #option="{ option }">
-							<i
-								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
-								class="pi pi-spin pi-spinner p-button-icon-left"
-							/>
-							<span class="p-button-label">{{ option }}</span>
-						</template>
-					</SelectButton>
+						:disabled="isDecomposedLoading"
+					/>
 				</section>
+				<tera-progress-spinner
+					v-if="isDecomposedLoading"
+					class="align-spinner"
+					is-centered
+					:font-size="2"
+				>
+					Please wait...
+				</tera-progress-spinner>
 			</template>
 			<template #data>
 				<tera-canvas-item
@@ -151,6 +152,7 @@ import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
 	model?: Model;
@@ -492,6 +494,10 @@ onUnmounted(() => {
 }
 .view-toggles > * {
 	pointer-events: auto;
+}
+
+.align-spinner {
+	margin-top: 15rem;
 }
 
 aside {
