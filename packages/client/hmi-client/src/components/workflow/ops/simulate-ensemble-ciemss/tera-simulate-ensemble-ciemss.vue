@@ -193,15 +193,9 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runEnsemble"
-				:disabled="false"
-			/>
+			<Button outlined label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
 			<tera-pyciemss-cancel-button
+				:style="{ marginRight: 'auto' }"
 				:disabled="cancelRunId === ''"
 				:simulation-run-id="cancelRunId"
 			/>
