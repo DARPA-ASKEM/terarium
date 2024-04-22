@@ -19,7 +19,6 @@ jobs:
       image-name: ghcr.io/darpa-askem/hmi-client
 
   amd64:
-    if: false
     runs-on: ubuntu-22.04
     needs: image-tag
     permissions:
@@ -87,7 +86,6 @@ jobs:
           tags: ghcr.io/darpa-askem/hmi-client:${{ needs.image-tag.outputs.tag }}--arm64
 
   arm64-emulation:
-    if: false
     runs-on: ubuntu-22.04
     needs: image-tag
     permissions:

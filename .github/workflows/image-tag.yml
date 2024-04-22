@@ -19,7 +19,8 @@ jobs:
     outputs:
       name: ${{ steps.define.outputs.name }}
     steps:
-      - id: define
+      - name: Define the final tag based on the branch or tag
+        id: define
         run: |
           if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
