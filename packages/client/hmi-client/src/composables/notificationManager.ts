@@ -130,18 +130,16 @@ export function useNotificationManager() {
 		// Make sure this init function gets called only once for the lifetime of the app
 		if (initialized) return;
 		const handlers = createNotificationEventHandlers(items);
+		// Supported client event types for the notification manager
+		const supportedEventTypes = handlers.getSupportedEventTypes();
 
-		const initialEvents = (
-			await getLatestUnacknowledgedNotifications(handlers.getSupportedEventTypes())
-		)
+		const initialEvents = (await getLatestUnacknowledgedNotifications(supportedEventTypes))
 			.map(convertToClientEvents)
 			.flat();
 		initialEvents.forEach((event) => handlers.get(event.type)(event));
 
 		// Initialize SSE event handlers for the subsequent events for the notification manager
-		handlers
-			.getSupportedEventTypes()
-			.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
+		supportedEventTypes.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		// Attach handlers for logging
 		// SUPPORTED_CLIENT_EVENT_TYPES.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		initialized = true;
