@@ -131,7 +131,7 @@ jobs:
       # - amd64
       # - arm64-macos
       # - arm64-emulation
-    uses: ./.github/workflows/merge-images.yaml
+    uses: ./.github/workflows/merge-images.yml
     with:
       image_name: ${{ env.IMAGE_NAME }}
       image_tag: ${{ needs.image-tag.outputs.tag }}
