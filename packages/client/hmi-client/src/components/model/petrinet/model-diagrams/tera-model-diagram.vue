@@ -7,8 +7,7 @@
 			<TeraResizablePanel
 				v-if="!isPreview"
 				class="diagram-container"
-				:class="{ unlocked: !isLocked }"
-				:style="isLocked && { pointerEvents: 'none' }"
+				:class="{ 'unlocked-zoom': !isZoomLocked }"
 			>
 				<section class="graph-element">
 					<Toolbar>
@@ -24,9 +23,9 @@
 									severity="secondary"
 								/>
 								<Button
-									@click="isLocked = !isLocked"
-									:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
-									:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
+									@click="isZoomLocked = !isZoomLocked"
+									:icon="isZoomLocked ? 'pi pi-lock' : 'pi pi-unlock'"
+									:label="isZoomLocked ? 'Unlock zoom' : 'Lock zoom'"
 									class="p-button-sm p-button-outlined"
 									style="background-color: var(--gray-50)"
 									onmouseover="this.style.backgroundColor='--gray-100';"
@@ -111,7 +110,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -146,7 +145,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
-const isLocked = ref(true);
+const isZoomLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -185,6 +184,8 @@ async function renderGraph() {
 	const rawTemplates = rawTemplatesSummary(mmt.value);
 
 	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	console.log(renderer, renderer.svgEl);
+	console.log(graphElement.value);
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
@@ -229,15 +230,18 @@ async function renderGraph() {
 				}
 			}
 		});
-
 		renderer.on('node-mouse-leave', () => {
 			hoveredTransitionId.value = '';
 		});
+
+		if (isZoomLocked.value) {
+			renderer.disableZoom();
+		}
 	}
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true && isStratified.value
+		isCollapsed.value && isStratified.value
 			? convertToIGraph(templatesSummary)
 			: convertToIGraph(rawTemplates);
 
@@ -265,6 +269,15 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
+
+onMounted(() => {
+	// document.addEventListener('wheel', (event) => {
+	// 	console.log(event);
+	// 	if (isZoomLocked.value) {
+	// 		event.stopPropagation();
+	// 	}
+	// });
+});
 </script>
 
 <style scoped>
@@ -284,7 +297,7 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-.unlocked {
+.unlocked-zoom {
 	border: 1px solid var(--primary-color);
 }
 .preview {

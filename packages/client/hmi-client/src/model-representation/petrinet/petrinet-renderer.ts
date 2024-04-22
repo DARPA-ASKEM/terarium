@@ -379,4 +379,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				return { x: node.x, y: node.y };
 		}
 	}
+
+	disableZoom() {
+		this?.svgEl?.call(d3.zoom().on('zoom', null));
+	}
 }
