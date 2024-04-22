@@ -233,10 +233,10 @@ async function renderGraph() {
 		renderer.on('node-mouse-leave', () => {
 			hoveredTransitionId.value = '';
 		});
+	}
 
-		if (isZoomLocked.value) {
-			renderer.disableZoom();
-		}
+	if (isZoomLocked.value) {
+		renderer.disableZoom();
 	}
 
 	// Render graph
