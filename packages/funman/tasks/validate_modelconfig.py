@@ -76,7 +76,7 @@ def taskrunner_wrapper():
         data_json = json.loads(data)
 
         # Create work unit
-        model = adapter.validate_python(test["model"])
+        model = adapter.validate_python(data_json["model"])
         model = _wrap_with_internal_model(model)
         request = data_json["request"]
         result = run_validate(model, request)
