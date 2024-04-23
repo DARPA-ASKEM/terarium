@@ -185,14 +185,13 @@ export const removeEdge = (wf: Workflow, id: string, registry: WorkflowRegistry)
 	const targetPort = targetNode.inputs[targetPortIndex];
 
 	if (!targetPort) return;
-
 	targetPort.value = null;
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
 	delete targetPort.label;
 
 	// Resets the type to the initial input type if it was a union type
 	const initialInput = registry.getOperation(targetNode.operationType)?.inputs?.[targetPortIndex];
-	if (initialInput && initialInput.type.includes('|')) {
+	if (initialInput?.type.includes('|')) {
 		targetPort.type = initialInput.type;
 		targetPort.label = initialInput.label;
 	}

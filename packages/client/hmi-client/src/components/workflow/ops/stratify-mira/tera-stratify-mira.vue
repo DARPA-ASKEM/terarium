@@ -156,6 +156,7 @@ import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
+import { getModelConfigurationById } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -358,7 +359,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
+	let modelId = '';
+	if (props.node.inputs[0]?.type === 'modelId') {
+		modelId = props.node.inputs[0].value?.[0];
+	} else if (props.node.inputs[0]?.type === 'modelConfigId') {
+		const modelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
+		if (modelConfiguration) {
+			modelId = modelConfiguration.model_id;
+		}
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);

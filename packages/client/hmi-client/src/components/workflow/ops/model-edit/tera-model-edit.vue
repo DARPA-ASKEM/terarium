@@ -151,7 +151,6 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
-let modelId = '';
 
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
@@ -283,6 +282,15 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
+	let modelId = '';
+	if (props.node.inputs[0]?.type === 'modelId') {
+		modelId = props.node.inputs[0].value?.[0];
+	} else if (props.node.inputs[0]?.type === 'modelConfigId') {
+		const modelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
+		if (modelConfiguration) {
+			modelId = modelConfiguration.model_id;
+		}
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -376,15 +384,6 @@ watch(
 );
 
 onMounted(async () => {
-	if (props.node.inputs[0]?.type === 'modelId') {
-		modelId = props.node.inputs[0].value?.[0];
-	} else if (props.node.inputs[0]?.type === 'modelConfigId') {
-		const modelConfigurationId = props.node.inputs[0].value?.[0];
-		const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-		if (modelConfiguration) {
-			modelId = modelConfiguration.model_id;
-		}
-	}
 	await inputChangeHandler();
 });
 
