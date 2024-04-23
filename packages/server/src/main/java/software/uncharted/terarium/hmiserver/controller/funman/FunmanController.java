@@ -58,10 +58,7 @@ public class FunmanController {
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
 														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "400",
-						description = "Invalid input or bad request",
-						content = @Content),
+				@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue dispatching the request",
@@ -92,7 +89,6 @@ public class FunmanController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
-
 
 	// The methods below are depreacated
 	private final FunmanProxy funmanProxy;
