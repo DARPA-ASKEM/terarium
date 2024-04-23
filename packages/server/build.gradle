@@ -26,7 +26,6 @@ dependencyManagement {
   }
 }
 
-
 apply plugin: 'cz.habarta.typescript-generator'
 apply plugin: 'idea'
 apply plugin: 'com.diffplug.spotless'
@@ -162,5 +161,12 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
+    }
+}
+
+tasks.register('format') {
+    dependsOn('spotlessJava')
+    doFirst {
+        println("Running format")
     }
 }
