@@ -854,7 +854,7 @@ onMounted(async () => {
 watch(
 	() => knobs.value.transientModelConfig,
 	async (config) => {
-		if (isEmpty(config)) return;
+		if (isEmpty(config) || isEmpty(config.configuration)) return;
 		const response: any = await getMMT(config.configuration);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
