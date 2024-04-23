@@ -79,9 +79,11 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-		final Workflow workflow = new Workflow();
+
+		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
 						.with(csrf()))
@@ -92,9 +94,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
-		final Workflow workflow = new Workflow();
+		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
 						.with(csrf())
@@ -107,9 +110,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
 
-		final Workflow workflow = new Workflow();
+		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
 						.with(csrf()))
