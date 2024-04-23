@@ -174,18 +174,28 @@ export const addEdge = (
 	targetInputPort.status = WorkflowPortStatus.CONNECTED;
 };
 
-export const removeEdge = (wf: Workflow, id: string) => {
+export const removeEdge = (wf: Workflow, id: string, registry: WorkflowRegistry) => {
 	const edgeToRemove = wf.edges.find((d) => d.id === id);
 	if (!edgeToRemove) return;
 
 	// Remove the data reference at the targetPort
 	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
 	if (!targetNode) return;
-	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
+	const targetPortIndex = targetNode.inputs.findIndex((d) => d.id === edgeToRemove.targetPortId);
+	const targetPort = targetNode.inputs[targetPortIndex];
+
 	if (!targetPort) return;
+
 	targetPort.value = null;
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
 	delete targetPort.label;
+
+	// Resets the type to the initial input type if it was a union type
+	const initialInput = registry.getOperation(targetNode.operationType)?.inputs?.[targetPortIndex];
+	if (initialInput && initialInput.type.includes('|')) {
+		targetPort.type = initialInput.type;
+		targetPort.label = initialInput.label;
+	}
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
@@ -200,12 +210,12 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	}
 };
 
-export const removeNode = (wf: Workflow, id: string) => {
+export const removeNode = (wf: Workflow, id: string, registry: WorkflowRegistry) => {
 	// Remove all the edges first
 	const edgesToRemove = wf.edges.filter((d) => d.source === id || d.target === id);
 	const edgeIds = edgesToRemove.map((d) => d.id);
 	edgeIds.forEach((edgeId) => {
-		removeEdge(wf, edgeId);
+		removeEdge(wf, edgeId, registry);
 	});
 
 	// Remove the node

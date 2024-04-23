@@ -440,7 +440,7 @@ const closeDrilldown = async () => {
 };
 
 const removeNode = (event) => {
-	workflowService.removeNode(wf.value, event);
+	workflowService.removeNode(wf.value, event, registry);
 };
 
 const duplicateBranch = (id: string) => {
@@ -710,9 +710,10 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
+	// Find node by edge and reassign the input type this is required when the input has an |
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
-			workflowService.removeEdge(wf.value, edge.id);
+			workflowService.removeEdge(wf.value, edge.id, registry);
 		});
 		workflowDirty = true;
 	} else logger.error(`Edges with port id:${portId} not found.`);
