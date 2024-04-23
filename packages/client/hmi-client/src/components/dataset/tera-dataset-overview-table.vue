@@ -124,7 +124,9 @@ function formatData(data: DatasetColumn[]) {
 		id: col.name,
 		name: formatName(col.name),
 		description: col.description,
-		concept: col.metadata?.groundings?.identifiers,
+		concept: col.metadata?.groundings?.identifiers
+			? col.metadata.groundings.identifiers
+			: parseCurie(String(col.grounding?.identifiers[0].curie)),
 		unit: col.metadata?.unit,
 		dataType: col.metadata?.column_stats?.type,
 		stats: col.metadata?.column_stats,
