@@ -45,7 +45,7 @@ public class Workflow extends TerariumAsset {
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
 
-	@OneToOne(mappedBy = "workflowActual")
+	@OneToOne(mappedBy = "workflow")
 	@Where(clause = "deleted_on IS NULL")
 	@ToString.Exclude
 	@JsonManagedReference
@@ -59,7 +59,6 @@ public class Workflow extends TerariumAsset {
 
 		if(simulation != null) {
 			clone.setSimulation(simulation.clone());
-			clone.getSimulation().setWorkflowActual(this);
 		}
 
 		clone.description = this.description;

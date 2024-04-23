@@ -507,10 +507,9 @@ export interface Simulation extends TerariumAsset {
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
-    workflowId: string;
     userId?: string;
     projectId?: string;
-    workflowActual: Workflow;
+    workflow: Workflow;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {

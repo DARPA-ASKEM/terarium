@@ -69,13 +69,10 @@ public class Simulation extends TerariumAsset {
 	@Enumerated(EnumType.STRING)
 	private SimulationEngine engine;
 
-	@JsonAlias("workflow_id")
-	private UUID workflowId; //TODO can we get rid of this now or is this coming in from somewhere else?
-
 	@OneToOne
-	@JoinColumn(name = "workflowActual_id", nullable = true)
+	@JoinColumn(name = "workflow_id", nullable = true)
 	@JsonBackReference
-	private Workflow workflowActual;
+	private Workflow workflow;
 
 
 	@JsonAlias("user_id")
@@ -103,7 +100,6 @@ public class Simulation extends TerariumAsset {
 		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); //done
 		clone.setUserId(this.userId); // done
 		clone.setExecutionPayload(this.executionPayload.deepCopy()); //done
-		clone.setWorkflowId(this.workflowId); //TODO
 		clone.setProjectId(this.projectId); // TODO
 
 
