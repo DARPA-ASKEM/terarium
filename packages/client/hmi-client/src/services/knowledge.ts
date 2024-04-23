@@ -71,7 +71,6 @@ export const profileDataset = async (
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
-	console.log('data profile response', response.data);
 	return response.data.id;
 };
 
