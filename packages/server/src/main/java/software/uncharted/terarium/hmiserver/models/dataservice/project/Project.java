@@ -8,6 +8,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -60,7 +61,7 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
-	private List<ProjectAsset> projectAssets;
+	private List<ProjectAsset> projectAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient
