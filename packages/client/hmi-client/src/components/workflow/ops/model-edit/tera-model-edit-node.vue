@@ -27,7 +27,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
 
-const model = ref(null as Model | null);
+const model = ref<Model | null>(null);
 const updateModel = async () => {
 	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
 	if (modelId && modelId !== model?.value?.id) {
