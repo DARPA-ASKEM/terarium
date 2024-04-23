@@ -16,7 +16,7 @@
 		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div class="canvas-layer foreground-layer">
+		<div class="canvas-layer foreground-layer" :class="{ disable: isDisabled }">
 			<slot name="foreground" />
 		</div>
 	</main>
@@ -32,6 +32,7 @@ const props = withDefaults(
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
+		isDisabled?: boolean;
 	}>(),
 	{
 		background: 'dots',
@@ -229,5 +230,11 @@ svg:active {
 
 .foreground-layer {
 	position: relative;
+	display: flex;
+	flex-direction: column;
+}
+
+.disable {
+	height: 100%;
 }
 </style>
