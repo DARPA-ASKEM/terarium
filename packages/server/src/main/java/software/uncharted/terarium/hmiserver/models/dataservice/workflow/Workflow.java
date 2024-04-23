@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -57,7 +54,7 @@ public class Workflow extends TerariumAsset {
 
 		cloneSuperFields(clone);
 
-		if(simulation != null) {
+		if (simulation != null) {
 			clone.setSimulation(simulation.clone());
 		}
 

@@ -18,7 +18,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
-import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @EqualsAndHashCode(callSuper = true)
@@ -74,14 +73,13 @@ public class Simulation extends TerariumAsset {
 	@JsonBackReference
 	private Workflow workflow;
 
-
 	@JsonAlias("user_id")
 	@TSOptional
 	private String userId;
 
 	@JsonAlias("project_id")
 	@TSOptional
-	private UUID projectId; //TODO this can probably be joined to the project table soon?
+	private UUID projectId; // TODO this can probably be joined to the project table soon?
 
 	@Override
 	public Simulation clone() {
@@ -89,21 +87,19 @@ public class Simulation extends TerariumAsset {
 
 		cloneSuperFields(clone);
 
-		clone.setDescription(this.description); //done
+		clone.setDescription(this.description); // done
 
-		clone.setResultFiles(new ArrayList<>(this.resultFiles)); //done
-		clone.setType(SimulationType.valueOf(this.type.name())); //done
-		clone.setStatus(ProgressState.valueOf(this.status.name())); //done
-		clone.setStatusMessage(this.statusMessage); //done
-		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null); //done
-		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); //done
-		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); //done
+		clone.setResultFiles(new ArrayList<>(this.resultFiles)); // done
+		clone.setType(SimulationType.valueOf(this.type.name())); // done
+		clone.setStatus(ProgressState.valueOf(this.status.name())); // done
+		clone.setStatusMessage(this.statusMessage); // done
+		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null); // done
+		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); // done
+		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); // done
 		clone.setUserId(this.userId); // done
-		clone.setExecutionPayload(this.executionPayload.deepCopy()); //done
+		clone.setExecutionPayload(this.executionPayload.deepCopy()); // done
 		clone.setProjectId(this.projectId); // TODO
-
 
 		return clone;
 	}
-
 }

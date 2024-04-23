@@ -35,9 +35,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflowService.teardownIndexAndAlias();
 	}
 
-
-
-
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateWorkflow() throws Exception {

@@ -64,11 +64,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/** The class of the asset this service manages */
 	protected final Class<T> assetClass;
 
-
-
 	/** The expiration time for the presigned URLs in minutes */
 	private static final long EXPIRATION = 60;
-
 
 	/**
 	 * Get an asset by its ID
@@ -252,8 +249,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 		final PresignedURL presigned = new PresignedURL();
 		presigned.setUrl(s3ClientService
-			.getS3Service()
-			.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION));
+				.getS3Service()
+				.getS3PreSignedPutUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION));
 		presigned.setMethod("PUT");
 		return presigned;
 	}
@@ -269,8 +266,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	public Optional<PresignedURL> getDownloadUrl(final UUID id, final String filename) {
 
 		final Optional<String> url = s3ClientService
-			.getS3Service()
-			.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION);
+				.getS3Service()
+				.getS3PreSignedGetUrl(config.getFileStorageS3BucketName(), getPath(id, filename), EXPIRATION);
 
 		if (url.isEmpty()) {
 			return Optional.empty();
@@ -284,7 +281,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public ResponseEntity<Void> getUploadStream(final UUID uuid, final String filename, final MultipartFile file)
-		throws IOException {
+			throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
 
@@ -302,7 +299,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Observed(name = "function_profile")
 	public Optional<String> fetchFileAsString(final UUID uuid, final String filename) throws IOException {
 		try (final CloseableHttpClient httpclient =
-					 HttpClients.custom().disableRedirectHandling().build()) {
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
 			if (url.isEmpty()) {
@@ -318,7 +315,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Observed(name = "function_profile")
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
 		try (final CloseableHttpClient httpclient =
-					 HttpClients.custom().disableRedirectHandling().build()) {
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
 			if (url.isEmpty()) {
@@ -333,10 +330,10 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public void uploadFile(
-		final UUID uuid, final String filename, final HttpEntity fileEntity, final ContentType contentType)
-		throws IOException {
+			final UUID uuid, final String filename, final HttpEntity fileEntity, final ContentType contentType)
+			throws IOException {
 		try (final CloseableHttpClient httpclient =
-					 HttpClients.custom().disableRedirectHandling().build()) {
+				HttpClients.custom().disableRedirectHandling().build()) {
 
 			final PresignedURL presignedURL = getUploadUrl(uuid, filename);
 			final HttpPut put = new HttpPut(presignedURL.getUrl());
@@ -345,7 +342,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 			final HttpResponse response = httpclient.execute(put);
 			if (response.getStatusLine().getStatusCode() >= 300) {
 				throw new IOException("Failed to upload file to S3: "
-					+ response.getStatusLine().getReasonPhrase());
+						+ response.getStatusLine().getReasonPhrase());
 			}
 		}
 	}
@@ -353,5 +350,4 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	private String getPath(final UUID id, final String filename) {
 		return String.join("/", getAssetPath(), id.toString(), filename);
 	}
-
 }

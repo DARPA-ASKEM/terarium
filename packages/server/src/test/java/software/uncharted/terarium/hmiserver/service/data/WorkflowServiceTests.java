@@ -52,13 +52,12 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflowService.teardownIndexAndAlias();
 	}
 
-	static SimulationRequest createSimRequest(){
+	static SimulationRequest createSimRequest() {
 		final SimulationRequest request = new SimulationRequest();
 		request.setModelConfigId(UUID.randomUUID());
 		request.setTimespan(new TimeSpan());
 		return request;
 	}
-
 
 	static Simulation createSimulation(final String key) {
 		final Simulation simulation = new Simulation();
@@ -66,10 +65,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		simulation.setDescription("test-simulation-description-" + key);
 		simulation.setType(SimulationType.SIMULATION);
 		simulation.setExecutionPayload(objectMapper.convertValue(createSimRequest(), JsonNode.class));
-		simulation.setResultFiles(Arrays.asList("never", "gonna", "give", "you","up"));
+		simulation.setResultFiles(Arrays.asList("never", "gonna", "give", "you", "up"));
 		simulation.setStatus(ProgressState.RUNNING);
 		simulation.setEngine(SimulationEngine.SCIML);
-
 
 		return simulation;
 	}
@@ -86,12 +84,12 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		return (Workflow) new Workflow()
-			.setDescription("test-workflow-description-0")
-			.setTransform(new Transform().setX(1).setY(2).setK(3))
-			.setNodes(List.of(a, b, c, d))
-			.setEdges(List.of(ab, bc, cd))
-			.setPublicAsset(true)
-			.setName("test-workflow-name-0");
+				.setDescription("test-workflow-description-0")
+				.setTransform(new Transform().setX(1).setY(2).setK(3))
+				.setNodes(List.of(a, b, c, d))
+				.setEdges(List.of(ab, bc, cd))
+				.setPublicAsset(true)
+				.setName("test-workflow-name-0");
 	}
 
 	static Workflow createWorkflow(final String key) throws Exception {
@@ -106,13 +104,12 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		final Workflow workflow = new Workflow();
-		workflow.setName("test-workflow-name-"+ key);
-		workflow.setDescription("test-workflow-description-"+ key);
+		workflow.setName("test-workflow-name-" + key);
+		workflow.setDescription("test-workflow-description-" + key);
 		workflow.setTransform(new Transform().setX(1).setY(2).setK(3));
 		workflow.setNodes(List.of(a, b, c, d));
 		workflow.setEdges(List.of(ab, bc, cd));
 		workflow.setPublicAsset(true);
-
 
 		return workflow;
 	}
@@ -222,9 +219,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflow.setSimulation(simulation);
 		workflowService.updateAsset(workflow);
 
-
-
-
 		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
@@ -265,12 +259,21 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(
 				workflow.getEdges().get(2).getWorkflowId(),
 				cloned.getEdges().get(2).getWorkflowId());
-		Assertions.assertNotEquals(workflow.getSimulation().getId(), cloned.getSimulation().getId());
-		Assertions.assertEquals(workflow.getSimulation().getName(), cloned.getSimulation().getName());
-		Assertions.assertEquals(workflow.getSimulation().getDescription(), cloned.getSimulation().getDescription());
-		Assertions.assertEquals(workflow.getSimulation().getResultFiles().size(), cloned.getSimulation().getResultFiles().size());
-		Assertions.assertEquals(workflow.getSimulation().getExecutionPayload(), cloned.getSimulation().getExecutionPayload());
-		Assertions.assertEquals(workflow.getSimulation().getType(), cloned.getSimulation().getType());
+		Assertions.assertNotEquals(
+				workflow.getSimulation().getId(), cloned.getSimulation().getId());
+		Assertions.assertEquals(
+				workflow.getSimulation().getName(), cloned.getSimulation().getName());
+		Assertions.assertEquals(
+				workflow.getSimulation().getDescription(),
+				cloned.getSimulation().getDescription());
+		Assertions.assertEquals(
+				workflow.getSimulation().getResultFiles().size(),
+				cloned.getSimulation().getResultFiles().size());
+		Assertions.assertEquals(
+				workflow.getSimulation().getExecutionPayload(),
+				cloned.getSimulation().getExecutionPayload());
+		Assertions.assertEquals(
+				workflow.getSimulation().getType(), cloned.getSimulation().getType());
 	}
 
 	@Test
@@ -280,7 +283,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow);
 
-		//TODO: Once we have import/export nailed down we need to test simulations here too
+		// TODO: Once we have import/export nailed down we need to test simulations here too
 
 		final byte[] exported = workflowService.exportAsset(workflow.getId());
 
