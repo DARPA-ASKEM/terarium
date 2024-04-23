@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json
 
 def cleanup():

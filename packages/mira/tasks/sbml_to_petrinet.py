@@ -1,6 +1,6 @@
 import sys
 import io
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 from mira.metamodel.ops import simplify_rate_laws
 from mira.modeling import Model
 from mira.modeling.amr.petrinet import AMRPetriNetModel

@@ -2,7 +2,7 @@ import json
 import sys
 from GoLLM.core.entities import ConfigureModelDataset
 from GoLLM.core.openai.tool_utils import config_from_dataset
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 
 
 def cleanup():

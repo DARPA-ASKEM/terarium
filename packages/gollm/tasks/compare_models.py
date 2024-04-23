@@ -1,7 +1,7 @@
 import sys
 from GoLLM.core.entities import ModelCompareModel
 from GoLLM.core.openai.tool_utils import compare_models
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 
 
 def cleanup():

@@ -1,7 +1,7 @@
 import sys
 from GoLLM.core.entities import ModelCardModel
 from GoLLM.core.openai.tool_utils import model_card_chain
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 
 
 def cleanup():

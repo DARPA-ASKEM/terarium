@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 
 # Funman imports
 from funman import Funman
@@ -15,7 +15,6 @@ from funman.server.query import (
     FunmanResults,
     FunmanWorkUnit,
 )
-import pydantic
 from pydantic import TypeAdapter
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
 

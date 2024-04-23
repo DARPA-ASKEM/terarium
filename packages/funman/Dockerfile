@@ -37,14 +37,15 @@ RUN pip install .
 RUN pip install auxiliary_packages/funman_dreal
 RUN pip install auxiliary_packages/funman_demo
 
-# Copy the funman package
+# Install taskrunner
+COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
+COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
+WORKDIR /taskrunner
+RUN pip install -e .
+
+# Install funman tasks
 COPY ./packages/funman /funman_tasks
 WORKDIR /funman_tasks
-
-# Copy the taskrunner interface
-COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
-
-# Install the tasks for funman
 RUN pip install -e .
 
 WORKDIR /

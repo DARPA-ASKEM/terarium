@@ -16,8 +16,8 @@ WORKDIR /
 
 # Install OpenJDK JRE
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
-	rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -27,25 +27,25 @@ COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 # Install wget
 RUN apt-get update && \
-	apt-get install -y --no-install-recommends wget && \
-	rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends wget && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
-	tar -zxvf gollm.tar.gz && \
-	mv GoLLM-* GoLLM && \
-	cd /GoLLM && \
-	pip install --no-cache-dir -r requirements.txt && \
-	pip install -e .
+RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/kbirk/remove-tasks.tar.gz && \
+    tar -zxvf gollm.tar.gz && \
+    mv GoLLM-* GoLLM && \
+    cd /GoLLM && \
+    pip install -e .
 
-# Copy the GoLLM task package
+# Install taskrunner
+COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
+COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
+WORKDIR /taskrunner
+RUN pip install -e .
+
+# Install GoLLM tasks
 COPY ./packages/gollm /gollm_task
 WORKDIR /gollm_task
-
-# Copy the taskrunner interface
-COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
-
-# Install the tasks for GoLLM
 RUN pip install -e .
 
 WORKDIR /

@@ -1,6 +1,6 @@
 import sys
 import os
-from ...taskrunner.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 from mira.sources.system_dynamics.stella import template_model_from_stella_model_file
 from mira.modeling.amr.stockflow import template_model_to_stockflow_json
 
