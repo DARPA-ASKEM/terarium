@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -269,9 +269,6 @@ const toggleOptionsMenu = (event) => {
 watch(
 	() => props.assetId,
 	async () => {
-		// unsub and sub to avoid multiple subscriptions when switching between document assets
-		await unsubscribe(ClientEventType.Extraction, subscribeToExtraction);
-		await subscribe(ClientEventType.Extraction, subscribeToExtraction);
 		if (props.assetId) {
 			view.value = DocumentView.EXTRACTIONS;
 			pdfLink.value = null;
@@ -314,19 +311,18 @@ onUpdated(() => {
 	}
 });
 
+onMounted(async () => {
+	await subscribe(ClientEventType.Extraction, subscribeToExtraction);
+});
+
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
 	if (!event.data) return;
 	if (event.data.documentId !== props.assetId) return;
 
 	const status = getStatus(event.data);
-	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.  Lets what for the Notification service to be fully integrated and then this can be removed.
+	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.  Lets wait for the Notification service to be fully integrated and then this can be removed.
 	if (status === 'Completed' && event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);
-		await unsubscribe(ClientEventType.Extraction, subscribeToExtraction);
-	}
-
-	if (status === 'Failed') {
-		await unsubscribe(ClientEventType.Extraction, subscribeToExtraction);
 	}
 }
 
