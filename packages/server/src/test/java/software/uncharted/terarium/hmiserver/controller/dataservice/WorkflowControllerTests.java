@@ -79,7 +79,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
