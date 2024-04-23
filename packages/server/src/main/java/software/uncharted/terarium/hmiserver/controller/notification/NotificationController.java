@@ -76,7 +76,9 @@ public class NotificationController {
 	@ApiResponses(
 			value = {
 				@ApiResponse(responseCode = "200", description = "Acknowledged all events in notification group"),
-				@ApiResponse(responseCode = "500", description = "There was an issue acknowledging the notification group")
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue acknowledging the notification group")
 			})
 	public ResponseEntity<Void> acknowledgeNotificationGroup(@PathVariable("groupId") final UUID groupId) {
 
