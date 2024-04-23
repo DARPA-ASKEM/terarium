@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
@@ -63,14 +63,13 @@ public class ProjectAssetService {
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
+		if (asset instanceof Model) {
+			projectAsset.setAssetName(((Model) asset).getHeader().getName());
+		}
 
 		projectAsset = projectAssetRepository.save(projectAsset);
 
-		if (project.getProjectAssets() == null) {
-			project.setProjectAssets(new ArrayList<>(List.of(projectAsset)));
-		} else {
-			project.getProjectAssets().add(projectAsset);
-		}
+		project.getProjectAssets().add(projectAsset);
 
 		return Optional.of(projectAsset);
 	}
