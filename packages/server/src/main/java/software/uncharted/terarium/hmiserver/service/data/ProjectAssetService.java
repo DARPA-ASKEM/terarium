@@ -64,7 +64,7 @@ public class ProjectAssetService {
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
-		if(asset instanceof Model) {
+		if (asset instanceof Model) {
 			projectAsset.setAssetName(((Model) asset).getHeader().getName());
 		}
 
