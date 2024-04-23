@@ -1,9 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
 import java.io.Serializable;
-
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @TSModel
 public record Identifier(String curie, String name) implements Serializable {

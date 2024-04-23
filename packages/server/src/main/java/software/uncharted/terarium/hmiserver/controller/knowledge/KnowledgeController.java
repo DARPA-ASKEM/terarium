@@ -8,6 +8,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -54,21 +68,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchServic
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -588,7 +587,9 @@ public class KnowledgeController {
 					if (groundings.getIdentifiers() == null) {
 						groundings.setIdentifiers(new ArrayList<>());
 					}
-					groundings.getIdentifiers().add(new Identifier(g.get(0).asText(), g.get(1).asText()));
+					groundings
+							.getIdentifiers()
+							.add(new Identifier(g.get(0).asText(), g.get(1).asText()));
 				}
 
 				// remove groundings from annotation object
