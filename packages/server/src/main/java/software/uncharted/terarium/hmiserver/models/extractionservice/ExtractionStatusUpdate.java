@@ -13,7 +13,12 @@ public class ExtractionStatusUpdate {
 	private String message;
 	private String error;
 
-	public ExtractionStatusUpdate(final UUID notificationGroupId, final UUID documentId, final Double t, final String message, final String error) {
+	public ExtractionStatusUpdate(
+			final UUID notificationGroupId,
+			final UUID documentId,
+			final Double t,
+			final String message,
+			final String error) {
 		this.notificationGroupId = notificationGroupId;
 		this.documentId = documentId;
 		this.t = t;
