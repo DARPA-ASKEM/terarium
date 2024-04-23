@@ -117,13 +117,13 @@ const getElapsedTimeText = (item: NotificationItem) => {
  * and is placed outside of this component's scope and the scoped styles aren't applied to it.
  */
 .notification-panel-container.p-overlaypanel {
-	top: 51px !important;
-	width: 540px;
+	top: var(--navbar-outer-height) !important;
+	width: 34rem;
 	box-shadow: 0px 4px 4px 0px #00000040;
 	padding: var(--content-padding);
 	padding-bottom: 1.5rem;
 	gap: var(--gap);
-	border: 1px solid #c3ccd6;
+	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius-medium);
 	.p-overlaypanel-content {
 		padding: 0;
