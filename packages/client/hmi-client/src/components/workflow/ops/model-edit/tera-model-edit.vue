@@ -116,7 +116,7 @@ import TeraModelTemplateEditor from '@/components/model-template/tera-model-temp
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -282,14 +282,14 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
-	let modelId = '';
-	if (props.node.inputs[0]?.type === 'modelId') {
-		modelId = props.node.inputs[0].value?.[0];
-	} else if (props.node.inputs[0]?.type === 'modelConfigId') {
-		const modelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
-		if (modelConfiguration) {
-			modelId = modelConfiguration.model_id;
-		}
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
 	}
 	if (!modelId) return;
 

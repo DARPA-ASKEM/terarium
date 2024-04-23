@@ -12,6 +12,11 @@ export const getModelConfigurationById = async (id: string) => {
 	return (response?.data as ModelConfiguration) ?? null;
 };
 
+export const getModelIdFromModelConfigurationId = async (id: string) => {
+	const modelConfiguration = await getModelConfigurationById(id);
+	return modelConfiguration?.model_id ?? null;
+};
+
 export const createModelConfiguration = async (
 	model_id: string | undefined,
 	name: string,
