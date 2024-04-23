@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from core.taskrunner import TaskRunnerInterface
+from ...taskrunner.taskrunner import TaskRunnerInterface
 
 # Funman imports
 from funman import Funman
@@ -72,7 +72,7 @@ def taskrunner_wrapper():
         taskrunner.on_cancellation(cleanup)
 
         # Input wrangling
-        data = taskrunner.read_input_with_timeout()
+        data = taskrunner.read_input_str_with_timeout()
         data_json = json.loads(data)
 
         # Create work unit
@@ -80,7 +80,7 @@ def taskrunner_wrapper():
         model = _wrap_with_internal_model(model)
         request = data_json["request"]
         result = run_validate(model, request)
-        taskrunner.write_output_with_timeout({"response": result})
+        taskrunner.write_output_dict_with_timeout({"response": result})
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")

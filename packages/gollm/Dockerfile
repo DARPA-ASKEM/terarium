@@ -33,12 +33,17 @@ RUN apt-get update && \
 RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
 RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
 	tar -zxvf gollm.tar.gz && \
-	mv GoLLM-* GoLLM
+	mv GoLLM-* GoLLM && \
+	cd /GoLLM && \
+	pip install --no-cache-dir -r requirements.txt && \
+	pip install -e .
 
-WORKDIR /GoLLM
+# Copy the GoLLM task package
+COPY ./packages/gollm /gollm_task
+WORKDIR /gollm_task
 
-# Install GoLLM deps
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the taskrunner interface
+COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 
 # Install the tasks for GoLLM
 RUN pip install -e .
