@@ -39,6 +39,10 @@ jobs:
   test-server:
     uses: ./.github/workflows/test-server.yaml
 
+  # Run Taskrunner Tests
+  test-taskrunner:
+    uses: ./.github/workflows/test-taskrunner.yaml
+
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
@@ -86,6 +90,7 @@ jobs:
       - test-server
       - lint-client
       - test-client
+      - test-taskrunner
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
@@ -173,6 +178,8 @@ jobs:
         with:
           files: ./${{ env.BAKE_FILE }}
           targets: ${{ matrix.target }}
+          sbom: false
+          provenance: false
           push: true
           set: |
             *.cache-from=type=gha,scope=build-${{ matrix.target }}

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
-import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -40,17 +39,20 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
+import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class TaskService {
 
-	public enum TaskMode {
+	public static enum TaskMode {
 		@JsonAlias("sync")
 		SYNC("sync"),
 		@JsonAlias("async")
@@ -62,7 +64,6 @@ public class TaskService {
 			this.value = value;
 		}
 
-		@Override
 		public String toString() {
 			return value;
 		}
@@ -76,9 +77,6 @@ public class TaskService {
 	@Data
 	@EqualsAndHashCode(callSuper = true)
 	private static class TaskRequestWithId extends TaskRequest {
-		@Serial
-		private static final long serialVersionUID = 2344373001617309558L;
-
 		private UUID id;
 
 		TaskRequestWithId(final TaskRequest req) {
@@ -86,6 +84,7 @@ public class TaskService {
 			type = req.getType();
 			script = req.getScript();
 			input = req.getInput();
+			userId = req.getUserId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
@@ -94,6 +93,7 @@ public class TaskService {
 			return new TaskResponse()
 					.setId(id)
 					.setStatus(status)
+					.setUserId(userId)
 					.setScript(getScript())
 					.setAdditionalProperties(getAdditionalProperties());
 		}
@@ -102,9 +102,6 @@ public class TaskService {
 	// This private subclass exists to prevent anything outside of this service from
 	// mucking with the futures internal state.
 	private static class CompletableTaskFuture extends TaskFuture {
-
-		@Serial
-		private static final long serialVersionUID = -7596695803007848183L;
 
 		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
 			this.id = id;
@@ -155,6 +152,7 @@ public class TaskService {
 	private final RabbitAdmin rabbitAdmin;
 	private final Config config;
 	private final ObjectMapper objectMapper;
+	private final NotificationService notificationService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
@@ -314,8 +312,9 @@ public class TaskService {
 				return;
 			}
 
+			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
 			if (resp.getOutput() != null) {
-				log.info("Received response {} for task {}", new String(resp.getOutput()), resp.getId());
+				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
 			}
 
 			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
@@ -363,7 +362,7 @@ public class TaskService {
 				if (emitter != null) {
 					try {
 						emitter.send(resp);
-					} catch (final IllegalStateException | ClientAbortException e) {
+					} catch (IllegalStateException | ClientAbortException e) {
 						log.warn("Error sending task response for task {}. User likely disconnected", resp.getId());
 						taskIdToEmitter.remove(resp.getId());
 					} catch (final IOException e) {
@@ -403,6 +402,8 @@ public class TaskService {
 				return;
 			}
 
+			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
+
 			try {
 				// execute the handler
 				if (responseHandlers.containsKey(resp.getScript())) {
@@ -431,6 +432,17 @@ public class TaskService {
 			} finally {
 				rLock.unlock();
 			}
+
+			try {
+				// create the notification event
+				final NotificationEvent event = new NotificationEvent();
+				event.setData(resp);
+				notificationService.createNotificationEvent(resp.getId(), event);
+			} catch (final Exception e) {
+				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			}
+
+			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
 
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
@@ -535,11 +547,22 @@ public class TaskService {
 						TimeUnit.SECONDS);
 			}
 
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(req.getType().toString());
+			group.setUserId(req.getUserId());
+			notificationService.createNotificationGroup(group);
+
 			// now send request
 			final String requestQueue = String.format(
 					"%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-			log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType());
+			log.info(
+					"Readying task: {} with SHA: {} to send on queue: {}",
+					req.getId(),
+					hash,
+					req.getType().toString());
 
 			// ensure the request queue exists
 			declareQueue(requestQueue);
@@ -607,6 +630,16 @@ public class TaskService {
 			log.info("Future completed for task: {}", future.getId());
 			return resp;
 		} catch (final TimeoutException e) {
+
+			// if we time out, something has probably gone wrong, lets remove it from the
+			// SHA lookup
+			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+			try {
+				// check if there is an id associated with the hash of the request already
+				taskIdCache.remove(req.getSHA256());
+			} finally {
+				rLock.unlock();
+			}
 			throw new TimeoutException(
 					"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
 		}

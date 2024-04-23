@@ -1,31 +1,32 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import java.io.IOException;
 
-@Converter
-public class JsonConverter implements AttributeConverter<Object, String> {
+@Converter(autoApply = true)
+public class JsonConverter implements AttributeConverter<JsonNode, String> {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Override
-	public String convertToDatabaseColumn(final Object attribute) {
+	public String convertToDatabaseColumn(final JsonNode attribute) {
 		try {
 			return objectMapper.writeValueAsString(attribute);
 		} catch (final JsonProcessingException e) {
-			throw new RuntimeException("Error converting Object to JSON", e);
+			throw new RuntimeException("Error converting JsonNode to JSON", e);
 		}
 	}
 
 	@Override
-	public Object convertToEntityAttribute(final String dbData) {
+	public JsonNode convertToEntityAttribute(final String dbData) {
 		try {
-			return objectMapper.readValue(dbData, Object.class);
+			return objectMapper.readValue(dbData, JsonNode.class);
 		} catch (final IOException e) {
-			throw new RuntimeException("Error converting JSON to Object", e);
+			throw new RuntimeException("Error converting JSON to JsonNode", e);
 		}
 	}
 }
