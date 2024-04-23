@@ -2,4 +2,5 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 bash .husky/secretsVerification.sh
+bash ./gradlew format
 yarn lint-staged
