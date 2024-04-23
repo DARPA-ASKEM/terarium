@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -88,7 +87,10 @@ public class ExtractionService {
 		private final ClientEventType clientEventType;
 
 		ExtractionGroupInstance(
-				final ExtractionService extractionService, final UUID documentId, final Double halfTimeSeconds, ClientEventType clientEventType) {
+				final ExtractionService extractionService,
+				final UUID documentId,
+				final Double halfTimeSeconds,
+				ClientEventType clientEventType) {
 			super(
 					extractionService.clientEventService,
 					extractionService.notificationService,
@@ -101,7 +103,8 @@ public class ExtractionService {
 		@Override
 		public ClientEvent<ExtractionStatusUpdate> produceClientEvent(
 				final Double t, final String message, final String error) {
-			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(this.getNotificationGroupId(), documentId, t, message, error);
+			final ExtractionStatusUpdate update =
+					new ExtractionStatusUpdate(this.getNotificationGroupId(), documentId, t, message, error);
 			return ClientEvent.<ExtractionStatusUpdate>builder()
 					.type(this.clientEventType)
 					.data(update)
@@ -352,10 +355,10 @@ public class ExtractionService {
 	}
 
 	private DocumentAsset runVariableExtraction(
-		final ExtractionGroupInstance notificationInterface,
-		final UUID documentId,
-		final List<UUID> modelIds,
-		final String domain) {
+			final ExtractionGroupInstance notificationInterface,
+			final UUID documentId,
+			final List<UUID> modelIds,
+			final String domain) {
 
 		notificationInterface.sendMessage("Starting variable extraction.");
 		try {
@@ -440,7 +443,8 @@ public class ExtractionService {
 		}
 	}
 
-	public Future<DocumentAsset> extractVariables(final UUID documentId, final List<UUID> modelIds, final String domain) {
+	public Future<DocumentAsset> extractVariables(
+			final UUID documentId, final List<UUID> modelIds, final String domain) {
 		// Set up the client interface
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);

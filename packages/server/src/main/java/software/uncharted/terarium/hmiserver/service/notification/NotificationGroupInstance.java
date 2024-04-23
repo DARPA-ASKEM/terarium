@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
 import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
