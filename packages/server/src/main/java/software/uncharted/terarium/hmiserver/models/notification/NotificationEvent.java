@@ -61,6 +61,7 @@ public class NotificationEvent {
 	}
 
 	@Convert(converter = JsonConverter.class)
+	@Column(columnDefinition = "text")
 	private JsonNode data;
 
 	public NotificationEvent setData(final JsonNode arg) {
