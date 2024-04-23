@@ -4,13 +4,6 @@ import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
-type NotificationEventData = {
-	notificationGroupId: string;
-	t: number;
-	message: string;
-	error: string;
-};
-
 const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return 'Failed';
 	if (data.t >= 1.0) return 'Completed';
@@ -24,7 +17,12 @@ const toastTitle = {
 	}
 };
 
-const displayToast = (eventType: ClientEventType, status: string, msg: string, error: string) => {
+const logStatusMessage = (
+	eventType: ClientEventType,
+	status: string,
+	msg: string,
+	error: string
+) => {
 	if (!['Completed', 'Failed'].includes(status)) return;
 
 	if (status === 'Completed')
@@ -41,9 +39,7 @@ const displayToast = (eventType: ClientEventType, status: string, msg: string, e
 
 // Creates notification event handlers for each type of client events that manipulates given notification items ref
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
-	const handlers:
-		| Record<ClientEventType, <T extends NotificationEventData>(event: ClientEvent<T>) => void>
-		| {} = {};
+	const handlers = {} as Record<ClientEventType, (event: ClientEvent<any>) => void>;
 
 	handlers[ClientEventType.ExtractionPdf] = (event: ClientEvent<ExtractionStatusUpdate>) => {
 		if (!event.data) return;
@@ -99,12 +95,21 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 export const createNotificationEventLogger = (
 	visibleNotificationItems: Ref<NotificationItem[]>
 ) => {
-	const handleLogging = <T extends NotificationEventData>(event: ClientEvent<T>) => {
+	const handleLogging = <
+		T extends { notificationGroupId: string; t: number; message: string; error: string }
+	>(
+		event: ClientEvent<T>
+	) => {
 		const found = visibleNotificationItems.value.find(
 			(item) => item.notificationGroupId === event.data.notificationGroupId
 		);
 		if (!found) return;
-		displayToast(event.type, getStatus(event.data), event.data.message, event.data.error);
+		logStatusMessage(
+			event.type,
+			getStatus(event.data),
+			event.data.message || '',
+			event.data.error || ''
+		);
 	};
 	return handleLogging;
 };
