@@ -4,15 +4,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+
+
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -20,6 +30,54 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 public class FunmanController {
 
+	private final TaskService taskService;
+
+	@PostMapping("/model-card")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a model configuration validation task")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "The provided document text is too long",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "404",
+						description = "The provided model or document arguments are not found",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
+	public ResponseEntity<TaskResponse> createValidationRequest(
+			@RequestParam(name = "input", required = true) final JsonNode input) {
+
+		try {
+			final TaskRequest taskRequest = new TaskRequest();
+			taskRequest.setType(TaskType.GOLLM);
+
+			return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
+		} catch (final ResponseStatusException e) {
+			throw e;
+		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+
+	}
+
+
+	// Depreacated
 	private final FunmanProxy funmanProxy;
 
 	@GetMapping("/{queryId}/halt")
