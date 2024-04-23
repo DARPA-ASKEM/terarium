@@ -1,3 +1,4 @@
+
 package software.uncharted.terarium.hmiserver.controller.funman;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,6 +15,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -60,8 +62,7 @@ public class FunmanController {
 						description = "There was an issue dispatching the request",
 						content = @Content)
 			})
-	public ResponseEntity<TaskResponse> createValidationRequest(
-			@RequestParam(name = "input", required = true) final JsonNode input) {
+	public ResponseEntity<TaskResponse> createValidationRequest(@RequestBody final JsonNode input) {
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
@@ -77,7 +78,6 @@ public class FunmanController {
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-
 	}
 
 
