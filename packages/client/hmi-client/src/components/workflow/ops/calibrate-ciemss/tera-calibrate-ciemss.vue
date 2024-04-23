@@ -158,13 +158,13 @@
 		<template #footer>
 			<Button
 				outlined
-				:style="{ marginRight: 'auto' }"
 				label="Run"
 				icon="pi pi-play"
 				@click="runCalibrate"
 				:disabled="disableRunButton"
 			/>
 			<tera-pyciemss-cancel-button
+				class="mr-auto"
 				:disabled="cancelRunId === ''"
 				:simulation-run-id="cancelRunId"
 			/>
