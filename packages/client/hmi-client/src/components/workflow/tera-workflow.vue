@@ -710,7 +710,6 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
-	// Find node by edge and reassign the input type this is required when the input has an |
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id, registry);
