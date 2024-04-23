@@ -82,6 +82,10 @@ def taskrunner_wrapper():
         result = run_validate(model, request)
         taskrunner.write_output_with_timeout({"response": result})
 
+        taskrunner.log("Shutting down")
+        taskrunner.shutdown()
+        print("Validation finished")
+
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
         sys.stderr.flush()

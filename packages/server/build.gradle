@@ -111,14 +111,6 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-hibernate {
-    enhancement {
-        lazyInitialization true
-        dirtyTracking true
-        associationManagement true
-    }
-}
-
 generateTypeScript {
     jsonLibrary = 'jackson2'
     classesWithAnnotations = [
