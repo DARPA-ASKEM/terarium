@@ -48,11 +48,16 @@ export default defineConfig({
 				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 				changeOrigin: true
 			},
-			'^/beaker/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
+			'^/beaker': {
+				target: 'https://beaker.staging.terarium.ai',
+				changeOrigin: true,
+				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
 			},
-			'^/beaker_ws/(.*)': {
-				target: 'http://beaker.staging.terarium.ai'
+			'^/beaker_ws': {
+				target: 'ws://beaker.staging.terarium.ai',
+				ws: true,
+				changeOrigin: true,
+				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
 			}
 		}
 	},
