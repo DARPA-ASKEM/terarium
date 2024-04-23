@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
+import jakarta.annotation.PostConstruct;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -73,13 +75,18 @@ public class ExtractionService {
 	// time the progress takes to reach each subsequent half
 	final Double HALFTIME_SECONDS = 2.0;
 
-	// @Value("${terarium.extractionService.poolSize:10}")
-	private int POOL_SIZE = 10;
+	@Value("${terarium.extractionService.poolSize:10}")
+	private int POOL_SIZE;
 
 	@Value("${mit-openai-api-key:}")
 	String MIT_OPENAI_API_KEY;
 
-	private final ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
+	private ExecutorService executor;
+
+	@PostConstruct
+	void init() {
+		executor = Executors.newFixedThreadPool(POOL_SIZE);
+	}
 
 	private static class ExtractionGroupInstance extends NotificationGroupInstance<ExtractionStatusUpdate> {
 
@@ -269,7 +276,8 @@ public class ExtractionService {
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
 						extraction.setMetadata(
-								objectMapper.convertValue(record, new TypeReference<Map<String, Object>>() {}));
+							objectMapper.convertValue(record, new TypeReference<>() {})
+						);
 
 						document.getAssets().add(extraction);
 						notificationInterface.sendMessage(
