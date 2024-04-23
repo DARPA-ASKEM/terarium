@@ -1,7 +1,7 @@
 import json
 import sys
-from GoLLM.core.entities import ConfigureModel
-from GoLLM.core.openai.tool_utils import model_config_chain
+from gollm.entities import ConfigureModel
+from gollm.openai.tool_utils import model_config_chain
 from taskrunner import TaskRunnerInterface
 
 

@@ -1,6 +1,6 @@
 import sys
-from GoLLM.core.entities import ModelCardModel
-from GoLLM.core.openai.tool_utils import model_card_chain
+from gollm.entities import ModelCardModel
+from gollm.openai.tool_utils import model_card_chain
 from taskrunner import TaskRunnerInterface
 
 

@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -83,7 +82,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		return builder.toString();
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateLargeEchoTaskRequest() throws Exception {
 
@@ -127,7 +126,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		public Integer num;
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 

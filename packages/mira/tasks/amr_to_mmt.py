@@ -1,5 +1,4 @@
 import sys
-import os
 import json
 from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json

@@ -134,7 +134,7 @@ class TaskRunnerInterface:
                 raise TimeoutError('Writing to output pipe timed out')
 
     def write_progress_dict_with_timeout(self, progress: dict, timeout_seconds: int):
-        return self.write_progress_json_with_timeout(json.dumps(progress), timeout_seconds)
+        return self.write_progress_str_with_timeout(json.dumps(progress), timeout_seconds)
 
     def write_output_str_with_timeout(self, output: str, timeout_seconds: int = 30):
         def write_output(output: str):

@@ -1,7 +1,7 @@
 import sys
 
-from GoLLM.core.entities import EmbeddingModel
-from GoLLM.core.openai.tool_utils import embedding_chain
+from gollm.entities import EmbeddingModel
+from gollm.openai.tool_utils import embedding_chain
 from taskrunner import TaskRunnerInterface
 
 

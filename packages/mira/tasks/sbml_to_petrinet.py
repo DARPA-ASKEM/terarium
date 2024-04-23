@@ -1,5 +1,4 @@
 import sys
-import io
 from taskrunner import TaskRunnerInterface
 from mira.metamodel.ops import simplify_rate_laws
 from mira.modeling import Model

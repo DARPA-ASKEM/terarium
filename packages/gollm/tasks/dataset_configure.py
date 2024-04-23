@@ -1,7 +1,7 @@
 import json
 import sys
-from GoLLM.core.entities import ConfigureModelDataset
-from GoLLM.core.openai.tool_utils import config_from_dataset
+from gollm.entities import ConfigureModelDataset
+from gollm.openai.tool_utils import config_from_dataset
 from taskrunner import TaskRunnerInterface
 
 
