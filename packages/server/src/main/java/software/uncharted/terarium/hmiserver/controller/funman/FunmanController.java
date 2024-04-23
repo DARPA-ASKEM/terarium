@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.funman;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
@@ -23,6 +25,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
+import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -30,9 +33,11 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 @Slf4j
 public class FunmanController {
 
+	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
+	private final CurrentUserService currentUserService;
 
-	@PostMapping("/model-card")
+	@PostMapping("/test")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a model configuration validation task")
 	@ApiResponses(
@@ -51,10 +56,6 @@ public class FunmanController {
 						description = "The provided document text is too long",
 						content = @Content),
 				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue dispatching the request",
 						content = @Content)
@@ -64,7 +65,10 @@ public class FunmanController {
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
-			taskRequest.setType(TaskType.GOLLM);
+			taskRequest.setType(TaskType.FUNMAN);
+			taskRequest.setScript(ValidateModelConfigHandler.NAME);
+			taskRequest.setUserId(currentUserService.get().getId());
+			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 
 			return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
 		} catch (final ResponseStatusException e) {
