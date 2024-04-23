@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import java.util.UUID;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.Data;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -43,5 +43,4 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 		}
 		return resp;
 	}
-
 }
