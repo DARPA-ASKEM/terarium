@@ -26,15 +26,15 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
 }
 
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "db-migration", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
+  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "db-migration-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base"]
 }
 
 # ---------------------------------
@@ -60,16 +60,6 @@ target "hmi-server-base" {
 
 target "hmi-server" {
   inherits = ["_platforms", "hmi-server-base"]
-}
-
-target "db-migration-base" {
-	context = "." # root of the repo
-	dockerfile = "./packages/db-migration/docker/Dockerfile"
-	tags = tag("db-migration", "", "")
-}
-
-target "db-migration" {
-  inherits = ["_platforms", "db-migration-base"]
 }
 
 target "gollm-taskrunner-base" {
@@ -101,4 +91,3 @@ target "funman-taskrunner-base" {
 target "funman-taskrunner" {
   inherits = ["_platforms", "funman-taskrunner-base"]
 }
-
