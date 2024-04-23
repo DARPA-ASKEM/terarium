@@ -31,7 +31,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/kbirk/remove-tasks.tar.gz && \
+RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
     tar -zxvf gollm.tar.gz && \
     mv GoLLM-* GoLLM && \
     cd /GoLLM && \
