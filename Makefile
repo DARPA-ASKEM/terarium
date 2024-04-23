@@ -40,14 +40,6 @@ image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace hmi-client build
 	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-TARGETS += db-migration
-clean-db-migration: clean-db-migration-base
-	rm -rf $(PROJECT_DIR)/packages/db-migration/docker/build
-
-image-db-migration: clean-db-migration
-	./gradlew :packages:db-migration:build -x test
-	mv $(PROJECT_DIR)/packages/db-migration/build $(PROJECT_DIR)/packages/db-migration/docker/build
-
 TARGETS += gollm-taskrunner
 clean-gollm-taskrunner: clean-gollm-taskrunner-base
 	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
@@ -83,10 +75,6 @@ clean: $(TARGETS:%=clean-%)
 .PHONY: clean-hmi-server-base
 clean-hmi-server-base:
 	./gradlew :packages:server:clean
-
-.PHONY: clean-db-migration-base
-clean-db-migration-base:
-	./gradlew :packages:db-migration:clean
 
 .PHONY: clean-gollm-taskrunner-base
 clean-gollm-taskrunner-base:

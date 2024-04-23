@@ -126,7 +126,7 @@ function formatData(data: DatasetColumn[]) {
 		description: col.description,
 		concept: col.metadata?.groundings?.identifiers,
 		unit: col.metadata?.unit,
-		dataType: col.dataType,
+		dataType: col.metadata?.column_stats?.type,
 		stats: col.metadata?.column_stats,
 		column: col
 	}));
