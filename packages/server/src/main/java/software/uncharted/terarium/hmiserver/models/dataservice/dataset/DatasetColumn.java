@@ -1,13 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+
+import java.util.List;
+import java.util.Map;
 
 /** Represents a column in a dataset */
 @Data
@@ -68,5 +69,13 @@ public class DatasetColumn {
 		DATE,
 		@JsonAlias("time")
 		TIME
+	}
+
+	public void updateMetadata(final Map<String, Object> metadata) {
+		if (this.metadata == null) {
+			this.metadata = metadata;
+		} else {
+			this.metadata.putAll(metadata);
+		}
 	}
 }

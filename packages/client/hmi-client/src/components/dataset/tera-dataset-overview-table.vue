@@ -124,9 +124,12 @@ function formatData(data: DatasetColumn[]) {
 		id: col.name,
 		name: formatName(col.name),
 		description: col.description,
+		// eslint-disable-next-line no-nested-ternary
 		concept: col.metadata?.groundings?.identifiers
 			? col.metadata.groundings.identifiers
-			: parseCurie(String(col.grounding?.identifiers[0].curie)),
+			: col.grounding?.identifiers[0]
+				? parseCurie(String(col.grounding?.identifiers[0].curie))
+				: null,
 		unit: col.metadata?.unit,
 		dataType: col.metadata?.column_stats?.type,
 		stats: col.metadata?.column_stats,

@@ -601,7 +601,8 @@ public class KnowledgeController {
 				newCol.setGrounding(groundings);
 				newCol.setAnnotations(col.getAnnotations());
 				newCol.setDescription(annotation.get("description").asText());
-				newCol.setMetadata(mapper.convertValue(annotation, Map.class));
+				newCol.setMetadata(col.getMetadata());
+				newCol.updateMetadata(mapper.convertValue(annotation, Map.class));
 				columns.add(newCol);
 			}
 
