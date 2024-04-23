@@ -33,7 +33,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("execution_payload")
 	@Convert(converter = JpaConverterJson.class)
-	private SimulationRequest executionPayload;
+	private JsonNode executionPayload;
 
 	@TSOptional
 	private String description;
@@ -102,7 +102,7 @@ public class Simulation extends TerariumAsset {
 		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); //done
 		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); //done
 		clone.setUserId(this.userId); // done
-		clone.setExecutionPayload(this.executionPayload.clone()); //done
+		clone.setExecutionPayload(this.executionPayload.deepCopy()); //done
 		clone.setWorkflowId(this.workflowId); //TODO
 		clone.setProjectId(this.projectId); // TODO
 

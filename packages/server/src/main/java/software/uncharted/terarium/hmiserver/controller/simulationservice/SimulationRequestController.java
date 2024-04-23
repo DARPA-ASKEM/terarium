@@ -59,6 +59,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final ModelConfigurationService modelConfigService;
 
+	private final ObjectMapper objectMapper;
+
 	@Value("${terarium.sciml-queue}")
 	private String SCIML_QUEUE;
 
@@ -93,7 +95,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.SCIML.toString());
 
-		sim.setExecutionPayload(request);
+		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 
 		// FIXME: These fiels are arguable unnecessary
@@ -136,7 +138,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.CIEMSS.toString());
 
-		sim.setExecutionPayload(request);
+		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 
 		final Optional<Project> project = projectService.getProject(request.getProjectId());

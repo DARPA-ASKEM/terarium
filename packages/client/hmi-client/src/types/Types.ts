@@ -498,7 +498,7 @@ export interface RegNetVertex {
 }
 
 export interface Simulation extends TerariumAsset {
-    executionPayload: SimulationRequest;
+    executionPayload: any;
     description?: string;
     resultFiles?: string[];
     type: SimulationType;
