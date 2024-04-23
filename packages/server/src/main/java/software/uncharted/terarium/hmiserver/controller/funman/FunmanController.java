@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,9 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
 
+
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/funman/queries")
 @RequiredArgsConstructor
@@ -34,6 +38,14 @@ public class FunmanController {
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
+
+	private final ValidateModelConfigHandler validateModelConfigHandler;
+
+	@PostConstruct
+	void init() {
+		taskService.addResponseHandler(validateModelConfigHandler);
+	}
+
 
 	@PostMapping("/test")
 	@Secured(Roles.USER)
@@ -66,6 +78,12 @@ public class FunmanController {
 			taskRequest.setScript(ValidateModelConfigHandler.NAME);
 			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
+
+			// TODO: create Simulation for tracking
+			final UUID uuid = UUID.randomUUID();
+			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
+			props.setSimulationId(uuid);
+			taskRequest.setAdditionalProperties(props);
 
 			return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
 		} catch (final ResponseStatusException e) {
