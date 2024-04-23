@@ -342,11 +342,14 @@ public class ExtractionService {
 				throw new ResponseStatusException(
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
+			} catch(final RuntimeException e) {
+				notificationInterface.sendError(e.getMessage());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 			} catch (final Exception e) {
 				final String error = "Unable to extract pdf";
 				log.error(error, e);
 				notificationInterface.sendError("Extraction failed, unexpected error.");
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		});
 	}
