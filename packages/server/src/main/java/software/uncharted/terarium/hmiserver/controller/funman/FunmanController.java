@@ -60,7 +60,7 @@ public class FunmanController {
 														implementation = TaskResponse.class))),
 				@ApiResponse(
 						responseCode = "400",
-						description = "The provided document text is too long",
+						description = "Invalid input or bad request",
 						content = @Content),
 				@ApiResponse(
 						responseCode = "500",
@@ -76,7 +76,9 @@ public class FunmanController {
 			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 
-			// TODO: create Simulation for tracking
+			// TODO:
+			// - create Simulation for tracking
+			// - mark Simulation as pending
 			final UUID uuid = UUID.randomUUID();
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(uuid);
@@ -91,7 +93,8 @@ public class FunmanController {
 		}
 	}
 
-	// Depreacated
+
+	// The methods below are depreacated
 	private final FunmanProxy funmanProxy;
 
 	@GetMapping("/{queryId}/halt")

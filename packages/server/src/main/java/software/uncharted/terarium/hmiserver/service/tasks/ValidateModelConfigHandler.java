@@ -29,14 +29,12 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
 
-			System.out.println("");
-			System.out.println("");
-			System.out.println("");
+			// TODO:
+			// - Retrive final result json
+			// - Upload final result into S3
+			// - Mark simulation as completed, update result file
 			System.out.println("");
 			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + simulationId.toString());
-			System.out.println("");
-			System.out.println("");
-			System.out.println("");
 			System.out.println("");
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
