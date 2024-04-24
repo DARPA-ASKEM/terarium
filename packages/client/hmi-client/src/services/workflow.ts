@@ -114,14 +114,11 @@ export const addEdge = (
 ) => {
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
 	const targetNode = wf.nodes.find((d) => d.id === targetId);
-	if (!sourceNode) return;
-	if (!targetNode) return;
+	if (!sourceNode || !targetNode) return;
 
 	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
 	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
-
-	if (!sourceOutputPort) return;
-	if (!targetInputPort) return;
+	if (!sourceOutputPort || !targetInputPort) return;
 
 	// Check if edge already exist
 	const existingEdge = wf.edges.find(
@@ -131,16 +128,15 @@ export const addEdge = (
 			d.target === targetId &&
 			d.targetPortId === targetPortId
 	);
-
 	if (existingEdge) return;
-
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
 
 	const allowedTypes = targetInputPort.type.split('|');
-	if (!allowedTypes.includes(sourceOutputPort.type)) return;
-
-	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+	if (
+		!allowedTypes.includes(sourceOutputPort.type) ||
+		(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
+	) {
 		return;
 	}
 
@@ -153,8 +149,8 @@ export const addEdge = (
 		targetInputPort.value = sourceOutputPort.value;
 	}
 
-	// Transfer concrete type information where it can accept multiple types
-	// Note this will lock in the typing, even after unlink
+	// Transfer concrete type to the input type to match the output type
+	// Saves the original type in case we want to revert when we unlink the edge
 	if (allowedTypes.length > 1) {
 		targetInputPort.originalType = targetInputPort.type;
 		targetInputPort.type = sourceOutputPort.type;
@@ -190,8 +186,8 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
 	delete targetPort.label;
 
-	// Resets the type to the initial input type if it was a union type
-	if (targetPort?.originalType?.includes('|')) {
+	// Resets the type to the original type (used when multiple types for a port are allowed)
+	if (targetPort?.originalType) {
 		targetPort.type = targetPort.originalType;
 	}
 
