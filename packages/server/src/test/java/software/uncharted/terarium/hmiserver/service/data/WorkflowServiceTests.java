@@ -181,7 +181,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow);
 
-
 		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
