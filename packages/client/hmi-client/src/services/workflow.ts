@@ -232,9 +232,8 @@ export const updateNodeStatus = (wf: Workflow, nodeId: string, status: OperatorS
 const defaultPortLabels = {
 	modelId: 'Model',
 	modelConfigId: 'Model configuration',
-	'modelId|modelConfigId': 'Model or Model configuration',
 	datasetId: 'Dataset',
-	'datasetId|simulationId': 'Dataset or Simulation',
+	simulationId: 'Simulation',
 	codeAssetId: 'Code asset'
 };
 
@@ -246,6 +245,11 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	// Assign to default label using port type
 	else if (defaultPortLabels[type]) {
 		portLabel = defaultPortLabels[type];
+	}
+	// Create name if there are multiple types
+	else if (type.includes('|')) {
+		const types = type.split('|');
+		portLabel = types.map((t) => defaultPortLabels[t] ?? t).join(' or ');
 	}
 
 	if (isOptional) portLabel = portLabel.concat(' (optional)');
