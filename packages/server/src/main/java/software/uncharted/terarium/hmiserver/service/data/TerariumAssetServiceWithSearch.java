@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 /**
  * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
@@ -37,10 +38,11 @@ public abstract class TerariumAssetServiceWithSearch<
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
 			final R repository,
 			final Class<T> assetClass) {
 
-		super(config, projectAssetService, repository, assetClass);
+		super(config, projectAssetService, repository, s3ClientService, assetClass);
 
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
