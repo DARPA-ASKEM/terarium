@@ -35,14 +35,13 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflowService.teardownIndexAndAlias();
 	}
 
-	final Workflow workflow = new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description");
-
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateWorkflow() throws Exception {
 
-		final Workflow workflow =
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description");
+		final Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name0");
+		workflow.setDescription("test-workflow-description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/workflows")
 						.with(csrf())
@@ -55,12 +54,21 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflows() throws Exception {
 
-		workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
-		workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
-		workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
+		final Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name1");
+		workflow.setDescription("test-workflow-description");
+
+		final Workflow workflow2 = new Workflow();
+		workflow2.setName("test-workflow-name2");
+		workflow2.setDescription("test-workflow-description2");
+
+		final Workflow workflow3 = new Workflow();
+		workflow3.setName("test-workflow-name3");
+		workflow3.setDescription("test-workflow-description3");
+
+		workflowService.createAsset(workflow);
+		workflowService.createAsset(workflow2);
+		workflowService.createAsset(workflow3);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf()))
 				.andExpect(status().isOk())
@@ -71,8 +79,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
+		Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name1");
+		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
 						.with(csrf()))
@@ -83,8 +93,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
+		Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name1");
+		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
 						.with(csrf())
@@ -97,8 +109,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(
-				new Workflow().setName("test-workflow-name0").setDescription("test-workflow-description"));
+		Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name1");
+		workflow.setDescription("test-workflow-description");
+		workflow = workflowService.createAsset(workflow);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
 						.with(csrf()))

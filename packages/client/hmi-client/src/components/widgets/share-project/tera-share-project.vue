@@ -14,8 +14,9 @@
 				:options="usersMenu"
 				optionLabel="name"
 				editable
+				showClear
 				placeholder="Add people and groups"
-				@update:model-value="(value) => addNewSelectedUser(value.id)"
+				@update:model-value="(value) => addNewSelectedUser(value?.id)"
 				class="w-full p-dropdown-sm"
 			/>
 			<section class="selected-users" v-if="selectedUsers.size > 0">
@@ -127,15 +128,17 @@ function addExistingUser(id: string, relationship?: string) {
 	}
 }
 
-function addNewSelectedUser(id: string) {
+function addNewSelectedUser(id?: string) {
+	if (!id) {
+		return;
+	}
 	const user = users.value.find((u) => u.id === id);
 	if (user) {
 		newSelectedUsers.value.add(user);
 		newSelectedUserPermissions.set(id, 'writer');
-	}
 
-	// Clear the selected user to allow for re-selection
-	selectedUser.value = null;
+		selectedUser.value = null;
+	}
 }
 
 function onAfterHide() {
@@ -232,7 +235,6 @@ watch(
 	async () => {
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
-		console.log(users.value);
 	},
 	{ immediate: true }
 );
