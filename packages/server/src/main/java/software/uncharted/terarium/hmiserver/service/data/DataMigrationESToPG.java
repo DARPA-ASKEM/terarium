@@ -26,10 +26,8 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.DataMigration;
 import software.uncharted.terarium.hmiserver.models.DataMigration.MigrationState;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.repository.DataMigrationRepository;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
-import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
@@ -140,9 +138,8 @@ public class DataMigrationESToPG {
 
 	List<MigrationConfig<?, ?>> getMigrations() {
 		return List.of(
-			new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
-			new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex())
-			);
+				new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
+				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()));
 	}
 
 	@PostConstruct
