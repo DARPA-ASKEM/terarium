@@ -238,6 +238,7 @@ const defaultPortLabels = {
 	modelConfigId: 'Model configuration',
 	'modelId|modelConfigId': 'Model or Model configuration',
 	datasetId: 'Dataset',
+	'datasetId|simulationId': 'Dataset or Simulation',
 	codeAssetId: 'Code asset'
 };
 
