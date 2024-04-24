@@ -27,7 +27,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
-	public static final String NAME = "gollm:dataset_configure";
+	public static final String NAME = "gollm_task:dataset_configure";
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;

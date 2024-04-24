@@ -27,7 +27,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
-	public static final String NAME = "gollm:configure_model";
+	public static final String NAME = "gollm_task:configure_model";
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
@@ -97,7 +97,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				}
 
 				// Set the all the GoLLM extractions into the model metadata
-				// FIXME - It is not what we should do, this is a hack for the March 2024 Evaluation
+				// FIXME - It is not what we should do, this is a hack for the March 2024
+				// Evaluation
 				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
