@@ -142,7 +142,7 @@
 				viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
-			PDF Extractions may still be processing please refresh in some time...
+			PDF Extractions are processing please come back in some time...
 		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
@@ -177,7 +177,7 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import { getStatus } from '@/composables/notificationManager';
+import { getStatus } from '@/services/notificationEventHandlers';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -316,11 +316,12 @@ onMounted(async () => {
 });
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
+	console.log(event.data.message);
 	if (!event.data || event.data.documentId !== props.assetId) return;
 
 	const status = getStatus(event.data);
-	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.  Lets wait for the Notification service to be fully integrated and then this can be removed.
-	if (status === 'Completed' && event.data.message.includes('Dispatching')) {
+	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
+	if (status === 'Completed' || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);
 	}
 }

@@ -4,7 +4,7 @@ import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
-const getStatus = (data: { error: string; t: number }) => {
+export const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return 'Failed';
 	if (data.t >= 1.0) return 'Completed';
 	return 'Running';
