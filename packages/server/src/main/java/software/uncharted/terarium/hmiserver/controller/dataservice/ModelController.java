@@ -378,7 +378,7 @@ public class ModelController {
 					modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
 			modelConfigurations.forEach(config -> {
-				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
+				final JsonNode configuration = config.getConfiguration();
 
 				// check if configuration has a metadata field, if it doesnt make it an empty
 				// object

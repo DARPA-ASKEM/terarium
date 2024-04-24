@@ -225,7 +225,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			final ObjectMapper mapper = new ObjectMapper();
 			final Optional<ModelConfiguration> modelConfig = modelConfigService.getAsset(modelConfigId);
-			final JsonNode configuration = mapper.convertValue(modelConfig.get().getConfiguration(), JsonNode.class);
+			final JsonNode configuration = modelConfig.get().getConfiguration();
 			// Parse the values found under the following path:
 			// AMR -> configuration -> metadata -> timeseries -> parameter name -> value
 			// EG) "timeseries": {
