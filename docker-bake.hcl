@@ -64,7 +64,7 @@ target "hmi-server" {
 
 target "gollm-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.GoLLM"
+	dockerfile = "./packages/gollm/Dockerfile"
 	tags = tag("gollm-taskrunner", "", "")
 }
 
@@ -74,7 +74,7 @@ target "gollm-taskrunner" {
 
 target "mira-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.Mira"
+	dockerfile = "./packages/mira/Dockerfile"
 	tags = tag("mira-taskrunner", "", "")
 }
 
@@ -84,7 +84,7 @@ target "mira-taskrunner" {
 
 target "funman-taskrunner-base" {
 	context = "." # root of the repo
-	dockerfile = "./packages/taskrunner/docker/Dockerfile.funman"
+	dockerfile = "./packages/funman/Dockerfile"
 	tags = tag("funman-taskrunner", "", "")
 }
 
