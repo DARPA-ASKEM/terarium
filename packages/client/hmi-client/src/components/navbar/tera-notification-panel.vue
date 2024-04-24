@@ -12,8 +12,8 @@
 			{{ unacknowledgedFinishedItems.length }}</span
 		>
 	</div>
-	<OverlayPanel class="notification-container" ref="panel" @hide="acknowledgeFinishedItems">
-		<div class="header">
+	<OverlayPanel class="notification-panel-container" ref="panel" @hide="acknowledgeFinishedItems">
+		<header>
 			<h1>Notifications</h1>
 			<Button
 				label="Clear notifications"
@@ -21,12 +21,16 @@
 				:disabled="!hasFinishedItems"
 				@click="clearFinishedItems"
 			/>
-		</div>
+		</header>
 		<ul class="notification-items-container" v-if="notificationItems.length > 0">
-			<li class="notification-item" v-for="item in notificationItems" :key="item.id">
+			<li
+				class="notification-item"
+				v-for="item in notificationItems"
+				:key="item.notificationGroupId"
+			>
 				<p class="heading">
 					{{ getTitleText(item) }}
-					<tera-asset-link text-only :label="item.assetName" :asset-route="getAssetRoute(item)" />
+					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
 				<p class="msg">{{ item.msg }}</p>
 				<div v-if="item.status === 'Running'" class="progressbar-container">
@@ -93,9 +97,9 @@ const getActionText = (item: NotificationItem) => {
 const getAssetRoute = (item: NotificationItem) => {
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
-			return { assetId: item.id, pageType: AssetType.Document };
+			return { assetId: item.assetId, pageType: AssetType.Document };
 		default:
-			return { assetId: item.id, pageType: AssetType.Document };
+			return { assetId: item.assetId, pageType: AssetType.Document };
 	}
 };
 
@@ -107,6 +111,31 @@ const getElapsedTimeText = (item: NotificationItem) => {
 </script>
 
 <style>
+/*
+ * Reset the default overlay component container style.
+ * Note that this style block isn't scoped since the overlay component is appended to the body html dynamically when opened
+ * and is placed outside of this component's scope and the scoped styles aren't applied to it.
+ */
+.notification-panel-container.p-overlaypanel {
+	top: var(--navbar-outer-height) !important;
+	width: 34rem;
+	box-shadow: 0px 4px 4px 0px #00000040;
+	padding: var(--content-padding);
+	padding-bottom: 1.5rem;
+	gap: var(--gap);
+	border: 1px solid var(--surface-border-alt);
+	border-radius: var(--border-radius-medium);
+	.p-overlaypanel-content {
+		padding: 0;
+	}
+	&:after,
+	&:before {
+		content: none;
+	}
+}
+</style>
+
+<style scoped>
 .notification-button {
 	position: relative;
 	.p-button.p-button-secondary.p-button-text {
@@ -127,25 +156,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		padding: 2px 5px;
 	}
 }
-/* Reset default overlay component style */
-.notification-container.p-overlaypanel .p-overlaypanel-content {
-	padding: 0;
-}
-.notification-container.p-overlaypanel:after,
-.notification-container.p-overlaypanel:before {
-	content: none;
-}
-.notification-container.p-overlaypanel {
-	top: 51px !important;
-	width: 540px;
-	box-shadow: 0px 4px 4px 0px #00000040;
-	padding: var(--content-padding);
-	padding-bottom: 1.5rem;
-	gap: var(--gap);
-	border: 1px solid #c3ccd6;
-	border-radius: var(--border-radius-medium);
-}
-.header {
+header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -205,21 +216,21 @@ const getElapsedTimeText = (item: NotificationItem) => {
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--gap-small);
-	}
-	.done-container .status-msg {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-	.done-container .status-msg.ok {
-		color: var(--primary-color);
-	}
-	.done-container .status-msg.error {
-		color: var(--error-color);
-	}
-	.done-container .time-msg {
-		font-size: var(--font-caption);
-		color: var(--text-color-secondary);
+		.status-msg {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+		.status-msg.ok {
+			color: var(--primary-color);
+		}
+		.status-msg.error {
+			color: var(--error-color);
+		}
+		.time-msg {
+			font-size: var(--font-caption);
+			color: var(--text-color-secondary);
+		}
 	}
 }
 </style>
