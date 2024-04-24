@@ -9,6 +9,7 @@ on:
   push:
     paths:
       - 'packages/taskrunner/**'
+      - 'packages/gollm/**'
     branches:
       - 'main'
     tags:
