@@ -118,7 +118,7 @@
 			/>
 		</form>
 		<template #footer>
-			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
+			<Button label="Save" size="large" @click="saveNewModel" />
 			<Button
 				class="p-button-secondary"
 				size="large"
@@ -289,6 +289,10 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	if (!stratifiedAmr.value) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
 
 	// Create output
 	const modelData = await createModel(stratifiedAmr.value);
@@ -387,11 +391,12 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string) => {
-	if (!stratifiedAmr.value || !modelName) return;
-	stratifiedAmr.value.header.name = modelName;
+const saveNewModel = async () => {
+	if (!stratifiedAmr.value) return;
+	stratifiedAmr.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
+	console.log(stratifiedAmr.value);
 	const modelData = await createModel(stratifiedAmr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
