@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
@@ -20,8 +21,9 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, repository, Workflow.class);
+		super(config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository, Workflow.class);
 	}
 
 	@Override
@@ -68,5 +70,10 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			}
 		}
 		return super.updateAsset(asset);
+	}
+
+	@Override
+	protected String getAssetPath() {
+		throw new UnsupportedOperationException("Workflows are not stored in S3");
 	}
 }
