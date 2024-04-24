@@ -316,8 +316,7 @@ onMounted(async () => {
 });
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
-	if (!event.data) return;
-	if (event.data.documentId !== props.assetId) return;
+	if (!event.data || event.data.documentId !== props.assetId) return;
 
 	const status = getStatus(event.data);
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.  Lets wait for the Notification service to be fully integrated and then this can be removed.
