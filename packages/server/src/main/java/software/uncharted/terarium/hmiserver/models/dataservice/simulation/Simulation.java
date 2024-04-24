@@ -83,17 +83,17 @@ public class Simulation extends TerariumAsset {
 
 		cloneSuperFields(clone);
 
-		clone.setDescription(this.description); // done
+		clone.setDescription(this.description);
 
-		clone.setResultFiles(new ArrayList<>(this.resultFiles)); // done
-		clone.setType(SimulationType.valueOf(this.type.name())); // done
-		clone.setStatus(ProgressState.valueOf(this.status.name())); // done
-		clone.setStatusMessage(this.statusMessage); // done
-		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null); // done
-		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null); // done
-		clone.setEngine(SimulationEngine.valueOf(this.engine.name())); // done
-		clone.setUserId(this.userId); // done
-		clone.setExecutionPayload(this.executionPayload.deepCopy()); // done
+		clone.setResultFiles(new ArrayList<>(this.resultFiles));
+		clone.setType(SimulationType.valueOf(this.type.name()));
+		clone.setStatus(ProgressState.valueOf(this.status.name()));
+		clone.setStatusMessage(this.statusMessage);
+		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null);
+		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null);
+		clone.setEngine(SimulationEngine.valueOf(this.engine.name()));
+		clone.setUserId(this.userId);
+		clone.setExecutionPayload(this.executionPayload.deepCopy());
 		clone.setProjectId(this.projectId); // TODO
 
 		return clone;
