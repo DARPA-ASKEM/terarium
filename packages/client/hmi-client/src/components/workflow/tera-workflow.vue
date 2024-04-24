@@ -440,7 +440,7 @@ const closeDrilldown = async () => {
 };
 
 const removeNode = (event) => {
-	workflowService.removeNode(wf.value, event, registry);
+	workflowService.removeNode(wf.value, event);
 };
 
 const duplicateBranch = (id: string) => {
@@ -712,7 +712,7 @@ function removeEdges(portId: string) {
 	);
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
-			workflowService.removeEdge(wf.value, edge.id, registry);
+			workflowService.removeEdge(wf.value, edge.id);
 		});
 		workflowDirty = true;
 	} else logger.error(`Edges with port id:${portId} not found.`);
