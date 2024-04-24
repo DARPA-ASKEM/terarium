@@ -116,6 +116,7 @@ import TeraModelTemplateEditor from '@/components/model-template/tera-model-temp
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -150,7 +151,7 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
-const modelId = props.node.inputs[0].value?.[0];
+
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -281,6 +282,15 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);

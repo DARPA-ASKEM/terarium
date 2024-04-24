@@ -122,7 +122,7 @@ public class SearchByAssetTypeController {
 				final TaskRequest req = new TaskRequest();
 				req.setType(TaskType.GOLLM);
 				req.setInput(embeddingRequest);
-				req.setScript("gollm:embedding");
+				req.setScript("gollm_task:embedding");
 				req.setUserId(currentUserService.get().getId());
 
 				final TaskResponse resp = taskService.runTaskSync(req, REQUEST_TIMEOUT_SECONDS);

@@ -40,7 +40,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflowService.teardownIndexAndAlias();
 	}
 
-	Workflow createWorkflow() throws Exception {
+	static Workflow createWorkflow() throws Exception {
 
 		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
 		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
@@ -52,15 +52,15 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		return (Workflow) new Workflow()
-				.setName("test-workflow-name-0")
 				.setDescription("test-workflow-description-0")
 				.setTransform(new Transform().setX(1).setY(2).setK(3))
 				.setNodes(List.of(a, b, c, d))
 				.setEdges(List.of(ab, bc, cd))
-				.setPublicAsset(true);
+				.setPublicAsset(true)
+				.setName("test-workflow-name-0");
 	}
 
-	Workflow createWorkflow(final String key) throws Exception {
+	static Workflow createWorkflow(final String key) throws Exception {
 
 		final WorkflowNode a = new WorkflowNode().setId(UUID.randomUUID());
 		final WorkflowNode b = new WorkflowNode().setId(UUID.randomUUID());
@@ -71,13 +71,15 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowEdge bc = new WorkflowEdge().setSource(b.getId()).setTarget(c.getId());
 		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
-		return (Workflow) new Workflow()
-				.setName("test-workflow-name-" + key)
-				.setDescription("test-workflow-description-" + key)
-				.setTransform(new Transform().setX(1).setY(2).setK(3))
-				.setNodes(List.of(a, b, c, d))
-				.setEdges(List.of(ab, bc, cd))
-				.setPublicAsset(true);
+		final Workflow workflow = new Workflow();
+		workflow.setName("test-workflow-name-" + key);
+		workflow.setDescription("test-workflow-description-" + key);
+		workflow.setTransform(new Transform().setX(1).setY(2).setK(3));
+		workflow.setNodes(List.of(a, b, c, d));
+		workflow.setEdges(List.of(ab, bc, cd));
+		workflow.setPublicAsset(true);
+
+		return workflow;
 	}
 
 	@Test
@@ -177,7 +179,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneWorkflow() throws Exception {
 
 		Workflow workflow = createWorkflow();
-
 		workflow = workflowService.createAsset(workflow);
 
 		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
@@ -227,7 +228,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void testItCanExportAndImportWorkflow() throws Exception {
 
 		Workflow workflow = createWorkflow();
-
 		workflow = workflowService.createAsset(workflow);
 
 		final byte[] exported = workflowService.exportAsset(workflow.getId());

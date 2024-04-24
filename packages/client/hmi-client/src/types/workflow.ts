@@ -77,6 +77,7 @@ export interface Operation {
 export interface WorkflowPort {
 	id: string;
 	type: string;
+	originalType?: string;
 	status: WorkflowPortStatus;
 	label?: string;
 	value?: any[] | null;
