@@ -507,9 +507,9 @@ export interface Simulation extends TerariumAsset {
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
+    workflowId: string;
     userId?: string;
     projectId?: string;
-    workflow: Workflow;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -958,14 +958,6 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface Workflow extends TerariumAsset {
-    description: string;
-    transform: Transform;
-    nodes: WorkflowNode[];
-    edges: WorkflowEdge[];
-    simulation: Simulation;
-}
-
 export interface XDDFacetsItemResponse {
     buckets: XDDFacetBucket[];
     doc_count_error_upper_bound: number;
@@ -1070,24 +1062,6 @@ export interface PetriNetTransitionProperties {
     name: string;
     description: string;
     grounding?: ModelGrounding;
-}
-
-export interface Transform {
-    x: number;
-    y: number;
-    k: number;
-}
-
-export interface WorkflowNode {
-    id: string;
-    workflowId: string;
-}
-
-export interface WorkflowEdge {
-    id: string;
-    workflowId: string;
-    source: string;
-    target: string;
 }
 
 export interface XDDFacetBucket {

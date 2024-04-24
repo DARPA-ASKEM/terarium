@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,16 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
-import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Slf4j
 public class WorkflowServiceTests extends TerariumApplicationTests {
@@ -37,11 +30,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private WorkflowService workflowService;
 
-	@Autowired
-	SimulationService simulationService;
-
-	static ObjectMapper objectMapper = new ObjectMapper();
-
 	@BeforeEach
 	public void setup() throws IOException {
 		workflowService.setupIndexAndAliasAndEnsureEmpty();
@@ -50,26 +38,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		workflowService.teardownIndexAndAlias();
-	}
-
-	static SimulationRequest createSimRequest() {
-		final SimulationRequest request = new SimulationRequest();
-		request.setModelConfigId(UUID.randomUUID());
-		request.setTimespan(new TimeSpan());
-		return request;
-	}
-
-	static Simulation createSimulation(final String key) {
-		final Simulation simulation = new Simulation();
-		simulation.setName("test-simulation-name-" + key);
-		simulation.setDescription("test-simulation-description-" + key);
-		simulation.setType(SimulationType.SIMULATION);
-		simulation.setExecutionPayload(objectMapper.convertValue(createSimRequest(), JsonNode.class));
-		simulation.setResultFiles(Arrays.asList("never", "gonna", "give", "you", "up"));
-		simulation.setStatus(ProgressState.RUNNING);
-		simulation.setEngine(SimulationEngine.SCIML);
-
-		return simulation;
 	}
 
 	static Workflow createWorkflow() throws Exception {
@@ -210,13 +178,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCloneWorkflow() throws Exception {
 
-		Simulation simulation = createSimulation("A");
-		simulation = simulationService.createAsset(simulation);
-
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow);
 
-		workflow.setSimulation(simulation);
 		workflowService.updateAsset(workflow);
 
 		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
@@ -259,21 +223,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(
 				workflow.getEdges().get(2).getWorkflowId(),
 				cloned.getEdges().get(2).getWorkflowId());
-		Assertions.assertNotEquals(
-				workflow.getSimulation().getId(), cloned.getSimulation().getId());
-		Assertions.assertEquals(
-				workflow.getSimulation().getName(), cloned.getSimulation().getName());
-		Assertions.assertEquals(
-				workflow.getSimulation().getDescription(),
-				cloned.getSimulation().getDescription());
-		Assertions.assertEquals(
-				workflow.getSimulation().getResultFiles().size(),
-				cloned.getSimulation().getResultFiles().size());
-		Assertions.assertEquals(
-				workflow.getSimulation().getExecutionPayload(),
-				cloned.getSimulation().getExecutionPayload());
-		Assertions.assertEquals(
-				workflow.getSimulation().getType(), cloned.getSimulation().getType());
 	}
 
 	@Test
@@ -282,8 +231,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow);
-
-		// TODO: Once we have import/export nailed down we need to test simulations here too
 
 		final byte[] exported = workflowService.exportAsset(workflow.getId());
 

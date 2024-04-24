@@ -1,9 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,14 +10,11 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -42,21 +37,11 @@ public class Workflow extends TerariumAsset {
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
 
-	@OneToOne(mappedBy = "workflow")
-	@Where(clause = "deleted_on IS NULL")
-	@ToString.Exclude
-	@JsonManagedReference
-	private Simulation simulation;
-
 	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
 
 		cloneSuperFields(clone);
-
-		if (simulation != null) {
-			clone.setSimulation(simulation.clone());
-		}
 
 		clone.description = this.description;
 		if (this.transform != null) {
