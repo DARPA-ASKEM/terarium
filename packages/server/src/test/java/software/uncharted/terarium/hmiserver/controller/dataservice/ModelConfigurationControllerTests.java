@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -68,7 +69,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value"));
+				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 						.with(csrf())
@@ -85,7 +86,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -102,7 +103,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
