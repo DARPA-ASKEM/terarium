@@ -85,7 +85,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			configuration.setModelId(model.getId());
 			configuration.setName("New configuration from dataset");
 			configuration.setDescription("");
-			configuration.setConfiguration(objectMapper.convertValue(modelCopy, JsonNode.class));
+			configuration.setConfiguration(modelCopy);
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {

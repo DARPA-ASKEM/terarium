@@ -28,5 +28,5 @@ public class ModelConfiguration extends TerariumAssetThatSupportsAdditionalPrope
 	@JsonProperty("model_id")
 	private UUID modelId;
 
-	private JsonNode configuration;
+	private Model configuration;
 }

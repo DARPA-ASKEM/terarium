@@ -378,12 +378,12 @@ public class ModelController {
 					modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
 			modelConfigurations.forEach(config -> {
-				final JsonNode configuration = config.getConfiguration();
+				final Model configuration = config.getConfiguration();
 
 				// check if configuration has a metadata field, if it doesnt make it an empty
 				// object
-				if (configuration.get("metadata") == null) {
-					((ObjectNode) configuration).putObject("metadata");
+				if (configuration.getMetadata() == null) {
+					configuration.setMetadata(new ModelMetadata());
 				}
 
 				// Find the Document Assets linked via provenance to the model configuration
@@ -433,11 +433,7 @@ public class ModelController {
 				sourceNames.addAll(documentSourceNames);
 				sourceNames.addAll(datasetSourceNames);
 
-				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
-
-				metadata.set("source", objectMapper.valueToTree(sourceNames));
-
-				((ObjectNode) configuration).set("metadata", metadata);
+				configuration.getMetadata().setSource(objectMapper.valueToTree(sourceNames));
 
 				config.setConfiguration(configuration);
 			});

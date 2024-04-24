@@ -233,7 +233,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
-    configuration: any;
+    configuration: Model;
     model_id: string;
 }
 
@@ -897,6 +897,7 @@ export interface ModelMetadata {
     parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
+    source?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];

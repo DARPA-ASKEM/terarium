@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -54,7 +55,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
+				.setConfiguration(new Model()));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -69,7 +70,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class));
+				.setConfiguration(new Model());
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 						.with(csrf())
@@ -86,7 +87,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
+				.setConfiguration(new Model()));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -103,7 +104,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework")
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
-				.setConfiguration(objectMapper.convertValue(Map.of("key", "value"), JsonNode.class)));
+				.setConfiguration(new Model()));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))

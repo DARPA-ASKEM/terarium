@@ -648,7 +648,7 @@ const updateConfigFromModel = (inputModel: Model) => {
 
 const runSanityCheck = () => {
 	const errors: string[] = [];
-	const modelToCheck = knobs.value?.transientModelConfig?.configuration as Model;
+	const modelToCheck = knobs.value?.transientModelConfig?.configuration;
 	if (!modelToCheck) {
 		errors.push('no model defined in configuration');
 		return errors;

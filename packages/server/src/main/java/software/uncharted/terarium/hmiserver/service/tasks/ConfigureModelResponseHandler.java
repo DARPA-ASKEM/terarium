@@ -107,7 +107,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				configuration.setName(condition.get("name").asText());
 				configuration.setDescription(condition.get("description").asText());
 
-				configuration.setConfiguration(objectMapper.convertValue(modelCopy, JsonNode.class));
+				configuration.setConfiguration(modelCopy);
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
 				// add provenance
