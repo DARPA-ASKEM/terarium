@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		documentation-url="'https://github.com/DARPA-ASKEM/beaker-kernel/blob/main/docs/contexts_mira_model_edit.md'"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

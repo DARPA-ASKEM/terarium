@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:documentation-url="'https://github.com/ml4ai/ASKEM-TA1-DockerVM?tab=readme-ov-file#code2amr'"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

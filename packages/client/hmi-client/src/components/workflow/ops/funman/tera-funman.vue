@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:documentation-url="'https://github.com/siftech/funman'"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

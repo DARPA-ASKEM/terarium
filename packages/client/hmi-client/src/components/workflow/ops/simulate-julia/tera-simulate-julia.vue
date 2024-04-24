@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:documentation-url="'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L222'"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

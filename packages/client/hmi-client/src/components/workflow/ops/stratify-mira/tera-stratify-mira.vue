@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:documentation-url="'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb'"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

@@ -5,6 +5,7 @@
 				:active-index="selectedViewIndex"
 				:views="views"
 				:tooltip="tooltip"
+				:documentation-url="documentationUrl"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 			>
@@ -66,6 +67,7 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
+	documentationUrl?: string;
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state']);
