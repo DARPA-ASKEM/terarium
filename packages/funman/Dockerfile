@@ -7,17 +7,19 @@ COPY ./packages/taskrunner .
 
 RUN ./gradlew bootJar
 
+
 # ------------------------------------------------------------------------------
 
-# Set up the Python image with JRE
-FROM python:3.10-slim
+# Funman-base, should contain dreal4, ibex, and python dependencies
+FROM ghcr.io/darpa-askem/funman-base:latest-e5fb635757aa57007615a75371f55dd4a24851e0
 
-WORKDIR /
+
 
 # Install OpenJDK JRE
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
+
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
@@ -25,22 +27,25 @@ COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 # Copy the echo script for testing
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
-# Install wget
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends wget && \
-	rm -rf /var/lib/apt/lists/*
 
-RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
-RUN wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/refs/heads/main.tar.gz && \
-	tar -zxvf gollm.tar.gz && \
-	mv GoLLM-* GoLLM
+ADD https://api.github.com/repos/DARPA-ASKEM/funman-api/git/refs/heads/develop version.json
+RUN git clone https://github.com/DARPA-ASKEM/funman-api.git
 
-WORKDIR /GoLLM
+WORKDIR /funman-api
 
-# Install GoLLM deps
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install .
+RUN pip install auxiliary_packages/funman_dreal
+RUN pip install auxiliary_packages/funman_demo
 
-# Install the tasks for GoLLM
+# Install taskrunner
+COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
+COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
+WORKDIR /taskrunner
+RUN pip install -e .
+
+# Install funman tasks
+COPY ./packages/funman /funman_tasks
+WORKDIR /funman_tasks
 RUN pip install -e .
 
 WORKDIR /
