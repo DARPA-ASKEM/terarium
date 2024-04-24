@@ -181,7 +181,6 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow);
 
-		workflowService.updateAsset(workflow);
 
 		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
 
