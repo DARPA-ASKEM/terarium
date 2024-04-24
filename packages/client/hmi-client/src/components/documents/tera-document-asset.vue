@@ -312,7 +312,7 @@ onUpdated(() => {
 });
 
 onMounted(async () => {
-	await subscribe(ClientEventType.Extraction, subscribeToExtraction);
+	await subscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
@@ -326,7 +326,7 @@ async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>)
 }
 
 onUnmounted(async () => {
-	await unsubscribe(ClientEventType.Extraction, subscribeToExtraction);
+	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 </script>
 <style scoped>
