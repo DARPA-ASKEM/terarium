@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
@@ -42,7 +43,8 @@ public abstract class NotificationGroupInstance<T> {
 	public abstract ClientEvent<T> produceClientEvent(final Double t, final String message, final String error);
 
 	private Double estimateT() {
-		return 1.0f - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds));
+		// Make sure this value never reaches 1.0 since 1.0 is reserved for the final message
+		return Math.max(0.9 - Math.pow(0.5, (getElapsedSeconds() / halfTimeSeconds)), 0);
 	}
 
 	private Double getElapsedSeconds() {
@@ -70,6 +72,10 @@ public abstract class NotificationGroupInstance<T> {
 
 		// send the update to the user
 		clientEventService.sendToUser(event, notificationGroup.getUserId());
+	}
+
+	public UUID getNotificationGroupId() {
+		return this.notificationGroup.getId();
 	}
 
 	public void sendMessage(final String msg) {
