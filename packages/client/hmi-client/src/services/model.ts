@@ -11,7 +11,7 @@ import { isEmpty } from 'lodash';
 import { modelCard } from './goLLM';
 import { profileModel } from './knowledge';
 
-export async function createModel(model: Model | Record<string, unknown>): Promise<Model | null> {
+export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
@@ -133,12 +133,12 @@ export function validateModelName(name: string): boolean {
  * @param file file to validate
  * @returns json object if valid, null otherwise
  */
-export async function validateAMRFile(file: File) {
+export async function validateAMRFile(file: File): Promise<Model | null> {
 	if (!file.name.endsWith('.json')) return null;
 	const jsonObject = await fileToJson(file);
 	if (!jsonObject) return null;
 	if (!isValidAMR(jsonObject)) return null;
-	return jsonObject;
+	return jsonObject as unknown as Model;
 }
 
 /**
