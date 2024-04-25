@@ -51,7 +51,7 @@ import { IModel } from '@jupyterlab/services/lib/session/session';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
-import { updateNotebookSession } from '@/services/notebook-session';
+import notebookSessionService from '@/services/notebook-session-service';
 import { useProjects } from '@/composables/project';
 
 const messagesHistory = ref<JupyterMessage[]>([]);
@@ -399,7 +399,7 @@ watch(
 	() => notebookItems.value,
 	async () => {
 		if (props.notebookSession) {
-			await updateNotebookSession({
+			await notebookSessionService.update({
 				id: props.notebookSession.id,
 				name: props.notebookSession.name,
 				description: props.notebookSession.description,

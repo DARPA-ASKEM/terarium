@@ -229,7 +229,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
-import { cloneNoteBookSession } from '@/services/notebook-session';
+import notebookSessionService from '@/services/notebook-session-service';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
 import * as DatasetOp from '@/components/workflow/ops/dataset/mod';
@@ -445,7 +445,6 @@ const removeNode = (event) => {
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
-
 	cloneNoteBookSessions();
 };
 
@@ -466,7 +465,7 @@ const cloneNoteBookSessions = async () => {
 				sessionIdSet.add(sessionId);
 			} else {
 				// eslint-disable-next-line
-				const session = await cloneNoteBookSession(sessionId);
+				const session = await notebookSessionService.clone(sessionId);
 				state.notebookSessionId = session.id;
 				sessionIdSet.add(session.id);
 			}

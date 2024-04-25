@@ -24,7 +24,7 @@
 import { WorkflowNode } from '@/types/workflow';
 import TeraDatasetJupyterRegriddingPanel from '@/components/dataset/tera-dataset-jupyter-regridding-panel.vue';
 import { onMounted, ref } from 'vue';
-import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
+import notebookSessionService from '@/services/notebook-session-service';
 import { getDataset } from '@/services/dataset';
 import type { NotebookSession, Dataset } from '@/types/Types';
 import { cloneDeep } from 'lodash';
@@ -48,7 +48,7 @@ onMounted(async () => {
 	let notebookSessionId = props.node.state?.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
-		const response = await createNotebookSession({
+		const response = await notebookSessionService.create({
 			id: uuidv4(),
 			name: props.node.id,
 			description: '',
@@ -83,7 +83,7 @@ onMounted(async () => {
 		}
 	});
 
-	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
+	notebookSession.value = await notebookSessionService.get(notebookSessionId!);
 });
 
 const addOutputPort = (data: any) => {

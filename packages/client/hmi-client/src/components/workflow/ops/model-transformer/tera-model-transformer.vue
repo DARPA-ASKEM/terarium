@@ -25,7 +25,7 @@
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraModelJupyterPanel from '@/components/model/tera-model-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
-import { createNotebookSession, getNotebookSessionById } from '@/services/notebook-session';
+import notebookSessionService from '@/services/notebook-session-service';
 import { v4 as uuidv4 } from 'uuid';
 import type { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
@@ -49,14 +49,14 @@ const modelId = computed(() => {
 	return modelConfirgurationList[0];
 });
 
-const notebookSession = ref(<NotebookSession | undefined>undefined);
+const notebookSession = ref<NotebookSession | undefined>(undefined);
 
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	let notebookSessionId = state.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
-		const response = await createNotebookSession({
+		const response = await notebookSessionService.create({
 			id: uuidv4(),
 			name: props.node.id,
 			description: '',
@@ -70,7 +70,7 @@ onMounted(async () => {
 			emit('update-state', state);
 		}
 	}
-	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
+	notebookSession.value = await notebookSessionService.get(notebookSessionId!);
 });
 
 const addOutputPort = async (data) => {
