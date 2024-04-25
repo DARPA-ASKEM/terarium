@@ -82,7 +82,11 @@ public class Project extends TerariumAsset {
 	private String userPermission;
 
 	public static Project merge(final Project existingProject, final Project project) {
-		// if variables are null, keep the existing value
+
+		// Merge non-transient fields to ensure they are not lost
+		if (project.getId() != null) {
+			existingProject.setId(project.getId());
+		}
 		if (project.getName() != null) {
 			existingProject.setName(project.getName());
 		}
@@ -95,14 +99,11 @@ public class Project extends TerariumAsset {
 		if (project.getOverviewContent() != null) {
 			existingProject.setOverviewContent(project.getOverviewContent());
 		}
-		if (project.getMetadata() != null) {
-			existingProject.setMetadata(project.getMetadata());
-		}
 		if (project.getPublicProject() != null) {
 			existingProject.setPublicProject(project.getPublicProject());
 		}
-		if (project.getUserPermission() != null) {
-			existingProject.setUserPermission(project.getUserPermission());
+		if (project.getTemporary() != null) {
+			existingProject.setTemporary(project.getTemporary());
 		}
 		if (project.getDeletedOn() != null) {
 			existingProject.setDeletedOn(project.getDeletedOn());
