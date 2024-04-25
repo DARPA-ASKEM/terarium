@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,21 +17,19 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.funman.FunmanPostQueriesRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.proxies.funman.FunmanProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
-
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
-import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -45,7 +43,6 @@ public class FunmanController {
 
 	private final ValidateModelConfigHandler validateModelConfigHandler;
 	private final SimulationService simulationService;
-
 
 	@PostConstruct
 	void init() {
@@ -92,7 +89,7 @@ public class FunmanController {
 			sim.setType(SimulationType.VALIDATION);
 			sim.setStatus(ProgressState.QUEUED);
 
-		  // Upsert
+			// Upsert
 			final Optional<Simulation> updated = simulationService.updateAsset(sim);
 			if (updated.isEmpty()) {
 				throw new Exception("Failed to create funman simulation object");
@@ -113,7 +110,6 @@ public class FunmanController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
-
 
 	// The methods below are depreacated
 	private final FunmanProxy funmanProxy;
