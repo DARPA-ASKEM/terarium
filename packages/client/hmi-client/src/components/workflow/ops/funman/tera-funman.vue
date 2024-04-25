@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -194,7 +193,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { FunmanOperationState, ConstraintGroup, DOCUMENTATION_URL } from './funman-operation';
+import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;

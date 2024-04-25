@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -224,8 +223,7 @@ import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
-	EnsembleCalibrateExtraCiemss,
-	DOCUMENTATION_URL
+	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{

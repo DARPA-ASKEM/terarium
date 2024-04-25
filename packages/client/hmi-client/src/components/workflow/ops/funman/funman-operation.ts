@@ -1,7 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
-export const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
+const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
 
 export interface ConstraintGroup {
 	borderColour: string;
@@ -40,6 +40,7 @@ export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
 	displayName: 'Validate configuration',
 	description: 'Validate configuration',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,

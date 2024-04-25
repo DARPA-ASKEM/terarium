@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -175,7 +174,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
-import { ModelFromCodeState, DOCUMENTATION_URL } from './model-from-code-operation';
+import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;

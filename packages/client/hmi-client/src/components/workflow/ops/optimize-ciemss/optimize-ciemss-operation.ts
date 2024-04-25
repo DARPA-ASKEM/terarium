@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export const DOCUMENTATION_URL =
+const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum InterventionTypes {
@@ -68,6 +68,7 @@ export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
 	displayName: 'Optimize with PyCIEMSS',
 	description: 'Optimize with PyCIEMSS',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }

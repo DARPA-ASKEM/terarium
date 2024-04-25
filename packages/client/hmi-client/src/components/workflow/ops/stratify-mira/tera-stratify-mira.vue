@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -164,8 +163,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import {
 	blankStratifyGroup,
 	StratifyGroup,
-	StratifyOperationStateMira,
-	DOCUMENTATION_URL
+	StratifyOperationStateMira
 } from './stratify-mira-operation';
 
 const props = defineProps<{

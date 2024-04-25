@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -118,7 +117,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { ModelEditOperationState, DOCUMENTATION_URL } from './model-edit-operation';
+import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;

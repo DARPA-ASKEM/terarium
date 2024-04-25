@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -31,7 +30,7 @@ import type { NotebookSession, Dataset } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { RegriddingOperationState, DOCUMENTATION_URL } from './regridding-operation';
+import { RegriddingOperationState } from './regridding-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<RegriddingOperationState>;

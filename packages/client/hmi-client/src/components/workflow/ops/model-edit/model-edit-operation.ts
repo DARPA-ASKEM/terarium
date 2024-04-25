@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export const DOCUMENTATION_URL =
+const DOCUMENTATION_URL =
 	'https://github.com/DARPA-ASKEM/beaker-kernel/blob/main/docs/contexts_mira_model_edit.md';
 
 export interface ModelEditCode {
@@ -17,6 +17,7 @@ export const ModelEditOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_EDIT,
 	displayName: 'Edit model',
 	description: 'Edit a model',
+	documentationUrl: DOCUMENTATION_URL,
 	isRunnable: false,
 	inputs: [
 		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }

@@ -1,7 +1,7 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export const DOCUMENTATION_URL =
+const DOCUMENTATION_URL =
 	'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L222';
 
 export interface SimulateJuliaOperationState extends BaseState {
@@ -19,6 +19,7 @@ export const SimulateJuliaOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_JULIA,
 	displayName: 'Simulate with SciML',
 	description: 'given a model id, and configuration id, run a simulation',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,

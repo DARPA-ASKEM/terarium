@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -216,7 +215,7 @@ import {
 
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
-import { CalibrationOperationStateCiemss, DOCUMENTATION_URL } from './calibrate-operation';
+import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;

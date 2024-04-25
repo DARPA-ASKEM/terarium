@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -161,7 +160,7 @@ import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
-import { ModelComparisonOperationState, DOCUMENTATION_URL } from './model-comparison-operation';
+import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;

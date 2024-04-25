@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-export const DOCUMENTATION_URL = 'https://pandas.pydata.org/docs/user_guide/index.html#user-guide';
+const DOCUMENTATION_URL = 'https://pandas.pydata.org/docs/user_guide/index.html#user-guide';
 
 export interface DatasetTransformerState extends BaseState {
 	datasetId: string | null;
@@ -10,6 +10,7 @@ export interface DatasetTransformerState extends BaseState {
 export const DatasetTransformerOperation: Operation = {
 	name: WorkflowOperationTypes.DATASET_TRANSFORMER,
 	description: 'Select a dataset',
+	documentationUrl: DOCUMENTATION_URL,
 	displayName: 'Transform dataset',
 	isRunnable: true,
 	inputs: [{ type: 'datasetId|simulationId', label: 'Dataset or Simulation' }],

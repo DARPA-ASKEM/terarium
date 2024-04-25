@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -149,8 +148,7 @@ import {
 	EquationBlock,
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
-	ModelFromEquationsState,
-	DOCUMENTATION_URL
+	ModelFromEquationsState
 } from './model-from-equations-operation';
 
 const emit = defineEmits([

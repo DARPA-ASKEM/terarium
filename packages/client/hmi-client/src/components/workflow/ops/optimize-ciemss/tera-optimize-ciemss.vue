@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -350,8 +349,7 @@ import {
 	InterventionTypes,
 	ContextMethods,
 	InterventionPolicyGroup,
-	blankInterventionPolicyGroup,
-	DOCUMENTATION_URL
+	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{

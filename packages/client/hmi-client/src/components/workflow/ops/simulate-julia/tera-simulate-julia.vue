@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -126,7 +125,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
-import { SimulateJuliaOperationState, DOCUMENTATION_URL } from './simulate-julia-operation';
+import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;

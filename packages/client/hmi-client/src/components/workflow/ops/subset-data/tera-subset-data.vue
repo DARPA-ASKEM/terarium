@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -231,7 +230,7 @@ import Checkbox from 'primevue/checkbox';
 import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
 import { useProjects } from '@/composables/project';
-import { SubsetDataOperationState, DOCUMENTATION_URL } from './subset-data-operation';
+import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SubsetDataOperationState>;

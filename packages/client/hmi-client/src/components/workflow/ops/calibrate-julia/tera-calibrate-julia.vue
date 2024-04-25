@@ -1,7 +1,6 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -235,8 +234,7 @@ import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
-	CalibrationOperationStateJulia,
-	DOCUMENTATION_URL
+	CalibrationOperationStateJulia
 } from './calibrate-operation';
 
 const props = defineProps<{

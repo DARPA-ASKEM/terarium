@@ -1,7 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
-export const DOCUMENTATION_URL =
+const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
 
 export interface CalibrationOperationStateCiemss extends BaseState {
@@ -25,6 +25,7 @@ export const CalibrationOperationCiemss: Operation = {
 	displayName: 'Calibrate with PyCIEMSS',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }
