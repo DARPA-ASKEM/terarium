@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +90,7 @@ public class FunmanController {
 			sim.setType(SimulationType.SIMULATION);
 			sim.setStatus(ProgressState.QUEUED);
 
-		  // Create new simulatin object to proxy the funman validation process
+			// Create new simulatin object to proxy the funman validation process
 			Simulation newSimulation = simulationService.createAsset(sim);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
