@@ -157,17 +157,15 @@ import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import {
-	getModelIdFromModelConfigurationId,
-	DOCUMENTATION_URL
-} from '@/services/model-configurations';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
 import {
 	blankStratifyGroup,
 	StratifyGroup,
-	StratifyOperationStateMira
+	StratifyOperationStateMira,
+	DOCUMENTATION_URL
 } from './stratify-mira-operation';
 
 const props = defineProps<{
