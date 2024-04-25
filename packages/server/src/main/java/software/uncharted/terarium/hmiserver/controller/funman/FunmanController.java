@@ -78,17 +78,17 @@ public class FunmanController {
 			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 
-			// TODO:
-			// - create Simulation for tracking
-			// - mark Simulation as pending
+
 			final UUID uuid = UUID.randomUUID();
-
 			final Simulation sim = new Simulation();
-			sim.setId(uuid);
 
+			sim.setId(uuid);
 			// sim.setType(SimulationType.VALIDATION);
-			sim.setType(SimulationType.SIMULATION);
+			sim.setType(SimulationType.SIMULATION); // FIXME - type is overly strict
 			sim.setStatus(ProgressState.QUEUED);
+
+			// FIXME: uncomment when DB column is fixed
+		  // sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
 			Simulation newSimulation = simulationService.createAsset(sim);
@@ -97,8 +97,6 @@ public class FunmanController {
 			props.setSimulationId(uuid);
 			taskRequest.setAdditionalProperties(props);
 			taskService.runTask(TaskMode.ASYNC, taskRequest);
-
-			// return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
 
 			return ResponseEntity.ok(newSimulation);
 		} catch (final ResponseStatusException e) {
