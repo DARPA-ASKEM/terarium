@@ -42,6 +42,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelati
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -72,6 +73,8 @@ public class ProjectController {
 	final ProjectAssetService projectAssetService;
 
 	final TerariumAssetServices terariumAssetServices;
+
+	final UserService userService;
 
 	final ObjectMapper objectMapper;
 
@@ -165,6 +168,15 @@ public class ProjectController {
 						counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
 
 				project.setMetadata(metadata);
+
+				// Set the author name for the project
+				if (project.getUserId() != null) {
+					final String authorName =
+							userService.getById(project.getUserId()).getName();
+					if (authorName != null) {
+						project.setUserName(authorName);
+					}
+				}
 			} catch (final Exception e) {
 				log.error(
 						"Cannot get Datasets, Models, and Publications assets from data-service for project_id {}",
@@ -265,6 +277,15 @@ public class ProjectController {
 					project.get().setPublicProject(rebacProject.isPublic());
 					project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
 					project.get().setAuthors(authors);
+
+					if (project.get().getUserId() != null) {
+						final String authorName =
+								userService.getById(project.get().getUserId()).getName();
+						if (authorName != null) {
+							project.get().setUserName(authorName);
+						}
+					}
+
 					return ResponseEntity.ok(project.get());
 				}
 			}
