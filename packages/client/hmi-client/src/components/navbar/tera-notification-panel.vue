@@ -171,7 +171,7 @@ header {
 	}
 }
 .text-body {
-	font-size: var(--font-caption);
+	font-size: var(--font-body-small);
 	color: var(--text-color-secondary);
 	margin-top: 1rem;
 }
