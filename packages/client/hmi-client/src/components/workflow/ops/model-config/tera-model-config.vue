@@ -193,6 +193,14 @@
 							icon="pi pi-play"
 							@click="createConfiguration(false)"
 						/>
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Download"
+							icon="pi pi-download"
+							@click="downloadConfiguredModel()"
+						/>
 						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 					</div>
 				</template>
@@ -674,6 +682,19 @@ const runSanityCheck = () => {
 		}
 	});
 	return errors;
+};
+
+const downloadConfiguredModel = async () => {
+	const rawModel = knobs.value?.transientModelConfig?.configuration;
+	if (rawModel) {
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 4))}`;
+		const a = document.createElement('a');
+		a.href = `data:${data}`;
+		a.download = `${knobs.value?.transientModelConfig?.configuration?.name ?? model}.json`;
+		a.innerHTML = 'download JSON';
+		a.click();
+		a.remove();
+	}
 };
 
 const createConfiguration = async (force: boolean = false) => {
