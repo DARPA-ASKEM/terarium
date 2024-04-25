@@ -147,12 +147,7 @@
 				<span>Value</span>
 				<span class="evaluate-toggle">
 					<label>Evaluate</label>
-					<InputSwitch
-						v-if="!isStratified"
-						v-model="areExpressionsEvaluated"
-						:binary="true"
-						label="Evaluate expressions?"
-					/>
+					<InputSwitch v-if="!isStratified" v-model="areExpressionsEvaluated" :binary="true" />
 				</span>
 			</template>
 			<template #body="slotProps">
