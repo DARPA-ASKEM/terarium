@@ -36,8 +36,8 @@ const props = defineProps<{
 const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const notebookSession = ref<NotebookSession | undefined>(undefined);
-const showChatThoughts = ref<boolean>(false);
-const showKernels = ref<boolean>(false);
+const showChatThoughts = ref(false);
+const showKernels = ref(false);
 
 const assets = computed(() =>
 	props.node.inputs
