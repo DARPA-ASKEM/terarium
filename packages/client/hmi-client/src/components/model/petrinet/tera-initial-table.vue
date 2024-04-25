@@ -145,13 +145,15 @@
 		<Column field="value" class="w-2 pr-2">
 			<template #header>
 				<span>Value</span>
-				<Button
-					class="ml-auto"
-					text
-					size="small"
-					:label="isExpressionEvaluated ? 'Eval' : 'No eval'"
-					@click="isExpressionEvaluated = !isExpressionEvaluated"
-				/>
+				<span class="evaluate-toggle">
+					<label>Evaluate</label>
+					<InputSwitch
+						v-if="!isStratified"
+						v-model="areExpressionsEvaluated"
+						:binary="true"
+						label="Evaluate expressions?"
+					/>
+				</span>
 			</template>
 			<template #body="slotProps">
 				<!-- Matrix -->
@@ -169,7 +171,7 @@
 					"
 				>
 					<InputText
-						v-if="!isExpressionEvaluated"
+						v-if="!areExpressionsEvaluated"
 						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						:disabled="readonly"
@@ -261,6 +263,7 @@ import {
 	getInitialMetadata
 } from '@/model-representation/service';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import InputSwitch from 'primevue/inputswitch';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -279,7 +282,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-value', 'update-model']);
 
-const isExpressionEvaluated = ref(false);
+const areExpressionsEvaluated = ref(false);
 const evaluatedExpressions = ref(new Map<string, string>());
 
 const matrixModalContext = ref({
@@ -364,7 +367,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			});
 		});
 	} else {
-		initials.value.forEach(async (vals, init) => {
+		initials.value.forEach((vals, init) => {
 			const initial = getInitials(model).find((i) => i.target === vals[0]);
 			const initialsMetadata = getInitialMetadata(model, initial!.target);
 			const sourceValue = initialsMetadata?.source;
@@ -453,6 +456,20 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 .truncate-text {
 	display: flex;
 	width: 10rem;
+}
+
+.evaluate-toggle {
+	margin-left: auto;
+	font-weight: var(--font-weight);
+	font-size: var(--font-tiny);
+	display: flex;
+	flex-direction: column;
+	align-items: end;
+	gap: var(--gap-xsmall);
+
+	& > .p-inputswitch {
+		scale: 0.75;
+	}
 }
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
