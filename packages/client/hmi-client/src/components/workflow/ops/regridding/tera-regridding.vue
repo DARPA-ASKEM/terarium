@@ -30,7 +30,7 @@ import type { NotebookSession, Dataset } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { RegriddingOperationState } from './regridding-operation';
+import type { RegriddingOperationState } from './regridding-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<RegriddingOperationState>;
