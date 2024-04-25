@@ -1,6 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,12 +13,6 @@ import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -59,7 +58,8 @@ public class ProjectService {
 			return Optional.empty();
 		}
 
-		final Project existingProject = projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
+		final Project existingProject =
+				projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
 
 		// merge the existing project with values from the new project
 		final Project mergedProject = Project.merge(existingProject, project);
