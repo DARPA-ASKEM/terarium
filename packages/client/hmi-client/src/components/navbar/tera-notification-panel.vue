@@ -167,11 +167,13 @@ header {
 	}
 	button {
 		padding: 1px;
+		font-size: var(--font-caption);
 	}
 }
 .text-body {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
+	margin-top: 1rem;
 }
 
 .notification-items-container {
@@ -193,7 +195,9 @@ header {
 	}
 	.msg {
 		font-size: var(--font-caption);
-		color: #9298a5;
+		color: var(--text-color-secondary);
+		margin-top: 0.2rem;
+		/* color: #9298a5; */
 	}
 	.action {
 		font-size: var(--font-caption);
@@ -218,8 +222,9 @@ header {
 		gap: var(--gap-small);
 		.status-msg {
 			display: flex;
-			align-items: center;
+			align-items: top;
 			gap: 0.5rem;
+			font-size: var(--font-caption);
 		}
 		.status-msg.ok {
 			color: var(--primary-color);
@@ -230,6 +235,8 @@ header {
 		.time-msg {
 			font-size: var(--font-caption);
 			color: var(--text-color-secondary);
+			min-width: 96px;
+			text-align: right;
 		}
 	}
 }
