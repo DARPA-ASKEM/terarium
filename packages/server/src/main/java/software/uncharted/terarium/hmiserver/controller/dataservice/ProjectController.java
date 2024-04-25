@@ -10,13 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -42,6 +35,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelati
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -54,6 +48,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/projects")
 @RestController
@@ -72,6 +74,8 @@ public class ProjectController {
 	final ProjectAssetService projectAssetService;
 
 	final TerariumAssetServices terariumAssetServices;
+
+	final UserService userService;
 
 	final ObjectMapper objectMapper;
 
@@ -165,6 +169,14 @@ public class ProjectController {
 						counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
 
 				project.setMetadata(metadata);
+
+				// Set the creator name for the project
+				if (project.getUserId() != null) {
+					final String creatorName = userService.getById(project.getUserId()).getName();
+					if (creatorName != null) {
+						project.setUserName(creatorName);
+					}
+				}
 			} catch (final Exception e) {
 				log.error(
 						"Cannot get Datasets, Models, and Publications assets from data-service for project_id {}",
@@ -265,6 +277,14 @@ public class ProjectController {
 					project.get().setPublicProject(rebacProject.isPublic());
 					project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
 					project.get().setAuthors(authors);
+
+					if (project.get().getUserId() != null) {
+						final String creatorName = userService.getById(project.get().getUserId()).getName();
+						if (creatorName != null) {
+							project.get().setUserName(creatorName);
+						}
+					}
+
 					return ResponseEntity.ok(project.get());
 				}
 			}

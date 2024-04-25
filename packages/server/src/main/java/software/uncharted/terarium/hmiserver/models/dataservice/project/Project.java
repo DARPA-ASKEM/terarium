@@ -6,11 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
-import java.io.Serial;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -20,6 +15,12 @@ import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+
+import java.io.Serial;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -79,4 +80,39 @@ public class Project extends TerariumAsset {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userPermission;
+
+	public static Project merge(final Project existingProject, final Project project) {
+		// if variables are null, keep the existing value
+		if (project.getName() != null) {
+			existingProject.setName(project.getName());
+		}
+		if (project.getUserId() != null) {
+			existingProject.setUserId(project.getUserId());
+		}
+		if (project.getDescription() != null) {
+			existingProject.setDescription(project.getDescription());
+		}
+		if (project.getOverviewContent() != null) {
+			existingProject.setOverviewContent(project.getOverviewContent());
+		}
+		if (project.getMetadata() != null) {
+			existingProject.setMetadata(project.getMetadata());
+		}
+		if (project.getPublicProject() != null) {
+			existingProject.setPublicProject(project.getPublicProject());
+		}
+		if (project.getUserPermission() != null) {
+			existingProject.setUserPermission(project.getUserPermission());
+		}
+		if (project.getDeletedOn() != null) {
+			existingProject.setDeletedOn(project.getDeletedOn());
+		}
+		if (project.getCreatedOn() != null) {
+			existingProject.setCreatedOn(project.getCreatedOn());
+		}
+		if (project.getUpdatedOn() != null) {
+			existingProject.setUpdatedOn(project.getUpdatedOn());
+		}
+		return existingProject;
+	}
 }
