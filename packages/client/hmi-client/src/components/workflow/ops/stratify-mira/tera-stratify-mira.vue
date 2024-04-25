@@ -396,7 +396,6 @@ const saveNewModel = async () => {
 	stratifiedAmr.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
-	console.log(stratifiedAmr.value);
 	const modelData = await createModel(stratifiedAmr.value);
 	const projectId = projectResource.activeProject.value?.id;
 
