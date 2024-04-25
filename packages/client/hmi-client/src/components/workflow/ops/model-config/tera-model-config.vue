@@ -690,7 +690,9 @@ const downloadConfiguredModel = async () => {
 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 4))}`;
 		const a = document.createElement('a');
 		a.href = `data:${data}`;
-		a.download = `${knobs.value?.transientModelConfig?.configuration?.name ?? model}.json`;
+		a.download = `${
+			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
+		}.json`;
 		a.innerHTML = 'download JSON';
 		a.click();
 		a.remove();

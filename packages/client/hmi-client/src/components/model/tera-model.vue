@@ -125,6 +125,24 @@ const optionsMenuItems = computed(() => [
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
+	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			if (model.value) {
+				const data = `text/json;charset=utf-8,${encodeURIComponent(
+					JSON.stringify(model, null, 4)
+				)}`;
+				const a = document.createElement('a');
+				a.href = `data:${data}`;
+				a.download = `${model.value.header.name ?? 'model'}.json`;
+				a.innerHTML = 'download JSON';
+				a.click();
+				a.remove();
+			}
+			emit('close-preview');
+		}
 	}
 
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
