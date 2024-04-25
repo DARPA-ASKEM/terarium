@@ -95,8 +95,13 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding {
-    identifiers: { [index: string]: string };
+    identifiers: Identifier[];
     context?: { [index: string]: any };
+}
+
+export interface Identifier {
+    curie: string;
+    name: string;
 }
 
 export interface PresignedURL {
@@ -545,6 +550,7 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
+    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;

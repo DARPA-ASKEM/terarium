@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -584,9 +585,11 @@ public class KnowledgeController {
 						continue;
 					}
 					if (groundings.getIdentifiers() == null) {
-						groundings.setIdentifiers(new HashMap<>());
+						groundings.setIdentifiers(new ArrayList<>());
 					}
-					groundings.getIdentifiers().put(g.get(0).asText(), g.get(1).asText());
+					groundings
+							.getIdentifiers()
+							.add(new Identifier(g.get(0).asText(), g.get(1).asText()));
 				}
 
 				// remove groundings from annotation object
@@ -596,10 +599,11 @@ public class KnowledgeController {
 				newCol.setName(col.getName());
 				newCol.setDataType(col.getDataType());
 				newCol.setFormatStr(col.getFormatStr());
-				newCol.setGrounding(col.getGrounding());
+				newCol.setGrounding(groundings);
 				newCol.setAnnotations(col.getAnnotations());
 				newCol.setDescription(annotation.get("description").asText());
-				newCol.setMetadata(mapper.convertValue(annotation, Map.class));
+				newCol.setMetadata(col.getMetadata());
+				newCol.updateMetadata(mapper.convertValue(annotation, Map.class));
 				columns.add(newCol);
 			}
 

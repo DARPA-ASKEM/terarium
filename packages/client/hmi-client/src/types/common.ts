@@ -201,8 +201,9 @@ export interface CompareModelsResponseType {
 }
 
 export interface NotificationItem {
-	id: string;
+	notificationGroupId: string;
 	type: ClientEventType;
+	assetId: string;
 	assetName: string;
 	status: 'Completed' | 'Failed' | 'Running';
 	msg: string;
