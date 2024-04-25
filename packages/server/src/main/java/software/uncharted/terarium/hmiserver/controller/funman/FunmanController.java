@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.util.UUID;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,11 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
 
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
+import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+
 @RestController
 @RequestMapping("/funman/queries")
 @RequiredArgsConstructor
@@ -38,6 +44,8 @@ public class FunmanController {
 	private final CurrentUserService currentUserService;
 
 	private final ValidateModelConfigHandler validateModelConfigHandler;
+	private final SimulationService simulationService;
+
 
 	@PostConstruct
 	void init() {
@@ -57,14 +65,15 @@ public class FunmanController {
 										mediaType = "application/json",
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
+														implementation = Simulation.class))),
 				@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue dispatching the request",
 						content = @Content)
 			})
-	public ResponseEntity<TaskResponse> createValidationRequest(@RequestBody final JsonNode input) {
+	// public ResponseEntity<TaskResponse> createValidationRequest(@RequestBody final JsonNode input) {
+	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNode input) {
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
@@ -77,11 +86,26 @@ public class FunmanController {
 			// - create Simulation for tracking
 			// - mark Simulation as pending
 			final UUID uuid = UUID.randomUUID();
+
+			final Simulation sim = new Simulation();
+			sim.setId(uuid);
+			sim.setType(SimulationType.VALIDATION);
+			sim.setStatus(ProgressState.QUEUED);
+
+		  // Upsert
+			final Optional<Simulation> updated = simulationService.updateAsset(sim);
+			if (updated.isEmpty()) {
+				throw new Exception("Failed to create funman simulation object");
+			}
+
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(uuid);
 			taskRequest.setAdditionalProperties(props);
+			taskService.runTask(TaskMode.ASYNC, taskRequest);
 
-			return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
+			// return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
+
+			return ResponseEntity.ok(updated.get());
 		} catch (final ResponseStatusException e) {
 			throw e;
 		} catch (final Exception e) {
@@ -89,6 +113,7 @@ public class FunmanController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
+
 
 	// The methods below are depreacated
 	private final FunmanProxy funmanProxy;
