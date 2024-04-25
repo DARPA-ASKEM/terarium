@@ -11,7 +11,8 @@ import { isEmpty } from 'lodash';
 import { modelCard } from './goLLM';
 import { profileModel } from './knowledge';
 
-export async function createModel(model): Promise<Model | null> {
+export async function createModel(model: Model | Record<string, unknown>): Promise<Model | null> {
+	delete model.id;
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
 }

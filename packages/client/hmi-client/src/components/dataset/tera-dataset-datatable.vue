@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset } from '@/types/Types';
@@ -230,6 +230,13 @@ const setChartOptions = () => {
 const onToggle = (val) => {
 	selectedColumns.value = csvHeaders?.value?.filter((col) => val.includes(col));
 };
+
+watch(
+	() => props.rawContent,
+	() => {
+		selectedColumns.value = csvHeaders?.value;
+	}
+);
 </script>
 
 <style scoped>

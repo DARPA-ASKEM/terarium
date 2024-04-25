@@ -79,9 +79,7 @@
 								class="white-space-nowrap"
 								style="margin-right: auto"
 								label="Save as new model"
-								@click="
-									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-								"
+								@click="saveNewModel({ addToProject: true, appendOutputPort: true })"
 							/>
 							<Button label="Close" size="large" @click="emit('close')" />
 						</div>
@@ -318,9 +316,9 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
+const saveNewModel = async (options: SaveOptions) => {
+	if (!amr.value) return;
+	amr.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
 	const modelData = await createModel(amr.value);
@@ -335,7 +333,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (options.appendOutputPort) {
 		emit('append-output', {
 			id: uuidv4(),
-			label: modelName,
+			label: newModelName.value,
 			type: 'modelId',
 			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]
