@@ -10,13 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -55,6 +48,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/projects")
 @RestController
@@ -169,12 +170,12 @@ public class ProjectController {
 
 				project.setMetadata(metadata);
 
-				// Set the creator name for the project
+				// Set the author name for the project
 				if (project.getUserId() != null) {
-					final String creatorName =
+					final String authorName =
 							userService.getById(project.getUserId()).getName();
-					if (creatorName != null) {
-						project.setUserName(creatorName);
+					if (authorName != null) {
+						project.setUserName(authorName);
 					}
 				}
 			} catch (final Exception e) {
@@ -279,10 +280,10 @@ public class ProjectController {
 					project.get().setAuthors(authors);
 
 					if (project.get().getUserId() != null) {
-						final String creatorName =
+						final String authorName =
 								userService.getById(project.get().getUserId()).getName();
-						if (creatorName != null) {
-							project.get().setUserName(creatorName);
+						if (authorName != null) {
+							project.get().setUserName(authorName);
 						}
 					}
 

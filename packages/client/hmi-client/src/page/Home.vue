@@ -260,10 +260,10 @@ const projectsTabs = computed<{ title: string; projects: Project[] }[]>(() => [
 const columns = ref([
 	{ field: 'name', header: 'Project title' },
 	{ field: 'description', header: 'Description' },
-	{ field: 'owner', header: 'Owner' },
+	{ field: 'owner', header: 'Author' },
 	{ field: 'stats', header: 'Stats' },
 	{ field: 'created', header: 'Created on' },
-	{ field: 'updated', header: 'Last updated' } // Last update property doesn't exist yet
+	{ field: 'updated', header: 'Last updated' }
 ]);
 
 const selectedColumns = ref(columns.value);

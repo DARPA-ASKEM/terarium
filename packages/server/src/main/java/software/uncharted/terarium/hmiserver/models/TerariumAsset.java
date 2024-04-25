@@ -6,15 +6,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
@@ -41,6 +43,7 @@ public abstract class TerariumAsset implements Serializable {
 	protected void onCreate() {
 		this.createdOn =
 				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.updatedOn = this.createdOn;
 	}
 
 	@TSOptional
@@ -68,6 +71,7 @@ public abstract class TerariumAsset implements Serializable {
 	private Boolean publicAsset = false;
 
 	// This is here just to satisfy the service interface.
+	@Override
 	public TerariumAsset clone() {
 		throw new RuntimeException(
 				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");

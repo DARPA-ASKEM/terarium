@@ -28,7 +28,7 @@
 					:lines="1"
 				/>
 				<template v-if="col.field === 'owner'">
-					{{ data.userName ? data.userName : '--' }}
+					{{ data.userName ?? '--' }}
 				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
 					<span class="mr-1"><i class="pi pi-user mr-1" />1</span>
