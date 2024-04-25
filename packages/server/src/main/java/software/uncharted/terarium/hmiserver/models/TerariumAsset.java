@@ -41,6 +41,7 @@ public abstract class TerariumAsset implements Serializable {
 	protected void onCreate() {
 		this.createdOn =
 				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.updatedOn = this.createdOn;
 	}
 
 	@TSOptional
@@ -68,6 +69,7 @@ public abstract class TerariumAsset implements Serializable {
 	private Boolean publicAsset = false;
 
 	// This is here just to satisfy the service interface.
+	@Override
 	public TerariumAsset clone() {
 		throw new RuntimeException(
 				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");

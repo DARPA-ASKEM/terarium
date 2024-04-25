@@ -27,6 +27,9 @@
 					:text="data.description"
 					:lines="1"
 				/>
+				<template v-if="col.field === 'owner'">
+					{{ data.userName ?? '--' }}
+				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
 					<span class="mr-1"><i class="pi pi-user mr-1" />1</span>
 					<span class="mr-1"
@@ -38,8 +41,11 @@
 					</span>
 					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
 				</div>
-				<template v-else-if="col.field === 'timestamp'">
-					{{ formatDdMmmYyyy(data.updatedOn) }}
+				<template v-else-if="col.field === 'created'">
+					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
+				</template>
+				<template v-else-if="col.field === 'updated'">
+					{{ data.updatedOn ? formatDdMmmYyyy(data.updatedOn) : '--' }}
 				</template>
 			</template>
 		</Column>
