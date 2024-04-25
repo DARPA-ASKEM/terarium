@@ -294,6 +294,7 @@ const initials = computed<Map<string, string[]>>(() => {
 const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 	const model = props.model;
 	const formattedInitials: ModelConfigTableData[] = [];
+	console.log(props.data, model.semantics?.ode.initials);
 
 	if (isStratified.value) {
 		initials.value.forEach((vals, init) => {
@@ -340,6 +341,9 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			const descriptionValue = initialsMetadata?.description;
 			const conceptValue = initialsMetadata?.concept;
 			const expressionValue = initialsMetadata?.expression;
+
+			console.log(initial, initialsMetadata);
+
 			formattedInitials.push({
 				id: init,
 				name: nameValue,
