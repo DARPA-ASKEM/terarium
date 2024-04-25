@@ -8,10 +8,10 @@
 			<Suspense>
 				<tera-dataset-jupyter-panel
 					:assets="assets"
-					:show-kernels="showKernels"
-					:show-chat-thoughts="showChatThoughts"
-					@new-dataset-saved="addOutputPort"
 					:notebook-session="notebookSession"
+					:show-chat-thoughts="showChatThoughts"
+					:show-kernels="showKernels"
+					@new-dataset-saved="addOutputPort"
 				/>
 			</Suspense>
 		</div>
@@ -35,8 +35,10 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'close']);
 
-const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>false);
+const notebookSession = ref<NotebookSession | undefined>(undefined);
+const showChatThoughts = ref<boolean>(false);
+const showKernels = ref<boolean>(false);
+
 const assets = computed(() =>
 	props.node.inputs
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
@@ -45,8 +47,6 @@ const assets = computed(() =>
 			id: inputNode.value![0]
 		}))
 );
-
-const notebookSession = ref(<NotebookSession | undefined>undefined);
 
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
