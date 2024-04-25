@@ -388,7 +388,7 @@ const knobs = ref<BasicKnobs>({
 		name: '',
 		description: '',
 		model_id: '',
-		configuration: {}
+		configuration: {} as Model
 	}
 });
 
@@ -779,7 +779,7 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value
+			configuration: model.value ?? ({} as Model)
 		};
 
 		await createTempModelConfig();
