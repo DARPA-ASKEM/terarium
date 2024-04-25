@@ -1,5 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/DARPA-ASKEM/climate-data/blob/main/api/processing/filters.py#L48';
+
 export interface SubsetDataOperationState extends BaseState {
 	datasetId: string | null;
 	fromDate: Date;

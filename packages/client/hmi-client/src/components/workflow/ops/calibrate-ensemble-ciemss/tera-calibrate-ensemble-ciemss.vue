@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -224,7 +224,8 @@ import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
-	EnsembleCalibrateExtraCiemss
+	EnsembleCalibrateExtraCiemss,
+	DOCUMENTATION_URL
 } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{

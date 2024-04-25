@@ -3,6 +3,9 @@ import { ModelServiceType } from '@/types/common';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CodeBlock } from '@/utils/code-asset';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/ml4ai/ASKEM-TA1-DockerVM?tab=readme-ov-file#code2amr';
+
 export interface ModelFromCodeState {
 	codeLanguage: ProgrammingLanguage;
 	codeBlocks: AssetBlock<CodeBlock>[];

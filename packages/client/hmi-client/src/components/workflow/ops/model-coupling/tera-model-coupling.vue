@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://algebraicjulia.github.io/Decapodes.jl/dev/overview/#Merging-Multiple-Physics'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -114,7 +114,7 @@ import Dropdown from 'primevue/dropdown';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import { ModelCouplingState } from './model-coupling-operation';
+import { ModelCouplingState, DOCUMENTATION_URL } from './model-coupling-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelCouplingState>;

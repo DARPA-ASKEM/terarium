@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L245'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -235,7 +235,8 @@ import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
-	CalibrationOperationStateJulia
+	CalibrationOperationStateJulia,
+	DOCUMENTATION_URL
 } from './calibrate-operation';
 
 const props = defineProps<{

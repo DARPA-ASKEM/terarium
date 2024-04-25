@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -157,7 +157,10 @@ import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import {
+	getModelIdFromModelConfigurationId,
+	DOCUMENTATION_URL
+} from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

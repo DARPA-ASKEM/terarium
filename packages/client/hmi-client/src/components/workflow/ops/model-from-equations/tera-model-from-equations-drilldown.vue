@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/DARPA-ASKEM/model-service/blob/07ae21cae2d5465f9ac5b5bbbe6c7b28b7259f04/src/ModelService.jl#L54'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -149,7 +149,8 @@ import {
 	EquationBlock,
 	EquationFromImageBlock,
 	instanceOfEquationFromImageBlock,
-	ModelFromEquationsState
+	ModelFromEquationsState,
+	DOCUMENTATION_URL
 } from './model-from-equations-operation';
 
 const emit = defineEmits([

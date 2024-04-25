@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -236,7 +236,10 @@ import type {
 import { RunResults } from '@/types/SimulateConfig';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import {
+	SimulateEnsembleCiemssOperationState,
+	DOCUMENTATION_URL
+} from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;

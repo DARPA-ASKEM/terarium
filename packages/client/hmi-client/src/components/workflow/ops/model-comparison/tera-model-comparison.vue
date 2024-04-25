@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/gyorilab/mira/blob/7314765ab409ddc9647269ad2381055f1cd67706/notebooks/hackathon_2023.10/dkg_grounding_model_comparison.ipynb#L307'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -161,7 +161,7 @@ import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
-import { ModelComparisonOperationState } from './model-comparison-operation';
+import { ModelComparisonOperationState, DOCUMENTATION_URL } from './model-comparison-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;

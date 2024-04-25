@@ -1,6 +1,9 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L222';
+
 export interface SimulateJuliaOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];

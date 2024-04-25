@@ -1,5 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+export const DOCUMENTATION_URL = 'https://pandas.pydata.org/docs/user_guide/index.html#user-guide';
+
 export interface DatasetTransformerState extends BaseState {
 	datasetId: string | null;
 	notebookSessionId?: string;

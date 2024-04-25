@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -157,7 +157,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import { SimulateCiemssOperationState, DOCUMENTATION_URL } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;

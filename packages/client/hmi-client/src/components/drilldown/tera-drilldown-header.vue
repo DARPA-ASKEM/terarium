@@ -3,7 +3,7 @@
 		<div class="title-row">
 			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
 			<slot name="inputs" />
-			<a v-if="documentationUrl" :href="documentationUrl" target="_blank" rel="noopener noreferrer"
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer"
 				>Documentation</a
 			>
 			<Button

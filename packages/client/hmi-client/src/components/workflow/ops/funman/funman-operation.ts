@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
+export const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
+
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;

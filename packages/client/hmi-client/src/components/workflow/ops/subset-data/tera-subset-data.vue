@@ -1,7 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
-		:documentation-url="'https://github.com/DARPA-ASKEM/climate-data/blob/main/api/processing/filters.py#L48'"
+		:documentation-url="DOCUMENTATION_URL"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -231,7 +231,7 @@ import Checkbox from 'primevue/checkbox';
 import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
 import { useProjects } from '@/composables/project';
-import { SubsetDataOperationState } from './subset-data-operation';
+import { SubsetDataOperationState, DOCUMENTATION_URL } from './subset-data-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SubsetDataOperationState>;

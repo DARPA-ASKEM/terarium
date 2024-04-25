@@ -1,6 +1,9 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35';
+
 export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	chartConfigs: string[][];
 	mapping: EnsembleModelConfigs[];

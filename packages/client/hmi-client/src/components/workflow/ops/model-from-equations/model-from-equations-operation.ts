@@ -2,6 +2,9 @@ import type { DocumentExtraction } from '@/types/Types';
 import { ModelServiceType } from '@/types/common';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/DARPA-ASKEM/model-service/blob/07ae21cae2d5465f9ac5b5bbbe6c7b28b7259f04/src/ModelService.jl#L54';
+
 export interface EquationBlock {
 	text: string;
 	extractionError?: boolean;

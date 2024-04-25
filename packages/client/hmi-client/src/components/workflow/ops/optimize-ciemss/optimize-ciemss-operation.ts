@@ -1,5 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
+
 export enum InterventionTypes {
 	paramValue = 'param_value',
 	startTime = 'start_time'

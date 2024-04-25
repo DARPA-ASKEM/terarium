@@ -1,6 +1,9 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
+
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
 	chartConfigs: string[][];

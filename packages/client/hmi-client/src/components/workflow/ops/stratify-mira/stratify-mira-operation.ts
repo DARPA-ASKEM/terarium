@@ -1,6 +1,9 @@
 import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 
+export const DOCUMENTATION_URL =
+	'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
+
 export interface StratifyGroup {
 	borderColour: string;
 	name: string;
