@@ -89,14 +89,13 @@ public class FunmanController {
 
 			final Simulation sim = new Simulation();
 			sim.setId(uuid);
-			sim.setType(SimulationType.VALIDATION);
+
+			// sim.setType(SimulationType.VALIDATION);
+			sim.setType(SimulationType.SIMULATION);
 			sim.setStatus(ProgressState.QUEUED);
 
-		  // Upsert
-			final Optional<Simulation> updated = simulationService.updateAsset(sim);
-			if (updated.isEmpty()) {
-				throw new Exception("Failed to create funman simulation object");
-			}
+		  // Create new simulatin object to proxy the funman validation process
+			Simulation newSimulation = simulationService.createAsset(sim);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(uuid);
@@ -105,10 +104,12 @@ public class FunmanController {
 
 			// return ResponseEntity.ok().body(taskService.runTask(TaskMode.ASYNC, taskRequest));
 
-			return ResponseEntity.ok(updated.get());
+			return ResponseEntity.ok(newSimulation);
 		} catch (final ResponseStatusException e) {
+			e.printStackTrace();
 			throw e;
 		} catch (final Exception e) {
+			e.printStackTrace();
 			final String error = "Unable to dispatch task request";
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
