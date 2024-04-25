@@ -19,8 +19,6 @@
 </template>
 
 <script setup lang="ts">
-// Proxy to use tera-dataset via a workflow context
-
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraDatasetJupyterPanel from '@/components/dataset/tera-dataset-jupyter-panel.vue';
 import { computed, onMounted, ref } from 'vue';
