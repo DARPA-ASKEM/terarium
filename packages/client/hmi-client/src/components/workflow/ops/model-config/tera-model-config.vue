@@ -687,7 +687,7 @@ const runSanityCheck = () => {
 const downloadConfiguredModel = async () => {
 	const rawModel = knobs.value?.transientModelConfig?.configuration;
 	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 4))}`;
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
 		const a = document.createElement('a');
 		a.href = `data:${data}`;
 		a.download = `${

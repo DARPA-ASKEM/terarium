@@ -132,7 +132,7 @@ const optionsMenuItems = computed(() => [
 		command: async () => {
 			if (model.value) {
 				const data = `text/json;charset=utf-8,${encodeURIComponent(
-					JSON.stringify(model, null, 4)
+					JSON.stringify(model.value, null, 2)
 				)}`;
 				const a = document.createElement('a');
 				a.href = `data:${data}`;
