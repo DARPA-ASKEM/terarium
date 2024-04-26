@@ -68,7 +68,6 @@ public class FunmanController {
 						description = "There was an issue dispatching the request",
 						content = @Content)
 			})
-	// public ResponseEntity<TaskResponse> createValidationRequest(@RequestBody final JsonNode input) {
 	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNode input) {
 
 		try {
@@ -82,12 +81,10 @@ public class FunmanController {
 			final Simulation sim = new Simulation();
 
 			sim.setId(uuid);
-			// sim.setType(SimulationType.VALIDATION);
-			sim.setType(SimulationType.SIMULATION); // FIXME - type is overly strict
-			sim.setStatus(ProgressState.QUEUED);
-
-			// FIXME: uncomment when DB column is fixed
-			// sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
+			sim.setType(SimulationType.VALIDATION);
+			sim.setStatus(ProgressState.RUNNING);
+			sim.setDescription("funman model configuration validation");
+			sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
 			Simulation newSimulation = simulationService.createAsset(sim);
