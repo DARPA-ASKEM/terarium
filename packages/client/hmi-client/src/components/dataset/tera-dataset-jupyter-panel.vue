@@ -59,7 +59,7 @@
 				option-label="name"
 				option-value="value"
 				class="5"
-				:disabled="!kernelState"
+				:disabled="kernelStatus !== 'idle'"
 				@change="onChangeLanguage"
 			/>
 			<Button
@@ -83,6 +83,7 @@
 			@update-kernel-status="updateKernelStatus"
 			@new-dataset-saved="onNewDatasetSaved"
 			@download-response="onDownloadResponse"
+			@update-language="(lang) => emit('update-language', lang)"
 			:notebook-session="props.notebookSession"
 		/>
 
@@ -282,8 +283,6 @@ const onChangeLanguage = (val) => {
 			};
 			const message: JupyterMessage = createMessage(messageBody);
 			kernel.sendJupyterMessage(message);
-
-			emit('update-language', val.value);
 		}
 	});
 };
