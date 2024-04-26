@@ -2,42 +2,35 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.io.Serial;
-import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TSModel
 @Entity
-public class Simulation implements Serializable {
+@TSModel
+public class Simulation extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = 5467224100686908152L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	private UUID id;
-
 	@JsonAlias("execution_payload")
 	@Convert(converter = JpaConverterJson.class)
-	private Object executionPayload;
-
-	@TSOptional
-	private String name;
+	private JsonNode executionPayload;
 
 	@TSOptional
 	private String description;
@@ -45,6 +38,7 @@ public class Simulation implements Serializable {
 	@JsonAlias("result_files")
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@ElementCollection
 	private List<String> resultFiles;
 
 	@Enumerated(EnumType.STRING)
@@ -81,22 +75,27 @@ public class Simulation implements Serializable {
 
 	@JsonAlias("project_id")
 	@TSOptional
-	private UUID projectId;
+	private UUID projectId; // TODO this can probably be joined to the project table soon?
 
-	@TSOptional
-	@CreationTimestamp
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp createdOn;
+	@Override
+	public Simulation clone() {
+		final Simulation clone = new Simulation();
 
-	@TSOptional
-	@UpdateTimestamp
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp updatedOn;
+		cloneSuperFields(clone);
 
-	@TSOptional
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	private Timestamp deletedOn;
+		clone.setDescription(this.description);
+
+		clone.setResultFiles(new ArrayList<>(this.resultFiles));
+		clone.setType(SimulationType.valueOf(this.type.name()));
+		clone.setStatus(ProgressState.valueOf(this.status.name()));
+		clone.setStatusMessage(this.statusMessage);
+		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null);
+		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null);
+		clone.setEngine(SimulationEngine.valueOf(this.engine.name()));
+		clone.setUserId(this.userId);
+		clone.setExecutionPayload(this.executionPayload.deepCopy());
+		clone.setProjectId(this.projectId); // TODO
+
+		return clone;
+	}
 }

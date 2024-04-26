@@ -79,9 +79,7 @@
 								class="white-space-nowrap"
 								style="margin-right: auto"
 								label="Save as new model"
-								@click="
-									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-								"
+								@click="saveNewModel({ addToProject: true, appendOutputPort: true })"
 							/>
 							<Button label="Close" size="large" @click="emit('close')" />
 						</div>
@@ -116,6 +114,7 @@ import TeraModelTemplateEditor from '@/components/model-template/tera-model-temp
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -150,7 +149,7 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
-const modelId = props.node.inputs[0].value?.[0];
+
 const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -281,6 +280,15 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -308,9 +316,9 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
+const saveNewModel = async (options: SaveOptions) => {
+	if (!amr.value) return;
+	amr.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
 	const modelData = await createModel(amr.value);
@@ -325,7 +333,7 @@ const saveNewModel = async (modelName: string, options: SaveOptions) => {
 	if (options.appendOutputPort) {
 		emit('append-output', {
 			id: uuidv4(),
-			label: modelName,
+			label: newModelName.value,
 			type: 'modelId',
 			state: _.cloneDeep(props.node.state),
 			value: [modelData.id]

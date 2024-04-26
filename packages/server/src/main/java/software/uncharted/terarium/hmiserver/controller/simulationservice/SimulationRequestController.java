@@ -63,6 +63,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigService;
 
+	private final ObjectMapper objectMapper;
+
 	@Value("${terarium.sciml-queue}")
 	private String SCIML_QUEUE;
 
@@ -71,7 +73,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
 
 		try {
-			final Optional<Simulation> sim = simulationService.getSimulation(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -97,7 +99,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.SCIML.toString());
 
-		sim.setExecutionPayload(request);
+		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 
 		// FIXME: These fiels are arguable unnecessary
@@ -109,7 +111,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.SCIML);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -161,7 +163,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.CIEMSS.toString());
 
-		sim.setExecutionPayload(request);
+		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 
 		final Optional<Project> project = projectService.getProject(request.getProjectId());
@@ -173,7 +175,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.CIEMSS);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateSimulation(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

@@ -57,7 +57,14 @@ public class ProjectService {
 		if (!projectRepository.existsById(project.getId())) {
 			return Optional.empty();
 		}
-		return Optional.of(projectRepository.save(project));
+
+		final Project existingProject =
+				projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
+
+		// merge the existing project with values from the new project
+		final Project mergedProject = Project.mergeProjectFields(existingProject, project);
+
+		return Optional.of(projectRepository.save(mergedProject));
 	}
 
 	@Observed(name = "function_profile")

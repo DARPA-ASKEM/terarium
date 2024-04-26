@@ -22,7 +22,9 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("gollm")
 		GOLLM("gollm"),
 		@JsonAlias("mira")
-		MIRA("mira");
+		MIRA("mira"),
+		@JsonAlias("funman")
+		FUNMAN("funman");
 
 		private final String value;
 

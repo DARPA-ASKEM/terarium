@@ -69,4 +69,12 @@ public class DatasetColumn {
 		@JsonAlias("time")
 		TIME
 	}
+
+	public void updateMetadata(final Map<String, Object> metadata) {
+		if (this.metadata == null) {
+			this.metadata = metadata;
+		} else {
+			this.metadata.putAll(metadata);
+		}
+	}
 }

@@ -118,7 +118,7 @@
 			/>
 		</form>
 		<template #footer>
-			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
+			<Button label="Save" size="large" @click="saveNewModel" />
 			<Button
 				class="p-button-secondary"
 				size="large"
@@ -156,6 +156,7 @@ import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -288,6 +289,10 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	if (!stratifiedAmr.value) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
 
 	// Create output
 	const modelData = await createModel(stratifiedAmr.value);
@@ -358,7 +363,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -378,9 +391,9 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string) => {
-	if (!stratifiedAmr.value || !modelName) return;
-	stratifiedAmr.value.header.name = modelName;
+const saveNewModel = async () => {
+	if (!stratifiedAmr.value) return;
+	stratifiedAmr.value.header.name = newModelName.value;
 
 	const projectResource = useProjects();
 	const modelData = await createModel(stratifiedAmr.value);

@@ -95,8 +95,13 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding {
-    identifiers: { [index: string]: string };
+    identifiers: Identifier[];
     context?: { [index: string]: any };
+}
+
+export interface Identifier {
+    curie: string;
+    name: string;
 }
 
 export interface PresignedURL {
@@ -498,10 +503,8 @@ export interface RegNetVertex {
     rate_constant?: any;
 }
 
-export interface Simulation {
-    id?: string;
+export interface Simulation extends TerariumAsset {
     executionPayload: any;
-    name?: string;
     description?: string;
     resultFiles?: string[];
     type: SimulationType;
@@ -513,9 +516,6 @@ export interface Simulation {
     workflowId: string;
     userId?: string;
     projectId?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -551,6 +551,7 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
+    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
