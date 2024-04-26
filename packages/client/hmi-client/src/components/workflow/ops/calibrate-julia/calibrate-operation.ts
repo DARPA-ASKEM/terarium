@@ -1,5 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
+const DOCUMENTATION_URL =
+	'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L245';
+
 export interface CalibrateMap {
 	modelVariable: string;
 	datasetVariable: string;
@@ -35,6 +38,7 @@ export const CalibrationOperationJulia: Operation = {
 	displayName: 'Calibrate with SciML',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset' }

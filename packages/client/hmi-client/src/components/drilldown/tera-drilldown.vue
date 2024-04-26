@@ -5,6 +5,7 @@
 				:active-index="selectedViewIndex"
 				:views="views"
 				:tooltip="tooltip"
+				:documentation-url="node.documentationUrl"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 			>
