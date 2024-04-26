@@ -69,6 +69,7 @@ export const addNode = (
 		workflowId: wf.id,
 		operationType: op.name,
 		displayName: op.displayName,
+		documentationUrl: op.documentationUrl,
 		x: pos.x,
 		y: pos.y,
 		state: options.state ?? {},
