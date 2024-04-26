@@ -1,4 +1,3 @@
-packages/server/src/main/java/software/uncharted/terarium/hmiserver/service/AuthorityService.java
 package software.uncharted.terarium.hmiserver.service;
 
 import lombok.RequiredArgsConstructor;
