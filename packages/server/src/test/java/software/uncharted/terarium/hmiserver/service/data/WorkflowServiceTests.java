@@ -334,9 +334,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 					workflows.get(i).getCreatedOn().toInstant().getEpochSecond(),
 					results.get(i).getCreatedOn().toInstant().getEpochSecond());
 			Assertions.assertEquals(
-					workflows.get(i).getUpdatedOn(), results.get(i).getUpdatedOn());
+					workflows.get(i).getUpdatedOn().toInstant().getEpochSecond(),
+					results.get(i).getUpdatedOn().toInstant().getEpochSecond());
 			Assertions.assertEquals(
-					workflows.get(i).getDeletedOn(), results.get(i).getDeletedOn());
+					workflows.get(i).getDeletedOn().toInstant().getEpochSecond(),
+					results.get(i).getDeletedOn().toInstant().getEpochSecond());
 			Assertions.assertEquals(
 					workflows.get(i).getNodes().size(),
 					results.get(i).getNodes().size());
