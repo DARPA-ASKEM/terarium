@@ -1,3 +1,4 @@
+packages/server/src/main/java/software/uncharted/terarium/hmiserver/service/AuthorityService.java
 package software.uncharted.terarium.hmiserver.service;
 
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class AuthorityService {
 	private final AuthorityRepository authorityRepository;
 
 	public long count() {
-		System.out.println("Just a test"):
+		System.out.println("Just a test");
 		return authorityRepository.count();
 	}
 
