@@ -1,8 +1,5 @@
 <template>
 	<div class="data-transform-container">
-		<!-- Confirm Dialogs -->
-		<ConfirmDialog class="w-4" />
-
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
@@ -55,6 +52,16 @@
 
 			<!-- Reset kernel -->
 			<span class="flex-auto"></span>
+			<Dropdown
+				:model-value="selectedLanguage"
+				placeholder="Select a language"
+				:options="languages"
+				option-label="name"
+				option-value="value"
+				class="5"
+				:disabled="!kernelState"
+				@change="onChangeLanguage"
+			/>
 			<Button
 				label="Reset kernel"
 				severity="secondary"
@@ -149,9 +156,9 @@ import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
+import { programmingLanguageOptions } from '@/types/common';
 
 const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker Kernel');
 const selectedKernel = ref();
@@ -164,9 +171,13 @@ const props = defineProps<{
 	showKernels: boolean;
 	showChatThoughts: boolean;
 	notebookSession?: NotebookSession;
+	programmingLanguage?: string;
 }>();
 
-const emit = defineEmits(['new-dataset-saved']);
+const languages = programmingLanguageOptions();
+const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
+
+const emit = defineEmits(['new-dataset-saved', 'update-language']);
 
 const chat = ref();
 const kernelStatus = ref(<string>'');
@@ -234,10 +245,48 @@ jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
 	if (kernel?.name === 'beaker_kernel') {
 		setKernelContext(kernel as IKernelConnection, {
 			context: 'dataset',
+			language: selectedLanguage.value,
 			context_info: contextInfo
 		});
 	}
 });
+
+const onChangeLanguage = (val) => {
+	confirm.require({
+		message:
+			'Are you sure you want to change the language? Changing the language will reset the kernel to its starting state.',
+		header: 'Change language',
+		icon: 'pi pi-exclamation-triangle',
+		accept: () => {
+			const session = jupyterSession.session;
+			const kernel = session?.kernel as IKernelConnection;
+
+			const contextInfo: any = {};
+			props.assets.forEach((asset, i) => {
+				const key = `d${i + 1}`;
+				contextInfo[key] = {
+					id: asset.id,
+					asset_type: toAssetType(asset.type)
+				};
+			});
+			const messageBody = {
+				session: session?.name || '',
+				channel: 'shell',
+				content: {
+					context: 'dataset',
+					language: val.value,
+					context_info: contextInfo
+				},
+				msgType: 'context_setup_request',
+				msgId: createMessageId('context_setup_request')
+			};
+			const message: JupyterMessage = createMessage(messageBody);
+			kernel.sendJupyterMessage(message);
+
+			emit('update-language', val.value);
+		}
+	});
+};
 
 watch(
 	() => [jupyterCsv.value?.csv],
