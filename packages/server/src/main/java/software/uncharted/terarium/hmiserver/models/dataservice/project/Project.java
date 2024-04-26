@@ -79,4 +79,18 @@ public class Project extends TerariumAsset {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private String userPermission;
+
+	public static Project mergeProjectFields(final Project existingProject, final Project project) {
+		// Merge non-transient Project specific fields into the existing project
+		if (project.getName() != null) {
+			existingProject.setName(project.getName());
+		}
+		if (project.getDescription() != null) {
+			existingProject.setDescription(project.getDescription());
+		}
+		if (project.getOverviewContent() != null) {
+			existingProject.setOverviewContent(project.getOverviewContent());
+		}
+		return existingProject;
+	}
 }

@@ -118,7 +118,9 @@
 					optionValue="value"
 					placeholder="Select a parameter type"
 					:disabled="readonly"
-					@update:model-value="(val) => changeType(slotProps.data.value, val)"
+					@update:model-value="
+						(val) => updateMetadataFromInput(slotProps.data.value.target, 'expression', val)
+					"
 				>
 					<template #value="slotProps">
 						<span class="flex align-items-center">
@@ -140,7 +142,14 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Value" class="w-2 pr-2">
+		<Column field="value" class="w-2 pr-2">
+			<template #header>
+				<span>Value</span>
+				<span class="evaluate-toggle">
+					<label>Evaluate</label>
+					<InputSwitch v-if="!isStratified" v-model="areExpressionsEvaluated" :binary="true" />
+				</span>
+			</template>
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -150,19 +159,23 @@
 					>Open matrix</span
 				>
 				<!-- Expression -->
-				<span
+				<template
 					v-else-if="
 						slotProps.data.type === ParamType.EXPRESSION ||
 						slotProps.data.type === ParamType.CONSTANT
 					"
 				>
 					<InputText
+						v-if="!areExpressionsEvaluated"
 						class="tabular-numbers w-full"
 						v-model.lazy="slotProps.data.value.expression"
 						:disabled="readonly"
 						@update:model-value="updateExpression(slotProps.data.value)"
 					/>
-				</span>
+					<span v-else>
+						{{ evaluatedExpressions.get(slotProps.data.value.expression) }}
+					</span>
+				</template>
 			</template>
 		</Column>
 
@@ -214,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import type { Model, Initial, DKG } from '@/types/Types';
@@ -245,6 +258,7 @@ import {
 	getInitialMetadata
 } from '@/model-representation/service';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import InputSwitch from 'primevue/inputswitch';
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
@@ -262,6 +276,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-value', 'update-model']);
+
+const areExpressionsEvaluated = ref(false);
+const evaluatedExpressions = ref(new Map<string, string>());
 
 const matrixModalContext = ref({
 	isOpen: false,
@@ -287,6 +304,20 @@ const initials = computed<Map<string, string[]>>(() => {
 	}
 	model.semantics?.ode.initials?.forEach((initial) => {
 		result.set(initial.target, [initial.target]);
+	});
+	return result;
+});
+
+const isStratified = computed(() => {
+	if (!props.mmt) return false;
+	return isStratifiedModel(props.mmt);
+});
+
+const parametersValueMap = computed(() => {
+	const keys = Object.keys(props.mmt.parameters);
+	const result: any = {};
+	keys.forEach((key) => {
+		result[key] = props.mmt.parameters[key].value;
 	});
 	return result;
 });
@@ -340,6 +371,7 @@ const tableFormattedInitials = computed<ModelConfigTableData[]>(() => {
 			const descriptionValue = initialsMetadata?.description;
 			const conceptValue = initialsMetadata?.concept;
 			const expressionValue = initialsMetadata?.expression;
+
 			formattedInitials.push({
 				id: init,
 				name: nameValue,
@@ -382,10 +414,24 @@ const updateMetadataFromInput = (id: string, key: string, value: any) => {
 	emit('update-model', clone);
 };
 
-const isStratified = computed(() => {
-	if (!props.mmt) return false;
-	return isStratifiedModel(props.mmt);
-});
+async function evaluateExpression(expression: string) {
+	return pythonInstance.evaluateExpression(expression, parametersValueMap.value);
+}
+
+const initialExpressions = computed<string[]>(() =>
+	tableFormattedInitials.value.map((i) => i.value.expression)
+);
+
+watch(
+	() => initialExpressions.value,
+	async () => {
+		evaluatedExpressions.value.clear();
+		initialExpressions.value.forEach(async (expression) => {
+			const newExpression = await evaluateExpression(expression);
+			evaluatedExpressions.value.set(expression, newExpression);
+		});
+	}
+);
 
 const updateExpression = async (value: Initial) => {
 	const mathml = (await pythonInstance.parseExpression(value.expression)).mathml;
@@ -399,32 +445,26 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 		curies.value = response;
 	}
 }
-
-const changeType = (initial: Initial, typeIndex: number) => {
-	const clonedModel = cloneDeep(props.model);
-	const metadata = clonedModel.metadata?.initials;
-	if (!metadata) return;
-	if (!metadata[initial.target]) {
-		metadata[initial.target] = {};
-	}
-	switch (typeIndex) {
-		case ParamType.EXPRESSION:
-			if (metadata) metadata[initial.target].expression = true;
-			break;
-		case ParamType.CONSTANT:
-		default:
-			metadata[initial.target].expression = false;
-			break;
-	}
-
-	emit('update-model', clonedModel);
-};
 </script>
 
 <style scoped>
 .truncate-text {
 	display: flex;
 	width: 10rem;
+}
+
+.evaluate-toggle {
+	margin-left: auto;
+	font-weight: var(--font-weight);
+	font-size: var(--font-tiny);
+	display: flex;
+	flex-direction: column;
+	align-items: end;
+	gap: var(--gap-xsmall);
+
+	& > .p-inputswitch {
+		scale: 0.75;
+	}
 }
 
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
