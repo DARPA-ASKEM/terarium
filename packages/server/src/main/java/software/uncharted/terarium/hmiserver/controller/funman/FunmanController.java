@@ -77,10 +77,7 @@ public class FunmanController {
 			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 
-			final UUID uuid = UUID.randomUUID();
 			final Simulation sim = new Simulation();
-
-			sim.setId(uuid);
 			sim.setType(SimulationType.VALIDATION);
 			sim.setStatus(ProgressState.RUNNING);
 			sim.setDescription("funman model configuration validation");
@@ -90,7 +87,7 @@ public class FunmanController {
 			Simulation newSimulation = simulationService.createAsset(sim);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
-			props.setSimulationId(uuid);
+			props.setSimulationId(newSimulation.getId());
 			taskRequest.setAdditionalProperties(props);
 			taskService.runTask(TaskMode.ASYNC, taskRequest);
 
