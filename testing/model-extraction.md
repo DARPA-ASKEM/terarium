@@ -1,8 +1,17 @@
 ## Model extraction
+Please go through __every__ steps of the test scenario. 
+When blocked, or an error, an UI/UX anomaly occurs, please report which scenario and step to [ #askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+
 
 ### 1. Begin test 
 - [ ] a. login to https://app.staging.terarium.ai using the test account
-- [ ] b. Create project named `Q&A [name of tester]`
+
+```
+email: qa@test.io
+password: askem-quality-assurance
+```
+
+- [ ] b. Create project named `Q&A [Your Name]`
 
 ### 2. Upload a PDF
 - [ ] a. Upload _the Document_ [SIR](https://drive.google.com/file/d/1vN4sNR7IrRi5GsOQ9r_LgV4S5wwinXnG/view?usp=drive_link)
