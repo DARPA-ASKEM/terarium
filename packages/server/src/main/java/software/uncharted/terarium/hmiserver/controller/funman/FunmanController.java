@@ -78,7 +78,6 @@ public class FunmanController {
 			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 
-
 			final UUID uuid = UUID.randomUUID();
 			final Simulation sim = new Simulation();
 
@@ -88,7 +87,7 @@ public class FunmanController {
 			sim.setStatus(ProgressState.QUEUED);
 
 			// FIXME: uncomment when DB column is fixed
-		  // sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
+			// sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
 			Simulation newSimulation = simulationService.createAsset(sim);
