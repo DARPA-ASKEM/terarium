@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -38,9 +39,11 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+
 
 @RequestMapping("/simulation-request")
 @RestController
@@ -57,6 +60,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final ProjectService projectService;
 	private final SimulationService simulationService;
 
+	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigService;
 
 	@Value("${terarium.sciml-queue}")
@@ -120,9 +124,30 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
-
-		if (request.getInterventions() == null) {
-			request.setInterventions(getInterventionFromId(request.getModelConfigId()));
+		//Get model's interventions and append them to requests:
+		try{
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(request.getModelConfigId());
+			if (modelConfiguration.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
+			if (model.isEmpty()){
+				return ResponseEntity.notFound().build();
+			}
+			final List<Intervention> modelInterventions = model.get().getInterventions();
+			if (modelInterventions != null){
+				List<Intervention> allInterventions = request.getInterventions();
+				if (allInterventions == null){
+					allInterventions = new ArrayList();
+				}
+				allInterventions.addAll(modelInterventions);
+				request.setInterventions(allInterventions);
+			}
+		}
+		catch(IOException e) {
+			String error = "Unable to find model configuration";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
 		final JobResponse res = simulationCiemssServiceProxy
@@ -213,61 +238,5 @@ public class SimulationRequestController implements SnakeCaseController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		}
-	}
-
-	// Get modelConfigId
-	// Check if it has timeseries in its metadata
-	// If it does for each element convert it to type Intervention and add it to
-	// this.interventions
-	// Schema: http://json-schema.org/draft-07/schema#
-	private List<Intervention> getInterventionFromId(final UUID modelConfigId) {
-		final List<Intervention> interventionList = new ArrayList<>();
-		try {
-			final ObjectMapper mapper = new ObjectMapper();
-			final Optional<ModelConfiguration> modelConfig = modelConfigService.getAsset(modelConfigId);
-			final JsonNode configuration = mapper.convertValue(modelConfig.get().getConfiguration(), JsonNode.class);
-			// Parse the values found under the following path:
-			// AMR -> configuration -> metadata -> timeseries -> parameter name -> value
-			// EG) "timeseries": {
-			// "beta": "1:0.05,2:0.04,3:0.01"
-			// }
-			// Into the following format: "interventions":
-			// [{"timestep":1,"name":"beta","value":0.05},
-			// {"timestep":2,"name":"beta","value":0.04}, ...]
-			// This will later be scrapped after a redesign where our AMR -> configuration
-			// -> metadata -> timeseries -> parameter name -> value should be more typed.
-			if (configuration.get("metadata").get("timeseries") != null) {
-				final JsonNode timeseries =
-						mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
-				final List<String> fieldNames = new ArrayList<>();
-				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
-				for (int i = 0; i < fieldNames.size(); i++) {
-					// Eg) Beta
-					final String interventionName = fieldNames.get(i).replaceAll("\"", ",");
-					// Eg) "1:0.14, 10:0.1, 20:0.2, 30:0.3"
-					final String tempString = timeseries
-							.findValue(fieldNames.get(i))
-							.toString()
-							.replaceAll("\"", "")
-							.replaceAll(" ", "");
-					final String[] tempList = tempString.split(",");
-					for (final String ele : tempList) {
-						final Integer timestep = Integer.parseInt(ele.split(":")[0]);
-						final Double value = Double.parseDouble(ele.split(":")[1]);
-						final Intervention temp = new Intervention();
-						temp.setName(interventionName);
-						temp.setValue(value);
-						temp.setTimestep(timestep);
-						interventionList.add(temp);
-					}
-				}
-			}
-		} catch (final RuntimeException | IOException e) {
-			final String error = String.format(
-					"Unable to parse model.configuration.metadata.timeseries for model config id: %s", modelConfigId);
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-		return interventionList;
 	}
 }
