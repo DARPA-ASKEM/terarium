@@ -1,10 +1,10 @@
-../packages/server/src/main/java/software/uncharted/terarium/hmiserver/service/tasks/ValidateModelConfigHandler.javapackage software.uncharted.terarium.hmiserver.service.tasks;
-
+package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.ArrayList;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,29 +39,33 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
+		final String resultFilename = "validation.json";
 		try {
+			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-
 			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			if (sim.isEmpty()) {
+				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
+			}
 
-			// TODO:
-			// - Retrive final result json
-			// - Upload final result into S3
-			// - Mark simulation as completed, update result file
+			// Retrive final result json
 			final JsonNode result = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+
+			// Upload final result into S3
 			final byte[] bytes = objectMapper.writeValueAsBytes(result.get("response"));
 			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.APPLICATION_OCTET_STREAM);
+			simulationService.uploadFile(simulationId, resultFilename, fileEntity, ContentType.TEXT_PLAIN);
 
-			simulationService.uploadFile(simulationId, "validation.json", fileEntity, ContentType.TEXT_PLAIN);
-
-			// Mark as done, and set resultFiles
+			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
-			simulationService.updateAsset(sim.get());
+			final ArrayList<String> resultFiles = new ArrayList<String>();
+			resultFiles.add(resultFilename);
+			simulationService.setResultFiles(resultFiles);
 
-			System.out.println("");
-			System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + simulationId.toString());
-			System.out.println("");
+			// Save
+			simulationService.updateAsset(sim.get());
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
