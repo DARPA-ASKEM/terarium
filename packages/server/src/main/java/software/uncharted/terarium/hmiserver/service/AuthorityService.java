@@ -14,7 +14,6 @@ public class AuthorityService {
 	private final AuthorityRepository authorityRepository;
 
 	public long count() {
-		System.out.println("Just a test");
 		return authorityRepository.count();
 	}
 
