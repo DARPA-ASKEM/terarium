@@ -61,7 +61,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setStatus(ProgressState.COMPLETE);
 			final ArrayList<String> resultFiles = new ArrayList<String>();
 			resultFiles.add(resultFilename);
-			simulationService.setResultFiles(resultFiles);
+			sim.get().setResultFiles(resultFiles);
 
 			// Save
 			simulationService.updateAsset(sim.get());
