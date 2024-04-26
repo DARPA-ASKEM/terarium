@@ -30,9 +30,11 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("execution_payload")
 	@Convert(converter = JpaConverterJson.class)
+	@Column(columnDefinition = "text")
 	private JsonNode executionPayload;
 
 	@TSOptional
+	@Column(length = 1000)
 	private String description;
 
 	@JsonAlias("result_files")
@@ -49,6 +51,7 @@ public class Simulation extends TerariumAsset {
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "text")
 	private String statusMessage;
 
 	@JsonAlias("start_time")
