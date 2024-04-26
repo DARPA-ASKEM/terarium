@@ -6,7 +6,8 @@ import type {
 	ModelTemplateCard,
 	ModelTemplateEdge,
 	ModelTemplateJunction,
-	ModelTemplateCanvas
+	ModelTemplateCanvas,
+	OffsetValues
 } from '@/types/model-templating';
 import { DecomposedModelTemplateTypes } from '@/types/model-templating';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -516,14 +517,21 @@ export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanv
 }
 
 // Helper function for finding port position when auto drawing junctions and edges
-function getPortPosition(templateCard: ModelTemplateCard, portId: string) {
+function getPortPosition(
+	templateCard: ModelTemplateCard,
+	portId: string,
+	potentialPortPositions?: Map<string, OffsetValues>
+) {
 	const cardWidth = 168;
+	const id = `${templateCard.id}-${portId}`;
 
 	// Default to fallback values for port position (top right of the card)
 	let x = templateCard.x + cardWidth;
 	let y = templateCard.y;
 	// Get the position of the port element
-	const portElement = document.getElementById(`${templateCard.id}-${portId}`);
+	const portElement = potentialPortPositions
+		? potentialPortPositions.get(id)
+		: document.getElementById(id);
 	if (portElement) {
 		x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
 		y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
@@ -657,6 +665,7 @@ export async function reflectFlattenedEditInDecomposedView(
 	kernelManager: KernelSessionManager,
 	flattenedCanvas: ModelTemplateCanvas,
 	decomposedCanvas: ModelTemplateCanvas,
+	decomposedPortPositions: Map<string, OffsetValues>,
 	outputCode: Function,
 	syncWithMiraModel: Function,
 	interpolatePointsFn?: Function
@@ -707,8 +716,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			// Finds the decomposed template that has the port used in the flattened view
 			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
-
-			const portPosition = getPortPosition(templateCard, sharedPortId); // FIXME: Decomposed ports can't be referenced at this stage since we are in the flattened view
+			const portPosition = getPortPosition(templateCard, sharedPortId, decomposedPortPositions); // Pass decomposed port positions that were saved when we switched to the flattened view
 
 			addJunction(decomposedCanvas, portPosition);
 			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;

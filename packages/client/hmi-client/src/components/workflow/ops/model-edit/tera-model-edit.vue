@@ -190,7 +190,12 @@ const appendCode = (data: any, property: string) => {
 };
 
 const syncWithMiraModel = (data: any) => {
-	amr.value = data.content['application/json'];
+	const updatedModel = data.content?.['application/json'];
+	if (!updatedModel) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
+	amr.value = updatedModel;
 };
 
 // Reset model, then execute the code
