@@ -452,6 +452,8 @@ function onEditorFormatSwitch(newFormat: EditorFormat) {
 	if (newFormat === EditorFormat.Decomposed)
 		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
 	else {
+		// When switching to the flattened view, we save the decomposed port positions
+		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
 		decomposedPortPositions.clear();
 		const decomposedPortElements = document.getElementsByClassName(
 			'port selectable'
