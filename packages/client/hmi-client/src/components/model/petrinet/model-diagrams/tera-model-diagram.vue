@@ -190,15 +190,15 @@ async function renderGraph() {
 		graphLegendColors.value = renderer.depthColorList;
 	}
 
-	if (isStratified.value) {
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, data } = selection.datum();
-			if (data.type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
-			}
-		});
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, data } = selection.datum();
+		if (data.type === NodeType.Transition) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
 
+	if (isStratified.value) {
 		renderer.on('node-mouse-enter', async (_eventName, _event, selection) => {
 			const { id, data } = selection.datum();
 
