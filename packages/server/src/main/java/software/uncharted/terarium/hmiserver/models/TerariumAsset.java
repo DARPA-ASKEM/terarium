@@ -28,7 +28,7 @@ public abstract class TerariumAsset implements Serializable {
 	private UUID id = UUID.randomUUID();
 
 	@TSOptional
-	@Column(length = 255)
+	@Column(length = 512)
 	@Schema(defaultValue = "Default Name")
 	private String name;
 
