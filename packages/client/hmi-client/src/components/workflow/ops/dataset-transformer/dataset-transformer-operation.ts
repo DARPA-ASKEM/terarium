@@ -1,3 +1,5 @@
+import { ProgrammingLanguage } from '@/types/Types';
+import { ProgrammingLanguageVersion } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
 const DOCUMENTATION_URL = 'https://pandas.pydata.org/docs/user_guide/index.html#user-guide';
@@ -5,6 +7,7 @@ const DOCUMENTATION_URL = 'https://pandas.pydata.org/docs/user_guide/index.html#
 export interface DatasetTransformerState extends BaseState {
 	datasetId: string | null;
 	notebookSessionId?: string;
+	programmingLanguage: string;
 }
 
 export const DatasetTransformerOperation: Operation = {
@@ -19,7 +22,8 @@ export const DatasetTransformerOperation: Operation = {
 
 	initState: () => {
 		const init: DatasetTransformerState = {
-			datasetId: null
+			datasetId: null,
+			programmingLanguage: ProgrammingLanguageVersion[ProgrammingLanguage.Python]
 		};
 		return init;
 	}
