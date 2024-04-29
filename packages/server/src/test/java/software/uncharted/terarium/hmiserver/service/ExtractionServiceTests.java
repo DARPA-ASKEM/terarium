@@ -58,10 +58,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+			.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -77,10 +77,11 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final ClassPathResource resource1 = new ClassPathResource("knowledge/extraction_text.txt");
 		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+
+			.setText(new String(content1))
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText(new String(content1));
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -99,10 +100,11 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+
+			.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -128,10 +130,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+			.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
-				.setDescription("my description")
-				.setFileNames(List.of("paper.pdf"));
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 

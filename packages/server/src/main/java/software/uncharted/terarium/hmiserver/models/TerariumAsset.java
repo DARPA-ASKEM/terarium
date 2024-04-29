@@ -28,7 +28,14 @@ public abstract class TerariumAsset implements Serializable {
 	private UUID id = UUID.randomUUID();
 
 	@TSOptional
+	@Column(length = 255)
+	@Schema(defaultValue = "Default Name")
 	private String name;
+
+	@TSOptional
+	@Schema(defaultValue = "Default Description")
+	@Column(columnDefinition = "text")
+	private String description;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -78,6 +85,7 @@ public abstract class TerariumAsset implements Serializable {
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
 		asset.id = UUID.randomUUID(); // ensure we create a new id
 		asset.name = name;
+		asset.description = description;
 		asset.createdOn = this.createdOn != null ? new Timestamp(this.createdOn.getTime()) : null;
 		asset.updatedOn = this.updatedOn != null ? new Timestamp(this.updatedOn.getTime()) : null;
 		asset.deletedOn = this.deletedOn != null ? new Timestamp(this.deletedOn.getTime()) : null;

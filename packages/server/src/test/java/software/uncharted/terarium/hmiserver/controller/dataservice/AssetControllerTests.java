@@ -137,9 +137,9 @@ public class AssetControllerTests extends TerariumApplicationTests {
 	 */
 	@BeforeEach
 	public void setUpScenario() throws Exception {
-		project = projectService.createProject(new Project().setName("test-proj-1"));
+		project = projectService.createProject((Project) new Project().setName("test-proj-1"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
+		final DocumentAsset documentAsset = documentAssetService.createAsset( (DocumentAsset)
 				new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"));
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -154,9 +154,9 @@ public class AssetControllerTests extends TerariumApplicationTests {
 						.content(objectMapper.writeValueAsString(projectAsset)))
 				.andExpect(status().isCreated());
 
-		project2 = projectService.createProject(new Project().setName("test-proj-2"));
+		project2 = projectService.createProject((Project)new Project().setName("test-proj-2"));
 
-		final DocumentAsset documentAsset2 = documentAssetService.createAsset(
+		final DocumentAsset documentAsset2 = documentAssetService.createAsset( (DocumentAsset)
 				new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"));
 
 		final ProjectAsset projectAsset2 = new ProjectAsset()

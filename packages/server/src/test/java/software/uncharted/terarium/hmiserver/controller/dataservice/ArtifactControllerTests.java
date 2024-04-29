@@ -50,7 +50,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateArtifact() throws Exception {
 
-		final Artifact artifact = new Artifact().setName("test-artifact-name").setDescription("my description");
+		final Artifact artifact = (Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/artifacts")
 						.with(csrf())
@@ -63,8 +63,8 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset((Artifact)
+			new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
 						.with(csrf()))
@@ -75,9 +75,9 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifacts() throws Exception {
 
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
+		artifactService.createAsset((Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
+		artifactService.createAsset((Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
+		artifactService.createAsset((Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf()))
 				.andExpect(status().isOk())
@@ -89,7 +89,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
 						.with(csrf()))
@@ -103,7 +103,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -131,7 +131,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifactFromGithub() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 						.with(csrf())
@@ -147,7 +147,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 
@@ -188,7 +188,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifactAsText() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 

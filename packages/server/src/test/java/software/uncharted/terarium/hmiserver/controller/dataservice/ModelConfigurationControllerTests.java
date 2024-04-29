@@ -49,11 +49,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset((ModelConfiguration)new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
-				.setDescription("test-desc")
-				.setConfiguration(new Model()));
+				.setConfiguration(new Model())
+				.setName("test-framework")
+				.setDescription("test-desc"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -64,11 +64,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = new ModelConfiguration()
-				.setName("test-framework")
+		final ModelConfiguration modelConfiguration = (ModelConfiguration)new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
+				.setConfiguration(new Model())
 				.setDescription("test-desc")
-				.setConfiguration(new Model());
+				.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 						.with(csrf())
@@ -81,11 +81,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
-				.setModelId(UUID.randomUUID())
-				.setDescription("test-desc")
-				.setConfiguration(new Model()));
+		final ModelConfiguration modelConfiguration = (ModelConfiguration)new ModelConfiguration()
+			.setModelId(UUID.randomUUID())
+			.setConfiguration(new Model())
+			.setDescription("test-desc")
+			.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -98,11 +98,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
-				.setModelId(UUID.randomUUID())
-				.setDescription("test-desc")
-				.setConfiguration(new Model()));
+		final ModelConfiguration modelConfiguration = (ModelConfiguration)new ModelConfiguration()
+			.setModelId(UUID.randomUUID())
+			.setConfiguration(new Model())
+			.setDescription("test-desc")
+			.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))

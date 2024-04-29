@@ -24,10 +24,6 @@ public class Equation extends TerariumAsset {
 	@TSOptional
 	private String userId;
 
-	/** (Optional) Display/human name for the equation * */
-	@TSOptional
-	private String name;
-
 	/** The type of equation (mathml or latex) * */
 	@JsonAlias("equation_type")
 	private EquationType equationType;

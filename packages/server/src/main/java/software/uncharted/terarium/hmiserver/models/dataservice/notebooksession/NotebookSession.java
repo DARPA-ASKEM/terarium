@@ -18,10 +18,5 @@ public class NotebookSession extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = 9176019416379347233L;
 
-	private String name;
-
-	@TSOptional
-	private String description;
-
 	private JsonNode data;
 }

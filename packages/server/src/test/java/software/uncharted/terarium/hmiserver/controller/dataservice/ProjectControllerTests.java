@@ -60,7 +60,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProject() throws Exception {
 
-		final Project project = new Project().setName("test-name");
+		final Project project = (Project) new Project().setName("test-name");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/projects")
 						.with(csrf())
@@ -73,7 +73,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetProject() throws Exception {
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId())
 						.with(csrf()))
@@ -84,7 +84,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateProject() throws Exception {
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/projects/" + project.getId())
 						.with(csrf())
@@ -97,7 +97,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProject() throws Exception {
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId())
 						.with(csrf()))
@@ -110,10 +110,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProjectAsset() throws Exception {
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
+			new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		final ProjectAsset projectAsset = new ProjectAsset()
 				.setAssetId(documentAsset.getId())
@@ -143,10 +143,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProjectAsset() throws Exception {
 
-		final Project project = projectService.createProject(new Project().setName("test-name"));
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
+			new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset);
 
