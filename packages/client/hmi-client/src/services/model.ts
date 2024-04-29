@@ -10,7 +10,7 @@ import { isEmpty } from 'lodash';
 import { modelCard } from './goLLM';
 import { profileModel } from './knowledge';
 
-export async function createModel(model: Model | Record<string, unknown>): Promise<Model | null> {
+export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
@@ -120,12 +120,12 @@ export function validateModelName(name: string): boolean {
  * @param file file to validate
  * @returns json object if valid, null otherwise
  */
-export async function validateAMRFile(file: File) {
+export async function validateAMRFile(file: File): Promise<Model | null> {
 	if (!file.name.endsWith('.json')) return null;
 	const jsonObject = await fileToJson(file);
 	if (!jsonObject) return null;
 	if (!isValidAMR(jsonObject)) return null;
-	return jsonObject;
+	return jsonObject as unknown as Model;
 }
 
 /**
@@ -134,8 +134,14 @@ export async function validateAMRFile(file: File) {
  * @returns boolean
  */
 export function isValidAMR(json: Record<string, unknown>) {
-	const schema: string = (json?.header as any)?.schema.toLowerCase();
-	const schemaName: string = (json?.header as any)?.schema_name.toLowerCase();
+	const schema: string | undefined = (json?.header as any)?.schema?.toLowerCase();
+	let schemaName: string | undefined = (json?.header as any)?.schema_name?.toLowerCase();
+
+	if (!schemaName && schema && json?.header) {
+		schemaName = Object.values(AMRSchemaNames).find((v) => schema.toLowerCase().includes(v));
+		(json.header as any).schema_name = schemaName;
+	}
+
 	if (!schema || !schemaName) return false;
 	if (!Object.values(AMRSchemaNames).includes(schemaName as AMRSchemaNames)) return false;
 	if (!Object.values(AMRSchemaNames).some((name) => schema.includes(name))) return false;
