@@ -39,6 +39,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("result_files")
 	@TSOptional
+	@Column(length = 1000)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ElementCollection
 	private List<String> resultFiles;
