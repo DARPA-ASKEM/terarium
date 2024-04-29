@@ -4,7 +4,7 @@
 			v-if="isVisible"
 			class="save-as-dialog"
 			@modal-mask-clicked="emit('close-modal')"
-			@modal-enter-press="saveNewModel"
+			@modal-enter-press="save"
 		>
 			<template #header>
 				<h4>{{ title }}</h4>
@@ -21,14 +21,8 @@
 				</form>
 			</template>
 			<template #footer>
-				<Button label="Save" size="large" @click="saveNewModel" />
-				<Button
-					label="Cancel"
-					class="p-button-secondary"
-					size="large"
-					outlined
-					@click="cancelNewModel"
-				/>
+				<Button label="Save" size="large" @click="save" />
+				<Button label="Cancel" class="p-button-secondary" size="large" outlined @click="cancel" />
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -45,9 +39,9 @@ import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
 import type { Model } from '@/types/Types';
 import {
-	createModel
+	createModel,
 	// getModel,
-	// updateModel,
+	updateModel
 } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
@@ -69,22 +63,28 @@ const props = defineProps({
 	openOnSave: {
 		type: Boolean,
 		default: false
+	},
+	isUpdatingName: {
+		type: Boolean,
+		default: false
 	}
 });
 
+// on-name-update, on-save-as
 const emit = defineEmits(['close-modal', 'on-save', 'update']);
 
 const newModelName = ref<string>('');
+
+const projectResource = useProjects();
 
 // TODO: Consider letting the user just know if what they are typing currently is a duplicate (do not prevent them from saving)
 // const isValidName = ref<boolean>(true);
 // const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));	v-bind:class="invalidInputStyle"
 
-async function saveNewModel() {
+async function saveAs() {
 	const newModel = cloneDeep(props.model);
 	newModel.header.name = newModelName.value.trim();
 
-	const projectResource = useProjects();
 	const modelData = await createModel(newModel);
 	if (!modelData) return;
 
@@ -96,6 +96,7 @@ async function saveNewModel() {
 	);
 
 	emit('on-save', modelData);
+
 	if (props.openOnSave) {
 		router.push({
 			name: RouteName.Project,
@@ -105,45 +106,36 @@ async function saveNewModel() {
 			}
 		});
 	}
+
 	emit('close-modal');
 }
 
-function cancelNewModel() {
+async function updateName() {
+	const modelToUpdate = cloneDeep(props.model);
+	modelToUpdate.header.name = newModelName.value.trim();
+
+	const response = await updateModel(modelToUpdate);
+	if (!response) return;
+
+	await projectResource.refresh();
+
+	logger.info(`Updated model name to ${newModelName.value}.`);
+	emit('update', newModelName.value);
+	emit('close-modal');
+}
+
+function save() {
+	if (props.isUpdatingName) {
+		updateName();
+	} else {
+		saveAs();
+	}
+}
+
+function cancel() {
 	newModelName.value = '';
 	emit('close-modal');
 }
-// async function updateModelName() {
-// 	if (!validateModelName(newModelName.value) || !props.modelId) return;
-
-// 	// 1. Update model name
-// 	const model = await getModel(props.modelId);
-// 	if (!model) return;
-// 	model.header.name = newModelName.value;
-// 	const updateResponse = await updateModel(model);
-// 	if (!updateResponse) return;
-
-// 	// 2. Save asset to project
-// 	const projectId = useProjects().activeProject.value?.id;
-// 	if (!projectId) return;
-// 	const response = await addAsset(projectId, AssetType.Model, props.modelId);
-// 	await useProjects().refresh();
-
-// 	if (!response) {
-// 		return;
-// 	}
-
-// 	useToastService().success('', 'Model saved successfully');
-// 	emit('update', newModelName.value);
-// 	emit('close-modal');
-// }
-
-// async function createOrUpdateModel() {
-// 	if (props.modelId) {
-// 		updateModelName();
-// 	} else {
-// 		createNewModel();
-// 	}
-// }
 </script>
 
 <style scoped>
