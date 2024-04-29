@@ -16,7 +16,6 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -29,7 +28,6 @@ public class Simulation extends TerariumAsset {
 	private static final long serialVersionUID = 5467224100686908152L;
 
 	@JsonAlias("execution_payload")
-	@Convert(converter = JpaConverterJson.class)
 	@Column(columnDefinition = "text")
 	private JsonNode executionPayload;
 
