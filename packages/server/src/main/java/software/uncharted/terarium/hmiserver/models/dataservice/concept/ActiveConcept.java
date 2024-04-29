@@ -21,6 +21,4 @@ public class ActiveConcept extends TerariumAsset {
 
 	@Column(unique = true)
 	private String curie;
-
-	private String name;
 }

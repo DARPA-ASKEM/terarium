@@ -168,7 +168,7 @@ const projectOptions = computed(() => [
 						// then, link and store in the project assets
 						if (datasetId) {
 							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
-							assetName = selectedAsset.value.name;
+							assetName = selectedAsset.value.name ?? '';
 						}
 					} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
 						const document = selectedAsset.value as Document;

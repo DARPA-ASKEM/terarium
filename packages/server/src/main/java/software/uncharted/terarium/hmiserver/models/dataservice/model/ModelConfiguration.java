@@ -19,8 +19,6 @@ public class ModelConfiguration extends TerariumAssetThatSupportsAdditionalPrope
 	@Serial
 	private static final long serialVersionUID = -4109896135386019667L;
 
-	private String name;
-
 	@TSOptional
 	private String description;
 

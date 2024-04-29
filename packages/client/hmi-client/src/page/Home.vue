@@ -232,7 +232,9 @@ function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'A
 function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
 		if (selectedSort.value === 'Alphabetical') {
-			return projects.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+			return projects.sort((a, b) =>
+				(a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase())
+			);
 		}
 		if (selectedSort.value === 'Last updated (descending)') {
 			return sortProjectByDates(projects, 'updatedOn', 'DESC');

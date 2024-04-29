@@ -256,10 +256,10 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -275,10 +275,10 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionWithModelTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -301,10 +301,10 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -340,10 +340,10 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
-				.setDescription("my description")
-				.setFileNames(List.of("paper.pdf"));
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -361,30 +361,30 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void profileModel() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-pdf-name")
-				.setDescription("my description")
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setText(
 						"""
-								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
-								of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
-								theoretical framework to investigate its spread within a community. Here, the model is based upon the
-								well-known susceptible-infected-removed (SIR) model with the difference that a total population is not
-								deﬁned or kept constant per se and the number of susceptible individuals does not decline monotonically.
-								To the contrary, as we show herein, it can be increased in surge periods! In particular, we investigate
-								the time evolution of different populations and monitor diverse signiﬁcant parameters for the spread
-								of the disease in various communities, represented by China, South Korea, India, Australia, USA, Italy
-								and the state of Texas in the USA. The SIR model can provide us with insights and predictions of the
-								spread of the virus in communities that the recorded data alone cannot. Our work shows the importance
-								of modelling the spread of COVID-19 by the SIR model that we propose here, as it can help to assess
-								the impact of the disease by offering valuable predictions. Our analysis takes into account data from
-								January to June, 2020, the period that contains the data before and during the implementation of strict
-								and control measures. We propose predictions on various parameters related to the spread of COVID-19
-								and on the number of susceptible, infected and removed populations until September 2020. By comparing
-								the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
-								19 can be under control in all communities considered, if proper restrictions and strong policies are
-								implemented to control the infection rates early from the spread of the disease.
-								""");
+						In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
+						of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
+						theoretical framework to investigate its spread within a community. Here, the model is based upon the
+						well-known susceptible-infected-removed (SIR) model with the difference that a total population is not
+						deﬁned or kept constant per se and the number of susceptible individuals does not decline monotonically.
+						To the contrary, as we show herein, it can be increased in surge periods! In particular, we investigate
+						the time evolution of different populations and monitor diverse signiﬁcant parameters for the spread
+						of the disease in various communities, represented by China, South Korea, India, Australia, USA, Italy
+						and the state of Texas in the USA. The SIR model can provide us with insights and predictions of the
+						spread of the virus in communities that the recorded data alone cannot. Our work shows the importance
+						of modelling the spread of COVID-19 by the SIR model that we propose here, as it can help to assess
+						the impact of the disease by offering valuable predictions. Our analysis takes into account data from
+						January to June, 2020, the period that contains the data before and during the implementation of strict
+						and control measures. We propose predictions on various parameters related to the spread of COVID-19
+						and on the number of susceptible, infected and removed populations until September 2020. By comparing
+						the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
+						19 can be under control in all communities considered, if proper restrictions and strong policies are
+						implemented to control the infection rates early from the spread of the disease.
+						""")
+				.setName("test-pdf-name")
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -413,7 +413,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
 		Dataset dataset = datasetService.createAsset(
-				new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -435,30 +435,30 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-pdf-name")
-				.setDescription("my description")
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setText(
 						"""
-								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
-								of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
-								theoretical framework to investigate its spread within a community. Here, the model is based upon the
-								well-known susceptible-infected-removed (SIR) model with the difference that a total population is not
-								deﬁned or kept constant per se and the number of susceptible individuals does not decline monotonically.
-								To the contrary, as we show herein, it can be increased in surge periods! In particular, we investigate
-								the time evolution of different populations and monitor diverse signiﬁcant parameters for the spread
-								of the disease in various communities, represented by China, South Korea, India, Australia, USA, Italy
-								and the state of Texas in the USA. The SIR model can provide us with insights and predictions of the
-								spread of the virus in communities that the recorded data alone cannot. Our work shows the importance
-								of modelling the spread of COVID-19 by the SIR model that we propose here, as it can help to assess
-								the impact of the disease by offering valuable predictions. Our analysis takes into account data from
-								January to June, 2020, the period that contains the data before and during the implementation of strict
-								and control measures. We propose predictions on various parameters related to the spread of COVID-19
-								and on the number of susceptible, infected and removed populations until September 2020. By comparing
-								the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
-								19 can be under control in all communities considered, if proper restrictions and strong policies are
-								implemented to control the infection rates early from the spread of the disease.
-								""");
+						In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
+						of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
+						theoretical framework to investigate its spread within a community. Here, the model is based upon the
+						well-known susceptible-infected-removed (SIR) model with the difference that a total population is not
+						deﬁned or kept constant per se and the number of susceptible individuals does not decline monotonically.
+						To the contrary, as we show herein, it can be increased in surge periods! In particular, we investigate
+						the time evolution of different populations and monitor diverse signiﬁcant parameters for the spread
+						of the disease in various communities, represented by China, South Korea, India, Australia, USA, Italy
+						and the state of Texas in the USA. The SIR model can provide us with insights and predictions of the
+						spread of the virus in communities that the recorded data alone cannot. Our work shows the importance
+						of modelling the spread of COVID-19 by the SIR model that we propose here, as it can help to assess
+						the impact of the disease by offering valuable predictions. Our analysis takes into account data from
+						January to June, 2020, the period that contains the data before and during the implementation of strict
+						and control measures. We propose predictions on various parameters related to the spread of COVID-19
+						and on the number of susceptible, infected and removed populations until September 2020. By comparing
+						the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
+						19 can be under control in all communities considered, if proper restrictions and strong policies are
+						implemented to control the infection rates early from the spread of the disease.
+						""")
+				.setName("test-pdf-name")
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -488,10 +488,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -522,10 +520,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -557,10 +553,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
