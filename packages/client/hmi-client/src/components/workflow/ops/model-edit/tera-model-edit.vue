@@ -327,31 +327,6 @@ const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPor
 	}
 };
 
-// const saveNewModel = async (options: SaveOptions) => {
-// 	if (!amr.value) return;
-// 	amr.value.header.name = newModelName.value;
-
-// 	const projectResource = useProjects();
-// 	const modelData = await createModel(amr.value);
-// 	const projectId = projectResource.activeProject.value?.id;
-
-// 	if (!modelData) return;
-
-// 	if (options.addToProject) {
-// 		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-// 	}
-
-// 	if (options.appendOutputPort) {
-// 		emit('append-output', {
-// 			id: uuidv4(),
-// 			label: newModelName.value,
-// 			type: 'modelId',
-// 			state: _.cloneDeep(props.node.state),
-// 			value: [modelData.id]
-// 		});
-// 	}
-// };
-
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
