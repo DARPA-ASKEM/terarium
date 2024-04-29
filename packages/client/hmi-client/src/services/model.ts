@@ -1,6 +1,5 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
-import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import * as EventService from '@/services/event';
 import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, AssetType, EventType } from '@/types/Types';
@@ -79,18 +78,6 @@ export async function updateModel(model: Model) {
 export async function getModelConfigurations(modelId: Model['id']): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model-configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
-}
-
-// function adds model to project, returns modelId if successful otherwise null
-export async function addNewPetrinetModelToProject(modelName: string): Promise<string | null> {
-	// 1. Load an empty AMR
-	const amr = newAMR(modelName);
-	(amr as any).id = undefined; // FIXME: id hack
-
-	const response = await createModel(amr);
-	const modelId = response?.id;
-
-	return modelId ?? null;
 }
 
 export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {
