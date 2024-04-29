@@ -106,6 +106,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				configuration.setModelId(model.getId());
 				configuration.setName(condition.get("name").asText());
 				configuration.setDescription(condition.get("description").asText());
+
 				configuration.setConfiguration(modelCopy);
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
