@@ -30,13 +30,6 @@ public class Dataset extends TerariumAsset {
 	@TSOptional
 	private String esgfId;
 
-	/** Name of the dataset */
-	private String name;
-
-	/** (Optional) textual description of the dataset */
-	@TSOptional
-	private String description;
-
 	/** (Optional) data source date */
 	@TSOptional
 	@JsonAlias("data_source_date")

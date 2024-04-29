@@ -31,13 +31,9 @@ public class Simulation extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private JsonNode executionPayload;
 
-	@TSOptional
-	@Column(length = 1000)
-	private String description;
-
 	@JsonAlias("result_files")
 	@TSOptional
-	@Column(length = 1000)
+	@Column(length = 1024)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ElementCollection
 	private List<String> resultFiles;
@@ -73,6 +69,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("user_id")
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
 	@JsonAlias("project_id")
@@ -84,8 +81,6 @@ public class Simulation extends TerariumAsset {
 		final Simulation clone = new Simulation();
 
 		cloneSuperFields(clone);
-
-		clone.setDescription(this.description);
 
 		clone.setResultFiles(new ArrayList<>(this.resultFiles));
 		clone.setType(SimulationType.valueOf(this.type.name()));

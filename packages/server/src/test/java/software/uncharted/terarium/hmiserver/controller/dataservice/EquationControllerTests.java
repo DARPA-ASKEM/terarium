@@ -47,7 +47,7 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEquation() throws Exception {
 
-		final Equation equation = new Equation().setName("test-equation-name");
+		final Equation equation = (Equation) new Equation().setName("test-equation-name");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/equations")
 						.with(csrf())
@@ -60,7 +60,7 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquation() throws Exception {
 
-		final Equation equation = equationService.createAsset(new Equation().setName("test-equation-name"));
+		final Equation equation = equationService.createAsset((Equation) new Equation().setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/equations/" + equation.getId())
 						.with(csrf()))
@@ -71,9 +71,9 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetEquations() throws Exception {
 
-		equationService.createAsset(new Equation().setName("test-equation-name"));
-		equationService.createAsset(new Equation().setName("test-equation-name"));
-		equationService.createAsset(new Equation().setName("test-equation-name"));
+		equationService.createAsset((Equation) new Equation().setName("test-equation-name"));
+		equationService.createAsset((Equation) new Equation().setName("test-equation-name"));
+		equationService.createAsset((Equation) new Equation().setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/equations").with(csrf()))
 				.andExpect(status().isOk())
@@ -84,7 +84,7 @@ public class EquationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteEquation() throws Exception {
 
-		final Equation equation = equationService.createAsset(new Equation().setName("test-equation-name"));
+		final Equation equation = equationService.createAsset((Equation) new Equation().setName("test-equation-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/equations/" + equation.getId())
 						.with(csrf()))
