@@ -110,8 +110,9 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-model-modal
-		:modelId="selectedModel?.id"
+	<tera-save-model-modal
+		v-if="selectedModel"
+		:model="selectedModel"
 		:is-visible="isNewModelModalVisible"
 		@close-modal="onCloseModelModal"
 		@update="onAddModel"
@@ -138,7 +139,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';

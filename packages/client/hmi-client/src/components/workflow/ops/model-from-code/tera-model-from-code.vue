@@ -137,8 +137,9 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-model-modal
-		:modelId="selectedModel?.id"
+	<tera-save-model-modal
+		v-if="selectedModel"
+		:model="selectedModel"
 		:is-visible="isNewModelModalVisible"
 		@close-modal="onCloseModelModal"
 		@update="onAddModel"
@@ -156,7 +157,7 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -399,7 +400,7 @@ async function handleCode() {
 }
 
 function openModal() {
-	isNewModelModalVisible.value = true;
+	if (selectedModel.value) isNewModelModalVisible.value = true;
 }
 
 function onAddModel(modelName: string) {

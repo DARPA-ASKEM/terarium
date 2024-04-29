@@ -66,7 +66,12 @@
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
-		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
+		<tera-save-model-modal
+			title="Create new model"
+			:is-visible="isNewModelModalVisible"
+			open-on-save
+			@close-modal="onCloseModelModal"
+		/>
 	</main>
 </template>
 
@@ -93,8 +98,8 @@ import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import Button from 'primevue/button';
-import TeraModelModal from './components/tera-model-modal.vue';
 import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
+import TeraSaveModelModal from './components/tera-save-model-modal.vue';
 
 const route = useRoute();
 const router = useRouter();

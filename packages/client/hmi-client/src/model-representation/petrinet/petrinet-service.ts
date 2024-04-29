@@ -127,7 +127,7 @@ export const updateConfigFields = async (
 	});
 };
 
-export function newAMR(modelName: string) {
+export function newAMR(modelName: string = '') {
 	const amr: Model = {
 		header: {
 			name: modelName,
@@ -137,7 +137,6 @@ export function newAMR(modelName: string) {
 			schema_name: 'petrinet',
 			model_version: '0.1'
 		},
-		id: '',
 		model: {
 			states: [],
 			transitions: []
