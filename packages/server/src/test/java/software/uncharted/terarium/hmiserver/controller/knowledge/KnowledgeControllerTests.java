@@ -278,8 +278,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				;
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -341,7 +340,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-		DocumentAsset documentAsset = (DocumentAsset)new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
 				.setDescription("my description");
@@ -363,8 +362,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	public void profileModel() throws Exception {
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText(
-				"""
+				.setText(
+						"""
 						In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
 						of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
 						theoretical framework to investigate its spread within a community. Here, the model is based upon the
@@ -413,8 +412,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final ClassPathResource resource = new ClassPathResource("knowledge/dataset.csv");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-		Dataset dataset = datasetService.createAsset((Dataset)
-				new Dataset().setName("test-dataset-name").setDescription("my description"));
+		Dataset dataset = datasetService.createAsset(
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -437,8 +436,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText(
-				"""
+				.setText(
+						"""
 						In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
 						of the novel COVID-19 disease and develop a susceptible-infected-removed (SIR) model that provides a
 						theoretical framework to investigate its spread within a community. Here, the model is based upon the
@@ -489,10 +488,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset((Code) new Code()
-				.setFiles(files)
-				.setName("test-code-name")
-				.setDescription("my description"));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -523,10 +520,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset((Code) new Code()
-				.setFiles(files)
-				.setName("test-code-name")
-				.setDescription("my description"));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -558,10 +553,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset((Code)new Code()
-				.setFiles(files)
-				.setName("test-code-name")
-				.setDescription("my description"));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"));
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);

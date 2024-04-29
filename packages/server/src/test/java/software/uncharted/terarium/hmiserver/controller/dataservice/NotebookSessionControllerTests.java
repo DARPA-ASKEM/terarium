@@ -60,8 +60,8 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetNotebookSession() throws Exception {
 
-		final NotebookSession notebookSession =
-				notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"));
+		final NotebookSession notebookSession = notebookSessionService.createAsset(
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
 						.with(csrf()))
@@ -85,8 +85,8 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteNotebookSession() throws Exception {
 
-		final NotebookSession notebookSession =
-				notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"));
+		final NotebookSession notebookSession = notebookSessionService.createAsset(
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
 						.with(csrf()))

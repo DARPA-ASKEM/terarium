@@ -59,7 +59,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	public void variableExtractionTests() throws Exception {
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText("x = 0. y = 1. I = Infected population.")
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
 				.setDescription("my description");
 
@@ -78,8 +78,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-
-			.setText(new String(content1))
+				.setText(new String(content1))
 				.setName("test-document-name")
 				.setDescription("my description");
 
@@ -101,8 +100,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	public void linkAmrTests() throws Exception {
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-
-			.setText("x = 0. y = 1. I = Infected population.")
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
 				.setDescription("my description");
 
@@ -131,7 +129,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setFileNames(List.of("paper.pdf"))
+				.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
 				.setDescription("my description");
 

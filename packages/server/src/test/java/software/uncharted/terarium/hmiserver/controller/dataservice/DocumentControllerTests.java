@@ -65,7 +65,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDocument() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 						.with(csrf()))
@@ -77,13 +77,13 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDocuments() throws Exception {
 
 		documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset").with(csrf()))
 				.andExpect(status().isOk())
@@ -95,7 +95,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteDocument() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
 						.with(csrf()))
@@ -110,7 +110,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDocument() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -139,7 +139,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDocumentFromGithub() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put(
 								"/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
@@ -156,7 +156,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDocument() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
@@ -198,7 +198,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDocumentAsText() throws Exception {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-			new DocumentAsset().setName("test-document-name").setDescription("my description"));
+				new DocumentAsset().setName("test-document-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
 
