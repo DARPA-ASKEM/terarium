@@ -38,11 +38,7 @@ import router from '@/router';
 import { RouteName } from '@/router/routes';
 import { AssetType } from '@/types/Types';
 import type { Model } from '@/types/Types';
-import {
-	createModel,
-	// getModel,
-	updateModel
-} from '@/services/model';
+import { createModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { newAMR } from '@/model-representation/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
@@ -90,8 +86,18 @@ async function saveAs() {
 	const projectId = projectResource.activeProject.value?.id;
 	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 
+	const urlToModel = `${
+		router.resolve({
+			name: RouteName.Project,
+			params: {
+				pageType: AssetType.Model,
+				assetId: modelData.id
+			}
+		}).href
+	}`;
+
 	logger.info(
-		`${modelData.name} saved successfully in project ${projectResource.activeProject.value?.name}.`
+		`<a href="${urlToModel}">${modelData.name}</a> saved successfully in project ${projectResource.activeProject.value?.name}.`
 	);
 
 	emit('on-save', modelData);
@@ -116,7 +122,8 @@ async function updateName() {
 	const response = await updateModel(modelToUpdate);
 	if (!response) return;
 
-	await projectResource.refresh();
+	// TODO: Consider calling this refresh within the services themselves
+	projectResource.refresh();
 
 	logger.info(`Updated model name to ${newModelName.value}.`);
 	emit('on-save', newModelName.value);
