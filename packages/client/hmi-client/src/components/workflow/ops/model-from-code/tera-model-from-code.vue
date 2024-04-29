@@ -140,9 +140,9 @@
 	<tera-save-model-modal
 		v-if="selectedModel"
 		:model="selectedModel"
-		:is-visible="isNewModelModalVisible"
+		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@update="onAddModel"
+		@on-save="onAddModel"
 	/>
 </template>
 
@@ -193,7 +193,7 @@ enum ModelFramework {
 	Petrinet = 'Petrinet',
 	Decapodes = 'Decapodes'
 }
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const isProcessing = ref(false);
 const fetchingInputBlocks = ref(false);
 
@@ -400,7 +400,7 @@ async function handleCode() {
 }
 
 function openModal() {
-	if (selectedModel.value) isNewModelModalVisible.value = true;
+	if (selectedModel.value) showSaveModelModal.value = true;
 }
 
 function onAddModel(modelName: string) {
@@ -408,7 +408,7 @@ function onAddModel(modelName: string) {
 	updateNodeLabel(selectedOutputId.value, modelName);
 }
 function onCloseModelModal() {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 }
 
 function handleCompileExprResponse() {

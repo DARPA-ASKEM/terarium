@@ -68,7 +68,7 @@
 		<!-- New model modal -->
 		<tera-save-model-modal
 			title="Create new model"
-			:is-visible="isNewModelModalVisible"
+			:is-visible="showSaveModelModal"
 			open-on-save
 			@close-modal="onCloseModelModal"
 		/>
@@ -107,7 +107,7 @@ const router = useRouter();
 const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
@@ -182,7 +182,7 @@ const openWorkflow = async () => {
 const openNewAsset = (assetType: AssetType) => {
 	switch (assetType) {
 		case AssetType.Model:
-			isNewModelModalVisible.value = true;
+			showSaveModelModal.value = true;
 			break;
 		case AssetType.Workflow:
 			openWorkflow();
@@ -211,7 +211,7 @@ async function openCode() {
 }
 
 const onCloseModelModal = () => {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 };
 
 onMounted(() => {

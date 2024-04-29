@@ -70,8 +70,7 @@ const props = defineProps({
 	}
 });
 
-// on-name-update, on-save-as
-const emit = defineEmits(['close-modal', 'on-save', 'update']);
+const emit = defineEmits(['close-modal', 'on-save']);
 
 const newModelName = ref<string>('');
 
@@ -120,7 +119,7 @@ async function updateName() {
 	await projectResource.refresh();
 
 	logger.info(`Updated model name to ${newModelName.value}.`);
-	emit('update', newModelName.value);
+	emit('on-save', newModelName.value);
 	emit('close-modal');
 }
 

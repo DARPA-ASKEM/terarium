@@ -96,7 +96,7 @@
 						:disabled="!selectedModel"
 						outlined
 						:loading="savingAsset"
-						@click="isNewModelModalVisible = true"
+						@click="showSaveModelModal = true"
 					></Button>
 					<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />
 					<Button
@@ -113,9 +113,9 @@
 	<tera-save-model-modal
 		v-if="selectedModel"
 		:model="selectedModel"
-		:is-visible="isNewModelModalVisible"
+		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@update="onAddModel"
+		@on-save="onAddModel"
 	/>
 </template>
 
@@ -235,7 +235,7 @@ const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const savingAsset = ref(false);
 const isGeneratingCard = ref(false);
 onMounted(async () => {
@@ -368,7 +368,7 @@ function onAddModel(modelName: string) {
 }
 
 function onCloseModelModal() {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 }
 
 function updateNodeLabel(id: string, label: string) {
