@@ -86,32 +86,23 @@ async function saveAs() {
 	const projectId = projectResource.activeProject.value?.id;
 	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 
-	const urlToModel = `${
-		router.resolve({
-			name: RouteName.Project,
-			params: {
-				pageType: AssetType.Model,
-				assetId: modelData.id
-			}
-		}).href
-	}`;
+	const assetRouteParams = {
+		name: RouteName.Project,
+		params: {
+			pageType: AssetType.Model,
+			assetId: modelData.id
+		}
+	};
 
+	const urlToModel = `${router.resolve(assetRouteParams).href}`;
 	logger.info(
 		`<a href="${urlToModel}">${modelData.name}</a> saved successfully in project ${projectResource.activeProject.value?.name}.`
 	);
-
-	emit('on-save', modelData);
-
 	if (props.openOnSave) {
-		router.push({
-			name: RouteName.Project,
-			params: {
-				pageType: AssetType.Model,
-				assetId: modelData.id
-			}
-		});
+		router.push(assetRouteParams);
 	}
 
+	emit('on-save', modelData);
 	emit('close-modal');
 }
 
@@ -122,7 +113,7 @@ async function updateName() {
 	const response = await updateModel(modelToUpdate);
 	if (!response) return;
 
-	// TODO: Consider calling this refresh within the services themselves
+	// TODO: Consider calling this refresh within the update functions in the services themselves
 	projectResource.refresh();
 
 	logger.info(`Updated model name to ${newModelName.value}.`);
