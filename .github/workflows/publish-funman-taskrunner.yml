@@ -49,9 +49,6 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Build funman-taskrunner using Makefile
-        run: make image-funman-taskrunner
-
       - name: Create image and push
         uses: docker/build-push-action@v5
         with:
@@ -90,9 +87,6 @@ jobs:
           distribution: 'temurin'
           java-version: 17
           cache: gradle
-
-      - name: Build funman-taskrunner using Makefile
-        run: make image-funman-taskrunner
 
       - name: Create image and push
         uses: docker/build-push-action@v5

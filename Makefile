@@ -46,7 +46,7 @@ clean-gollm-taskrunner: clean-gollm-taskrunner-base
 
 image-gollm-taskrunner: clean-gollm-taskrunner
 	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/gollm/build
 
 TARGETS += mira-taskrunner
 clean-mira-taskrunner: clean-mira-taskrunner-base
@@ -54,7 +54,7 @@ clean-mira-taskrunner: clean-mira-taskrunner-base
 
 image-mira-taskrunner: clean-mira-taskrunner
 	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/mira/build
 
 TARGETS += funman-taskrunner
 clean-funman-taskrunner: clean-funman-taskrunner-base
@@ -62,7 +62,7 @@ clean-funman-taskrunner: clean-funman-taskrunner-base
 
 image-funman-taskrunner: clean-funman-taskrunner
 	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
+	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/funman/build
 
 
 
@@ -78,14 +78,17 @@ clean-hmi-server-base:
 
 .PHONY: clean-gollm-taskrunner-base
 clean-gollm-taskrunner-base:
+	rm -rf $(PROJECT_DIR)/packages/gollm/build
 	./gradlew :packages:taskrunner:clean
 
 .PHONY: clean-mira-taskrunner-base
 clean-mira-taskrunner-base:
+	rm -rf $(PROJECT_DIR)/packages/mira/build
 	./gradlew :packages:taskrunner:clean
 
 .PHONY: clean-funman-taskrunner-base
 clean-funman-taskrunner-base:
+	rm -rf $(PROJECT_DIR)/packages/funman/build
 	./gradlew :packages:taskrunner:clean
 
 
