@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -378,12 +377,12 @@ public class ModelController {
 					modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
 			modelConfigurations.forEach(config -> {
-				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
+				final Model configuration = config.getConfiguration();
 
 				// check if configuration has a metadata field, if it doesnt make it an empty
 				// object
-				if (configuration.get("metadata") == null) {
-					((ObjectNode) configuration).putObject("metadata");
+				if (configuration.getMetadata() == null) {
+					configuration.setMetadata(new ModelMetadata());
 				}
 
 				// Find the Document Assets linked via provenance to the model configuration
@@ -433,11 +432,7 @@ public class ModelController {
 				sourceNames.addAll(documentSourceNames);
 				sourceNames.addAll(datasetSourceNames);
 
-				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
-
-				metadata.set("source", objectMapper.valueToTree(sourceNames));
-
-				((ObjectNode) configuration).set("metadata", metadata);
+				configuration.getMetadata().setSource(objectMapper.valueToTree(sourceNames));
 
 				config.setConfiguration(configuration);
 			});

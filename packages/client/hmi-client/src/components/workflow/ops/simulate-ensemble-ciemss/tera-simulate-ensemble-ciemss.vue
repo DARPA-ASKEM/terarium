@@ -348,7 +348,7 @@ onMounted(async () => {
 		amr.model.states?.forEach((element) => {
 			tempList.push(element.id);
 		});
-		amr.semantics.ode.observables?.forEach((element) => tempList.push(element.id));
+		amr.semantics?.ode.observables?.forEach((element) => tempList.push(element.id));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name);
