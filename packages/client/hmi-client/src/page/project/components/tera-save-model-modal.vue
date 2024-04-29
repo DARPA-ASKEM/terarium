@@ -94,9 +94,8 @@ async function saveAs() {
 		}
 	};
 
-	const urlToModel = `${router.resolve(assetRouteParams).href}`;
 	logger.info(
-		`<a href="${urlToModel}">${modelData.name}</a> saved successfully in project ${projectResource.activeProject.value?.name}.`
+		`${modelData.name} saved successfully in project ${projectResource.activeProject.value?.name}.`
 	);
 	if (props.openOnSave) {
 		router.push(assetRouteParams);
