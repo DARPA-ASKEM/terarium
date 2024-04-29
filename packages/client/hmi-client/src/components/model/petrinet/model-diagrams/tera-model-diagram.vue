@@ -190,50 +190,50 @@ async function renderGraph() {
 		graphLegendColors.value = renderer.depthColorList;
 	}
 
-	if (isStratified.value) {
-		renderer.on('node-click', (_eventName, _event, selection) => {
-			const { id, data } = selection.datum();
-			if (data.type === NodeType.Transition) {
-				selectedTransitionId.value = id;
-				openValueConfig.value = true;
+	renderer.on('node-click', (_eventName, _event, selection) => {
+		const { id, data, matrixRows } = selection.datum();
+		// If there are matrixRows then it is stratified
+		if (data.type === NodeType.Transition && matrixRows) {
+			selectedTransitionId.value = id;
+			openValueConfig.value = true;
+		}
+	});
+
+	renderer.on('node-mouse-enter', async (_eventName, _event, selection) => {
+		const { id, data, matrixRows } = selection.datum();
+
+		if (data.type === NodeType.Transition && matrixRows) {
+			hoveredTransitionId.value = id;
+
+			const diagramBounds = renderer?.svgEl?.getBoundingClientRect();
+			const transitionMatrixBounds = selection.node().getBoundingClientRect();
+
+			await nextTick(); // Wait for tooltip to render to get its dimensions
+			const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
+			const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
+
+			if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
+				const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
+				const transitionMatrixY = transitionMatrixBounds.top - diagramBounds.top;
+				const transitionMatrixHeight = selection.datum().height;
+				const transitionMatrixWidth = selection.datum().width;
+
+				// Shift tooltip to the top center of the transition matrix
+				const x =
+					transitionMatrixX -
+					(tooltipWidth + transitionMatrixWidth / 2) / 2 +
+					transitionMatrixBounds.width / 2;
+				const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
+
+				hoveredTransitionPosition.value = { x, y };
 			}
-		});
+		}
+	});
 
-		renderer.on('node-mouse-enter', async (_eventName, _event, selection) => {
-			const { id, data } = selection.datum();
-
-			if (data.type === NodeType.Transition) {
-				hoveredTransitionId.value = id;
-
-				const diagramBounds = renderer?.svgEl?.getBoundingClientRect();
-				const transitionMatrixBounds = selection.node().getBoundingClientRect();
-
-				await nextTick(); // Wait for tooltip to render to get its dimensions
-				const tooltipHeight = tooltipContentRef.value.parentElement.clientHeight;
-				const tooltipWidth = tooltipContentRef.value.parentElement.clientWidth;
-
-				if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
-					const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
-					const transitionMatrixY = transitionMatrixBounds.top - diagramBounds.top;
-					const transitionMatrixHeight = selection.datum().height;
-					const transitionMatrixWidth = selection.datum().width;
-
-					// Shift tooltip to the top center of the transition matrix
-					const x =
-						transitionMatrixX -
-						(tooltipWidth + transitionMatrixWidth / 2) / 2 +
-						transitionMatrixBounds.width / 2;
-					const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
-
-					hoveredTransitionPosition.value = { x, y };
-				}
-			}
-		});
-
-		renderer.on('node-mouse-leave', () => {
-			hoveredTransitionId.value = '';
-		});
-	}
+	renderer.on('node-mouse-leave', (_eventName, _event, selection) => {
+		const { data, matrixRows } = selection.datum();
+		if (data.type === NodeType.Transition && matrixRows) hoveredTransitionId.value = '';
+	});
 
 	// Render graph
 	const graphData =
