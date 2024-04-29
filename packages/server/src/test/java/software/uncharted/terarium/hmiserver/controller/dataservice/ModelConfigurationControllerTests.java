@@ -82,11 +82,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset((ModelConfiguration)new ModelConfiguration()
-			.setModelId(UUID.randomUUID())
-			.setConfiguration(new Model())
-			.setDescription("test-desc")
-			.setName("test-framework"));
+		final ModelConfiguration modelConfiguration =
+				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+						.setModelId(UUID.randomUUID())
+						.setConfiguration(new Model())
+						.setDescription("test-desc")
+						.setName("test-framework"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
