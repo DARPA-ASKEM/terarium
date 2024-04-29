@@ -715,7 +715,7 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const data = await createModelConfiguration(
 		model.value.id,
-		knobs.value?.transientModelConfig?.name,
+		knobs.value?.transientModelConfig?.name ?? '',
 		knobs.value?.transientModelConfig?.description ?? '',
 		knobs.value?.transientModelConfig?.configuration
 	);

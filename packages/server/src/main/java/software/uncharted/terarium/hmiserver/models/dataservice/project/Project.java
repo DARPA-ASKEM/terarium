@@ -31,9 +31,6 @@ public class Project extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -241733670076432802L;
 
-	@Schema(defaultValue = "My New Project")
-	private String name;
-
 	private String userId;
 
 	@TSOptional
@@ -45,10 +42,6 @@ public class Project extends TerariumAsset {
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private List<String> authors;
-
-	@TSOptional
-	@Schema(defaultValue = "My Project Description")
-	private String description;
 
 	@TSOptional
 	@Schema(defaultValue = "My Project Overview")
