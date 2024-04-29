@@ -88,13 +88,12 @@ async function saveNewModel() {
 	const modelData = await createModel(newModel);
 	if (!modelData) return;
 
-	console.log(newModel);
-	console.log('modelData', modelData);
-
 	const projectId = projectResource.activeProject.value?.id;
 	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
 
-	logger.info(`${modelData.name} saved successfully.`);
+	logger.info(
+		`${modelData.name} saved successfully in project ${projectResource.activeProject.value?.name}.`
+	);
 
 	emit('on-save', modelData);
 	if (props.openOnSave) {
