@@ -23,7 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -40,11 +39,10 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-
 
 @RequestMapping("/simulation-request")
 @RestController
@@ -127,27 +125,28 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
-		//Get model's interventions and append them to requests:
-		try{
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(request.getModelConfigId());
+		// Get model's interventions and append them to requests:
+		try {
+			final Optional<ModelConfiguration> modelConfiguration =
+					modelConfigService.getAsset(request.getModelConfigId());
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
-			if (model.isEmpty()){
+			final Optional<Model> model =
+					modelService.getAsset(modelConfiguration.get().getModelId());
+			if (model.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			final List<Intervention> modelInterventions = model.get().getInterventions();
-			if (modelInterventions != null){
+			if (modelInterventions != null) {
 				List<Intervention> allInterventions = request.getInterventions();
-				if (allInterventions == null){
+				if (allInterventions == null) {
 					allInterventions = new ArrayList();
 				}
 				allInterventions.addAll(modelInterventions);
 				request.setInterventions(allInterventions);
 			}
-		}
-		catch(IOException e) {
+		} catch (IOException e) {
 			String error = "Unable to find model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
