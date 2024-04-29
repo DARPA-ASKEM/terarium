@@ -1,6 +1,6 @@
 # Terarium Task Runner
 
-This is the async task runner for the Terarium Application
+This is the async taskrunner for the Terarium Application.
 
 # How it works:
 
