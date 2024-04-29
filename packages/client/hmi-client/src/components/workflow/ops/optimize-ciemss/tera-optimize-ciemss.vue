@@ -331,7 +331,6 @@ import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
 	ModelConfiguration,
-	Model,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
@@ -503,7 +502,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = modelConfiguration.value.configuration as Model;
+	const model = modelConfiguration.value.configuration;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
@@ -585,7 +584,7 @@ const saveModelConfiguration = async () => {
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
 		knobs.value.modelConfigDesc,
-		modelConfiguration.value.configuration as Model
+		modelConfiguration.value.configuration
 	);
 
 	if (!data) {

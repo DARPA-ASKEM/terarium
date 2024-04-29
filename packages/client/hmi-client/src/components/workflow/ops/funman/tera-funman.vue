@@ -423,7 +423,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = modelConfiguration.value.configuration as Model;
+	model.value = modelConfiguration.value.configuration;
 };
 
 const setModelOptions = async () => {
