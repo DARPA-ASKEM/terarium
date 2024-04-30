@@ -31,8 +31,6 @@ const timestep = ref(props.modelIntervention.timestep);
 const value = ref(props.modelIntervention.value);
 
 function updateIntervention() {
-	console.log('name: ');
-	console.log(name.value);
 	const intervention: Intervention = {
 		name: name.value,
 		timestep: timestep.value,

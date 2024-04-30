@@ -661,8 +661,6 @@ const addIntervention = () => {
 
 const updateIntervention = (value: Intervention, index: number) => {
 	if (knobs.value.transientModelConfig.interventions?.[index]) {
-		console.log('Found index and updated value');
-		console.log(value);
 		knobs.value.transientModelConfig.interventions[index] = value;
 	} else {
 		logger.error(`Failed to update intervention at position ${index}`);
