@@ -47,10 +47,18 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView>
+				<TabView @tab-change="tabChange($event)">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div v-if="!isEmpty(tab.projects)">
+							<div>
+								<InputText
+									v-model="searchProjects"
+									placeholder="Search for projects"
+									id="searchProject"
+									class="p-inputtext"
+								/>
+							</div>
+							<div>
 								<!-- TODO: Add project search back in once we are ready
 								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
@@ -83,9 +91,9 @@
 							</div>
 							<div>
 								<SelectButton
-									v-if="!isEmpty(tab.projects)"
+									v-if="!isEmpty(searchedAndFilterProjects)"
 									:model-value="view"
-									@change="if ($event.value) view = $event.value;"
+									@change="selectChange"
 									:options="viewOptions"
 									option-value="value"
 								>
@@ -97,7 +105,10 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<div
+								v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)"
+								class="no-projects"
+							>
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -124,7 +135,7 @@
 										<tera-project-card />
 									</li>
 								</template>
-								<li v-else v-for="project in tab.projects" :key="project.id">
+								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -135,7 +146,7 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:projects="tab.projects"
+								:projects="searchedAndFilterProjects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
 								class="project-table"
@@ -167,10 +178,14 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import InputText from 'primevue/inputtext';
+import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
+const activeTabIndex = ref(0);
 const showVideo = ref(false);
+const searchProjects = ref<string>('');
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -207,6 +222,14 @@ const myFilteredSortedProjects = computed(() => {
 	return filterAndSortProjects(myProjects);
 });
 
+function selectChange(event) {
+	if (event.value) view.value = event.value;
+}
+
+function tabChange(event) {
+	activeTabIndex.value = event.index;
+}
+
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
@@ -218,6 +241,19 @@ function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
 	menuProject.value = null;
 }
+
+const searchedAndFilterProjects = computed(() => {
+	const currentTabIndex = activeTabIndex.value;
+	const projects = projectsTabs.value[currentTabIndex].projects;
+	const userInput = searchProjects.value.trim();
+	const result = FilterService.filter(
+		projects,
+		['name', 'description', 'userName'],
+		userInput,
+		'contains'
+	);
+	return filterAndSortProjects(result);
+});
 
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
@@ -352,12 +388,8 @@ header > section > button {
 	background-color: #f9f9f9;
 }
 
-.p-dropdown,
-.p-multiselect {
+.p-inputtext {
 	min-width: 17rem;
-	display: flex;
-	align-items: center;
-	padding-left: 0.5rem;
 }
 
 .filter-and-sort {
@@ -431,17 +463,6 @@ a {
 	padding: 0;
 }
 
-.close-button {
-	width: 14px;
-	height: 14px;
-	cursor: pointer;
-	opacity: 50%;
-}
-
-.close-button:hover {
-	opacity: 100%;
-}
-
 /* Video & Thumbnail */
 .video-container {
 	border: 1px solid var(--surface-border-light);
@@ -494,10 +515,5 @@ a {
 
 .video-thumbnail .sub-header {
 	color: var(--surface-50);
-}
-
-.video-player {
-	border-radius: 6px;
-	padding: 0;
 }
 </style>
