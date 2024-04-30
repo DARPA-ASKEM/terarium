@@ -191,18 +191,18 @@ async function renderGraph() {
 	}
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
-		const { id, data, matrixRows } = selection.datum();
+		const { id, data } = selection.datum();
 		// If there are matrixRows then it is stratified
-		if (data.type === NodeType.Transition && matrixRows) {
+		if (data.type === NodeType.Transition && data.isStratified) {
 			selectedTransitionId.value = id;
 			openValueConfig.value = true;
 		}
 	});
 
 	renderer.on('node-mouse-enter', async (_eventName, _event, selection) => {
-		const { id, data, matrixRows } = selection.datum();
+		const { id, data } = selection.datum();
 
-		if (data.type === NodeType.Transition && matrixRows) {
+		if (data.type === NodeType.Transition && data.isStratified) {
 			hoveredTransitionId.value = id;
 
 			const diagramBounds = renderer?.svgEl?.getBoundingClientRect();
@@ -231,8 +231,8 @@ async function renderGraph() {
 	});
 
 	renderer.on('node-mouse-leave', (_eventName, _event, selection) => {
-		const { data, matrixRows } = selection.datum();
-		if (data.type === NodeType.Transition && matrixRows) hoveredTransitionId.value = '';
+		const { data } = selection.datum();
+		if (data.type === NodeType.Transition && data.isStratified) hoveredTransitionId.value = '';
 	});
 
 	// Render graph
