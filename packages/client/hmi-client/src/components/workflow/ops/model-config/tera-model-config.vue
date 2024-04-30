@@ -180,7 +180,7 @@
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
 						<tera-model-intervention
 							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
-							:key="idx"
+							:key="intervention.name + intervention.timestep + intervention.value"
 							:modelIntervention="intervention"
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
