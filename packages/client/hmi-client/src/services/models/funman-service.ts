@@ -32,6 +32,7 @@ export interface RenderOptions {
 	click?: Function;
 }
 
+// @deprecated
 export async function getQueries(id: string) {
 	try {
 		const response = await API.get(`/funman/queries/${id}`);
@@ -53,6 +54,7 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 	}
 }
 
+// @deprecated
 export async function haltQuery(id: string) {
 	try {
 		const response = await API.get(`/funman/queries/${id}/halt`);

@@ -72,10 +72,10 @@
 import { ref, onMounted, watch } from 'vue';
 import {
 	FunmanProcessedData,
-	getQueries,
 	processFunman,
 	renderFumanTrajectories
 } from '@/services/models/funman-service';
+import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
@@ -126,7 +126,9 @@ const formatNumber = (v: number) => {
 };
 
 const initalizeParameters = async () => {
-	const funmanResult = await getQueries(props.funModelId);
+	const rawFunmanResult = await getRunResult(props.funModelId, 'validation.json');
+	const funmanResult = JSON.parse(rawFunmanResult);
+
 	inputConstraints = funmanResult.request.constraints;
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];

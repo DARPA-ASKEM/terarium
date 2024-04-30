@@ -24,7 +24,7 @@ import {
 } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
-import { getQueries } from '@/services/models/funman-service';
+import { pollAction } from '@/services/models/simulation-service';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -49,13 +49,8 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => {
-			const response = await getQueries(runId);
-			if (response.done && response.done === true) {
-				return { data: response } as any;
-			}
-			return { data: null } as any;
-		});
+		.setPollAction(async () => pollAction(runId));
+
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -77,9 +72,17 @@ watch(
 		if (!id || id === '') return;
 
 		const response = await getStatus(id);
+		console.log('');
+		console.log('');
+		console.log(response.state);
+		console.log(response);
+		console.log('');
+		console.log('');
+
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
 		}
+
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressId = '';
 		emit('update-state', state);
