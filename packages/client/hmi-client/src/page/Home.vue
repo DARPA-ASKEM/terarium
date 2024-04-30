@@ -388,6 +388,14 @@ header > section > button {
 	background-color: #f9f9f9;
 }
 
+.p-dropdown,
+.p-multiselect {
+	min-width: 17rem;
+	display: flex;
+	align-items: center;
+	padding-left: 0.5rem;
+}
+
 .p-inputtext {
 	min-width: 17rem;
 }
@@ -462,6 +470,16 @@ a {
 .new-project-button {
 	padding: 0;
 }
+.close-button {
+	width: 14px;
+	height: 14px;
+	cursor: pointer;
+	opacity: 50%;
+}
+
+.close-button:hover {
+	opacity: 100%;
+}
 
 /* Video & Thumbnail */
 .video-container {
@@ -515,5 +533,10 @@ a {
 
 .video-thumbnail .sub-header {
 	color: var(--surface-50);
+}
+
+.video-player {
+	border-radius: 6px;
+	padding: 0;
 }
 </style>
