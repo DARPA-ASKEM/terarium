@@ -40,12 +40,22 @@
 				<!-- Loop through the messages and display them -->
 				<div v-for="m in msg.messages" :key="m.header.msg_id">
 					<!-- Handle llm_thought type -->
-					<div v-if="m.header.msg_type === 'llm_thought'">
-						<tera-jupyter-response-thought
-							class="llm-thought"
-							:thought="formattedLlmThought(m.content)"
-							:show-thought="showThought || props.showChatThoughts"
-						/>
+					<div v-if="m.header.msg_type === 'llm_thought'" class="llm-thought">
+						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
+							<ul>
+								<li v-for="(line, index) in formattedLlmThoughtPoints(m.content)" :key="index">
+									{{ line }}
+								</li>
+							</ul>
+						</tera-jupyter-response-thought>
+						<div class="llm-menu-items">
+							<Button
+								link
+								:label="`${showThought ? 'Hide' : 'Show'} thoughts`"
+								@click="() => (showThought = !showThought)"
+							/>
+							<Button link label="Edit the prompts" @click="() => (isEditingQuery = true)" />
+						</div>
 					</div>
 					<!-- Handle llm_response type -->
 					<div
@@ -61,10 +71,9 @@
 					</div>
 					<!-- Handle stream type for stdout -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
-						<tera-jupyter-response-thought
-							:thought="formattedThought(m.content['text'].trim())"
-							:show-thought="showThought || props.showChatThoughts"
-						/>
+						<tera-jupyter-response-thought :show-thought="showThought || props.showChatThoughts">
+							{{ formattedThought(m.content['text'].trim()) }}
+						</tera-jupyter-response-thought>
 					</div>
 					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
@@ -192,13 +201,18 @@ const formattedThought = (input: string) => {
 	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
 };
 
-const formattedLlmThought = (input: { [key: string]: string }) => {
+const formattedLlmThoughtPoints = (input: { [key: string]: string }) => {
+	let thought = '';
+	const details: string[] = [];
 	// make pretty text for the thought
-	const formattedLines = Object.keys(input).map((key) => {
-		const category = toTitleCase(key);
-		return `${category}\n${input[key]}`;
+	Object.keys(input).forEach((key) => {
+		if (key === 'thought') {
+			thought = input[key];
+		} else {
+			details.push(`${toTitleCase(key)}: ${input[key]}`);
+		}
 	});
-	return formattedLines.join('\n\n');
+	return [thought, ...details];
 };
 
 // Function to convert a string to Title Case
@@ -246,8 +260,6 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: var(--gap);
-	padding-left: 60px;
 	/* Add ai-assistant icon */
 	background-image: url('@assets/svg/icons/message.svg');
 	background-repeat: no-repeat;
@@ -313,18 +325,46 @@ function onDeleteRequested(msgId: string) {
 	right: 10px;
 }
 
-.llm-thought {
-	padding-left: 60px;
+.query,
+.llm-thought,
+.llm-response {
+	padding-left: 57px;
 	padding-right: 2rem;
 	padding-bottom: var(--gap-small);
-	white-space: pre-wrap;
-	color: var(--text-color-subdued);
+}
+
+.llm-thought {
+	ul {
+		list-style: inside;
+	}
+	li:first-child {
+		list-style: none;
+		background-image: url('@assets/svg/icons/magic.svg');
+		background-repeat: no-repeat;
+		background-size: 1.5rem 1.5rem;
+		background-position: 0 0.625rem;
+		padding: 0.625rem 0 0.625rem 1.875rem;
+	}
+	li {
+		margin-bottom: var(--gap-xsmall);
+		padding-left: 0.625rem;
+	}
+	li::first-letter {
+		text-transform: uppercase;
+	}
+}
+.llm-menu-items {
+	button {
+		padding-left: 0;
+		padding-right: 0;
+		margin-right: 2rem;
+	}
+	button:hover :deep(.p-button-label) {
+		text-decoration: none;
+	}
 }
 
 .llm-response {
-	padding-left: 60px;
-	padding-right: 2rem;
-	padding-bottom: var(--gap-small);
 	white-space: pre-wrap;
 	color: var(--text-color);
 	/* Add ai-assistant magic icon */
