@@ -29,13 +29,6 @@ public class Artifact extends TerariumAsset {
 	/* UserId of who created this asset */
 	private String userId;
 
-	/* The name of the artifact. */
-	private String name;
-
-	/* A description of the artifact. */
-	@TSOptional
-	private String description;
-
 	/* The name of the file(s) in this artifact */
 	@JsonAlias("file_names")
 	private List<String> fileNames;

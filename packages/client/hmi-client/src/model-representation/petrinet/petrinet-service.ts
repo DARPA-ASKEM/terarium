@@ -1,21 +1,6 @@
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { Model, ModelConfiguration } from '@/types/Types';
 
-export interface NodeData {
-	type: string;
-	strataType?: string;
-	expression?: string;
-}
-
-export interface EdgeData {
-	numEdges: number;
-}
-
-export enum StratifiedModel {
-	Mira = 'mira',
-	Catlab = 'catlab'
-}
-
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
@@ -127,7 +112,7 @@ export const updateConfigFields = async (
 	});
 };
 
-export function newAMR(modelName: string) {
+export function newAMR(modelName: string = '') {
 	const amr: Model = {
 		header: {
 			name: modelName,
@@ -137,7 +122,6 @@ export function newAMR(modelName: string) {
 			schema_name: 'petrinet',
 			model_version: '0.1'
 		},
-		id: '',
 		model: {
 			states: [],
 			transitions: []

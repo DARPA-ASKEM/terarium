@@ -97,61 +97,40 @@
 						severity="secondary"
 						size="large"
 						label="Save as new model"
-						@click="isNewModelModalVisible = true"
+						@click="showSaveModelModal = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
-		<template #header>
-			<h4>Save as a new model</h4>
-		</template>
-		<form @submit.prevent class="mt-3">
-			<label for="new-model">What would you like to call it?</label>
-			<InputText
-				id="new-model"
-				type="text"
-				v-model="newModelName"
-				placeholder="Enter a unique name for your model"
-			/>
-		</form>
-		<template #footer>
-			<Button label="Save" size="large" @click="saveNewModel" />
-			<Button
-				class="p-button-secondary"
-				size="large"
-				label="Cancel"
-				@click="isNewModelModalVisible = false"
-			/>
-		</template>
-	</tera-modal>
+	<tera-save-model-modal
+		v-if="stratifiedAmr"
+		:model="stratifiedAmr"
+		:is-visible="showSaveModelModal"
+		@close-modal="showSaveModelModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import _ from 'lodash';
-import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-
+import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useProjects } from '@/composables/project';
+
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { useToastService } from '@/services/toast';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
@@ -191,9 +170,7 @@ const executeResponse = ref({
 	traceback: ''
 });
 const modelNodeOptions = ref<string[]>([]);
-
-const isNewModelModalVisible = ref(false);
-const newModelName = ref('');
+const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
@@ -389,21 +366,6 @@ const inputChangeHandler = async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
-};
-
-const saveNewModel = async () => {
-	if (!stratifiedAmr.value) return;
-	stratifiedAmr.value.header.name = newModelName.value;
-
-	const projectResource = useProjects();
-	const modelData = await createModel(stratifiedAmr.value);
-	const projectId = projectResource.activeProject.value?.id;
-
-	if (!modelData) return;
-	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	useToastService().success('', `Saved to project ${projectResource.activeProject.value?.name}`);
-
-	isNewModelModalVisible.value = false;
 };
 
 const initialize = (editorInstance: any) => {
