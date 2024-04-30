@@ -7511,7 +7511,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.9, fast-glob@npm:^3.3.1":
+"fast-glob@npm:^3.2.9, fast-glob@npm:^3.3.0, fast-glob@npm:^3.3.1":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
   dependencies:
@@ -8174,16 +8174,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:13.1.4":
-  version: 13.1.4
-  resolution: "globby@npm:13.1.4"
+"globby@npm:13.2.2":
+  version: 13.2.2
+  resolution: "globby@npm:13.2.2"
   dependencies:
     dir-glob: "npm:^3.0.1"
-    fast-glob: "npm:^3.2.11"
-    ignore: "npm:^5.2.0"
+    fast-glob: "npm:^3.3.0"
+    ignore: "npm:^5.2.4"
     merge2: "npm:^1.4.1"
     slash: "npm:^4.0.0"
-  checksum: 4d039258f3af41f868e81d6d992542c445fe847ce09593a5ba20987695b145dcbca7263736b3ebbe4a7d985beb8d71bad1104ada00997e768cf21c311d1bbdf1
+  checksum: 4494a9d2162a7e4d327988b26be66d8eab87d7f59a83219e74b065e2c3ced23698f68fb10482bf9337133819281803fb886d6ae06afbb2affa743623eb0b1949
   languageName: node
   linkType: hard
 
@@ -8234,7 +8234,7 @@ __metadata:
     eslint: "npm:8.57.0"
     eslint-config-esnext: "npm:4.1.0"
     eslint-plugin-import: "npm:2.29.1"
-    globby: "npm:13.1.4"
+    globby: "npm:13.2.2"
     jest: "npm:29.7.0"
     live-server: "npm:1.2.2"
     lodash: "npm:4.17.21"
@@ -8633,6 +8633,13 @@ __metadata:
   version: 5.3.0
   resolution: "ignore@npm:5.3.0"
   checksum: 51594355cea4c6ad6b28b3b85eb81afa7b988a1871feefd7062baf136c95aa06760ee934fa9590e43d967bd377ce84a4cf6135fbeb6063e063f1182a0e9a3bcd
+  languageName: node
+  linkType: hard
+
+"ignore@npm:^5.2.4":
+  version: 5.3.1
+  resolution: "ignore@npm:5.3.1"
+  checksum: 0a884c2fbc8c316f0b9f92beaf84464253b73230a4d4d286697be45fca081199191ca33e1c2e82d9e5f851f5e9a48a78e25a35c951e7eb41e59f150db3530065
   languageName: node
   linkType: hard
 
