@@ -182,11 +182,13 @@
 							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
 							:key="idx"
 							:modelIntervention="intervention"
+							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
 								(data: Intervention) => {
 									updateIntervention(data, idx);
 								}
 							"
+							@delete="deleteIntervention(idx)"
 						/>
 					</AccordionTab>
 				</Accordion>
@@ -652,10 +654,19 @@ const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
 const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const addIntervention = () => {
+	console.log(mmt.value.parameters);
 	if (knobs.value.transientModelConfig.interventions) {
 		knobs.value.transientModelConfig.interventions.push({ name: '', timestep: 1, value: 1 });
 	} else {
 		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
+	}
+};
+
+const deleteIntervention = (index: number) => {
+	const tempList = cloneDeep(knobs.value.transientModelConfig.interventions);
+	if (tempList?.[index]) {
+		tempList.splice(index, 1);
+		knobs.value.transientModelConfig.interventions = cloneDeep(tempList);
 	}
 };
 
