@@ -663,10 +663,8 @@ const addIntervention = () => {
 };
 
 const deleteIntervention = (index: number) => {
-	const tempList = cloneDeep(knobs.value.transientModelConfig.interventions);
-	if (tempList?.[index]) {
-		tempList.splice(index, 1);
-		knobs.value.transientModelConfig.interventions = cloneDeep(tempList);
+	if (knobs.value.transientModelConfig.interventions?.[index]) {
+		knobs.value.transientModelConfig.interventions.splice(index, 1);
 	}
 };
 
