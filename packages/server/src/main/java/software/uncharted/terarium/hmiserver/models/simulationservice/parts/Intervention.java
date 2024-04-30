@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
 
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import java.util.UUID;
 
 @Data
 @Accessors(chain = true)

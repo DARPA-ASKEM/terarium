@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
@@ -125,16 +124,18 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
-		//Get model config's interventions and append them to requests:
-		try{
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(request.getModelConfigId());
+		// Get model config's interventions and append them to requests:
+		try {
+			final Optional<ModelConfiguration> modelConfiguration =
+					modelConfigService.getAsset(request.getModelConfigId());
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-			if (modelInterventions != null){
+			final List<Intervention> modelInterventions =
+					modelConfiguration.get().getInterventions();
+			if (modelInterventions != null) {
 				List<Intervention> allInterventions = request.getInterventions();
-				if (allInterventions == null){
+				if (allInterventions == null) {
 					allInterventions = new ArrayList<Intervention>();
 				}
 				allInterventions.addAll(modelInterventions);
