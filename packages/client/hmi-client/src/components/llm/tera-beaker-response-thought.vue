@@ -5,7 +5,7 @@
 			class="thought"
 			:class="{ hide: !props.showThought, show: props.showThought }"
 		>
-			<slot></slot>
+			<slot />
 		</div>
 	</div>
 </template>
