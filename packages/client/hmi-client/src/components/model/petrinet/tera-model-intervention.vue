@@ -11,12 +11,12 @@
 			<InputText v-else v-model.lazy="name" @update:model-value="updateIntervention" />
 		</div>
 		<div class="label-col">
-			<label>Value</label>
-			<tera-input-number v-model.lazy="timestep" @update:model-value="updateIntervention" />
-		</div>
-		<div class="label-col">
 			<label>Timestep</label>
 			<tera-input-number v-model.lazy="value" @update:model-value="updateIntervention" />
+		</div>
+		<div class="label-col">
+			<label>Value</label>
+			<tera-input-number v-model.lazy="timestep" @update:model-value="updateIntervention" />
 		</div>
 		<Button label="Delete" icon="pi pi-trash" @click="$emit('delete')" rounded text />
 	</div>
