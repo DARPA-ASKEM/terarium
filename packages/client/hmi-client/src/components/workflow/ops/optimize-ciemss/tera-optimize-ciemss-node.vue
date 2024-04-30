@@ -49,6 +49,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 import { chartActionsProxy } from '@/components/workflow/util';
 import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
@@ -121,6 +122,7 @@ const getSimulationInterventions = async (id) => {
 	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
 	for (let i = 0; i < paramNames.length; i++) {
 		simulationIntervetions.push({
+			id: uuidv4(),
 			name: paramNames[i],
 			timestep: startTime[i],
 			value: policyResult[i]
