@@ -655,7 +655,6 @@ const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
 const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const addIntervention = () => {
-	console.log(mmt.value.parameters);
 	if (knobs.value.transientModelConfig.interventions) {
 		knobs.value.transientModelConfig.interventions.push({
 			id: uuidv4(),
