@@ -50,7 +50,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateCode() throws Exception {
 
-		final Code codeAsset = new Code().setName("test-code-name").setDescription("my description");
+		final Code codeAsset = (Code) new Code().setName("test-code-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/code-asset")
 						.with(csrf())
@@ -64,7 +64,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanGetCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset/" + codeAsset.getId())
 						.with(csrf()))
@@ -75,11 +75,11 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodes() throws Exception {
 
-		codeAssetService.createAsset(new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
 
-		codeAssetService.createAsset(new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
 
-		codeAssetService.createAsset(new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf()))
 				.andExpect(status().isOk())
@@ -91,7 +91,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/code-asset/" + codeAsset.getId())
 						.with(csrf()))
@@ -105,7 +105,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -133,7 +133,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithub() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
 						.with(csrf())
@@ -149,7 +149,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithubRepo() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
 						.with(csrf())
@@ -164,7 +164,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadCodeAsText() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setName("test-code-name").setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadCode test";
 

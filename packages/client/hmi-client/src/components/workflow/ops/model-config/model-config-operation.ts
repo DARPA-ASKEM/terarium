@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import type { ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
@@ -37,7 +37,7 @@ export const ModelConfigOperation: Operation = {
 				name: '',
 				description: '',
 				model_id: '',
-				configuration: {}
+				configuration: {} as Model
 			}
 		};
 		return init;

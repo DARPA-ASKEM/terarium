@@ -66,7 +66,12 @@
 			</template>
 		</tera-slider-panel>
 		<!-- New model modal -->
-		<tera-model-modal :is-visible="isNewModelModalVisible" @close-modal="onCloseModelModal" />
+		<tera-save-model-modal
+			title="Create new model"
+			:is-visible="showSaveModelModal"
+			open-on-save
+			@close-modal="onCloseModelModal"
+		/>
 	</main>
 </template>
 
@@ -93,8 +98,8 @@ import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import Button from 'primevue/button';
-import TeraModelModal from './components/tera-model-modal.vue';
 import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
+import TeraSaveModelModal from './components/tera-save-model-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -102,7 +107,7 @@ const router = useRouter();
 const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
@@ -177,7 +182,7 @@ const openWorkflow = async () => {
 const openNewAsset = (assetType: AssetType) => {
 	switch (assetType) {
 		case AssetType.Model:
-			isNewModelModalVisible.value = true;
+			showSaveModelModal.value = true;
 			break;
 		case AssetType.Workflow:
 			openWorkflow();
@@ -206,7 +211,7 @@ async function openCode() {
 }
 
 const onCloseModelModal = () => {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 };
 
 onMounted(() => {

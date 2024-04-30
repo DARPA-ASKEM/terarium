@@ -10,5 +10,7 @@ public enum SimulationType {
 	@JsonAlias({"calibrate", "calibration"})
 	CALIBRATION,
 	@JsonAlias({"optimize", "optimization"})
-	OPTIMIZATION
+	OPTIMIZATION,
+	@JsonAlias({"validation"})
+	VALIDATION
 }

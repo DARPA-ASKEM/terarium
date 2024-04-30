@@ -193,6 +193,14 @@
 							icon="pi pi-play"
 							@click="createConfiguration(false)"
 						/>
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Download"
+							icon="pi pi-download"
+							@click="downloadConfiguredModel()"
+						/>
 						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 					</div>
 				</template>
@@ -380,7 +388,7 @@ const knobs = ref<BasicKnobs>({
 		name: '',
 		description: '',
 		model_id: '',
-		configuration: {}
+		configuration: {} as Model
 	}
 });
 
@@ -648,7 +656,7 @@ const updateConfigFromModel = (inputModel: Model) => {
 
 const runSanityCheck = () => {
 	const errors: string[] = [];
-	const modelToCheck = knobs.value?.transientModelConfig?.configuration as Model;
+	const modelToCheck = knobs.value?.transientModelConfig?.configuration;
 	if (!modelToCheck) {
 		errors.push('no model defined in configuration');
 		return errors;
@@ -676,6 +684,21 @@ const runSanityCheck = () => {
 	return errors;
 };
 
+const downloadConfiguredModel = async () => {
+	const rawModel = knobs.value?.transientModelConfig?.configuration;
+	if (rawModel) {
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+		const a = document.createElement('a');
+		a.href = `data:${data}`;
+		a.download = `${
+			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
+		}.json`;
+		a.innerHTML = 'download JSON';
+		a.click();
+		a.remove();
+	}
+};
+
 const createConfiguration = async (force: boolean = false) => {
 	if (!model.value) return;
 
@@ -692,7 +715,7 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const data = await createModelConfiguration(
 		model.value.id,
-		knobs.value?.transientModelConfig?.name,
+		knobs.value?.transientModelConfig?.name ?? '',
 		knobs.value?.transientModelConfig?.description ?? '',
 		knobs.value?.transientModelConfig?.configuration
 	);
@@ -756,7 +779,7 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value
+			configuration: model.value ?? ({} as Model)
 		};
 
 		await createTempModelConfig();

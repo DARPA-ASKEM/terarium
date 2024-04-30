@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
@@ -227,7 +228,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			final ObjectMapper mapper = new ObjectMapper();
 			final Optional<ModelConfiguration> modelConfig = modelConfigService.getAsset(modelConfigId);
-			final JsonNode configuration = mapper.convertValue(modelConfig.get().getConfiguration(), JsonNode.class);
+			final Model configuration = modelConfig.get().getConfiguration();
 			// Parse the values found under the following path:
 			// AMR -> configuration -> metadata -> timeseries -> parameter name -> value
 			// EG) "timeseries": {
@@ -238,9 +239,9 @@ public class SimulationRequestController implements SnakeCaseController {
 			// {"timestep":2,"name":"beta","value":0.04}, ...]
 			// This will later be scrapped after a redesign where our AMR -> configuration
 			// -> metadata -> timeseries -> parameter name -> value should be more typed.
-			if (configuration.get("metadata").get("timeseries") != null) {
+			if (configuration.getMetadata().getTimeseries() != null) {
 				final JsonNode timeseries =
-						mapper.convertValue(configuration.get("metadata").get("timeseries"), JsonNode.class);
+						mapper.convertValue(configuration.getMetadata().getTimeseries(), JsonNode.class);
 				final List<String> fieldNames = new ArrayList<>();
 				timeseries.fieldNames().forEachRemaining(key -> fieldNames.add(key));
 				for (int i = 0; i < fieldNames.size(); i++) {

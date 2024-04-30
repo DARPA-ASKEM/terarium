@@ -21,12 +21,6 @@ public class Code extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = 3041175096070970227L;
 	/* The name of the code. */
-	@Schema(defaultValue = "Default Name")
-	private String name;
-
-	/* The description of the code. */
-	@Schema(defaultValue = "Default Description")
-	private String description;
 
 	/* Files that contain dynamics */
 	@TSOptional
