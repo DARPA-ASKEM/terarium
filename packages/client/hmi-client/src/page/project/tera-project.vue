@@ -67,7 +67,6 @@
 		</tera-slider-panel>
 		<!-- New model modal -->
 		<tera-save-model-modal
-			title="Create new model"
 			:is-visible="showSaveModelModal"
 			:asset-type="AssetType.Model"
 			open-on-save
@@ -75,11 +74,10 @@
 		/>
 		<!-- New wf modal -->
 		<tera-save-model-modal
-			title="Create new workflow"
 			:is-visible="showSaveWorkflowModal"
 			:assetType="AssetType.Workflow"
 			open-on-save
-			@close-modal="onCloseModelModal"
+			@close-modal="showSaveWorkflowModal = false"
 		/>
 	</main>
 </template>
@@ -95,7 +93,6 @@ import { RouteName } from '@/router/routes';
 import { AssetRoute } from '@/types/common';
 import { isProjectAssetTypes, ProjectPages } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { createWorkflow, emptyWorkflow } from '@/services/workflow';
 import { AssetType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
@@ -176,18 +173,18 @@ async function removeAsset(assetRoute: AssetRoute) {
 	}
 }
 
-const openWorkflow = async () => {
-	// Create a new workflow
-	const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
-	const wf = emptyWorkflow(`workflow ${workflows.length + 1}`, '');
+// const openWorkflow = async () => {
+// 	// Create a new workflow
+// 	const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
+// 	const wf = emptyWorkflow(`workflow ${workflows.length + 1}`, '');
 
-	// Add the workflow to the project
-	const response = await createWorkflow(wf);
-	const workflowId = response.id;
-	await useProjects().addAsset(AssetType.Workflow, workflowId);
+// 	// Add the workflow to the project
+// 	const response = await createWorkflow(wf);
+// 	const workflowId = response.id;
+// 	await useProjects().addAsset(AssetType.Workflow, workflowId);
 
-	openAsset({ pageType: AssetType.Workflow, assetId: workflowId });
-};
+// 	openAsset({ pageType: AssetType.Workflow, assetId: workflowId });
+// };
 
 const openNewAsset = (assetType: AssetType) => {
 	switch (assetType) {
@@ -195,7 +192,7 @@ const openNewAsset = (assetType: AssetType) => {
 			showSaveModelModal.value = true;
 			break;
 		case AssetType.Workflow:
-			openWorkflow();
+			showSaveWorkflowModal.value = true;
 			break;
 		case AssetType.Code:
 			openAsset({
