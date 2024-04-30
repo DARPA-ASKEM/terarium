@@ -51,7 +51,7 @@
 				<section class="details">
 					<div>
 						<div class="author">{{ project?.userName ?? '——' }}</div>
-						<div class="update-date">{{ formatDdMmmYyyy(project.updatedOn) }}</div>
+						<div>{{ formatDdMmmYyyy(project.updatedOn) }}</div>
 					</div>
 					<div class="description">
 						{{ project.description }}
