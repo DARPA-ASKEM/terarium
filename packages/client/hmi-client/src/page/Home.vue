@@ -47,7 +47,7 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView @tab-change="tabChange($event)">
+				<TabView @tab-change="tabChange">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div>
