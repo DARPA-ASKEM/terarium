@@ -192,7 +192,6 @@ async function renderGraph() {
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
 		const { id, data } = selection.datum();
-		// If there are matrixRows then it is stratified
 		if (data.type === NodeType.Transition && data.isStratified) {
 			selectedTransitionId.value = id;
 			openValueConfig.value = true;
