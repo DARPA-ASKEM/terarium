@@ -1,3 +1,9 @@
+/**
+ * Cleans a number string by removing non-numeric characters.
+ *
+ * @param {string} num - The number string to clean.
+ * @returns {string} The cleaned number string.
+ */
 export function cleanNumberString(num: string): string {
 	// remove spaces
 	let numStr = num.replace(/ /g, '');
@@ -29,11 +35,24 @@ export function cleanNumberString(num: string): string {
 	return numStr;
 }
 
+/**
+ * Converts a number string to its exponential form.
+ *
+ * @param {string} num - The number string to convert.
+ * @param {number} precision - The number of digits to appear after the decimal point in the resulting string.
+ * @returns {string} The number in exponential form.
+ */
 export function numberToExponential(num: string, precision: number = 3): string {
 	if (Number.isNaN(Number(num))) return Number.NaN.toString();
 	return Number(num).toExponential(precision);
 }
 
+/**
+ * Converts a number string from its exponential form to normal form.
+ *
+ * @param {string} num - The number string in exponential form to convert.
+ * @returns {string} The number in normal form.
+ */
 export function exponentialToNumber(num: string): string {
 	// Split the number into base and exponent parts
 	const [base, exponent] = num.split(/[eE]/);
@@ -66,6 +85,12 @@ export function exponentialToNumber(num: string): string {
 	return sign + str + zeros;
 }
 
+/**
+ * Converts a number string to its NIST form.
+ *
+ * @param {string} num - The number string to convert.
+ * @returns {string} The number in NIST form.
+ */
 export function numberToNist(num: string) {
 	if (Number.isNaN(Number(num))) return Number.NaN.toString();
 	num = cleanNumberString(num);
@@ -89,6 +114,12 @@ export function numberToNist(num: string) {
 	return formattedNumber;
 }
 
+/**
+ * Converts a number string from its NIST form to normal form.
+ *
+ * @param {string} num - The number string in NIST form to convert.
+ * @returns {string} The number in normal form.
+ */
 export function nistToNumber(num: string): string {
 	// Remove any spaces from the formatted number
 	const numStr = cleanNumberString(num);
@@ -104,6 +135,12 @@ export function nistToNumber(num: string): string {
 	return numStr.replace(/ /g, '');
 }
 
+/**
+ * Displays a number string in either exponential form or NIST form, depending on its length.
+ *
+ * @param {string} num - The number string to display.
+ * @returns {string} The number in either exponential form or NIST form.
+ */
 export function displayNumber(num: string): string {
 	const numStr = cleanNumberString(num);
 	if (Number.isNaN(Number(numStr))) return Number.NaN.toString();
