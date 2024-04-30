@@ -94,11 +94,7 @@ describe('number util tests', () => {
 
 		it('should correctly handle small negative numbers', () => {
 			expect(numberToExponential('-0.3')).to.eq('-3.000e-1');
-			expect(
-				numberToExponential(
-					'-0.000000000000000000000000000000000000000000000000000000000000000000100051'
-				)
-			).to.eq('-1.001e-67');
+			expect(numberToExponential(`-0.${'0'.repeat(66)}100051`)).to.eq('-1.001e-67');
 		});
 
 		it('should return "NaN" for non-numeric strings', () => {
