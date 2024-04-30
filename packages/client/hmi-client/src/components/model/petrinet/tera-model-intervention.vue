@@ -31,17 +31,18 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
-	modelIntervention: Intervention;
+	intervention: Intervention;
 	parameterOptions?: string[];
 }>();
 const emit = defineEmits(['update-value', 'delete']);
 
-const name = ref(props.modelIntervention.name);
-const timestep = ref(props.modelIntervention.timestep);
-const value = ref(props.modelIntervention.value);
+const name = ref(props.intervention.name);
+const timestep = ref(props.intervention.timestep);
+const value = ref(props.intervention.value);
 
 function updateIntervention() {
 	const intervention: Intervention = {
+		id: props.intervention.id,
 		name: name.value,
 		timestep: timestep.value,
 		value: value.value
