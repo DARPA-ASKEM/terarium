@@ -310,7 +310,7 @@ const updateStateExtras = () => {
 
 const filterStateVars = (params) => {
 	const initialStates =
-		modelConfig.value?.configuration.semantics.ode.initials.map((d) => d.expression) ?? [];
+		modelConfig.value?.configuration?.semantics?.ode?.initials?.map((d) => d.expression) ?? [];
 	return Object.keys(params).reduce((acc, key) => {
 		if (!initialStates.includes(key)) {
 			acc[key] = params[key];

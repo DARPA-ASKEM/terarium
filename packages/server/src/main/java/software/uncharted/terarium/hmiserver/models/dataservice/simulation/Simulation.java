@@ -16,7 +16,6 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -29,14 +28,12 @@ public class Simulation extends TerariumAsset {
 	private static final long serialVersionUID = 5467224100686908152L;
 
 	@JsonAlias("execution_payload")
-	@Convert(converter = JpaConverterJson.class)
+	@Column(columnDefinition = "text")
 	private JsonNode executionPayload;
-
-	@TSOptional
-	private String description;
 
 	@JsonAlias("result_files")
 	@TSOptional
+	@Column(length = 1024)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ElementCollection
 	private List<String> resultFiles;
@@ -49,6 +46,7 @@ public class Simulation extends TerariumAsset {
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "text")
 	private String statusMessage;
 
 	@JsonAlias("start_time")
@@ -71,6 +69,7 @@ public class Simulation extends TerariumAsset {
 
 	@JsonAlias("user_id")
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
 	@JsonAlias("project_id")
@@ -82,8 +81,6 @@ public class Simulation extends TerariumAsset {
 		final Simulation clone = new Simulation();
 
 		cloneSuperFields(clone);
-
-		clone.setDescription(this.description);
 
 		clone.setResultFiles(new ArrayList<>(this.resultFiles));
 		clone.setType(SimulationType.valueOf(this.type.name()));

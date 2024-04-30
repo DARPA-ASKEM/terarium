@@ -1,6 +1,5 @@
 <template>
 	<div class="data-transform-container">
-		<ConfirmDialog></ConfirmDialog>
 		<!-- Jupyter Kernel Settings -->
 		<div class="settings-title" v-if="showKernels">Kernel Settings</div>
 		<div class="jupyter-settings" v-if="showKernels">
@@ -124,7 +123,6 @@ import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 

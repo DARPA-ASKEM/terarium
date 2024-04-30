@@ -437,6 +437,9 @@ public class TaskService {
 				// create the notification event
 				final NotificationEvent event = new NotificationEvent();
 				event.setData(resp);
+
+				log.info("Creating notification event under group id: {}", resp.getId());
+
 				notificationService.createNotificationEvent(resp.getId(), event);
 			} catch (final Exception e) {
 				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
@@ -547,12 +550,19 @@ public class TaskService {
 						TimeUnit.SECONDS);
 			}
 
-			// create the notification group for the task
-			final NotificationGroup group = new NotificationGroup();
-			group.setId(req.getId()); // use the task id
-			group.setType(req.getType().toString());
-			group.setUserId(req.getUserId());
-			notificationService.createNotificationGroup(group);
+			try {
+				log.info("Creating notification group under id: {}", req.getId());
+
+				// create the notification group for the task
+				final NotificationGroup group = new NotificationGroup();
+				group.setId(req.getId()); // use the task id
+				group.setType(req.getType().toString());
+				group.setUserId(req.getUserId());
+				notificationService.createNotificationGroup(group);
+
+			} catch (final Exception e) {
+				log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+			}
 
 			// now send request
 			final String requestQueue = String.format(

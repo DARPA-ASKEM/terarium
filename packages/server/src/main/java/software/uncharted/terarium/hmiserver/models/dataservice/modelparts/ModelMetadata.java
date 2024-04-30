@@ -72,4 +72,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("code_id")
 	String codeId;
+
+	@TSOptional
+	JsonNode source;
 }

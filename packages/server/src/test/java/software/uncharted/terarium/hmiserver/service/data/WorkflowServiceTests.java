@@ -52,11 +52,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final WorkflowEdge cd = new WorkflowEdge().setSource(c.getId()).setTarget(d.getId());
 
 		return (Workflow) new Workflow()
-				.setDescription("test-workflow-description-0")
 				.setTransform(new Transform().setX(1).setY(2).setK(3))
 				.setNodes(List.of(a, b, c, d))
 				.setEdges(List.of(ab, bc, cd))
 				.setPublicAsset(true)
+				.setDescription("test-workflow-description-0")
 				.setName("test-workflow-name-0");
 	}
 
@@ -334,7 +334,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 					workflows.get(i).getCreatedOn().toInstant().getEpochSecond(),
 					results.get(i).getCreatedOn().toInstant().getEpochSecond());
 			Assertions.assertEquals(
-					workflows.get(i).getUpdatedOn(), results.get(i).getUpdatedOn());
+					workflows.get(i).getUpdatedOn().toInstant().getEpochSecond(),
+					results.get(i).getUpdatedOn().toInstant().getEpochSecond());
 			Assertions.assertEquals(
 					workflows.get(i).getDeletedOn(), results.get(i).getDeletedOn());
 			Assertions.assertEquals(

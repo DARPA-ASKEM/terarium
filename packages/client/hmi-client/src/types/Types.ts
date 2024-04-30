@@ -25,6 +25,7 @@ export interface ClientLog {
 export interface TerariumAsset {
     id?: string;
     name?: string;
+    description?: string;
     createdOn?: Date;
     updatedOn?: Date;
     deletedOn?: Date;
@@ -69,9 +70,7 @@ export interface GithubRepo {
 }
 
 export interface Artifact extends TerariumAsset {
-    name: string;
     userId: string;
-    description?: string;
     fileNames: string[];
     metadata?: any;
     concepts?: OntologyConcept[];
@@ -122,8 +121,6 @@ export interface ResponseSuccess {
 }
 
 export interface Code extends TerariumAsset {
-    name: string;
-    description: string;
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
@@ -141,7 +138,6 @@ export interface Dynamics {
 }
 
 export interface ActiveConcept extends TerariumAsset {
-    name: string;
     curie: string;
 }
 
@@ -158,10 +154,8 @@ export interface OntologyConcept {
 }
 
 export interface Dataset extends TerariumAsset {
-    name: string;
     userId?: string;
     esgfId?: string;
-    description?: string;
     dataSourceDate?: Date;
     fileNames?: string[];
     datasetUrl?: string;
@@ -195,7 +189,6 @@ export interface AddDocumentAssetFromXDDResponse {
 }
 
 export interface DocumentAsset extends TerariumAsset {
-    description?: string;
     userId?: string;
     fileNames?: string[];
     documentUrl?: string;
@@ -236,9 +229,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
-    name: string;
-    description?: string;
-    configuration: any;
+    configuration: Model;
     model_id: string;
 }
 
@@ -407,8 +398,6 @@ export interface DecapodesTerm {
 }
 
 export interface NotebookSession extends TerariumAsset {
-    name: string;
-    description?: string;
     data: any;
 }
 
@@ -418,11 +407,9 @@ export interface PetriNetModel {
 }
 
 export interface Project extends TerariumAsset {
-    name: string;
     userId: string;
     userName?: string;
     authors?: string[];
-    description?: string;
     overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
@@ -504,7 +491,6 @@ export interface RegNetVertex {
 
 export interface Simulation extends TerariumAsset {
     executionPayload: any;
-    description?: string;
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
@@ -903,6 +889,7 @@ export interface ModelMetadata {
     parameters?: { [index: string]: any };
     card?: Card;
     provenance?: string[];
+    source?: any;
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
@@ -1376,6 +1363,7 @@ export enum SimulationType {
     Simulation = "SIMULATION",
     Calibration = "CALIBRATION",
     Optimization = "OPTIMIZATION",
+    Validation = "VALIDATION",
 }
 
 export enum ProgressState {
