@@ -5,7 +5,7 @@
 			class="thought"
 			:class="{ hide: !props.showThought, show: props.showThought }"
 		>
-			{{ thought }}
+			<slot></slot>
 		</div>
 	</div>
 </template>
@@ -15,19 +15,19 @@ import { ref } from 'vue';
 const responseThought = ref(<HTMLElement | null>null);
 
 const props = defineProps<{
-	thought: string;
 	showThought?: boolean;
 }>();
 </script>
 
 <style scoped>
 .thought {
-	border-radius: 5px;
 	white-space: pre-line;
-	color: var(--gray-600);
-	max-height: 10000px;
-	overflow: hidden;
-	padding: 5px;
+	background-color: #fff;
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: var(--gap);
+	color: var(--text-color);
+	width: fit-content;
 }
 
 .hide {
