@@ -249,11 +249,13 @@ type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
 function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'ASC' | 'DESC') {
 	return projects.sort((a, b) => {
-		const dateAObj = new Date(a[dateType]);
-		const dateBObj = new Date(b[dateType]);
-		const dateA = dateAObj || 0;
-		const dateB = dateBObj || 0;
-		return sorting === 'ASC' ? dateA - dateB : dateB - dateA;
+		const dateValueA = a[dateType]?.toString();
+		const dateValueB = b[dateType]?.toString();
+		const dateA = dateValueA ? new Date(dateValueA) : new Date(0);
+		const dateB = dateValueB ? new Date(dateValueB) : new Date(0);
+		return sorting === 'ASC'
+			? dateA.getTime() - dateB.getTime()
+			: dateB.getTime() - dateA.getTime();
 	});
 }
 
