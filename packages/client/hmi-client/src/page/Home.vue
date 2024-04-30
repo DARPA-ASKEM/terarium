@@ -59,16 +59,6 @@
 								/>
 							</div>
 							<div>
-								<!-- TODO: Add project search back in once we are ready
-								<span class="p-input-icon-left">
-								<i class="pi pi-filter" />
-								<InputText
-									v-model="searchQuery"
-									size="small"
-									class="p-inputtext-sm"
-									placeholder="Filter by keyword"
-								/>
-							</span> -->
 								<span v-if="view === ProjectsView.Cards">
 									<Dropdown
 										v-model="selectedSort"
@@ -185,7 +175,7 @@ const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 const activeTabIndex = ref(0);
 const showVideo = ref(false);
-const searchProjects = ref<string>('');
+const searchProjects = ref('');
 
 enum ProjectsView {
 	Cards = 'Cards',
