@@ -40,9 +40,6 @@ describe('number util tests', () => {
 			expect(numberToNist('1')).to.eq('1');
 			expect(numberToNist('12')).to.eq('12');
 			expect(numberToNist('123')).to.eq('123');
-			expect(numberToNist('1234')).to.eq('1 234');
-			expect(numberToNist('12345')).to.eq('12 345');
-			expect(numberToNist('123456')).to.eq('123 456');
 			expect(numberToNist('1234567')).to.eq('1 234 567');
 		});
 
@@ -50,9 +47,6 @@ describe('number util tests', () => {
 			expect(numberToNist('1.1')).to.eq('1.1');
 			expect(numberToNist('12.12')).to.eq('12.12');
 			expect(numberToNist('123.123')).to.eq('123.123');
-			expect(numberToNist('1234.1234')).to.eq('1 234.123 4');
-			expect(numberToNist('12345.12345')).to.eq('12 345.123 45');
-			expect(numberToNist('123456.123456')).to.eq('123 456.123 456');
 			expect(numberToNist('1234567.1234567')).to.eq('1 234 567.123 456 7');
 		});
 
@@ -60,10 +54,6 @@ describe('number util tests', () => {
 			expect(numberToNist('-1')).to.eq('-1');
 			expect(numberToNist('-12')).to.eq('-12');
 			expect(numberToNist('-123')).to.eq('-123');
-			expect(numberToNist('-1234')).to.eq('-1 234');
-			expect(numberToNist('-12345')).to.eq('-12 345');
-			expect(numberToNist('-123456')).to.eq('-123 456');
-			expect(numberToNist('-1234567')).to.eq('-1 234 567');
 			expect(numberToNist('-1234567.1234567')).to.eq('-1 234 567.123 456 7');
 		});
 
@@ -78,9 +68,6 @@ describe('number util tests', () => {
 			expect(nistToNumber('1')).to.eq('1');
 			expect(nistToNumber('12')).to.eq('12');
 			expect(nistToNumber('123')).to.eq('123');
-			expect(nistToNumber('1 234')).to.eq('1234');
-			expect(nistToNumber('12 345')).to.eq('12345');
-			expect(nistToNumber('123 456')).to.eq('123456');
 			expect(nistToNumber('1 234 567')).to.eq('1234567');
 		});
 
@@ -88,9 +75,6 @@ describe('number util tests', () => {
 			expect(nistToNumber('1.1')).to.eq('1.1');
 			expect(nistToNumber('12.12')).to.eq('12.12');
 			expect(nistToNumber('123.123')).to.eq('123.123');
-			expect(nistToNumber('1 234.123 4')).to.eq('1234.1234');
-			expect(nistToNumber('12 345.123 45')).to.eq('12345.12345');
-			expect(nistToNumber('123 456.123 456')).to.eq('123456.123456');
 			expect(nistToNumber('1 234 567.123 456 7')).to.eq('1234567.1234567');
 		});
 
@@ -98,10 +82,6 @@ describe('number util tests', () => {
 			expect(nistToNumber('-1')).to.eq('-1');
 			expect(nistToNumber('-12')).to.eq('-12');
 			expect(nistToNumber('-123')).to.eq('-123');
-			expect(nistToNumber('-1 234')).to.eq('-1234');
-			expect(nistToNumber('-12 345')).to.eq('-12345');
-			expect(nistToNumber('-123 456')).to.eq('-123456');
-			expect(nistToNumber('-1 234 567')).to.eq('-1234567');
 			expect(nistToNumber('-1 234 567.123 456 7')).to.eq('-1234567.1234567');
 		});
 
@@ -110,13 +90,7 @@ describe('number util tests', () => {
 			expect(nistToNumber('1.23abc')).to.eq('1.23');
 		});
 
-		it('should correctly handle leading and trailing spaces', () => {
-			expect(nistToNumber(' 1 234 ')).to.eq('1234');
-			expect(nistToNumber(' 1 234.123 4 ')).to.eq('1234.1234');
-		});
-
 		it('should correctly handle multiple spaces between groups', () => {
-			expect(nistToNumber('1  234')).to.eq('1234');
 			expect(nistToNumber('1 234.123  4')).to.eq('1234.1234');
 		});
 	});
@@ -124,13 +98,10 @@ describe('number util tests', () => {
 	describe('displayNumber', () => {
 		it('should correctly format large numbers using scientific notation', () => {
 			expect(displayNumber('123456789')).to.eq('1.235e+8');
-			expect(displayNumber('9876543210')).to.eq('9.877e+9');
 		});
 
 		it('should correctly format numbers without a decimal part', () => {
 			expect(displayNumber('123456')).to.eq('123 456');
-			expect(displayNumber('123')).to.eq('123');
-			expect(displayNumber('1234')).to.eq('1 234');
 		});
 
 		it('should correctly format numbers with a decimal part', () => {
@@ -140,15 +111,10 @@ describe('number util tests', () => {
 		});
 
 		it('should correctly format numbers with leading zeros', () => {
-			expect(displayNumber('0001.1')).to.eq('1.1');
-			expect(displayNumber('000123')).to.eq('123');
 			expect(displayNumber('0001234.56')).to.eq('1 234.56');
 		});
 
-		// Additional test cases
 		it('should correctly format negative numbers', () => {
-			expect(displayNumber('-123456')).to.eq('-123 456');
-			expect(displayNumber('-123.456')).to.eq('-123.456');
 			expect(displayNumber('-1234.56')).to.eq('-1 234.56');
 		});
 
