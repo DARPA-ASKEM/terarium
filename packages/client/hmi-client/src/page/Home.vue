@@ -47,7 +47,7 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView>
+				<TabView @tab-change="tabChange($event)">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
 							<div>
@@ -55,8 +55,6 @@
 									v-model="searchProjects"
 									placeholder="Search for projects"
 									id="searchProject"
-									@input="searchForProjects(tab.projects)"
-									@blur="searchForProjects(tab.projects)"
 									class="p-inputtext"
 								/>
 							</div>
@@ -93,7 +91,7 @@
 							</div>
 							<div>
 								<SelectButton
-									v-if="!isEmpty(projectSearchResults(tab.projects))"
+									v-if="!isEmpty(searchedAndFilterProjects)"
 									:model-value="view"
 									@change="if ($event.value) view = $event.value;"
 									:options="viewOptions"
@@ -108,7 +106,7 @@
 						</section>
 						<section class="projects">
 							<div
-								v-if="!isLoadingProjects && isEmpty(projectSearchResults(tab.projects))"
+								v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)"
 								class="no-projects"
 							>
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
@@ -137,7 +135,7 @@
 										<tera-project-card />
 									</li>
 								</template>
-								<li v-else v-for="project in projectSearchResults(tab.projects)" :key="project.id">
+								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -148,7 +146,7 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:projects="projectSearchResults(tab.projects)"
+								:projects="searchedAndFilterProjects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
 								class="project-table"
@@ -185,9 +183,9 @@ import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
+const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const searchProjects = ref<string>('');
-const tabFilteredProjects = ref<Project[]>([]);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -221,62 +219,37 @@ const myFilteredSortedProjects = computed(() => {
 	const myProjects = projects.filter(({ userPermission }) =>
 		['creator', 'writer'].includes(userPermission ?? '')
 	);
-	const inputSearch = searchProjects.value.trim();
-	if (!inputSearch || inputSearch === '') {
-		console.log('test');
-		return filterAndSortProjects(myProjects);
-	}
-	return filterAndSortProjects(
-		FilterService.filter(myProjects, ['name', 'description', 'userName'], inputSearch, 'contains')
-	);
+	return filterAndSortProjects(myProjects);
 });
+
+function tabChange(event) {
+	activeTabIndex.value = event.index;
+}
 
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
 	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
-	const inputSearch = searchProjects.value.trim();
-	if (!inputSearch || inputSearch === '') {
-		return filterAndSortProjects(publicProjects);
-	}
-	return filterAndSortProjects(
-		FilterService.filter(
-			publicProjects,
-			['name', 'description', 'userName'],
-			inputSearch,
-			'contains'
-		)
-	);
+	return filterAndSortProjects(publicProjects);
 });
-
-function projectSearchResults(projects: Project[]) {
-	if (!tabFilteredProjects.value || searchProjects.value === '') {
-		return projects;
-	}
-	return tabFilteredProjects.value;
-}
 
 function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
 	menuProject.value = null;
 }
 
-function searchForProjects(tabProjects: Project[]) {
+const searchedAndFilterProjects = computed(() => {
+	const currentTabIndex = activeTabIndex.value;
+	const projects = projectsTabs.value[currentTabIndex].projects;
 	const userInput = searchProjects.value.trim();
-	if (!userInput || userInput === '') {
-		tabFilteredProjects.value = [];
-	} else {
-		tabFilteredProjects.value = [
-			...FilterService.filter(
-				tabProjects,
-				['name', 'description', 'userName'],
-				userInput,
-				'contains'
-			)
-		];
-	}
-	return tabFilteredProjects.value;
-}
+	const result = FilterService.filter(
+		projects,
+		['name', 'description', 'userName'],
+		userInput,
+		'contains'
+	);
+	return filterAndSortProjects(result);
+});
 
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
