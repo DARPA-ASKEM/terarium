@@ -1,32 +1,40 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
 import java.util.UUID;
+
 import org.springframework.stereotype.Service;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
 import software.uncharted.terarium.hmiserver.repository.data.SimulationRepository;
+import software.uncharted.terarium.hmiserver.repository.data.SimulationUpdateRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
 @Service
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
+	final private SimulationUpdateRepository simulationUpdateRepository;
+
 	/**
 	 * Constructor for SimulationService
 	 *
-	 * @param config application config
+	 * @param config              application config
 	 * @param projectAssetService project asset service
-	 * @param repository simulation repository
-	 * @param s3ClientService S3 client service
+	 * @param repository          simulation repository
+	 * @param s3ClientService     S3 client service
 	 */
 	public SimulationService(
 			final Config config,
 			final ProjectAssetService projectAssetService,
 			final SimulationRepository repository,
-			final S3ClientService s3ClientService) {
+			final S3ClientService s3ClientService,
+			final SimulationUpdateRepository simulationUpdateRepository) {
 		super(config, projectAssetService, repository, s3ClientService, Simulation.class);
+		this.simulationUpdateRepository = simulationUpdateRepository;
 	}
 
 	@Override
@@ -40,6 +48,20 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 	private String getDatasetPath(final UUID datasetId, final String filename) {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
+	}
+
+	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update) {
+
+		final Simulation simulation = getAsset(simulationId).orElseThrow();
+
+		// ensure the id is set
+		update.setSimulationId(simulationId);
+		final SimulationUpdate created = simulationUpdateRepository.save(update);
+
+		// update the sim
+		simulation.getUpdates().add(created);
+		repository.save(simulation);
+		return created;
 	}
 
 	@Observed(name = "function_profile")
