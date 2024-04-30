@@ -32,17 +32,6 @@ export interface RenderOptions {
 	click?: Function;
 }
 
-// @deprecated
-export async function getQueries(id: string) {
-	try {
-		const response = await API.get(`/funman/queries/${id}`);
-		return response.data;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
 export async function makeQueries(body: FunmanPostQueriesRequest) {
 	try {
 		const resp = await API.post('/funman/queries', body);
@@ -50,17 +39,6 @@ export async function makeQueries(body: FunmanPostQueriesRequest) {
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return null;
-	}
-}
-
-// @deprecated
-export async function haltQuery(id: string) {
-	try {
-		const response = await API.get(`/funman/queries/${id}/halt`);
-		return response.data;
-	} catch (error) {
-		logger.error(error);
 		return null;
 	}
 }

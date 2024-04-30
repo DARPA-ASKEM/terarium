@@ -72,13 +72,6 @@ watch(
 		if (!id || id === '') return;
 
 		const response = await getStatus(id);
-		console.log('');
-		console.log('');
-		console.log(response.state);
-		console.log(response);
-		console.log('');
-		console.log('');
-
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
 		}
