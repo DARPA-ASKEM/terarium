@@ -1,21 +1,6 @@
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { Model, ModelConfiguration } from '@/types/Types';
 
-export interface NodeData {
-	type: string;
-	strataType?: string;
-	expression?: string;
-}
-
-export interface EdgeData {
-	numEdges: number;
-}
-
-export enum StratifiedModel {
-	Mira = 'mira',
-	Catlab = 'catlab'
-}
-
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
