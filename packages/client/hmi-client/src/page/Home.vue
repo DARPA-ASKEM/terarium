@@ -50,7 +50,17 @@
 				<TabView>
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div v-if="!isEmpty(tab.projects)">
+							<div>
+								<InputText
+									v-model="searchProjects"
+									placeholder="Search for projects"
+									id="searchProject"
+									@input="searchForProjects(tab.projects)"
+									@blur="searchForProjects(tab.projects)"
+									class="p-inputtext"
+								/>
+							</div>
+							<div>
 								<!-- TODO: Add project search back in once we are ready
 								<span class="p-input-icon-left">
 								<i class="pi pi-filter" />
@@ -83,7 +93,7 @@
 							</div>
 							<div>
 								<SelectButton
-									v-if="!isEmpty(tab.projects)"
+									v-if="!isEmpty(projectSearchResults(tab.projects))"
 									:model-value="view"
 									@change="if ($event.value) view = $event.value;"
 									:options="viewOptions"
@@ -97,7 +107,10 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<div
+								v-if="!isLoadingProjects && isEmpty(projectSearchResults(tab.projects))"
+								class="no-projects"
+							>
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -124,7 +137,7 @@
 										<tera-project-card />
 									</li>
 								</template>
-								<li v-else v-for="project in tab.projects" :key="project.id">
+								<li v-else v-for="project in projectSearchResults(tab.projects)" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -135,7 +148,7 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:projects="tab.projects"
+								:projects="projectSearchResults(tab.projects)"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
 								class="project-table"
@@ -167,10 +180,14 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import InputText from 'primevue/inputtext';
+import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 const showVideo = ref(false);
+const searchProjects = ref<string>('');
+const tabFilteredProjects = ref<Project[]>([]);
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -204,19 +221,61 @@ const myFilteredSortedProjects = computed(() => {
 	const myProjects = projects.filter(({ userPermission }) =>
 		['creator', 'writer'].includes(userPermission ?? '')
 	);
-	return filterAndSortProjects(myProjects);
+	const inputSearch = searchProjects.value.trim();
+	if (!inputSearch || inputSearch === '') {
+		console.log('test');
+		return filterAndSortProjects(myProjects);
+	}
+	return filterAndSortProjects(
+		FilterService.filter(myProjects, ['name', 'description', 'userName'], inputSearch, 'contains')
+	);
 });
 
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
 	const publicProjects = projects.filter(({ publicProject }) => publicProject === true);
-	return filterAndSortProjects(publicProjects);
+	const inputSearch = searchProjects.value.trim();
+	if (!inputSearch || inputSearch === '') {
+		return filterAndSortProjects(publicProjects);
+	}
+	return filterAndSortProjects(
+		FilterService.filter(
+			publicProjects,
+			['name', 'description', 'userName'],
+			inputSearch,
+			'contains'
+		)
+	);
 });
+
+function projectSearchResults(projects: Project[]) {
+	if (!tabFilteredProjects.value || searchProjects.value === '') {
+		return projects;
+	}
+	return tabFilteredProjects.value;
+}
 
 function openCreateProjectModal() {
 	isProjectConfigDialogVisible.value = true;
 	menuProject.value = null;
+}
+
+function searchForProjects(tabProjects: Project[]) {
+	const userInput = searchProjects.value.trim();
+	if (!userInput || userInput === '') {
+		tabFilteredProjects.value = [];
+	} else {
+		tabFilteredProjects.value = [
+			...FilterService.filter(
+				tabProjects,
+				['name', 'description', 'userName'],
+				userInput,
+				'contains'
+			)
+		];
+	}
+	return tabFilteredProjects.value;
 }
 
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
@@ -356,6 +415,10 @@ header > section > button {
 	display: flex;
 	align-items: center;
 	padding-left: 0.5rem;
+}
+
+.p-inputtext {
+	min-width: 17rem;
 }
 
 .filter-and-sort {
