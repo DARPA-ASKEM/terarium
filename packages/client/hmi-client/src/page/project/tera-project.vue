@@ -69,6 +69,15 @@
 		<tera-save-model-modal
 			title="Create new model"
 			:is-visible="showSaveModelModal"
+			:asset-type="AssetType.Model"
+			open-on-save
+			@close-modal="onCloseModelModal"
+		/>
+		<!-- New wf modal -->
+		<tera-save-model-modal
+			title="Create new workflow"
+			:is-visible="showSaveWorkflowModal"
+			:assetType="AssetType.Workflow"
 			open-on-save
 			@close-modal="onCloseModelModal"
 		/>
@@ -108,6 +117,7 @@ const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const showSaveModelModal = ref(false);
+const showSaveWorkflowModal = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
