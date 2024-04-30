@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
