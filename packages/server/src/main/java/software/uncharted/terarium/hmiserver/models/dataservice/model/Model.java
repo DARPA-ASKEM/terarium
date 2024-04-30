@@ -47,7 +47,6 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private ModelMetadata metadata;
 
-
 	public Model() {
 		super();
 	}
