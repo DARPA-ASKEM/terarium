@@ -17,7 +17,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
@@ -48,8 +47,6 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@TSOptional
 	private ModelMetadata metadata;
 
-	@TSOptional
-	private List<Intervention> interventions;
 
 	public Model() {
 		super();

@@ -127,21 +127,17 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
-		//Get model's interventions and append them to requests:
+		//Get model config's interventions and append them to requests:
 		try{
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(request.getModelConfigId());
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
-			if (model.isEmpty()){
-				return ResponseEntity.notFound().build();
-			}
-			final List<Intervention> modelInterventions = model.get().getInterventions();
+			final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 			if (modelInterventions != null){
 				List<Intervention> allInterventions = request.getInterventions();
 				if (allInterventions == null){
-					allInterventions = new ArrayList();
+					allInterventions = new ArrayList<Intervention>();
 				}
 				allInterventions.addAll(modelInterventions);
 				request.setInterventions(allInterventions);

@@ -175,6 +175,20 @@
 							<p class="empty-section">No parameters found.</p>
 						</section>
 					</AccordionTab>
+					<AccordionTab>
+						<template #header> Interventions </template>
+						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
+						<tera-model-intervention
+							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
+							:key="idx"
+							:modelIntervention="intervention"
+							@update-value="
+								(data: Intervention) => {
+									updateIntervention(data, idx);
+								}
+							"
+						/>
+					</AccordionTab>
 				</Accordion>
 
 				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
@@ -327,7 +341,7 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-
+import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
@@ -343,7 +357,13 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	Initial,
+	Intervention,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
@@ -388,7 +408,8 @@ const knobs = ref<BasicKnobs>({
 		name: '',
 		description: '',
 		model_id: '',
-		configuration: {} as Model
+		configuration: {} as Model,
+		interventions: []
 	}
 });
 
@@ -630,6 +651,24 @@ const isRegNet = computed(() => modelType.value === AMRSchemaNames.REGNET);
 const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
 const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
+const addIntervention = () => {
+	if (knobs.value.transientModelConfig.interventions) {
+		knobs.value.transientModelConfig.interventions.push({ name: '', timestep: 1, value: 1 });
+	} else {
+		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
+	}
+};
+
+const updateIntervention = (value: Intervention, index: number) => {
+	if (knobs.value.transientModelConfig.interventions?.[index]) {
+		console.log('Found index and updated value');
+		console.log(value);
+		knobs.value.transientModelConfig.interventions[index] = value;
+	} else {
+		logger.error(`Failed to update intervention at position ${index}`);
+	}
+};
+
 const updateConfigParam = (params: ModelParameter[]) => {
 	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
 	for (let i = 0; i < parameters.length; i++) {
@@ -717,7 +756,9 @@ const createConfiguration = async (force: boolean = false) => {
 		model.value.id,
 		knobs.value?.transientModelConfig?.name,
 		knobs.value?.transientModelConfig?.description ?? '',
-		knobs.value?.transientModelConfig?.configuration
+		knobs.value?.transientModelConfig?.configuration,
+		false,
+		knobs.value.transientModelConfig.interventions ?? []
 	);
 
 	if (!data) {
@@ -779,7 +820,8 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value ?? ({} as Model)
+			configuration: model.value ?? ({} as Model),
+			interventions: []
 		};
 
 		await createTempModelConfig();

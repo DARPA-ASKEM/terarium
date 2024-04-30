@@ -233,13 +233,13 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
-    interventions?: Intervention[];
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     name: string;
     description?: string;
     configuration: Model;
+    interventions?: Intervention[];
     model_id: string;
 }
 
