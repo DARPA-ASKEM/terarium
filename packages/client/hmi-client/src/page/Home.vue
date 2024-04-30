@@ -249,8 +249,8 @@ type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
 function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'ASC' | 'DESC') {
 	return projects.sort((a, b) => {
-		const dateA = a[dateType]?.valueOf() ?? 0;
-		const dateB = b[dateType]?.valueOf() ?? 0;
+		const dateA = new Date(a[dateType]) ?? 0;
+		const dateB = new Date(b[dateType]) ?? 0;
 		return sorting === 'ASC' ? dateA - dateB : dateB - dateA;
 	});
 }
