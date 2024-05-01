@@ -27,12 +27,6 @@ public class Equation extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -5769056715284691520L;
 
-	@ManyToOne
-	@JoinColumn(name = "project_id")
-	@JsonBackReference
-	@TSOptional
-	private Project project;
-
 	/** The userId of the user that created the equation * */
 	@TSOptional
 	@Column(length = 255)

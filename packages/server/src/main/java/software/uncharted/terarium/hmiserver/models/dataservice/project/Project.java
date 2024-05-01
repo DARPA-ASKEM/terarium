@@ -64,13 +64,6 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
-	private List<Equation> equationAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project")
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
 	private List<Code> codeAssets = new ArrayList<>();
 
 	@TSOptional
