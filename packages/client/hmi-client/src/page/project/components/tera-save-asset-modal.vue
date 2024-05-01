@@ -3,7 +3,7 @@
 		<tera-modal
 			v-if="isVisible"
 			class="save-as-dialog"
-			@modal-mask-clicked="emit('close-modal')"
+			@modal-mask-clicked="closeModal"
 			@on-modal-open="initializeAsset"
 			@modal-enter-press="save"
 		>
@@ -24,7 +24,13 @@
 			</template>
 			<template #footer>
 				<Button label="Save" size="large" @click="save" />
-				<Button label="Cancel" class="p-button-secondary" size="large" outlined @click="cancel" />
+				<Button
+					label="Close"
+					class="p-button-secondary"
+					size="large"
+					outlined
+					@click="closeModal"
+				/>
 			</template>
 		</tera-modal>
 	</Teleport>
@@ -89,7 +95,7 @@ function onSave(data: any) {
 	emit('on-save', data);
 }
 
-function cancel() {
+function closeModal() {
 	newName.value = '';
 	emit('close-modal');
 }
@@ -115,7 +121,7 @@ function save() {
 		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
 	}
 
-	emit('close-modal');
+	closeModal();
 }
 
 function initializeAsset() {

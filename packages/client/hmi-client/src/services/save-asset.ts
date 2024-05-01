@@ -29,10 +29,11 @@ export async function saveAs(
 			response = await createWorkflow(newAsset);
 			break;
 		case AssetType.Code:
-			response = await uploadCodeToProject(newAsset, ref(0));
+			response = await uploadCodeToProject(newAsset as File, ref(0));
 			break;
 		default:
-			break;
+			logger.info(`Saving for ${assetType} is not implemented.`);
+			return;
 	}
 
 	if (!response?.id) {
@@ -41,6 +42,10 @@ export async function saveAs(
 	}
 
 	const projectId = projectResource.activeProject.value?.id;
+	if (!projectId) {
+		logger.error(`Asset can't be saved since target project doesn't exist.`);
+		return;
+	}
 	await projectResource.addAsset(assetType, response.id, projectId);
 
 	// After saving notify the user and do any necessary actions
@@ -70,14 +75,18 @@ export async function overwrite(newAsset: any, assetType: AssetType, onSaveFunct
 			response = await updateModel(newAsset);
 			break;
 		default:
-			break;
+			logger.info(`Update for ${assetType} is not implemented.`);
+			return;
 	}
 
-	if (!response) return;
+	if (!response) {
+		logger.error(`Failed to update ${assetType}.`);
+		return;
+	}
 
 	// TODO: Consider calling this refresh within the update functions in the services themselves
 	projectResource.refresh();
 
-	logger.info(`Updated ${assetType} name to ${response.name}.`);
+	logger.info(`Updated ${response.name}.`);
 	if (onSaveFunction) onSaveFunction(response.name);
 }
