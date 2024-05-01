@@ -27,9 +27,27 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 4. A dropdown `parameters of interest` should be available populated with model parameters and states
     - select `beta (β)` and `gamma (γ)`.
 
-This constraint should always be there `Compartmental constraint`
+### 4. Compartmental constraint`
+It ensures non-negativity and mass conservation
+1. The `Compartmental constraint` should be on by default
+2. verify that the equation is correct `S + I + R = 1002`
+  
+### 5. Successful constraint
+1. Create a new constraint by clicking `Add constraint`
+2. Set to `State constraint` and name it `Infected`
+    - set the target to `I` from the dropdown 
+    - set the upper bound to `750`
+    - leave start/end time to `[0, 100]`
+    - leave the weight to `1.0`
+3. Run validation
+4. Verify that service returns true boxes as infected should not exceed 750
 
-always have those three constraint:
+### 6. Failed constraint
+1. Change the upper bound of `Infected` constraint `100`
+2. Run validation
+3. Verify that service returns false boxes as infected should exceed 100 between time `[0, 100]`
+  
+   always have those three constraint:
 - monotonicity of R always increasing
 - monotonicity of S always decreasing
 
