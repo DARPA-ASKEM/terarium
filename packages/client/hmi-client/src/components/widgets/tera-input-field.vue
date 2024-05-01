@@ -1,5 +1,5 @@
 <template>
-	<div class="input-container" :class="{ error: errorMessage }" @click.self.stop="focusInput">
+	<div :class="{ error: errorMessage }" @click.self.stop="focusInput">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input v-bind="attrs" ref="inputField" :value="modelValue" @input="updateValue" />
 	</div>
@@ -30,7 +30,7 @@ const updateValue = (event: Event) => {
 </script>
 
 <style scoped>
-.input-container {
+div {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
