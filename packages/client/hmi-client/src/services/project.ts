@@ -10,6 +10,7 @@ import { Component } from 'vue';
 import * as EventService from '@/services/event';
 import {
 	AssetType,
+	Code,
 	EventType,
 	PermissionRelationships,
 	Project,
@@ -33,7 +34,8 @@ async function create(
 			name,
 			description,
 			userId,
-			projectAssets: [] as ProjectAsset[]
+			projectAssets: [] as ProjectAsset[],
+			codeAssets: [] as Code[]
 		};
 		const response = await API.post(`/projects`, project);
 		const { status, data } = response;
