@@ -1,13 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -17,6 +11,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -28,8 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 public class SimulationUpdate {
 
 	@Id
-	@NotNull
-	private UUID id = UUID.randomUUID();
+	@NotNull private UUID id = UUID.randomUUID();
 
 	@ManyToOne
 	@JoinColumn(name = "simulation_id", nullable = false)
@@ -39,8 +36,7 @@ public class SimulationUpdate {
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	@NotNull
-	private Timestamp createdOn;
+	@NotNull private Timestamp createdOn;
 
 	@PrePersist
 	protected void onCreate() {
