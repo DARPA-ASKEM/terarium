@@ -27,12 +27,12 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 4. A dropdown `parameters of interest` should be available populated with model parameters and states
     - select `beta (β)` and `gamma (γ)`.
 
-### 4. Compartmental constraint`
+### 4. Compartmental constraint
 It ensures non-negativity and mass conservation
 1. The `Compartmental constraint` should be on by default
 2. verify that the equation is correct `S + I + R = 1002`
   
-### 5. Successful constraint
+### 5. Successful state constraint
 1. Create a new constraint by clicking `Add constraint`
 2. Set to `State constraint` and name it `Infected`
     - set the target to `I` from the dropdown 
@@ -40,22 +40,25 @@ It ensures non-negativity and mass conservation
     - leave start/end time to `[0, 100]`
     - leave the weight to `1.0`
 3. Run validation
-4. Verify that service returns true boxes as infected should not exceed 750
+4. Verify that service returns **true** boxes as infected should not exceed 750
 
-### 6. Failed constraint
+### 6. Failed state constraint
 1. Change the upper bound of `Infected` constraint `100`
 2. Run validation
-3. Verify that service returns false boxes as infected should exceed 100 between time `[0, 100]`
-  
-   always have those three constraint:
-- monotonicity of R always increasing
-- monotonicity of S always decreasing
+3. Verify that service returns **false** boxes as infected should exceed 100 between time `[0, 100]`
+4. Delete the constraint
 
-When you select multiple values in the state/parameter constraint are additional.
-So I select I and S, do not touch the weight. and Set upper bound of 1000.
+### 7. Successful monotonicity constraint
+1. Create a new constraint set to `Monotonicity constraint` and name it `Suceptible`
+    - set the target to `S` from the dropdown 
+    - set the direction to `decreasing`
+2. Run validation
+3. Verify that service returns **true** boxes as susceptible should be **decreasing** over time
 
-
-### 4. Run operator
+### 8. Failed monotonicity constraint
+1. Change the direction of `Suceptible` constraint to `increasing` 
+2. Run validation
+3. Verify that service returns **false** boxes as susceptible should be **decreasing** over time
 
 ### 5. End test
 1. logout of the application 
