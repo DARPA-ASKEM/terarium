@@ -90,12 +90,6 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
 			}
 		});
-
-		// if there's a timeseries field with the old parameter id then update it to the new id
-		if (amr.metadata?.timeseries && amr.metadata.timeseries[id]) {
-			amr.metadata.timeseries[newId] = amr.metadata.timeseries[id];
-			delete amr.metadata.timeseries[id];
-		}
 	}
 };
 

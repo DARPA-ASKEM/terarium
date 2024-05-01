@@ -62,16 +62,12 @@
 				tabindex="0"
 				@click="
 					() => {
-						if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-							emit('enter-value-cell', 'parameters', 'value', i, j);
-						}
+						emit('enter-value-cell', 'parameters', 'value', i, j);
 					}
 				"
 				@keyup.enter="
 					() => {
-						if (!configuration?.metadata?.timeseries?.[parameter.id]) {
-							emit('enter-value-cell', 'parameters', 'value', i, j);
-						}
+						emit('enter-value-cell', 'parameters', 'value', i, j);
 					}
 				"
 			>
@@ -79,9 +75,7 @@
 					:class="!cellEditStates[i].parameters[j] ? 'editable-cell' : 'editable-cell-hidden'"
 				>
 					<div class="distribution-cell">
-						<!-- To represent a time series variable -->
-						<span v-if="configuration?.metadata?.timeseries?.[parameter.id]">TS</span>
-						<span v-else>{{ parameter.value }}</span>
+						<span>{{ parameter.value }}</span>
 						<span class="distribution-range" v-if="parameter.distribution"
 							>Min: {{ parameter.distribution.parameters.minimum }} Max:
 							{{ parameter.distribution.parameters.maximum }}</span
