@@ -245,16 +245,6 @@ export function getInitial(model: Model, initialId: string): Initial | undefined
 }
 
 /**
- * Returns the timeseries for the specified semantic ID.
- * @param {Model} model - The model object.
- * @param {string} semanticId - The semantic ID.
- * @returns {any} - The timeseries.
- */
-export function getTimeseries(model: Model, semanticId: string) {
-	return model.metadata?.timeseries?.[semanticId];
-}
-
-/**
  * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
  * @param {string} parameterId - The ID of the parameter.
@@ -294,17 +284,6 @@ export function updateInitialMetadata(
 		model.metadata.initials[initialId] ??= {};
 	}
 	model.metadata.initials[initialId][metadataKey] = value;
-}
-
-/**
- * Validates the time series values.
- * @param {string} values - The time series values.
- * @returns {boolean} - True if the values are valid, false otherwise.
- */
-export function validateTimeSeries(values: string) {
-	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
-	const isValid = values.split(',').every(isPairValid);
-	return isValid;
 }
 
 export function setParameters(model: Model, parameters: ModelParameter[]) {
