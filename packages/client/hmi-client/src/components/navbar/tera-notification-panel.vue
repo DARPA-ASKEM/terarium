@@ -137,7 +137,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 .notification-panel-container.p-overlaypanel {
 	top: var(--navbar-outer-height) !important;
 	width: 34rem;
-	box-shadow: 0px 4px 4px 0px #00000040;
+	box-shadow: 0 4px 4px 0 #00000040;
 	padding: var(--content-padding);
 	padding-bottom: 1.5rem;
 	gap: var(--gap);
