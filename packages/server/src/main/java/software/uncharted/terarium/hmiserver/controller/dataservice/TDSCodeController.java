@@ -94,7 +94,7 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<List<Code>> getCodes(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(codeService.getAssets(pageSize, page));
 		} catch (final Exception e) {
