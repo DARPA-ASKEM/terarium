@@ -53,6 +53,7 @@ public class Code extends TerariumAsset {
 	@ManyToOne
 	@JoinColumn(name = "project_id")
 	@JsonBackReference
+	@TSOptional
 	private Project project;
 
 	@Override
