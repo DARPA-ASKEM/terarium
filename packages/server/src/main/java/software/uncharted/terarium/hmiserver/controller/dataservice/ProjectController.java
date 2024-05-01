@@ -89,28 +89,10 @@ public class ProjectController {
 	@Operation(summary = "Gets all projects (which are visible to this user)")
 	@ApiResponses(
 		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Projects found.",
-				content =
-					@Content(
-						array =
-							@ArraySchema(
-								schema =
-									@io.swagger.v3.oas.annotations.media.Schema(
-											implementation = Project.class)))),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There are no errors, but also no projects for this user",
-				content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue with rebac permissions",
-				content = @Content),
-			@ApiResponse(
-				responseCode = "503",
-				description = "There was an issue communicating with back-end services",
-				content = @Content)
+			@ApiResponse(responseCode = "200", description = "Projects found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no errors, but also no projects for this user", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content),
+			@ApiResponse(responseCode = "503", description = "There was an issue communicating with back-end services", content = @Content)
 		})
 	public ResponseEntity<List<Project>> getProjects(
 			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive
@@ -304,18 +286,10 @@ public class ProjectController {
 	@Operation(summary = "Gets a project by ID")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project found.",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))
-						}),
+				@ApiResponse(responseCode = "200", description = "Project found.", content = {@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))}),
 				@ApiResponse(responseCode = "403", description = "User does not have permission to view this project", content = @Content),
 				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
+				@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content),
 				@ApiResponse(responseCode = "503", description = "Error communicating with back-end services", content = @Content)
 			})
 	@GetMapping("/{id}")
@@ -327,7 +301,7 @@ public class ProjectController {
 
 		try {
 			if (!rebacUser.canRead(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized"));
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
@@ -340,15 +314,20 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 		}
 
-		final List<String> authors = new ArrayList<>();
-		final List<Contributor> contributors = getContributors(rebacProject);
-		for (final Contributor contributor : contributors) {
-			authors.add(contributor.name);
-		}
+		try {
+			final List<String> authors = new ArrayList<>();
+			final List<Contributor> contributors = getContributors(rebacProject);
+			for (final Contributor contributor : contributors) {
+				authors.add(contributor.name);
+			}
 
-		project.get().setPublicProject(rebacProject.isPublic());
-		project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
-		project.get().setAuthors(authors);
+			project.get().setPublicProject(rebacProject.isPublic());
+			project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
+			project.get().setAuthors(authors);
+		} catch (final Exception e) {
+			log.error("Failed to get project permissions from spicedb", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-get-permissions"));
+		}
 
 		if (project.get().getUserId() != null) {
 			final String authorName =
@@ -364,60 +343,38 @@ public class ProjectController {
 	@Operation(summary = "Soft deletes project by ID")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project marked for deletion",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
-				@ApiResponse(
-						responseCode = "304",
-						description = "The current user does not have delete privileges to this project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "200", description = "Project marked for deletion", content = {@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))}),
+				@ApiResponse(responseCode = "403", description = "The current user does not have delete privileges to this project", content = @Content),
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions or deleting the project", content = @Content)
 			})
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
 
+		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+		final RebacProject rebacProject = new RebacProject(id, reBACService);
+
 		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canAdministrate(rebacProject)) {
-				final boolean deleted = projectService.delete(id);
-				if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
+			if (!rebacUser.canAdministrate(rebacProject)) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-delete"));
 			}
 		} catch (final Exception e) {
-			log.error("Error deleting project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project");
+			log.error("Failed to get user permissions from spicedb", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-get-permissions"));
 		}
 
-		throw new ResponseStatusException(HttpStatus.NOT_MODIFIED, "Unable to delete project, please try again later.");
+		final boolean deleted = projectService.delete(id);
+		if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
+
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-delete"));
 	}
 
 	@Operation(summary = "Creates a new project")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Project created",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = Project.class)),
-						}),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving sessions from the data store",
-						content = @Content)
+				@ApiResponse(responseCode = "201", description = "Project created", content = {@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)),}),
+				@ApiResponse(responseCode = "500", description = "There was a rebac issue when creating the project", content = @Content),
+				@ApiResponse(responseCode = "503", description = "There was an issue communicating with the data store or rebac service", content = @Content)
 			})
 	@PostMapping
 	@Secured(Roles.USER)
@@ -441,7 +398,13 @@ public class ProjectController {
 					""";
 			project.setOverviewContent(welcomeMessage.getBytes());
 		}
-		project = projectService.createProject(project);
+
+		try {
+			project = projectService.createProject(project);
+		} catch (final Exception e) {
+			log.error("Error creating project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 
 		try {
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
@@ -453,12 +416,13 @@ public class ProjectController {
 		} catch (final Exception e) {
 			log.error("Error setting user's permissions for project", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error setting user's permissions for project");
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		} catch (final RelationshipAlreadyExistsException e) {
 			log.error("Error the user is already the creator of this project", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error the user is already the creator of this project");
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("rebac.relationship-already-exists"));
 		}
+
 		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 	}
 
