@@ -47,20 +47,18 @@
 
 			<!-- Tab section: My projects, Public projects, Sample projects -->
 			<section class="menu">
-				<TabView>
+				<TabView @tab-change="tabChange">
 					<TabPanel v-for="(tab, i) in projectsTabs" :header="tab.title" :key="i">
 						<section class="filter-and-sort">
-							<div v-if="!isEmpty(tab.projects)">
-								<!-- TODO: Add project search back in once we are ready
-								<span class="p-input-icon-left">
-								<i class="pi pi-filter" />
+							<div>
 								<InputText
-									v-model="searchQuery"
-									size="small"
-									class="p-inputtext-sm"
-									placeholder="Filter by keyword"
+									v-model="searchProjects"
+									placeholder="Search for projects"
+									id="searchProject"
+									class="p-inputtext"
 								/>
-							</span> -->
+							</div>
+							<div>
 								<span v-if="view === ProjectsView.Cards">
 									<Dropdown
 										v-model="selectedSort"
@@ -83,9 +81,9 @@
 							</div>
 							<div>
 								<SelectButton
-									v-if="!isEmpty(tab.projects)"
+									v-if="!isEmpty(searchedAndFilterProjects)"
 									:model-value="view"
-									@change="if ($event.value) view = $event.value;"
+									@change="selectChange"
 									:options="viewOptions"
 									option-value="value"
 								>
@@ -97,7 +95,10 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div v-if="!isLoadingProjects && isEmpty(tab.projects)" class="no-projects">
+							<div
+								v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)"
+								class="no-projects"
+							>
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -124,7 +125,7 @@
 										<tera-project-card />
 									</li>
 								</template>
-								<li v-else v-for="project in tab.projects" :key="project.id">
+								<li v-else v-for="project in searchedAndFilterProjects" :key="project.id">
 									<tera-project-card
 										v-if="project.id"
 										:project="project"
@@ -135,7 +136,7 @@
 							</ul>
 							<tera-project-table
 								v-else-if="view === ProjectsView.Table"
-								:projects="tab.projects"
+								:projects="searchedAndFilterProjects"
 								:selected-columns="selectedColumns"
 								@open-project="openProject"
 								class="project-table"
@@ -167,10 +168,14 @@ import { useProjectMenu } from '@/composables/project-menu';
 import { Project } from '@/types/Types';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
+import InputText from 'primevue/inputtext';
+import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
+const activeTabIndex = ref(0);
 const showVideo = ref(false);
+const searchProjects = ref('');
 
 enum ProjectsView {
 	Cards = 'Cards',
@@ -207,6 +212,14 @@ const myFilteredSortedProjects = computed(() => {
 	return filterAndSortProjects(myProjects);
 });
 
+function selectChange(event) {
+	if (event.value) view.value = event.value;
+}
+
+function tabChange(event) {
+	activeTabIndex.value = event.index;
+}
+
 const publicFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
@@ -219,13 +232,30 @@ function openCreateProjectModal() {
 	menuProject.value = null;
 }
 
+const searchedAndFilterProjects = computed(() => {
+	const currentTabIndex = activeTabIndex.value;
+	const projects = projectsTabs.value[currentTabIndex].projects;
+	const userInput = searchProjects.value.trim();
+	const result = FilterService.filter(
+		projects,
+		['name', 'description', 'userName'],
+		userInput,
+		'contains'
+	);
+	return filterAndSortProjects(result);
+});
+
 type DateType = 'createdOn' | 'updatedOn' | 'deletedOn';
 
 function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'ASC' | 'DESC') {
 	return projects.sort((a, b) => {
-		const dateA = a[dateType]?.valueOf() ?? 0;
-		const dateB = b[dateType]?.valueOf() ?? 0;
-		return sorting === 'ASC' ? dateA - dateB : dateB - dateA;
+		const dateValueA = a[dateType]?.toString();
+		const dateValueB = b[dateType]?.toString();
+		const dateA = dateValueA ? new Date(dateValueA) : new Date(0);
+		const dateB = dateValueB ? new Date(dateValueB) : new Date(0);
+		return sorting === 'ASC'
+			? dateA.getTime() - dateB.getTime()
+			: dateB.getTime() - dateA.getTime();
 	});
 }
 
@@ -360,6 +390,10 @@ header > section > button {
 	padding-left: 0.5rem;
 }
 
+.p-inputtext {
+	min-width: 17rem;
+}
+
 .filter-and-sort {
 	position: sticky;
 	z-index: 1;
@@ -430,7 +464,6 @@ a {
 .new-project-button {
 	padding: 0;
 }
-
 .close-button {
 	width: 14px;
 	height: 14px;
