@@ -1,9 +1,5 @@
 <template>
-	<div
-		class="input-container"
-		:class="{ error: errorMessage, disabled: attrs.disabled }"
-		@click.self.stop="focusInput"
-	>
+	<div class="input-container" :class="{ error: errorMessage }" @click.self.stop="focusInput">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input v-bind="attrs" ref="inputField" :value="modelValue" @input="updateValue" />
 	</div>
@@ -40,12 +36,13 @@ const updateValue = (event: Event) => {
 	align-items: center;
 	width: 100%;
 	padding: var(--gap-xsmall) var(--gap-small);
-	background-color: #fff;
+	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius-small);
 	cursor: text;
 	margin-bottom: var(--gap-small);
 	transition: border-color 0.3s ease-in-out;
+	font-family: var(--font-family);
 
 	&:has(*:disabled) {
 		opacity: 0.5;
