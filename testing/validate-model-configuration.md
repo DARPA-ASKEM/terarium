@@ -19,8 +19,14 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
    `β: 0.6, γ: 0.2, S: 1000, I: 2, R: 0`
 6. Save the configuration by giving it a name and clicking `Run`
 
-### 3. Setup operator
+### 3. Operator setup
 1. Link to a _Validate configuration_ operator
+2. You should see an `additonal options` section, expand it
+3. A tolerance/threshold input should be available 
+    - set to `0.1`, this tells Funman to create smaller bounding boxes 
+4. A dropdown `parameters of interest` should be available populated with model parameters and states
+    - select `beta (β)` and `gamma (γ)`.
+
 This constraint should always be there `Compartmental constraint`
 
 always have those three constraint:
