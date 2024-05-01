@@ -10,13 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -49,6 +42,7 @@ import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -58,6 +52,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 @RequestMapping("/projects")
 @RestController
 @Slf4j
@@ -66,18 +68,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
-	final ReBACService reBACService;
-
-	final CurrentUserService currentUserService;
-
-	final ProjectService projectService;
-
-	final ProjectAssetService projectAssetService;
-
-	final TerariumAssetServices terariumAssetServices;
+	final Messages messages;
 
 	final CodeService codeService;
-
+	final CurrentUserService currentUserService;
+	final ProjectAssetService projectAssetService;
+	final ProjectService projectService;
+	final ReBACService reBACService;
+	final TerariumAssetServices terariumAssetServices;
 	final UserService userService;
 
 	final ObjectMapper objectMapper;
@@ -90,63 +88,107 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all projects (which are visible to this user)")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Projects found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Project.class)))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no errors, but also no projects for this user",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue with rebac permissions",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Projects found.",
+				content =
+					@Content(
+						array =
+							@ArraySchema(
+								schema =
+									@io.swagger.v3.oas.annotations.media.Schema(
+											implementation = Project.class)))),
+			@ApiResponse(
+				responseCode = "204",
+				description = "There are no errors, but also no projects for this user",
+				content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue with rebac permissions",
+				content = @Content),
+			@ApiResponse(
+				responseCode = "503",
+				description = "There was an issue communicating with back-end services",
+				content = @Content)
+		})
 	public ResponseEntity<List<Project>> getProjects(
-			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive) {
+			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive
+	) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+
 		List<UUID> projectIds = null;
 		try {
 			projectIds = rebacUser.lookupProjects();
 		} catch (final Exception e) {
-			log.error("Error getting projects which a user can read", e);
+			log.error("Error retrieving projects from spicedb", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error getting projects which a user can read");
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+
 		if (projectIds == null || projectIds.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
 
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
-		final List<Project> projects =
-				includeInactive ? projectService.getProjects(projectIds) : projectService.getActiveProjects(projectIds);
+		final List<Project> projects;
+		try {
+			projects = includeInactive ? projectService.getProjects(projectIds) : projectService.getActiveProjects(projectIds);
+		} catch (final Exception e) {
+			log.error("Error retrieving projects from postgres db", e);
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 
 		projects.forEach(project -> {
+			final List<AssetType> assetTypes = Arrays.asList(
+					AssetType.DATASET,
+					AssetType.MODEL,
+					AssetType.DOCUMENT,
+					AssetType.WORKFLOW,
+					AssetType.PUBLICATION);
+
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+
+			// Set the user permission for the project. If we are unable to get the user permission, we remove the project.
 			try {
-				final List<AssetType> assetTypes = Arrays.asList(
-						AssetType.DATASET,
-						AssetType.MODEL,
-						AssetType.DOCUMENT,
-						AssetType.WORKFLOW,
-						AssetType.PUBLICATION);
-
-				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-				project.setPublicProject(rebacProject.isPublic());
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
+			} catch (final Exception e) {
+				log.error(
+					"Failed to get user permissions from spicedb for project {}... Removing Project from list.",
+					project.getId(),
+					e);
+				projects.remove(project);
+				return;
+			}
 
-				final List<Contributor> contributors = getContributors(rebacProject);
+			// Set the public status for the project. If we are unable to get the public status, we default to private.
+			try {
+				project.setPublicProject(rebacProject.isPublic());
+			} catch (final Exception e) {
+				log.error(
+					"Failed to get project {} public status from spicedb... Defaulting to private.",
+					project.getId(),
+					e);
+				project.setPublicProject(false);
+			}
 
+			// Set the contributors for the project. If we are unable to get the contributors, we default to an empty list.
+			List<Contributor> contributors = null;
+			try {
+				contributors = getContributors(rebacProject);
+			} catch (final Exception e) {
+				log.error(
+					"Failed to get project contributors from spicedb for project {}",
+					project.getId(),
+					e);
+			}
+
+			// Set the metadata for the project. If we are unable to get the metadata, we default to empty values.
+			try {
 				final List<ProjectAsset> assets =
-						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes);
+					projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes);
 
 				final Map<String, String> metadata = new HashMap<>();
 
@@ -155,39 +197,54 @@ public class ProjectController {
 					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
-				metadata.put("contributor-count", Integer.toString(contributors.size()));
 				metadata.put(
-						"datasets-count",
-						counts.getOrDefault(AssetType.DATASET, 0).toString());
+					"contributor-count",
+					Integer.toString(contributors == null ? 0 : contributors.size()));
 				metadata.put(
-						"document-count",
-						counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
+					"datasets-count",
+					counts.getOrDefault(AssetType.DATASET, 0).toString());
 				metadata.put(
-						"models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
+					"document-count",
+					counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
 				metadata.put(
-						"workflows-count",
-						counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
+					"models-count",
+					counts.getOrDefault(AssetType.MODEL, 0).toString());
 				metadata.put(
-						"publications-count",
-						counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
+					"workflows-count",
+					counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
+				metadata.put(
+					"publications-count",
+					counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
 
 				project.setMetadata(metadata);
+			} catch (final Exception e) {
+				log.error(
+					"Failed to get project assets from postgres db for project {}. Setting Default Metadata.",
+					project.getId(),
+					e);
+			}
 
-				// Set the author name for the project
+			// Set the author name for the project. If we are unable to get the author name, we don't set a value.
+			try {
 				if (project.getUserId() != null) {
 					final String authorName =
-							userService.getById(project.getUserId()).getName();
+						userService.getById(project.getUserId()).getName();
 					if (authorName != null) {
 						project.setUserName(authorName);
 					}
 				}
 			} catch (final Exception e) {
 				log.error(
-						"Cannot get Datasets, Models, and Publications assets from data-service for project_id {}",
-						project.getId(),
-						e);
+					"Failed to get project author name from postgres db for project {}",
+					project.getId(),
+					e);
 			}
 		});
+
+		if (projects.isEmpty()) {
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-get-permissions"));
+		}
 
 		return ResponseEntity.ok(projects);
 	}
@@ -209,33 +266,29 @@ public class ProjectController {
 	 * @param rebacProject the Project to collect RebacPermissionRelationships of.
 	 * @return List of Users and Groups who have edit capability of the rebacProject
 	 */
-	private List<Contributor> getContributors(final RebacProject rebacProject) {
+	private List<Contributor> getContributors(final RebacProject rebacProject) throws Exception {
 		final Map<String, Contributor> contributorMap = new HashMap<>();
 
-		try {
-			final List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
-			for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
-				final Schema.Relationship relationship = permissionRelationship.getRelationship();
-				// Ensure the relationship is capable of editing the project
-				if (relationship.equals(Schema.Relationship.CREATOR)
-						|| relationship.equals(Schema.Relationship.ADMIN)
-						|| relationship.equals(Schema.Relationship.WRITER)) {
-					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-						final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
-						final String name = user.getFirstName() + " " + user.getLastName();
-						if (!contributorMap.containsKey(name)) {
-							contributorMap.put(name, new Contributor(name, relationship));
-						}
-					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
-						if (!contributorMap.containsKey(group.getName())) {
-							contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
-						}
+		final List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
+		for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
+			final Schema.Relationship relationship = permissionRelationship.getRelationship();
+			// Ensure the relationship is capable of editing the project
+			if (relationship.equals(Schema.Relationship.CREATOR)
+					|| relationship.equals(Schema.Relationship.ADMIN)
+					|| relationship.equals(Schema.Relationship.WRITER)) {
+				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					final String name = user.getFirstName() + " " + user.getLastName();
+					if (!contributorMap.containsKey(name)) {
+						contributorMap.put(name, new Contributor(name, relationship));
+					}
+				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+					final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
+					if (!contributorMap.containsKey(group.getName())) {
+						contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
 					}
 				}
 			}
-		} catch (final Exception e) {
-			log.error("Failed to get project's contributors");
 		}
 
 		return new ArrayList<>(contributorMap.values());
@@ -260,44 +313,52 @@ public class ProjectController {
 									schema =
 											@io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))
 						}),
+				@ApiResponse(responseCode = "403", description = "User does not have permission to view this project", content = @Content),
+				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
 				@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content)
+				@ApiResponse(responseCode = "503", description = "Error communicating with back-end services", content = @Content)
 			})
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> getProject(@PathVariable("id") final UUID id) {
+
+		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+		final RebacProject rebacProject = new RebacProject(id, reBACService);
+
 		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canRead(rebacProject)) {
-				final Optional<Project> project = projectService.getProject(id);
-				if (project.isPresent()) {
-					final List<String> authors = new ArrayList<>();
-					final List<Contributor> contributors = getContributors(rebacProject);
-					for (final Contributor contributor : contributors) {
-						authors.add(contributor.name);
-					}
-
-					project.get().setPublicProject(rebacProject.isPublic());
-					project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
-					project.get().setAuthors(authors);
-
-					if (project.get().getUserId() != null) {
-						final String authorName =
-								userService.getById(project.get().getUserId()).getName();
-						if (authorName != null) {
-							project.get().setUserName(authorName);
-						}
-					}
-
-					return ResponseEntity.ok(project.get());
-				}
+			if (!rebacUser.canRead(rebacProject)) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized"));
 			}
-			return ResponseEntity.notFound().build();
 		} catch (final Exception e) {
-			log.error("Error getting project rebac information", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to verify project permissions");
+			log.error("Failed to get user permissions from spicedb", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+
+		final Optional<Project> project = projectService.getProject(id);
+
+		if (!project.isPresent()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+		}
+
+		final List<String> authors = new ArrayList<>();
+		final List<Contributor> contributors = getContributors(rebacProject);
+		for (final Contributor contributor : contributors) {
+			authors.add(contributor.name);
+		}
+
+		project.get().setPublicProject(rebacProject.isPublic());
+		project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
+		project.get().setAuthors(authors);
+
+		if (project.get().getUserId() != null) {
+			final String authorName =
+				userService.getById(project.get().getUserId()).getName();
+			if (authorName != null) {
+				project.get().setUserName(authorName);
+			}
+		}
+
+		return ResponseEntity.ok(project.get());
 	}
 
 	@Operation(summary = "Soft deletes project by ID")
