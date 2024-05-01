@@ -47,6 +47,7 @@ public class DataMigrationESToPG {
 
 	private final WorkflowService workflowService;
 	private final SimulationService simulationService;
+	private final CodeService codeService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -70,11 +71,11 @@ public class DataMigrationESToPG {
 		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
 			if (!elasticService.indexExists(index)) {
-				throw new RuntimeException("Index " + index + " does not exist");
+				return;
 			}
 
 			if (elasticService.count(index) == 0) {
-				throw new RuntimeException("Index " + index + " has no documents");
+				return;
 			}
 
 			// check if the data has already been migrated
@@ -139,7 +140,9 @@ public class DataMigrationESToPG {
 	List<MigrationConfig<?, ?>> getMigrations() {
 		return List.of(
 				new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
-				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()));
+				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()),
+				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()));
+		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 
 	@PostConstruct

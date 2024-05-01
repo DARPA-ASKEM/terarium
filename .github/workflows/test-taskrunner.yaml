@@ -3,6 +3,9 @@
 
 name: Taskrunner Tests
 
+env:
+  local_host_name: "localhost"
+
 # Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the $default-branch branch

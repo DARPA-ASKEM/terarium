@@ -24,7 +24,7 @@ import {
 } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
-import { getQueries } from '@/services/models/funman-service';
+import { pollAction } from '@/services/models/simulation-service';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -37,11 +37,15 @@ const poller = new Poller();
 
 const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
+
+	const outState = _.cloneDeep(props.node.state);
+	outState.inProgressId = '';
+
 	emit('append-output', {
 		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
-		state: _.cloneDeep(props.node.state)
+		state: outState
 	});
 };
 
@@ -49,13 +53,8 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => {
-			const response = await getQueries(runId);
-			if (response.done && response.done === true) {
-				return { data: response } as any;
-			}
-			return { data: null } as any;
-		});
+		.setPollAction(async () => pollAction(runId));
+
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -80,6 +79,7 @@ watch(
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
 		}
+
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressId = '';
 		emit('update-state', state);

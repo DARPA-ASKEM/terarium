@@ -124,6 +124,7 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
+    project?: Project;
 }
 
 export interface CodeFile {
@@ -200,20 +201,6 @@ export interface DocumentAsset extends TerariumAsset {
     assets?: DocumentExtraction[];
 }
 
-export interface Equation extends TerariumAsset {
-    userId?: string;
-    equationType: EquationType;
-    content: string;
-    metadata?: { [index: string]: any };
-    source?: EquationSource;
-}
-
-export interface EquationSource {
-    extractedFrom?: string;
-    documentAssetName?: string;
-    hmiGenerated?: boolean;
-}
-
 export interface ExternalPublication extends TerariumAsset {
     title: string;
     xdd_uri: string;
@@ -230,6 +217,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     configuration: Model;
+    interventions?: Intervention[];
     model_id: string;
 }
 
@@ -411,7 +399,11 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
+    /**
+     * @deprecated
+     */
     projectAssets: ProjectAsset[];
+    codeAssets: Code[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -498,9 +490,16 @@ export interface Simulation extends TerariumAsset {
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
-    workflowId: string;
     userId?: string;
     projectId?: string;
+    updates: SimulationUpdate[];
+}
+
+export interface SimulationUpdate {
+    id: string;
+    createdOn: Date;
+    data: any;
+    simulation: Simulation;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -689,6 +688,7 @@ export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
     jobId: string;
+    dataToPersist: any;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
@@ -727,6 +727,7 @@ export interface ScimlStatusUpdate {
     id: string;
     solData: { [index: string]: any };
     timesteps: number[];
+    dataToPersist: any;
 }
 
 export interface SimulationRequest {
@@ -884,7 +885,6 @@ export interface ModelSemantics {
 export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
-    timeseries?: { [index: string]: any };
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;
@@ -1313,11 +1313,6 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
-}
-
-export enum EquationType {
-    Mathml = "mathml",
-    Latex = "latex",
 }
 
 export enum ProvenanceRelationType {

@@ -99,7 +99,7 @@
 			</template>
 		</Column>
 
-		<!-- Value type: Matrix or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
+		<!-- Value type: Matrix or a Dropdown with: Constant, Distribution (with icons) -->
 		<Column field="type" header="Value Type" class="w-2">
 			<template #body="slotProps">
 				<Button
@@ -212,20 +212,6 @@
 						/>
 					-->
 				</span>
-
-				<!-- Time series -->
-				<span
-					class="timeseries-container mr-2"
-					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
-				>
-					<InputText
-						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
-						v-model.lazy="slotProps.data.timeseries"
-						:disabled="readonly"
-						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
-					/>
-					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
-				</span>
 			</template>
 		</Column>
 
@@ -323,37 +309,21 @@
 				</Column>
 				<Column header="Value type">
 					<template #body="{ data }">
-						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
+						{{ typeOptions[getParamType(data.parameter)].label }}
 					</template>
 				</Column>
 				<Column header="Value">
 					<template #body="{ data }">
-						<span
-							v-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.CONSTANT
-							"
-						>
+						<span v-if="getParamType(data.parameter) === ParamType.CONSTANT">
 							{{ data.parameter.value }}
 						</span>
 						<div
 							class="distribution-container"
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.DISTRIBUTION
-							"
+							v-else-if="getParamType(data.parameter) === ParamType.DISTRIBUTION"
 						>
 							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
 							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
 						</div>
-						<span
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.TIME_SERIES
-							"
-						>
-							{{ data.configuration?.configuration?.metadata?.timeseries?.[data.parameter.id] }}
-						</span>
 					</template>
 				</Column>
 				<Column header="Source">
@@ -404,8 +374,6 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import {
 	updateVariable,
-	validateTimeSeries,
-	getTimeseries,
 	getParameterMetadata,
 	getParameters,
 	updateParameterMetadata
@@ -426,8 +394,7 @@ const props = defineProps<{
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
+	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' }
 ];
 
 const emit = defineEmits(['update-value', 'update-model']);
@@ -486,13 +453,11 @@ const tableFormattedParams = ref<ModelConfigTableData[]>([]);
 // FIXME: This method doee not really work in this context, the different types
 // of CONSTANT/TIME_SERIES/DISTRIBUTION are not mutually exclusive, a parameter
 // can have one or more types
-const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
+const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
 
-	if (model.metadata?.timeseries?.[param.id] && model.metadata?.timeseries?.[param.id] !== null) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
+	if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
 	}
 	return type;
@@ -507,7 +472,6 @@ const buildParameterTable = () => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const param = getParameters(model).find((i) => i.id === v);
 				const paramType = getParamType(param);
-				const timeseriesValue = getTimeseries(props.model, param!.id);
 				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
 				return {
@@ -519,8 +483,7 @@ const buildParameterTable = () => {
 					units: param?.units?.expression ?? '',
 					value: param,
 					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
+					visibility: false
 				};
 			});
 			formattedParams.push({
@@ -541,7 +504,6 @@ const buildParameterTable = () => {
 			if (!param) return;
 			const paramType = getParamType(param);
 
-			const timeseriesValue = getTimeseries(props.model, param.id);
 			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
@@ -553,8 +515,7 @@ const buildParameterTable = () => {
 				unit: param.units?.expression,
 				value: param,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 
@@ -562,7 +523,6 @@ const buildParameterTable = () => {
 		const auxiliaries = model.model?.auxiliaries ?? [];
 		auxiliaries.forEach((aux) => {
 			const paramType = getParamType(aux);
-			const timeseriesValue = model.metadata?.timeseries?.[aux.id];
 			const parametersMetadata = model.metadata?.parameters?.[aux.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
@@ -574,8 +534,7 @@ const buildParameterTable = () => {
 				unit: aux.units?.expression,
 				value: aux,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 	}
@@ -593,8 +552,6 @@ const curies = ref<DKG[]>([]);
 const modelType = computed(() => getModelType(props.model));
 
 // const addPlusMinus = ref(10);
-
-const errorMessage = ref('');
 
 const expandedRows = ref([]);
 
@@ -622,25 +579,6 @@ const updateParamValue = (param: ModelParameter, key: string, value: any) => {
 	const clonedParam = cloneDeep(param);
 	clonedParam[key] = value;
 	emit('update-value', [clonedParam]);
-};
-
-const updateTimeseries = (id: string, value: string) => {
-	// Empty string => removal
-	if (value === '') {
-		const clonedModel = cloneDeep(props.model);
-		if (clonedModel.metadata && clonedModel.metadata.timeseries) {
-			clonedModel.metadata.timeseries[id] = null;
-		}
-		emit('update-model', clonedModel);
-		return;
-	}
-
-	if (!validateTimeSeries(value)) return;
-	const clonedModel = cloneDeep(props.model);
-	clonedModel.metadata ??= {};
-	clonedModel.metadata.timeseries ??= {};
-	clonedModel.metadata.timeseries[id] = value;
-	emit('update-model', clonedModel);
 };
 
 const updateMetadataFromInput = (id: string, key: string, value: any) => {
@@ -672,10 +610,6 @@ const applySelectedValue = () => {
 	if (!selectedValue.value) return;
 
 	const clonedModel = cloneDeep(props.model);
-	const timeseries =
-		selectedValue.value.configuration.configuration.metadata?.timeseries?.[
-			selectedValue.value.parameter.id
-		];
 	const metadata =
 		selectedValue.value.configuration.configuration.metadata?.parameters?.[
 			selectedValue.value.parameter.id
@@ -683,9 +617,7 @@ const applySelectedValue = () => {
 
 	clonedModel.metadata ??= {};
 	clonedModel.metadata.parameters ??= {};
-	clonedModel.metadata.timeseries ??= {};
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
-	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
 
 	// default source to use confirguration's source if there is no source
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id].source =
@@ -770,10 +702,6 @@ watch(
 	text-align: right;
 }
 
-.timeseries-container {
-	font-size: var(--font-caption);
-}
-
 .add-plus-minus {
 	width: 3rem;
 	margin-left: var(--gap-xsmall);
@@ -826,11 +754,6 @@ watch(
 }
 .invalid-message {
 	color: var(--text-color-danger);
-}
-
-.timeseries-container {
-	display: flex;
-	flex-direction: column;
 }
 
 .secondary-text {
