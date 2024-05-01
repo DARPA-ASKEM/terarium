@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -93,11 +91,11 @@ public class TaskService {
 
 		public TaskResponse createResponse(final TaskStatus status) {
 			return new TaskResponse()
-				.setId(id)
-				.setStatus(status)
-				.setUserId(userId)
-				.setScript(getScript())
-				.setAdditionalProperties(getAdditionalProperties());
+					.setId(id)
+					.setStatus(status)
+					.setUserId(userId)
+					.setScript(getScript())
+					.setAdditionalProperties(getAdditionalProperties());
 		}
 	}
 
@@ -218,7 +216,7 @@ public class TaskService {
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
-		final String exchangeName, final String queueName, final String routingKey) {
+			final String exchangeName, final String queueName, final String routingKey) {
 		// Declare a direct exchange
 		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
@@ -265,9 +263,9 @@ public class TaskService {
 			final TaskResponse latestResp = responseCache.get(taskId);
 
 			if (latestResp != null
-				&& (latestResp.getStatus() == TaskStatus.SUCCESS
-				|| latestResp.getStatus() == TaskStatus.FAILED
-				|| latestResp.getStatus() == TaskStatus.CANCELLED)) {
+					&& (latestResp.getStatus() == TaskStatus.SUCCESS
+							|| latestResp.getStatus() == TaskStatus.FAILED
+							|| latestResp.getStatus() == TaskStatus.CANCELLED)) {
 
 				// if this task has already resolved, send the response to the emitter
 				emitter.send(latestResp);
@@ -285,21 +283,21 @@ public class TaskService {
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
 	@RabbitListener(
-		bindings =
-		@QueueBinding(
-			value =
-			@org.springframework.amqp.rabbit.annotation.Queue(
-				autoDelete = "true",
-				exclusive = "false",
-				durable = "${terarium.taskrunner.durable-queues}"),
-			exchange =
-			@Exchange(
-				value = "${terarium.taskrunner.response-broadcast-exchange}",
-				durable = "${terarium.taskrunner.durable-queues}",
-				autoDelete = "false",
-				type = ExchangeTypes.DIRECT),
-			key = ""),
-		concurrency = "1")
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											autoDelete = "true",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.taskrunner.response-broadcast-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onTaskResponseAllInstanceReceive(final Message message) {
 		try {
 			final TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -317,8 +315,8 @@ public class TaskService {
 				final CompletableTaskFuture future = futures.get(resp.getId());
 				if (future != null) {
 					if (resp.getStatus() == TaskStatus.SUCCESS
-						|| resp.getStatus() == TaskStatus.CANCELLED
-						|| resp.getStatus() == TaskStatus.FAILED) {
+							|| resp.getStatus() == TaskStatus.CANCELLED
+							|| resp.getStatus() == TaskStatus.FAILED) {
 						// complete the future
 						log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
 						future.complete(resp);
@@ -374,22 +372,22 @@ public class TaskService {
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
 	@RabbitListener(
-		bindings =
-		@QueueBinding(
-			value =
-			@org.springframework.amqp.rabbit.annotation.Queue(
-				value = "${terarium.taskrunner.response-queue}",
-				autoDelete = "false",
-				exclusive = "false",
-				durable = "${terarium.taskrunner.durable-queues}"),
-			exchange =
-			@Exchange(
-				value = "${terarium.taskrunner.response-exchange}",
-				durable = "${terarium.taskrunner.durable-queues}",
-				autoDelete = "false",
-				type = ExchangeTypes.DIRECT),
-			key = ""),
-		concurrency = "1")
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											value = "${terarium.taskrunner.response-queue}",
+											autoDelete = "false",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.taskrunner.response-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -418,12 +416,12 @@ public class TaskService {
 				// add to the response cache
 				log.info("Writing response for task id {} for status {} to cache", resp.getId(), resp.getStatus());
 				responseCache.put(
-					resp.getId(),
-					resp,
-					CACHE_TTL_SECONDS,
-					TimeUnit.SECONDS,
-					CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS);
+						resp.getId(),
+						resp,
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
 			} finally {
 				rLock.unlock();
 			}
@@ -472,10 +470,10 @@ public class TaskService {
 				return null;
 			} catch (final Exception e1) {
 				log.error(
-					"Error decoding message as either {} or {}. Raw message is: {}",
-					clazz.getName(),
-					JsonNode.class.getName(),
-					message.getBody());
+						"Error decoding message as either {} or {}. Raw message is: {}",
+						clazz.getName(),
+						JsonNode.class.getName(),
+						message.getBody());
 				log.error("", e1);
 				return null;
 			}
@@ -501,7 +499,7 @@ public class TaskService {
 
 			// check if there is an id associated with the hash of the request already
 			final UUID existingId = taskIdCache.putIfAbsent(
-				hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
+					hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
 
 			if (existingId != null) {
 				// a task id already exits for the SHA256, this means the request has already
@@ -511,9 +509,9 @@ public class TaskService {
 
 				// only return responese if they have not failed or been cancelled
 				if (resp != null
-					&& resp.getStatus() != TaskStatus.CANCELLING
-					&& resp.getStatus() != TaskStatus.CANCELLED
-					&& resp.getStatus() != TaskStatus.FAILED) {
+						&& resp.getStatus() != TaskStatus.CANCELLING
+						&& resp.getStatus() != TaskStatus.CANCELLED
+						&& resp.getStatus() != TaskStatus.FAILED) {
 
 					// if the response is in the cache, return it
 					log.info("Response for task id: {} with status: {} found in cache", existingId, resp.getStatus());
@@ -531,18 +529,18 @@ public class TaskService {
 
 				// otherwise dispatch it again, and overwrite the id
 				log.info(
-					"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}",
-					existingId,
-					hash,
-					req.getId());
+						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}",
+						existingId,
+						hash,
+						req.getId());
 
 				taskIdCache.put(
-					hash,
-					req.getId(),
-					CACHE_TTL_SECONDS,
-					TimeUnit.SECONDS,
-					CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS);
+						hash,
+						req.getId(),
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
 			}
 
 			try {
@@ -561,13 +559,13 @@ public class TaskService {
 
 			// now send request
 			final String requestQueue = String.format(
-				"%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
+					"%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
 			log.info(
-				"Readying task: {} with SHA: {} to send on queue: {}",
-				req.getId(),
-				hash,
-				req.getType().toString());
+					"Readying task: {} with SHA: {} to send on queue: {}",
+					req.getId(),
+					hash,
+					req.getType().toString());
 
 			// ensure the request queue exists
 			declareQueue(requestQueue);
@@ -590,12 +588,12 @@ public class TaskService {
 				// cause servers to wait on requests that were never sent.
 				final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
 				responseCache.put(
-					req.getId(),
-					queuedResponse,
-					CACHE_TTL_SECONDS,
-					TimeUnit.SECONDS,
-					CACHE_MAX_IDLE_SECONDS,
-					TimeUnit.SECONDS);
+						req.getId(),
+						queuedResponse,
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS);
 
 				// create and return the future
 				final CompletableTaskFuture future = new CompletableTaskFuture(req.getId(), queuedResponse);
@@ -614,7 +612,7 @@ public class TaskService {
 	}
 
 	public TaskResponse runTaskSync(final TaskRequest req, final long timeoutSeconds)
-		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 
 		// send the request
 		final TaskFuture future = runTaskAsync(req);
@@ -646,19 +644,19 @@ public class TaskService {
 				rLock.unlock();
 			}
 			throw new TimeoutException(
-				"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
+					"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
 		}
 	}
 
 	public TaskResponse runTaskSync(final TaskRequest req)
-		throws JsonProcessingException, TimeoutException, ExecutionException, InterruptedException {
+			throws JsonProcessingException, TimeoutException, ExecutionException, InterruptedException {
 
 		final int DEFAULT_TIMEOUT_SECONDS = 60 * 5; // 5 minutes
 		return runTaskSync(req, DEFAULT_TIMEOUT_SECONDS);
 	}
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
-		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
