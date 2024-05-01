@@ -81,7 +81,7 @@ services:
       redis:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   hmi-client:
     image: ghcr.io/darpa-askem/hmi-client:latest
@@ -100,7 +100,7 @@ services:
       hmi-server:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   terarium-docs:
     image: ghcr.io/darpa-askem/terarium-docs:latest
@@ -116,4 +116,4 @@ services:
       timeout: "3s"
       retries: 30
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
