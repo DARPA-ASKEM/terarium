@@ -487,7 +487,10 @@ public class ProjectController {
 											projects will directly hold a reference to the assets associated with them.  During this
 											transition we need to properly create the relationships when users add assets to their
 											projects. However the exact API may not look like this in the end, and in fact may be
-											directly in the controllers for these assets and not in this ProjectController
+											directly in the controllers for these assets and not in this ProjectController.
+
+											Once all TerariumAssets have been migrated we can move this all to be a lot more generic
+											and not need to have this ugly if/else statement
 					*/
 					if (assetType.equals(AssetType.CODE)) {
 
