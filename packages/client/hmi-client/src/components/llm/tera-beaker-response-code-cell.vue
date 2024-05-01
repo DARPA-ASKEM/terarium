@@ -209,13 +209,12 @@ function cancelDelete() {
 @import '@jupyterlab/cells/style/index.css';
 @import '@jupyterlab/theme-light-extension/style/theme.css';
 @import '@jupyterlab/completer/style/index.css';
-
-.jp-CodeCell {
-	min-width: 300px;
+</style>
+<style scoped>
+.code-cell {
+	position: relative;
 }
-
 .controls {
-	padding-top: var(--gap-small);
 	display: flex;
 	align-items: end;
 	flex-direction: row;
@@ -225,9 +224,5 @@ function cancelDelete() {
 	top: 3px;
 	right: 10px;
 	z-index: 2;
-}
-
-.controls-with-query {
-	top: 38px;
 }
 </style>
