@@ -5,14 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.annotation.PostConstruct;
-
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
@@ -20,9 +17,9 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
-import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 
 @Service
@@ -51,15 +48,15 @@ public class TestReBACService extends ReBACService {
 				roles.add(r);
 			}
 
-			final PermissionUser permissionUser = new PermissionUser(user.getId(), user.getGivenName(),
-					user.getFamilyName(), user.getEmail(), roles);
+			final PermissionUser permissionUser =
+					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail(), roles);
 
 			users.put(user.getId(), permissionUser);
 		}
 
 		for (final User user : USERS) {
-			final PermissionUser permissionUser = new PermissionUser(user.getId(), user.getGivenName(),
-					user.getFamilyName(), user.getEmail());
+			final PermissionUser permissionUser =
+					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail());
 
 			for (final Role r : user.getRoles()) {
 
@@ -136,15 +133,13 @@ public class TestReBACService extends ReBACService {
 		return true;
 	}
 
-	public void createRelationship(final SchemaObject who, final SchemaObject what,
-			final Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-	}
+	public void createRelationship(
+			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
+			throws Exception, RelationshipAlreadyExistsException {}
 
-	public void removeRelationship(final SchemaObject who, final SchemaObject what,
-			final Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {
-	}
+	public void removeRelationship(
+			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
+			throws Exception, RelationshipAlreadyExistsException {}
 
 	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
 		return new ArrayList<>();
@@ -159,7 +154,8 @@ public class TestReBACService extends ReBACService {
 		for (final Map.Entry<String, PermissionRole> entry : roles.entrySet()) {
 			final PermissionRole role = entry.getValue();
 			if (role.getName().equals(roleName)) {
-				final boolean removed = role.getUsers().removeIf(user -> user.getId().equals(userId));
+				final boolean removed =
+						role.getUsers().removeIf(user -> user.getId().equals(userId));
 				if (removed) {
 					return ResponseEntity.ok().build();
 				}
@@ -199,9 +195,8 @@ public class TestReBACService extends ReBACService {
 		return ResponseEntity.ok().build();
 	}
 
-	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission,
-			final Schema.Type type)
-			throws Exception {
+	public List<UUID> lookupResources(
+			final SchemaObject who, final Schema.Permission permission, final Schema.Type type) throws Exception {
 
 		return new ArrayList<>();
 	}
