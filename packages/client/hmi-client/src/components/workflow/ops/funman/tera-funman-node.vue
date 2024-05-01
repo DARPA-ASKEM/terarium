@@ -37,11 +37,15 @@ const poller = new Poller();
 
 const addOutputPorts = async (runId: string) => {
 	const portLabel = props.node.inputs[0].label;
+
+	const outState = _.cloneDeep(props.node.state);
+	outState.inProgressId = '';
+
 	emit('append-output', {
 		label: `${portLabel} Result ${props.node.outputs.length + 1}`,
 		type: FunmanOperation.outputs[0].type,
 		value: runId,
-		state: _.cloneDeep(props.node.state)
+		state: outState
 	});
 };
 
