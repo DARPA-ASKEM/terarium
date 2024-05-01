@@ -6,12 +6,16 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
 import software.uncharted.terarium.hmiserver.repository.data.SimulationRepository;
+import software.uncharted.terarium.hmiserver.repository.data.SimulationUpdateRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 
 @Service
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
+
+	private final SimulationUpdateRepository simulationUpdateRepository;
 
 	/**
 	 * Constructor for SimulationService
@@ -25,8 +29,10 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			final Config config,
 			final ProjectAssetService projectAssetService,
 			final SimulationRepository repository,
-			final S3ClientService s3ClientService) {
+			final S3ClientService s3ClientService,
+			final SimulationUpdateRepository simulationUpdateRepository) {
 		super(config, projectAssetService, repository, s3ClientService, Simulation.class);
+		this.simulationUpdateRepository = simulationUpdateRepository;
 	}
 
 	@Override
@@ -40,6 +46,18 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 	private String getDatasetPath(final UUID datasetId, final String filename) {
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
+	}
+
+	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update) {
+
+		final Simulation simulation = getAsset(simulationId).orElseThrow();
+
+		update.setSimulation(simulation);
+		final SimulationUpdate created = simulationUpdateRepository.save(update);
+
+		simulation.getUpdates().add(created);
+
+		return created;
 	}
 
 	@Observed(name = "function_profile")
