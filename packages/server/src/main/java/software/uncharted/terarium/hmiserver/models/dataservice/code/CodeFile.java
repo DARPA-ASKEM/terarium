@@ -2,15 +2,19 @@ package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code.ProgrammingLanguage;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 public class CodeFile {
+
 	private ProgrammingLanguage language;
+
+	@JdbcTypeCode(SqlTypes.JSON)
 	private Dynamics dynamics;
 
 	@TSIgnore
@@ -29,5 +33,13 @@ public class CodeFile {
 				};
 
 		this.setLanguage(language);
+	}
+
+	@Override
+	public CodeFile clone() {
+		final CodeFile clone = new CodeFile();
+		clone.language = this.language;
+		clone.dynamics = this.dynamics.clone();
+		return clone;
 	}
 }

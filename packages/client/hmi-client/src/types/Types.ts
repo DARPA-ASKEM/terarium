@@ -124,6 +124,7 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
+    project?: Project;
 }
 
 export interface CodeFile {
@@ -230,6 +231,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
     configuration: Model;
+    interventions?: Intervention[];
     model_id: string;
 }
 
@@ -411,7 +413,11 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
+    /**
+     * @deprecated
+     */
     projectAssets: ProjectAsset[];
+    codeAssets: Code[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -893,7 +899,6 @@ export interface ModelSemantics {
 export interface ModelMetadata {
     annotations?: Annotations;
     attributes?: any[];
-    timeseries?: { [index: string]: any };
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;

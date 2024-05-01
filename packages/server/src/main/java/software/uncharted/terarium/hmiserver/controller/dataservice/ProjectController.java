@@ -35,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
@@ -43,6 +44,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.UserService;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -73,6 +75,8 @@ public class ProjectController {
 	final ProjectAssetService projectAssetService;
 
 	final TerariumAssetServices terariumAssetServices;
+
+	final CodeService codeService;
 
 	final UserService userService;
 
@@ -479,6 +483,29 @@ public class ProjectController {
 
 				if (project.isPresent()) {
 
+					/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
+											projects will directly hold a reference to the assets associated with them.  During this
+											transition we need to properly create the relationships when users add assets to their
+											projects. However the exact API may not look like this in the end, and in fact may be
+											directly in the controllers for these assets and not in this ProjectController
+					*/
+					if (assetType.equals(AssetType.CODE)) {
+
+						final Optional<Code> code = codeService.getAsset(assetId);
+						if (code.isEmpty()) {
+							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Code Asset does not exist");
+						}
+
+						if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
+						if (project.get().getCodeAssets().contains(code.get())) {
+							throw new ResponseStatusException(
+									HttpStatus.CONFLICT, "Code Asset already exists on project");
+						}
+
+						code.get().setProject(project.get());
+						codeService.updateAsset(code.get());
+					}
+
 					// double check that this asset is not already a part of this project, and if it
 					// does exist return a 409 to the front end
 					final Optional<ProjectAsset> existingAsset =
@@ -539,6 +566,23 @@ public class ProjectController {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			if (rebacUser.canWrite(rebacProject)) {
+
+				if (assetType.equals(AssetType.CODE)) {
+
+					/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
+											projects will directly hold a reference to the assets associated with them.  During this
+											transition we need to properly create the relationships when users add assets to their
+											projects. However the exact API may not look like this in the end, and in fact may be
+											directly in the controllers for these assets and not in this ProjectController
+					*/
+
+					final Optional<Code> deletedCode = codeService.deleteAsset(assetId);
+					if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
+						throw new ResponseStatusException(
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
+					}
+				}
+
 				final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 				if (deleted) {
 					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
