@@ -10,11 +10,11 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class CodeService extends TerariumAssetServiceWithoutSearch<Code, CodeRepository> {
 
-    public CodeService(
-            final Config config,
-            final ProjectAssetService projectAssetService,
-            final CodeRepository repository,
-            final S3ClientService s3ClientService) {
+	public CodeService(
+			final Config config,
+			final ProjectAssetService projectAssetService,
+			final CodeRepository repository,
+			final S3ClientService s3ClientService) {
 		super(config, projectAssetService, repository, s3ClientService, Code.class);
 	}
 

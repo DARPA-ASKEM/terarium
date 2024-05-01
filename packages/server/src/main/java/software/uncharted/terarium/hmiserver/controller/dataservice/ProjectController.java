@@ -515,7 +515,7 @@ public class ProjectController {
 					}
 
 					final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
-									terariumAssetServices.getServiceByType(assetType);
+							terariumAssetServices.getServiceByType(assetType);
 					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 					if (asset.isPresent()) {
 						final Optional<ProjectAsset> projectAsset =
