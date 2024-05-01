@@ -26,4 +26,13 @@ public class EquationSource {
 	@JsonAlias("hmi_generated")
 	@TSOptional
 	private Boolean hmiGenerated;
+
+	@Override
+	public EquationSource clone() {
+		EquationSource clone = new EquationSource();
+		clone.extractedFrom = this.extractedFrom;
+		clone.documentAssetName = this.documentAssetName;
+		clone.hmiGenerated = this.hmiGenerated;
+		return clone;
+	}
 }

@@ -65,7 +65,7 @@ public class EquationController {
 
 		try {
 			return ResponseEntity.ok(equationService.getAssets(pageSize, page));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get equations";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -141,7 +141,7 @@ public class EquationController {
 			final Optional<Equation> equation = equationService.getAsset(id);
 			return equation.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.noContent().build());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get equation";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
