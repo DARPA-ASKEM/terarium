@@ -505,9 +505,9 @@ export interface Simulation extends TerariumAsset {
 
 export interface SimulationUpdate {
     id: string;
-    simulationId: string;
     createdOn: Date;
     data: any;
+    simulation: Simulation;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
