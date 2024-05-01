@@ -32,10 +32,22 @@
 					{{ getTitleText(item) }}
 					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
-				<p class="msg">{{ item.msg }}</p>
+				<div class="notification-path-text msg">
+					<p>Project: {{ getProjectName() }}</p>
+					<p v-if="item.status !== 'Completed'">{{ item.msg }}</p>
+				</div>
 				<div v-if="item.status === 'Running'" class="progressbar-container">
-					<p class="action">{{ getActionText(item) }}</p>
+					<p class="action">{{ getActionText(item) }} {{ Math.round(item.progress * 100) }}%</p>
+
 					<ProgressBar :value="item.progress * 100" />
+					<!--					Disabled until backend process cancel feature is done-->
+					<!--					<Button-->
+					<!--						class="cancel-button"-->
+					<!--						label="Cancel"-->
+					<!--						text-->
+					<!--						aria-label="Cancel"-->
+					<!--						@click="togglePanel"-->
+					<!--					/>-->
 				</div>
 				<div v-else class="done-container">
 					<div class="status-msg ok" v-if="item.status === 'Completed'">
@@ -62,6 +74,7 @@ import { AssetType, ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
+import { useProjects } from '@/composables/project';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -75,6 +88,11 @@ const {
 const panel = ref();
 
 const togglePanel = (event) => panel.value.toggle(event);
+
+const getProjectName = () => {
+	const projectName = useProjects().activeProject.value?.name;
+	return projectName ?? '';
+};
 
 const getTitleText = (item: NotificationItem) => {
 	switch (item.type) {
@@ -182,6 +200,14 @@ header {
 	overflow: auto;
 }
 
+.notification-path-text {
+	padding-top: 3px;
+}
+
+.cancel-button {
+	font-size: var(--font-caption);
+}
+
 .notification-item {
 	padding: 1rem 0;
 	&:not(:first-child) {
@@ -222,7 +248,6 @@ header {
 		gap: var(--gap-small);
 		.status-msg {
 			display: flex;
-			align-items: top;
 			gap: 0.5rem;
 			font-size: var(--font-caption);
 		}
