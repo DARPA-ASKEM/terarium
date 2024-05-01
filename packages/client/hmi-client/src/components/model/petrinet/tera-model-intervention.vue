@@ -3,12 +3,10 @@
 		<div class="label-col">
 			<label>Parameter name </label>
 			<Dropdown
-				v-if="parameterOptions"
 				:options="parameterOptions"
 				v-model.lazy="name"
 				@update:model-value="updateIntervention"
 			/>
-			<InputText v-else v-model.lazy="name" @update:model-value="updateIntervention" />
 		</div>
 		<div class="label-col">
 			<label>Timestep</label>
@@ -27,12 +25,11 @@ import { ref } from 'vue';
 import { Intervention } from '@/types/Types';
 import teraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 
 const props = defineProps<{
 	intervention: Intervention;
-	parameterOptions?: string[];
+	parameterOptions: string[];
 }>();
 const emit = defineEmits(['update-value', 'delete']);
 
