@@ -1,15 +1,22 @@
 <template>
-	<div class="input-container" :class="{ error: errorMessage }" @click="focusInput">
-		<label for="custom-input" class="input-label">Label</label>
+	<div
+		class="input-container"
+		:class="{ error: errorMessage, disabled: disabled, focused: focused }"
+		@click="focusInput"
+	>
+		<label for="custom-input" class="input-label">{{ label }}</label>
 		<input
 			id="custom-input"
 			class="input-field"
 			ref="inputField"
-			:value="displayValue"
+			:value="modelValue"
 			@input="updateValue"
+			:disabled="disabled"
+			@focus="onFocus"
+			@blur="onBlur"
 		/>
 	</div>
-	<p v-if="isError" class="error-message">
+	<p v-if="errorMessage" class="error-message">
 		<i class="pi pi-exclamation-circle" /> {{ errorMessage }}
 	</p>
 </template>
@@ -18,53 +25,32 @@
 import { ref } from 'vue';
 
 defineProps<{
+	modelValue?: string;
+	label?: string;
 	errorMessage?: string;
+	disabled?: boolean;
 }>();
+
+const emit = defineEmits(['update:modelValue']);
 const inputField = ref<HTMLInputElement | null>(null);
-const isError = ref(true);
-const actualValue = ref(''); // This will store the actual value
-const displayValue = ref(''); // This will store the display value
+const focused = ref(false);
 
 const focusInput = () => {
 	inputField.value?.focus();
 };
 
+const onFocus = () => {
+	focused.value = true;
+};
+
+const onBlur = () => {
+	focused.value = false;
+};
+
 const updateValue = (event: Event) => {
 	const value = (event.target as HTMLInputElement).value;
-	actualValue.value = value; // Store the actual value
-	displayValue.value = applyMask(value); // Store the masked value for display
-	console.log(displayValue.value);
+	emit('update:modelValue', value);
 };
-
-const applyMask = (num: string) => {
-	num = parseFloat(num).toString();
-
-	// Split the input by decimal point
-	let [integerPart, decimalPart] = num.split('.');
-
-	// Format the integer part
-	integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-
-	if (num.includes('.') && decimalPart) {
-		decimalPart = decimalPart.replace(/(\d{3})/g, '$1 ').trim();
-	}
-
-	// Construct the formatted number
-	let formattedNumber = integerPart;
-	if (decimalPart) {
-		formattedNumber += `.${decimalPart}`;
-	}
-
-	return formattedNumber;
-};
-
-// const checkInput = (event: KeyboardEvent) => {
-//   const value = (event.target as HTMLInputElement).value + event.key;
-//   const maskedValue = applyMask(value);
-//   if (maskedValue !== value) {
-//     event.preventDefault();
-//   }
-// };
 </script>
 
 <style scoped>
@@ -76,10 +62,23 @@ const applyMask = (num: string) => {
 	padding: var(--gap-xsmall) var(--gap-small);
 	background-color: #fff;
 	border: 1px solid var(--surface-border-alt);
-	border-radius: 2px;
+	border-radius: var(--border-radius-small);
 	cursor: text;
+	margin-bottom: var(--gap-small);
+	transition: border-color 0.3s ease-in-out;
 	&.error {
 		background-color: var(--error-message-background);
+	}
+
+	&.disabled {
+		opacity: 0.5;
+	}
+
+	&.focused {
+		border-color: var(--primary-color);
+	}
+	input {
+		min-width: 0;
 	}
 }
 
@@ -98,8 +97,13 @@ const applyMask = (num: string) => {
 }
 
 .error-message {
-	font-size: 12px;
 	color: var(--error-message-color);
+	font-size: var(--font-caption);
 	word-wrap: break-word;
+	display: flex;
+	align-items: center;
+	i {
+		margin-right: var(--gap-small);
+	}
 }
 </style>
