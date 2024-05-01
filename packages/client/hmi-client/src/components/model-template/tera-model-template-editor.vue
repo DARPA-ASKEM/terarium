@@ -144,7 +144,8 @@ import type { Model } from '@/types/Types';
 import type {
 	ModelTemplateCanvas,
 	ModelTemplateCard,
-	ModelTemplateJunction
+	ModelTemplateJunction,
+	OffsetValues
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
@@ -180,6 +181,7 @@ let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
+const decomposedPortOffsetValues = new Map<string, OffsetValues>();
 
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
@@ -297,6 +299,7 @@ function createNewEdge(cardId: string, portId: string) {
 				props.kernelManager,
 				flattenedCanvas.value,
 				decomposedCanvas.value,
+				decomposedPortOffsetValues,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -446,7 +449,23 @@ function refreshFlattenedCanvas() {
 
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	if (newFormat === EditorFormat.Decomposed)
+		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	else {
+		// When switching to the flattened view, we save the decomposed port positions
+		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
+		decomposedPortOffsetValues.clear();
+		const decomposedPortElements = document.getElementsByClassName(
+			'port selectable'
+		) as HTMLCollectionOf<HTMLElement>;
+
+		Array.from(decomposedPortElements).forEach((element) =>
+			decomposedPortOffsetValues.set(
+				element.id,
+				modelTemplatingService.getElementOffsetValues(element)
+			)
+		);
+	}
 }
 
 watch(
