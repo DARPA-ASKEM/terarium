@@ -124,6 +124,7 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
+    project: Project;
 }
 
 export interface CodeFile {
@@ -411,7 +412,11 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
+    /**
+     * @deprecated
+     */
     projectAssets: ProjectAsset[];
+    codeAssets: Code[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
