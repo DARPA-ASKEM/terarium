@@ -65,19 +65,12 @@
 				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
 			</template>
 		</tera-slider-panel>
-		<!-- New model modal -->
-		<tera-save-model-modal
-			:is-visible="showSaveModelModal"
-			:asset-type="AssetType.Model"
+		<!-- New asset modal -->
+		<tera-save-asset-modal
+			:is-visible="showSaveAssetModal"
+			:assetType="assetTypeToCreate"
 			open-on-save
-			@close-modal="onCloseModelModal"
-		/>
-		<!-- New wf modal -->
-		<tera-save-model-modal
-			:is-visible="showSaveWorkflowModal"
-			:assetType="AssetType.Workflow"
-			open-on-save
-			@close-modal="showSaveWorkflowModal = false"
+			@close-modal="showSaveAssetModal = false"
 		/>
 	</main>
 </template>
@@ -105,7 +98,7 @@ import TeraCode from '@/components/code/tera-code.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import Button from 'primevue/button';
 import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
-import TeraSaveModelModal from './components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from './components/tera-save-asset-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -113,8 +106,8 @@ const router = useRouter();
 const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
-const showSaveModelModal = ref(false);
-const showSaveWorkflowModal = ref(false);
+const showSaveAssetModal = ref(false);
+const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 const isUploadResourcesModalVisible = ref(false);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
@@ -173,36 +166,10 @@ async function removeAsset(assetRoute: AssetRoute) {
 	}
 }
 
-// const openWorkflow = async () => {
-// 	// Create a new workflow
-// 	const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
-// 	const wf = emptyWorkflow(`workflow ${workflows.length + 1}`, '');
-
-// 	// Add the workflow to the project
-// 	const response = await createWorkflow(wf);
-// 	const workflowId = response.id;
-// 	await useProjects().addAsset(AssetType.Workflow, workflowId);
-
-// 	openAsset({ pageType: AssetType.Workflow, assetId: workflowId });
-// };
-
+// Configures save asset modal to create/open the correct asset type
 const openNewAsset = (assetType: AssetType) => {
-	switch (assetType) {
-		case AssetType.Model:
-			showSaveModelModal.value = true;
-			break;
-		case AssetType.Workflow:
-			showSaveWorkflowModal.value = true;
-			break;
-		case AssetType.Code:
-			openAsset({
-				pageType: AssetType.Code,
-				assetId: AssetType.Code // FIXME: hack to get around weird tab behaviour,
-			});
-			break;
-		default:
-			break;
-	}
+	assetTypeToCreate.value = assetType;
+	showSaveAssetModal.value = true;
 };
 
 // TODO:
@@ -216,10 +183,6 @@ async function openCode() {
 	if (!res) return;
 	code.value = res;
 }
-
-const onCloseModelModal = () => {
-	showSaveModelModal.value = false;
-};
 
 onMounted(() => {
 	if (!route.params.assetId || !route.params.pageType) {

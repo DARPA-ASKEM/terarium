@@ -173,8 +173,8 @@ async function addFileToCodeAsset(
 
 function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	// given the extension of a file, return the programming language
-	const fileExtensiopn: string = fileName.split('.').pop() || '';
-	switch (fileExtensiopn) {
+	const fileExtension: string = fileName.split('.').pop() || '';
+	switch (fileExtension) {
 		case 'py':
 			return ProgrammingLanguage.Python;
 		case 'jl':

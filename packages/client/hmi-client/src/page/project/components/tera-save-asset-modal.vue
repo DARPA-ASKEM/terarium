@@ -4,6 +4,7 @@
 			v-if="isVisible"
 			class="save-as-dialog"
 			@modal-mask-clicked="emit('close-modal')"
+			@on-modal-open="initializeAsset"
 			@modal-enter-press="save"
 		>
 			<template #header>
@@ -30,16 +31,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, PropType, computed } from 'vue';
+import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { AssetType, ProgrammingLanguage } from '@/types/Types';
+import type { Model, Code } from '@/types/Types';
+import type { Workflow } from '@/types/workflow';
+import { emptyWorkflow } from '@/services/workflow';
+import { setFileExtension } from '@/services/code';
+import { useProjects } from '@/composables/project';
+import { newAMR } from '@/model-representation/petrinet/petrinet-service';
+import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps({
-	title: {
-		type: String,
-		default: 'Save as a new asset'
-	},
 	initialName: {
 		type: String,
 		default: ''
@@ -48,27 +54,96 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
+	asset: {
+		type: Object as PropType<Model> | Object as
+			| PropType<Workflow>
+			| Object as PropType<Code> | null,
+		default: null
+	},
+	assetType: {
+		type: String as PropType<AssetType>,
+		default: AssetType.Model
+	},
 	openOnSave: {
+		type: Boolean,
+		default: false
+	},
+	isOverwriting: {
 		type: Boolean,
 		default: false
 	}
 });
 
-const emit = defineEmits(['save', 'close-modal']);
+const emit = defineEmits(['close-modal', 'on-save']);
 
-// TODO: Consider letting the user just know if what they are typing currently is a duplicate (do not prevent them from saving)
-// const isValidName = ref<boolean>(true);
-// const invalidInputStyle = computed(() => (!isValidName.value ? 'p-invalid' : ''));	v-bind:class="invalidInputStyle"
-
+let newAsset: any = null;
 const newName = ref<string>(props.initialName);
 
-function save() {
-	emit('save', newName.value.trim());
+const title = computed(() => {
+	if (!props.asset) return `Create new ${props.assetType}`;
+	if (props.isOverwriting) return `Update ${props.assetType} name`;
+	return `Save as a new ${props.assetType}`;
+});
+
+function onSave(data: any) {
+	emit('on-save', data);
 }
 
 function cancel() {
 	newName.value = '';
 	emit('close-modal');
+}
+
+// Generic save function
+function save() {
+	// Prepare the asset with the new name
+	switch (props.assetType) {
+		case AssetType.Model:
+			(newAsset as Model).header.name = newName.value;
+			break;
+		case AssetType.Workflow:
+			(newAsset as Workflow).name = newName.value;
+			break;
+		default:
+			break;
+	}
+
+	// Save method
+	if (props.isOverwriting) {
+		saveAssetService.overwrite(newAsset, props.assetType, onSave);
+	} else {
+		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
+	}
+
+	emit('close-modal');
+}
+
+function initializeAsset() {
+	// If an asset is passed, clone it for saving
+	if (props.asset) {
+		newAsset = cloneDeep(props.asset);
+		return;
+	}
+
+	// Creates an empty version of the asset if there no asset passed
+	switch (props.assetType) {
+		case AssetType.Model:
+			newAsset = newAMR() as Model;
+			break;
+		case AssetType.Workflow:
+			if (isEmpty(newName.value)) {
+				const workflows = useProjects().getActiveProjectAssets(AssetType.Workflow);
+				newName.value = `workflow ${workflows.length + 1}`;
+			}
+			newAsset = emptyWorkflow();
+			break;
+		case AssetType.Code:
+			newName.value = setFileExtension('untitled', ProgrammingLanguage.Python);
+			newAsset = new File([''], newName.value);
+			break;
+		default:
+			break;
+	}
 }
 </script>
 

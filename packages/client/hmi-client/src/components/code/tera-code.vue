@@ -35,7 +35,7 @@
 							severity="secondary"
 							outlined
 							label="Save as new"
-							@click="isCodeNamingModalVisible = true"
+							@click="showSaveAssetModal = true"
 						/>
 						<Dropdown
 							class="toolbar-button"
@@ -141,43 +141,15 @@
 					/>
 				</template>
 			</tera-modal>
-			<tera-modal
-				v-if="isCodeNamingModalVisible"
-				@modal-mask-clicked="isCodeNamingModalVisible = false"
-				@modal-enter-press="isCodeNamingModalVisible = false"
-			>
-				<template #header>
-					<h4>Save code file</h4>
-					<p>Choose a descriptive and unique name for your code file.</p>
-				</template>
-				<template #default>
-					<form @submit.prevent>
-						<label class="text-sm" for="model-name">Name</label>
-						<InputText id="model-name" type="text" placeholder="Filename" v-model="newCodeName" />
-					</form>
-				</template>
-				<template #footer>
-					<Button
-						label="Save"
-						size="large"
-						@click="
-							() => {
-								isCodeNamingModalVisible = false;
-								saveNewCode();
-							}
-						"
-					/>
-					<Button
-						label="Cancel"
-						size="large"
-						outlined
-						severity="secondary"
-						class="p-button-secondary"
-						@click="isCodeNamingModalVisible = false"
-					/>
-				</template>
-			</tera-modal>
 		</Teleport>
+		<tera-save-asset-modal
+			v-if="codeAssetCopy"
+			:is-visible="showSaveAssetModal"
+			:asset="codeAssetCopy"
+			:assetType="AssetType.Code"
+			:initial-name="codeName"
+			@close-modal="showSaveAssetModal = false"
+		/>
 	</tera-asset>
 </template>
 
@@ -192,16 +164,13 @@ import {
 	getCodeFileAsText,
 	getProgrammingLanguage,
 	setFileExtension,
-	updateCodeAsset,
-	uploadCodeToProject
+	updateCodeAsset
 } from '@/services/code';
 import { useToastService } from '@/services/toast';
 import type { Code, CodeFile } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { useProjects } from '@/composables/project';
@@ -211,6 +180,8 @@ import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import { extractDynamicRows } from '@/utils/code-asset';
 import ContextMenu from 'primevue/contextmenu';
 import { logger } from '@/utils/logger';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import * as saveAssetService from '@/services/save-asset';
 import TeraDirectory from './tera-directory.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 
@@ -235,7 +206,7 @@ const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
-const isCodeNamingModalVisible = ref(false);
+const showSaveAssetModal = ref(false);
 const isDynamicsModalVisible = ref(false);
 const newCodeName = ref('');
 const newDynamicsName = ref('');
@@ -360,34 +331,9 @@ async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 		toast.success('', `Saved Code Asset`);
 		highlightDynamics();
 	} else {
-		newCodeName.value = codeName.value;
-		await saveNewCode();
+		newCodeName.value = setFileExtension(codeName.value, programmingLanguage.value);
+		saveAssetService.saveAs(new File([codeText.value], newCodeName.value), AssetType.Code);
 	}
-}
-
-async function saveNewCode() {
-	newCodeName.value = setFileExtension(newCodeName.value, programmingLanguage.value);
-	const file = new File([codeText.value], newCodeName.value);
-	const newCode = await uploadCodeToProject(file, progress);
-	let newAsset;
-	if (newCode?.id) {
-		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
-	}
-	if (!newAsset) {
-		toast.error('', 'Unable to save file');
-		return;
-	}
-	toast.success('', `File saved as ${codeName.value}`);
-	codeAsset.value = newCode;
-
-	router.push({
-		name: RouteName.Project,
-		params: {
-			pageType: AssetType.Code,
-			projectId: useProjects().activeProject.value?.id,
-			assetId: codeAsset?.value?.id
-		}
-	});
 }
 
 async function refreshCodeAsset(codeId: string) {
