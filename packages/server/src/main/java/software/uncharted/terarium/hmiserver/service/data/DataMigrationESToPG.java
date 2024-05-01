@@ -48,7 +48,6 @@ public class DataMigrationESToPG {
 	private final WorkflowService workflowService;
 	private final SimulationService simulationService;
 	private final CodeService codeService;
-	private final EquationService equationService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -142,8 +141,7 @@ public class DataMigrationESToPG {
 		return List.of(
 				new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
 				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()),
-				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()),
-				new MigrationConfig<>(equationService, elasticConfig.getEquationIndex()));
+				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()));
 		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 
