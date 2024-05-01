@@ -516,11 +516,16 @@ export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanv
 	addTemplateInView(flattenedCanvas, flattenedModel);
 }
 
+export function getElementOffsetValues(element: HTMLElement): OffsetValues {
+	const { offsetLeft, offsetTop, offsetWidth, offsetHeight } = element;
+	return { offsetLeft, offsetTop, offsetWidth, offsetHeight };
+}
+
 // Helper function for finding port position when auto drawing junctions and edges
 function getPortPosition(
 	templateCard: ModelTemplateCard,
 	portId: string,
-	potentialPortPositions?: Map<string, OffsetValues>
+	potentialPortOffsetValues?: Map<string, OffsetValues>
 ) {
 	const cardWidth = 168;
 	const id = `${templateCard.id}-${portId}`;
@@ -528,13 +533,19 @@ function getPortPosition(
 	// Default to fallback values for port position (top right of the card)
 	let x = templateCard.x + cardWidth;
 	let y = templateCard.y;
-	// Get the position of the port element
-	const portElement = potentialPortPositions
-		? potentialPortPositions.get(id)
-		: document.getElementById(id);
-	if (portElement) {
-		x = templateCard.x + portElement.offsetLeft + portElement.offsetWidth - 10;
-		y = templateCard.y + portElement.offsetTop + portElement.offsetHeight / 2;
+	// Get the offset values of the port element to determine its position
+	let portOffsetValues: OffsetValues | null = null;
+	if (potentialPortOffsetValues) {
+		const potentialPortPosition = potentialPortOffsetValues.get(id);
+		if (potentialPortPosition) portOffsetValues = potentialPortPosition;
+	} else {
+		const portElement = document.getElementById(id);
+		if (portElement) portOffsetValues = getElementOffsetValues(portElement);
+	}
+
+	if (portOffsetValues) {
+		x = templateCard.x + portOffsetValues.offsetLeft + portOffsetValues.offsetWidth - 10;
+		y = templateCard.y + portOffsetValues.offsetTop + portOffsetValues.offsetHeight / 2;
 	}
 	return { x, y };
 }
@@ -665,7 +676,7 @@ export async function reflectFlattenedEditInDecomposedView(
 	kernelManager: KernelSessionManager,
 	flattenedCanvas: ModelTemplateCanvas,
 	decomposedCanvas: ModelTemplateCanvas,
-	decomposedPortPositions: Map<string, OffsetValues>,
+	decomposedPortOffsetValues: Map<string, OffsetValues>,
 	outputCode: Function,
 	syncWithMiraModel: Function,
 	interpolatePointsFn?: Function
@@ -716,7 +727,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			// Finds the decomposed template that has the port used in the flattened view
 			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.models, sharedPortId);
 			if (!templateCard) return;
-			const portPosition = getPortPosition(templateCard, sharedPortId, decomposedPortPositions); // Pass decomposed port positions that were saved when we switched to the flattened view
+			const portPosition = getPortPosition(templateCard, sharedPortId, decomposedPortOffsetValues); // Pass decomposed port offset values that were saved when we switched to the flattened view
 
 			addJunction(decomposedCanvas, portPosition);
 			decompJunctionId = decomposedCanvas.junctions[decomposedCanvas.junctions.length - 1].id;

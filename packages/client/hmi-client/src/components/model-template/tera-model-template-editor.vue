@@ -181,7 +181,7 @@ let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
-const decomposedPortPositions = new Map<string, OffsetValues>();
+const decomposedPortOffsetValues = new Map<string, OffsetValues>();
 
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
@@ -299,7 +299,7 @@ function createNewEdge(cardId: string, portId: string) {
 				props.kernelManager,
 				flattenedCanvas.value,
 				decomposedCanvas.value,
-				decomposedPortPositions,
+				decomposedPortOffsetValues,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -454,18 +454,16 @@ function onEditorFormatSwitch(newFormat: EditorFormat) {
 	else {
 		// When switching to the flattened view, we save the decomposed port positions
 		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
-		decomposedPortPositions.clear();
+		decomposedPortOffsetValues.clear();
 		const decomposedPortElements = document.getElementsByClassName(
 			'port selectable'
 		) as HTMLCollectionOf<HTMLElement>;
 
-		Array.from(decomposedPortElements).forEach((el) =>
-			decomposedPortPositions.set(el.id, {
-				offsetLeft: el.offsetLeft,
-				offsetTop: el.offsetTop,
-				offsetWidth: el.offsetWidth,
-				offsetHeight: el.offsetHeight
-			})
+		Array.from(decomposedPortElements).forEach((element) =>
+			decomposedPortOffsetValues.set(
+				element.id,
+				modelTemplatingService.getElementOffsetValues(element)
+			)
 		);
 	}
 }
