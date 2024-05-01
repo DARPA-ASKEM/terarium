@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import io.micrometer.observation.annotation.Observed;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -17,15 +15,15 @@ import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 @Service
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
-	final private SimulationUpdateRepository simulationUpdateRepository;
+	private final SimulationUpdateRepository simulationUpdateRepository;
 
 	/**
 	 * Constructor for SimulationService
 	 *
-	 * @param config              application config
+	 * @param config application config
 	 * @param projectAssetService project asset service
-	 * @param repository          simulation repository
-	 * @param s3ClientService     S3 client service
+	 * @param repository simulation repository
+	 * @param s3ClientService S3 client service
 	 */
 	public SimulationService(
 			final Config config,

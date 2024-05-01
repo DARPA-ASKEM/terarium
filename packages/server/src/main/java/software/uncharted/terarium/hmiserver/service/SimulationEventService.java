@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.rabbitmq.client.Channel;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -7,7 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
@@ -18,12 +21,6 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import com.rabbitmq.client.Channel;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -58,6 +55,7 @@ public class SimulationEventService {
 	// correct instance holding the sse can forward the response to the user.
 	@Value("${terarium.simulation.sciml-broadcast-exchange}")
 	private String SCIML_BROADCAST_EXCHANGE;
+
 	@Value("${terarium.simulation.pyciemss-broadcast-exchange}")
 	private String PYCIEMSS_BROADCAST_EXCHANGE;
 
@@ -109,7 +107,22 @@ public class SimulationEventService {
 	// This is an anonymous queue, every instance the hmi-server will receive a
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.simulation.sciml-broadcast-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											autoDelete = "true",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.simulation.sciml-broadcast-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onScimlAllInstanceReceive(final Message message) {
 		try {
 
@@ -156,7 +169,22 @@ public class SimulationEventService {
 	// This is an anonymous queue, every instance the hmi-server will receive a
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.simulation.pyciemss-broadcast-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											autoDelete = "true",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.simulation.pyciemss-broadcast-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onPyciemssAllInstanceReceive(final Message message) {
 		try {
 

@@ -1,19 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
@@ -103,7 +100,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulationById() throws IOException {
 		final Simulation simulation = simulationService.createAsset(createSimulation("0"));
-		final Simulation fetchedSimulation = simulationService.getAsset(simulation.getId()).get();
+		final Simulation fetchedSimulation =
+				simulationService.getAsset(simulation.getId()).get();
 
 		Assertions.assertEquals(simulation, fetchedSimulation);
 		Assertions.assertEquals(simulation.getId(), fetchedSimulation.getId());
@@ -121,7 +119,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		final Simulation simulation = simulationService.createAsset(createSimulation("A"));
 		simulation.setName("new name");
 
-		final Simulation updatedSimulation = simulationService.updateAsset(simulation).orElseThrow();
+		final Simulation updatedSimulation =
+				simulationService.updateAsset(simulation).orElseThrow();
 
 		Assertions.assertEquals(simulation, updatedSimulation);
 		Assertions.assertNotNull(updatedSimulation.getUpdatedOn());
