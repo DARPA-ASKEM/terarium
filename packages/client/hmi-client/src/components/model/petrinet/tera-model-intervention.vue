@@ -2,19 +2,15 @@
 	<div class="form">
 		<div class="label-col">
 			<label>Parameter name </label>
-			<Dropdown
-				:options="parameterOptions"
-				v-model.lazy="name"
-				@update:model-value="updateIntervention"
-			/>
+			<Dropdown :options="parameterOptions" v-model.lazy="name" @blur="updateIntervention" />
 		</div>
 		<div class="label-col">
 			<label>Timestep</label>
-			<tera-input-number v-model.lazy="timestep" @update:model-value="updateIntervention" />
+			<tera-input-number v-model.lazy="timestep" @blur="updateIntervention" />
 		</div>
 		<div class="label-col">
 			<label>Value</label>
-			<tera-input-number v-model.lazy="value" @update:model-value="updateIntervention" />
+			<tera-input-number v-model.lazy="value" @blur="updateIntervention" />
 		</div>
 		<Button label="Delete" icon="pi pi-trash" @click="$emit('delete')" rounded text />
 	</div>
@@ -39,7 +35,6 @@ const value = ref(props.intervention.value);
 
 function updateIntervention() {
 	const intervention: Intervention = {
-		id: props.intervention.id,
 		name: name.value,
 		timestep: timestep.value,
 		value: value.value

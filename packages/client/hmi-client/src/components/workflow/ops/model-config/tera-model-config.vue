@@ -180,7 +180,7 @@
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
 						<tera-model-intervention
 							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
-							:key="intervention.id"
+							:key="intervention.name + intervention.timestep"
 							:intervention="intervention"
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
@@ -374,7 +374,6 @@ import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
 import { getInitials, getParameters } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
-import { v4 as uuidv4 } from 'uuid';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -657,15 +656,12 @@ const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW)
 const addIntervention = () => {
 	if (knobs.value.transientModelConfig.interventions) {
 		knobs.value.transientModelConfig.interventions.push({
-			id: uuidv4(),
 			name: '',
 			timestep: 1,
 			value: 1
 		});
 	} else {
-		knobs.value.transientModelConfig.interventions = [
-			{ id: uuidv4(), name: '', timestep: 1, value: 1 }
-		];
+		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
 	}
 };
 

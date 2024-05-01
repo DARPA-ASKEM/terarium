@@ -752,7 +752,6 @@ export interface EnsembleModelConfigs {
 }
 
 export interface Intervention {
-    id: string;
     name: string;
     timestep: number;
     value: number;
