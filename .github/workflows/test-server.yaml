@@ -4,7 +4,7 @@
 name: Server Tests
 
 env:
-    local_host_name: "localhost"
+  local_host_name: "localhost"
 
 # Controls when the action will run.
 # yamllint disable-line rule:truthy
