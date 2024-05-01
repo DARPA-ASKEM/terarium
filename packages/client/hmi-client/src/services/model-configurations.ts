@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import type { ModelConfiguration, Model } from '@/types/Types';
+import type { ModelConfiguration, Model, Intervention } from '@/types/Types';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -22,18 +22,21 @@ export const createModelConfiguration = async (
 	name: string,
 	description: string,
 	configuration: Model,
-	isTemporary?: boolean
+	isTemporary?: boolean,
+	givenInterventions?: Intervention[]
 ) => {
 	if (!model_id) {
 		return null;
 	}
 	const temporary = isTemporary ?? false;
+	const interventions = givenInterventions ?? [];
 	const response = await API.post(`/model-configurations`, {
 		model_id,
 		temporary,
 		name,
 		description,
-		configuration
+		configuration,
+		interventions
 	});
 	return response?.data ?? null;
 };
