@@ -18,4 +18,4 @@ services:
       AUTH_PASSWORD: "${secret_service_account_password}"
       OPENAI_API_KEY: "${secret_mit_openai_key}"
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
