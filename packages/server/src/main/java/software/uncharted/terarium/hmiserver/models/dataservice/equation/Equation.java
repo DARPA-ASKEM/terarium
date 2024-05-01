@@ -1,25 +1,37 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.equation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serial;
 import java.util.Map;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /** The Equation Data Model */
 @EqualsAndHashCode(callSuper = true)
 @TSModel
 @Data
 @Accessors(chain = true)
+@Entity
 public class Equation extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -5769056715284691520L;
+
+	@ManyToOne
+	@JoinColumn(name = "project_id")
+	@JsonBackReference
+	@TSOptional
+	private Project project;
+
 	/** The userId of the user that created the equation * */
 	@TSOptional
 	private String userId;
