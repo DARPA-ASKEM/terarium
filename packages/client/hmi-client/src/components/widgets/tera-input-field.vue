@@ -1,13 +1,19 @@
 <template>
 	<div :class="{ error: errorMessage }" @click.self.stop="focusInput">
 		<label @click.self.stop="focusInput">{{ label }}</label>
-		<input v-bind="attrs" ref="inputField" :value="modelValue" @input="updateValue" />
+		<input
+			v-bind="attrs"
+			ref="inputField"
+			:value="modelValue"
+			@input="updateValue"
+			:style="{ 'text-align': textAlign }"
+		/>
 	</div>
 	<aside v-if="errorMessage"><i class="pi pi-exclamation-circle" /> {{ errorMessage }}</aside>
 </template>
 
 <script setup lang="ts">
-import { ref, useAttrs } from 'vue';
+import { computed, ref, useAttrs } from 'vue';
 
 defineProps<{
 	modelValue: string;
@@ -19,6 +25,7 @@ const emit = defineEmits(['update:modelValue']);
 const inputField = ref<HTMLInputElement | null>(null);
 const attrs = useAttrs();
 
+const textAlign = computed(() => (attrs.type === 'number' ? 'right' : 'left'));
 const focusInput = () => {
 	inputField.value?.focus();
 };
@@ -67,10 +74,14 @@ label {
 }
 
 input {
-	text-align: right;
 	flex-grow: 1;
 	border: none;
 	background-color: none;
+	&::-webkit-inner-spin-button,
+	&::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
 }
 
 aside {

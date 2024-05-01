@@ -19,6 +19,11 @@
 			<label>Disabled input</label>
 			<tera-input-field label="Label" model-value="Disabled" disabled />
 		</div>
+
+		<div class="w-2">
+			<label>Number input</label>
+			<tera-input-field label="Label" v-model="numberstring" type="number" />
+		</div>
 	</div>
 </template>
 
@@ -27,6 +32,7 @@ import teraInputField from '@/components/widgets/tera-input-field.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');
+const numberstring = ref<string>('');
 const errorstring = ref<string>('Error message error message');
 const errormessage = ref<string>('Error message error message');
 
