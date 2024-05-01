@@ -71,7 +71,7 @@ public class TaskService {
 
 	// This private subclass is to prevent people from setting the task id
 	// themselves since it may be overridden if the task is already in the cache.
-	// This will prevent siutations where someone creates an id, does something with
+	// This will prevent situations where someone creates an id, does something with
 	// it, and then sends the request expected the response to match it.
 	@NoArgsConstructor
 	@Data
@@ -162,6 +162,8 @@ public class TaskService {
 	// NOTE: We require a distributed lock to keep the following three caches in
 	// sync across instances. Anytime these caches are written or read from, the
 	// lock must be acquired.
+	// DO NOT TOUCH THESE CACHES, UNLESS YOU KNOW WHAT YOU ARE DOING.
+	// There be dragons.
 	// vvvvvvvvvvvvvvvvvvv
 	private RLock rLock;
 	private RMapCache<String, UUID> taskIdCache;
@@ -172,15 +174,6 @@ public class TaskService {
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
-
-	// The exchange name that the taskrunner will publish responses to.
-	@Value("${terarium.taskrunner.response-exchange}")
-	private String TASK_RUNNER_RESPONSE_EXCHANGE;
-
-	// The _shared_ response exchange that each hmi-server instance will consume on.
-	// NOTE: messages will round robin between hmi-server instances.
-	@Value("${terarium.taskrunner.response-queue}")
-	private String TASK_RUNNER_RESPONSE_QUEUE;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
