@@ -25,7 +25,7 @@
 import { ref } from 'vue';
 
 defineProps<{
-	modelValue?: string;
+	modelValue: string;
 	label?: string;
 	errorMessage?: string;
 	disabled?: boolean;

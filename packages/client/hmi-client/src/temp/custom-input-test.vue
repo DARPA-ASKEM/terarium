@@ -2,7 +2,7 @@
 	<div class="flex flex-column pl-8 gap-5">
 		<div class="w-2">
 			<label>normal input</label>
-			<tera-input-field label="Label" />
+			<tera-input-field v-model="teststring" label="Label" />
 		</div>
 
 		<div class="w-2">
@@ -26,6 +26,7 @@
 import teraInputField from '@/components/widgets/tera-input-field.vue';
 import { ref } from 'vue';
 
+const teststring = ref<string>('');
 const errorstring = ref<string>('Error message error message');
 const errormessage = ref<string>('Error message error message');
 
