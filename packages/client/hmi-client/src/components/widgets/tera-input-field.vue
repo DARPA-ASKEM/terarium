@@ -66,9 +66,6 @@ const updateValue = (event: Event) => {
 	cursor: text;
 	margin-bottom: var(--gap-small);
 	transition: border-color 0.3s ease-in-out;
-	&.error {
-		background-color: var(--error-message-background);
-	}
 
 	&.disabled {
 		opacity: 0.5;
@@ -76,6 +73,9 @@ const updateValue = (event: Event) => {
 
 	&.focused {
 		border-color: var(--primary-color);
+	}
+	&.error {
+		border-color: var(--error-border-color);
 	}
 	input {
 		min-width: 0;
