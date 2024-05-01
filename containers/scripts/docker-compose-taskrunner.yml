@@ -15,7 +15,7 @@ services:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   mira-taskrunner:
     container_name: mira-taskrunner
@@ -31,7 +31,7 @@ services:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   funman-taskrunner:
     container_name: funman-taskrunner
@@ -47,4 +47,4 @@ services:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
