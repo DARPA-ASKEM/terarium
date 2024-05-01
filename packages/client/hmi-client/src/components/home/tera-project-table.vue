@@ -14,7 +14,7 @@
 			:key="index"
 			:style="`width: ${getColumnWidth(col.field)}%`"
 		>
-			<template v-if="col.field !== 'username'" #body="{ data }">
+			<template #body="{ data }">
 				<a
 					v-if="col.field === 'name'"
 					class="project-title-link"
@@ -27,9 +27,9 @@
 					:text="data.description"
 					:lines="1"
 				/>
-				<template v-if="col.field === 'owner'">
+				<div v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
-				</template>
+				</div>
 				<div v-else-if="col.field === 'stats'" class="stats">
 					<span class="mr-1"><i class="pi pi-user mr-1" />1</span>
 					<span class="mr-1"
@@ -41,10 +41,10 @@
 					</span>
 					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
 				</div>
-				<template v-else-if="col.field === 'created'">
+				<template v-else-if="col.field === 'createdOn'">
 					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
 				</template>
-				<template v-else-if="col.field === 'updated'">
+				<template v-else-if="col.field === 'updatedOn'">
 					{{ data.updatedOn ? formatDdMmmYyyy(data.updatedOn) : '--' }}
 				</template>
 			</template>
