@@ -498,9 +498,16 @@ export interface Simulation extends TerariumAsset {
     startTime?: Date;
     completedTime?: Date;
     engine: SimulationEngine;
-    workflowId: string;
     userId?: string;
     projectId?: string;
+    updates: SimulationUpdate[];
+}
+
+export interface SimulationUpdate {
+    id: string;
+    simulationId: string;
+    createdOn: Date;
+    data: any;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -689,6 +696,7 @@ export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
     jobId: string;
+    dataToPersist: any;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
@@ -727,6 +735,7 @@ export interface ScimlStatusUpdate {
     id: string;
     solData: { [index: string]: any };
     timesteps: number[];
+    dataToPersist: any;
 }
 
 export interface SimulationRequest {
