@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -62,8 +61,6 @@ public class TDSCodeController {
 
 	final CodeService codeService;
 
-	final ObjectMapper objectMapper;
-
 	/**
 	 * Retrieves a list of codes.
 	 *
@@ -97,10 +94,10 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<List<Code>> getCodes(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
+			@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(codeService.getAssets(pageSize, page));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			log.error("Unable to get code resources", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get code resources");
@@ -179,7 +176,7 @@ public class TDSCodeController {
 			final Optional<Code> code = codeService.getAsset(id);
 			return code.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.noContent().build());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			log.error("Unable to get code resource", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get code resource");
