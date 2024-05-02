@@ -201,20 +201,6 @@ export interface DocumentAsset extends TerariumAsset {
     assets?: DocumentExtraction[];
 }
 
-export interface Equation extends TerariumAsset {
-    userId?: string;
-    equationType: EquationType;
-    content: string;
-    metadata?: { [index: string]: any };
-    source?: EquationSource;
-}
-
-export interface EquationSource {
-    extractedFrom?: string;
-    documentAssetName?: string;
-    hmiGenerated?: boolean;
-}
-
 export interface ExternalPublication extends TerariumAsset {
     title: string;
     xdd_uri: string;
@@ -702,7 +688,6 @@ export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
     jobId: string;
-    dataToPersist: any;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
@@ -741,7 +726,6 @@ export interface ScimlStatusUpdate {
     id: string;
     solData: { [index: string]: any };
     timesteps: number[];
-    dataToPersist: any;
 }
 
 export interface SimulationRequest {
@@ -1327,11 +1311,6 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
-}
-
-export enum EquationType {
-    Mathml = "mathml",
-    Latex = "latex",
 }
 
 export enum ProvenanceRelationType {

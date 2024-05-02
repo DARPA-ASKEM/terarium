@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -32,6 +33,7 @@ public class ScimlStatusUpdate {
 	// List of timesteps
 	private List<Number> timesteps;
 
+	@JsonIgnore
 	public JsonNode getDataToPersist() {
 		final ObjectMapper mapper = new ObjectMapper();
 		final JsonNode jsonNode = mapper.valueToTree(this);

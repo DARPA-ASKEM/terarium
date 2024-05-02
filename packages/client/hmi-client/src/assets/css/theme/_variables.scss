@@ -42,6 +42,7 @@ $fontWeightSemiBold: 600;
 //global
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
+$smallBorderRadius: 2px !default;
 $borderRadius: 4px !default;
 $mediumBorderRadius: 6px !default;
 $bigBorderRadius: 8px !default;
@@ -868,12 +869,15 @@ $petri-inputBox: var(--surface-0);
 
 :root {
 	--editing-color: rgb(238, 238, 136);
+	--border-radius-small: #{$smallBorderRadius};
 	--border-radius: #{$borderRadius};
 	--border-radius-medium: #{$mediumBorderRadius};
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
 	--chevron-hover: #1b807332;
 	--content-padding: #{$panelContentPadding};
+	--error-message-background: #{$errorMessageBg};
+	--error-message-color: #{$errorMessageTextColor};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
 	--font-body-medium: #{$fontBodyMedium};
@@ -939,6 +943,7 @@ $petri-inputBox: var(--surface-0);
 	--warning-color: #FFAB00;
 	--surface-error: #FDDDD3;
 	--error-color: #F35625;
+	--error-border-color: #F89A7C;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;
 	--surface-section: #ffffff;
