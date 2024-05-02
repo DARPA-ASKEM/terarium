@@ -11,7 +11,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
 ### 2. Upload a Dataset
-1. Upload _the Dataset_ [dataset.json](data/dataset.json) using `Upload Resources` button in the bottom left.
+1. Upload _the Dataset_ [Epi Sc 4 Interaction matrix.csv](data/Epi Sc 4 Interaction matrix.csv) using `Upload Resources` button in the bottom left.
 2. Check that _the Dataset_ appears in the left menu.
 3. Open _the Dataset_ and check that it has been added correctly.
 
