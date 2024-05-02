@@ -34,5 +34,7 @@ you should see the following options in your chart's dropdown:
   EnsembleVariableThree
   (or whatever arbitrary name you gave your mappings)
 
+You should be able to add and delete charts
+You should see changes to the select on the charts duplicated in the node as well as the drilldown views
 ### 5. End test
 1. logout of the application 

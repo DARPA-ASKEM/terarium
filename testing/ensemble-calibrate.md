@@ -25,10 +25,11 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 4. Set the other mappings as follows:
     Find the `Susceptible_state` in the ensemble variables dropdown, select it and hit add mapping.
       Link the `Susceptible` for both of your identical configurations
-5. 
 
 ### Validation:
 Run should complete with a chart and a dataset
+You should be able to add and delete charts
+You should see changes to the select on the charts duplicated in the node as well as the drilldown views
 
 ### 5. End test
 1. logout of the application 
