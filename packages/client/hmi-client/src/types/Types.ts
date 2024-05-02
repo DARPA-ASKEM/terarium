@@ -614,6 +614,7 @@ export interface NotificationEvent {
     createdOn: Date;
     acknowledgedOn: Date;
     data: any;
+    notificationGroup: NotificationGroup;
 }
 
 export interface NotificationGroup {
