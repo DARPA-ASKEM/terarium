@@ -20,6 +20,7 @@ import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -30,9 +31,6 @@ public class Project extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -241733670076432802L;
-
-	@Schema(defaultValue = "My New Project")
-	private String name;
 
 	private String userId;
 
@@ -47,10 +45,6 @@ public class Project extends TerariumAsset {
 	private List<String> authors;
 
 	@TSOptional
-	@Schema(defaultValue = "My Project Description")
-	private String description;
-
-	@TSOptional
 	@Schema(defaultValue = "My Project Overview")
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
@@ -61,7 +55,15 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ToString.Exclude
 	@JsonManagedReference
+	@Deprecated // This will be going away once the PG migration is done.
 	private List<ProjectAsset> projectAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project")
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@ToString.Exclude
+	@JsonManagedReference
+	private List<Code> codeAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient

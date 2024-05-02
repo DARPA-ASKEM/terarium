@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -17,6 +16,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -49,11 +49,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
-				.setModelId(UUID.randomUUID())
-				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration =
+				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+						.setModelId(UUID.randomUUID())
+						.setConfiguration(new Model())
+						.setName("test-framework")
+						.setDescription("test-desc"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -64,11 +65,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = new ModelConfiguration()
-				.setName("test-framework")
+		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
+				.setConfiguration(new Model())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value"));
+				.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 						.with(csrf())
@@ -81,11 +82,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
-				.setModelId(UUID.randomUUID())
-				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+		final ModelConfiguration modelConfiguration =
+				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+						.setModelId(UUID.randomUUID())
+						.setConfiguration(new Model())
+						.setDescription("test-desc")
+						.setName("test-framework"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -98,11 +100,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(new ModelConfiguration()
-				.setName("test-framework")
+		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
+				.setConfiguration(new Model())
 				.setDescription("test-desc")
-				.setConfiguration(Map.of("key", "value")));
+				.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))

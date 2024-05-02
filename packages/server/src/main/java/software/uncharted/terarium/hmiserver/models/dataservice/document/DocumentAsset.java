@@ -25,12 +25,6 @@ public class DocumentAsset extends TerariumAsset {
 	private static final long serialVersionUID = -8425680186002783351L;
 
 	@TSOptional
-	private String name;
-
-	@TSOptional
-	private String description;
-
-	@TSOptional
 	private String userId;
 
 	@TSOptional

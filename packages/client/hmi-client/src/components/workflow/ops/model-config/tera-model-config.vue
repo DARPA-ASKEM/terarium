@@ -175,6 +175,22 @@
 							<p class="empty-section">No parameters found.</p>
 						</section>
 					</AccordionTab>
+					<AccordionTab>
+						<template #header> Interventions </template>
+						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
+						<tera-model-intervention
+							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
+							:key="intervention.name + intervention.timestep"
+							:intervention="intervention"
+							:parameter-options="Object.keys(mmt.parameters)"
+							@update-value="
+								(data: Intervention) => {
+									updateIntervention(data, idx);
+								}
+							"
+							@delete="deleteIntervention(idx)"
+						/>
+					</AccordionTab>
 				</Accordion>
 
 				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
@@ -192,6 +208,14 @@
 							label="Run"
 							icon="pi pi-play"
 							@click="createConfiguration(false)"
+						/>
+						<Button
+							outlined
+							size="large"
+							:disabled="isSaveDisabled"
+							label="Download"
+							icon="pi pi-download"
+							@click="downloadConfiguredModel()"
 						/>
 						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
 					</div>
@@ -319,7 +343,7 @@ import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue'
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-
+import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { FatalError } from '@/api/api';
@@ -335,7 +359,13 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
 import { createModelConfiguration } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	Initial,
+	Intervention,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
@@ -380,7 +410,8 @@ const knobs = ref<BasicKnobs>({
 		name: '',
 		description: '',
 		model_id: '',
-		configuration: {}
+		configuration: {} as Model,
+		interventions: []
 	}
 });
 
@@ -622,6 +653,32 @@ const isRegNet = computed(() => modelType.value === AMRSchemaNames.REGNET);
 const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
 const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
+const addIntervention = () => {
+	if (knobs.value.transientModelConfig.interventions) {
+		knobs.value.transientModelConfig.interventions.push({
+			name: '',
+			timestep: 1,
+			value: 1
+		});
+	} else {
+		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
+	}
+};
+
+const deleteIntervention = (index: number) => {
+	if (knobs.value.transientModelConfig.interventions?.[index]) {
+		knobs.value.transientModelConfig.interventions.splice(index, 1);
+	}
+};
+
+const updateIntervention = (value: Intervention, index: number) => {
+	if (knobs.value.transientModelConfig.interventions?.[index]) {
+		knobs.value.transientModelConfig.interventions[index] = value;
+	} else {
+		logger.error(`Failed to update intervention at position ${index}`);
+	}
+};
+
 const updateConfigParam = (params: ModelParameter[]) => {
 	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
 	for (let i = 0; i < parameters.length; i++) {
@@ -648,7 +705,7 @@ const updateConfigFromModel = (inputModel: Model) => {
 
 const runSanityCheck = () => {
 	const errors: string[] = [];
-	const modelToCheck = knobs.value?.transientModelConfig?.configuration as Model;
+	const modelToCheck = knobs.value?.transientModelConfig?.configuration;
 	if (!modelToCheck) {
 		errors.push('no model defined in configuration');
 		return errors;
@@ -676,6 +733,21 @@ const runSanityCheck = () => {
 	return errors;
 };
 
+const downloadConfiguredModel = async () => {
+	const rawModel = knobs.value?.transientModelConfig?.configuration;
+	if (rawModel) {
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+		const a = document.createElement('a');
+		a.href = `data:${data}`;
+		a.download = `${
+			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
+		}.json`;
+		a.innerHTML = 'download JSON';
+		a.click();
+		a.remove();
+	}
+};
+
 const createConfiguration = async (force: boolean = false) => {
 	if (!model.value) return;
 
@@ -692,9 +764,11 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const data = await createModelConfiguration(
 		model.value.id,
-		knobs.value?.transientModelConfig?.name,
+		knobs.value?.transientModelConfig?.name ?? '',
 		knobs.value?.transientModelConfig?.description ?? '',
-		knobs.value?.transientModelConfig?.configuration
+		knobs.value?.transientModelConfig?.configuration,
+		false,
+		knobs.value.transientModelConfig.interventions ?? []
 	);
 
 	if (!data) {
@@ -756,7 +830,8 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value
+			configuration: model.value ?? ({} as Model),
+			interventions: []
 		};
 
 		await createTempModelConfig();

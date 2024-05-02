@@ -223,12 +223,14 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		const parameters = modelConfiguration.configuration.semantics.ode.parameters;
-		csvData.forEach((row) =>
-			parameters.forEach((parameter: any) => {
-				row[parameter.id] = parameter.value;
-			})
-		);
+		const parameters = modelConfiguration.configuration?.semantics?.ode?.parameters;
+		if (parameters) {
+			csvData.forEach((row) =>
+				parameters.forEach((parameter: any) => {
+					row[parameter.id] = parameter.value;
+				})
+			);
+		}
 	}
 	runResults.value[runId] = csvData as any;
 	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value, runId);

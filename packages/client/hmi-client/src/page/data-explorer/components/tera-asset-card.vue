@@ -228,7 +228,7 @@ const title = computed(() => {
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
-		value = (props.asset as Dataset).name;
+		value = (props.asset as Dataset).name ?? '';
 	}
 	return highlightSearchTerms(value);
 });

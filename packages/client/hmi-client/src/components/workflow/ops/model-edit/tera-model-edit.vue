@@ -64,12 +64,6 @@
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
 					<template #footer>
-						<InputText
-							v-model="newModelName"
-							placeholder="model name"
-							type="text"
-							class="input-small"
-						/>
 						<div class="flex gap-2">
 							<Button
 								:disabled="!amr"
@@ -79,7 +73,7 @@
 								class="white-space-nowrap"
 								style="margin-right: auto"
 								label="Save as new model"
-								@click="saveNewModel({ addToProject: true, appendOutputPort: true })"
+								@click="showSaveModelModal = true"
 							/>
 							<Button label="Close" size="large" @click="emit('close')" />
 						</div>
@@ -88,22 +82,26 @@
 			</div>
 		</div>
 	</tera-drilldown>
+	<tera-save-model-modal
+		v-if="amr"
+		:model="amr"
+		:is-visible="showSaveModelModal"
+		@close-modal="showSaveModelModal = false"
+		@on-save="onSaveModel"
+	/>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import { createModel, getModel } from '@/services/model';
+import { getModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
-import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -115,6 +113,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -149,8 +148,8 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
+const showSaveModelModal = ref(false);
 
-const newModelName = ref('');
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
 	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
@@ -190,7 +189,12 @@ const appendCode = (data: any, property: string) => {
 };
 
 const syncWithMiraModel = (data: any) => {
-	amr.value = data.content['application/json'];
+	const updatedModel = data.content?.['application/json'];
+	if (!updatedModel) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
+	amr.value = updatedModel;
 };
 
 // Reset model, then execute the code
@@ -316,29 +320,15 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (options: SaveOptions) => {
-	if (!amr.value) return;
-	amr.value.header.name = newModelName.value;
-
-	const projectResource = useProjects();
-	const modelData = await createModel(amr.value);
-	const projectId = projectResource.activeProject.value?.id;
-
-	if (!modelData) return;
-
-	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	}
-
+const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPort: true }) => {
 	if (options.appendOutputPort) {
 		emit('append-output', {
 			id: uuidv4(),
-			label: newModelName.value,
+			label: savedModel.name,
 			type: 'modelId',
 			state: _.cloneDeep(props.node.state),
-			value: [modelData.id]
+			value: [savedModel.id]
 		});
-		emit('close');
 	}
 };
 

@@ -25,8 +25,6 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
-	private String description;
-
 	private Transform transform;
 
 	@Convert(converter = ObjectConverter.class)
@@ -43,7 +41,6 @@ public class Workflow extends TerariumAsset {
 
 		cloneSuperFields(clone);
 
-		clone.description = this.description;
 		if (this.transform != null) {
 			clone.transform = new Transform()
 					.setX(this.transform.getX())

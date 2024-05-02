@@ -40,32 +40,6 @@ image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace hmi-client build
 	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-TARGETS += gollm-taskrunner
-clean-gollm-taskrunner: clean-gollm-taskrunner-base
-	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-image-gollm-taskrunner: clean-gollm-taskrunner
-	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-TARGETS += mira-taskrunner
-clean-mira-taskrunner: clean-mira-taskrunner-base
-	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-image-mira-taskrunner: clean-mira-taskrunner
-	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-TARGETS += funman-taskrunner
-clean-funman-taskrunner: clean-funman-taskrunner-base
-	rm -rf $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-image-funman-taskrunner: clean-funman-taskrunner
-	./gradlew :packages:taskrunner:build -x test
-	mv $(PROJECT_DIR)/packages/taskrunner/build $(PROJECT_DIR)/packages/taskrunner/docker/build
-
-
-
 
 ## Clean
 .PHONY: clean
@@ -75,20 +49,6 @@ clean: $(TARGETS:%=clean-%)
 .PHONY: clean-hmi-server-base
 clean-hmi-server-base:
 	./gradlew :packages:server:clean
-
-.PHONY: clean-gollm-taskrunner-base
-clean-gollm-taskrunner-base:
-	./gradlew :packages:taskrunner:clean
-
-.PHONY: clean-mira-taskrunner-base
-clean-mira-taskrunner-base:
-	./gradlew :packages:taskrunner:clean
-
-.PHONY: clean-funman-taskrunner-base
-clean-funman-taskrunner-base:
-	./gradlew :packages:taskrunner:clean
-
-
 
 ## Images
 .PHONY: images

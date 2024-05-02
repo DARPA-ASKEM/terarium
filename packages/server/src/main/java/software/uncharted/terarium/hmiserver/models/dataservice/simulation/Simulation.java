@@ -2,9 +2,18 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -12,11 +21,11 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.utils.hibernate.JpaConverterJson;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -29,14 +38,12 @@ public class Simulation extends TerariumAsset {
 	private static final long serialVersionUID = 5467224100686908152L;
 
 	@JsonAlias("execution_payload")
-	@Convert(converter = JpaConverterJson.class)
+	@Column(columnDefinition = "text")
 	private JsonNode executionPayload;
-
-	@TSOptional
-	private String description;
 
 	@JsonAlias("result_files")
 	@TSOptional
+	@Column(length = 1024)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@ElementCollection
 	private List<String> resultFiles;
@@ -49,6 +56,7 @@ public class Simulation extends TerariumAsset {
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@Column(columnDefinition = "text")
 	private String statusMessage;
 
 	@JsonAlias("start_time")
@@ -66,24 +74,26 @@ public class Simulation extends TerariumAsset {
 	@Enumerated(EnumType.STRING)
 	private SimulationEngine engine;
 
-	@JsonAlias("workflow_id")
-	private UUID workflowId;
-
 	@JsonAlias("user_id")
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
 	@JsonAlias("project_id")
 	@TSOptional
 	private UUID projectId; // TODO this can probably be joined to the project table soon?
 
+	@OneToMany(mappedBy = "simulation", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OrderBy("createdOn DESC")
+	@ToString.Exclude
+	@JsonManagedReference
+	private List<SimulationUpdate> updates = new ArrayList<>();
+
 	@Override
 	public Simulation clone() {
 		final Simulation clone = new Simulation();
 
 		cloneSuperFields(clone);
-
-		clone.setDescription(this.description);
 
 		clone.setResultFiles(new ArrayList<>(this.resultFiles));
 		clone.setType(SimulationType.valueOf(this.type.name()));
@@ -94,7 +104,11 @@ public class Simulation extends TerariumAsset {
 		clone.setEngine(SimulationEngine.valueOf(this.engine.name()));
 		clone.setUserId(this.userId);
 		clone.setExecutionPayload(this.executionPayload.deepCopy());
-		clone.setProjectId(this.projectId); // TODO
+		clone.setProjectId(this.projectId);
+
+		for (final SimulationUpdate update : this.updates) {
+			clone.getUpdates().add(update.clone(clone));
+		}
 
 		return clone;
 	}

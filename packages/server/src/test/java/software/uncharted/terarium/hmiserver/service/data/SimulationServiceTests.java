@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
@@ -45,6 +46,12 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		simulation.setEngine(SimulationEngine.SCIML);
 
 		return simulation;
+	}
+
+	static SimulationUpdate createSimulationUpdate(final JsonNode data) {
+		final SimulationUpdate update = new SimulationUpdate();
+		update.setData(data);
+		return update;
 	}
 
 	@Test
@@ -169,5 +176,31 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 				simulation.getResultFiles().size(), imported.getResultFiles().size());
 		Assertions.assertEquals(simulation.getExecutionPayload(), imported.getExecutionPayload());
 		Assertions.assertEquals(simulation.getType(), imported.getType());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateSimulationUpdates() {
+		final Simulation before = (Simulation) createSimulation("0").setId(UUID.randomUUID());
+
+		try {
+			Simulation after = simulationService.createAsset(before);
+
+			final String jsonString = "{\"key\":\"value\"}";
+			final JsonNode data = objectMapper.readTree(jsonString);
+
+			final SimulationUpdate update0 = createSimulationUpdate(data);
+			simulationService.appendUpdateToSimulation(after.getId(), update0);
+
+			final SimulationUpdate update1 = createSimulationUpdate(data);
+			simulationService.appendUpdateToSimulation(after.getId(), update1);
+
+			after = simulationService.getAsset(after.getId()).orElseThrow();
+
+			Assertions.assertEquals(2, after.getUpdates().size());
+
+		} catch (final Exception e) {
+			Assertions.fail(e);
+		}
 	}
 }

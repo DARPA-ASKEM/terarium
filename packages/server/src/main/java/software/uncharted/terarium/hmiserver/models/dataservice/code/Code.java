@@ -1,68 +1,81 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.io.Serial;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
+@Entity
 public class Code extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = 3041175096070970227L;
-	/* The name of the code. */
-	@Schema(defaultValue = "Default Name")
-	private String name;
-
-	/* The description of the code. */
-	@Schema(defaultValue = "Default Description")
-	private String description;
 
 	/* Files that contain dynamics */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
+	@JdbcTypeCode(SqlTypes.JSON)
 	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
 	@TSOptional
 	@JsonAlias("repo_url")
+	@Column(length = 512)
 	private String repoUrl;
 
 	/* The optional metadata for this code */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
+	@ElementCollection
+	@Column(columnDefinition = "text")
 	private Map<String, String> metadata;
 
-	public enum ProgrammingLanguage {
-		PYTHON("python"),
-		R("r"),
-		Julia("julia"),
-		ZIP("zip");
+	@ManyToOne
+	@JoinColumn(name = "project_id")
+	@JsonBackReference
+	@TSOptional
+	private Project project;
 
-		public final String language;
+	@Override
+	public Code clone() {
+		final Code clone = new Code();
+		cloneSuperFields(clone);
 
-		ProgrammingLanguage(final String language) {
-			this.language = language;
+		if (this.files != null) {
+			clone.files = new HashMap<>();
+			for (final String fileName : this.files.keySet()) {
+				clone.files.put(fileName, this.files.get(fileName).clone());
+			}
 		}
 
-		@Override
-		@JsonValue
-		public String toString() {
-			return language;
+		clone.repoUrl = this.repoUrl;
+		if (this.metadata != null) {
+			clone.metadata = new HashMap<>();
+			for (final String key : this.metadata.keySet()) {
+				clone.metadata.put(key, this.metadata.get(key));
+			}
 		}
 
-		public static ProgrammingLanguage fromString(final String language) {
-			return ProgrammingLanguage.valueOf(language.toUpperCase());
-		}
+		return clone;
 	}
 }
