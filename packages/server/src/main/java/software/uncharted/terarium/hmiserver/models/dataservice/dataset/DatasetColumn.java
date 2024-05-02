@@ -88,7 +88,7 @@ public class DatasetColumn {
 		return clone;
 	}
 
-	enum ColumnType {
+	public enum ColumnType {
 		@JsonAlias("unknown")
 		UNKNOWN,
 		@JsonAlias("boolean")
