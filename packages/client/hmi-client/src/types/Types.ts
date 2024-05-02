@@ -614,6 +614,7 @@ export interface NotificationEvent {
     createdOn: Date;
     acknowledgedOn: Date;
     data: any;
+    notificationGroup: NotificationGroup;
 }
 
 export interface NotificationGroup {
@@ -688,7 +689,6 @@ export interface CiemssStatusUpdate {
     loss: number;
     progress: number;
     jobId: string;
-    dataToPersist: any;
 }
 
 export interface EnsembleCalibrationCiemssRequest {
@@ -727,7 +727,6 @@ export interface ScimlStatusUpdate {
     id: string;
     solData: { [index: string]: any };
     timesteps: number[];
-    dataToPersist: any;
 }
 
 export interface SimulationRequest {

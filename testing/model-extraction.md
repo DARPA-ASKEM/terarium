@@ -11,7 +11,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
 ### 2. Upload a PDF
-1. Upload _the Document_ [SIR](https://drive.google.com/file/d/1vN4sNR7IrRi5GsOQ9r_LgV4S5wwinXnG/view?usp=drive_link)
+1. Upload _the Document_ [SIR.pdf](data/SIR.pdf)
 2. Wait for final notification of document extraction
 3. Open _the Document_ and check that extractions are visible
 
