@@ -1,4 +1,4 @@
-## Template Test Scenario
+## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
 When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
 
@@ -10,18 +10,18 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
     ```
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
-### 2. Task
+### 2. [Task name]
 1. Describe what the user is to be done to complete a task.
 2. The user is expected to know what to do to and look for to complete the task.
 3. The goal is to ensure that **no steps are missed**.
 4. Describe the expected outcome.
 
-### 3. Another task
+### 3. [Another task name]
 1. If a task might have multiple outcomes, please split them in two tasks.
 2. No need to repeat all the step, just mention what needs to be done to be different.
 3. Describe the expected outcome.
 
-### 4. Input files
+### 4. [About input file]
 1. If the test requires input files, please provide them via links.
 2. The files are stored in the `testing/data` folder.
 3. Please keep the names of files simple.
