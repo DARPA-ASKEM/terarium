@@ -14,20 +14,18 @@
 			:key="index"
 			:style="`width: ${getColumnWidth(col.field)}%`"
 		>
-			<template v-if="col.field !== 'username'" #body="{ data }">
-				<a
-					v-if="col.field === 'name'"
-					class="project-title-link"
-					@click.stop="emit('open-project', data.id)"
-				>
-					{{ data.name }}
-				</a>
+			<template #body="{ data }">
+				<template v-if="col.field === 'name'">
+					<a class="project-title-link" @click.stop="emit('open-project', data.id)">
+						{{ data.name }}
+					</a>
+				</template>
 				<tera-show-more-text
 					v-else-if="col.field === 'description'"
 					:text="data.description"
 					:lines="1"
 				/>
-				<template v-if="col.field === 'owner'">
+				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
 				</template>
 				<div v-else-if="col.field === 'stats'" class="stats">
@@ -41,10 +39,10 @@
 					</span>
 					<span><i class="pi pi-share-alt mr-1" /> {{ data.metadata?.['models-count'] }}</span>
 				</div>
-				<template v-else-if="col.field === 'created'">
+				<template v-else-if="col.field === 'createdOn'">
 					{{ data.createdOn ? formatDdMmmYyyy(data.createdOn) : '--' }}
 				</template>
-				<template v-else-if="col.field === 'updated'">
+				<template v-else-if="col.field === 'updatedOn'">
 					{{ data.updatedOn ? formatDdMmmYyyy(data.updatedOn) : '--' }}
 				</template>
 			</template>

@@ -16,6 +16,7 @@ import AMRPetriTest from '@/temp/AMRPetriTest.vue';
 import PyodideTest from '@/temp/PyodideTest.vue';
 import JupyterTest from '@/temp/JupyterTest.vue';
 import ModelTemplateTest from '@/temp/model-template-test.vue';
+import CustomInputTest from '@/temp/custom-input-test.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -67,7 +68,8 @@ const routes = [
 	{ path: '/amr-petri-test', component: AMRPetriTest },
 	{ path: '/pyodide-test', component: PyodideTest },
 	{ path: '/jupyter-test', component: JupyterTest },
-	{ path: '/model-template-test', component: ModelTemplateTest }
+	{ path: '/model-template-test', component: ModelTemplateTest },
+	{ path: '/custom-input-test', component: CustomInputTest }
 ];
 
 const router = createRouter({
