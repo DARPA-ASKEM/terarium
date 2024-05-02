@@ -1,12 +1,18 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import java.util.ArrayList;import java.util.HashMap;import java.util.List;
-import java.util.Map;
 import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;import jakarta.persistence.Enumerated;import lombok.Data;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;import org.hibernate.type.SqlTypes;import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
@@ -60,17 +66,17 @@ public class DatasetColumn {
 	}
 
 	@Override
-	public DatasetColumn clone(){
+	public DatasetColumn clone() {
 		final DatasetColumn clone = new DatasetColumn();
 
 		clone.dataType = this.dataType;
 		clone.formatStr = this.formatStr;
-		if(this.annotations != null) {
+		if (this.annotations != null) {
 			clone.annotations = new ArrayList<>();
 			clone.annotations.addAll(this.annotations);
 		}
 
-		if(this.metadata != null) {
+		if (this.metadata != null) {
 			clone.metadata = new HashMap<>();
 			clone.metadata.putAll(this.metadata);
 		}
@@ -79,10 +85,8 @@ public class DatasetColumn {
 
 		clone.description = this.description;
 
-
 		return clone;
 	}
-
 
 	enum ColumnType {
 		@JsonAlias("unknown")
@@ -110,5 +114,4 @@ public class DatasetColumn {
 		@JsonAlias("time")
 		TIME
 	}
-
 }

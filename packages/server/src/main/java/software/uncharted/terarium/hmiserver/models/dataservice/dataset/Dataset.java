@@ -1,19 +1,27 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.sql.Timestamp;
-import java.util.ArrayList;import java.util.List;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;import jakarta.persistence.ManyToOne;import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;import org.hibernate.type.SqlTypes;import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /** Represents a dataset document from TDS */
 @EqualsAndHashCode(callSuper = true)
@@ -88,26 +96,26 @@ public class Dataset extends TerariumAsset {
 	private Grounding grounding;
 
 	@Override
-	public Dataset clone(){
+	public Dataset clone() {
 		final Dataset clone = new Dataset();
 		super.cloneSuperFields(clone);
 
 		clone.userId = this.userId;
 		clone.esgfId = this.esgfId;
 		clone.dataSourceDate = this.dataSourceDate;
-		if(fileNames != null){
+		if (fileNames != null) {
 			clone.fileNames = new ArrayList<>();
 			clone.fileNames.addAll(fileNames);
 		}
 		clone.datasetUrl = this.datasetUrl;
-		if(datasetUrls != null){
+		if (datasetUrls != null) {
 			clone.datasetUrls = new ArrayList<>();
 			clone.datasetUrls.addAll(datasetUrls);
 		}
 
-		if(columns != null){
+		if (columns != null) {
 			clone.columns = new ArrayList<>();
-			for(DatasetColumn column : columns){
+			for (final DatasetColumn column : columns) {
 				clone.columns.add(column.clone());
 			}
 		}

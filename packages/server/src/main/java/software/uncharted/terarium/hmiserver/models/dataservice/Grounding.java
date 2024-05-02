@@ -2,11 +2,15 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;import java.util.HashMap;import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;import org.hibernate.type.SqlTypes;import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 /** Represents a grounding document from TDS */
@@ -28,7 +32,7 @@ public class Grounding implements Serializable {
 	private Map<String, Object> context;
 
 	@Override
-	public Grounding clone(){
+	public Grounding clone() {
 
 		final Grounding clone = new Grounding();
 		if (this.identifiers != null) {
@@ -37,7 +41,7 @@ public class Grounding implements Serializable {
 		}
 		if (this.context != null) {
 			clone.context = new HashMap<>();
-			for(final String key : this.context.keySet()) {
+			for (final String key : this.context.keySet()) {
 				clone.context.put(key, context.get(key));
 			}
 		}
