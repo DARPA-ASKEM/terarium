@@ -120,11 +120,9 @@ public class Dataset extends TerariumAsset {
 			}
 		}
 
-		if(this.metadata!= null)
-			clone.metadata = this.metadata.deepCopy();
+		if (this.metadata != null) clone.metadata = this.metadata.deepCopy();
 		clone.source = this.source;
-		if(this.grounding != null)
-			clone.grounding = this.grounding.clone();
+		if (this.grounding != null) clone.grounding = this.grounding.clone();
 
 		return clone;
 	}

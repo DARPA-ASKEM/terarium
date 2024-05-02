@@ -519,15 +519,16 @@ public class ProjectController {
 						codeService.updateAsset(code.get());
 					} else if (assetType.equals(AssetType.DATASET)) {
 
-            final Optional<Dataset> dataset = datasetService.getAsset(assetId);
+						final Optional<Dataset> dataset = datasetService.getAsset(assetId);
 						if (dataset.isEmpty()) {
 							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset Asset does not exist");
 						}
 
-						if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
+						if (project.get().getDatasetAssets() == null)
+							project.get().setDatasetAssets(new ArrayList<>());
 						if (project.get().getDatasetAssets().contains(dataset.get())) {
 							throw new ResponseStatusException(
-								HttpStatus.CONFLICT, "Dataset Asset already exists on project");
+									HttpStatus.CONFLICT, "Dataset Asset already exists on project");
 						}
 
 						dataset.get().setProject(project.get());
@@ -596,11 +597,11 @@ public class ProjectController {
 			if (rebacUser.canWrite(rebacProject)) {
 
 				/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-											projects will directly hold a reference to the assets associated with them.  During this
-											transition we need to properly create the relationships when users add assets to their
-											projects. However the exact API may not look like this in the end, and in fact may be
-											directly in the controllers for these assets and not in this ProjectController
-					*/
+										projects will directly hold a reference to the assets associated with them.  During this
+										transition we need to properly create the relationships when users add assets to their
+										projects. However the exact API may not look like this in the end, and in fact may be
+										directly in the controllers for these assets and not in this ProjectController
+				*/
 				if (assetType.equals(AssetType.CODE)) {
 
 					final Optional<Code> deletedCode = codeService.deleteAsset(assetId);
@@ -613,7 +614,7 @@ public class ProjectController {
 					final Optional<Dataset> deletedDataset = datasetService.deleteAsset(assetId);
 					if (deletedDataset.isEmpty() || deletedDataset.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete dataset asset");
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete dataset asset");
 					}
 				}
 

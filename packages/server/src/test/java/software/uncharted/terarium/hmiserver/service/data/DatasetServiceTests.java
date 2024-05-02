@@ -1,10 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;import java.util.List;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -24,226 +24,229 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 @Slf4j
 public class DatasetServiceTests extends TerariumApplicationTests {
 
-    @Autowired
-    private ObjectMapper mapper;
+	@Autowired
+	private ObjectMapper mapper;
 
-    @Autowired
-    private DatasetService datasetService;
+	@Autowired
+	private DatasetService datasetService;
 
-    @BeforeEach
-    public void setup() throws IOException {
-        datasetService.setupIndexAndAliasAndEnsureEmpty();
-    }
+	@BeforeEach
+	public void setup() throws IOException {
+		datasetService.setupIndexAndAliasAndEnsureEmpty();
+	}
 
-    @AfterEach
-    public void teardown() throws IOException {
-        datasetService.teardownIndexAndAlias();
-    }
+	@AfterEach
+	public void teardown() throws IOException {
+		datasetService.teardownIndexAndAlias();
+	}
 
-    static Dataset createDataset() throws Exception {
-        return createDataset("A");
-    }
+	static Dataset createDataset() throws Exception {
+		return createDataset("A");
+	}
 
-    static Dataset createDataset(final String key) throws Exception {
+	static Dataset createDataset(final String key) throws Exception {
 
-        final Grounding grounding = new Grounding();
-				grounding.setContext(new HashMap<>());
-				grounding.getContext().put("hello", "world-"+key);
-				grounding.getContext().put("foo", "bar-"+key);
-				grounding.setIdentifiers(new ArrayList<>());
-				grounding.getIdentifiers().add(new Identifier("curie", "maria"));
+		final Grounding grounding = new Grounding();
+		grounding.setContext(new HashMap<>());
+		grounding.getContext().put("hello", "world-" + key);
+		grounding.getContext().put("foo", "bar-" + key);
+		grounding.setIdentifiers(new ArrayList<>());
+		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
 
-				final DatasetColumn column1 = new DatasetColumn().setName("Title").setDataType(DatasetColumn.ColumnType.STRING).setDescription("hello world").setGrounding(grounding);
-				final DatasetColumn column2 = new DatasetColumn().setName("Value").setDataType(DatasetColumn.ColumnType.FLOAT).setDescription("3.1415926").setGrounding(grounding);
+		final DatasetColumn column1 = new DatasetColumn()
+				.setName("Title")
+				.setDataType(DatasetColumn.ColumnType.STRING)
+				.setDescription("hello world")
+				.setGrounding(grounding);
+		final DatasetColumn column2 = new DatasetColumn()
+				.setName("Value")
+				.setDataType(DatasetColumn.ColumnType.FLOAT)
+				.setDescription("3.1415926")
+				.setGrounding(grounding);
 
+		final Dataset dataset = new Dataset();
+		dataset.setName("test-dataset-name-" + key);
+		dataset.setDescription("test-dataset-description-" + key);
+		dataset.setColumns(new ArrayList<>());
+		dataset.getColumns().add(column1);
+		dataset.getColumns().add(column2);
+		dataset.setGrounding(grounding);
+		dataset.setPublicAsset(true);
 
-        final Dataset dataset = new Dataset();
-        dataset.setName("test-dataset-name-" + key);
-        dataset.setDescription("test-dataset-description-" + key);
-        dataset.setColumns(new ArrayList<>());
-				dataset.getColumns().add(column1);
-				dataset.getColumns().add(column2);
-				dataset.setGrounding(grounding);
-        dataset.setPublicAsset(true);
+		return dataset;
+	}
 
-        return dataset;
-    }
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateDataset() throws Exception {
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanCreateDataset() throws Exception {
+		final Dataset before = (Dataset) createDataset().setId(UUID.randomUUID());
+		final Dataset after = datasetService.createAsset(before);
 
-        final Dataset before = (Dataset) createDataset().setId(UUID.randomUUID());
-        final Dataset after = datasetService.createAsset(before);
+		Assertions.assertEquals(before.getId(), after.getId());
+		Assertions.assertNotNull(after.getId());
+		Assertions.assertNotNull(after.getCreatedOn());
+		Assertions.assertEquals(after.getColumns().size(), 2);
+	}
 
-        Assertions.assertEquals(before.getId(), after.getId());
-        Assertions.assertNotNull(after.getId());
-        Assertions.assertNotNull(after.getCreatedOn());
-        Assertions.assertEquals(after.getColumns().size(), 2);
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCantCreateDuplicates() throws Exception {
 
-    }
+		final Dataset dataset = (Dataset) createDataset().setId(UUID.randomUUID());
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCantCreateDuplicates() throws Exception {
+		datasetService.createAsset(dataset);
 
-        final Dataset dataset = (Dataset) createDataset().setId(UUID.randomUUID());
+		try {
+			datasetService.createAsset(dataset);
+			Assertions.fail("Should have thrown an exception");
+		} catch (final IllegalArgumentException e) {
+			Assertions.assertTrue(e.getMessage().contains("already exists"));
+		}
+	}
 
-        datasetService.createAsset(dataset);
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetDatasets() throws Exception {
 
-        try {
-            datasetService.createAsset(dataset);
-            Assertions.fail("Should have thrown an exception");
-        } catch (final IllegalArgumentException e) {
-            Assertions.assertTrue(e.getMessage().contains("already exists"));
-        }
-    }
+		datasetService.createAsset(createDataset("0"));
+		datasetService.createAsset(createDataset("1"));
+		datasetService.createAsset(createDataset("2"));
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanGetDatasets() throws Exception {
+		final List<Dataset> datasets = datasetService.getAssets(0, 3);
 
-        datasetService.createAsset(createDataset("0"));
-        datasetService.createAsset(createDataset("1"));
-        datasetService.createAsset(createDataset("2"));
+		Assertions.assertEquals(3, datasets.size());
+	}
 
-        final List<Dataset> datasets = datasetService.getAssets(0, 3);
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetDataset() throws Exception {
 
-        Assertions.assertEquals(3, datasets.size());
-    }
+		final Dataset dataset = datasetService.createAsset(createDataset());
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanGetDataset() throws Exception {
+		final Dataset fetchedDataset = datasetService.getAsset(dataset.getId()).get();
 
-        final Dataset dataset = datasetService.createAsset(createDataset());
+		Assertions.assertEquals(dataset, fetchedDataset);
+		Assertions.assertEquals(dataset.getId(), fetchedDataset.getId());
+		Assertions.assertEquals(dataset.getCreatedOn(), fetchedDataset.getCreatedOn());
+		Assertions.assertEquals(dataset.getUpdatedOn(), fetchedDataset.getUpdatedOn());
+		Assertions.assertEquals(dataset.getDeletedOn(), fetchedDataset.getDeletedOn());
+		Assertions.assertEquals(dataset.getGrounding(), fetchedDataset.getGrounding());
+	}
 
-        final Dataset fetchedDataset =
-                datasetService.getAsset(dataset.getId()).get();
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanUpdateDataset() throws Exception {
 
-        Assertions.assertEquals(dataset, fetchedDataset);
-        Assertions.assertEquals(dataset.getId(), fetchedDataset.getId());
-        Assertions.assertEquals(dataset.getCreatedOn(), fetchedDataset.getCreatedOn());
-        Assertions.assertEquals(dataset.getUpdatedOn(), fetchedDataset.getUpdatedOn());
-        Assertions.assertEquals(dataset.getDeletedOn(), fetchedDataset.getDeletedOn());
-        Assertions.assertEquals(dataset.getGrounding(), fetchedDataset.getGrounding());
-    }
+		final Dataset dataset = datasetService.createAsset(createDataset());
+		dataset.setName("new name");
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanUpdateDataset() throws Exception {
+		final Dataset updatedDataset = datasetService.updateAsset(dataset).orElseThrow();
 
-        final Dataset dataset = datasetService.createAsset(createDataset());
-        dataset.setName("new name");
+		Assertions.assertEquals(dataset, updatedDataset);
+		Assertions.assertNotNull(updatedDataset.getUpdatedOn());
+	}
 
-        final Dataset updatedDataset = datasetService.updateAsset(dataset).orElseThrow();
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDeleteDataset() throws Exception {
 
-        Assertions.assertEquals(dataset, updatedDataset);
-        Assertions.assertNotNull(updatedDataset.getUpdatedOn());
-    }
+		final Dataset dataset = datasetService.createAsset(createDataset());
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanDeleteDataset() throws Exception {
+		datasetService.deleteAsset(dataset.getId());
 
-        final Dataset dataset = datasetService.createAsset(createDataset());
+		final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId());
 
-        datasetService.deleteAsset(dataset.getId());
+		Assertions.assertTrue(deleted.isEmpty());
+	}
 
-        final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId());
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCloneDataset() throws Exception {
 
-        Assertions.assertTrue(deleted.isEmpty());
-    }
+		Dataset dataset = createDataset();
+		dataset = datasetService.createAsset(dataset);
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanCloneDataset() throws Exception {
+		final Dataset cloned = datasetService.cloneAsset(dataset.getId());
 
-        Dataset dataset = createDataset();
-        dataset = datasetService.createAsset(dataset);
+		Assertions.assertNotEquals(dataset.getId(), cloned.getId());
+		Assertions.assertEquals(dataset.getGrounding(), cloned.getGrounding());
+		Assertions.assertEquals(dataset.getColumns(), cloned.getColumns());
+	}
 
-        final Dataset cloned = datasetService.cloneAsset(dataset.getId());
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanExportAndImportDataset() throws Exception {
 
-        Assertions.assertNotEquals(dataset.getId(), cloned.getId());
-        Assertions.assertEquals(dataset.getGrounding(), cloned.getGrounding());
-				Assertions.assertEquals(dataset.getColumns(), cloned.getColumns());
+		Dataset dataset = createDataset();
+		dataset = datasetService.createAsset(dataset);
 
-    }
+		final byte[] exported = datasetService.exportAsset(dataset.getId());
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanExportAndImportDataset() throws Exception {
+		final Dataset imported = datasetService.importAsset(exported);
 
-        Dataset dataset = createDataset();
-        dataset = datasetService.createAsset(dataset);
+		Assertions.assertNotEquals(dataset.getId(), imported.getId());
+		Assertions.assertEquals(dataset.getName(), imported.getName());
+		Assertions.assertEquals(dataset.getDescription(), imported.getDescription());
+		Assertions.assertEquals(dataset.getGrounding(), imported.getGrounding());
+		Assertions.assertEquals(dataset.getColumns(), imported.getColumns());
+	}
 
-        final byte[] exported = datasetService.exportAsset(dataset.getId());
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSearchAssets() throws Exception {
 
-        final Dataset imported = datasetService.importAsset(exported);
+		final int NUM = 32;
 
-        Assertions.assertNotEquals(dataset.getId(), imported.getId());
-        Assertions.assertEquals(dataset.getName(), imported.getName());
-        Assertions.assertEquals(dataset.getDescription(), imported.getDescription());
-        Assertions.assertEquals(dataset.getGrounding(), imported.getGrounding());
-				Assertions.assertEquals(dataset.getColumns(), imported.getColumns());
-    }
+		List<Dataset> datasets = new ArrayList<>();
+		for (int i = 0; i < NUM; i++) {
+			datasets.add(createDataset(String.valueOf(i)));
+		}
+		datasets = datasetService.createAssets(datasets);
 
+		final List<Dataset> results = datasetService.searchAssets(0, NUM, null);
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanSearchAssets() throws Exception {
+		Assertions.assertEquals(NUM, results.size());
 
-        final int NUM = 32;
+		for (int i = 0; i < results.size(); i++) {
+			Assertions.assertEquals(datasets.get(i).getName(), results.get(i).getName());
+			Assertions.assertEquals(
+					datasets.get(i).getDescription(), results.get(i).getDescription());
+			Assertions.assertEquals(
+					datasets.get(i).getGrounding(), results.get(i).getGrounding());
+			Assertions.assertEquals(
+					datasets.get(i).getCreatedOn().toInstant().getEpochSecond(),
+					results.get(i).getCreatedOn().toInstant().getEpochSecond());
+			Assertions.assertEquals(
+					datasets.get(i).getUpdatedOn().toInstant().getEpochSecond(),
+					results.get(i).getUpdatedOn().toInstant().getEpochSecond());
+			Assertions.assertEquals(
+					datasets.get(i).getDeletedOn(), results.get(i).getDeletedOn());
+		}
+	}
 
-        List<Dataset> datasets = new ArrayList<>();
-        for (int i = 0; i < NUM; i++) {
-            datasets.add(createDataset(String.valueOf(i)));
-        }
-        datasets = datasetService.createAssets(datasets);
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSyncToNewIndex() throws Exception {
 
-        final List<Dataset> results = datasetService.searchAssets(0, NUM, null);
+		final int NUM = 32;
 
-        Assertions.assertEquals(NUM, results.size());
+		final List<Dataset> datasets = new ArrayList<>();
+		for (int i = 0; i < NUM; i++) {
+			datasets.add(createDataset(String.valueOf(i)));
+		}
+		datasetService.createAssets(datasets);
 
-        for (int i = 0; i < results.size(); i++) {
-            Assertions.assertEquals(datasets.get(i).getName(), results.get(i).getName());
-            Assertions.assertEquals(
-                    datasets.get(i).getDescription(), results.get(i).getDescription());
-            Assertions.assertEquals(
-                    datasets.get(i).getGrounding(), results.get(i).getGrounding());
-            Assertions.assertEquals(
-                    datasets.get(i).getCreatedOn().toInstant().getEpochSecond(),
-                    results.get(i).getCreatedOn().toInstant().getEpochSecond());
-            Assertions.assertEquals(
-                    datasets.get(i).getUpdatedOn().toInstant().getEpochSecond(),
-                    results.get(i).getUpdatedOn().toInstant().getEpochSecond());
-            Assertions.assertEquals(
-                    datasets.get(i).getDeletedOn(), results.get(i).getDeletedOn());
-        }
-    }
+		final String currentIndex = datasetService.getCurrentAssetIndex();
 
-    @Test
-    @WithUserDetails(MockUser.URSULA)
-    public void testItCanSyncToNewIndex() throws Exception {
+		Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
 
-        final int NUM = 32;
+		datasetService.syncAllAssetsToNewIndex(true);
 
-        final List<Dataset> datasets = new ArrayList<>();
-        for (int i = 0; i < NUM; i++) {
-            datasets.add(createDataset(String.valueOf(i)));
-        }
-        datasetService.createAssets(datasets);
+		final String newIndex = datasetService.getCurrentAssetIndex();
 
-        final String currentIndex = datasetService.getCurrentAssetIndex();
+		Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
 
-        Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
-
-        datasetService.syncAllAssetsToNewIndex(true);
-
-        final String newIndex = datasetService.getCurrentAssetIndex();
-
-        Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
-
-        Assertions.assertNotEquals(currentIndex, newIndex);
-    }
+		Assertions.assertNotEquals(currentIndex, newIndex);
+	}
 }
