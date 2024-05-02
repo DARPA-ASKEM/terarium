@@ -448,34 +448,23 @@ watch(
 watch(
 	() => props.assetId,
 	async () => {
-		if (props.assetId === AssetType.Code) {
-			// FIXME: assetId is 'code' for a newly opened code asset; a hack to get around some weird tab behaviour
+		isLoading.value = true;
+		const code = await getCodeAsset(props.assetId);
+		if (code?.files && Object.keys(code.files)[0]) {
+			codeAsset.value = code;
+			codeName.value = code.name ?? '';
+
+			const filename = Object.keys(code.files)[0];
+			codeSelectedFile.value = filename;
+
+			codeText.value = (await getCodeFileAsText(props.assetId, filename)) ?? INITIAL_TEXT;
+			programmingLanguage.value =
+				code.files[filename].language ?? getProgrammingLanguage(codeName.value);
+		} else {
 			codeAsset.value = null;
 			codeName.value = 'newcode.py';
 			codeText.value = INITIAL_TEXT;
 			programmingLanguage.value = ProgrammingLanguage.Python;
-		} else {
-			isLoading.value = true;
-			const code = await getCodeAsset(props.assetId);
-			if (code && code.files && Object.keys(code.files)[0]) {
-				codeAsset.value = code;
-				codeName.value = code.name ?? '';
-
-				const filename = Object.keys(code.files)[0];
-				codeSelectedFile.value = filename;
-
-				const text = await getCodeFileAsText(props.assetId, filename);
-				if (text) {
-					codeText.value = text;
-				}
-				programmingLanguage.value =
-					code.files[filename].language ?? getProgrammingLanguage(codeName.value);
-			} else {
-				codeAsset.value = null;
-				codeName.value = 'newcode.py';
-				codeText.value = INITIAL_TEXT;
-				programmingLanguage.value = ProgrammingLanguage.Python;
-			}
 		}
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
 		// Remove dynamics of previous file then add the new ones
