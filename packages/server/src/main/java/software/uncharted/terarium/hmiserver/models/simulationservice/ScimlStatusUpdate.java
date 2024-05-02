@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
