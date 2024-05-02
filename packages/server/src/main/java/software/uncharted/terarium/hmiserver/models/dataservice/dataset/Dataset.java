@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serial;
 import java.sql.Timestamp;
-import java.util.List;
+import java.util.ArrayList;import java.util.List;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;import jakarta.persistence.ManyToOne;import lombok.Data;
@@ -86,4 +86,36 @@ public class Dataset extends TerariumAsset {
 	@TSOptional
 	@JdbcTypeCode(SqlTypes.JSON)
 	private Grounding grounding;
+
+	@Override
+	public Dataset clone(){
+		final Dataset clone = new Dataset();
+		super.cloneSuperFields(clone);
+
+		clone.userId = this.userId;
+		clone.esgfId = this.esgfId;
+		clone.dataSourceDate = this.dataSourceDate;
+		if(fileNames != null){
+			clone.fileNames = new ArrayList<>();
+			clone.fileNames.addAll(fileNames);
+		}
+		clone.datasetUrl = this.datasetUrl;
+		if(datasetUrls != null){
+			clone.datasetUrls = new ArrayList<>();
+			clone.datasetUrls.addAll(datasetUrls);
+		}
+
+		if(columns != null){
+			clone.columns = new ArrayList<>();
+			for(DatasetColumn column : columns){
+				clone.columns.add(column.clone());
+			}
+		}
+
+		clone.metadata = this.metadata.deepCopy();
+		clone.source = this.source;
+		clone.grounding = this.grounding.clone();
+
+		return clone;
+	}
 }

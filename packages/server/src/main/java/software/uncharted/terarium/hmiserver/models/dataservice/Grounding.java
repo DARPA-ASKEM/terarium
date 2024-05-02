@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
+import java.util.ArrayList;import java.util.HashMap;import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -26,4 +26,22 @@ public class Grounding implements Serializable {
 	@TSOptional
 	@JdbcTypeCode(SqlTypes.JSON)
 	private Map<String, Object> context;
+
+	@Override
+	public Grounding clone(){
+
+		final Grounding clone = new Grounding();
+		if (this.identifiers != null) {
+			clone.identifiers = new ArrayList<>();
+			clone.identifiers.addAll(this.identifiers);
+		}
+		if (this.context != null) {
+			clone.context = new HashMap<>();
+			for(final String key : this.context.keySet()) {
+				clone.context.put(key, context.get(key));
+			}
+		}
+
+		return clone;
+	}
 }
