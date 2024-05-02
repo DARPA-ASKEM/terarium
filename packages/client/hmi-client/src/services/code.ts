@@ -212,7 +212,7 @@ function setFileExtension(fileName: string, language: ProgrammingLanguage) {
 		fileName = fileName.slice(0, fileExtensionIndex);
 	}
 
-	// Add the appropriate one based on the selected language
+	// Add the appropriate extension based on the selected language
 	return fileName.concat('.').concat(getFileExtension(language));
 }
 
