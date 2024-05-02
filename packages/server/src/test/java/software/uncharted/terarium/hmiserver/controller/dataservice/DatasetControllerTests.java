@@ -41,20 +41,16 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DatasetService datasetService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
 
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDatasetIndex());
+		datasetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDatasetIndex());
+		datasetService.teardownIndexAndAlias();
 	}
 
 	@Test
