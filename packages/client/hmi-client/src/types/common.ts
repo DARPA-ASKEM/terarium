@@ -200,6 +200,12 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
+export enum ItemStatusType {
+	Completed = 'Completed',
+	Failed = 'Failed',
+	Running = 'Running'
+}
+
 export interface NotificationItem {
 	notificationGroupId: string;
 	type: ClientEventType;

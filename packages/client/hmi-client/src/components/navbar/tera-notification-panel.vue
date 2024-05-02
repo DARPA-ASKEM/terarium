@@ -33,10 +33,10 @@
 					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
 				<div class="notification-path-text msg">
-					<p>Project: {{ getProjectName() }}</p>
-					<p v-if="item.status !== 'Completed'">{{ item.msg }}</p>
+					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
+					<p v-if="!isStatusCorrect(ItemStatusType.Completed, item)">{{ item.msg }}</p>
 				</div>
-				<div v-if="item.status === 'Running'" class="progressbar-container">
+				<div v-if="isStatusCorrect(ItemStatusType.Running, item)" class="progressbar-container">
 					<p class="action">{{ getActionText(item) }} {{ Math.round(item.progress * 100) }}%</p>
 
 					<ProgressBar :value="item.progress * 100" />
@@ -50,10 +50,10 @@
 					<!--					/>-->
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="item.status === 'Completed'">
+					<div class="status-msg ok" v-if="isStatusCorrect(ItemStatusType.Completed, item)">
 						<i class="pi pi-check-circle" />Completed
 					</div>
-					<div class="status-msg error" v-else-if="item.status === 'Failed'">
+					<div class="status-msg error" v-else-if="isStatusCorrect(ItemStatusType.Failed, item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
 					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
@@ -69,7 +69,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
-import { NotificationItem } from '@/types/common';
+import { NotificationItem, ItemStatusType } from '@/types/common';
 import { AssetType, ClientEventType } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
@@ -89,11 +89,6 @@ const panel = ref();
 
 const togglePanel = (event) => panel.value.toggle(event);
 
-const getProjectName = () => {
-	const projectName = useProjects().activeProject.value?.name;
-	return projectName ?? '';
-};
-
 const getTitleText = (item: NotificationItem) => {
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
@@ -102,6 +97,9 @@ const getTitleText = (item: NotificationItem) => {
 			return 'Process';
 	}
 };
+
+const isStatusCorrect = (status: ItemStatusType, item: NotificationItem) =>
+	status === ItemStatusType[item.status];
 
 const getActionText = (item: NotificationItem) => {
 	switch (item.type) {
