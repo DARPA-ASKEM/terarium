@@ -16,10 +16,10 @@ Note: sampling combinations in pyciemss can result in numerical instability, whe
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
 ### 2. Model setup
-1. Find a Petrinet model (e.g. SIR) and bring it onto a workflow
+1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
 2. Connect the model to a Model Configuration operation, create a configuration
 3. Ensure that the model parameters (e.g. beta, gamma) have distribution ranges
-5. Connect the model-configuration to a Simulate-PyCIEMSS operation
+4. Connect the model-configuration to a Simulate-PyCIEMSS operation
 
 ### 3. Run with small samples
 1. Set number of samples to 10, run the simulation
