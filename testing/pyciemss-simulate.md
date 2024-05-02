@@ -2,6 +2,11 @@
 Please go through __every__ step of the test scenario.\
 When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
 
+Note: sampling combinations in pyciemss can result in numerical instability, when this happens, you can:
+- Retry the simulation, or
+- Fiddle with the paramter distribution ranges, make the intervals larger or smaller
+
+
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
