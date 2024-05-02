@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,8 +32,7 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private CurrentUserService currentUserService;
 
-	ClientEvent<ExtractionStatusUpdate> produceClientEvent(
-			final Double t, final String message, final String error) {
+	ClientEvent<ExtractionStatusUpdate> produceClientEvent(final Double t, final String message, final String error) {
 		final ExtractionStatusUpdate update =
 				new ExtractionStatusUpdate(UUID.randomUUID(), UUID.randomUUID(), t, message, error);
 		return ClientEvent.<ExtractionStatusUpdate>builder()
@@ -62,9 +59,12 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		final NotificationGroup group =
 				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
 
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
 
 		final NotificationGroup after =
 				notificationService.getNotificationGroup(group.getId()).orElseThrow();
@@ -82,9 +82,12 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		final NotificationGroup group =
 				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
 
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
 
 		final NotificationGroup after =
 				notificationService.getNotificationGroup(group.getId()).orElseThrow();
@@ -120,7 +123,8 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(0, resp2.size());
 
 		// create a new event
-		notificationService.createNotificationEvent(group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+		notificationService.createNotificationEvent(
+				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
 
 		final List<NotificationGroup> resp3 = notificationService.getUnAckedNotificationGroupsCreatedSince(
 				currentUserService.get().getId(), since);
