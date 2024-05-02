@@ -27,10 +27,15 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
     Find the `Susceptible_state` in the ensemble variables dropdown, select it and hit add mapping.
       Link the `Susceptible` for both of your identical configurations
 
-### Validation:
-Run should complete with a chart and a dataset
-You should be able to add and delete charts
-You should see changes to the select on the charts duplicated in the node as well as the drilldown views
-
 ### 5. End test
 1. logout of the application 
+
+### Misc:
+You should be able to add mapping as well as delete mapping. close and open the drilldown and see saved changes.
+You should be able to set weights to whatever you like as well as hit the `Set weights to be equal` to reset them.
+
+Once complete:
+You should be able to add and delete charts
+You should see changes to the select on the charts duplicated in the node as well as the drilldown views
+You should be able to save the dataset 
+
