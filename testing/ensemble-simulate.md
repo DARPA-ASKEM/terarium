@@ -42,6 +42,8 @@ you should see the following options in your chart's dropdown:
 ### Misc:
 You should be able to add mapping as well as delete mapping. close and open the drilldown and see saved changes.
 You should be able to set weights to whatever you like as well as hit the `Set weights to be equal` to reset them.
+You should be able to utilize the `Stop` button to stop the run. In order to do this is may help to increase the 
+defaults to make a longer lasting run so you dont need to rely on reaction time
 
 Once complete:
 You should be able to add and delete charts
