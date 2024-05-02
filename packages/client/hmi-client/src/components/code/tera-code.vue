@@ -34,7 +34,7 @@
 							class="toolbar-button white-space-nowrap"
 							severity="secondary"
 							outlined
-							label="Save as new"
+							label="Save as"
 							@click="showSaveAssetModal = true"
 						/>
 						<Dropdown
@@ -143,9 +143,9 @@
 			</tera-modal>
 		</Teleport>
 		<tera-save-asset-modal
-			v-if="codeAssetCopy"
+			v-if="newFile"
 			:is-visible="showSaveAssetModal"
-			:asset="codeAssetCopy"
+			:asset="newFile"
 			:assetType="AssetType.Code"
 			:initial-name="codeName"
 			@close-modal="showSaveAssetModal = false"
@@ -208,7 +208,6 @@ const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
 const showSaveAssetModal = ref(false);
 const isDynamicsModalVisible = ref(false);
-const newCodeName = ref('');
 const newDynamicsName = ref('');
 const newDynamicsDescription = ref('');
 const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
@@ -231,6 +230,10 @@ const fileNames = computed<string[]>(() => {
 	if (!codeAssetCopy.value?.files) return [];
 	return Object.keys(codeAssetCopy.value?.files);
 });
+
+const newFile = computed(
+	() => new File([codeText.value], setFileExtension(codeName.value, programmingLanguage.value))
+);
 
 const codeAssetCopy = ref<Code | null>(null);
 const savingAsset = ref(false);
@@ -331,8 +334,10 @@ async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 		toast.success('', `Saved Code Asset`);
 		highlightDynamics();
 	} else {
-		newCodeName.value = setFileExtension(codeName.value, programmingLanguage.value);
-		saveAssetService.saveAs(new File([codeText.value], newCodeName.value), AssetType.Code);
+		saveAssetService.saveAs(
+			new File([codeText.value], setFileExtension(codeName.value, programmingLanguage.value)),
+			AssetType.Code
+		);
 	}
 }
 

@@ -43,7 +43,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import type { Model, Code } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
 import { emptyWorkflow } from '@/services/workflow';
 import { setFileExtension } from '@/services/code';
@@ -61,9 +61,7 @@ const props = defineProps({
 		default: false
 	},
 	asset: {
-		type: Object as PropType<Model> | Object as
-			| PropType<Workflow>
-			| Object as PropType<Code> | null,
+		type: Object as PropType<saveAssetService.AssetToSave> | null,
 		default: null
 	},
 	assetType: {
@@ -110,6 +108,11 @@ function save() {
 		case AssetType.Workflow:
 			(newAsset as Workflow).name = newName.value;
 			break;
+		case AssetType.Code:
+			if (newAsset.name !== newName.value) {
+				newAsset = new File([newAsset], newName.value);
+			}
+			break;
 		default:
 			break;
 	}
@@ -125,6 +128,8 @@ function save() {
 }
 
 function initializeAsset() {
+	console.log(props.asset);
+
 	// If an asset is passed, clone it for saving
 	if (props.asset) {
 		newAsset = cloneDeep(props.asset);
@@ -150,6 +155,8 @@ function initializeAsset() {
 		default:
 			break;
 	}
+
+	console.log(newAsset);
 }
 </script>
 

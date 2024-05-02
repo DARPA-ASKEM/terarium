@@ -7,6 +7,10 @@ import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
+import type { Model } from '@/types/Types';
+import type { Workflow } from '@/types/workflow';
+
+export type AssetToSave = File | Model | Workflow;
 
 const projectResource = useProjects();
 
@@ -14,7 +18,7 @@ const projectResource = useProjects();
 
 // Saves the asset as a new asset
 export async function saveAs(
-	newAsset: any,
+	newAsset: AssetToSave,
 	assetType: AssetType,
 	openOnSave: boolean = false,
 	onSaveFunction?: Function
@@ -23,10 +27,10 @@ export async function saveAs(
 
 	switch (assetType) {
 		case AssetType.Model:
-			response = await createModel(newAsset);
+			response = await createModel(newAsset as Model);
 			break;
 		case AssetType.Workflow:
-			response = await createWorkflow(newAsset);
+			response = await createWorkflow(newAsset as Workflow);
 			break;
 		case AssetType.Code:
 			response = await uploadCodeToProject(newAsset as File, ref(0));
@@ -67,12 +71,16 @@ export async function saveAs(
 }
 
 // Overwrites/updates the asset
-export async function overwrite(newAsset: any, assetType: AssetType, onSaveFunction?: Function) {
+export async function overwrite(
+	newAsset: AssetToSave,
+	assetType: AssetType,
+	onSaveFunction?: Function
+) {
 	let response: any = null;
 
 	switch (assetType) {
 		case AssetType.Model:
-			response = await updateModel(newAsset);
+			response = await updateModel(newAsset as Model);
 			break;
 		default:
 			logger.info(`Update for ${assetType} is not implemented.`);
