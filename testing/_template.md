@@ -23,12 +23,13 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 
 ### 4. Input files
 1. If the test requires input files, please provide them via links.
-2. The files are stored in the `testing/assets/[name-of-test]` folder.
+2. The files are stored in the `testing/data` folder.
 3. Please keep the names of files simple.
 4. If the files needs to be pre-made, provide it in full, do not write the steps to create it.
     - For example, to validate a model-configuration, do not write the steps to create an SIR model and configuring it.
     - Instead, provide the `SIR.json` file of the model pre-configured
-    - Link the file to its path in the `testing/assets/[name-of-test]` folder.
+    - Link the file to its path in the `testing/data` folder.
+    - Please re-use existing files if possible.
 
 ### 4. End test
 1. logout of the application 
