@@ -69,6 +69,7 @@ public class DatasetColumn {
 	public DatasetColumn clone() {
 		final DatasetColumn clone = new DatasetColumn();
 
+		clone.name = this.name;
 		clone.dataType = this.dataType;
 		clone.formatStr = this.formatStr;
 		if (this.annotations != null) {

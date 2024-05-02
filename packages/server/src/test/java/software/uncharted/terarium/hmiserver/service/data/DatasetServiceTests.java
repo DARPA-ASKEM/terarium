@@ -17,7 +17,9 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
+import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 
 @Slf4j
 public class DatasetServiceTests extends TerariumApplicationTests {
@@ -163,7 +165,9 @@ public class DatasetServiceTests extends TerariumApplicationTests {
         final Dataset cloned = datasetService.cloneAsset(dataset.getId());
 
         Assertions.assertNotEquals(dataset.getId(), cloned.getId());
-        //TODO more checks here
+        Assertions.assertEquals(dataset.getGrounding(), cloned.getGrounding());
+				Assertions.assertEquals(dataset.getColumns(), cloned.getColumns());
+
     }
 
     @Test
@@ -181,7 +185,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
         Assertions.assertEquals(dataset.getName(), imported.getName());
         Assertions.assertEquals(dataset.getDescription(), imported.getDescription());
         Assertions.assertEquals(dataset.getGrounding(), imported.getGrounding());
-        //TODO more checks here
+				Assertions.assertEquals(dataset.getColumns(), imported.getColumns());
     }
 
 
