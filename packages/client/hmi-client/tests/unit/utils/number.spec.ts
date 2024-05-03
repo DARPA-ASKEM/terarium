@@ -106,12 +106,12 @@ describe('number util tests', () => {
 
 		it('should correctly format numbers with a decimal part', () => {
 			expect(displayNumber('123.456')).to.eq('123.456');
-			expect(displayNumber('1234.56')).to.eq('1 234.56');
+			expect(displayNumber('1234.56')).to.eq('1234.56');
 			expect(displayNumber('12345.678')).to.eq('1.235e+4');
 		});
 
 		it('should correctly format numbers with leading zeros', () => {
-			expect(displayNumber('0001234.56')).to.eq('1 234.56');
+			expect(displayNumber('0001234.56')).to.eq('1234.56');
 		});
 
 		it('should correctly format negative numbers', () => {

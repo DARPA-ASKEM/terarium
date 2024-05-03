@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { maskToNistNumber, nistToNumber } from '@/utils/number';
-import { computed, nextTick, ref, useAttrs } from 'vue';
+import { computed, ref, useAttrs } from 'vue';
 
 const props = defineProps<{
 	modelValue: string;
@@ -42,23 +42,16 @@ const updateValue = (event: Event) => {
 	const value = target.value;
 
 	if (attrs.type === 'sci') {
-		const start = target.selectionStart;
-		const end = target.selectionEnd;
-
 		// Mask the value before emitting the update
 		const maskedValue = maskToNistNumber(value);
-		target.value = maskedValue;
-
-		// Restore cursor position after Vue re-renders the component
-		nextTick(() => {
-			target.setSelectionRange(start, end);
-		});
 
 		emit('update:modelValue', maskedValue);
 	} else {
 		emit('update:modelValue', value);
 	}
 };
+
+// convert back to a number when finished
 const unmask = () => {
 	if (attrs.type === 'sci') emit('update:modelValue', nistToNumber(props.modelValue));
 };
