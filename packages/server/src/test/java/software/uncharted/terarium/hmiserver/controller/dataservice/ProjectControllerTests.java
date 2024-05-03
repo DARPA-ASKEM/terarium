@@ -1,11 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +21,11 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+
+import java.io.IOException;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
@@ -60,10 +61,14 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProject() throws Exception {
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/projects?name=test&userId=abc123&description=desc")
-						.with(csrf())
-						.contentType("application/json"))
-				.andExpect(status().isCreated());
+		final Project project = (Project)new Project().setName("test-name").setDescription("test-description");
+		project.setUserId(MockUser.URSULA);
+
+		mockMvc.perform(MockMvcRequestBuilders.post("/projects")
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(project)))
+			.andExpect(status().isCreated());
 	}
 
 	@Test
