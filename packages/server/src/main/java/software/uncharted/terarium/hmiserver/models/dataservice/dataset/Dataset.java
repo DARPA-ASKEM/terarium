@@ -1,26 +1,29 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /** Represents a dataset document from TDS */
@@ -39,7 +42,9 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 255)
 	private String userId;
 
-	/** ESGF id of the dataset. This will be null for datasets that are not from ESGF */
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 */
 	@TSOptional
 	@Column(length = 255)
 	private String esgfId;
@@ -68,7 +73,10 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 1024)
 	private String datasetUrl;
 
-	/** (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets */
+	/**
+	 * (Optional) List of urls from which the dataset can be downloaded/fetched.
+	 * Used for ESGF datasets
+	 */
 	@TSOptional
 	@Column(length = 1024)
 	@ElementCollection
@@ -76,12 +84,13 @@ public class Dataset extends TerariumAsset {
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = ObjectConverter.class)
+	@Column(columnDefinition = "text")
 	private List<DatasetColumn> columns;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = JsonConverter.class)
 	@Column(columnDefinition = "text")
 	private JsonNode metadata;
 
@@ -90,9 +99,13 @@ public class Dataset extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private String source;
 
-	/** (Optional) Grounding of ontological concepts related to the dataset as a whole */
+	/**
+	 * (Optional) Grounding of ontological concepts related to the dataset as a
+	 * whole
+	 */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = ObjectConverter.class)
+	@Column(columnDefinition = "text")
 	private Grounding grounding;
 
 	@Override
@@ -120,9 +133,11 @@ public class Dataset extends TerariumAsset {
 			}
 		}
 
-		if (this.metadata != null) clone.metadata = this.metadata.deepCopy();
+		if (this.metadata != null)
+			clone.metadata = this.metadata.deepCopy();
 		clone.source = this.source;
-		if (this.grounding != null) clone.grounding = this.grounding.clone();
+		if (this.grounding != null)
+			clone.grounding = this.grounding.clone();
 
 		return clone;
 	}
