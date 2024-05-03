@@ -3,7 +3,7 @@
     "name": "Configured SIR",
     "description": "A configured SIR to the validate configuration operator.",
     "schema": "https://github.com/DARPA-ASKEM/Model-Representations/blob/main/petrinet/petrinet_schema.json",
-    "schema_name": "PetriNet",
+    "schema_name": "petrinet",
     "model_version": "0.1"
   },
   "model": {
