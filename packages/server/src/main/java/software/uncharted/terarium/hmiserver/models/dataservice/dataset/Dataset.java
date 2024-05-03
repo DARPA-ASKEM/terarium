@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
@@ -88,7 +89,7 @@ public class Dataset extends TerariumAsset {
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@Convert(converter = ObjectConverter.class)
+	@Convert(converter = JsonConverter.class)
 	@Column(columnDefinition = "text")
 	private JsonNode metadata;
 
