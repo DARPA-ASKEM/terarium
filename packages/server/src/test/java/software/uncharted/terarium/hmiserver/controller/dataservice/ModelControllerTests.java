@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,11 +19,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
@@ -49,17 +48,17 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	public void testItCanCreateModel() throws Exception {
 
 		final Model model = new Model()
-			.setHeader(new ModelHeader()
-				.setName("test-name")
-				.setModelSchema("test-schema")
-				.setModelVersion("0.1.2")
-				.setDescription("test-description")
-				.setSchemaName("petrinet"));
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(model)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(model)))
 				.andExpect(status().isCreated());
 	}
 
