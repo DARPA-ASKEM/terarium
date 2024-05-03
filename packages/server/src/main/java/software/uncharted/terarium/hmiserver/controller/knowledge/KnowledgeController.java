@@ -435,27 +435,30 @@ public class KnowledgeController {
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
 
 		try {
-			final Provenance provenancePayload = new Provenance(
-					ProvenanceRelationType.EXTRACTED_FROM,
-					modelId,
-					ProvenanceType.MODEL,
-					documentId,
-					ProvenanceType.DOCUMENT);
-			provenanceService.createProvenance(provenancePayload);
-		} catch (final Exception e) {
-			final String error = "Unable to create provenance for profile-model";
-			log.error(error, e);
-		}
 
-		try {
-			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
 			String documentText = "";
-			if (documentOptional.isPresent()) {
-				final int MAX_CHAR_LIMIT = 9000;
+			if (documentId != null) {
+				final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
+				if (documentOptional.isPresent()) {
+					final int MAX_CHAR_LIMIT = 9000;
 
-				final DocumentAsset document = documentOptional.get();
-				documentText = document.getText()
-						.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+					final DocumentAsset document = documentOptional.get();
+					documentText = document.getText()
+							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+
+					try {
+						final Provenance provenancePayload = new Provenance(
+								ProvenanceRelationType.EXTRACTED_FROM,
+								modelId,
+								ProvenanceType.MODEL,
+								documentId,
+								ProvenanceType.DOCUMENT);
+						provenanceService.createProvenance(provenancePayload);
+					} catch (final Exception e) {
+						final String error = "Unable to create provenance for profile-model";
+						log.error(error, e);
+					}
+				}
 			}
 
 			final Model model = modelService.getAsset(modelId).orElseThrow();
