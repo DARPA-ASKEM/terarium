@@ -170,13 +170,5 @@ export function maskToNistNumber(input: string): string {
 		maskedInput = base;
 	}
 
-	// If the input string represents an exponential number, convert it to a number and then to a string in exponential notation
-	if (maskedInput.includes('e')) {
-		const num = Number(maskedInput);
-		if (!Number.isNaN(num)) {
-			maskedInput = num.toExponential();
-		}
-	}
-
 	return maskedInput;
 }

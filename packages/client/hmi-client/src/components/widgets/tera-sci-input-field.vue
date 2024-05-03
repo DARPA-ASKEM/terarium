@@ -1,10 +1,9 @@
 <template>
 	<tera-input-field
-		:model-value="modelValue"
+		:model-value="maskToNistNumber(modelValue)"
 		@update:modelValue="onUpdateValue"
 		v-bind="attrs"
 		type="sci"
-		:mask="maskToNistNumber"
 		:error-message="errorMessage"
 	/>
 </template>

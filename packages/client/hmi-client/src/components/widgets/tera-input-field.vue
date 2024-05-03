@@ -41,6 +41,7 @@ const updateValue = (event: Event) => {
 		emit('update:modelValue', inputField.value!.value);
 		return;
 	}
+	inputField.value!.value = props.modelValue;
 	emit('update:modelValue', value);
 };
 </script>
