@@ -5,21 +5,19 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
-public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
+public class DatasetService extends S3BackedAssetService<Dataset> {
 
 	public DatasetService(
-			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
+			final Config config,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final DatasetRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository, Dataset.class);
+			final S3ClientService s3ClientService) {
+		super(elasticConfig, config, elasticService, projectAssetService, s3ClientService, Dataset.class);
 	}
 
 	@Override
@@ -32,10 +30,5 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
 		return elasticConfig.getDatasetIndex();
-	}
-
-	@Override
-	public String getAssetAlias() {
-		return elasticConfig.getDatasetAlias();
 	}
 }
