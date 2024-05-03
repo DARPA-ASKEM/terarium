@@ -1,24 +1,28 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
@@ -46,7 +50,7 @@ public class Code extends TerariumAsset {
 	/* The optional metadata for this code */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	@ElementCollection
+	@Convert(converter = ObjectConverter.class)
 	@Column(columnDefinition = "text")
 	private Map<String, String> metadata;
 

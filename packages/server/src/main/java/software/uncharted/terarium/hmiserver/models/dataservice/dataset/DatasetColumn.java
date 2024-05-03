@@ -1,20 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.data.redis.connection.convert.MapConverter;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
 /** Represents a column in a dataset */
 @Data
@@ -27,7 +31,8 @@ public class DatasetColumn {
 	private String name;
 
 	/**
-	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
+	 * Datatype. One of: unknown, boolean, string, char, integer, int, float,
+	 * double, timestamp, datetime, date, time
 	 */
 	@JsonAlias("data_type")
 	@Enumerated(EnumType.STRING)
@@ -41,16 +46,19 @@ public class DatasetColumn {
 
 	/** Column annotations from the MIT data profiling tool */
 	@Column(columnDefinition = "text")
+	@Convert(converter = ObjectConverter.class)
 	private List<String> annotations;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(columnDefinition = "text")
+	@Convert(converter = MapConverter.class)
 	private Map<String, Object> metadata;
 
 	/** (Optional) Grounding of ontological concepts related to the column */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Column(columnDefinition = "text")
+	@Convert(converter = ObjectConverter.class)
 	private Grounding grounding;
 
 	@TSOptional
@@ -82,7 +90,8 @@ public class DatasetColumn {
 			clone.metadata.putAll(this.metadata);
 		}
 
-		if (this.grounding != null) clone.grounding = this.grounding.clone();
+		if (this.grounding != null)
+			clone.grounding = this.grounding.clone();
 
 		clone.description = this.description;
 
