@@ -82,8 +82,7 @@ public class DatasetColumn {
 			clone.metadata.putAll(this.metadata);
 		}
 
-		if(this.grounding != null)
-			clone.grounding = this.grounding.clone();
+		if (this.grounding != null) clone.grounding = this.grounding.clone();
 
 		clone.description = this.description;
 
