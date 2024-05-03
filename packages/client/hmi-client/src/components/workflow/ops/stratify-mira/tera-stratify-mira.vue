@@ -303,7 +303,7 @@ const buildJupyterContext = () => {
 };
 
 const getStatesAndParameters = (amrModel: Model) => {
-	const modelFramework = amrModel.header.schema_name;
+	const modelFramework = amrModel.header.schema_name?.toLowerCase();
 	const modelStates: string[] = [];
 	const modelParameters: string[] = [];
 
