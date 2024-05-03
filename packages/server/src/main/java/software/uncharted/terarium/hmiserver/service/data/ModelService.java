@@ -143,6 +143,7 @@ public class ModelService extends TerariumAssetService<Model> {
 	@Observed(name = "function_profile")
 	public Model createAsset(final Model asset) throws IOException {
 		// Make sure that the model framework is set to lowercase
+		if(asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 		asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
 
 		// Set default value for model parameters (0.0)
