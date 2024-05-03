@@ -24,15 +24,22 @@
 			<label>Number input</label>
 			<tera-input-field label="Label" v-model="numberstring" type="number" />
 		</div>
+
+		<div class="w-2">
+			<label>sci input</label>
+			<tera-sci-input-field v-model="scistring" label="Label" />
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import teraInputField from '@/components/widgets/tera-input-field.vue';
+import teraSciInputField from '@/components/widgets/tera-sci-input-field.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');
 const numberstring = ref<string>('');
+const scistring = ref<string>('');
 const errorstring = ref<string>('Error message error message');
 const errormessage = ref<string>('Error message error message');
 

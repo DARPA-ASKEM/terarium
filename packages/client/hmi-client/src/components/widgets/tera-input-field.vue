@@ -15,23 +15,32 @@
 <script setup lang="ts">
 import { computed, ref, useAttrs } from 'vue';
 
-defineProps<{
+const props = defineProps<{
 	modelValue: string;
 	label?: string;
 	errorMessage?: string;
+	mask?: (value: any) => string;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
 const inputField = ref<HTMLInputElement | null>(null);
 const attrs = useAttrs();
 
-const textAlign = computed(() => (attrs.type === 'number' ? 'right' : 'left'));
+const textAlign = computed(() =>
+	attrs.type === 'number' || attrs.type === 'sci' ? 'right' : 'left'
+);
 const focusInput = () => {
 	inputField.value?.focus();
 };
 
 const updateValue = (event: Event) => {
 	const value = (event.target as HTMLInputElement).value;
+	if (props.mask) {
+		const maskedValue = props.mask(value);
+		inputField.value!.value = maskedValue;
+		emit('update:modelValue', inputField.value!.value);
+		return;
+	}
 	emit('update:modelValue', value);
 };
 </script>
