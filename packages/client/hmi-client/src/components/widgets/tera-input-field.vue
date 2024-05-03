@@ -4,22 +4,23 @@
 		<input
 			v-bind="attrs"
 			ref="inputField"
-			:value="modelValue"
+			:value="getValue()"
 			@input="updateValue"
 			:style="{ 'text-align': textAlign }"
+			@blur="unmask"
 		/>
 	</div>
 	<aside v-if="errorMessage"><i class="pi pi-exclamation-circle" /> {{ errorMessage }}</aside>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useAttrs } from 'vue';
+import { maskToNistNumber, nistToNumber } from '@/utils/number';
+import { computed, nextTick, ref, useAttrs } from 'vue';
 
 const props = defineProps<{
 	modelValue: string;
 	label?: string;
 	errorMessage?: string;
-	mask?: (value: any) => string;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -33,16 +34,33 @@ const focusInput = () => {
 	inputField.value?.focus();
 };
 
+const getValue = () =>
+	attrs.type === 'sci' ? maskToNistNumber(props.modelValue) : props.modelValue;
+
 const updateValue = (event: Event) => {
-	const value = (event.target as HTMLInputElement).value;
-	if (props.mask) {
-		const maskedValue = props.mask(value);
-		inputField.value!.value = maskedValue;
-		emit('update:modelValue', inputField.value!.value);
-		return;
+	const target = event.target as HTMLInputElement;
+	const value = target.value;
+
+	if (attrs.type === 'sci') {
+		const start = target.selectionStart;
+		const end = target.selectionEnd;
+
+		// Mask the value before emitting the update
+		const maskedValue = maskToNistNumber(value);
+		target.value = maskedValue;
+
+		// Restore cursor position after Vue re-renders the component
+		nextTick(() => {
+			target.setSelectionRange(start, end);
+		});
+
+		emit('update:modelValue', maskedValue);
+	} else {
+		emit('update:modelValue', value);
 	}
-	inputField.value!.value = props.modelValue;
-	emit('update:modelValue', value);
+};
+const unmask = () => {
+	if (attrs.type === 'sci') emit('update:modelValue', nistToNumber(props.modelValue));
 };
 </script>
 

@@ -72,50 +72,6 @@ export function displayNumber(num: string): string {
 	return numberToNist(num);
 }
 
-/**
- * Checks if a number string is in NIST form.
- *
- * @param {string} num - The number string to check.
- * @returns {boolean} True if the number is in NIST form, false otherwise.
- */
-export function isNistNumber(num: string): boolean {
-	// If the input is blank, return true
-	if (num.trim() === '') {
-		return true;
-	}
-
-	if (num.startsWith('-')) {
-		num = num.substring(1);
-	}
-
-	// Check if the string only contains digits, 'e', '+', '-', '.'
-	if (!/^[0-9e+-. ]+$/.test(num)) {
-		return false;
-	}
-
-	// Check if there is more than one decimal point
-	if ((num.match(/\./g) || []).length > 1) {
-		return false;
-	}
-
-	// Split the input by decimal point
-	const [integerPart, decimalPart] = num.split('.');
-
-	// Check the integer part
-	if (integerPart.length > 4 || decimalPart?.length > 4) {
-		if (integerPart && !/^(\d{1,3}( \d{3})*)?$/.test(integerPart)) {
-			return false;
-		}
-
-		// Check the decimal part
-		if (decimalPart && !/^(\d{3} )*\d{1,3}$/.test(decimalPart)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 export function maskToNistNumber(input: string): string {
 	// Remove any characters that are not digits, '.', '+', '-', or 'e'
 	let maskedInput = input.replace(/[^0-9e+-.]/g, '');
@@ -124,8 +80,6 @@ export function maskToNistNumber(input: string): string {
 	if (maskedInput.startsWith('.')) {
 		maskedInput = `0${maskedInput}`;
 	}
-	// Ensure '.e' is replaced with '.'
-	maskedInput = maskedInput.replace(/\.e/g, '.');
 
 	// Ensure '+' is only directly after 'e'
 	maskedInput = maskedInput.replace(/([^e])\+/g, '$1');

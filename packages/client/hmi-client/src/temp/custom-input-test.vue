@@ -27,14 +27,18 @@
 
 		<div class="w-2">
 			<label>sci input</label>
-			<tera-sci-input-field v-model="scistring" label="Label" />
+			<tera-input-field
+				v-model="scistring"
+				label="Label"
+				type="sci"
+				@update:model-value="console.log(scistring)"
+			/>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import teraInputField from '@/components/widgets/tera-input-field.vue';
-import teraSciInputField from '@/components/widgets/tera-sci-input-field.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');
