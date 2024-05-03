@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -15,12 +16,12 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /** Represents a dataset document from TDS */
@@ -76,12 +77,13 @@ public class Dataset extends TerariumAsset {
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = ObjectConverter.class)
+	@Column(columnDefinition = "text")
 	private List<DatasetColumn> columns;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = JsonConverter.class)
 	@Column(columnDefinition = "text")
 	private JsonNode metadata;
 
@@ -92,7 +94,8 @@ public class Dataset extends TerariumAsset {
 
 	/** (Optional) Grounding of ontological concepts related to the dataset as a whole */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Convert(converter = ObjectConverter.class)
+	@Column(columnDefinition = "text")
 	private Grounding grounding;
 
 	@Override

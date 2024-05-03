@@ -933,7 +933,7 @@ watch(
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(
