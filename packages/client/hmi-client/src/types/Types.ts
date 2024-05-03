@@ -165,6 +165,7 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
+    project?: Project;
 }
 
 export interface DatasetColumn {
@@ -404,6 +405,7 @@ export interface Project extends TerariumAsset {
      */
     projectAssets: ProjectAsset[];
     codeAssets: Code[];
+    datasetAssets: Dataset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
