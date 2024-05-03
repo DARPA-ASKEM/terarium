@@ -1,14 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;

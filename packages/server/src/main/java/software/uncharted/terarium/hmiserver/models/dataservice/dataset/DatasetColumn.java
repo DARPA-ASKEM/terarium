@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.data.redis.connection.convert.MapConverter;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.data.redis.connection.convert.MapConverter;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -31,8 +28,7 @@ public class DatasetColumn {
 	private String name;
 
 	/**
-	 * Datatype. One of: unknown, boolean, string, char, integer, int, float,
-	 * double, timestamp, datetime, date, time
+	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
 	 */
 	@JsonAlias("data_type")
 	@Enumerated(EnumType.STRING)
@@ -90,8 +86,7 @@ public class DatasetColumn {
 			clone.metadata.putAll(this.metadata);
 		}
 
-		if (this.grounding != null)
-			clone.grounding = this.grounding.clone();
+		if (this.grounding != null) clone.grounding = this.grounding.clone();
 
 		clone.description = this.description;
 
