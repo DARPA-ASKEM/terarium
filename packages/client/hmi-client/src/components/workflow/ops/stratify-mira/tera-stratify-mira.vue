@@ -43,6 +43,15 @@
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section>
 				<p class="mt-3 ml-4">Code Editor - Python</p>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="[]"
+						:context-language="'python3'"
+						@llm-output="(data: any) => console.log(data)"
+					/>
+				</Suspense>
+
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -123,6 +132,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
