@@ -49,3 +49,10 @@ export interface ModelTemplateEdge {
 	};
 	points: Position[];
 }
+
+export interface OffsetValues {
+	offsetLeft: number;
+	offsetTop: number;
+	offsetWidth: number;
+	offsetHeight: number;
+}

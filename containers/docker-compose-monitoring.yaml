@@ -6,7 +6,7 @@ services:
     ports:
       - 8096:3000
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
     volumes:
       - ./grafana.ini:/etc/grafana/grafana.ini
       - ./dashboards:/var/lib/grafana/dashboards
@@ -18,7 +18,7 @@ services:
     ports:
       - 3100:3100
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   prometheus:
     image: ghcr.io/unchartedsoftware/uncharted-shipyard/uncharted-prometheus:v2.45.0
@@ -28,4 +28,4 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command: --config.file=/etc/prometheus/prometheus.yml
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
