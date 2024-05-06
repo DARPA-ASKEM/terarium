@@ -1,20 +1,21 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.hibernate.annotations.Type;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -27,12 +28,12 @@ public class Workflow extends TerariumAsset {
 
 	private Transform transform;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
 	private List<WorkflowEdge> edges;
 
 	@Override
