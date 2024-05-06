@@ -23,8 +23,6 @@ export async function saveAs(
 	openOnSave: boolean = false,
 	onSaveFunction?: Function
 ) {
-	console.log('newAsset', newAsset);
-
 	let response: any = null;
 
 	switch (assetType) {
