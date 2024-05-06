@@ -85,6 +85,7 @@ public class TaskService {
 			script = req.getScript();
 			input = req.getInput();
 			userId = req.getUserId();
+			projectId = req.getProjectId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
@@ -94,6 +95,7 @@ public class TaskService {
 					.setId(id)
 					.setStatus(status)
 					.setUserId(userId)
+					.setProjectId(projectId)
 					.setScript(getScript())
 					.setAdditionalProperties(getAdditionalProperties());
 		}
@@ -558,6 +560,8 @@ public class TaskService {
 				group.setId(req.getId()); // use the task id
 				group.setType(req.getType().toString());
 				group.setUserId(req.getUserId());
+				group.setProjectId(req.getProjectId());
+
 				notificationService.createNotificationGroup(group);
 
 			} catch (final Exception e) {
