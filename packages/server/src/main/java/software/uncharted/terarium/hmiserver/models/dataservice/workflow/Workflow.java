@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import jakarta.persistence.Convert;
+import com.fasterxml.jackson.annotation.JsonBackReference;import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -8,13 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.Data;
+import jakarta.persistence.JoinColumn;import jakarta.persistence.ManyToOne;import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -34,6 +34,12 @@ public class Workflow extends TerariumAsset {
 	@Convert(converter = ObjectConverter.class)
 	@JdbcTypeCode(SqlTypes.JSON)
 	private List<WorkflowEdge> edges;
+
+	@ManyToOne
+	@JoinColumn(name = "project_id")
+	@JsonBackReference
+	@TSOptional
+	private Project project;
 
 	@Override
 	public Workflow clone() {
