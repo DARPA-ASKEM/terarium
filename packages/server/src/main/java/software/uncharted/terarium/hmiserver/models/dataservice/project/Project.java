@@ -21,7 +21,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -65,13 +65,6 @@ public class Project extends TerariumAsset {
 	@ToString.Exclude
 	@JsonManagedReference
 	private List<Code> codeAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project")
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
-	@JsonManagedReference
-	private List<Dataset> datasetAssets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "project")
 	@Where(clause = "deleted_on IS NULL")

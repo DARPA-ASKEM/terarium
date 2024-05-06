@@ -180,7 +180,7 @@
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
 						<tera-model-intervention
 							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
-							:key="intervention.name + intervention.timestep"
+							:key="intervention.name + intervention.timestep + intervention.value"
 							:intervention="intervention"
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
@@ -838,7 +838,7 @@ const initialize = async () => {
 	}
 	// State already been set up use it instead:
 	else {
-		knobs.value.transientModelConfig = state.transientModelConfig;
+		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
 	}
 
 	// Ensure the parameters have constant and distributions for editing in children components
@@ -881,8 +881,7 @@ const initialize = async () => {
 
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
-
-	knobs.value.transientModelConfig = config;
+	knobs.value.transientModelConfig = cloneDeep(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -934,7 +933,7 @@ watch(
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	},
-	{ immediate: true }
+	{ immediate: true, deep: true }
 );
 
 watch(

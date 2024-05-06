@@ -35,7 +35,7 @@ public class ElasticsearchConfiguration {
 	}
 
 	public String getDatasetIndex() {
-		return String.join("_", index.prefix, index.datasetRoot, index.suffix);
+		return String.join("_", index.prefix, index.datasetRoot, "tera_2.1");
 	}
 
 	public String getDocumentIndex() {

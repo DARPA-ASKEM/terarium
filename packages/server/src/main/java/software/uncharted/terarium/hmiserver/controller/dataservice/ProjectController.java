@@ -36,7 +36,6 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -47,7 +46,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -82,9 +80,8 @@ public class ProjectController {
 
 	final CodeService codeService;
 
-	final DatasetService datasetService;
 
-    final WorkflowService workflowService;
+	final WorkflowService workflowService;
 
 	final UserService userService;
 
@@ -521,22 +518,6 @@ public class ProjectController {
 
 						code.get().setProject(project.get());
 						codeService.updateAsset(code.get());
-					} else if (assetType.equals(AssetType.DATASET)) {
-
-						final Optional<Dataset> dataset = datasetService.getAsset(assetId);
-						if (dataset.isEmpty()) {
-							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset Asset does not exist");
-						}
-
-						if (project.get().getDatasetAssets() == null)
-							project.get().setDatasetAssets(new ArrayList<>());
-						if (project.get().getDatasetAssets().contains(dataset.get())) {
-							throw new ResponseStatusException(
-									HttpStatus.CONFLICT, "Dataset Asset already exists on project");
-						}
-
-						dataset.get().setProject(project.get());
-						datasetService.updateAsset(dataset.get());
 					} else if (assetType.equals(AssetType.WORKFLOW)) {
 
 						final Optional<Workflow> workflow = workflowService.getAsset(assetId);
@@ -628,13 +609,6 @@ public class ProjectController {
 					if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
-					}
-				} else if (assetType.equals(AssetType.DATASET)) {
-
-					final Optional<Dataset> deletedDataset = datasetService.deleteAsset(assetId);
-					if (deletedDataset.isEmpty() || deletedDataset.get().getDeletedOn() == null) {
-						throw new ResponseStatusException(
-								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete dataset asset");
 					}
 				} else if (assetType.equals(AssetType.WORKFLOW)) {
 
