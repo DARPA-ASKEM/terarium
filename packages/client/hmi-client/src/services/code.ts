@@ -153,8 +153,6 @@ async function addFileToCodeAsset(
 	const formData = new FormData();
 	formData.append('file', file);
 
-	console.log(formData, file);
-
 	const response = await API.put(`/code-asset/${codeAssetId}/upload-code`, formData, {
 		params: {
 			filename: file.name
