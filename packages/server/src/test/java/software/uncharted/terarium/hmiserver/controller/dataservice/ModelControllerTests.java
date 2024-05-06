@@ -52,7 +52,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description"));
+						.setDescription("test-description")
+						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
 						.with(csrf())
@@ -70,7 +71,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet")));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId()).with(csrf()))
 				.andExpect(status().isOk());
@@ -85,7 +87,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet")));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
 						.with(csrf())
@@ -103,7 +106,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet")));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
 						.with(csrf()))
@@ -121,7 +125,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet")));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
 						.with(csrf()))
@@ -137,7 +142,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet")));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
 				.andExpect(status().isOk());
