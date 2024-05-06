@@ -80,7 +80,6 @@ public class ProjectController {
 
 	final CodeService codeService;
 
-
 	final WorkflowService workflowService;
 
 	final UserService userService;
@@ -529,7 +528,7 @@ public class ProjectController {
 							project.get().setWorkflowAssets(new ArrayList<>());
 						if (project.get().getWorkflowAssets().contains(workflow.get())) {
 							throw new ResponseStatusException(
-								HttpStatus.CONFLICT, "Workflow Asset already exists on project");
+									HttpStatus.CONFLICT, "Workflow Asset already exists on project");
 						}
 
 						workflow.get().setProject(project.get());
@@ -615,7 +614,7 @@ public class ProjectController {
 					final Optional<Workflow> deletedWorkflow = workflowService.deleteAsset(assetId);
 					if (deletedWorkflow.isEmpty() || deletedWorkflow.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete workflow asset");
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete workflow asset");
 					}
 				}
 

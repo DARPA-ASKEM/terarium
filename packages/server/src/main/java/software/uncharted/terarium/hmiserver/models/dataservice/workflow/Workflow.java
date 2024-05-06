@@ -1,20 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;import jakarta.persistence.Convert;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import jakarta.persistence.JoinColumn;import jakarta.persistence.ManyToOne;import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
