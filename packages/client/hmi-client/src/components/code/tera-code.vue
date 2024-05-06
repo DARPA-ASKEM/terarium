@@ -143,9 +143,9 @@
 			</tera-modal>
 		</Teleport>
 		<tera-save-asset-modal
-			v-if="newFile"
+			v-if="codeText"
 			:is-visible="showSaveAssetModal"
-			:asset="newFile"
+			:asset="codeText"
 			:assetType="AssetType.Code"
 			:initial-name="codeName"
 			@close-modal="showSaveAssetModal = false"
@@ -230,10 +230,6 @@ const fileNames = computed<string[]>(() => {
 	if (!codeAssetCopy.value?.files) return [];
 	return Object.keys(codeAssetCopy.value?.files);
 });
-
-const newFile = computed(
-	() => new File([codeText.value], setFileExtension(codeName.value, programmingLanguage.value))
-);
 
 const codeAssetCopy = ref<Code | null>(null);
 const savingAsset = ref(false);
@@ -333,6 +329,7 @@ async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 		await refreshCodeAsset(res.id);
 		toast.success('', `Saved Code Asset`);
 		highlightDynamics();
+		isRenamingCode.value = false;
 	} else {
 		saveAssetService.saveAs(
 			new File([codeText.value], setFileExtension(codeName.value, programmingLanguage.value)),
@@ -458,6 +455,7 @@ watch(
 			codeSelectedFile.value = filename;
 
 			codeText.value = (await getCodeFileAsText(props.assetId, filename)) ?? INITIAL_TEXT;
+
 			programmingLanguage.value =
 				code.files[filename].language ?? getProgrammingLanguage(codeName.value);
 		} else {

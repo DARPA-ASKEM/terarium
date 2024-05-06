@@ -61,7 +61,7 @@ const props = defineProps({
 		default: false
 	},
 	asset: {
-		type: Object as PropType<saveAssetService.AssetToSave> | null,
+		type: [Object, String, null] as PropType<saveAssetService.AssetToSave | string | null>,
 		default: null
 	},
 	assetType: {
@@ -81,7 +81,7 @@ const props = defineProps({
 const emit = defineEmits(['close-modal', 'on-save']);
 
 let newAsset: any = null;
-const newName = ref<string>(props.initialName);
+const newName = ref<string>('');
 
 const title = computed(() => {
 	if (!props.asset) return `Create new ${props.assetType}`;
@@ -109,9 +109,9 @@ function save() {
 			(newAsset as Workflow).name = newName.value;
 			break;
 		case AssetType.Code:
-			if (newAsset.name !== newName.value) {
-				newAsset = new File([newAsset], newName.value);
-			}
+			// File needs to be created here since name is read only
+			// Here newAsset comes as a string and is reassigned as a File
+			newAsset = new File([newAsset], newName.value);
 			break;
 		default:
 			break;
@@ -128,11 +128,14 @@ function save() {
 }
 
 function initializeAsset() {
-	console.log(props.asset);
+	newName.value = props.initialName;
 
 	// If an asset is passed, clone it for saving
 	if (props.asset) {
 		newAsset = cloneDeep(props.asset);
+		if (props.assetType === AssetType.Code) {
+			newName.value = setFileExtension(newName.value, ProgrammingLanguage.Python);
+		}
 		return;
 	}
 
@@ -155,8 +158,6 @@ function initializeAsset() {
 		default:
 			break;
 	}
-
-	console.log(newAsset);
 }
 </script>
 

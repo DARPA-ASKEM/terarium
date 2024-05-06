@@ -1,16 +1,16 @@
 import { ref } from 'vue';
 import { createWorkflow } from '@/services/workflow';
-import { uploadCodeToProject } from '@/services/code';
+import { updateCodeAsset, uploadCodeToProject } from '@/services/code';
 import { createModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import { AssetType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
-import type { Model } from '@/types/Types';
+import type { Model, Code } from '@/types/Types';
 import type { Workflow } from '@/types/workflow';
 
-export type AssetToSave = File | Model | Workflow;
+export type AssetToSave = Model | Workflow | File;
 
 const projectResource = useProjects();
 
@@ -23,6 +23,8 @@ export async function saveAs(
 	openOnSave: boolean = false,
 	onSaveFunction?: Function
 ) {
+	console.log('newAsset', newAsset);
+
 	let response: any = null;
 
 	switch (assetType) {
@@ -76,11 +78,19 @@ export async function overwrite(
 	assetType: AssetType,
 	onSaveFunction?: Function
 ) {
+	if (!(newAsset instanceof File) && !newAsset.id) {
+		logger.error(`Can't overwrite an asset that lacks an id.`);
+		return;
+	}
+
 	let response: any = null;
 
 	switch (assetType) {
 		case AssetType.Model:
 			response = await updateModel(newAsset as Model);
+			break;
+		case AssetType.Code:
+			response = await updateCodeAsset(newAsset as Code);
 			break;
 		default:
 			logger.info(`Update for ${assetType} is not implemented.`);
