@@ -5,9 +5,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -85,12 +83,13 @@ public class Dataset extends TerariumAsset {
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
 	private List<DatasetColumn> columns;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
 	@Column(columnDefinition = "text")
 	private JsonNode metadata;
 
@@ -104,7 +103,8 @@ public class Dataset extends TerariumAsset {
 	 * whole
 	 */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
 	private Grounding grounding;
 
 	@Override

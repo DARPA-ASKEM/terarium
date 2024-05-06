@@ -4,9 +4,7 @@ import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -38,7 +36,8 @@ public class Code extends TerariumAsset {
 	/* Files that contain dynamics */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "text")
 	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
