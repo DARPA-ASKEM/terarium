@@ -33,7 +33,7 @@
 							:default-options="sampleAgentQuestions"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => replaceThought(data)"
+							@llm-thought-output="replaceThought"
 						/>
 					</Suspense>
 					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
@@ -196,14 +196,14 @@ const appendCode = (data: any, property: string) => {
 	}
 };
 
-const replaceThought = (data: any) => {
+function replaceThought(data: any) {
 	const thought = data;
 	if (thought) {
 		llmThought.value = data;
 	} else {
-		logger.error('No code to append');
+		logger.error('No thought to append');
 	}
-};
+}
 
 const syncWithMiraModel = (data: any) => {
 	const updatedModel = data.content?.['application/json'];

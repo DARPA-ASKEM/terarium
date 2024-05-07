@@ -233,15 +233,18 @@
 						@click="runFromCode"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => console.log(data)"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:defaultOptions="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="replaceThought"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -346,6 +349,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
@@ -438,6 +442,7 @@ const buildJupyterContext = () => {
 const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
+const llmThought = ref();
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -455,6 +460,15 @@ const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
 	if (runUpdatedCode) runFromCode();
 };
+
+function replaceThought(data: any) {
+	const thought = data;
+	if (thought) {
+		llmThought.value = data;
+	} else {
+		logger.error('No thought to append');
+	}
+}
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -1033,6 +1047,10 @@ onUnmounted(() => {
 #notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+}
+
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

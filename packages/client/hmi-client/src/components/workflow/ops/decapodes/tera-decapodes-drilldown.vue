@@ -25,15 +25,18 @@
 						:loading="isRunningCode"
 					/>
 				</template>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => console.log(data)"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:defaultOptions="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="replaceThought"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -68,6 +71,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -115,6 +120,7 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 const codeText = ref();
+const llmThought = ref();
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
@@ -128,6 +134,15 @@ const appendCode = (data: any, property: string) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
 	saveCodeToState(codeText.value);
 };
+
+function replaceThought(data: any) {
+	const thought = data;
+	if (thought) {
+		llmThought.value = data;
+	} else {
+		logger.error('No thought to append');
+	}
+}
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -229,3 +244,9 @@ onUnmounted(() => {
 	kernelManager.shutdown();
 });
 </script>
+
+<style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+</style>

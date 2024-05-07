@@ -81,13 +81,18 @@
 						@click="runCode"
 					/>
 				</div>
-				<tera-notebook-jupyter-input
-					:kernelManager="kernelManager"
-					:defaultOptions="sampleAgentQuestions"
-					@llm-output="appendCode"
-					@llm-thought-output="(data: any) => console.log(data)"
-					:context-language="contextLanguage"
-				/>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernelManager="kernelManager"
+							:defaultOptions="sampleAgentQuestions"
+							@llm-output="appendCode"
+							@llm-thought-output="replaceThought"
+							:context-language="contextLanguage"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -145,6 +150,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
@@ -186,6 +193,7 @@ const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
+const llmThought = ref();
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
@@ -282,6 +290,15 @@ function appendCode(data: any) {
 	const newCode = data.content.code;
 	if (newCode) code.value = newCode;
 	else logger.error('No code to append');
+}
+
+function replaceThought(data: any) {
+	const thought = data;
+	if (thought) {
+		llmThought.value = data;
+	} else {
+		logger.error('No thought to append');
+	}
 }
 
 function processCompareModels(modelIds) {
@@ -403,6 +420,9 @@ ul {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+}
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

@@ -32,5 +32,6 @@ onMounted(async () => {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: 0.75rem;
+	margin-top: 0.5rem;
 }
 </style>
