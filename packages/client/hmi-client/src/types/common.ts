@@ -7,6 +7,7 @@ import {
 	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
+	ProgressState,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
@@ -200,18 +201,12 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export enum ItemStatusType {
-	Completed = 'Completed',
-	Failed = 'Failed',
-	Running = 'Running'
-}
-
 export interface NotificationItem {
 	notificationGroupId: string;
 	type: ClientEventType;
 	assetId: string;
 	assetName: string;
-	status: 'Completed' | 'Failed' | 'Running';
+	status: ProgressState;
 	msg: string;
 	error: string;
 	progress: number;

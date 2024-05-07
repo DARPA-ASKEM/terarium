@@ -34,9 +34,9 @@
 				</p>
 				<div class="notification-path-text msg">
 					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
-					<p v-if="!isStatusCorrect(ItemStatusType.Completed, item)">{{ item.msg }}</p>
+					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
-				<div v-if="isStatusCorrect(ItemStatusType.Running, item)" class="progressbar-container">
+				<div v-if="isRunning(item)" class="progressbar-container">
 					<p class="action">{{ getActionText(item) }} {{ Math.round(item.progress * 100) }}%</p>
 
 					<ProgressBar :value="item.progress * 100" />
@@ -50,10 +50,10 @@
 					<!--					/>-->
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="isStatusCorrect(ItemStatusType.Completed, item)">
+					<div class="status-msg ok" v-if="isComplete(item)">
 						<i class="pi pi-check-circle" />Completed
 					</div>
-					<div class="status-msg error" v-else-if="isStatusCorrect(ItemStatusType.Failed, item)">
+					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
 					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
@@ -69,8 +69,8 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
-import { NotificationItem, ItemStatusType } from '@/types/common';
-import { AssetType, ClientEventType } from '@/types/Types';
+import { NotificationItem } from '@/types/common';
+import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
@@ -98,8 +98,9 @@ const getTitleText = (item: NotificationItem) => {
 	}
 };
 
-const isStatusCorrect = (status: ItemStatusType, item: NotificationItem) =>
-	status === ItemStatusType[item.status];
+const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
+const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
+const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
 
 const getActionText = (item: NotificationItem) => {
 	switch (item.type) {
