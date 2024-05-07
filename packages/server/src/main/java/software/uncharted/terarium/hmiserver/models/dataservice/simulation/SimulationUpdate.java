@@ -13,7 +13,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
@@ -31,7 +30,6 @@ public class SimulationUpdate {
 	private UUID id = UUID.randomUUID();
 
 	@ManyToOne
-	@JoinColumn(name = "simulation_id")
 	@JsonBackReference
 	@NotNull
 	private Simulation simulation;

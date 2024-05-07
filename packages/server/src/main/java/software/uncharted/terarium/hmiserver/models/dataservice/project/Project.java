@@ -55,20 +55,20 @@ public class Project extends TerariumAsset {
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] overviewContent;
 
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	@Deprecated // This will be going away once the PG migration is done.
 	private List<ProjectAsset> projectAssets = new ArrayList<>();
 
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<Code> codeAssets = new ArrayList<>();
 
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference

@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -34,7 +33,6 @@ public class NotificationEvent extends BaseEntity {
 	private ProgressState state = null;
 
 	@ManyToOne
-	@JoinColumn(name = "notification_group_id")
 	@JsonBackReference
 	@NotNull
 	private NotificationGroup notificationGroup;

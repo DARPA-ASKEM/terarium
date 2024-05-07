@@ -13,7 +13,6 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -55,7 +54,6 @@ public class Code extends TerariumAsset {
 
 	@TSOptional
 	@ManyToOne
-	@JoinColumn(name = "project_id")
 	@JsonBackReference
 	private Project project;
 

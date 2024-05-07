@@ -86,7 +86,7 @@ public class Simulation extends TerariumAsset {
 	@TSOptional
 	private UUID projectId; // TODO this can probably be joined to the project table soon?
 
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "simulation", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("createdOn DESC")
 	@JsonManagedReference
 	private List<SimulationUpdate> updates = new ArrayList<>();

@@ -34,7 +34,7 @@ public class NotificationGroup extends BaseEntity {
 	private String type;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "notificationGroup", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("createdOn DESC")
 	@JsonManagedReference
 	private List<NotificationEvent> notificationEvents = new ArrayList<>();

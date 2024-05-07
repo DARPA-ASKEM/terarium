@@ -68,7 +68,6 @@ public class Dataset extends TerariumAsset {
 
 	@TSOptional
 	@ManyToOne
-	@JoinColumn(name = "project_id")
 	@JsonBackReference
 	private Project project;
 
@@ -88,7 +87,7 @@ public class Dataset extends TerariumAsset {
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "dataset", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
 	private List<DatasetColumn> columns;
 
