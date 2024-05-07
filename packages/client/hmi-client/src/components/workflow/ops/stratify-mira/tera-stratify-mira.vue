@@ -42,15 +42,11 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<!--
-				<p class="mt-3 ml-4">Code Editor - Python</p>
-				-->
-				{{ kernelReady }}
 				<tera-notebook-jupyter-input
 					:kernel-manager="kernelManager"
 					:default-options="[]"
 					:context-language="'python3'"
-					@llm-output="(data: any) => console.log(data)"
+					@llm-output="(data: any) => processLLMOutput(data)"
 				/>
 
 				<v-ace-editor
@@ -210,6 +206,11 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 
 const stratifyModel = () => {
 	stratifyRequest();
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+	saveCodeToState(data.content.code, false);
 };
 
 const resetModel = () => {
