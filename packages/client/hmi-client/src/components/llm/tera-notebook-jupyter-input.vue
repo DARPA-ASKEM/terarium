@@ -44,6 +44,7 @@
 	</div>
 	<div>
 		<p>LLM Thoughts Options 1</p>
+		<tera-notebook-jupyter-thought-output-simple-naming :thought="thoughts" />
 	</div>
 </template>
 
@@ -54,6 +55,7 @@ import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
+import teraNotebookJupyterThoughtOutputSimpleNaming from '@/components/llm/tera-notebook-jupyter-thought-output-simple-naming.vue';
 
 const props = defineProps<{
 	kernelManager: KernelSessionManager;
@@ -65,8 +67,8 @@ const emit = defineEmits(['llm-output', 'llm-thought-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
-
 const showAssistant = ref(true);
+const thoughts = ref();
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -84,6 +86,7 @@ const submitQuestion = () => {
 		emit('llm-output', data);
 	});
 	message.register('llm_thought', (data) => {
+		thoughts.value = data;
 		emit('llm-thought-output', data);
 	});
 };

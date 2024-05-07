@@ -1,6 +1,5 @@
 <template>
 	<p>To Discuss if this should exist</p>
-	<p>LLM Thoughts Options 2</p>
 </template>
 
 <script setup lang="ts">

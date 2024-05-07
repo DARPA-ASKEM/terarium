@@ -35,6 +35,7 @@
 						@llm-thought-output="(data: any) => replaceThought(data)"
 					/>
 				</Suspense>
+				<p>LLM Thoughts Options 2</p>
 				<tera-notebook-jupyter-thought-output-simple-naming :thought="llmThought" />
 				<v-ace-editor
 					v-model:value="codeText"
