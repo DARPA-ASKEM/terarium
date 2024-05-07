@@ -169,13 +169,24 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ./hmiServerDev.sh start local run
 ```
 
-If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
+If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
+```shell
+./hmiServerDev.sh start local
+```
+
+If you're looking to just decrypt or encrypt secrets you can run:
 
 ```shell
 ./hmiServerDev.sh decrypt
 ```
+or
+```shell
+./hmiServerDev.sh encrypt
+```
 
+If running decrypt, you'll see the contents of `application-secrets.properties.encrypted` decrypted to plain text.
 There should now be a `application-secrets.properties` file in the `packages/server/src/main/resources` dir.
+If running encrypt, `application-secrets.properties`'s content will be encrypted into the *.encrypted file.
 
 <details>
 <summary><b>Debugging the Server in IntelliJ</b></summary>
