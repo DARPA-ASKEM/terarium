@@ -99,8 +99,8 @@
 			</template>
 		</Column>
 
-		<!-- Value type: Matrix or a Dropdown with: Constant, Distribution (with icons) -->
-		<Column field="type" header="Value Type" class="w-2">
+		<!-- Value type: Matrix or a Contant -->
+		<Column field="type" header="Value" class="w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -110,38 +110,20 @@
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
-				<Dropdown
+				<tera-input-number
 					v-else
-					class="value-type-dropdown w-9"
-					:model-value="slotProps.data.type"
-					:options="typeOptions"
-					optionLabel="label"
-					optionValue="value"
-					placeholder="Select a parameter type"
+					class="constant-number"
+					v-model.lazy="slotProps.data.value.value"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
 					:disabled="readonly"
-					@update:model-value="(val) => (slotProps.data.type = val)"
-				>
-					<template #value="slotProps">
-						<span class="flex align-items-center">
-							<span
-								class="p-dropdown-item-icon mr-2"
-								:class="typeOptions[slotProps.value].icon"
-							></span>
-							<span>{{ typeOptions[slotProps.value].label }}</span>
-						</span>
-					</template>
-					<template #option="slotProps">
-						<span class="flex align-items-center">
-							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
-							<span>{{ slotProps.option.label }}</span>
-						</span>
-					</template>
-				</Dropdown>
+					@update:model-value="emit('update-value', [slotProps.data.value])"
+				/>
 			</template>
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Value" class="w-2 pr-2">
+		<Column field="value" header="Distribution" class="w-2 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -151,10 +133,7 @@
 					>Open matrix</span
 				>
 				<!-- Distribution -->
-				<div
-					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
-					class="distribution-container"
-				>
+				<div v-else class="distribution-container">
 					<label>Min</label>
 					<tera-input-number
 						class="distribution-item min-value"
@@ -174,44 +153,6 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
-
-				<!-- Constant: Includes the value, a button and input box to convert it into a distributions with a customizable range -->
-				<span
-					v-else-if="slotProps.data.type === ParamType.CONSTANT"
-					class="flex align-items-center"
-				>
-					<tera-input-number
-						class="constant-number"
-						v-model.lazy="slotProps.data.value.value"
-						:min-fraction-digits="1"
-						:max-fraction-digits="10"
-						:disabled="readonly"
-						@update:model-value="emit('update-value', [slotProps.data.value])"
-					/>
-					<!-- This is a button with an input field inside it, weird huh?, but it works -->
-					<!--
-					<Button
-						v-if="!readonly"
-						class="ml-2 pt-0 pb-0 w-5"
-						text
-						@click="changeType(slotProps.data.value, 1)"
-						v-tooltip="'Convert to distribution'"
-					>
-						<span class="white-space-nowrap text-sm">Add ±</span>
-						<InputNumber
-							v-model="addPlusMinus"
-
-							text
-							class="constant-number add-plus-minus w-full"
-							inputId="convert-to-distribution"
-							suffix="%"
-							:min="0"
-							:max="100"
-							:disabled="readonly"
-							@click.stop
-						/>
-					-->
-				</span>
 			</template>
 		</Column>
 
@@ -352,7 +293,6 @@ import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
