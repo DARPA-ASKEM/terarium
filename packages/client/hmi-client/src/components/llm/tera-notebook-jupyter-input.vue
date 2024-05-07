@@ -42,10 +42,6 @@
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
-	<div>
-		<p>LLM Thoughts Options 1</p>
-		<tera-notebook-jupyter-thought-output-simple-naming :thought="thoughts" />
-	</div>
 </template>
 
 <script setup lang="ts">
@@ -55,7 +51,6 @@ import Button from 'primevue/button';
 import { ref } from 'vue';
 import { KernelState, KernelSessionManager } from '@/services/jupyter';
 import Dropdown from 'primevue/dropdown';
-import teraNotebookJupyterThoughtOutputSimpleNaming from '@/components/llm/tera-notebook-jupyter-thought-output-simple-naming.vue';
 
 const props = defineProps<{
 	kernelManager: KernelSessionManager;
