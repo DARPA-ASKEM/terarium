@@ -42,13 +42,16 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<tera-notebook-jupyter-input
-					:kernel-manager="kernelManager"
-					:default-options="[]"
-					:context-language="'python3'"
-					@llm-output="(data: any) => processLLMOutput(data)"
-				/>
-
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="[]"
+						:context-language="'python3'"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => (llmThought = data)"
+					/>
+					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -130,6 +133,7 @@ import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tabl
 import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
@@ -196,6 +200,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmThought = ref();
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -495,8 +500,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.notebook-section:deep(main .notebook-toolbar),
-.notebook-section:deep(main .ai-assistant) {
+.notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
 
