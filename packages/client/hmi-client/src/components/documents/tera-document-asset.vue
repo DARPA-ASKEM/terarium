@@ -16,7 +16,7 @@
 		<template #edit-buttons>
 			<SelectButton
 				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
+				@change="changeView"
 				:options="viewOptions"
 				option-value="value"
 				option-disabled="disabled"
@@ -202,6 +202,12 @@ const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' 
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
+
+const changeView = (event) => {
+	if (event.value) {
+		view.value = event.value;
+	}
+};
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
