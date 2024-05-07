@@ -18,7 +18,7 @@
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+			<tera-drilldown-section class="notebook-section">
 				<!-- Suggested configurations -->
 				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
@@ -1049,7 +1049,7 @@ onUnmounted(() => {
 	position: relative;
 }
 
-.notebook-section:deep(main .toolbar) {
+.toolbar {
 	padding-left: var(--gap-medium);
 }
 
