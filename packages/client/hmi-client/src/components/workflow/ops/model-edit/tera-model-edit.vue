@@ -32,9 +32,10 @@
 						:default-options="sampleAgentQuestions"
 						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => console.log(data)"
+						@llm-thought-output="(data: any) => replaceThought(data)"
 					/>
 				</Suspense>
+				<tera-notebook-jupyter-thought-output-simple-naming :thought="llmThought" />
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeAceEditor"
@@ -111,6 +112,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutputSimpleNaming from '@/components/llm/tera-notebook-jupyter-thought-output-simple-naming.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
@@ -169,6 +171,7 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmThought = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -184,6 +187,15 @@ const appendCode = (data: any, property: string) => {
 		if (property === 'executed_code') {
 			saveCodeToState(codeText.value, true);
 		}
+	} else {
+		logger.error('No code to append');
+	}
+};
+
+const replaceThought = (data: any) => {
+	const thought = data;
+	if (thought) {
+		llmThought.value = data;
 	} else {
 		logger.error('No code to append');
 	}
