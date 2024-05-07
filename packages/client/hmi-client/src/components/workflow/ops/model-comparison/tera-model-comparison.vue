@@ -85,6 +85,7 @@
 					:kernelManager="kernelManager"
 					:defaultOptions="sampleAgentQuestions"
 					@llm-output="appendCode"
+					@llm-thought-output="(data: any) => console.log(data)"
 					:context-language="contextLanguage"
 				/>
 				<v-ace-editor

@@ -239,6 +239,7 @@
 						:defaultOptions="sampleAgentQuestions"
 						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
+						@llm-thought-output="(data: any) => console.log(data)"
 					/>
 				</Suspense>
 				<v-ace-editor
