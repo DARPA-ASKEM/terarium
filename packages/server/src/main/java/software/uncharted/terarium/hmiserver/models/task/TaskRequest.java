@@ -12,6 +12,7 @@ import java.util.Base64;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 
 @Accessors(chain = true)
 @NoArgsConstructor
@@ -42,6 +43,8 @@ public class TaskRequest implements Serializable {
 	protected byte[] input;
 	protected int timeoutMinutes = 30;
 	protected String userId;
+
+	protected ClientEventType eventType;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are

@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
+import org.aspectj.weaver.ast.Not;
 import org.redisson.api.RLock;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -45,6 +46,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
 @Service
@@ -153,6 +155,7 @@ public class TaskService {
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
+	private final ClientEventService clientEventService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
@@ -429,7 +432,7 @@ public class TaskService {
 			try {
 				// create the notification event
 				final NotificationEvent event = new NotificationEvent();
-				event.setData(resp);
+				event.setData(resp.getAdditionalProperties());
 
 				log.info("Creating notification event under group id: {}", resp.getId());
 

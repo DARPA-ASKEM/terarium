@@ -8,4 +8,5 @@ public enum ClientEventType {
 	FILE_UPLOAD_PROGRESS,
 	EXTRACTION,
 	EXTRACTION_PDF,
+	TASK_GOLLM,
 }
