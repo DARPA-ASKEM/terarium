@@ -360,10 +360,10 @@ watch(
 		if (props.node.active) {
 			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
-
 			await inputChangeHandler();
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 onMounted(async () => {
