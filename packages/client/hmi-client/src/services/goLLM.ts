@@ -10,11 +10,12 @@ import { b64DecodeUnicode } from '@/utils/binary';
  * @param {string} documentId - The document ID.
  * @param {string} modelId - The model ID.
  */
-export async function modelCard(documentId: string): Promise<void> {
+export async function modelCard(documentId: string, projectId: string): Promise<void> {
 	try {
 		const response = await API.post<TaskResponse>('/gollm/model-card', null, {
 			params: {
-				'document-id': documentId
+				'document-id': documentId,
+				'project-id': projectId
 			}
 		});
 
@@ -39,13 +40,15 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
-	handlers: TaskEventHandlers
+	handlers: TaskEventHandlers,
+	projectId: string
 ): Promise<TaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
 				'model-id': modelId,
-				'document-id': documentId
+				'document-id': documentId,
+				'project-id': projectId
 			}
 		});
 
@@ -88,7 +91,7 @@ export async function configureModelFromDatasets(
 	return null;
 }
 
-export async function compareModels(modelIds: string[]): Promise<CompareModelsResponseType> {
+export async function compareModels(modelIds: string[], projectId: string): Promise<CompareModelsResponseType> {
 	let resolve;
 	let reject;
 
@@ -98,9 +101,10 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	});
 
 	try {
-		const response = await API.get<TaskResponse>('/gollm/compare-models', {
+		const response = await API.get<TaskResponse>(`/gollm/compare-models`, {
 			params: {
-				'model-ids': modelIds.join(',')
+				'model-ids': modelIds.join(','),
+				'project-id': projectId
 			}
 		});
 

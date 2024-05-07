@@ -161,6 +161,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
@@ -284,7 +285,7 @@ function appendCode(data: any) {
 }
 
 function processCompareModels(modelIds) {
-	compareModels(modelIds).then((response) => {
+	compareModels(modelIds, useProjects().activeProjectId.value).then((response) => {
 		llmAnswer.value = response.response;
 	});
 }

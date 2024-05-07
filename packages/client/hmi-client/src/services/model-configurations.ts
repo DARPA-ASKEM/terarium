@@ -7,17 +7,18 @@ export const getAllModelConfigurations = async () => {
 	return (response?.data as ModelConfiguration[]) ?? null;
 };
 
-export const getModelConfigurationById = async (id: string) => {
-	const response = await API.get(`/model-configurations/${id}`);
+export const getModelConfigurationById = async (id: string, projectId: string) => {
+	const response = await API.get(`/model-configurations/${id}?project-id=${projectId}`);
 	return (response?.data as ModelConfiguration) ?? null;
 };
 
-export const getModelIdFromModelConfigurationId = async (id: string) => {
-	const modelConfiguration = await getModelConfigurationById(id);
+export const getModelIdFromModelConfigurationId = async (id: string, projectId: string) => {
+	const modelConfiguration = await getModelConfigurationById(id, projectId);
 	return modelConfiguration?.model_id ?? null;
 };
 
 export const createModelConfiguration = async (
+	projectId: string,
 	model_id: string | undefined,
 	name: string,
 	description: string,
@@ -31,21 +32,23 @@ export const createModelConfiguration = async (
 	const temporary = isTemporary ?? false;
 	const interventions = givenInterventions ?? [];
 	const response = await API.post(`/model-configurations`, {
-		model_id,
-		temporary,
-		name,
-		description,
-		configuration,
-		interventions
+		'configuration': {
+			model_id,
+			temporary,
+			name,
+			description,
+			configuration,
+			interventions
+		}, projectId
 	});
 	return response?.data ?? null;
 };
 
-export const addDefaultConfiguration = async (model: Model): Promise<void> => {
-	await createModelConfiguration(model.id, 'Default config', 'Default config', model);
+export const addDefaultConfiguration = async (projectId: string, model: Model): Promise<void> => {
+	await createModelConfiguration(projectId, model.id, 'Default config', 'Default config', model);
 };
 
-export const updateModelConfiguration = async (config: ModelConfiguration) => {
+export const updateModelConfiguration = async (config: ModelConfiguration, projectId: string) => {
 	// Do a sanity pass to ensure type-safety
 	const model: Model = config.configuration as Model;
 	const parameters = model.semantics?.ode.parameters;
@@ -64,6 +67,6 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 		API.put(`/models/${config.configuration.id}`, config.configuration);
 	}
 
-	const response = await API.put(`/model-configurations/${config.id}`, config);
+	const response = await API.put(`/model-configurations/${config.id}`, {config, projectId});
 	return response?.data ?? null;
 };

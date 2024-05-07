@@ -33,6 +33,7 @@ import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
+import { useProjects } from '@/composables/project';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
@@ -56,12 +57,15 @@ onMounted(async () => {
 	let notebookSessionId = state.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
-		const response = await createNotebookSession({
-			id: uuidv4(),
-			name: props.node.id,
-			description: '',
-			data: { history: [] }
-		});
+		const response = await createNotebookSession(
+			{
+				id: uuidv4(),
+				name: props.node.id,
+				description: '',
+				data: { history: [] }
+			},
+			useProjects().activeProjectId.value
+		);
 		notebookSessionId = response?.id;
 
 		if (notebookSessionId) {
@@ -70,7 +74,10 @@ onMounted(async () => {
 			emit('update-state', state);
 		}
 	}
-	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
+	notebookSession.value = await getNotebookSessionById(
+		notebookSessionId!,
+		useProjects().activeProjectId.value
+	);
 });
 
 const addOutputPort = async (data) => {
@@ -86,7 +93,7 @@ const addOutputPort = async (data) => {
 	emit('update-state', state);
 
 	// set default configuration
-	await addDefaultConfiguration(model);
+	await addDefaultConfiguration(useProjects().activeProjectId.value, model);
 
 	emit('append-output', {
 		id: uuidv4(),

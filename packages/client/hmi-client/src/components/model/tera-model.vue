@@ -167,7 +167,7 @@ async function updateModelName() {
 }
 
 async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
-	await updateModelConfiguration(updatedConfiguration);
+	await updateModelConfiguration(updatedConfiguration, useProjects().activeProjectId.value);
 	setTimeout(async () => {
 		emit('update-model-configuration');
 		const indexToUpdate = modelConfigurations.value.findIndex(
@@ -188,7 +188,7 @@ async function fetchConfigurations() {
 				!tempConfigurations.find((d) => d.name === 'Default config')) &&
 			!isModelEmpty(model.value)
 		) {
-			await addDefaultConfiguration(model.value);
+			await addDefaultConfiguration(useProjects().activeProjectId.value, model.value);
 			setTimeout(async () => {
 				// elastic search might still not update in time
 				tempConfigurations = await getModelConfigurations(model.value?.id!);

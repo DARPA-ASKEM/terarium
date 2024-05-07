@@ -61,7 +61,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	public void testItCanGetNotebookSession() throws Exception {
 
 		final NotebookSession notebookSession = notebookSessionService.createAsset(
-				(NotebookSession) new NotebookSession().setName("test-notebook-name"));
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
 						.with(csrf()))
@@ -72,9 +72,9 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetNotebookSessions() throws Exception {
 
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"));
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"));
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"));
+		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
+		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
+		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/sessions").with(csrf()))
 				.andExpect(status().isOk())
@@ -86,13 +86,13 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteNotebookSession() throws Exception {
 
 		final NotebookSession notebookSession = notebookSessionService.createAsset(
-				(NotebookSession) new NotebookSession().setName("test-notebook-name"));
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				notebookSessionService.getAsset(notebookSession.getId()).isEmpty());
+				notebookSessionService.getAsset(notebookSession.getId(), ASSUMED_PERMISSION).isEmpty());
 	}
 }

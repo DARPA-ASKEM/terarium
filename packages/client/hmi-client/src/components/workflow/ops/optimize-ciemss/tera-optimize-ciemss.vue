@@ -350,6 +350,7 @@ import {
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
@@ -501,7 +502,7 @@ const formatJsonValue = (value) => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId, useProjects().activeProjectId.value);
 	const model = modelConfiguration.value.configuration;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
@@ -581,6 +582,7 @@ const saveModelConfiguration = async () => {
 
 	// TODO: This should be taking some values from our output result but its TBD
 	const data = await createModelConfiguration(
+    useProjects().activeProjectId.value,
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
 		knobs.value.modelConfigDesc,

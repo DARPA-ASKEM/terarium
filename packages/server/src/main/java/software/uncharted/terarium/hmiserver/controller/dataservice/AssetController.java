@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
@@ -70,11 +71,12 @@ public class AssetController {
 			@PathVariable("asset-type") final String assetTypeName,
 			@PathVariable("asset-name") final String assetName,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission assumedPermission = Schema.Permission.READ;
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		if (projectId == null) {
 
-			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType);
+			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType, assumedPermission);
 			if (asset.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is already in use");
 			} else {
@@ -90,7 +92,7 @@ public class AssetController {
 					if (project.isPresent()) {
 						final Optional<ProjectAsset> asset =
 								projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
-										projectId, assetName, assetType);
+										projectId, assetName, assetType, assumedPermission);
 						if (asset.isPresent()) {
 							throw new ResponseStatusException(
 									HttpStatus.CONFLICT, "Asset name is not available in this project");

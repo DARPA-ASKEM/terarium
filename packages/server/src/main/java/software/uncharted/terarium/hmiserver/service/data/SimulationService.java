@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.repository.data.SimulationRepositor
 import software.uncharted.terarium.hmiserver.repository.data.SimulationUpdateRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
@@ -48,9 +49,9 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update) {
+	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update, Schema.Permission hasReadPermission) {
 
-		final Simulation simulation = getAsset(simulationId).orElseThrow();
+		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
 
 		update.setSimulation(simulation);
 		final SimulationUpdate created = simulationUpdateRepository.save(update);

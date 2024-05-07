@@ -44,6 +44,7 @@ async function getDocumentAsset(documentId: string): Promise<DocumentAsset | nul
 async function uploadDocumentAssetToProject(
 	file: File,
 	userId: string,
+	projectId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<DocumentAsset | null> {
@@ -55,7 +56,10 @@ async function uploadDocumentAssetToProject(
 		userId
 	};
 
-	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
+	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(
+		documentAsset,
+		projectId
+	);
 	if (!newDocumentAsset || !newDocumentAsset.id) return null;
 
 	const successfulUpload = await addFileToDocumentAsset(newDocumentAsset.id, file, progress);
@@ -68,6 +72,7 @@ async function createNewDocumentFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userId: string,
+	projectId: string,
 	description?: string
 ) {
 	// Find the file name by removing the path portion
@@ -83,7 +88,7 @@ async function createNewDocumentFromGithubFile(
 		userId
 	};
 
-	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
+	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset, projectId);
 	if (!newDocument || !newDocument.id) return null;
 
 	const urlResponse = await API.put(
@@ -104,8 +109,11 @@ async function createNewDocumentFromGithubFile(
  * Creates a new document asset in TDS and returns the new document asset object id
  * @param document the document asset to create
  */
-async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<DocumentAsset | null> {
-	const response = await API.post('/document-asset', documentAsset);
+async function createNewDocumentAsset(
+	documentAsset: DocumentAsset,
+	projectId: string
+): Promise<DocumentAsset | null> {
+	const response = await API.post('/document-asset', { documentAsset, projectId });
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }

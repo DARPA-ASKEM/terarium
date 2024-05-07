@@ -236,6 +236,7 @@ import { RunResults } from '@/types/SimulateConfig';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
@@ -338,7 +339,7 @@ onMounted(async () => {
 	if (!modelConfigurationIds) return;
 
 	const allModelConfigurations = await Promise.all(
-		modelConfigurationIds.map((id) => getModelConfigurationById(id))
+		modelConfigurationIds.map((id) => getModelConfigurationById(id, useProjects().activeProjectId.value))
 	);
 
 	allModelOptions.value = {};

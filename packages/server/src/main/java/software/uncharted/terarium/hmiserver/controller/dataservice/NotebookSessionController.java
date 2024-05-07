@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,10 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /** Rest controller for storing, retrieving, modifying and deleting notebook sessions in the dataservice */
 @RequestMapping("/sessions")
@@ -39,6 +44,8 @@ public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
 	final ObjectMapper objectMapper;
+	final private ProjectService projectService;
+	final private CurrentUserService currentUserService;
 
 	/**
 	 * Retrieve the list of NotebookSessions
@@ -72,7 +79,7 @@ public class NotebookSessionController {
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 
 		try {
-			return ResponseEntity.ok(sessionService.getAssets(pageSize, page));
+			return ResponseEntity.ok(sessionService.getPublicNotTemporaryAssets(pageSize, page));
 		} catch (final IOException e) {
 			final String error = "Unable to get sessions";
 			log.error(error, e);
@@ -83,7 +90,7 @@ public class NotebookSessionController {
 	/**
 	 * Create session and return its ID
 	 *
-	 * @param session session to create
+	 * @param request session to create and projectId
 	 * @return new ID for session
 	 */
 	@PostMapping
@@ -105,16 +112,24 @@ public class NotebookSessionController {
 						description = "There was an issue creating the session",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSession session) {
+	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSessionRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
-			sessionService.createAsset(session);
+			NotebookSession session = request.getNotebookSession();
+			sessionService.createAsset(session, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
 			final String error = "Unable to create session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+	}
+
+	@Data
+	class NotebookSessionRequestBody {
+		NotebookSession notebookSession;
+		UUID projectId;
 	}
 
 	/**
@@ -143,10 +158,11 @@ public class NotebookSessionController {
 						description = "There was an issue retrieving the session from the data store",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id) {
+	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<NotebookSession> session = sessionService.getAsset(id);
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
 			return session.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -160,7 +176,7 @@ public class NotebookSessionController {
 	 * Update an session
 	 *
 	 * @param id id of session to update
-	 * @param session session to update with
+	 * @param request session to update with and projectId
 	 * @return ID of updated session
 	 */
 	@PutMapping("/{id}")
@@ -187,11 +203,13 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> updateNotebookSession(
-			@PathVariable("id") final UUID id, @RequestBody final NotebookSession session) {
+			@PathVariable("id") final UUID id, @RequestBody final NotebookSessionRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
+			NotebookSession session = request.getNotebookSession();
 			session.setId(id);
-			final Optional<NotebookSession> updated = sessionService.updateAsset(session);
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -220,9 +238,10 @@ public class NotebookSessionController {
 						description = "There was an issue cloning the session",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> cloneNotebookSession(@PathVariable("id") final UUID id) {
+	ResponseEntity<NotebookSession> cloneNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			final NotebookSession clone = sessionService.cloneAsset(id);
+			final NotebookSession clone = sessionService.cloneAsset(id, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
 		} catch (final IOException e) {
 			final String error = "Unable to clone notebook session";
@@ -254,10 +273,11 @@ public class NotebookSessionController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id) {
+	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			sessionService.deleteAsset(id);
+			sessionService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete noteboko session";

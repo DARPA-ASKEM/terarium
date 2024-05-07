@@ -466,7 +466,7 @@ const cloneNoteBookSessions = async () => {
 				sessionIdSet.add(sessionId);
 			} else {
 				// eslint-disable-next-line
-				const session = await cloneNoteBookSession(sessionId);
+				const session = await cloneNoteBookSession(sessionId, useProjects().activeProjectId.value);
 				state.notebookSessionId = session.id;
 				sessionIdSet.add(session.id);
 			}

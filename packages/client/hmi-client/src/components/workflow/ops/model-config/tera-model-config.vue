@@ -375,6 +375,7 @@ import { logger } from '@/utils/logger';
 import { getInitials, getParameters } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import {useProjects} from "@/composables/project";
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -554,7 +555,8 @@ const extractConfigurationsFromInputs = async () => {
 						fetchConfigurations(model.value.id);
 					}
 				}
-			}
+			},
+      useProjects().activeProjectId.value
 		);
 	}
 	if (datasetIds.value) {
@@ -762,14 +764,15 @@ const createConfiguration = async (force: boolean = false) => {
 		}
 	}
 
-	const data = await createModelConfiguration(
-		model.value.id,
-		knobs.value?.transientModelConfig?.name ?? '',
-		knobs.value?.transientModelConfig?.description ?? '',
-		knobs.value?.transientModelConfig?.configuration,
-		false,
-		knobs.value.transientModelConfig.interventions ?? []
-	);
+  const data = await createModelConfiguration(
+    useProjects().activeProjectId.value,
+    model.value.id,
+    knobs.value?.transientModelConfig?.name ?? '',
+    knobs.value?.transientModelConfig?.description ?? '',
+    knobs.value?.transientModelConfig?.configuration,
+    false,
+    knobs.value.transientModelConfig.interventions ?? []
+  );
 
 	if (!data) {
 		logger.error('Failed to create model configuration');
@@ -804,6 +807,7 @@ const createTempModelConfig = async () => {
 	const state = cloneDeep(props.node.state);
 	if (state.tempConfigId !== '' || !model.value) return;
 	const data = await createModelConfiguration(
+    useProjects().activeProjectId.value,
 		model.value.id,
 		'Temp_config_name',
 		'Utilized in model config node for beaker purposes',

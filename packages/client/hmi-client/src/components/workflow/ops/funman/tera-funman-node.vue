@@ -25,6 +25,7 @@ import {
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction } from '@/services/models/simulation-service';
+import {useProjects} from "@/composables/project";
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -53,7 +54,7 @@ const getStatus = async (runId: string) => {
 	poller
 		.setInterval(5000)
 		.setThreshold(100)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
 
 	const pollerResults = await poller.start();
 

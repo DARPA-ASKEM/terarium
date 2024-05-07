@@ -148,8 +148,12 @@ export function isValidAMR(json: Record<string, unknown>) {
 	return true;
 }
 
-export async function profile(modelId: string, documentId: string): Promise<Model | null> {
-	return profileModel(modelId, documentId);
+export async function profile(
+	modelId: string,
+	projectId: string,
+	documentId: string
+): Promise<Model | null> {
+	return profileModel(modelId, projectId, documentId);
 }
 
 /**
@@ -162,14 +166,15 @@ export async function profile(modelId: string, documentId: string): Promise<Mode
 export async function generateModelCard(
 	documentId: string,
 	modelId: string,
+	projectId: string,
 	modelServiceType: ModelServiceType
 ): Promise<void> {
 	if (modelServiceType === ModelServiceType.TA1) {
-		await profile(modelId, documentId);
+		await profile(modelId, projectId, documentId);
 	}
 
 	if (modelServiceType === ModelServiceType.TA4) {
-		await modelCard(documentId);
+		await modelCard(documentId, projectId);
 	}
 }
 

@@ -13,12 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
@@ -38,10 +33,12 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/simulation-request")
 @RestController
@@ -50,6 +47,8 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 // TODO: Once we've moved this off of TDS remove the SnakeCaseController
 // interface and import.
 public class SimulationRequestController implements SnakeCaseController {
+
+	private final CurrentUserService currentUserService;
 
 	private final SimulationServiceProxy simulationServiceProxy;
 
@@ -68,10 +67,11 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
+	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -86,6 +86,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRun(@RequestBody final SimulationRequest request) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+
 		final JobResponse res = simulationServiceProxy
 				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
 				.getBody();
@@ -109,7 +111,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.SCIML);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -124,10 +126,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId());
+					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -170,7 +174,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setEngine(SimulationEngine.CIEMSS);
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

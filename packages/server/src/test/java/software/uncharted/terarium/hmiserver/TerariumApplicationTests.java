@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -29,4 +30,6 @@ public class TerariumApplicationTests {
 				.apply(springSecurity())
 				.build();
 	}
+
+	public Schema.Permission ASSUMED_PERMISSION = Schema.Permission.WRITE;
 }

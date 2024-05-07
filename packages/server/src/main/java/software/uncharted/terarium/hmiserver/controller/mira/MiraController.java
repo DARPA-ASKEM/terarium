@@ -39,11 +39,13 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/mira")
 @RestController
@@ -58,11 +60,13 @@ public class MiraController {
 	private final StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
+	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 
 	@Data
 	public static class ModelConversionRequest {
-		public UUID artifactId;
+		UUID artifactId;
+		UUID projectId;
 	}
 
 	@Data
@@ -151,10 +155,11 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
+		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
 
-			final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
+			final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
 			if (artifact.isEmpty()) {
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.BAD_REQUEST, "Artifact not found");

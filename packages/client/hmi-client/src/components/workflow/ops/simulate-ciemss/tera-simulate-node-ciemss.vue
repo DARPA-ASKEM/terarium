@@ -52,6 +52,7 @@ import { chartActionsProxy } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -71,7 +72,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -84,7 +85,7 @@ const pollResult = async (runId: string) => {
 		logger.error(`Simulation: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(runId);
+		const simulation = await getSimulation(runId, useProjects().activeProjectId.value);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressSimulationId = '';

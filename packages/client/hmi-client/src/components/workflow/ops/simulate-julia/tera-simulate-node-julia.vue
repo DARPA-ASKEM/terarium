@@ -41,6 +41,7 @@ import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
@@ -58,7 +59,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {

@@ -236,6 +236,7 @@ import {
 	CalibrateMethodOptions,
 	CalibrationOperationStateJulia
 } from './calibrate-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -442,7 +443,7 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Set up model config + dropdown names
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value, useProjects().activeProjectId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
 

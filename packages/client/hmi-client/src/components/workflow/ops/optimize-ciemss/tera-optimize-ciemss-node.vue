@@ -53,6 +53,7 @@ import { chartActionsProxy } from '@/components/workflow/util';
 import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -75,7 +76,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(4000)
 		.setThreshold(350)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
@@ -89,7 +90,7 @@ const pollResult = async (runId: string) => {
 		logger.error(`Optimization: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(runId);
+		const simulation = await getSimulation(runId, useProjects().activeProjectId.value);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';

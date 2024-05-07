@@ -16,6 +16,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Component
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			Optional<Simulation> sim = simulationService.getAsset(simulationId, assumePermission);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -64,7 +65,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(sim.get());
+			simulationService.updateAsset(sim.get(), assumePermission);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

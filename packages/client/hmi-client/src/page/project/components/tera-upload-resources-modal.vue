@@ -202,7 +202,13 @@ async function processAMRJson(file: File) {
  */
 async function processModel(file: File) {
 	// Upload file as an artifact, create an empty model, and link them
-	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
+	const artifact = await uploadArtifactToProject(
+		file,
+		useAuthStore().user?.id ?? '',
+		useProjects().activeProjectId.value,
+		'',
+		progress
+	);
 	if (!artifact) return { id: '', assetType: '' };
 	const newModelId = await processAndAddModelToProject(artifact);
 	await createProvenance({
@@ -228,12 +234,12 @@ async function upload() {
 		createdAssets.forEach((_, index) => {
 			const { name, id } = (results.value ?? [])[index];
 			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
+				extractPDF(id, useProjects().activeProjectId.value);
 			} else if (
 				name &&
 				(name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))
 			) {
-				modelCard(id);
+				modelCard(id, useProjects().activeProjectId.value);
 			}
 		});
 		emit('close');

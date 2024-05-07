@@ -53,6 +53,7 @@ import { chartActionsProxy } from '@/components/workflow/util';
 import type { CsvAsset } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -75,7 +76,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
 
 	const pollerResults = await poller.start();
 

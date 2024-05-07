@@ -66,9 +66,9 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow3.setName("test-workflow-name3");
 		workflow3.setDescription("test-workflow-description3");
 
-		workflowService.createAsset(workflow);
-		workflowService.createAsset(workflow2);
-		workflowService.createAsset(workflow3);
+		workflowService.createAsset(workflow, ASSUMED_PERMISSION);
+		workflowService.createAsset(workflow2, ASSUMED_PERMISSION);
+		workflowService.createAsset(workflow3, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf()))
 				.andExpect(status().isOk())
@@ -82,7 +82,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
 						.with(csrf()))
@@ -96,7 +96,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
 						.with(csrf())
@@ -112,12 +112,12 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(workflowService.getAsset(workflow.getId()).isEmpty());
+		Assertions.assertTrue(workflowService.getAsset(workflow.getId(), ASSUMED_PERMISSION).isEmpty());
 	}
 }

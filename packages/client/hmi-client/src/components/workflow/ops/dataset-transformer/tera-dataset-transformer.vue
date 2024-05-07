@@ -32,6 +32,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
+import { useProjects } from '@/composables/project';
 import { DatasetTransformerState } from './dataset-transformer-operation';
 
 const props = defineProps<{
@@ -57,12 +58,15 @@ onMounted(async () => {
 	let notebookSessionId = props.node.state?.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
-		const response = await createNotebookSession({
-			id: uuidv4(),
-			name: props.node.id,
-			description: '',
-			data: { history: [] }
-		});
+		const response = await createNotebookSession(
+			{
+				id: uuidv4(),
+				name: props.node.id,
+				description: '',
+				data: { history: [] }
+			},
+			useProjects().activeProjectId.value
+		);
 		notebookSessionId = response?.id;
 
 		if (notebookSessionId) {
@@ -72,7 +76,10 @@ onMounted(async () => {
 		}
 	}
 
-	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
+	notebookSession.value = await getNotebookSessionById(
+		notebookSessionId!,
+		useProjects().activeProjectId.value
+	);
 });
 
 const onUpdateLanguage = (language: string) => {

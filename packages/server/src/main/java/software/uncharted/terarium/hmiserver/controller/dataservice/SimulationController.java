@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -39,12 +41,16 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/simulations")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class SimulationController {
+
+	private final ReBACService reBACService;
 
 	private final SimulationService simulationService;
 
@@ -78,10 +84,12 @@ public class SimulationController {
 						description = "There was an issue creating the simulation",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation) {
-		try {
+	public ResponseEntity<Simulation> createSimulation(@RequestBody final SimulationRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
-			final Simulation sim = simulationService.createAsset(simulation);
+		try {
+			Simulation simulation = request.getSimulation();
+			final Simulation sim = simulationService.createAsset(simulation, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -89,6 +97,12 @@ public class SimulationController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+	}
+
+	@Data
+	class SimulationRequestBody {
+		Simulation simulation;
+		UUID projectId;
 	}
 
 	@GetMapping("/{id}")
@@ -114,9 +128,11 @@ public class SimulationController {
 						description = "There was an issue retrieving simulations from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
+	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			Optional<Simulation> simulation = simulationService.getAsset(id);
+			Optional<Simulation> simulation = simulationService.getAsset(id, permission);
 
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
@@ -150,7 +166,7 @@ public class SimulationController {
 						sim.setStatusMessage("Failed running simulation " + sim.getId());
 					}
 
-					simulation = simulationService.updateAsset(sim);
+					simulation = simulationService.updateAsset(sim, permission);
 				}
 			}
 
@@ -184,10 +200,13 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> updateSimulation(
-			@PathVariable("id") final UUID id, @RequestBody final Simulation simulation) {
+			@PathVariable("id") final UUID id, @RequestBody final SimulationRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+
 		try {
+			final Simulation simulation = request.getSimulation();
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(simulation);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -211,9 +230,11 @@ public class SimulationController {
 						description = "There was an issue deleting the simulation",
 						content = @Content)
 			})
-	public String deleteSimulation(@PathVariable("id") final UUID id) {
+	public String deleteSimulation(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			simulationService.deleteAsset(id);
+			simulationService.deleteAsset(id, permission);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -296,15 +317,17 @@ public class SimulationController {
 			@PathVariable("project-id") final UUID projectId,
 			@RequestParam("dataset-name") final String datasetName) {
 
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
 			if (sim.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset());
+			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
 			dataset.setName(datasetName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
 			final ObjectMapper mapper = new ObjectMapper();
@@ -320,24 +343,24 @@ public class SimulationController {
 
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset);
+			datasetService.updateAsset(dataset, permission);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
 				final Optional<ProjectAsset> asset =
-						projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset);
+					projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
 				// underlying asset does not exist
 				return asset.map(projectAsset ->
-								ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
-						.orElseGet(() -> ResponseEntity.notFound().build());
+						ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
+					.orElseGet(() -> ResponseEntity.notFound().build());
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();
 			}
 		} catch (final IOException e) {
 			final String error =
-					String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
+				String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}

@@ -313,24 +313,14 @@ public class ReBACService {
 		return permissionGroup;
 	}
 
-	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
+	public boolean can(SchemaObject who, Schema.Permission permission, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.READ, what, getCurrentConsistency());
-	}
-
-	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.WRITE, what, getCurrentConsistency());
+		return rebac.checkPermission(who, permission, what, getCurrentConsistency());
 	}
 
 	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
-	}
-
-	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, getCurrentConsistency());
 	}
 
 	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {

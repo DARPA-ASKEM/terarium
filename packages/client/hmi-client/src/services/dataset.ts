@@ -157,8 +157,8 @@ async function getDownloadURL(datasetId: string, filename: string): Promise<Pres
  * Creates a new dataset in TDS from the dataset given (required name, url, description).
  * @param dataset the dataset with updated storage ID from tds
  */
-async function createDataset(dataset: Dataset): Promise<Dataset | null> {
-	const resp = await API.post('/datasets', dataset);
+async function createDataset(dataset: Dataset, projectId: string): Promise<Dataset | null> {
+	const resp = await API.post('/datasets', { dataset, projectId });
 	if (resp && resp.status < 400 && resp.data) {
 		return resp.data;
 	}
@@ -179,6 +179,7 @@ async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userId: string,
+	projectId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -198,7 +199,7 @@ async function createNewDatasetFromGithubFile(
 		userId
 	};
 
-	const newDataset: Dataset | null = await createDataset(dataset);
+	const newDataset: Dataset | null = await createDataset(dataset, projectId);
 	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
@@ -228,6 +229,7 @@ async function createNewDatasetFromFile(
 	progress: Ref<number>,
 	file: File,
 	userId: string,
+	projectId: string,
 	description?: string
 ): Promise<Dataset | null> {
 	const fileType = file.name.endsWith('.csv') ? 'csv' : 'file';
@@ -242,7 +244,7 @@ async function createNewDatasetFromFile(
 		userId
 	};
 
-	const newDataset: Dataset | null = await createDataset(dataset);
+	const newDataset: Dataset | null = await createDataset(dataset, projectId);
 	if (!newDataset || !newDataset.id) return null;
 
 	const formData = new FormData();

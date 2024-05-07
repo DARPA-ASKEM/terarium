@@ -306,7 +306,7 @@ async function openSelectedFiles(event?: DropdownChangeEvent) {
 	].filter((file) => file.fileCategory === FileCategory.Data);
 
 	if (selectedDataFiles.length > 0) {
-		await importDataFiles(selectedDataFiles);
+		await importDataFiles(selectedDataFiles, useProjects().activeProjectId.value);
 	}
 
 	const selectedDocumentFiles: GithubFile[] = selectedFiles.value.filter(
@@ -359,7 +359,7 @@ async function previewTextFile(file: GithubFile) {
  * async function to import the selected data files and create new datasets from them
  * @param githubFiles the data files to open
  */
-async function importDataFiles(githubFiles: GithubFile[]) {
+async function importDataFiles(githubFiles: GithubFile[], projectId: string) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
@@ -367,6 +367,7 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.user?.id ?? '',
+			projectId,
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
@@ -375,19 +376,20 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 	});
 }
 
-async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string) {
+async function importDocumentFiles(githubFiles: GithubFile[], projectId: string) {
 	githubFiles.forEach(async (githubFile) => {
 		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			useAuthStore().user?.id ?? ''
+			useAuthStore().user?.id ?? '',
+			projectId
 		);
 		let newAsset;
 		if (document && document.id) {
 			newAsset = await useProjects().addAsset(AssetType.Document, document.id, projectId);
 		}
 		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
-			extractPDF(document.id);
+			extractPDF(document.id, projectId);
 		}
 	});
 }

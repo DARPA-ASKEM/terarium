@@ -59,7 +59,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateSimulation() {
 		final Simulation before = (Simulation) createSimulation("0").setId(UUID.randomUUID());
 		try {
-			final Simulation after = simulationService.createAsset(before);
+			final Simulation after = simulationService.createAsset(before, ASSUMED_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -75,8 +75,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	public void testItCantCreateDuplicates() {
 		final Simulation simulation = (Simulation) createSimulation("0").setId(UUID.randomUUID());
 		try {
-			simulationService.createAsset(simulation);
-			simulationService.createAsset(simulation);
+			simulationService.createAsset(simulation, ASSUMED_PERMISSION);
+			simulationService.createAsset(simulation, ASSUMED_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 
 		} catch (final Exception e) {
@@ -87,11 +87,11 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulations() throws IOException {
-		simulationService.createAsset(createSimulation("0"));
-		simulationService.createAsset(createSimulation("1"));
-		simulationService.createAsset(createSimulation("2"));
+		simulationService.createAsset(createSimulation("0"), ASSUMED_PERMISSION);
+		simulationService.createAsset(createSimulation("1"), ASSUMED_PERMISSION);
+		simulationService.createAsset(createSimulation("2"), ASSUMED_PERMISSION);
 
-		final List<Simulation> sims = simulationService.getAssets(0, 10);
+		final List<Simulation> sims = simulationService.getPublicNotTemporaryAssets(0, 10);
 
 		Assertions.assertEquals(3, sims.size());
 	}
@@ -99,9 +99,9 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulationById() throws IOException {
-		final Simulation simulation = simulationService.createAsset(createSimulation("0"));
+		final Simulation simulation = simulationService.createAsset(createSimulation("0"), ASSUMED_PERMISSION);
 		final Simulation fetchedSimulation =
-				simulationService.getAsset(simulation.getId()).get();
+				simulationService.getAsset(simulation.getId(), ASSUMED_PERMISSION).get();
 
 		Assertions.assertEquals(simulation, fetchedSimulation);
 		Assertions.assertEquals(simulation.getId(), fetchedSimulation.getId());
@@ -116,11 +116,11 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateSimulation() throws Exception {
 
-		final Simulation simulation = simulationService.createAsset(createSimulation("A"));
+		final Simulation simulation = simulationService.createAsset(createSimulation("A"), ASSUMED_PERMISSION);
 		simulation.setName("new name");
 
 		final Simulation updatedSimulation =
-				simulationService.updateAsset(simulation).orElseThrow();
+				simulationService.updateAsset(simulation, ASSUMED_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(simulation, updatedSimulation);
 		Assertions.assertNotNull(updatedSimulation.getUpdatedOn());
@@ -130,11 +130,11 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteSimulation() throws Exception {
 
-		final Simulation simulation = simulationService.createAsset(createSimulation("B"));
+		final Simulation simulation = simulationService.createAsset(createSimulation("B"), ASSUMED_PERMISSION);
 
-		simulationService.deleteAsset(simulation.getId());
+		simulationService.deleteAsset(simulation.getId(), ASSUMED_PERMISSION);
 
-		final Optional<Simulation> deleted = simulationService.getAsset(simulation.getId());
+		final Optional<Simulation> deleted = simulationService.getAsset(simulation.getId(), ASSUMED_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -145,9 +145,9 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 
 		Simulation simulation = createSimulation("A");
 
-		simulation = simulationService.createAsset(simulation);
+		simulation = simulationService.createAsset(simulation, ASSUMED_PERMISSION);
 
-		final Simulation cloned = simulationService.cloneAsset(simulation.getId());
+		final Simulation cloned = simulationService.cloneAsset(simulation.getId(), ASSUMED_PERMISSION);
 
 		Assertions.assertNotEquals(simulation.getId(), cloned.getId());
 		Assertions.assertEquals(simulation.getName(), cloned.getName());
@@ -163,11 +163,11 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 
 		Simulation simulation = createSimulation("A");
 
-		simulation = simulationService.createAsset(simulation);
+		simulation = simulationService.createAsset(simulation, ASSUMED_PERMISSION);
 
-		final byte[] exported = simulationService.exportAsset(simulation.getId());
+		final byte[] exported = simulationService.exportAsset(simulation.getId(), ASSUMED_PERMISSION);
 
-		final Simulation imported = simulationService.importAsset(exported);
+		final Simulation imported = simulationService.importAsset(exported, ASSUMED_PERMISSION);
 
 		Assertions.assertNotEquals(simulation.getId(), imported.getId());
 		Assertions.assertEquals(simulation.getName(), imported.getName());
@@ -184,18 +184,18 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		final Simulation before = (Simulation) createSimulation("0").setId(UUID.randomUUID());
 
 		try {
-			Simulation after = simulationService.createAsset(before);
+			Simulation after = simulationService.createAsset(before, ASSUMED_PERMISSION);
 
 			final String jsonString = "{\"key\":\"value\"}";
 			final JsonNode data = objectMapper.readTree(jsonString);
 
 			final SimulationUpdate update0 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update0);
+			simulationService.appendUpdateToSimulation(after.getId(), update0, ASSUMED_PERMISSION);
 
 			final SimulationUpdate update1 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update1);
+			simulationService.appendUpdateToSimulation(after.getId(), update1, ASSUMED_PERMISSION);
 
-			after = simulationService.getAsset(after.getId()).orElseThrow();
+			after = simulationService.getAsset(after.getId(), ASSUMED_PERMISSION).orElseThrow();
 
 			Assertions.assertEquals(2, after.getUpdates().size());
 

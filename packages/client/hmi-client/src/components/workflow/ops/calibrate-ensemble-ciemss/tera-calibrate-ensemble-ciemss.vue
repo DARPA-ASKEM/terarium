@@ -225,6 +225,7 @@ import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
 } from './calibrate-ensemble-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
@@ -361,7 +362,7 @@ onMounted(async () => {
 	// Model configuration input
 	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id);
+			const { modelConfiguration, modelOptions } = await setupModelInput(id, useProjects().activeProjectId.value);
 			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
 			if (modelOptions) allModelOptions.value.push(modelOptions);
 		})

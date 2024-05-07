@@ -115,6 +115,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -291,7 +292,7 @@ const inputChangeHandler = async () => {
 	if (input.type === 'modelId') {
 		modelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0], useProjects().activeProjectId.value);
 	}
 	if (!modelId) return;
 

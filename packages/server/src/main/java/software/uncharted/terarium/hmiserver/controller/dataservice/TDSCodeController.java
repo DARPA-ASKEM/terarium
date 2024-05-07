@@ -47,7 +47,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/code-asset")
 @RestController
@@ -60,6 +64,10 @@ public class TDSCodeController {
 	final GithubProxy githubProxy;
 
 	final CodeService codeService;
+
+	final ProjectService projectService;
+	final ProjectAssetService projectAssetService;
+	final CurrentUserService currentUserService;
 
 	/**
 	 * Retrieves a list of codes.
@@ -96,7 +104,7 @@ public class TDSCodeController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(codeService.getAssets(pageSize, page));
+			return ResponseEntity.ok(codeService.getPublicNotTemporaryAssets(pageSize, page));
 		} catch (final Exception e) {
 			log.error("Unable to get code resources", e);
 			throw new ResponseStatusException(
@@ -131,8 +139,10 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), code.getId(), Schema.Permission.WRITE);
+
 		try {
-			code = codeService.createAsset(code);
+			code = codeService.createAsset(code, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
@@ -172,8 +182,10 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<Code> getCode(@PathVariable("id") final UUID id) {
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+
 		try {
-			final Optional<Code> code = codeService.getAsset(id);
+			final Optional<Code> code = codeService.getAsset(id, permission);
 			return code.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final Exception e) {
@@ -215,9 +227,11 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<Code> updateCode(@PathVariable("id") final UUID codeId, @RequestBody final Code code) {
 
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateAsset(code);
+			final Optional<Code> updated = codeService.updateAsset(code, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -254,8 +268,10 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteCode(@PathVariable("id") final UUID id) {
 
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+
 		try {
-			codeService.deleteAsset(id);
+			codeService.deleteAsset(id, permission);
 		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
@@ -413,12 +429,13 @@ public class TDSCodeController {
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input)
 			throws IOException {
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
 
 		log.debug("Uploading code {} to project", codeId);
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCodeHelper(codeId, filename, fileEntity);
+		return uploadCodeHelper(codeId, filename, fileEntity, permission);
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
@@ -444,6 +461,8 @@ public class TDSCodeController {
 			@RequestParam("filename") final String filename) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+
 		// download file from GitHub
 		final String fileString =
 				jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
@@ -452,7 +471,7 @@ public class TDSCodeController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get file as string data");
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadCodeHelper(codeId, filename, fileEntity);
+		return uploadCodeHelper(codeId, filename, fileEntity, permission);
 	}
 
 	/**
@@ -486,6 +505,8 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName) {
+		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
 
 			final String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
@@ -497,7 +518,7 @@ public class TDSCodeController {
 
 			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-			return uploadCodeHelper(codeId, repoName, fileEntity);
+			return uploadCodeHelper(codeId, repoName, fileEntity, permission);
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -515,8 +536,7 @@ public class TDSCodeController {
 	 * @return A response containing the status of the upload
 	 */
 	private ResponseEntity<Integer> uploadCodeHelper(
-			final UUID codeId, final String fileName, final HttpEntity codeHttpEntity) {
-
+			final UUID codeId, final String fileName, final HttpEntity codeHttpEntity, Schema.Permission hasWritePermission) {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 
@@ -526,7 +546,7 @@ public class TDSCodeController {
 			put.setEntity(codeHttpEntity);
 			final HttpResponse response = httpclient.execute(put);
 
-			final Optional<Code> code = codeService.getAsset(codeId);
+			final Optional<Code> code = codeService.getAsset(codeId, hasWritePermission);
 			if (code.isEmpty()) {
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get code");
@@ -541,7 +561,7 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateAsset(code.get());
+			codeService.updateAsset(code.get(), hasWritePermission);
 
 			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
 

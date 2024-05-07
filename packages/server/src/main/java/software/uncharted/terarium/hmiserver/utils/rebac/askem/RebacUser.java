@@ -20,16 +20,20 @@ public class RebacUser extends RebacObject {
 		return new SchemaObject(Schema.Type.USER, getId());
 	}
 
+	public boolean can(RebacProject rebacProject, Schema.Permission permission) throws Exception {
+		return reBACService.can(getSchemaObject(), permission, rebacProject.getSchemaObject());
+	}
+
 	public boolean canRead(RebacProject rebacProject) throws Exception {
-		return reBACService.canRead(getSchemaObject(), rebacProject.getSchemaObject());
+		return reBACService.can(getSchemaObject(), Schema.Permission.READ, rebacProject.getSchemaObject());
 	}
 
 	public boolean canWrite(RebacProject rebacProject) throws Exception {
-		return reBACService.canWrite(getSchemaObject(), rebacProject.getSchemaObject());
+		return reBACService.can(getSchemaObject(), Schema.Permission.WRITE, rebacProject.getSchemaObject());
 	}
 
 	public boolean canAdministrate(RebacObject rebacObject) throws Exception {
-		return reBACService.canAdministrate(getSchemaObject(), rebacObject.getSchemaObject());
+		return reBACService.can(getSchemaObject(), Schema.Permission.ADMINISTRATE, rebacObject.getSchemaObject());
 	}
 
 	public boolean isMemberOf(RebacGroup rebacGroup) throws Exception {

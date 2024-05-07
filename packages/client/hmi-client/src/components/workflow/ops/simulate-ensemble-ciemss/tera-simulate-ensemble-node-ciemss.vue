@@ -50,6 +50,7 @@ import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
 } from './simulate-ensemble-ciemss-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
@@ -71,7 +72,7 @@ const getStatus = async (simulationId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(simulationId));
+		.setPollAction(async () => pollAction(simulationId, useProjects().activeProjectId.value));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -83,7 +84,7 @@ const getStatus = async (simulationId: string) => {
 		logger.error(`Simulation: ${simulationId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(simulationId);
+		const simulation = await getSimulation(simulationId, useProjects().activeProjectId.value);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressSimulationId = '';

@@ -54,7 +54,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setName("test-framework")
-						.setDescription("test-desc"));
+						.setDescription("test-desc"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -87,7 +87,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setDescription("test-desc")
-						.setName("test-framework"));
+						.setName("test-framework"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -111,6 +111,6 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
+				modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUMED_PERMISSION).isEmpty());
 	}
 }

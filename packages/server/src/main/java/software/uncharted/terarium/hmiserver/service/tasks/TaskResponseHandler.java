@@ -1,8 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
+	final protected Schema.Permission assumePermission = Schema.Permission.WRITE;
+
 	public abstract String getName();
 
 	public static TaskResponse onQueued(final TaskResponse response) {

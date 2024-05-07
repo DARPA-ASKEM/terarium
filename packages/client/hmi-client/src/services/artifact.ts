@@ -12,7 +12,8 @@ import { Ref } from 'vue';
 async function createNewArtifactFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
-	userId: string
+	userId: string,
+	projectId: string
 ) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
@@ -27,7 +28,7 @@ async function createNewArtifactFromGithubFile(
 		userId
 	};
 
-	const newArtifact: Artifact | null = await createNewArtifact(artifact);
+	const newArtifact: Artifact | null = await createNewArtifact(artifact, projectId);
 	if (!newArtifact || !newArtifact.id) return null;
 
 	const urlResponse = await API.put(
@@ -55,6 +56,7 @@ async function createNewArtifactFromGithubFile(
 async function uploadArtifactToProject(
 	file: File,
 	userId: string,
+	projectId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<Artifact | null> {
@@ -66,7 +68,7 @@ async function uploadArtifactToProject(
 		userId
 	};
 
-	const newArtifact: Artifact | null = await createNewArtifact(artifact);
+	const newArtifact: Artifact | null = await createNewArtifact(artifact, projectId);
 	if (!newArtifact || !newArtifact.id) return null;
 
 	const successfulUpload = await addFileToArtifact(newArtifact.id, file, progress);
@@ -79,8 +81,8 @@ async function uploadArtifactToProject(
  * Creates a new artifact in TDS and returns the new artifact object id
  * @param artifact the artifact to create
  */
-async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
-	const response = await API.post('/artifacts', artifact);
+async function createNewArtifact(artifact: Artifact, projectId: string): Promise<Artifact | null> {
+	const response = await API.post('/artifacts', { artifact, projectId });
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }

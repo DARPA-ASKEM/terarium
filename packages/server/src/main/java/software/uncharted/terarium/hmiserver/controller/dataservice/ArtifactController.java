@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -43,7 +45,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/artifacts")
 @RestController
@@ -56,6 +61,9 @@ public class ArtifactController {
 	final JsDelivrProxy gitHubProxy;
 
 	final ObjectMapper objectMapper;
+
+	final private ProjectService projectService;
+	final private CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -80,7 +88,7 @@ public class ArtifactController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(artifactService.getAssets(page, pageSize));
+			return ResponseEntity.ok(artifactService.getPublicNotTemporaryAssets(page, pageSize));
 		} catch (final Exception e) {
 			final String error = "An error occurred while retrieving artifacts";
 			log.error(error, e);
@@ -107,14 +115,21 @@ public class ArtifactController {
 						description = "There was an issue creating the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody final Artifact artifact) {
+	public ResponseEntity<Artifact> createArtifact(@RequestBody final ArtifactRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact));
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(request.getArtifact(), permission));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+	}
+
+	@Data
+	class ArtifactRequestBody {
+		Artifact artifact;
+		UUID projectId;
 	}
 
 	@GetMapping("/{id}")
@@ -137,9 +152,10 @@ public class ArtifactController {
 						description = "There was an issue retrieving the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
+	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
+			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
 			return artifact.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -170,11 +186,13 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> updateArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestBody final Artifact artifact) {
+			@PathVariable("id") final UUID artifactId, @RequestBody final ArtifactRequestBody request) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
+			Artifact artifact = request.getArtifact();
 			artifact.setId(artifactId);
-			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -203,10 +221,11 @@ public class ArtifactController {
 						description = "There was an issue deleting the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId) {
+	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			artifactService.deleteAsset(artifactId);
+			artifactService.deleteAsset(artifactId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
 		} catch (final Exception e) {
 			final String error = "Unable to delete artifact";

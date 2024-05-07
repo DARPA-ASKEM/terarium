@@ -144,6 +144,7 @@ import {
 	StratifyGroup,
 	StratifyOperationStateMira
 } from './stratify-mira-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
@@ -347,7 +348,7 @@ const inputChangeHandler = async () => {
 	if (input.type === 'modelId') {
 		modelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0], useProjects().activeProjectId.value);
 	}
 	if (!modelId) return;
 

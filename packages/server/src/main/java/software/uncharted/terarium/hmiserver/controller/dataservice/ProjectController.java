@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -138,6 +140,7 @@ public class ProjectController {
 						AssetType.DOCUMENT,
 						AssetType.WORKFLOW,
 						AssetType.PUBLICATION);
+				final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), project.getId());
 
 				final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 				project.setPublicProject(rebacProject.isPublic());
@@ -146,7 +149,7 @@ public class ProjectController {
 				final List<Contributor> contributors = getContributors(rebacProject);
 
 				final List<ProjectAsset> assets =
-						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes);
+						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes, permission);
 
 				final Map<String, String> metadata = new HashMap<>();
 
@@ -266,10 +269,11 @@ public class ProjectController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> getProject(@PathVariable("id") final UUID id) {
+		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+
 		try {
 			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canRead(rebacProject)) {
 				final Optional<Project> project = projectService.getProject(id);
 				if (project.isPresent()) {
 					final List<String> authors = new ArrayList<>();
@@ -292,8 +296,7 @@ public class ProjectController {
 
 					return ResponseEntity.ok(project.get());
 				}
-			}
-			return ResponseEntity.notFound().build();
+				return ResponseEntity.notFound().build();
 		} catch (final Exception e) {
 			log.error("Error getting project rebac information", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to verify project permissions");
@@ -324,19 +327,9 @@ public class ProjectController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
-
-		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canAdministrate(rebacProject)) {
-				final boolean deleted = projectService.delete(id);
-				if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
-			}
-		} catch (final Exception e) {
-			log.error("Error deleting project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project");
-		}
-
+		projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+		final boolean deleted = projectService.delete(id);
+		if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
 		throw new ResponseStatusException(HttpStatus.NOT_MODIFIED, "Unable to delete project, please try again later.");
 	}
 
@@ -426,20 +419,12 @@ public class ProjectController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(
 			@PathVariable("id") final UUID id, @RequestBody final Project project) {
-		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canWrite(rebacProject)) {
-				project.setId(id);
-				final Optional<Project> updatedProject = projectService.updateProject(project);
-				return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
-						.build());
-			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		} catch (final Exception e) {
-			log.error("Error updating project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update project");
-		}
+		projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
+
+		project.setId(id);
+		final Optional<Project> updatedProject = projectService.updateProject(project);
+		return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
+			.build());
 	}
 
 	// --------------------------------------------------------------------------
@@ -475,13 +460,12 @@ public class ProjectController {
 
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
-		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.canWrite(rebacProject)) {
-				final Optional<Project> project = projectService.getProject(projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-				if (project.isPresent()) {
+		try {
+			final Optional<Project> project = projectService.getProject(projectId);
+
+			if (project.isPresent()) {
 
 					/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
 											projects will directly hold a reference to the assets associated with them.  During this
@@ -492,48 +476,48 @@ public class ProjectController {
 											Once all TerariumAssets have been migrated we can move this all to be a lot more generic
 											and not need to have this ugly if/else statement
 					*/
-					if (assetType.equals(AssetType.CODE)) {
+				if (assetType.equals(AssetType.CODE)) {
 
-						final Optional<Code> code = codeService.getAsset(assetId);
-						if (code.isEmpty()) {
-							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Code Asset does not exist");
-						}
-
-						if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
-						if (project.get().getCodeAssets().contains(code.get())) {
-							throw new ResponseStatusException(
-									HttpStatus.CONFLICT, "Code Asset already exists on project");
-						}
-
-						code.get().setProject(project.get());
-						codeService.updateAsset(code.get());
+					final Optional<Code> code = codeService.getAsset(assetId, permission);
+					if (code.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Code Asset does not exist");
 					}
 
-					// double check that this asset is not already a part of this project, and if it
-					// does exist return a 409 to the front end
-					final Optional<ProjectAsset> existingAsset =
-							projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
-					if (existingAsset.isPresent()) {
-						return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
+					if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
+					if (project.get().getCodeAssets().contains(code.get())) {
+						throw new ResponseStatusException(
+							HttpStatus.CONFLICT, "Code Asset already exists on project");
 					}
 
-					final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
-							terariumAssetServices.getServiceByType(assetType);
-					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
-					if (asset.isPresent()) {
-						final Optional<ProjectAsset> projectAsset =
-								projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
-						return projectAsset
-								.map(pa -> ResponseEntity.status(HttpStatus.CREATED)
-										.body(pa))
-								.orElseGet(() -> ResponseEntity.notFound().build());
-					} else {
-						return ResponseEntity.notFound().build();
-					}
+					code.get().setProject(project.get());
+					codeService.updateAsset(code.get(), permission);
 				}
+
+				// double check that this asset is not already a part of this project, and if it
+				// does exist return a 409 to the front end
+				final Optional<ProjectAsset> existingAsset =
+					projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId, permission);
+				if (existingAsset.isPresent()) {
+					return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
+				}
+
+				final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
+					terariumAssetServices.getServiceByType(assetType);
+				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
+				if (asset.isPresent()) {
+					final Optional<ProjectAsset> projectAsset =
+						projectAssetService.createProjectAsset(project.get(), assetType, asset.get(), permission);
+					return projectAsset
+						.map(pa -> ResponseEntity.status(HttpStatus.CREATED)
+							.body(pa))
+						.orElseGet(() -> ResponseEntity.notFound().build());
+				} else {
+					return ResponseEntity.notFound().build();
+				}
+			} else {
+				return ResponseEntity.notFound().build();
 			}
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.error("Error creating project assets", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create project asset");
 		}
@@ -565,12 +549,9 @@ public class ProjectController {
 
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
-		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.canWrite(rebacProject)) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-				if (assetType.equals(AssetType.CODE)) {
+		if (assetType.equals(AssetType.CODE)) {
 
 					/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
 											projects will directly hold a reference to the assets associated with them.  During this
@@ -579,23 +560,23 @@ public class ProjectController {
 											directly in the controllers for these assets and not in this ProjectController
 					*/
 
-					final Optional<Code> deletedCode = codeService.deleteAsset(assetId);
-					if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
-						throw new ResponseStatusException(
-								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
-					}
+			try {
+				final Optional<Code> deletedCode = codeService.deleteAsset(assetId, permission);
+				if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
+					throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
 				}
-
-				final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
-				if (deleted) {
-					return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
-				}
+			} catch (final Exception e) {
+				log.error("Error deleting project assets", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project asset");
 			}
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		} catch (final Exception e) {
-			log.error("Error deleting project assets", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project asset");
 		}
+
+		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);
+		if (deleted) {
+			return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
+		}
+		return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 	}
 
 	// --------------------------------------------------------------------------
@@ -624,21 +605,20 @@ public class ProjectController {
 			})
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(@PathVariable("id") final UUID id) {
 		try {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+
 			final RebacProject rebacProject = new RebacProject(id, reBACService);
-			if (rebacUser.canRead(rebacProject)) {
-				final PermissionRelationships permissions = new PermissionRelationships();
-				for (final RebacPermissionRelationship permissionRelationship :
-						rebacProject.getPermissionRelationships()) {
-					if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-						permissions.addUser(
-								reBACService.getUser(permissionRelationship.getSubjectId()),
-								permissionRelationship.getRelationship());
-					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						permissions.addGroup(
-								reBACService.getGroup(permissionRelationship.getSubjectId()),
-								permissionRelationship.getRelationship());
-					}
+			final PermissionRelationships permissions = new PermissionRelationships();
+			for (final RebacPermissionRelationship permissionRelationship :
+				rebacProject.getPermissionRelationships()) {
+				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
+					permissions.addUser(
+						reBACService.getUser(permissionRelationship.getSubjectId()),
+						permissionRelationship.getRelationship());
+				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
+					permissions.addGroup(
+						reBACService.getGroup(permissionRelationship.getSubjectId()),
+						permissionRelationship.getRelationship());
 				}
 
 				return ResponseEntity.ok(permissions);
@@ -676,6 +656,8 @@ public class ProjectController {
 			@PathVariable("group-id") final String groupId,
 			@PathVariable("relationship") final String relationship) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return setProjectPermissions(what, who, relationship);
@@ -712,6 +694,8 @@ public class ProjectController {
 			@PathVariable("oldRelationship") final String oldRelationship,
 			@RequestParam("to") final String newRelationship) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
@@ -750,6 +734,8 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return removeProjectPermissions(what, who, relationship);
@@ -785,6 +771,8 @@ public class ProjectController {
 	public ResponseEntity<JsonNode> makeProjectPublic(
 			@PathVariable("id") final UUID id, @PathVariable("isPublic") final boolean isPublic) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
+
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
 			// Getting the user permissions
@@ -794,17 +782,12 @@ public class ProjectController {
 			// Setting the relationship to be of a reader
 			final String relationship = Schema.Relationship.READER.toString();
 
-			// If the current user is an admin of the project
-			if (user.canAdministrate(project)) {
-				if (isPublic) {
-					// Set the Public Group permissions to READ the Project
-					return setProjectPermissions(project, who, relationship);
-				} else {
-					// Remove the Public Group permissions to READ the Project
-					return removeProjectPermissions(project, who, relationship);
-				}
+			if (isPublic) {
+				// Set the Public Group permissions to READ the Project
+				return setProjectPermissions(project, who, relationship);
 			} else {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+				// Remove the Public Group permissions to READ the Project
+				return removeProjectPermissions(project, who, relationship);
 			}
 		} catch (final Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -836,6 +819,8 @@ public class ProjectController {
 			@PathVariable("user-id") final String userId,
 			@PathVariable("relationship") final String relationship) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 			return setProjectPermissions(what, who, relationship);
@@ -872,6 +857,8 @@ public class ProjectController {
 			@PathVariable("old-relationship") final String oldRelationship,
 			@RequestParam("to") final String newRelationship) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
@@ -907,6 +894,8 @@ public class ProjectController {
 			@PathVariable("user-id") final String userId,
 			@PathVariable("relationship") final String relationship) {
 		try {
+			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
+
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 			return removeProjectPermissions(what, who, relationship);
@@ -919,42 +908,33 @@ public class ProjectController {
 
 	private ResponseEntity<JsonNode> setProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
-			try {
-				what.setPermissionRelationships(who, relationship);
-				return ResponseEntity.ok().build();
-			} catch (final RelationshipAlreadyExistsException e) {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-			}
+		try {
+			what.setPermissionRelationships(who, relationship);
+			return ResponseEntity.ok().build();
+		} catch (final RelationshipAlreadyExistsException e) {
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
-		return ResponseEntity.notFound().build();
 	}
 
 	private ResponseEntity<JsonNode> updateProjectPermissions(
 			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
 			throws Exception {
-		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
-			try {
-				what.removePermissionRelationships(who, oldRelationship);
-				what.setPermissionRelationships(who, newRelationship);
-				return ResponseEntity.ok().build();
-			} catch (final RelationshipAlreadyExistsException e) {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-			}
+		try {
+			what.removePermissionRelationships(who, oldRelationship);
+			what.setPermissionRelationships(who, newRelationship);
+			return ResponseEntity.ok().build();
+		} catch (final RelationshipAlreadyExistsException e) {
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
-		return ResponseEntity.notFound().build();
 	}
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
-		if (new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what)) {
-			try {
-				what.removePermissionRelationships(who, relationship);
-				return ResponseEntity.ok().build();
-			} catch (final RelationshipAlreadyExistsException e) {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-			}
+		try {
+			what.removePermissionRelationships(who, relationship);
+			return ResponseEntity.ok().build();
+		} catch (final RelationshipAlreadyExistsException e) {
+			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
-		return ResponseEntity.notFound().build();
 	}
 }

@@ -408,7 +408,12 @@ async function generateCard(docId, modelId) {
 
 	isGeneratingCard.value = true;
 	// await generateModelCard(docId, modelId, clonedState.value.modelService);
-	await generateModelCard(docId, modelId, ModelServiceType.TA1);
+	await generateModelCard(
+		docId,
+		modelId,
+		useProjects().activeProjectId.value,
+		ModelServiceType.TA1
+	);
 	isGeneratingCard.value = false;
 	fetchModel();
 }

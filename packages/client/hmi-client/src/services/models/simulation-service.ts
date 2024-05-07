@@ -170,9 +170,9 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 	return output;
 }
 
-export async function getSimulation(id: Simulation['id']): Promise<Simulation | null> {
+export async function getSimulation(id: Simulation['id'], projectId: string): Promise<Simulation | null> {
 	try {
-		const response = await API.get(`/simulations/${id}`);
+		const response = await API.get(`/simulations/${id}?project-id=${projectId}`);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -258,8 +258,8 @@ export async function unsubscribeToUpdateMessages(
 	await unsubscribe(eventType, messageHandler);
 }
 
-export async function pollAction(id: string) {
-	const simResponse: Simulation | null = await getSimulation(id);
+export async function pollAction(id: string, projectId: string) {
+	const simResponse: Simulation | null = await getSimulation(id, projectId);
 	if (!simResponse) {
 		console.error(`Error occured with simulation ${id}`);
 		return { data: null, progress: null, error: `Failed running simulation ${id}` };

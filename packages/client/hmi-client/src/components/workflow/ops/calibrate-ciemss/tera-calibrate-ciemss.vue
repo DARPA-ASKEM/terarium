@@ -216,6 +216,7 @@ import {
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -408,7 +409,7 @@ onMounted(async () => {
 	}
 
 	// Model configuration input
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value, useProjects().activeProjectId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
 

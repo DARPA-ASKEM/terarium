@@ -217,7 +217,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 	// there's only a single input config
 	const modelConfigId = props.node.inputs[0].value?.[0];
-	const modelConfiguration = await getModelConfigurationById(modelConfigId);
+	const modelConfiguration = await getModelConfigurationById(modelConfigId, useProjects().activeProjectId.value);
 
 	const resultCsv = await getRunResult(runId, 'result.csv');
 	const csvData = csvParse(resultCsv);
