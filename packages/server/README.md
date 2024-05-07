@@ -125,29 +125,3 @@ class Child {
 
 };
 ```
-
-**NOTE:** `@JoinColumn` is a tricky annotation because it is interpreted differently based on what relationship annotation it is paired with, and whether the relationship is uni-directional vs bi-directional.
-
-```html
-/*
-* (Optional) The name of the foreign key column.
-* The table in which it is found depends upon the
-* context.
-
-* - If the join is for a OneToOne or ManyToOne
-*  mapping using a foreign key mapping strategy,
-* the foreign key column is in the table of the
-* source entity or embeddable.
-
-* - If the join is for a unidirectional OneToMany mapping
-* using a foreign key mapping strategy, the foreign key is in the
-* table of the target entity.
-
-* - If the join is for a ManyToMany mapping or for a OneToOne
-* or bidirectional ManyToOne/OneToMany mapping using a join
-* table, the foreign key is in a join table.
-
-* -  If the join is for an element collection, the foreign
-* key is in a collection table.
-*/
-```
