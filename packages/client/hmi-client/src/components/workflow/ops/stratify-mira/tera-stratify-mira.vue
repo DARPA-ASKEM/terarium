@@ -192,7 +192,6 @@ const outputs = computed(() => {
 	return [];
 });
 
-const kernelReady = ref(false);
 const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
@@ -375,7 +374,6 @@ const inputChangeHandler = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
-			kernelReady.value = true;
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
