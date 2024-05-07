@@ -61,7 +61,7 @@
 		</Column>
 
 		<!-- Value type: Matrix or a Contant -->
-		<Column field="type" header="Value" class="pl-2 w-2">
+		<Column field="type" header="Value" class="pl-2 pr-2 w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -84,7 +84,7 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Distribution" class="w-3 pr-2">
+		<Column field="value" header="Distribution" class="w-3 pl-2 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
