@@ -20,6 +20,7 @@ public class TaskRequest implements Serializable {
 	private int timeoutMinutes = 30;
 	private Object additionalProperties;
 	protected String userId;
+	protected UUID projectId;
 
 	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 		return new TaskResponse()
@@ -27,6 +28,7 @@ public class TaskRequest implements Serializable {
 				.setStatus(status)
 				.setScript(script)
 				.setUserId(userId)
+				.setProjectId(projectId)
 				.setAdditionalProperties(additionalProperties)
 				.setStdout(stdout)
 				.setStderr(stderr);
