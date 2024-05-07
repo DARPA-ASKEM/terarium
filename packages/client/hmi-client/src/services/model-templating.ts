@@ -221,13 +221,12 @@ export function addDecomposedTemplateInKernel(
 	syncWithMiraModel: Function,
 	isTemplatePrepared = false // True when decomposed template in flattened view is being added
 ) {
-	const model = card.model;
+	const { model, templateType } = card;
 	// Confirm a decomposed card is being added
-	if (!(Object.values(DecomposedModelTemplateTypes) as string[]).includes(model.header.name)) {
+	if (!templateType || !Object.values(DecomposedModelTemplateTypes).includes(templateType)) {
 		logger.error('Only decomposed templates can be added.');
 		return;
 	}
-	const templateType = model.header.name as DecomposedModelTemplateTypes;
 
 	const decomposedTemplateToAdd = isTemplatePrepared
 		? model

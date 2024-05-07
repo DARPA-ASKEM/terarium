@@ -108,7 +108,7 @@
 					:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
 					@dragging="(event) => updatePosition(event, junction)"
 				>
-					<tera-model-junction :junction="junction" :template-cards="cards" />
+					<tera-model-junction :junction="junction" :cards="cards" />
 				</tera-canvas-item>
 			</template>
 			<template #background>
