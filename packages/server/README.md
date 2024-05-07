@@ -23,13 +23,13 @@ To build the NATIVE image simply run the following from the root directory.
 docker buildx build -f modules/server/docker/Dockerfile.native -t docker.uncharted.software/terarium:server .
 ```
 
-### Hibernate Reference:
+## Hibernate Relationships:
 
 There are three types of relationships in `hibernate`: `@OneToOne`, `@OneToMany`/`@ManyToOne`, and `@ManyToMany`.
 
 `@OneToOne` and `@OneToMany` can be done without an additional table, while `@ManyToMany` must use an additional table.
 
-#### Defining Bi-directional Relationships
+### Defining Bi-directional Relationships
 
 For `@OneToOne` and `@OneToMany` bi-directional relationships we prefer to not use an additional table. These relationships are setup as follows:
 
@@ -71,7 +71,7 @@ class Child {
 };
 ```
 
-#### Defining Uni-directional Relationships
+### Defining Uni-directional Relationships
 
 Uni-directional relationships are where only one side of the reference is defined. This is typically used when some child type may be "owned" by various parent types.
 
