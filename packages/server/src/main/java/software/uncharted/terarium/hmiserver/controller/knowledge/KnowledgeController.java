@@ -443,8 +443,16 @@ public class KnowledgeController {
 					final int MAX_CHAR_LIMIT = 9000;
 
 					final DocumentAsset document = documentOptional.get();
-					documentText = document.getText()
-							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+
+					try {
+						final int documentTextLength = document.getText().length();
+						documentText = document.getText()
+							.substring(0, Math.min(documentTextLength, MAX_CHAR_LIMIT));
+					} catch (NullPointerException e) {
+						throw new ResponseStatusException(
+							HttpStatus.BAD_REQUEST,
+							"Supplied document is still in the extraction process. Please try again later...");
+					}
 
 					try {
 						final Provenance provenancePayload = new Provenance(
