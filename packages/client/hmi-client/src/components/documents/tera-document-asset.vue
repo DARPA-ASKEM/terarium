@@ -162,7 +162,7 @@ import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { ClientEvent, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
-import { AssetType, ClientEventType, ExtractionAssetType } from '@/types/Types';
+import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -321,7 +321,7 @@ async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>)
 
 	const status = getStatus(event.data);
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
-	if (status === 'Completed' || event.data.message.includes('Dispatching')) {
+	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);
 	}
 }

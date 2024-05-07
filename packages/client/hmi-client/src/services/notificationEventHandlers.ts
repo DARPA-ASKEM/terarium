@@ -19,7 +19,7 @@ const toastTitle = {
 
 const logStatusMessage = (
 	eventType: ClientEventType,
-	status: string,
+	status: ProgressState,
 	msg: string,
 	error: string
 ) => {
