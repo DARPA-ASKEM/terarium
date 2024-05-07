@@ -61,7 +61,7 @@
 		</Column>
 
 		<!-- Value type: Matrix or a Contant -->
-		<Column field="type" header="Value" class="pl-2 pr-2 w-2">
+		<Column field="type" header="Constant" class="pl-2 pr-6 w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -84,7 +84,7 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Distribution" class="w-3 pl-2 pr-2">
+		<Column field="value" header="Distribution" class="w-4 pl-2 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -166,6 +166,7 @@
 		<tera-modal
 			v-if="suggestedValuesModalContext.isOpen"
 			@modal-mask-clicked="onCloseSuggestedValuesModal"
+			:width="1000"
 		>
 			<template #header
 				><h5>Suggested configurations for {{ suggestedValuesModalContext.id }}</h5></template
@@ -174,7 +175,7 @@
 				:value="suggestedValues"
 				dataKey="index"
 				v-model:selection="selectedValue"
-				tableStyle="min-width: 50rem"
+				tableStyle="min-width: 80rem"
 			>
 				<Column selectionMode="single" class="w-3rem"></Column>
 				<Column header="Symbol">
@@ -196,22 +197,16 @@
 						{{ data.configuration?.name }}
 					</template>
 				</Column>
-				<Column header="Value type">
+				<Column header="Constant">
 					<template #body="{ data }">
-						{{ typeOptions[getParamType(data.parameter)].label }}
+						{{ data.parameter.value }}
 					</template>
 				</Column>
-				<Column header="Value">
+				<Column header="Distribution">
 					<template #body="{ data }">
-						<span v-if="getParamType(data.parameter) === ParamType.CONSTANT">
-							{{ data.parameter.value }}
-						</span>
-						<div
-							class="distribution-container"
-							v-else-if="getParamType(data.parameter) === ParamType.DISTRIBUTION"
-						>
-							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
-							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
+						<div class="distribution-container">
+							<span>Min: {{ data.parameter.distribution?.parameters.minimum }}</span>
+							<span>Max: {{ data.parameter.distribution?.parameters.maximum }}</span>
 						</div>
 					</template>
 				</Column>
@@ -270,11 +265,6 @@ const props = defineProps<{
 	readonly?: boolean;
 	configView?: boolean; // if the table is in the model config view we have limited functionality
 }>();
-
-const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' }
-];
 
 const emit = defineEmits(['update-value', 'update-model']);
 
