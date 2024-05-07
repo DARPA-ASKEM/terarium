@@ -116,7 +116,7 @@
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
 							<tera-initial-table
-								v-if="!isEmpty(knobs.transientModelConfig)"
+								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
 								:model="knobs.transientModelConfig.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
@@ -158,7 +158,7 @@
 							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
 						<tera-parameter-table
-							v-if="!isEmpty(knobs.transientModelConfig)"
+							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
 							:model-configurations="suggestedConfigurationContext.tableData"
 							:model="knobs.transientModelConfig.configuration"
 							:mmt="mmt"
