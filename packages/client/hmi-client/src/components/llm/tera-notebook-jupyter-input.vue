@@ -42,6 +42,9 @@
 		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
 		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
+	<div>
+		<p>LLM Thoughts Options 1</p>
+	</div>
 </template>
 
 <script setup lang="ts">
