@@ -311,10 +311,6 @@ const inputChangeHandler = async () => {
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
 			isKernelReady.value = true;
 		}
-
-		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper();
-		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
@@ -367,8 +363,7 @@ watch(
 
 			await inputChangeHandler();
 		}
-	},
-	{ immediate: true }
+	}
 );
 
 onMounted(async () => {
