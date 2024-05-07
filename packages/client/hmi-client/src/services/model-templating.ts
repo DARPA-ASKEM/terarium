@@ -366,7 +366,6 @@ export function removeTemplateInKernel(
  */
 export function updateDecomposedTemplateNameInView(decomposedModel: Model, newName: string) {
 	decomposedModel.header.name = newName;
-	if (decomposedModel.metadata) decomposedModel.metadata.templateCard.name = newName;
 	if (decomposedModel.model.transitions[0] && decomposedModel?.semantics?.ode?.rates[0]) {
 		decomposedModel.model.transitions[0].id = newName;
 		decomposedModel.model.transitions[0].properties.name = newName;
@@ -519,16 +518,16 @@ export function getElementOffsetValues(element: HTMLElement): OffsetValues {
 
 // Helper function for finding port position when auto drawing junctions and edges
 function getPortPosition(
-	templateCard: ModelTemplateCard,
+	card: ModelTemplateCard,
 	portId: string,
 	potentialPortOffsetValues?: Map<string, OffsetValues>
 ) {
 	const cardWidth = 168;
-	const id = `${templateCard.id}-${portId}`;
+	const id = `${card.id}-${portId}`;
 
 	// Default to fallback values for port position (top right of the card)
-	let x = templateCard.x + cardWidth;
-	let y = templateCard.y;
+	let x = card.x + cardWidth;
+	let y = card.y;
 	// Get the offset values of the port element to determine its position
 	let portOffsetValues: OffsetValues | null = null;
 	if (potentialPortOffsetValues) {
@@ -540,8 +539,8 @@ function getPortPosition(
 	}
 
 	if (portOffsetValues) {
-		x = templateCard.x + portOffsetValues.offsetLeft + portOffsetValues.offsetWidth - 10;
-		y = templateCard.y + portOffsetValues.offsetTop + portOffsetValues.offsetHeight / 2;
+		x = card.x + portOffsetValues.offsetLeft + portOffsetValues.offsetWidth - 10;
+		y = card.y + portOffsetValues.offsetTop + portOffsetValues.offsetHeight / 2;
 	}
 	return { x, y };
 }
