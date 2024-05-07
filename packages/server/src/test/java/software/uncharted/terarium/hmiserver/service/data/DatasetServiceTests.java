@@ -199,8 +199,24 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Dataset cloned = datasetService.cloneAsset(dataset.getId());
 
 		Assertions.assertNotEquals(dataset.getId(), cloned.getId());
-		Assertions.assertEquals(dataset.getGrounding(), cloned.getGrounding());
-		Assertions.assertEquals(dataset.getColumns(), cloned.getColumns());
+		Assertions.assertEquals(dataset.getGrounding().getIdentifiers(), cloned.getGrounding().getIdentifiers());
+		Assertions.assertEquals(dataset.getGrounding().getContext(), cloned.getGrounding().getContext());
+		Assertions.assertEquals(dataset.getColumns().size(), cloned.getColumns().size());
+		for (int i = 0; i < dataset.getColumns().size(); i++) {
+			Assertions.assertEquals(dataset.getColumns().get(i).getName(), cloned.getColumns().get(i).getName());
+			Assertions.assertEquals(dataset.getColumns().get(i).getDescription(),
+					cloned.getColumns().get(i).getDescription());
+			Assertions.assertEquals(dataset.getColumns().get(i).getDataType(),
+					cloned.getColumns().get(i).getDataType());
+			Assertions.assertEquals(dataset.getColumns().get(i).getAnnotations(),
+					cloned.getColumns().get(i).getAnnotations());
+			Assertions.assertEquals(dataset.getColumns().get(i).getMetadata(),
+					cloned.getColumns().get(i).getMetadata());
+			Assertions.assertEquals(dataset.getColumns().get(i).getGrounding().getIdentifiers(),
+					cloned.getColumns().get(i).getGrounding().getIdentifiers());
+			Assertions.assertEquals(dataset.getColumns().get(i).getGrounding().getContext(),
+					cloned.getColumns().get(i).getGrounding().getContext());
+		}
 	}
 
 	@Test
@@ -217,8 +233,24 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(dataset.getId(), imported.getId());
 		Assertions.assertEquals(dataset.getName(), imported.getName());
 		Assertions.assertEquals(dataset.getDescription(), imported.getDescription());
-		Assertions.assertEquals(dataset.getGrounding(), imported.getGrounding());
-		Assertions.assertEquals(dataset.getColumns(), imported.getColumns());
+		Assertions.assertEquals(dataset.getGrounding().getIdentifiers(), imported.getGrounding().getIdentifiers());
+		Assertions.assertEquals(dataset.getGrounding().getContext(), imported.getGrounding().getContext());
+		Assertions.assertEquals(dataset.getColumns().size(), imported.getColumns().size());
+		for (int i = 0; i < dataset.getColumns().size(); i++) {
+			Assertions.assertEquals(dataset.getColumns().get(i).getName(), imported.getColumns().get(i).getName());
+			Assertions.assertEquals(dataset.getColumns().get(i).getDescription(),
+					imported.getColumns().get(i).getDescription());
+			Assertions.assertEquals(dataset.getColumns().get(i).getDataType(),
+					imported.getColumns().get(i).getDataType());
+			Assertions.assertEquals(dataset.getColumns().get(i).getAnnotations(),
+					imported.getColumns().get(i).getAnnotations());
+			Assertions.assertEquals(dataset.getColumns().get(i).getMetadata(),
+					imported.getColumns().get(i).getMetadata());
+			Assertions.assertEquals(dataset.getColumns().get(i).getGrounding().getIdentifiers(),
+					imported.getColumns().get(i).getGrounding().getIdentifiers());
+			Assertions.assertEquals(dataset.getColumns().get(i).getGrounding().getContext(),
+					imported.getColumns().get(i).getGrounding().getContext());
+		}
 	}
 
 	@Test
@@ -242,7 +274,9 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 			Assertions.assertEquals(
 					datasets.get(i).getDescription(), results.get(i).getDescription());
 			Assertions.assertEquals(
-					datasets.get(i).getGrounding(), results.get(i).getGrounding());
+					datasets.get(i).getGrounding().getIdentifiers(), results.get(i).getGrounding().getIdentifiers());
+			Assertions.assertEquals(
+					datasets.get(i).getGrounding().getContext(), results.get(i).getGrounding().getContext());
 			Assertions.assertEquals(
 					datasets.get(i).getCreatedOn().toInstant().getEpochSecond(),
 					results.get(i).getCreatedOn().toInstant().getEpochSecond());

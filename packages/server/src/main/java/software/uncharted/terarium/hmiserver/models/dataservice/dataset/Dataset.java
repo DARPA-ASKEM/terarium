@@ -89,7 +89,6 @@ public class Dataset extends TerariumAsset {
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	// @JoinColumn(name = "dataset_column_id")
 	@JsonManagedReference
 	private List<DatasetColumn> columns;
 
