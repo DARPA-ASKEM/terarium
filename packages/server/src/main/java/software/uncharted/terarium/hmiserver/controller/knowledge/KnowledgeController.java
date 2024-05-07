@@ -444,10 +444,9 @@ public class KnowledgeController {
 
 					final DocumentAsset document = documentOptional.get();
 
-					try {
-						final int documentTextLength = document.getText().length();
-						documentText = document.getText().substring(0, Math.min(documentTextLength, MAX_CHAR_LIMIT));
-					} catch (NullPointerException e) {
+					if (document.getText() != null) {
+						documentText = document.getText().substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+					} else {
 						throw new ResponseStatusException(
 								HttpStatus.BAD_REQUEST,
 								"Supplied document is still in the extraction process. Please try again later...");
