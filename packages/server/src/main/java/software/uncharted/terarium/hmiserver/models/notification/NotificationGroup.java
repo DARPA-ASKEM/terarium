@@ -41,7 +41,7 @@ public class NotificationGroup {
 	@NotNull private String type;
 
 	@TSOptional
-	private String projectId;
+	private UUID projectId;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
