@@ -25,22 +25,27 @@ docker buildx build -f modules/server/docker/Dockerfile.native -t docker.unchart
 
 ## Hibernate Relationships:
 
-There are three types of relationships in `hibernate`: `@OneToOne`, `@OneToMany`/`@ManyToOne`, and `@ManyToMany`.
+There are three types of relationship annotations used in `hibernate`:
+    - `@OneToOne <-> @OneToOne`
+    - `@OneToMany <-> @ManyToOne`
+    - `@ManyToMany <-> @ManyToMany`.
 
 `@OneToOne` and `@OneToMany` can be done without an additional table, while `@ManyToMany` must use an additional table.
 
 ### Defining Bi-directional Relationships
 
-For `@OneToOne` and `@OneToMany` bi-directional relationships we prefer to not use an additional table. These relationships are setup as follows:
+For `@OneToOne` and `@OneToMany` bi-directional relationships we prefer to not use an additional table.
 
-- `@OneToMany` and `@ManyToOne` annotations are used to define the type of relationship between the entities.
-    - `mappedBy` defines which part of the relationship _does not_ contain the foreign key, typically the "parent". If `mappedBy` is not specified, an additional table is used to store the relationship.
-    - `cascade` defines what types of operations are cascaded to the other side of the relationship.
+These relationships are setup as follows:
+
+- `@OneToMany` / `@ManyToOne` / `@ManyToMany` annotations are used to define the type of relationship between the entities.
+    - `mappedBy` defines which side "owns" the relationship. For `@OneToMany` it defines which side _does not_ contain the foreign key. If `mappedBy` is not specified, an additional table is used to store the relationship. For `@ManyToMany` relationships, it is used to define the "owner" side of the many to many.
+    - `cascade` defines what types of operations are cascaded from the owner to the other side of the relationship. `CascadeType.ALL` seems to be a safe default.
     - `fetch` defines how the elemeents are fetched. `EAGER` fetches them immediately. `LAZY` fetches them only when accessed.
 
 - `@JsonManagedReference` and `@JsonBackReference` are required to prevent `toString` and `hashCode` from exploding due to the circular references of bi-directional relationships.
 
-For `@ManyToMany`, simply omit `mappedBy` from the annotation.
+**Note:** because we use `mappedBy` to define the ownsership of the relationship, `@JoinColumn` is not necessary for bi-directional relationships.
 
 ```java
 @Data
@@ -73,10 +78,29 @@ class Child {
 
 ### Defining Uni-directional Relationships
 
-Uni-directional relationships are where only one side of the reference is defined. This is typically used when some child type may be "owned" by various parent types.
+Uni-directional relationships are where only one side of the reference is defined in the code, inside the "owning" entity. For these relationships the `mappedBy` argument is omitted and the relationship is stored depends on the `@JoinColumn` annotation. By default if `@JoinColumn` is not defined, an additional table is created to define the relationship.
 
+How the `@JoinColumn` annotation is used is based on the type of relationship, as per the docs:
 
- In these cases we use the `@JoinColumn` on the parent to specify the foreign key field on the child. If the `@JoinColumn` is not used, by default `hibernate` will create an additional table to store the relationship.
+```html
+/*
+* - If the join is for a OneToOne or ManyToOne
+*  mapping using a foreign key mapping strategy,
+* the foreign key column is in the table of the
+* source entity or embeddable.
+
+* - If the join is for a unidirectional OneToMany mapping
+* using a foreign key mapping strategy, the foreign key is in the
+* table of the target entity.
+
+* - If the join is for a ManyToMany mapping or for a OneToOne
+* or bidirectional ManyToOne/OneToMany mapping using a join
+* table, the foreign key is in a join table.
+
+* -  If the join is for an element collection, the foreign
+* key is in a collection table.
+*/
+```
 
 ```java
 @Data
