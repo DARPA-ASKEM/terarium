@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,16 +10,21 @@ import org.hibernate.annotations.Type;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.BaseEntity;
 
 /** Represents a grounding document from TDS */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
-public class Grounding implements Serializable {
+@Entity
+public class Grounding extends BaseEntity {
 
 	@Serial
 	private static final long serialVersionUID = 302308407252037615L;

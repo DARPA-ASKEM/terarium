@@ -25,7 +25,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -87,9 +86,8 @@ public class Simulation extends TerariumAsset {
 	@TSOptional
 	private UUID projectId; // TODO this can probably be joined to the project table soon?
 
-	@OneToMany(mappedBy = "simulation", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@OrderBy("createdOn DESC")
-	@ToString.Exclude
 	@JsonManagedReference
 	private List<SimulationUpdate> updates = new ArrayList<>();
 

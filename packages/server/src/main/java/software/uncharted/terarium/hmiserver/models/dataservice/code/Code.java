@@ -53,10 +53,10 @@ public class Code extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private Map<String, String> metadata;
 
+	@TSOptional
 	@ManyToOne
 	@JoinColumn(name = "project_id")
 	@JsonBackReference
-	@TSOptional
 	private Project project;
 
 	@Override

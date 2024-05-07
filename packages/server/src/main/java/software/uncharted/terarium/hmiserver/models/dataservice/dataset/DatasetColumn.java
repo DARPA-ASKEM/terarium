@@ -8,26 +8,43 @@ import java.util.Map;
 import org.hibernate.annotations.Type;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.BaseEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 /** Represents a column in a dataset */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
-public class DatasetColumn {
+@Entity
+public class DatasetColumn extends BaseEntity {
 
 	/** Name of the column */
 	@Column(length = 255)
 	private String name;
+
+	@TSOptional
+	@ManyToOne
+	@JoinColumn(name = "dataset_id")
+	@JsonBackReference
+	private Dataset dataset;
 
 	/**
 	 * Datatype. One of: unknown, boolean, string, char, integer, int, float,
@@ -56,8 +73,8 @@ public class DatasetColumn {
 
 	/** (Optional) Grounding of ontological concepts related to the column */
 	@TSOptional
-	@Column(columnDefinition = "text")
-	@Type(JsonType.class)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
 
 	@TSOptional

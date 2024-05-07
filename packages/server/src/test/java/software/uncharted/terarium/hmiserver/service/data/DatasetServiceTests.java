@@ -1,19 +1,22 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -40,29 +43,32 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		datasetService.teardownIndexAndAlias();
 	}
 
-	static Dataset createDataset() throws Exception {
-		return createDataset("A");
-	}
-
-	static Dataset createDataset(final String key) throws Exception {
-
+	static Grounding createGrounding(final String key) {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(new HashMap<>());
 		grounding.getContext().put("hello", "world-" + key);
 		grounding.getContext().put("foo", "bar-" + key);
 		grounding.setIdentifiers(new ArrayList<>());
 		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
+		return grounding;
+	}
+
+	static Dataset createDataset() throws Exception {
+		return createDataset("A");
+	}
+
+	static Dataset createDataset(final String key) throws Exception {
 
 		final DatasetColumn column1 = new DatasetColumn()
 				.setName("Title")
 				.setDataType(DatasetColumn.ColumnType.STRING)
 				.setDescription("hello world")
-				.setGrounding(grounding);
+				.setGrounding(createGrounding(key));
 		final DatasetColumn column2 = new DatasetColumn()
 				.setName("Value")
 				.setDataType(DatasetColumn.ColumnType.FLOAT)
 				.setDescription("3.1415926")
-				.setGrounding(grounding);
+				.setGrounding(createGrounding(key));
 
 		final Dataset dataset = new Dataset();
 		dataset.setName("test-dataset-name-" + key);
@@ -70,7 +76,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		dataset.setColumns(new ArrayList<>());
 		dataset.getColumns().add(column1);
 		dataset.getColumns().add(column2);
-		dataset.setGrounding(grounding);
+		dataset.setGrounding(createGrounding(key));
 		dataset.setPublicAsset(true);
 
 		return dataset;
@@ -87,6 +93,29 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
 		Assertions.assertEquals(after.getColumns().size(), 2);
+
+		for (final DatasetColumn col : after.getColumns()) {
+			Assertions.assertNotNull(col.getId());
+			Assertions.assertNotNull(col.getCreatedOn());
+			Assertions.assertNotNull(col.getGrounding());
+			Assertions.assertNotNull(col.getGrounding().getId());
+			Assertions.assertNotNull(col.getGrounding().getCreatedOn());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers());
+			Assertions.assertEquals(col.getGrounding().getIdentifiers().size(), 1);
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).curie());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).name());
+			Assertions.assertNotNull(col.getGrounding().getContext());
+			Assertions.assertEquals(col.getGrounding().getContext().size(), 2);
+		}
+
+		Assertions.assertNotNull(after.getGrounding());
+		Assertions.assertNotNull(after.getGrounding().getId());
+		Assertions.assertNotNull(after.getGrounding().getCreatedOn());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).curie());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).name());
+		Assertions.assertNotNull(after.getGrounding().getContext());
+		Assertions.assertEquals(after.getGrounding().getContext().size(), 2);
 	}
 
 	@Test

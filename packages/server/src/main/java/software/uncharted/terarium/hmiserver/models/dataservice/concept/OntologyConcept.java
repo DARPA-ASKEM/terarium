@@ -1,17 +1,26 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.concept;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.UUID;
-import lombok.Data;
-import lombok.experimental.Accessors;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.Data;
+import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
@@ -51,7 +60,7 @@ public class OntologyConcept implements Serializable {
 	private String curie;
 
 	@ManyToOne
-	@JoinColumn(name = "activeConceptId", nullable = true)
+	@JoinColumn(name = "active_concept_id")
 	@JsonBackReference
 	@JsonAlias("active_concept")
 	private ActiveConcept activeConcept;

@@ -9,13 +9,18 @@ import org.hibernate.annotations.Type;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -61,10 +66,10 @@ public class Dataset extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private List<String> fileNames;
 
+	@TSOptional
 	@ManyToOne
 	@JoinColumn(name = "project_id")
 	@JsonBackReference
-	@TSOptional
 	private Project project;
 
 	@TSOptional
@@ -83,8 +88,9 @@ public class Dataset extends TerariumAsset {
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	// @JoinColumn(name = "dataset_column_id")
+	@JsonManagedReference
 	private List<DatasetColumn> columns;
 
 	/** (Optional) Unformatted metadata about the dataset */
@@ -103,8 +109,8 @@ public class Dataset extends TerariumAsset {
 	 * whole
 	 */
 	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
 
 	@Override
