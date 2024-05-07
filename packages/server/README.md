@@ -25,12 +25,14 @@ docker buildx build -f modules/server/docker/Dockerfile.native -t docker.unchart
 
 ## Hibernate Relationships:
 
-There are three types of relationship annotations used in `hibernate`:
-    - `@OneToOne <-> @OneToOne`
-    - `@OneToMany <-> @ManyToOne`
-    - `@ManyToMany <-> @ManyToMany`.
+There are three types of relationship annotations used in **Hibernate**:
+- `@OneToOne <-> @OneToOne`: a single parent entity references 0 or 1 child entity.
+- `@OneToMany <-> @ManyToOne`: a single parent entity references 0 to n child entities.
+- `@ManyToMany <-> @ManyToMany`: multiple parent entities share 0 to n child entities.
 
-`@OneToOne` and `@OneToMany` can be done without an additional table, while `@ManyToMany` must use an additional table.
+Mapping to the tables:
+
+`@OneToOne` and `@OneToMany` can be done with or without an additional table, while `@ManyToMany` must use an additional table.
 
 ### Defining Bi-directional Relationships
 
@@ -38,8 +40,8 @@ For `@OneToOne` and `@OneToMany` bi-directional relationships we prefer to not u
 
 These relationships are setup as follows:
 
-- `@OneToMany` / `@ManyToOne` / `@ManyToMany` annotations are used to define the type of relationship between the entities.
-    - `mappedBy` defines which side "owns" the relationship. For `@OneToMany` it defines which side _does not_ contain the foreign key. If `mappedBy` is not specified, an additional table is used to store the relationship. For `@ManyToMany` relationships, it is used to define the "owner" side of the many to many.
+- `@OneToOne` / `@OneToMany` / `@ManyToOne` / `@ManyToMany` annotations are used to define the type of relationship between the entities.
+    - `mappedBy` defines which side "owns" the relationship. For `OneToOne` and `@OneToMany` it defines which side _does not_ contain the foreign key. If `mappedBy` is not specified, an additional table is used to store the relationship. For `@ManyToMany` relationships, it is used to define the "owner" side of the many to many.
     - `cascade` defines what types of operations are cascaded from the owner to the other side of the relationship. `CascadeType.ALL` seems to be a safe default.
     - `fetch` defines how the elemeents are fetched. `EAGER` fetches them immediately. `LAZY` fetches them only when accessed.
 
