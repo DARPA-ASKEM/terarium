@@ -42,45 +42,6 @@
 			</template>
 		</Column>
 
-		<Column header="Concept" class="w-1">
-			<template #body="{ data }">
-				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
-					{{
-						getNameOfCurieCached(
-							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.identifiers)
-						)
-					}}
-
-					<a
-						target="_blank"
-						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
-						@click.stop
-						aria-label="Open Concept"
-					>
-						<i class="pi pi-external-link" />
-					</a>
-				</template>
-				<template v-else>--</template>
-			</template>
-			<template v-if="!configView && !readonly" #editor="{ data }">
-				<AutoComplete
-					v-model="conceptSearchTerm.name"
-					:suggestions="curies"
-					@complete="onSearch"
-					@item-select="
-						updateParamValue(data.value, 'grounding', {
-							identifiers: parseCurie($event.value.curie)
-						})
-					"
-					optionLabel="name"
-					:forceSelection="true"
-					:inputStyle="{ width: '100%' }"
-				/>
-			</template>
-		</Column>
-
 		<Column header="Unit" class="w-1">
 			<template #body="slotProps">
 				<InputText
@@ -100,7 +61,7 @@
 		</Column>
 
 		<!-- Value type: Matrix or a Contant -->
-		<Column field="type" header="Value" class="w-2">
+		<Column field="type" header="Value" class="pl-2 w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -123,7 +84,7 @@
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Distribution" class="w-2 pr-2">
+		<Column field="value" header="Distribution" class="w-3 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -153,19 +114,6 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
-			</template>
-		</Column>
-
-		<!-- Source  -->
-		<Column field="source" header="Source" class="w-2">
-			<template #body="{ data }">
-				<InputText
-					v-if="data.type !== ParamType.MATRIX"
-					class="w-full"
-					v-model.lazy="data.source"
-					:disabled="readonly"
-					@update:model-value="(val) => updateMetadataFromInput(data.value.id, 'source', val)"
-				/>
 			</template>
 		</Column>
 
@@ -292,21 +240,13 @@
 import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { StratifiedMatrix } from '@/types/Model';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
-import {
-	getCurieFromGroudingIdentifier,
-	getCurieUrl,
-	getNameOfCurieCached,
-	parseCurie,
-	searchCuriesEntities
-} from '@/services/concept';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
@@ -315,8 +255,7 @@ import { isStratifiedModel, collapseParameters } from '@/model-representation/mi
 import {
 	updateVariable,
 	getParameterMetadata,
-	getParameters,
-	updateParameterMetadata
+	getParameters
 } from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -485,9 +424,6 @@ const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
 });
-const nameOfCurieCache = ref(new Map<string, string>());
-
-const curies = ref<DKG[]>([]);
 
 const modelType = computed(() => getModelType(props.model));
 
@@ -520,20 +456,6 @@ const updateParamValue = (param: ModelParameter, key: string, value: any) => {
 	clonedParam[key] = value;
 	emit('update-value', [clonedParam]);
 };
-
-const updateMetadataFromInput = (id: string, key: string, value: any) => {
-	const clonedModel = cloneDeep(props.model);
-	updateParameterMetadata(clonedModel, id, key, value);
-	emit('update-model', clonedModel);
-};
-
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
-}
 
 const openSuggestedValuesModal = (id: string) => {
 	suggestedValuesModalContext.value.isOpen = true;
