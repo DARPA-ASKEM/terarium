@@ -119,7 +119,6 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
-import * as llmThoughtExample from '@/examples/llmthought.json'; // TODO Remove
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -175,7 +174,7 @@ const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
 
-const llmThought = ref(llmThoughtExample);
+const llmThought = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',

@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
@@ -19,12 +19,7 @@ const props = defineProps<{
 }>();
 
 const showThoughts = ref(false);
-const thought = computed(() => props.llmThought.content.thought ?? 'No thought');
-
-onMounted(async () => {
-	console.log(props.llmThought);
-	console.log(props.llmThought.content.thought);
-});
+const thought = computed(() => props?.llmThought?.content?.thought ?? '');
 </script>
 
 <style scoped>
