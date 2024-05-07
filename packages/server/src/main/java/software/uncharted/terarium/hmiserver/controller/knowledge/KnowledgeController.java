@@ -445,7 +445,8 @@ public class KnowledgeController {
 					final DocumentAsset document = documentOptional.get();
 
 					if (document.getText() != null) {
-						documentText = document.getText().substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+						documentText = document.getText()
+								.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
 					} else {
 						throw new ResponseStatusException(
 								HttpStatus.BAD_REQUEST,
