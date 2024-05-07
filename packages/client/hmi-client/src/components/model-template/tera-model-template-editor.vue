@@ -206,9 +206,9 @@ const isCreatingNewEdge = computed(
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-	return cards.value.some(({ x, y, width, height }) => {
-		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
-		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
+	return cards.value.some(({ x, y }) => {
+		const withinXRange = p.x >= x - buffer && p.x <= x + buffer;
+		const withinYRange = p.y >= y - buffer && p.y <= y + buffer;
 		return withinXRange && withinYRange;
 	});
 }

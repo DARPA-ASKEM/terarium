@@ -52,9 +52,7 @@ export const modelTemplateCardOptions: ModelTemplateCard[] = [
 	model,
 	templateType: model.header.name as DecomposedModelTemplateTypes,
 	x: 0,
-	y: 0,
-	width: 0,
-	height: 0
+	y: 0
 }));
 
 function findCardIndexById(canvas: ModelTemplateCanvas, id: string) {
@@ -502,9 +500,7 @@ export function updateFlattenedTemplateInView(flattenedCanvas: ModelTemplateCanv
 		model,
 		templateType: null,
 		x: 100,
-		y: 100,
-		width: 0,
-		height: 0
+		y: 100
 	};
 
 	addTemplateInView(flattenedCanvas, flattenedCard);
@@ -563,9 +559,7 @@ export async function flattenedToDecomposedInView(
 				model,
 				x: 100,
 				y: yPos,
-				templateType: null,
-				width: 0,
-				height: 0
+				templateType: null
 			};
 			yPos += 200;
 

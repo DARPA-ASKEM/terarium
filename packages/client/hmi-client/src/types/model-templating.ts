@@ -28,9 +28,6 @@ export interface ModelTemplateCard {
 	templateType: DecomposedModelTemplateTypes | null;
 	x: number;
 	y: number;
-	// For collisionFn
-	width: number;
-	height: number;
 }
 
 export interface ModelTemplateJunction {
