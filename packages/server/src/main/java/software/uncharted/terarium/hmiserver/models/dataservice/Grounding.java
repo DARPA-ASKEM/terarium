@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.BaseEntity;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
 /** Represents a grounding document from TDS */
 @Data
@@ -24,37 +24,37 @@ import software.uncharted.terarium.hmiserver.models.BaseEntity;
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class Grounding extends BaseEntity {
+public class Grounding extends TerariumEntity {
 
-	@Serial
-	private static final long serialVersionUID = 302308407252037615L;
+    @Serial
+    private static final long serialVersionUID = 302308407252037615L;
 
-	/** Ontological identifier per DKG */
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<Identifier> identifiers;
+    /** Ontological identifier per DKG */
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
+    private List<Identifier> identifiers;
 
-	/** (Optional) Additional context that informs the grounding */
-	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private Map<String, Object> context;
+    /** (Optional) Additional context that informs the grounding */
+    @TSOptional
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
+    private Map<String, Object> context;
 
-	@Override
-	public Grounding clone() {
+    @Override
+    public Grounding clone() {
 
-		final Grounding clone = new Grounding();
-		if (this.identifiers != null) {
-			clone.identifiers = new ArrayList<>();
-			clone.identifiers.addAll(this.identifiers);
-		}
-		if (this.context != null) {
-			clone.context = new HashMap<>();
-			for (final String key : this.context.keySet()) {
-				clone.context.put(key, context.get(key));
-			}
-		}
+        final Grounding clone = new Grounding();
+        if (this.identifiers != null) {
+            clone.identifiers = new ArrayList<>();
+            clone.identifiers.addAll(this.identifiers);
+        }
+        if (this.context != null) {
+            clone.context = new HashMap<>();
+            for (final String key : this.context.keySet()) {
+                clone.context.put(key, context.get(key));
+            }
+        }
 
-		return clone;
-	}
+        return clone;
+    }
 }

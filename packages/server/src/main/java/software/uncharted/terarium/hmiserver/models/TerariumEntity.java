@@ -21,7 +21,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 @MappedSuperclass
-public abstract class BaseEntity implements Serializable {
+public abstract class TerariumEntity implements Serializable {
 
 	@Id
 	@TSOptional
@@ -53,7 +53,7 @@ public abstract class BaseEntity implements Serializable {
 		this.updatedOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 	}
 
-	protected BaseEntity cloneSuperFields(final BaseEntity entity) {
+	protected TerariumEntity cloneSuperFields(final TerariumEntity entity) {
 		entity.id = UUID.randomUUID(); // ensure we create a new id
 		entity.createdOn = this.createdOn != null ? new Timestamp(this.createdOn.getTime()) : null;
 		entity.updatedOn = this.updatedOn != null ? new Timestamp(this.updatedOn.getTime()) : null;

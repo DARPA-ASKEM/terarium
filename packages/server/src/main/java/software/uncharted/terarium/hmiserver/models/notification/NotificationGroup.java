@@ -16,26 +16,26 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.BaseEntity;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
-public class NotificationGroup extends BaseEntity {
+public class NotificationGroup extends TerariumEntity {
 
-	@Serial
-	private static final long serialVersionUID = -3382397588627700379L;
+    @Serial
+    private static final long serialVersionUID = -3382397588627700379L;
 
-	@NotNull
-	private String userId;
+    @NotNull
+    private String userId;
 
-	@NotNull
-	private String type;
+    @NotNull
+    private String type;
 
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@OneToMany(mappedBy = "notificationGroup", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@OrderBy("createdOn DESC")
-	@JsonManagedReference
-	private List<NotificationEvent> notificationEvents = new ArrayList<>();
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    @OneToMany(mappedBy = "notificationGroup", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OrderBy("createdOn DESC")
+    @JsonManagedReference
+    private List<NotificationEvent> notificationEvents = new ArrayList<>();
 }
