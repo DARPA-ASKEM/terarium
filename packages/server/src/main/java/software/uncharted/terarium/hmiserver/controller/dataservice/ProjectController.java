@@ -698,12 +698,7 @@ public class ProjectController {
 	) {
 		final RebacProject what = new RebacProject(projectId, reBACService);
 		final RebacGroup who = new RebacGroup(groupId, reBACService);
-		try {
-			return setProjectPermissions(what, who, relationship);
-		} catch (final Exception e) {
-			log.error("Error setting project group permission relationships", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("rebac.permissions.unable-to-set"));
-		}
+		return setProjectPermissions(what, who, relationship);
 	}
 
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
@@ -719,15 +714,11 @@ public class ProjectController {
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("groupId") final String groupId,
 			@PathVariable("oldRelationship") final String oldRelationship,
-			@RequestParam("to") final String newRelationship) {
-		try {
+			@RequestParam("to") final String newRelationship
+	) {
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
-		} catch (final Exception e) {
-			log.error("Error deleting project user permission relationships", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project user permission relationships");
-		}
 	}
 
 	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
@@ -735,87 +726,61 @@ public class ProjectController {
 	@Operation(summary = "Deletes a group's permissions for a project")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions deleted",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
+				@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
 				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 			})
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("group-id") final String groupId,
-			@PathVariable("relationship") final String relationship) {
+			@PathVariable("relationship") final String relationship
+	) {
 		if (relationship.equalsIgnoreCase(Schema.Relationship.CREATOR.toString())) {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
-		try {
-			final RebacProject what = new RebacProject(projectId, reBACService);
-			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return removeProjectPermissions(what, who, relationship);
-		} catch (final Exception e) {
-			log.error("Error deleting project group permission relationships", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project group permission relationships");
-		}
+
+		final RebacProject what = new RebacProject(projectId, reBACService);
+		final RebacGroup who = new RebacGroup(groupId, reBACService);
+		return removeProjectPermissions(what, who, relationship);
 	}
 
 	@Operation(summary = "Toggle a project public, or restricted, by ID")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project visibility has been updated",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(
-						responseCode = "304",
-						description = "The current user does not have privileges to modify this project.",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))}),
+				@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 			})
 	@PutMapping("/set-public/{id}/{isPublic}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
-			@PathVariable("id") final UUID id, @PathVariable("isPublic") final boolean isPublic) {
-		try {
-			// Getting the project permissions
-			final RebacProject project = new RebacProject(id, reBACService);
-			// Getting the user permissions
-			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
-			// Getting the Public group permissions
-			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
-			// Setting the relationship to be of a reader
-			final String relationship = Schema.Relationship.READER.toString();
+			@PathVariable("id") final UUID id,
+			@PathVariable("isPublic") final boolean isPublic
+	) {
+		// Getting the project permissions
+		final RebacProject project = new RebacProject(id, reBACService);
+		// Getting the user permissions
+		final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
+		// Getting the Public group permissions
+		final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+		// Setting the relationship to be of a reader
+		final String relationship = Schema.Relationship.READER.toString();
 
-			// If the current user is an admin of the project
-			if (user.canAdministrate(project)) {
-				if (isPublic) {
-					// Set the Public Group permissions to READ the Project
-					return setProjectPermissions(project, who, relationship);
-				} else {
-					// Remove the Public Group permissions to READ the Project
-					return removeProjectPermissions(project, who, relationship);
-				}
-			} else {
-				return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+		// Check to see if the current user is an admin of the project
+		try {
+			if (!user.canAdministrate(project)) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
 			}
-		} catch (final Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (isPublic) {
+			// Set the Public Group permissions to READ the Project
+			return setProjectPermissions(project, who, relationship);
+		} else {
+			// Remove the Public Group permissions to READ the Project
+			return removeProjectPermissions(project, who, relationship);
 		}
 	}
 
@@ -824,34 +789,18 @@ public class ProjectController {
 	@Operation(summary = "Sets a user's permissions for a project")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions set",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
+				@ApiResponse(responseCode = "200", description = "Permissions set", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
 				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 			})
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
-			@PathVariable("relationship") final String relationship) {
-		try {
-			final RebacProject what = new RebacProject(projectId, reBACService);
-			final RebacUser who = new RebacUser(userId, reBACService);
-			return setProjectPermissions(what, who, relationship);
-		} catch (final Exception e) {
-			log.error("Error setting project user permission relationships", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error setting project user permission relationships");
-		}
+			@PathVariable("relationship") final String relationship
+	) {
+		final RebacProject what = new RebacProject(projectId, reBACService);
+		final RebacUser who = new RebacUser(userId, reBACService);
+		return setProjectPermissions(what, who, relationship);
 	}
 
 	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
@@ -859,35 +808,19 @@ public class ProjectController {
 	@Operation(summary = "Updates a user's permissions for a project")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions updated",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
+				@ApiResponse(responseCode = "200", description = "Permissions updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
 				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 			})
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
 			@PathVariable("old-relationship") final String oldRelationship,
-			@RequestParam("to") final String newRelationship) {
-		try {
-			final RebacProject what = new RebacProject(projectId, reBACService);
-			final RebacUser who = new RebacUser(userId, reBACService);
-			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
-		} catch (final Exception e) {
-			log.error("Error deleting project user permission relationships", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project user permission relationships");
-		}
+			@RequestParam("to") final String newRelationship
+	) {
+		final RebacProject what = new RebacProject(projectId, reBACService);
+		final RebacUser who = new RebacUser(userId, reBACService);
+		return updateProjectPermissions(what, who, oldRelationship, newRelationship);
 	}
 
 	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
@@ -895,34 +828,18 @@ public class ProjectController {
 	@Operation(summary = "Deletes a user's permissions for a project")
 	@ApiResponses(
 			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions deleted",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
+				@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
 				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
+				@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
 			})
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
-			@PathVariable("relationship") final String relationship) {
-		try {
-			final RebacProject what = new RebacProject(projectId, reBACService);
-			final RebacUser who = new RebacUser(userId, reBACService);
-			return removeProjectPermissions(what, who, relationship);
-		} catch (final Exception e) {
-			log.error("Error deleting project user permission relationships", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project user permission relationships");
-		}
+			@PathVariable("relationship") final String relationship
+	) {
+		final RebacProject what = new RebacProject(projectId, reBACService);
+		final RebacUser who = new RebacUser(userId, reBACService);
+		return removeProjectPermissions(what, who, relationship);
 	}
 
 	private ResponseEntity<JsonNode> setProjectPermissions(
