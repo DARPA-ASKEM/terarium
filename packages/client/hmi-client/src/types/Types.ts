@@ -622,6 +622,7 @@ export interface NotificationGroup {
     id: string;
     userId: string;
     type: string;
+    projectId?: string;
     createdOn: Date;
     notificationEvents: NotificationEvent[];
 }
@@ -790,6 +791,7 @@ export interface TaskResponse {
     status: TaskStatus;
     output: any;
     userId: string;
+    projectId: string;
     additionalProperties: any;
     stdout: string;
     stderr: string;
