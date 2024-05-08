@@ -22,15 +22,18 @@ export interface ClientLog {
     args?: string[];
 }
 
-export interface TerariumAsset {
-    id?: string;
+export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
     deletedOn?: Date;
     temporary?: boolean;
     publicAsset?: boolean;
+}
+
+export interface TerariumEntity {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
 }
 
 export interface User {
@@ -93,7 +96,7 @@ export interface CsvColumnStats {
     sd: number;
 }
 
-export interface Grounding {
+export interface Grounding extends TerariumEntity {
     identifiers: Identifier[];
     context?: { [index: string]: any };
 }
@@ -127,9 +130,10 @@ export interface Code extends TerariumAsset {
     project?: Project;
 }
 
-export interface CodeFile {
-    language: ProgrammingLanguage;
+export interface CodeFile extends TerariumEntity {
+    fileName: string;
     dynamics: Dynamics;
+    language: ProgrammingLanguage;
 }
 
 export interface Dynamics {
@@ -168,7 +172,7 @@ export interface Dataset extends TerariumAsset {
     project?: Project;
 }
 
-export interface DatasetColumn {
+export interface DatasetColumn extends TerariumEntity {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
@@ -176,6 +180,7 @@ export interface DatasetColumn {
     metadata?: { [index: string]: any };
     grounding?: Grounding;
     description?: string;
+    dataset?: Dataset;
 }
 
 export interface AddDocumentAssetFromXDDRequest {
@@ -609,22 +614,18 @@ export interface EntitySimilarityResult {
     similarity: number;
 }
 
-export interface NotificationEvent {
-    id: string;
+export interface NotificationEvent extends TerariumEntity {
     progress: number;
     state: ProgressState;
-    createdOn: Date;
     acknowledgedOn: Date;
     data: any;
     notificationGroup: NotificationGroup;
 }
 
-export interface NotificationGroup {
-    id: string;
+export interface NotificationGroup extends TerariumEntity {
     userId: string;
     type: string;
     projectId?: string;
-    createdOn: Date;
     notificationEvents: NotificationEvent[];
 }
 

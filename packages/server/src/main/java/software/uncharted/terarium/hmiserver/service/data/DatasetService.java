@@ -1,8 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
 import io.micrometer.observation.annotation.Observed;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;

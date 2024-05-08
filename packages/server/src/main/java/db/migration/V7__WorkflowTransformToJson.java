@@ -1,15 +1,12 @@
 package db.migration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
-
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.hibernate.internal.util.SerializationHelper;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 
 public class V7__WorkflowTransformToJson extends BaseJavaMigration {
@@ -21,9 +18,8 @@ public class V7__WorkflowTransformToJson extends BaseJavaMigration {
 		try (var statement = context.getConnection().createStatement()) {
 
 			// Check the type of the transform column
-			final ResultSet typeResultSet = statement.executeQuery(
-					"SELECT data_type FROM information_schema.columns " +
-							"WHERE table_name = 'workflow' AND column_name = 'transform';");
+			final ResultSet typeResultSet = statement.executeQuery("SELECT data_type FROM information_schema.columns "
+					+ "WHERE table_name = 'workflow' AND column_name = 'transform';");
 
 			if (typeResultSet.next()) {
 				final String dataType = typeResultSet.getString("data_type");
@@ -43,8 +39,8 @@ public class V7__WorkflowTransformToJson extends BaseJavaMigration {
 			final ResultSet resultSet = statement.executeQuery("SELECT id, transform_old FROM workflow;");
 
 			// Prepare the update statement
-			final PreparedStatement preparedStatement = context.getConnection()
-					.prepareStatement("UPDATE workflow SET transform = ?::json WHERE id = ?;");
+			final PreparedStatement preparedStatement =
+					context.getConnection().prepareStatement("UPDATE workflow SET transform = ?::json WHERE id = ?;");
 
 			// Iterate through the result set
 			while (resultSet.next()) {
