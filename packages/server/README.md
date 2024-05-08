@@ -23,7 +23,19 @@ To build the NATIVE image simply run the following from the root directory.
 docker buildx build -f modules/server/docker/Dockerfile.native -t docker.uncharted.software/terarium:server .
 ```
 
-## Hibernate Relationships:
+# Hibernate:
+
+## When to use `json` / `jsonb` vs when to create a new `@Entity`
+
+The deciding factor for whether to write the type out as serialized JSON vs creating a separate table is based how "dynamic" or "opaque" the type is. If the property is completely dynamic, for example a `Map<String,Object>`, `List<Object>`, or `JsonNode` it makes sense to simply serialize it and store it as `text`. This is because the container is resilient to change. If the properties in the  `JsonNode` change, deserialization will not fail.
+
+For most cases `json` is recommended as it enforces that the field is stored as valid JSON while not has less overhead compared to `jsonb` as there is no processing. The only use case for `jsonb` is to provide indexing capabilities, which in our case is not needed as search will be done through elasticsearch instead.
+
+If the type has defined fields, it makes sense to create it as a separate `@Entity` and create a new table, because if the type does change, having it in its own table and schema will allow us to migrate it easier.
+
+An alternative approach to using a completely dynamic container is to create a typed class that extends the `SupportsAdditionalProperties` class. This allows specifying static typed fields on the class itself, and allowing anything not typed to be retained in a `Map<String, Object>`. This type is then stored as a `json` / `jsonb`.
+
+## Relationships:
 
 There are three types of relationship annotations used in **Hibernate**:
 - `@OneToOne <-> @OneToOne`: a single parent entity references 0 or 1 child entity.
@@ -127,3 +139,41 @@ class Child {
 
 };
 ```
+
+## Migrations:
+
+There are two "passes" for migrations in the app.
+
+1) For local, staging, and prod we have `spring.jpa.hibernate.ddl-auto=update`. On server startup Hibernate will update the schema if it detects that the entities and tables/columns are out of sync. It will add new tables/columns and update existing ones as needed, but it won't delete any existing tables or columns.
+
+This ensures that new tables are created and new columns are added. However this leaves the case of _modifying existing columns_.
+
+2) To modify existing columns we leverage [Flyway](https://github.com/flyway/flyway) which executes _after_ the hibernate DDL pass. There are two types of flyway migrations, `.sql` migrations, and Java migrations.
+
+### .sql migrations:
+
+To add a `.sql` migration, add the migraiton file to the `resources/db/migration` dir, ensure the migration fits the naming convention: `V{VERSION_NUM}__Name_of_migration.sql`, where `VERSION_NUM` is a new value incremented from the previous latest version.
+
+**These are the preferred method of migrating**
+
+### .java migrations:
+
+To add a `.java` migration to the `packages/server/src/main/java/software/uncharted/terarium/hmiserver/migration` dir in the following form:
+
+```java
+package software.uncharted.terarium.hmiserver.migration;
+
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+
+public class V8__Some_java_migration extends BaseJavaMigration {
+    @Override
+    public void migrate(Context context) throws Exception {
+        try (var statement = context.getConnection().createStatement()) {
+            statement.execute("ALTER TABLE simulation ALTER COLUMN description TYPE text;");
+        }
+    }
+}
+```
+
+Only use a java based migration if it is not possible to achieve via a `.sql` one.

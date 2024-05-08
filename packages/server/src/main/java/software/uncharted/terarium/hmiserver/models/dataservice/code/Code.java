@@ -11,9 +11,14 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -35,8 +40,9 @@ public class Code extends TerariumAsset {
 	/* Files that contain dynamics */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@MapKeyColumn(name = "fileName")
+	@JoinColumn(name = "code_id")
 	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
@@ -49,7 +55,7 @@ public class Code extends TerariumAsset {
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private Map<String, String> metadata;
 
 	@TSOptional

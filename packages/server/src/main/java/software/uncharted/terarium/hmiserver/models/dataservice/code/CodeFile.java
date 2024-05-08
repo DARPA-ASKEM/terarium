@@ -4,24 +4,33 @@ import org.hibernate.annotations.Type;
 
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.BaseEntity;
 
 @Data
 @Accessors(chain = true)
 @TSModel
-public class CodeFile {
+@Entity
+public class CodeFile extends BaseEntity {
+
+	@Column(length = 512)
+	private String fileName;
+
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Dynamics dynamics;
 
 	private ProgrammingLanguage language;
 
-	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
-	private Dynamics dynamics;
-
 	@TSIgnore
-	public void setProgrammingLanguageFromFileName(final String fileName) {
+	public void setFileNameAndProgrammingLanguage(final String fileName) {
+
+		this.fileName = fileName;
+
 		// Given the extension of a file, return the programming language
 		final String[] parts = fileName.split("\\.");
 		final String fileExtension = parts.length > 0 ? parts[parts.length - 1] : "";
@@ -40,6 +49,7 @@ public class CodeFile {
 	@Override
 	public CodeFile clone() {
 		final CodeFile clone = new CodeFile();
+		clone.fileName = this.fileName;
 		clone.language = this.language;
 		clone.dynamics = this.dynamics.clone();
 		return clone;

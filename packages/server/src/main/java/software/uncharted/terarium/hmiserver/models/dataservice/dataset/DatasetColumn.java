@@ -61,14 +61,14 @@ public class DatasetColumn extends BaseEntity {
 	private String formatStr;
 
 	/** Column annotations from the MIT data profiling tool */
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	@Type(JsonType.class)
 	private List<String> annotations;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@Column(columnDefinition = "text")
 	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Map<String, Object> metadata;
 
 	/** (Optional) Grounding of ontological concepts related to the column */

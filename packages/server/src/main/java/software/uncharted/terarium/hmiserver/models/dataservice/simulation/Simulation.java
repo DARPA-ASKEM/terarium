@@ -48,7 +48,7 @@ public class Simulation extends TerariumAsset {
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private List<String> resultFiles;
 
 	@Enumerated(EnumType.STRING)

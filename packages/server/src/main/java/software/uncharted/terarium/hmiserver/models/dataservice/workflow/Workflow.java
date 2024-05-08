@@ -29,11 +29,11 @@ public class Workflow extends TerariumAsset {
 	private Transform transform;
 
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private List<WorkflowNode> nodes;
 
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
 	@Override

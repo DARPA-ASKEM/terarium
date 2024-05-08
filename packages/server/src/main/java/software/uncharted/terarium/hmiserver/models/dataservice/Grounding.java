@@ -31,13 +31,13 @@ public class Grounding extends BaseEntity {
 
 	/** Ontological identifier per DKG */
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private List<Identifier> identifiers;
 
 	/** (Optional) Additional context that informs the grounding */
 	@TSOptional
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private Map<String, Object> context;
 
 	@Override

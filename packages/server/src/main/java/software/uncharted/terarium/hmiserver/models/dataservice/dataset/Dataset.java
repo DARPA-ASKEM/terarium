@@ -63,7 +63,7 @@ public class Dataset extends TerariumAsset {
 	@TSOptional
 	@JsonAlias("file_names")
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private List<String> fileNames;
 
 	@TSOptional
@@ -82,8 +82,8 @@ public class Dataset extends TerariumAsset {
 	 */
 	@TSOptional
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
-	private List<String> datasetUrls;
+	@Column(columnDefinition = "json")
+	private List<String> datasetUrls = new ArrayList<>();
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
@@ -94,7 +94,7 @@ public class Dataset extends TerariumAsset {
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
 	@Type(JsonType.class)
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "json")
 	private JsonNode metadata;
 
 	/** (Optional) Source of dataset */
