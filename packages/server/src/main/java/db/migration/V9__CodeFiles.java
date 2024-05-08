@@ -70,6 +70,7 @@ public class V9__CodeFiles extends BaseJavaMigration {
 			}
 
 			// Drop the old column
+			statement.execute("ALTER TABLE code DROP COLUMN files;");
 		}
 	}
 }

@@ -66,8 +66,8 @@ public class V7__WorkflowTransformToJson extends BaseJavaMigration {
 				preparedStatement.executeUpdate();
 			}
 
-			// Create new json column transform
-			statement.execute("ALTER TABLE workflow DROP COLUMN transform_old");
+			// Drop old json column
+			statement.execute("ALTER TABLE workflow DROP COLUMN transform_old;");
 		}
 	}
 }
