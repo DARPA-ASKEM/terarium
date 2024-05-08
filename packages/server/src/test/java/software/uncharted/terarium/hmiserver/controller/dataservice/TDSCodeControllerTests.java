@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -74,15 +75,22 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 	}
 
+	Map<String, String> createMetadata() {
+		return Map.of("key1", "value1", "key2", "value2");
+	}
+
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodes() throws Exception {
 
-		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code()
+				.setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"));
 
-		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code()
+				.setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"));
 
-		codeAssetService.createAsset((Code) new Code().setName("test-code-name").setDescription("my description"));
+		codeAssetService.createAsset((Code) new Code()
+				.setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf()))
 				.andExpect(status().isOk())
@@ -94,7 +102,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setMetadata(createMetadata()).setName("test-code-name")
+						.setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/code-asset/" + codeAsset.getId())
 				.with(csrf()))
@@ -108,7 +117,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setMetadata(createMetadata()).setName("test-code-name")
+						.setDescription("my description"));
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -136,7 +146,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithub() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setMetadata(createMetadata()).setName("test-code-name")
+						.setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
 				.with(csrf())
@@ -152,7 +163,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithubRepo() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setMetadata(createMetadata()).setName("test-code-name")
+						.setDescription("my description"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
 				.with(csrf())
@@ -167,7 +179,8 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadCodeAsText() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"));
+				(Code) new Code().setMetadata(createMetadata()).setName("test-code-name")
+						.setDescription("my description"));
 
 		final String content = "this is the file content for the testItCanDownloadCode test";
 
