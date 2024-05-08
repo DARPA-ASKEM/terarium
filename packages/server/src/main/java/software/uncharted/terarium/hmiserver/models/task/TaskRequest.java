@@ -46,8 +46,6 @@ public class TaskRequest implements Serializable {
 	protected String userId;
 	protected UUID projectId;
 
-	protected ClientEventType notificationEventType;
-
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are
 	// necessary for the response to be processed correctly. This property is used

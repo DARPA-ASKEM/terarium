@@ -15,8 +15,6 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 public class TaskNotificationEventData implements Serializable {
 	private UUID taskId;
 
-	private TaskType taskType;
-
 	private TaskStatus status;
 
 	private String message;
@@ -28,7 +26,6 @@ public class TaskNotificationEventData implements Serializable {
 	public static TaskNotificationEventData createFrom(TaskResponse resp) {
 		return TaskNotificationEventData.builder()
 				.taskId(resp.getId())
-				.taskType(resp.getType())
 				.status(resp.getStatus())
 				.message(resp.getStdout())
 				.error(resp.getStderr())

@@ -19,8 +19,6 @@ public class TaskRequest implements Serializable {
 	private byte[] input;
 	private int timeoutMinutes = 30;
 
-	private Object type;
-	private Object notificationEventType;
 	private Object additionalProperties;
 
 	protected String userId;
@@ -32,8 +30,6 @@ public class TaskRequest implements Serializable {
 				.setStatus(status)
 				.setScript(script)
 				.setUserId(userId)
-				.setType(type)
-				.setNotificationEventType(notificationEventType)
 				.setProjectId(projectId)
 				.setAdditionalProperties(additionalProperties)
 				.setStdout(stdout)

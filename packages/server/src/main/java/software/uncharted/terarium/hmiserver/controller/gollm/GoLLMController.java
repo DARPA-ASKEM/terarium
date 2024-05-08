@@ -132,7 +132,6 @@ public class GoLLMController {
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
-			req.setNotificationEventType(ClientEventType.TASK_GOLLM_MODEL_CARD);
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 			props.setDocumentId(documentId);
