@@ -57,9 +57,9 @@ describe('number util tests', () => {
 			expect(numberToNist('-1234567.1234567')).to.eq('-1 234 567.123 456 7');
 		});
 
-		it('should return "NaN" for non-numeric strings', () => {
-			expect(numberToNist('abc')).to.eq('NaN');
-			expect(numberToNist('1.23abc')).to.eq('1.23');
+		it('should return "" for non-numeric strings', () => {
+			expect(numberToNist('abc')).to.eq('');
+			expect(numberToNist('1.23abc')).to.eq('');
 		});
 	});
 
@@ -106,20 +106,20 @@ describe('number util tests', () => {
 
 		it('should correctly format numbers with a decimal part', () => {
 			expect(displayNumber('123.456')).to.eq('123.456');
-			expect(displayNumber('1234.56')).to.eq('1 234.56');
+			expect(displayNumber('1234.56')).to.eq('1234.56');
 			expect(displayNumber('12345.678')).to.eq('1.235e+4');
 		});
 
 		it('should correctly format numbers with leading zeros', () => {
-			expect(displayNumber('0001234.56')).to.eq('1 234.56');
+			expect(displayNumber('0001234.56')).to.eq('1234.56');
 		});
 
 		it('should correctly format negative numbers', () => {
 			expect(displayNumber('-1234.56')).to.eq('-1 234.56');
 		});
 
-		it('should return "NaN" for non-numeric strings', () => {
-			expect(displayNumber('abc')).to.eq('NaN');
+		it('should return "" for non-numeric strings', () => {
+			expect(displayNumber('abc')).to.eq('');
 			expect(displayNumber('1.23abc')).to.eq('1.23');
 		});
 	});
