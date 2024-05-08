@@ -1,17 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.notification;
 
+import java.io.Serial;
+import java.sql.Timestamp;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
-import java.io.Serial;
-import java.sql.Timestamp;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
@@ -20,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @TSModel
 @Entity
 public class NotificationEvent extends TerariumEntity {
@@ -32,7 +36,8 @@ public class NotificationEvent extends TerariumEntity {
 
 	@ManyToOne
 	@JsonBackReference
-	@NotNull private NotificationGroup notificationGroup;
+	@NotNull
+	private NotificationGroup notificationGroup;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")

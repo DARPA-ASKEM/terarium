@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.models;
 
+import java.sql.Timestamp;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import java.sql.Timestamp;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @TSModel
 @MappedSuperclass
 public abstract class TerariumAsset extends TerariumEntity {
