@@ -4,8 +4,8 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		:menu-items="menuItems"
-		:drill-down-outputs="selectedOutputId"
-		:drill-down-options="outputs"
+		:output="selectedOutputId"
+		:output-options="outputs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4 pt-3">

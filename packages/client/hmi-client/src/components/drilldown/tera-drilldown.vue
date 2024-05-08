@@ -25,9 +25,9 @@
 				</template>
 				<template #output>
 					<tera-output-dropdown
-						v-if="drillDownOptions && drillDownOutputs"
-						:options="drillDownOptions"
-						:output="drillDownOutputs"
+						v-if="outputOptions && output"
+						:options="outputOptions"
+						:output="output"
 						@update:selection="(e) => emit('update:selection', e)"
 					/>
 				</template>
@@ -92,8 +92,8 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
-	drillDownOutputs?: WorkflowOutput<any>['id'];
-	drillDownOptions?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
+	output?: WorkflowOutput<any>['id'];
+	outputOptions?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
