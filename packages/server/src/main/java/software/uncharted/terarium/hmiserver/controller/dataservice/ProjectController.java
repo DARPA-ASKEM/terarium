@@ -10,6 +10,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -51,15 +59,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/projects")
 @RestController
@@ -1060,10 +1059,7 @@ public class ProjectController {
 	}
 
 	private ResponseEntity<JsonNode> setProjectPermissions(
-			final RebacProject what,
-			final RebacObject who,
-			final String relationship
-	) {
+			final RebacProject what, final RebacObject who, final String relationship) {
 		boolean canAdministrate;
 		try {
 			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
@@ -1092,14 +1088,13 @@ public class ProjectController {
 			final RebacProject what,
 			final RebacObject who,
 			final String oldRelationship,
-			final String newRelationship
-	) {
+			final String newRelationship) {
 		boolean canAdministrate;
 		try {
 			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 
 		if (!canAdministrate) {
@@ -1119,16 +1114,13 @@ public class ProjectController {
 	}
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(
-			final RebacProject what,
-			final RebacObject who,
-			final String relationship
-	) {
+			final RebacProject what, final RebacObject who, final String relationship) {
 		boolean canAdministrate;
 		try {
 			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 
 		if (!canAdministrate) {
