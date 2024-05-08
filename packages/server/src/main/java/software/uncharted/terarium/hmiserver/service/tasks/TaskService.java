@@ -226,9 +226,7 @@ public class TaskService {
 	}
 
 	private ClientEventType ensureNotificationEventType(final ClientEventType eventType) {
-		return eventType == null
-			? ClientEventType.TASK_UNDEFINED_EVENT
-			: eventType;
+		return eventType == null ? ClientEventType.TASK_UNDEFINED_EVENT : eventType;
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
@@ -460,11 +458,12 @@ public class TaskService {
 				final ClientEventType clientEventType = ensureNotificationEventType(resp.getNotificationEventType());
 				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
 
-				final ClientEvent<TaskNotificationEventData> clientEvent = ClientEvent.<TaskNotificationEventData>builder()
-					.notificationGroupId(resp.getId())
-					.type(clientEventType)
-					.data(TaskNotificationEventData.createFrom(resp))
-					.build();
+				final ClientEvent<TaskNotificationEventData> clientEvent =
+						ClientEvent.<TaskNotificationEventData>builder()
+								.notificationGroupId(resp.getId())
+								.type(clientEventType)
+								.data(TaskNotificationEventData.createFrom(resp))
+								.build();
 				clientEventService.sendToUser(clientEvent, resp.getUserId());
 
 			} catch (final Exception e) {
@@ -582,7 +581,8 @@ public class TaskService {
 				// create the notification group for the task
 				final NotificationGroup group = new NotificationGroup();
 				group.setId(req.getId()); // use the task id
-				group.setType(ensureNotificationEventType(req.getNotificationEventType()).toString());
+				group.setType(ensureNotificationEventType(req.getNotificationEventType())
+						.toString());
 				group.setUserId(req.getUserId());
 				group.setProjectId(req.getProjectId());
 
