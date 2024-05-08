@@ -58,12 +58,12 @@ const props = defineProps<{
 	contextLanguage: string;
 }>();
 
-const emit = defineEmits(['llm-output']);
+const emit = defineEmits(['llm-output', 'llm-thought-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
-
 const showAssistant = ref(true);
+const thoughts = ref();
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -79,6 +79,10 @@ const submitQuestion = () => {
 	});
 	message.register('code_cell', (data) => {
 		emit('llm-output', data);
+	});
+	message.register('llm_thought', (data) => {
+		thoughts.value = data;
+		emit('llm-thought-output', data);
 	});
 };
 </script>
