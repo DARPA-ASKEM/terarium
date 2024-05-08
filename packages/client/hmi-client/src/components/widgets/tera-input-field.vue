@@ -47,7 +47,7 @@ const updateValue = (event: Event) => {
 
 	if (isNistType.value) {
 		maskedValue.value = value;
-		if (scrubAndParse(value)) {
+		if (scrubAndParse(maskedValue.value)) {
 			// update the model value only when the value is a valid nist
 			error.value = '';
 			emit('update:modelValue', maskedValue.value);
