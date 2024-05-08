@@ -51,8 +51,7 @@
 							text
 							@click="addCodeBlock"
 							:disabled="
-								clonedState.modelFramework === ModelFramework.Decapodes &&
-								!isEmpty(allCodeBlocks)
+								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
 							"
 						/>
 					</section>
@@ -100,9 +99,7 @@
 		<template #preview>
 			<tera-drilldown-preview :is-loading="isProcessing" class="pt-3 pb-2 pl-2 pr-4">
 				<section v-if="selectedModel">
-					<template
-						v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet"
-					>
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Petrinet">
 						<tera-model-description
 							:model="selectedModel"
 							:feature-config="{
@@ -111,9 +108,7 @@
 							:is-generating-card="isGeneratingCard"
 						/>
 					</template>
-					<template
-						v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes"
-					>
+					<template v-if="selectedOutput?.state?.modelFramework === ModelFramework.Decapodes">
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
@@ -350,9 +345,7 @@ async function handleCode() {
 			.filter((block) => block.includeInProcess)
 			.reduce((acc, block) => `${acc}${block.asset.codeContent}\n`, '');
 
-		const fileName = `tempFile.${extensionFromProgrammingLanguage(
-			clonedState.value.codeLanguage
-		)}`;
+		const fileName = `tempFile.${extensionFromProgrammingLanguage(clonedState.value.codeLanguage)}`;
 		const file = new File([codeContent], fileName);
 		const newCode: Code = {
 			name: 'tempCode',
