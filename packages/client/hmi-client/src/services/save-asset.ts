@@ -43,6 +43,7 @@ export async function saveAs(
 		return;
 	}
 
+	// TODO: Potentially add a flag in case we don't want to add the asset to the project
 	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId) {
 		logger.error(`Asset can't be saved since target project doesn't exist.`);
