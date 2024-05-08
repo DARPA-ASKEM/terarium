@@ -194,6 +194,10 @@ const syncWithMiraModel = (data: any) => {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
+	const firstOutputId = outputs.value?.[0].items[0].id;
+	if (firstOutputId === selectedOutputId.value) {
+		// onSaveModel(updatedModel, { appendOutputPort: false });
+	}
 	amr.value = updatedModel;
 };
 
@@ -358,6 +362,7 @@ watch(
 );
 
 onMounted(async () => {
+	// By default the first output option is the original model
 	if (isEmpty(outputs.value)) {
 		const input = props.node.inputs[0];
 		if (!input) return;
