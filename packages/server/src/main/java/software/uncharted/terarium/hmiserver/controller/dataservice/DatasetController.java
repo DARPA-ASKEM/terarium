@@ -598,6 +598,10 @@ public class DatasetController {
 			final String csvString = new String(csvBytes);
 			final String[] csvRows = csvString.split("\\R");
 			final String[] headers = csvRows[0].split(",");
+			for (int i = 0; i < headers.length; i++) {
+				// this is very ugly but we're removing opening and closing "'s around these strings.
+				headers[i] = headers[i].replaceAll("^\"|\"$", "");
+			}
 			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
