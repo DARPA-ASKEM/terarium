@@ -81,14 +81,16 @@
 						@click="runCode"
 					/>
 				</div>
-				<tera-notebook-jupyter-input
-					:kernelManager="kernelManager"
-					:defaultOptions="sampleAgentQuestions"
-					@llm-output="appendCode"
-					@llm-thought-output="(data: any) => (llmThought = data)"
-					:context-language="contextLanguage"
-				/>
-				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernelManager="kernelManager"
+						:defaultOptions="sampleAgentQuestions"
+						@llm-output="appendCode"
+						@llm-thought-output="(data: any) => (llmThought = data)"
+						:context-language="contextLanguage"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -407,6 +409,9 @@ ul {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+}
+.toolbar {
+	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

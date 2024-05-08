@@ -26,16 +26,18 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => (llmThought = data)"
-					/>
-				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:default-options="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => (llmThought = data)"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeAceEditor"
@@ -406,6 +408,9 @@ onUnmounted(() => {
 	position: relative;
 }
 
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
 .toolbar-right-side {
 	position: absolute;
 	top: var(--gap);

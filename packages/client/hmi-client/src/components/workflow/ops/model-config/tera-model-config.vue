@@ -233,16 +233,18 @@
 						@click="runFromCode"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => (llmThought = data)"
-					/>
-				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:defaultOptions="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => (llmThought = data)"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -1045,6 +1047,9 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+.toolbar {
+	padding-left: var(--gap-medium);
 }
 
 :deep(.p-datatable-loading-overlay.p-component-overlay) {

@@ -1,15 +1,13 @@
 <template>
-	<div class="toolbar">
-		<p v-if="showThoughts" class="thought-bubble">
-			{{ thought }}
-		</p>
-		<Button
-			v-if="thought"
-			link
-			:label="`${showThoughts ? 'Hide' : 'Show'} thoughts`"
-			@click="() => (showThoughts = !showThoughts)"
-		/>
-	</div>
+	<p v-if="showThoughts" class="thought-bubble">
+		{{ thought }}
+	</p>
+	<Button
+		v-if="thought"
+		link
+		:label="`${showThoughts ? 'Hide' : 'Show'} thoughts`"
+		@click="() => (showThoughts = !showThoughts)"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -24,10 +22,6 @@ const thought = computed(() => props?.llmThought?.content?.thought ?? '');
 </script>
 
 <style scoped>
-/* Note that as this is intended to be used in the notebook lets default its margin here */
-.toolbar {
-	padding-left: var(--gap-medium);
-}
 .thought-bubble {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);

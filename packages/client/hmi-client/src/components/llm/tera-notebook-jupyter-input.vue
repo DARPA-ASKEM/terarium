@@ -1,52 +1,46 @@
 <template>
-	<div class="toolbar">
-		<!-- Toolbar -->
-		<div class="notebook-toolbar">
-			<div class="toolbar-left-side">
-				<div class="flex gap-1 mr-2">
-					<InputSwitch v-model="showAssistant" class="mr-1" />
-					<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
-					<span>AI assistant</span>
-				</div>
-				<Dropdown
-					:disabled="true"
-					:model-value="contextLanguage"
-					:options="contextLanguageOptions"
-				/>
+	<!-- Toolbar -->
+	<div class="notebook-toolbar">
+		<div class="toolbar-left-side">
+			<div class="flex gap-1 mr-2">
+				<InputSwitch v-model="showAssistant" class="mr-1" />
+				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
+				<span>AI assistant</span>
 			</div>
-			<div class="toolbar-right-side">
-				<!-- empty for now, the Run & Reset buttons from the operator could go here -->
-			</div>
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		</div>
+		<div class="toolbar-right-side">
+			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
+		</div>
+	</div>
 
-		<!-- AI assistant -->
-		<div v-if="showAssistant" class="ai-assistant">
-			<!-- <i class="pi pi-magic" /> -->
-			<Dropdown
-				v-if="defaultOptions"
-				:editable="true"
-				class="input"
-				ref="inputElement"
-				v-model="questionString"
-				:options="props.defaultOptions"
-				type="text"
-				:disabled="kernelStatus === KernelState.busy"
-				:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-				@keydown.enter="submitQuestion"
-			/>
-			<InputText
-				v-else
-				class="input"
-				ref="inputElement"
-				v-model="questionString"
-				type="text"
-				:disabled="kernelStatus === KernelState.busy"
-				:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
-				@keydown.enter="submitQuestion"
-			/>
-			<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
-			<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
-		</div>
+	<!-- AI assistant -->
+	<div v-if="showAssistant" class="ai-assistant">
+		<!-- <i class="pi pi-magic" /> -->
+		<Dropdown
+			v-if="defaultOptions"
+			:editable="true"
+			class="input"
+			ref="inputElement"
+			v-model="questionString"
+			:options="props.defaultOptions"
+			type="text"
+			:disabled="kernelStatus === KernelState.busy"
+			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
+			@keydown.enter="submitQuestion"
+		/>
+		<InputText
+			v-else
+			class="input"
+			ref="inputElement"
+			v-model="questionString"
+			type="text"
+			:disabled="kernelStatus === KernelState.busy"
+			:placeholder="kernelStatus ? 'Please wait...' : 'What do you want to do?'"
+			@keydown.enter="submitQuestion"
+		/>
+		<i v-if="kernelStatus === KernelState.busy" class="pi pi-spin pi-spinner kernel-status" />
+		<Button v-else severity="secondary" icon="pi pi-send" @click="submitQuestion" />
 	</div>
 </template>
 
@@ -106,10 +100,6 @@ const submitQuestion = () => {
 	gap: var(--gap-3);
 	justify-content: space-between;
 	padding-top: var(--gap);
-}
-/* Note that as this is intended to be used in the notebook lets default its margin here */
-.toolbar {
-	padding-left: var(--gap-medium);
 }
 
 .toolbar-left-side,

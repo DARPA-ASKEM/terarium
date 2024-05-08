@@ -42,14 +42,16 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<tera-notebook-jupyter-input
-					:kernel-manager="kernelManager"
-					:default-options="[]"
-					:context-language="'python3'"
-					@llm-output="(data: any) => processLLMOutput(data)"
-					@llm-thought-output="(data: any) => (llmThought = data)"
-				/>
-				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="[]"
+						:context-language="'python3'"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => (llmThought = data)"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
