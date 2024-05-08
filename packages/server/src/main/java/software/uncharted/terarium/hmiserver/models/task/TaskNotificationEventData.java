@@ -5,7 +5,6 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 
 @Value
 @Builder
