@@ -23,6 +23,26 @@
 						</Chip>
 					</div>
 				</template>
+				<template #output>
+					<tera-output-dropdown
+						v-if="drillDownOptions && drillDownOutputs"
+						:options="drillDownOptions"
+						:output="drillDownOutputs"
+						@update:selection="(e) => emit('update:selection', e)"
+					/>
+				</template>
+				<template #menu>
+					<section v-if="!isEmpty(menuItems)" class="mr-3 ml-3">
+						<Button
+							icon="pi pi-ellipsis-v"
+							rounded
+							text
+							@click.stop="toggle"
+							:disabled="isEmpty(menuItems)"
+						/>
+						<Menu ref="menu" :model="menuItems" :popup="true" />
+					</section>
+				</template>
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-annotation
@@ -57,21 +77,28 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
+import { isEmpty } from 'lodash';
+import Menu from 'primevue/menu';
+import Button from 'primevue/button';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
+	menuItems?: any[];
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
+	drillDownOutputs?: WorkflowOutput<any>['id'];
+	drillDownOptions?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 }>();
 
-const emit = defineEmits(['on-close-clicked', 'update-state']);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
 const slots = useSlots();
-
+const menu = ref();
 /**
  * This will retrieve and filter all top level components in the default slot if they have the tabName prop.
  */
@@ -93,6 +120,10 @@ const selectedViewIndex = ref<number>(0);
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
+
+function toggle(event) {
+	menu.value.toggle(event);
+}
 </script>
 
 <style scoped>
