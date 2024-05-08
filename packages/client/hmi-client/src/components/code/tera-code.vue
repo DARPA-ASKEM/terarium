@@ -1,7 +1,11 @@
 <template>
 	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
-			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
+			<tera-directory
+				v-if="fileNames.length > 1"
+				:files="fileNames"
+				@fileClicked="onFileSelect"
+			/>
 			<div class="code-asset-editor">
 				<header class="code-asset-editor-header">
 					<div class="left-side w-full flex align-items-center gap-2">
@@ -98,7 +102,9 @@
 		</div>
 		<div v-else>
 			<!-- TODO: show entire file tree for github -->
-			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
+			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{
+				repoUrl
+			}}</a>
 		</div>
 		<Teleport to="body">
 			<tera-modal
@@ -109,15 +115,17 @@
 				<template #header>
 					<h4>Save this code block</h4>
 					<p>
-						Enter a name for the code block you are saving. Choose a name that reflects its purpose
-						or functionality within the model.
+						Enter a name for the code block you are saving. Choose a name that reflects
+						its purpose or functionality within the model.
 					</p>
 				</template>
 				<template #default>
 					<form @submit.prevent>
 						<label class="text-sm mb-1" for="model-name">Name</label>
 						<InputText id="model-name" type="text" v-model="newDynamicsName" />
-						<label class="text-sm mb-1" for="model-description">Description (optional)</label>
+						<label class="text-sm mb-1" for="model-description"
+							>Description (optional)</label
+						>
 						<Textarea v-model="newDynamicsDescription" />
 					</form>
 				</template>
@@ -153,7 +161,12 @@
 				<template #default>
 					<form @submit.prevent>
 						<label class="text-sm" for="model-name">Name</label>
-						<InputText id="model-name" type="text" placeholder="Filename" v-model="newCodeName" />
+						<InputText
+							id="model-name"
+							type="text"
+							placeholder="Filename"
+							v-model="newCodeName"
+						/>
 					</form>
 				</template>
 				<template #footer>
@@ -182,11 +195,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import Button from 'primevue/button';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
+import router from '@/router';
+import { RouteName } from '@/router/routes';
 import {
 	getCodeAsset,
 	getCodeFileAsText,
@@ -198,21 +212,20 @@ import {
 import { useToastService } from '@/services/toast';
 import type { Code, CodeFile } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
-import Textarea from 'primevue/textarea';
-import TeraAsset from '@/components/asset/tera-asset.vue';
-import { useProjects } from '@/composables/project';
-import Dropdown from 'primevue/dropdown';
+import { extractDynamicRows } from '@/utils/code-asset';
+import { logger } from '@/utils/logger';
 import { Ace, Range } from 'ace-builds';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { extractDynamicRows } from '@/utils/code-asset';
+import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { logger } from '@/utils/logger';
-import TeraDirectory from './tera-directory.vue';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import { computed, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
+import TeraDirectory from './tera-directory.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -318,7 +331,9 @@ function removeMarkers() {
 	if (editor.value) {
 		const markers = editor.value.session.getMarkers();
 		if (markers) {
-			Object.keys(markers).forEach((item) => editor.value?.session.removeMarker(markers[item].id));
+			Object.keys(markers).forEach(
+				(item) => editor.value?.session.removeMarker(markers[item].id)
+			);
 		}
 	}
 }
@@ -333,6 +348,7 @@ async function addDynamic() {
 			);
 		} else {
 			codeAssetCopy.value.files[codeSelectedFile.value] = {
+				fileName: codeSelectedFile.value,
 				language: getProgrammingLanguage(codeName.value),
 				dynamics: {
 					name: newDynamicsName.value,
@@ -461,7 +477,10 @@ function onFileTypeChange() {
 	if (codeAssetCopy.value?.files) {
 		const oldCodefile = codeAssetCopy.value.files[codeSelectedFile.value];
 		delete codeAssetCopy.value.files[codeSelectedFile.value];
-		codeSelectedFile.value = setFileExtension(codeSelectedFile.value, programmingLanguage.value);
+		codeSelectedFile.value = setFileExtension(
+			codeSelectedFile.value,
+			programmingLanguage.value
+		);
 		codeAssetCopy.value.files[codeSelectedFile.value] = { ...oldCodefile };
 	}
 

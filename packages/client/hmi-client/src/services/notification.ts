@@ -38,8 +38,8 @@ export async function getLatestUnacknowledgedNotifications(
 export function convertToClientEvents<T>(notificationGroup: NotificationGroup) {
 	const { notificationEvents, type } = notificationGroup;
 	const events: ClientEvent<T>[] = notificationEvents.map((event: NotificationEvent) => ({
-		id: event.id,
-		createdAtMs: new Date(event.createdOn).getTime(),
+		id: event.id || '',
+		createdAtMs: new Date(event.createdOn || Date.now()).getTime(),
 		type: type as ClientEventType,
 		data: event.data
 	}));
