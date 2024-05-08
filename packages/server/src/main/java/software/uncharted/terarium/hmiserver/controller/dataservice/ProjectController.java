@@ -10,14 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -59,6 +51,15 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/projects")
 @RestController
@@ -140,6 +141,10 @@ public class ProjectController {
 			log.error("Error retrieving projects from postgres db", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		if (projects.isEmpty()) {
+			return ResponseEntity.noContent().build();
 		}
 
 		projects.forEach(project -> {
@@ -231,11 +236,6 @@ public class ProjectController {
 			}
 		});
 
-		if (projects.isEmpty()) {
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-get-permissions"));
-		}
-
 		return ResponseEntity.ok(projects);
 	}
 
@@ -324,14 +324,17 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
+		boolean canRead;
 		try {
-			if (!rebacUser.canRead(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
-			}
+			canRead = rebacUser.canRead(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canRead) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
 		final Optional<Project> project = projectService.getProject(id);
@@ -394,14 +397,17 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
+		boolean canAdministrate;
 		try {
-			if (!rebacUser.canAdministrate(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-delete"));
-			}
+			canAdministrate = rebacUser.canAdministrate(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-get-permissions"));
+		}
+
+		if (!canAdministrate) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-delete"));
 		}
 
 		final boolean deleted = projectService.delete(id);
@@ -512,14 +518,17 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
+		boolean canWrite;
 		try {
-			if (!rebacUser.canWrite(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
-			}
+			canWrite = rebacUser.canWrite(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canWrite) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		}
 
 		project.setId(id);
@@ -580,14 +589,16 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 
+		boolean canWrite;
 		try {
-			if (!rebacUser.canWrite(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
+			canWrite = rebacUser.canWrite(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+		if (!canWrite) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
 		}
 
 		final Optional<Project> project;
@@ -703,14 +714,17 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 
+		boolean canWrite;
 		try {
-			if (!rebacUser.canWrite(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
+			canWrite = rebacUser.canWrite(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canWrite) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
 		}
 
 		if (assetType.equals(AssetType.CODE)) {
@@ -775,14 +789,17 @@ public class ProjectController {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
+		boolean canRead;
 		try {
-			if (!rebacUser.canRead(rebacProject)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
-			}
+			canRead = rebacUser.canRead(rebacProject);
 		} catch (final Exception e) {
 			log.error("Failed to get user permissions from spicedb", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canRead) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
 		final PermissionRelationships permissions = new PermissionRelationships();
@@ -932,13 +949,16 @@ public class ProjectController {
 		final String relationship = Schema.Relationship.READER.toString();
 
 		// Check to see if the current user is an admin of the project
+		boolean canAdministrate;
 		try {
-			if (!user.canAdministrate(project)) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
-		} catch (Exception e) {
+			canAdministrate = user.canAdministrate(project);
+		} catch (final Exception e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canAdministrate) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
 		}
 
 		if (isPublic) {
@@ -1023,7 +1043,8 @@ public class ProjectController {
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
 														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+				@ApiResponse(responseCode = "304", description = "Permission not modified", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Project not found", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
 						description = "An error occurred verifying permissions",
@@ -1039,11 +1060,23 @@ public class ProjectController {
 	}
 
 	private ResponseEntity<JsonNode> setProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) {
+			final RebacProject what,
+			final RebacObject who,
+			final String relationship
+	) {
+		boolean canAdministrate;
 		try {
-			if (!(new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what))) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
+			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
+		} catch (final Exception e) {
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canAdministrate) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
+		}
+
+		try {
 			what.setPermissionRelationships(who, relationship);
 		} catch (final RelationshipAlreadyExistsException e) {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
@@ -1059,11 +1092,21 @@ public class ProjectController {
 			final RebacProject what,
 			final RebacObject who,
 			final String oldRelationship,
-			final String newRelationship) {
+			final String newRelationship
+	) {
+		boolean canAdministrate;
 		try {
-			if (!(new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what))) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
+			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
+		} catch (final Exception e) {
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canAdministrate) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
+		}
+
+		try {
 			what.removePermissionRelationships(who, oldRelationship);
 			what.setPermissionRelationships(who, newRelationship);
 			return ResponseEntity.ok().build();
@@ -1076,11 +1119,23 @@ public class ProjectController {
 	}
 
 	private ResponseEntity<JsonNode> removeProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) {
+			final RebacProject what,
+			final RebacObject who,
+			final String relationship
+	) {
+		boolean canAdministrate;
 		try {
-			if (!(new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what))) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
-			}
+			canAdministrate = new RebacUser(currentUserService.get().getId(), reBACService).canAdministrate(what);
+		} catch (final Exception e) {
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+
+		if (!canAdministrate) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
+		}
+
+		try {
 			what.removePermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
 		} catch (final RelationshipAlreadyExistsException e) {
