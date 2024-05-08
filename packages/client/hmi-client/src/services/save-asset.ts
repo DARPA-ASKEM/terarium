@@ -12,8 +12,6 @@ import type { Workflow } from '@/types/workflow';
 
 export type AssetToSave = Model | Workflow | File;
 
-const projectResource = useProjects();
-
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
 // Saves the asset as a new asset
@@ -45,16 +43,16 @@ export async function saveAs(
 		return;
 	}
 
-	const projectId = projectResource.activeProject.value?.id;
+	const projectId = useProjects().activeProject.value?.id;
 	if (!projectId) {
 		logger.error(`Asset can't be saved since target project doesn't exist.`);
 		return;
 	}
-	await projectResource.addAsset(assetType, response.id, projectId);
+	await useProjects().addAsset(assetType, response.id, projectId);
 
 	// After saving notify the user and do any necessary actions
 	logger.info(
-		`${response.name} saved successfully in project ${projectResource.activeProject.value?.name}.`
+		`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`
 	);
 	if (openOnSave) {
 		router.push({
@@ -71,13 +69,13 @@ export async function saveAs(
 }
 
 // Overwrites/updates the asset
-export async function overwrite(
+export async function update(
 	newAsset: AssetToSave,
 	assetType: AssetType,
 	onSaveFunction?: Function
 ) {
 	if (!(newAsset instanceof File) && !newAsset.id) {
-		logger.error(`Can't overwrite an asset that lacks an id.`);
+		logger.error(`Can't update an asset that lacks an id.`);
 		return;
 	}
 
@@ -101,7 +99,7 @@ export async function overwrite(
 	}
 
 	// TODO: Consider calling this refresh within the update functions in the services themselves
-	projectResource.refresh();
+	useProjects().refresh();
 
 	logger.info(`Updated ${response.name}.`);
 	if (onSaveFunction) onSaveFunction(response.name);

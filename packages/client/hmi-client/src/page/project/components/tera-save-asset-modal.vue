@@ -19,7 +19,6 @@
 						v-model="newName"
 						placeholder="Enter a unique name"
 					/>
-					<slot name="extra-input-fields" />
 				</form>
 			</template>
 			<template #footer>
@@ -119,7 +118,7 @@ function save() {
 
 	// Save method
 	if (props.isOverwriting) {
-		saveAssetService.overwrite(newAsset, props.assetType, onSave);
+		saveAssetService.update(newAsset, props.assetType, onSave);
 	} else {
 		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
 	}
