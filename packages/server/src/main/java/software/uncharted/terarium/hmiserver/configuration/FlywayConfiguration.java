@@ -1,26 +1,34 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import java.beans.BeanProperty;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Objects;
+
 import javax.sql.DataSource;
-import lombok.RequiredArgsConstructor;
+
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer;
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.io.Resource;
 
+import lombok.RequiredArgsConstructor;
+
 /**
- * This configuration class ensures that hibernate runs BEFORE flyway. This is to preserve the schema generation
- * provided by Hibernate, but still get the benefits of having a proper version migration system in Flyway
+ * This configuration class ensures that hibernate runs BEFORE flyway. This is
+ * to preserve the schema generation
+ * provided by Hibernate, but still get the benefits of having a proper version
+ * migration system in Flyway
  */
 @Configuration
 @RequiredArgsConstructor
@@ -35,12 +43,31 @@ public class FlywayConfiguration {
 	Resource[] migrations;
 
 	/**
-	 * Set the baseline version to be the latest script. In the case where flyway is not initialized, we assume
-	 * hibernate correctly sets up the database
+	 * Set the baseline version to be the latest script. In the case where flyway is
+	 * not initialized, we assume hibernate correctly sets up the database
 	 */
-	@Bean
+	@BeanProperty
 	FlywayConfigurationCustomizer customizeBaselineVersion() {
 		return configuration -> configuration.baselineVersion(getBaselineVersion());
+	}
+
+	/**
+	 * Load properties
+	 */
+	@Bean
+	@ConfigurationProperties(prefix = "spring.flyway")
+	public FlywayProperties flywayProperties() {
+		return new FlywayProperties();
+	}
+
+	/**
+	 * Configure empty beans if disabled.
+	 */
+	@Bean
+	@ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "false")
+	public Flyway flyway() {
+		// Create a Flyway instance with default settings
+		return Flyway.configure().load();
 	}
 
 	/**
@@ -51,13 +78,16 @@ public class FlywayConfiguration {
 	 */
 	@Bean
 	FlywayMigrationInitializer flywayInitializer(final Flyway flyway) {
-		return new FlywayMigrationInitializer(flyway, (f) -> {});
+		return new FlywayMigrationInitializer(flyway, (f) -> {
+		});
 	}
 
-	static class FlywayVoid {}
+	static class FlywayVoid {
+	}
 
 	/**
-	 * Once the entityManagerFactory (aka, Hibernate) has been created it's safe to run migrations
+	 * Once the entityManagerFactory (aka, Hibernate) has been created it's safe to
+	 * run migrations
 	 *
 	 * @param flyway
 	 * @param flywayProperties
@@ -66,15 +96,18 @@ public class FlywayConfiguration {
 	@Bean
 	@DependsOn("entityManagerFactory")
 	FlywayVoid delayedFlywayInitializer(final Flyway flyway, final FlywayProperties flywayProperties) {
-		if (flywayProperties.isEnabled() && !isFlywayInitialized()) {
-			flyway.baseline();
+		if (flywayProperties.isEnabled()) {
+			if (!isFlywayInitialized()) {
+				flyway.baseline();
+			}
+			flyway.migrate();
 		}
-		flyway.migrate();
 		return new FlywayVoid();
 	}
 
 	/**
-	 * Tests if flyway is initialized by checking if the schema is present in the database
+	 * Tests if flyway is initialized by checking if the schema is present in the
+	 * database
 	 *
 	 * @return true if flyway is initialized, false otherwise
 	 */
