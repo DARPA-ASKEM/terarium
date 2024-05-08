@@ -23,6 +23,7 @@ public class TaskResponse implements Serializable {
 	private TaskStatus status;
 	private byte[] output;
 	protected String userId;
+	private UUID projectId;
 
 	@TSOptional
 	private ClientEventType notificationEventType;
