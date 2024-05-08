@@ -1,7 +1,7 @@
 <template>
-	<div v-if="showThoughts" class="thought-bubble">
-		<p>{{ thought }}</p>
-	</div>
+	<p v-if="showThoughts" class="thought-bubble">
+		{{ thought }}
+	</p>
 	<Button
 		v-if="thought"
 		link
