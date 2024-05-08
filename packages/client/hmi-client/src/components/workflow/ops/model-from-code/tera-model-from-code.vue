@@ -137,7 +137,7 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="selectedModel"
 		:model="selectedModel"
 		:is-visible="showSaveModelModal"
@@ -157,7 +157,7 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
