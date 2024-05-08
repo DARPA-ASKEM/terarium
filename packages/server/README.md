@@ -55,7 +55,7 @@ These relationships are setup as follows:
 - `@OneToOne` / `@OneToMany` / `@ManyToOne` / `@ManyToMany` annotations are used to define the type of relationship between the entities.
     - `mappedBy` defines which side "owns" the relationship. For `OneToOne` and `@OneToMany` it defines which side _does not_ contain the foreign key. If `mappedBy` is not specified, an additional table is used to store the relationship. For `@ManyToMany` relationships, it is used to define the "owner" side of the many to many.
     - `cascade` defines what types of operations are cascaded from the owner to the other side of the relationship. `CascadeType.ALL` seems to be a safe default.
-    - `fetch` defines how the elemeents are fetched. `EAGER` fetches them immediately. `LAZY` fetches them only when accessed.
+    - `fetch` defines how the elements are fetched. `EAGER` fetches them immediately. `LAZY` fetches them only when accessed.
 
 - `@JsonManagedReference` and `@JsonBackReference` are required to prevent `toString` and `hashCode` from exploding due to the circular references of bi-directional relationships.
 
@@ -125,7 +125,7 @@ class Parent {
     private UUID id = UUID.randomUUID();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-	@JoinColumn(name = "parent_id") // <--- because this is a @OneToMany uni-directional relationship, its referencing the column on the child, not the parent.
+    @JoinColumn(name = "parent_id") // <--- because this is a @OneToMany uni-directional relationship, it's referencing the column on the child, not the parent.
     private List<Child> children = new ArrayList<>();
 
 };
