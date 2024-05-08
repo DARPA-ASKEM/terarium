@@ -12,6 +12,8 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+    projectId?: string;
+    notificationGroupId?: string;
     data: T;
 }
 
@@ -784,13 +786,24 @@ export interface TimeSpan {
     end: number;
 }
 
+export interface TaskNotificationEventData {
+    taskId: string;
+    taskType: TaskType;
+    status: TaskStatus;
+    message: string;
+    error: string;
+    data: any;
+}
+
 export interface TaskResponse {
     id: string;
+    type: TaskType;
     script: string;
     status: TaskStatus;
     output: any;
     userId: string;
     projectId: string;
+    notificationEventType?: ClientEventType;
     additionalProperties: any;
     stdout: string;
     stderr: string;
@@ -1258,6 +1271,8 @@ export enum ClientEventType {
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
 }
 
 export enum FileType {
@@ -1375,6 +1390,12 @@ export enum ProgressState {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum TaskType {
+    Gollm = "GOLLM",
+    Mira = "MIRA",
+    Funman = "FUNMAN",
 }
 
 export enum ExtractionAssetType {

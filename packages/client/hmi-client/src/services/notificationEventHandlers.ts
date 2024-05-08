@@ -1,4 +1,9 @@
-import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	ExtractionStatusUpdate,
+	TaskNotificationEventData
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
@@ -45,12 +50,12 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		if (!event.data) return;
 
 		const existingItem = notificationItems.value.find(
-			(item) => item.notificationGroupId === event.data.notificationGroupId
+			(item) => item.notificationGroupId === event.notificationGroupId
 		);
 		if (!existingItem) {
 			// Create a new notification item
 			const newItem: NotificationItem = {
-				notificationGroupId: event.data.notificationGroupId,
+				notificationGroupId: event.notificationGroupId ?? '',
 				type: ClientEventType.ExtractionPdf,
 				assetId: event.data.documentId,
 				assetName: '',
@@ -79,6 +84,13 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		});
 	};
 
+	handlers[ClientEventType.TaskGollmModelCard] = (
+		event: ClientEvent<TaskNotificationEventData>
+	) => {
+		// TODO: Create a notification item and implement notification item UI for this event
+		console.log(event);
+	};
+
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
 	return {
@@ -100,8 +112,9 @@ export const createNotificationEventLogger = (
 	>(
 		event: ClientEvent<T>
 	) => {
+		if (!event.notificationGroupId) return;
 		const found = visibleNotificationItems.value.find(
-			(item) => item.notificationGroupId === event.data.notificationGroupId
+			(item) => item.notificationGroupId === event.notificationGroupId
 		);
 		if (!found) return;
 		logStatusMessage(

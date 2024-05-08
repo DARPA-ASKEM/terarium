@@ -1,5 +1,6 @@
 import API from '@/api/api';
 import { ClientEvent, ClientEventType, NotificationEvent, NotificationGroup } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
 /**
  * Get notification
@@ -37,10 +38,20 @@ export async function getLatestUnacknowledgedNotifications(
  */
 export function convertToClientEvents<T>(notificationGroup: NotificationGroup) {
 	const { notificationEvents, type } = notificationGroup;
+
+	if (Object.values(ClientEventType).includes(type as ClientEventType)) {
+		logger.error(`Notification type: ${type} is not supported client event type`, {
+			showToast: false
+		});
+		return [];
+	}
+
 	const events: ClientEvent<T>[] = notificationEvents.map((event: NotificationEvent) => ({
 		id: event.id,
 		createdAtMs: new Date(event.createdOn).getTime(),
 		type: type as ClientEventType,
+		notificationGroupId: notificationGroup.id,
+		projectId: notificationGroup.projectId,
 		data: event.data
 	}));
 	return events;
