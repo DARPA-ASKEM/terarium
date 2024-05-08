@@ -5,10 +5,24 @@
 				:active-index="selectedViewIndex"
 				:views="views"
 				:tooltip="tooltip"
+				:documentation-url="node.documentationUrl"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 			>
 				{{ title ?? node.displayName }}
+				<template #inputs>
+					<div class="input-chips">
+						<Chip
+							v-for="(input, index) in node.inputs.filter((input) => input.value)"
+							:key="index"
+							:label="input.label"
+						>
+							<template #icon>
+								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
+							</template>
+						</Chip>
+					</div>
+				</template>
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-annotation
@@ -45,6 +59,8 @@ import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import Chip from 'primevue/chip';
+import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -128,5 +144,21 @@ footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
+}
+
+.input-chips {
+	display: flex;
+	gap: var(--gap);
+	margin-right: auto;
+	margin-left: var(--gap);
+}
+
+.p-chip {
+	background-color: var(--surface-section);
+	color: var(--text-color-primary);
+}
+
+:deep(.p-chip .p-chip-text) {
+	font-size: var(--font-caption);
 }
 </style>

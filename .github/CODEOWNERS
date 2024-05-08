@@ -14,9 +14,7 @@
 
 # Backend services owners
 /packages/server/ @dgauldie @dvince2 @YohannParis
-/packages/db-mirgation/ @dgauldie @dvince2
-/packages/taskrunner/ @kbirk @YohannParis @j2whiting
-/packages/esingest/ @kbirk @j2whiting
+/packages/taskrunner/ @kbirk @YohannParis
 
 # Documentation owners
 docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2

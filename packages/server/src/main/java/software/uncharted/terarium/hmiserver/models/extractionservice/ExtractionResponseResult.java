@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.extractionservice;
 
+import java.util.Date;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-
-import java.util.Date;
 
 @Data
 @Accessors(chain = true)

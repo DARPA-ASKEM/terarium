@@ -210,6 +210,17 @@ describe('basic tests', () => {
   formatted with Prettier on commit (by invoking [Git Hooks](https://git-scm.com/docs/githooks)
   via [Husky](https://typicode.github.io/husky/#/)).
 
+### Ignore commits in the blame view
+
+For all merged commit to main that needs to be hidden from the blame view, add the full hash to `.git-blame-ignore-revs`.
+To make sure your local git configuration is set up to ignore these commits, run the following command:
+
+```shell
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+For more information: [git-blame-ignore-revs](https://git-scm.com/docs/git-blame#Documentation/git-blame.txt---ignore-revs-fileltfilegt) and on [github](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view)
+
+
 ## Maintenance Guidelines
 
 > The following section is mostly for maintainers who have commit access, but it's helpful to go through if you intend

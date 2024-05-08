@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
@@ -15,7 +14,7 @@ public class ConceptFacetSearchResponse implements Serializable {
 
 	@Data
 	@Accessors(chain = true)
-	static public class Result {
+	public static class Result {
 		private TaggableType type;
 		private UUID id;
 		private String curie;
@@ -24,14 +23,14 @@ public class ConceptFacetSearchResponse implements Serializable {
 
 	@Data
 	@Accessors(chain = true)
-	static public class Concept {
+	public static class Concept {
 		private Long count;
 		private String name;
 	}
 
 	@Data
 	@Accessors(chain = true)
-	static public class Facets {
+	public static class Facets {
 		private Map<TaggableType, Long> types;
 		private Map<String, Concept> concepts;
 	}

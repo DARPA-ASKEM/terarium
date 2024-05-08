@@ -1,55 +1,42 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * Represents a column in a dataset
- */
+/** Represents a column in a dataset */
 @Data
 @Accessors(chain = true)
 @TSModel
 public class DatasetColumn {
 
-	/**
-	 * Name of the column
-	 **/
+	/** Name of the column */
 	private String name;
 
 	/**
 	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
-	 **/
+	 */
 	@JsonAlias("data_type")
 	private ColumnType dataType;
 
-	/**
-	 * (Optional) String that describes the formatting of the value
-	 **/
+	/** (Optional) String that describes the formatting of the value */
 	@TSOptional
 	@JsonAlias("format_str")
 	private String formatStr;
 
-	/**
-	 * Column annotations from the MIT data profiling tool
-	 **/
+	/** Column annotations from the MIT data profiling tool */
 	private List<String> annotations;
 
-	/**
-	 * (Optional) Unformatted metadata about the dataset
-	 **/
+	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
 	private Map<String, Object> metadata;
 
-	/**
-	 * (Optional) Grounding of ontological concepts related to the column
-	 **/
+	/** (Optional) Grounding of ontological concepts related to the column */
 	@TSOptional
 	private Grounding grounding;
 
@@ -81,5 +68,13 @@ public class DatasetColumn {
 		DATE,
 		@JsonAlias("time")
 		TIME
+	}
+
+	public void updateMetadata(final Map<String, Object> metadata) {
+		if (this.metadata == null) {
+			this.metadata = metadata;
+		} else {
+			this.metadata.putAll(metadata);
+		}
 	}
 }

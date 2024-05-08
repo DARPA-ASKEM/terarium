@@ -15,7 +15,7 @@
 		<!-- Symbol -->
 		<Column header="Symbol" class="w-2">
 			<template #body="slotProps">
-				<span class="truncate-text">
+				<span class="truncate-text latex-font">
 					{{ slotProps.data.id }}
 				</span>
 			</template>
@@ -99,7 +99,7 @@
 			</template>
 		</Column>
 
-		<!-- Value type: Matrix or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
+		<!-- Value type: Matrix or a Dropdown with: Constant, Distribution (with icons) -->
 		<Column field="type" header="Value Type" class="w-2">
 			<template #body="slotProps">
 				<Button
@@ -212,20 +212,6 @@
 						/>
 					-->
 				</span>
-
-				<!-- Time series -->
-				<span
-					class="timeseries-container mr-2"
-					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
-				>
-					<InputText
-						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
-						v-model.lazy="slotProps.data.timeseries"
-						:disabled="readonly"
-						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
-					/>
-					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
-				</span>
 			</template>
 		</Column>
 
@@ -237,7 +223,7 @@
 					class="w-full"
 					v-model.lazy="data.source"
 					:disabled="readonly"
-					@update:model-value="(val) => updateSource(data.value.id ?? data.value.target, val)"
+					@update:model-value="(val) => updateMetadataFromInput(data.value.id, 'source', val)"
 				/>
 			</template>
 		</Column>
@@ -323,37 +309,21 @@
 				</Column>
 				<Column header="Value type">
 					<template #body="{ data }">
-						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
+						{{ typeOptions[getParamType(data.parameter)].label }}
 					</template>
 				</Column>
 				<Column header="Value">
 					<template #body="{ data }">
-						<span
-							v-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.CONSTANT
-							"
-						>
+						<span v-if="getParamType(data.parameter) === ParamType.CONSTANT">
 							{{ data.parameter.value }}
 						</span>
 						<div
 							class="distribution-container"
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.DISTRIBUTION
-							"
+							v-else-if="getParamType(data.parameter) === ParamType.DISTRIBUTION"
 						>
 							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
 							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
 						</div>
-						<span
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.TIME_SERIES
-							"
-						>
-							{{ data.configuration?.configuration?.metadata?.timeseries?.[data.parameter.id] }}
-						</span>
 					</template>
 				</Column>
 				<Column header="Source">
@@ -402,7 +372,12 @@ import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
-import { updateVariable } from '@/model-representation/service';
+import {
+	updateVariable,
+	getParameterMetadata,
+	getParameters,
+	updateParameterMetadata
+} from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
@@ -419,8 +394,7 @@ const props = defineProps<{
 
 const typeOptions = [
 	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
+	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' }
 ];
 
 const emit = defineEmits(['update-value', 'update-model']);
@@ -436,27 +410,15 @@ const selectedValue = ref<SuggestedValue | null>(null);
 const suggestedValues = computed(() => {
 	const matchingParameters: SuggestedValue[] = [];
 	props.modelConfigurations?.forEach((configuration, i) => {
-		if (modelType.value !== AMRSchemaNames.REGNET) {
-			configuration.configuration?.semantics?.ode.parameters?.forEach((parameter) => {
-				if (parameter.id === suggestedValuesModalContext.value.id) {
-					matchingParameters.push({
-						parameter,
-						configuration,
-						index: i
-					});
-				}
-			});
-		} else {
-			configuration.configuration?.model?.parameters?.forEach((parameter) => {
-				if (parameter.id === suggestedValuesModalContext.value.id) {
-					matchingParameters.push({
-						parameter,
-						configuration,
-						index: i
-					});
-				}
-			});
-		}
+		getParameters(configuration.configuration).forEach((parameter) => {
+			if (parameter.id === suggestedValuesModalContext.value.id) {
+				matchingParameters.push({
+					parameter,
+					configuration,
+					index: i
+				});
+			}
+		});
 	});
 
 	return matchingParameters;
@@ -491,13 +453,11 @@ const tableFormattedParams = ref<ModelConfigTableData[]>([]);
 // FIXME: This method doee not really work in this context, the different types
 // of CONSTANT/TIME_SERIES/DISTRIBUTION are not mutually exclusive, a parameter
 // can have one or more types
-const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
+const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
 
-	if (model.metadata?.timeseries?.[param.id] && model.metadata?.timeseries?.[param.id] !== null) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
+	if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
 	}
 	return type;
@@ -510,27 +470,20 @@ const buildParameterTable = () => {
 	if (isStratified.value) {
 		parameters.value.forEach((vals, init) => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
-				let param;
-				if (modelType.value === AMRSchemaNames.REGNET) {
-					param = model.model.parameters.find((i) => i.id === v);
-				} else {
-					param = model.semantics?.ode?.parameters?.find((i) => i.id === v);
-				}
+				const param = getParameters(model).find((i) => i.id === v);
 				const paramType = getParamType(param);
-				const timeseriesValue = model.metadata?.timeseries?.[param!.id];
-				const parametersMetadata = model.metadata?.parameters?.[param!.id];
+				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
 				return {
 					id: v,
-					name: param.name,
+					name: param?.name ?? '',
 					type: paramType,
-					description: param.description,
-					concept: param.grounding,
-					unit: param.unit?.expression,
+					description: param?.description ?? '',
+					concept: param?.grounding ?? { identifiers: {} },
+					units: param?.units?.expression ?? '',
 					value: param,
 					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
+					visibility: false
 				};
 			});
 			formattedParams.push({
@@ -547,29 +500,22 @@ const buildParameterTable = () => {
 		});
 	} else {
 		parameters.value.forEach((vals, init) => {
-			let param;
-			if (modelType.value === AMRSchemaNames.REGNET) {
-				param = model.model.parameters.find((i) => i.id === vals[0]);
-			} else {
-				param = model.semantics?.ode.parameters?.find((i) => i.id === vals[0]);
-			}
-
+			const param = getParameters(model).find((i) => i.id === vals[0]);
+			if (!param) return;
 			const paramType = getParamType(param);
 
-			const timeseriesValue = model.metadata?.timeseries?.[param!.id];
-			const parametersMetadata = model.metadata?.parameters?.[param!.id];
+			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
 				id: init,
-				name: param.name,
+				name: param.name ?? '',
 				type: paramType,
-				description: param.description,
-				concept: param.grounding,
-				unit: param.unit?.expression,
+				description: param.description ?? '',
+				concept: param.grounding ?? { identifiers: {} },
+				unit: param.units?.expression,
 				value: param,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 
@@ -577,7 +523,6 @@ const buildParameterTable = () => {
 		const auxiliaries = model.model?.auxiliaries ?? [];
 		auxiliaries.forEach((aux) => {
 			const paramType = getParamType(aux);
-			const timeseriesValue = model.metadata?.timeseries?.[aux.id];
 			const parametersMetadata = model.metadata?.parameters?.[aux.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
@@ -586,11 +531,10 @@ const buildParameterTable = () => {
 				type: paramType,
 				description: aux.description,
 				concept: aux.grounding,
-				unit: aux.unit?.expression,
+				unit: aux.units?.expression,
 				value: aux,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 	}
@@ -608,8 +552,6 @@ const curies = ref<DKG[]>([]);
 const modelType = computed(() => getModelType(props.model));
 
 // const addPlusMinus = ref(10);
-
-const errorMessage = ref('');
 
 const expandedRows = ref([]);
 
@@ -639,47 +581,10 @@ const updateParamValue = (param: ModelParameter, key: string, value: any) => {
 	emit('update-value', [clonedParam]);
 };
 
-const updateTimeseries = (id: string, value: string) => {
-	// Empty string => removal
-	if (value === '') {
-		const clonedModel = cloneDeep(props.model);
-		if (clonedModel.metadata && clonedModel.metadata.timeseries) {
-			clonedModel.metadata.timeseries[id] = null;
-		}
-		emit('update-model', clonedModel);
-		return;
-	}
-
-	if (!validateTimeSeries(value)) return;
+const updateMetadataFromInput = (id: string, key: string, value: any) => {
 	const clonedModel = cloneDeep(props.model);
-	clonedModel.metadata ??= {};
-	clonedModel.metadata.timeseries ??= {};
-	clonedModel.metadata.timeseries[id] = value;
+	updateParameterMetadata(clonedModel, id, key, value);
 	emit('update-model', clonedModel);
-};
-
-const updateSource = (id: string, value: string) => {
-	const clonedModel = cloneDeep(props.model);
-	if (!clonedModel.metadata?.parameters?.[id]) {
-		clonedModel.metadata ??= {};
-		clonedModel.metadata.parameters ??= {};
-		clonedModel.metadata.parameters[id] = {};
-	}
-	clonedModel.metadata.parameters[id].source = value;
-	emit('update-model', clonedModel);
-};
-
-const validateTimeSeries = (values: string) => {
-	const message = 'Incorrect format (e.g., 0:500)';
-	if (typeof values !== 'string') {
-		errorMessage.value = message;
-		return false;
-	}
-
-	const isPairValid = (pair: string): boolean => /^\d+:\d+(\.\d+)?$/.test(pair.trim());
-	const isValid = values.split(',').every(isPairValid);
-	errorMessage.value = isValid ? '' : message;
-	return isValid;
 };
 
 async function onSearch(event: AutoCompleteCompleteEvent) {
@@ -705,10 +610,6 @@ const applySelectedValue = () => {
 	if (!selectedValue.value) return;
 
 	const clonedModel = cloneDeep(props.model);
-	const timeseries =
-		selectedValue.value.configuration.configuration.metadata?.timeseries?.[
-			selectedValue.value.parameter.id
-		];
 	const metadata =
 		selectedValue.value.configuration.configuration.metadata?.parameters?.[
 			selectedValue.value.parameter.id
@@ -716,9 +617,7 @@ const applySelectedValue = () => {
 
 	clonedModel.metadata ??= {};
 	clonedModel.metadata.parameters ??= {};
-	clonedModel.metadata.timeseries ??= {};
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
-	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
 
 	// default source to use confirguration's source if there is no source
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id].source =
@@ -744,13 +643,9 @@ const applySelectedValue = () => {
 };
 
 const countSuggestions = (id): number =>
-	props.modelConfigurations?.filter((configuration) => {
-		if (modelType.value !== AMRSchemaNames.REGNET) {
-			return configuration.configuration?.semantics?.ode.parameters?.find((p) => p.id === id);
-		}
-
-		return configuration.configuration?.model?.parameters?.find((p) => p.id === id);
-	}).length ?? 0;
+	props.modelConfigurations?.filter((configuration) =>
+		getParameters(configuration.configuration).find((p) => p.id === id)
+	).length ?? 0;
 
 watch(
 	() => parameters.value,
@@ -807,10 +702,6 @@ watch(
 	text-align: right;
 }
 
-.timeseries-container {
-	font-size: var(--font-caption);
-}
-
 .add-plus-minus {
 	width: 3rem;
 	margin-left: var(--gap-xsmall);
@@ -863,11 +754,6 @@ watch(
 }
 .invalid-message {
 	color: var(--text-color-danger);
-}
-
-.timeseries-container {
-	display: flex;
-	flex-direction: column;
 }
 
 .secondary-text {

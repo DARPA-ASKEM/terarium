@@ -508,7 +508,7 @@ watch(
 			const code = await getCodeAsset(props.assetId);
 			if (code && code.files && Object.keys(code.files)[0]) {
 				codeAsset.value = code;
-				codeName.value = code.name;
+				codeName.value = code.name ?? '';
 
 				const filename = Object.keys(code.files)[0];
 				codeSelectedFile.value = filename;

@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 public class DKG {
 	@JsonAlias("id")
 	private String curie;
+
 	private String name;
 	private String description;
 	private String link;

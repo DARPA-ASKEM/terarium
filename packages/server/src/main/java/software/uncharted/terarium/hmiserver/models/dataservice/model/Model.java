@@ -4,6 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -16,12 +21,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
-
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -85,8 +84,8 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<ModelParameter> getParameters() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {
-			});
+			return objectMapper.convertValue(
+					this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
 		} else {
 			return this.getSemantics().getOde().getParameters();
 		}
@@ -97,12 +96,10 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<Initial> getInitials() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {
-			});
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {});
 		} else {
 			return this.getSemantics().getOde().getInitials();
 		}
-
 	}
 
 	@JsonIgnore

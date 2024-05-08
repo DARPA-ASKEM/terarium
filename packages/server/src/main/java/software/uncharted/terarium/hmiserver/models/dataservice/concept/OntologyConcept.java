@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import java.io.Serial;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,11 +15,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.TaggableType;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.UUID;
 
 @Entity
 @Data
@@ -35,18 +34,18 @@ public class OntologyConcept implements Serializable {
 	@TSOptional
 	@CreationTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp createdOn;
 
 	@TSOptional
 	@UpdateTimestamp
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp updatedOn;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition= "TIMESTAMP WITH TIME ZONE")
+	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp deletedOn;
 
 	private String curie;

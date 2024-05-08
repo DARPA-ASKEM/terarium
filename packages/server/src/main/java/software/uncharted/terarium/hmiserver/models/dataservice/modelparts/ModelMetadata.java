@@ -2,6 +2,10 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -11,11 +15,6 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
-
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -44,9 +43,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private List<JsonNode> attributes;
 
 	@TSOptional
-	private Map<String, Object> timeseries;
-
-	@TSOptional
 	private Map<String, Object> initials;
 
 	@TSOptional
@@ -60,6 +56,10 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private JsonNode gollmCard;
 
 	@TSOptional
+	@JsonProperty("gollmExtractions")
+	private JsonNode gollmExtractions;
+
+	@TSOptional
 	private List<String> provenance;
 
 	@TSOptional
@@ -69,4 +69,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("code_id")
 	String codeId;
+
+	@TSOptional
+	JsonNode source;
 }

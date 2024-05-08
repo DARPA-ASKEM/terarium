@@ -1,10 +1,12 @@
 import {
 	AssetType,
+	ClientEventType,
 	Dataset,
 	Document,
 	DocumentAsset,
 	Model,
 	ModelGrounding,
+	ProgrammingLanguage,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
@@ -36,7 +38,6 @@ export interface ModelConfigTableData {
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
-	timeseries?: string;
 }
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
@@ -198,3 +199,38 @@ export enum ModelServiceType {
 export interface CompareModelsResponseType {
 	response: string;
 }
+
+export interface NotificationItem {
+	notificationGroupId: string;
+	type: ClientEventType;
+	assetId: string;
+	assetName: string;
+	status: 'Completed' | 'Failed' | 'Running';
+	msg: string;
+	error: string;
+	progress: number;
+	lastUpdated: number;
+	acknowledged: boolean;
+}
+
+export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
+	[ProgrammingLanguage.Python]: 'python3',
+	[ProgrammingLanguage.R]: 'ir',
+	[ProgrammingLanguage.Julia]: 'julia-1.10',
+	[ProgrammingLanguage.Zip]: 'zip'
+};
+
+/**
+ * Returns an array of options for programming languages.
+ * Each option is an object with a `name` property that is a `ProgrammingLanguage` and a `value` property that is the corresponding version string.
+ * The `Zip` programming language is excluded from the options.
+ * @returns {Array} An array of options for programming languages.
+ */
+export const programmingLanguageOptions = (): { name: string; value: string }[] =>
+	Object.values(ProgrammingLanguage)
+		.filter((lang) => lang !== ProgrammingLanguage.Zip)
+		.map((lang) => ({
+			name:
+				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			value: ProgrammingLanguageVersion[lang]
+		}));

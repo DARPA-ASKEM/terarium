@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -13,10 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -61,14 +58,16 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.get();
 	}
 
 	// @Test
@@ -78,10 +77,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final ClassPathResource resource1 = new ClassPathResource("knowledge/extraction_text.txt");
 		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText(new String(content1))
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText(new String(content1));
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
@@ -91,7 +90,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi")
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi")
 				.get();
 	}
 
@@ -99,14 +99,16 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAsset = extractionService.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi").get();
+		documentAsset = extractionService
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
@@ -126,17 +128,17 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
-				.setDescription("my description")
-				.setFileNames(List.of("paper.pdf"));
+				.setDescription("my description");
 
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity,
-				ContentType.create("application/pdf"));
+		documentAssetService.uploadFile(
+				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
 
-		documentAsset = extractionService.extractPDF(documentAsset.getId(), "epi").get();
+		documentAsset =
+				extractionService.extractPDF(documentAsset.getId(), "epi").get();
 	}
-
 }

@@ -1,5 +1,3 @@
-import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { Ref } from 'vue';
 import { csvParse } from 'd3';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
@@ -18,9 +16,19 @@ import {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
-import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
+
+export async function cancelCiemssJob(runId: String) {
+	try {
+		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
@@ -232,42 +240,6 @@ export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationC
 	}
 }
 
-// add a simulation in progress if it does not exist
-const addSimulationInProgress = (state: any, runIds: string[]) => {
-	if (!state.simulationsInProgress) {
-		state.simulationsInProgress = [];
-	}
-	runIds.forEach((runId) => {
-		if (!state.simulationsInProgress.includes(runId)) {
-			state.simulationsInProgress.push(runId);
-		}
-	});
-};
-
-// delete a simulation in progress if it exists
-const deleteSimulationInProgress = (state: any, runIds: string[]) => {
-	if (state.simulationsInProgress) {
-		runIds.forEach((runId) => {
-			const index = state.simulationsInProgress.indexOf(runId);
-			if (index !== -1) {
-				state.simulationsInProgress.splice(index, 1);
-			}
-		});
-	}
-};
-
-// This function returns a string array of run ids.
-export const querySimulationInProgress = (node: WorkflowNode<any>): string[] => {
-	const state = node.state;
-	if (state.simulationsInProgress && state.simulationsInProgress.length > 0) {
-		// return all run ids on the node
-		return state.simulationsInProgress;
-	}
-
-	// return an empty array if no run ids are present
-	return [];
-};
-
 export async function subscribeToUpdateMessages(
 	simulationIds: string[],
 	eventType: ClientEventType,
@@ -302,109 +274,9 @@ export async function pollAction(id: string) {
 		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
 		return { data: null, progress: null, error: errorMessage };
 	}
+
+	if (simResponse.status === ProgressState.Cancelled) {
+		return { data: null, progress: null, error: null, cancelled: true };
+	}
 	return { data: simResponse, progress: null, error: null };
-}
-
-// @deprecated
-export async function simulationPollAction(
-	simulationIds: string[],
-	node: WorkflowNode<any>,
-	progress: Ref<{ status: ProgressState; value: number }>,
-	emitFn: (event: 'append-output' | 'update-state', ...args: any[]) => void
-) {
-	const requestList: Promise<Simulation | null>[] = [];
-
-	simulationIds.forEach((id) => {
-		requestList.push(getSimulation(id));
-	});
-
-	const response = await Promise.all(requestList).then(
-		(list) => list.filter((item) => !!item) as Simulation[]
-	);
-
-	const completedSimulationIds = isEmpty(response)
-		? ([] as string[])
-		: (response
-				.filter((simulation) => simulation?.status === ProgressState.Complete)
-				.map((simulation) => simulation!.id) as string[]);
-
-	const inProgressSimulationIds = isEmpty(response)
-		? ([] as string[])
-		: (response
-				.filter(
-					(simulation) =>
-						simulation?.status === ProgressState.Queued ||
-						simulation?.status === ProgressState.Running
-				)
-				.map((simulation) => simulation!.id) as string[]);
-
-	const unhandledStateSimulationIds = response
-		.filter(
-			(simulation) =>
-				simulation?.status !== ProgressState.Queued &&
-				simulation?.status !== ProgressState.Running &&
-				simulation?.status !== ProgressState.Complete
-		)
-		.map((simulation) => simulation!.id);
-
-	// there are unhandled states - we will return an error and remove all simulation Ids
-	if (unhandledStateSimulationIds.length > 0) {
-		const newState = cloneDeep(node.state);
-		deleteSimulationInProgress(newState, simulationIds);
-		if (!isEqual(node.state, newState)) {
-			emitFn('update-state', newState);
-		}
-
-		return {
-			data: response,
-			progress: null,
-			error: true
-		};
-	}
-
-	// all simulations complete
-	if (inProgressSimulationIds.length === 0 && completedSimulationIds.length > 0) {
-		const newState = cloneDeep(node.state);
-		deleteSimulationInProgress(newState, completedSimulationIds);
-		// only update state if it is different from the current one
-		if (!isEqual(node.state, newState)) {
-			emitFn('update-state', newState);
-		}
-		return {
-			data: response,
-			progress: null,
-			error: null
-		};
-	}
-
-	// handle any in progress simulations
-	if (inProgressSimulationIds.length > 0) {
-		const newState = cloneDeep(node.state);
-		addSimulationInProgress(newState, inProgressSimulationIds);
-		deleteSimulationInProgress(newState, completedSimulationIds);
-
-		// only update state if it is different from the current one
-		if (!isEqual(node.state, newState)) {
-			emitFn('update-state', newState);
-		}
-		progress.value.status = ProgressState.Running;
-		// keep polling
-		return {
-			data: null,
-			progress: null,
-			error: null
-		};
-	}
-
-	// remove all simulations for now if there is an unhandled state
-	const newState = deleteSimulationInProgress(node, simulationIds);
-	if (!isEqual(node.state, newState)) {
-		emitFn('update-state', newState);
-	}
-
-	return {
-		data: response,
-		progress: null,
-		error: true
-	};
 }

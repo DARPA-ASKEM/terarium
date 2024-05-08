@@ -1,8 +1,6 @@
 import sys
-import os
 import json
-from core.taskrunner import TaskRunnerInterface
-from mira.sources.amr.petrinet import template_model_from_amr_json
+from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json
 
 def cleanup():
@@ -15,7 +13,7 @@ def main():
         taskrunner = TaskRunnerInterface(description="AMR to MMT")
         taskrunner.on_cancellation(cleanup)
 
-        data = taskrunner.read_input_with_timeout()
+        data = taskrunner.read_input_str_with_timeout()
         amr = json.loads(data)
         mmt = model_from_json(amr)
 
@@ -54,7 +52,7 @@ def main():
             "template_params": template_params,
             "mmt": json.loads(mmt.json())
         }
-        taskrunner.write_output_with_timeout({"response": result})
+        taskrunner.write_output_dict_with_timeout({"response": result})
 
         print("AMR to MMT conversion succeeded")
     except Exception as e:

@@ -1,31 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 
-import java.util.List;
-
 /**
- * A class to handle scenario extraction from Document and Dataset via GoLLM task-runner.
- * GoLLM responses for the model configuration are in different JSON form depending on the source:
- *
- * Document:{
- * 		"conditions": [
- * 			{
- * 				"name": condition_name,
- *      	"description": description,
- *      	"initials": [ { "id": "initial_id", "value": 0.0 }, ... ],
- *      	"parameters": [ { "id": "parameter_id", "value": 0.0 }, ... ]
- *    	},
- *    	...]
- *    }
- *
- * Dataset: {"values":[{ "id": "initial_id", "value": 0.0, "type": "initial" },
- * 					 { "id": "parameter_id", "value": 0.0, "type": "parameter" },
- * 					 ...]}
+ * A class to handle scenario extraction from Document and Dataset via GoLLM task-runner. GoLLM responses for the model
+ * configuration are in different JSON form depending on the source: Document:{ "conditions": [ { "name":
+ * condition_name, "description": description, "initials": [ { "id": "initial_id", "value": 0.0 }, ... ], "parameters":
+ * [ { "id": "parameter_id", "value": 0.0 }, ... ] }, ...] } Dataset: {"values":[{ "id": "initial_id", "value": 0.0,
+ * "type": "initial" }, { "id": "parameter_id", "value": 0.0, "type": "parameter" }, ...]}
  */
 public class ScenarioExtraction {
 	// Replace initial values in the model with the values from the condition
@@ -34,7 +21,8 @@ public class ScenarioExtraction {
 		final String target = initial.getTarget();
 		if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
 			if (conditionInitial.has("value")) {
-				final String value = String.valueOf(conditionInitial.get("value").doubleValue());
+				final String value =
+						String.valueOf(conditionInitial.get("value").doubleValue());
 				initial.setExpression(value);
 			}
 		}
@@ -56,7 +44,8 @@ public class ScenarioExtraction {
 		modelParameters.forEach((parameter) -> {
 			condition.forEach((conditionParameter) -> {
 				// Test if type exist and is parameter for Dataset extraction
-				if (conditionParameter.has("type") && conditionParameter.get("type").asText().equals("initial")) {
+				if (conditionParameter.has("type")
+						&& conditionParameter.get("type").asText().equals("initial")) {
 					return;
 				}
 				replaceParameter(parameter, conditionParameter);
@@ -70,7 +59,8 @@ public class ScenarioExtraction {
 		modelInitials.forEach((initial) -> {
 			final String target = initial.getTarget();
 			condition.forEach((conditionInitial) -> {
-				if (conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")) return;
+				if (conditionInitial.has("type")
+						&& conditionInitial.get("type").asText().equals("parameter")) return;
 				replaceInitial(initial, conditionInitial);
 			});
 		});

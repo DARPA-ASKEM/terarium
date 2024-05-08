@@ -1,11 +1,19 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -19,17 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.annotation.PostConstruct;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -38,6 +35,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -54,16 +52,17 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 @RequiredArgsConstructor
 public class GoLLMController {
 
-	final private ObjectMapper objectMapper;
-	final private TaskService taskService;
-	final private DocumentAssetService documentAssetService;
-	final private DatasetService datasetService;
-	final private ModelService modelService;
+	private final ObjectMapper objectMapper;
+	private final TaskService taskService;
+	private final DocumentAssetService documentAssetService;
+	private final DatasetService datasetService;
+	private final ModelService modelService;
+	private final CurrentUserService currentUserService;
 
-	final private ModelCardResponseHandler modelCardResponseHandler;
-	final private ConfigureModelResponseHandler configureModelResponseHandler;
-	final private CompareModelsResponseHandler compareModelsResponseHandler;
-	final private ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+	private final ModelCardResponseHandler modelCardResponseHandler;
+	private final ConfigureModelResponseHandler configureModelResponseHandler;
+	private final CompareModelsResponseHandler compareModelsResponseHandler;
+	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
 
 	@PostConstruct
 	void init() {
@@ -76,12 +75,30 @@ public class GoLLMController {
 	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
-			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "The provided document text is too long",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "404",
+						description = "The provided model or document arguments are not found",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
@@ -112,6 +129,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ModelCardResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
@@ -123,23 +141,35 @@ public class GoLLMController {
 
 		} catch (final ResponseStatusException e) {
 			throw e;
-		}
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@GetMapping("/configure-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Configure Model` task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "404",
+						description = "The provided model or document arguments are not found",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
@@ -176,6 +206,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureModelResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
@@ -188,30 +219,45 @@ public class GoLLMController {
 
 		} catch (final ResponseStatusException e) {
 			throw e;
-		}
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@Data
-	static public class ConfigFromDatasetBody {
+	public static class ConfigFromDatasetBody {
 		private String matrixStr = "";
 	}
 
 	@PostMapping("/configure-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
-			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "The provided document text is too long",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "404",
+						description = "The provided model or document arguments are not found",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
@@ -228,7 +274,8 @@ public class GoLLMController {
 				}
 
 				// make sure there is text in the document
-				if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
+				if (dataset.get().getFileNames() == null
+						|| dataset.get().getFileNames().isEmpty()) {
 					log.warn("Dataset {} has no source files to send", datasetId);
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset has no filenames");
 				}
@@ -273,9 +320,11 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
-			final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
+			final ConfigureFromDatasetResponseHandler.Properties props =
+					new ConfigureFromDatasetResponseHandler.Properties();
 			props.setDatasetIds(datasetIds);
 			props.setModelId(modelId);
 			req.setAdditionalProperties(props);
@@ -285,24 +334,36 @@ public class GoLLMController {
 
 		} catch (final ResponseStatusException e) {
 			throw e;
-		}
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@GetMapping("/compare-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Compare Models` task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "404", description = "The provided model arguments are not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "404",
+						description = "The provided model arguments are not found",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
@@ -315,14 +376,15 @@ public class GoLLMController {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 				}
 				if (model.get().getMetadata().getGollmCard() != null) {
-					modelCards.add(objectMapper.writeValueAsString(model.get().getMetadata().getGollmCard()));
+					modelCards.add(objectMapper.writeValueAsString(
+							model.get().getMetadata().getGollmCard()));
 				}
 			}
 
 			// if the number of models is less than 2, return an error
 			if (modelCards.size() < 2) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						"At least two models with model cards are required");
+				throw new ResponseStatusException(
+						HttpStatus.BAD_REQUEST, "At least two models with model cards are required");
 			}
 
 			final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
@@ -332,6 +394,7 @@ public class GoLLMController {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.GOLLM);
 			req.setScript(CompareModelsResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
 
 			// send the request
@@ -339,22 +402,31 @@ public class GoLLMController {
 
 		} catch (final ResponseStatusException e) {
 			throw e;
-		}
-		catch (final Exception e) {
+		} catch (final Exception e) {
 			final String error = "Unable to dispatch task request";
 			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a GoLLM task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched cancellation successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class))),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the cancellation", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched cancellation successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Void.class))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the cancellation",
+						content = @Content)
+			})
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
@@ -362,9 +434,18 @@ public class GoLLMController {
 
 	@GetMapping("/{task-id}")
 	@Operation(summary = "Subscribe for updates on a GoLLM task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Subscribed successfully", content = @Content(mediaType = "text/event-stream", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Subscribed successfully",
+						content =
+								@Content(
+										mediaType = "text/event-stream",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+			})
 	@IgnoreRequestLogging
 	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
 		return taskService.subscribe(taskId);

@@ -1,23 +1,21 @@
 package software.uncharted.terarium.hmiserver.controller;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import javax.ws.rs.QueryParam;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.annotation.Secured;
-
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
-
-import javax.ws.rs.QueryParam;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import software.uncharted.terarium.hmiserver.security.Roles;
 
 @RequestMapping("/download")
 @RestController
@@ -31,10 +29,10 @@ public class DownloadController {
 		if (pdfBytes != null) {
 
 			return ResponseEntity.ok()
-				.headers(new HttpHeaders())
-				.contentLength(pdfBytes.length)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(new ByteArrayResource(pdfBytes));
+					.headers(new HttpHeaders())
+					.contentLength(pdfBytes.length)
+					.contentType(MediaType.APPLICATION_OCTET_STREAM)
+					.body(new ByteArrayResource(pdfBytes));
 		} else {
 			return ResponseEntity.internalServerError().build();
 		}

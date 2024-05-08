@@ -1,15 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 
-import java.io.Serial;
-import java.io.Serializable;
-
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelParameter extends SupportAdditionalProperties implements Serializable {
@@ -34,5 +35,5 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private ModelDistribution distribution;
 
 	@TSOptional
-	private ModelUnit unit;
+	private ModelUnit units;
 }

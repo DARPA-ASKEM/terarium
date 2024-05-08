@@ -3,7 +3,11 @@
 
 name: Server Tests
 
+env:
+  local_host_name: "localhost"
+
 # Controls when the action will run.
+# yamllint disable-line rule:truthy
 on:
   # Triggers the workflow on push or pull request events but only for the $default-branch branch
   push:
@@ -30,18 +34,19 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Validate Gradle JAR
       - name: Validate GradleW JAR
-        uses: gradle/wrapper-validation-action@b231772637bb498f11fdbc86052b6e8a8dc9fc92
+        uses: gradle/actions/wrapper-validation@v3
 
       # Setup Java 17
       - name: Setup Java v17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: 17
+          cache: gradle
 
       # Start containers
       - name: Start containers
@@ -49,13 +54,8 @@ jobs:
 
       # Run the tests
       - name: Run tests
-        uses: gradle/gradle-build-action@942d5e1456472d289f4b112fd3b62244067bac9c
-        with:
-          gradle-version: wrapper
-          build-root-directory: packages/server
-          arguments: |
-            test
-            --info
+        run: ./gradlew test --info
+        working-directory: packages/server
 
       # Run test reporter
       - name: Test Report

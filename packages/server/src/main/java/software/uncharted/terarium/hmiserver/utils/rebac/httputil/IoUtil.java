@@ -41,12 +41,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
-
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 @Slf4j
 public class IoUtil {
 
@@ -165,11 +162,18 @@ public class IoUtil {
 		AclEntry entry = AclEntry.newBuilder()
 				.setType(AclEntryType.ALLOW)
 				.setPrincipal(owner)
-				.setPermissions(AclEntryPermission.READ_DATA, AclEntryPermission.WRITE_DATA,
-						AclEntryPermission.APPEND_DATA, AclEntryPermission.READ_NAMED_ATTRS,
-						AclEntryPermission.WRITE_NAMED_ATTRS, AclEntryPermission.EXECUTE,
-						AclEntryPermission.READ_ATTRIBUTES, AclEntryPermission.WRITE_ATTRIBUTES,
-						AclEntryPermission.DELETE, AclEntryPermission.READ_ACL, AclEntryPermission.SYNCHRONIZE)
+				.setPermissions(
+						AclEntryPermission.READ_DATA,
+						AclEntryPermission.WRITE_DATA,
+						AclEntryPermission.APPEND_DATA,
+						AclEntryPermission.READ_NAMED_ATTRS,
+						AclEntryPermission.WRITE_NAMED_ATTRS,
+						AclEntryPermission.EXECUTE,
+						AclEntryPermission.READ_ATTRIBUTES,
+						AclEntryPermission.WRITE_ATTRIBUTES,
+						AclEntryPermission.DELETE,
+						AclEntryPermission.READ_ACL,
+						AclEntryPermission.SYNCHRONIZE)
 				.build();
 		acl.add(entry);
 		view.setAcl(acl);

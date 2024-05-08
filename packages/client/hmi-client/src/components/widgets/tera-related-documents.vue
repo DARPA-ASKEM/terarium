@@ -13,6 +13,7 @@
 					<tera-asset-link
 						:label="document.name"
 						:asset-route="{ assetId: document.id, pageType: AssetType.Document }"
+						show-icon
 					/>
 				</li>
 			</ul>

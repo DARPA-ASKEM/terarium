@@ -11,6 +11,7 @@
 		<router-view v-slot="{ Component }">
 			<component class="page" :is="Component" />
 		</router-view>
+		<ConfirmDialog class="w-4" />
 	</main>
 	<footer>
 		<tera-footer />
@@ -29,6 +30,7 @@ import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import TeraFooter from '@/components/navbar/tera-footer.vue';
 import { useProjects } from '@/composables/project';
 import { Project } from '@/types/Types';
+import ConfirmDialog from 'primevue/confirmdialog';
 import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
 import { useCurrentRoute } from './router/index';
 

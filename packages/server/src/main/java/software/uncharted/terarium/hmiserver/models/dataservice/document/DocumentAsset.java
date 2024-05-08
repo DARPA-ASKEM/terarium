@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import java.io.Serial;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -11,11 +15,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
-import java.io.Serial;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
@@ -24,12 +23,6 @@ public class DocumentAsset extends TerariumAsset {
 
 	@Serial
 	private static final long serialVersionUID = -8425680186002783351L;
-
-	@TSOptional
-	private String name;
-
-	@TSOptional
-	private String description;
 
 	@TSOptional
 	private String userId;

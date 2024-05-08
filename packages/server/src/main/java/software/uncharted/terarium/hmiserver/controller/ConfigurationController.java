@@ -12,11 +12,9 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.KeycloakJsConfiguration;
 
 /**
- * This resource is unauthenticated and is used to provide any configuration to the client
- * that must occur before auth is setup.  This should _only_ be used for configuration that
- * is not a secret.
+ * This resource is unauthenticated and is used to provide any configuration to the client that must occur before auth
+ * is setup. This should _only_ be used for configuration that is not a secret.
  */
-
 @RequestMapping("/configuration")
 @Slf4j
 @Configuration
@@ -42,7 +40,8 @@ public class ConfigurationController {
 	@GetMapping("/keycloak")
 	ResponseEntity<KeycloakJsConfiguration> getKeycloak() {
 
-		KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration().setUrl(config.getKeycloak().getUrl())
+		KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration()
+				.setUrl(config.getKeycloak().getUrl())
 				.setRealm(config.getKeycloak().getRealm())
 				.setClientId(config.getKeycloak().getClientId());
 

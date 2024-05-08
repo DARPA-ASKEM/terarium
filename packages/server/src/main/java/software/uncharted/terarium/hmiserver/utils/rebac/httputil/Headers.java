@@ -19,37 +19,35 @@ package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 public class Headers implements Iterable<Header> {
 
-    private LinkedHashMap<String, Header> headers = new LinkedHashMap<>();
+	private LinkedHashMap<String, Header> headers = new LinkedHashMap<>();
 
-    public void add(String header, String value) {
-        headers.put(header.toLowerCase(), new Header(header, value));
-    }
+	public void add(String header, String value) {
+		headers.put(header.toLowerCase(), new Header(header, value));
+	}
 
-    public boolean addIfMissing(String header, String value) {
-        String key = header.toLowerCase();
-        if (!headers.containsKey(key)) {
-            headers.put(key, new Header(header, value));
-            return true;
-        }
-        return false;
-    }
+	public boolean addIfMissing(String header, String value) {
+		String key = header.toLowerCase();
+		if (!headers.containsKey(key)) {
+			headers.put(key, new Header(header, value));
+			return true;
+		}
+		return false;
+	}
 
-    public boolean contains(String header) {
-        String key = header.toLowerCase();
-        return headers.containsKey(key);
-    }
+	public boolean contains(String header) {
+		String key = header.toLowerCase();
+		return headers.containsKey(key);
+	}
 
-    public Header get(String header) {
-        return headers.get(header.toLowerCase());
-    }
+	public Header get(String header) {
+		return headers.get(header.toLowerCase());
+	}
 
-    @Override
-    public Iterator<Header> iterator() {
-        return headers.values().iterator();
-    }
+	@Override
+	public Iterator<Header> iterator() {
+		return headers.values().iterator();
+	}
 }

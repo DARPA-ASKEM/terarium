@@ -35,7 +35,7 @@ public class ElasticsearchConfiguration {
 	}
 
 	public String getDatasetIndex() {
-		return String.join("_", index.prefix, index.datasetRoot, index.suffix);
+		return String.join("_", index.prefix, index.datasetRoot, "tera_2.1");
 	}
 
 	public String getDocumentIndex() {
@@ -74,20 +74,67 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.decapodesContextRoot, index.suffix);
 	}
 
-	public record Index(
-		String prefix,
-		String suffix,
-		String codeRoot,
-		String artifactRoot,
-		String datasetRoot,
-		String documentRoot,
-		String equationRoot,
-		String modelRoot,
-		String modelConfigurationRoot,
-		String notebookSessionRoot,
-		String simulationRoot,
-		String workflowRoot,
-		String decapodesConfigurationRoot,
-		String decapodesContextRoot) {
+	public String getCodeAlias() {
+		return String.join("_", index.prefix, index.codeRoot);
 	}
+
+	public String getArtifactAlias() {
+		return String.join("_", index.prefix, index.artifactRoot);
+	}
+
+	public String getDatasetAlias() {
+		return String.join("_", index.prefix, index.datasetRoot);
+	}
+
+	public String getDocumentAlias() {
+		return String.join("_", index.prefix, index.documentRoot);
+	}
+
+	public String getEquationAlias() {
+		return String.join("_", index.prefix, index.equationRoot);
+	}
+
+	public String getModelAlias() {
+		return String.join("_", index.prefix, index.modelRoot);
+	}
+
+	public String getModelConfigurationAlias() {
+		return String.join("_", index.prefix, index.modelConfigurationRoot);
+	}
+
+	public String getNotebookSessionAlias() {
+		return String.join("_", index.prefix, index.notebookSessionRoot);
+	}
+
+	public String getSimulationAlias() {
+		return String.join("_", index.prefix, index.simulationRoot);
+	}
+
+	public String getWorkflowAlias() {
+		return String.join("_", index.prefix, index.workflowRoot);
+	}
+
+	public String getDecapodesConfigurationAlias() {
+		return String.join("_", index.prefix, index.decapodesConfigurationRoot);
+	}
+
+	public String getDecapodesContextAlias() {
+		return String.join("_", index.prefix, index.decapodesContextRoot);
+	}
+
+	public record Index(
+			String prefix,
+			String suffix,
+			String codeRoot,
+			String artifactRoot,
+			String datasetRoot,
+			String documentRoot,
+			String equationRoot,
+			String modelRoot,
+			String modelConfigurationRoot,
+			String notebookSessionRoot,
+			String simulationRoot,
+			String workflowRoot,
+			String decapodesConfigurationRoot,
+			String decapodesContextRoot) {}
 }

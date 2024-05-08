@@ -16,4 +16,8 @@ public class TaskResponse implements Serializable {
 	private TaskStatus status;
 	private byte[] output;
 	private Object additionalProperties;
+	private UUID projectId;
+	protected String userId;
+	private String stdout;
+	private String stderr;
 }

@@ -6,15 +6,14 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import java.io.IOException;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.GenericFilterBean;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.service.KeycloakTokenService;
-
-import java.io.IOException;
-import java.util.*;
 
 @RequiredArgsConstructor
 public class ServiceRequestFilter extends GenericFilterBean {
@@ -27,7 +26,8 @@ public class ServiceRequestFilter extends GenericFilterBean {
 	}
 
 	@Override
-	public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain)
+	public void doFilter(
+			final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain)
 			throws IOException, ServletException {
 		final HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper((HttpServletRequest) servletRequest);
 
@@ -59,7 +59,8 @@ public class ServiceRequestFilter extends GenericFilterBean {
 
 			// If we have a basic auth header, then we need to get the jwt token from the
 			// token service
-			final String basicAuth = authorizationHeader.substring("Basic".length()).trim();
+			final String basicAuth =
+					authorizationHeader.substring("Basic".length()).trim();
 			final String[] credentials = new String(Base64.getDecoder().decode(basicAuth)).split(":", 2);
 			final String jwtToken = keycloakTokenService.getToken(credentials[0], credentials[1]);
 

@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.admin;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +16,6 @@ import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.AdminClientService;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -27,15 +26,14 @@ public class AdminController {
 	private final RoleRepository roleRepository;
 	private final AdminClientService adminClientService;
 
-	/**
-	 * Get a list of all users
-	 */
+	/** Get a list of all users */
 	@GetMapping("/users")
 	@Secured(Roles.ADMIN)
-	public ResponseEntity<List<User>> getUsers(@RequestParam(required = false, defaultValue = "0") Integer page,
-																						 @RequestParam(required = false, defaultValue = "5") Integer rows,
-																						 @RequestParam(required = false) String sortField,
-																						 @RequestParam(required = false) Integer sortOrder) {
+	public ResponseEntity<List<User>> getUsers(
+			@RequestParam(required = false, defaultValue = "0") Integer page,
+			@RequestParam(required = false, defaultValue = "5") Integer rows,
+			@RequestParam(required = false) String sortField,
+			@RequestParam(required = false) Integer sortOrder) {
 
 		Sort sort = Sort.unsorted();
 		if (sortField != null && !sortField.isEmpty()) {
@@ -60,7 +58,6 @@ public class AdminController {
 		return ResponseEntity.ok(userRepository.count());
 	}
 
-
 	/**
 	 * Get the total number of roles
 	 *
@@ -79,10 +76,11 @@ public class AdminController {
 	 */
 	@GetMapping("/roles")
 	@Secured(Roles.ADMIN)
-	public ResponseEntity<List<Role>> getRoles(@RequestParam(required = false, defaultValue = "0") Integer page,
-																						 @RequestParam(required = false, defaultValue = "5") Integer rows,
-																						 @RequestParam(required = false) String sortField,
-																						 @RequestParam(required = false) Integer sortOrder) {
+	public ResponseEntity<List<Role>> getRoles(
+			@RequestParam(required = false, defaultValue = "0") Integer page,
+			@RequestParam(required = false, defaultValue = "5") Integer rows,
+			@RequestParam(required = false) String sortField,
+			@RequestParam(required = false) Integer sortOrder) {
 
 		Sort sort = Sort.unsorted();
 		if (sortField != null && !sortField.isEmpty()) {
@@ -105,31 +103,33 @@ public class AdminController {
 	@GetMapping("/roles/{id}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> getRole(@PathVariable String id) {
-		return roleRepository.findById(Long.parseLong(id))
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
+		return roleRepository
+				.findById(Long.parseLong(id))
+				.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	/**
 	 * Update a role with the given id
 	 *
-	 * @param id   the id of the role to update
+	 * @param id the id of the role to update
 	 * @param role the new role data
 	 * @return the updated role
 	 */
 	@PutMapping("/roles/{id}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Role> updateRole(@PathVariable String id, @RequestBody Role role) {
-		return roleRepository.findById(Long.parseLong(id))
-			.map(roleData -> {
-				// The id and name on roles are immutable, the authorities are the only thing that can be changed
-				roleData.setAuthorities(role.getAuthorities());
-				return ResponseEntity.ok(roleRepository.save(roleData));
-			})
-			.orElse(ResponseEntity.notFound().build());
+		return roleRepository
+				.findById(Long.parseLong(id))
+				.map(roleData -> {
+					// The id and name on roles are immutable, the authorities are the only thing that can be changed
+					roleData.setAuthorities(role.getAuthorities());
+					return ResponseEntity.ok(roleRepository.save(roleData));
+				})
+				.orElse(ResponseEntity.notFound().build());
 	}
 
-	//returns updated user if successful, null otherwise
+	// returns updated user if successful, null otherwise
 	@PutMapping("/users/{id}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
@@ -139,5 +139,4 @@ public class AdminController {
 		}
 		return ResponseEntity.ok(retUser);
 	}
-
 }

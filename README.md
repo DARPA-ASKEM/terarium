@@ -52,6 +52,32 @@ brew install yarn
 brew install ansible
 ```
 
+<details>
+<summary><b>Windows Subsystem Linux Setup</b></summary>
+Instructions for users on a Windows System
+
+### Install WSL 
+Download from Windows Store App / [Website](https://apps.microsoft.com/home?hl=en-US&gl=US) a WSL developer tools app version you prefer to work with.
+
+In the Windows Command Prompt Terminal enter this to change the sudo password for WSL user.
+```shell
+wsl --user root
+passwd <username>
+```
+
+### Install Dependencies
+
+In the WSL Terminal input these commands to install the dependencies (Ubuntu install commands).
+```shell
+sudo apt-get upgrade
+sudo apt-get install build-essential
+sudo apt install openjdk-17-jre-headless
+sudo apt install gradle
+sudo apt install python3-pip
+python3 -m pip install --user ansible
+```
+</details>
+
 ### Ansible Vault Password File
 
 You will need to have the ansible askem vault password in your home directory in a file named `askem-vault-id.txt`. You can find this file in the ASKEM TERArium (Shared External) drive on Google Drive. **This file is not included in the repository for security reasons. Please contact the team for access to this file.**
@@ -143,13 +169,24 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ./hmiServerDev.sh start local run
 ```
 
-If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
+If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
+```shell
+./hmiServerDev.sh start local
+```
+
+If you're looking to just decrypt or encrypt secrets you can run:
 
 ```shell
 ./hmiServerDev.sh decrypt
 ```
+or
+```shell
+./hmiServerDev.sh encrypt
+```
 
+If running decrypt, you'll see the contents of `application-secrets.properties.encrypted` decrypted to plain text.
 There should now be a `application-secrets.properties` file in the `packages/server/src/main/resources` dir.
+If running encrypt, `application-secrets.properties`'s content will be encrypted into the *.encrypted file.
 
 <details>
 <summary><b>Debugging the Server in IntelliJ</b></summary>

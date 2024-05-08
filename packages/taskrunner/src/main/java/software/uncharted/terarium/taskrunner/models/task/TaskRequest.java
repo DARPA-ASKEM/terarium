@@ -19,12 +19,18 @@ public class TaskRequest implements Serializable {
 	private byte[] input;
 	private int timeoutMinutes = 30;
 	private Object additionalProperties;
+	protected String userId;
+	protected UUID projectId;
 
-	public TaskResponse createResponse(final TaskStatus status) {
+	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 		return new TaskResponse()
 				.setId(id)
 				.setStatus(status)
 				.setScript(script)
-				.setAdditionalProperties(additionalProperties);
+				.setUserId(userId)
+				.setProjectId(projectId)
+				.setAdditionalProperties(additionalProperties)
+				.setStdout(stdout)
+				.setStderr(stderr);
 	}
 }

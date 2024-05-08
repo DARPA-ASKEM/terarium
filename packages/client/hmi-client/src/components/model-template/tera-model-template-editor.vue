@@ -26,6 +26,7 @@
 			</section>
 		</aside>
 		<tera-infinite-canvas
+			:is-disabled="isDecomposedLoading"
 			@click="onCanvasClick"
 			@save-transform="saveTransform"
 			@mouseenter="setMouseOverCanvas(true)"
@@ -45,16 +46,17 @@
 						:model-value="currentModelFormat"
 						@change="if ($event.value) onEditorFormatSwitch($event.value);"
 						:options="modelFormatOptions"
-					>
-						<template #option="{ option }">
-							<i
-								v-if="isDecomposedLoading && option === EditorFormat.Decomposed"
-								class="pi pi-spin pi-spinner p-button-icon-left"
-							/>
-							<span class="p-button-label">{{ option }}</span>
-						</template>
-					</SelectButton>
+						:disabled="isDecomposedLoading"
+					/>
 				</section>
+				<tera-progress-spinner
+					v-if="isDecomposedLoading"
+					class="spinner"
+					is-centered
+					:font-size="2"
+				>
+					Please wait...
+				</tera-progress-spinner>
 			</template>
 			<template #data>
 				<tera-canvas-item
@@ -71,6 +73,7 @@
 						:model="currentCanvas.models[index]"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
+						:id="card.id"
 						@update-name="
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
@@ -82,7 +85,7 @@
 									syncWithMiraModel
 								)
 						"
-						@port-selected="(portId: string) => createNewEdge(card, portId)"
+						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
 						@port-mouseover="
 							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
 						"
@@ -141,7 +144,8 @@ import type { Model } from '@/types/Types';
 import type {
 	ModelTemplateCanvas,
 	ModelTemplateCard,
-	ModelTemplateJunction
+	ModelTemplateJunction,
+	OffsetValues
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
@@ -150,6 +154,7 @@ import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
 import TeraModelJunction from './tera-model-junction.vue';
 import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
 	model?: Model;
@@ -176,6 +181,7 @@ let isMouseOverCanvas = false;
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let isMouseOverPort = false;
 let junctionIdForNewEdge: string | null = null;
+const decomposedPortOffsetValues = new Map<string, OffsetValues>();
 
 const decomposedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
 const flattenedCanvas = ref<ModelTemplateCanvas>(modelTemplatingService.initializeCanvas());
@@ -222,8 +228,8 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
-function createNewEdge(card: ModelTemplateCard, portId: string) {
-	const target = { cardId: card.id, portId };
+function createNewEdge(cardId: string, portId: string) {
+	const target = { cardId, portId };
 
 	if (!isCreatingNewEdge.value) {
 		// Find the junction that we want to draw from
@@ -293,6 +299,7 @@ function createNewEdge(card: ModelTemplateCard, portId: string) {
 				props.kernelManager,
 				flattenedCanvas.value,
 				decomposedCanvas.value,
+				decomposedPortOffsetValues,
 				outputCode,
 				syncWithMiraModel,
 				interpolatePointsForCurve
@@ -442,7 +449,23 @@ function refreshFlattenedCanvas() {
 
 function onEditorFormatSwitch(newFormat: EditorFormat) {
 	currentModelFormat.value = newFormat;
-	if (newFormat === EditorFormat.Decomposed) refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	if (newFormat === EditorFormat.Decomposed)
+		refreshFlattenedCanvas(); // Removes unlinked decomposed templates
+	else {
+		// When switching to the flattened view, we save the decomposed port positions
+		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
+		decomposedPortOffsetValues.clear();
+		const decomposedPortElements = document.getElementsByClassName(
+			'port selectable'
+		) as HTMLCollectionOf<HTMLElement>;
+
+		Array.from(decomposedPortElements).forEach((element) =>
+			decomposedPortOffsetValues.set(
+				element.id,
+				modelTemplatingService.getElementOffsetValues(element)
+			)
+		);
+	}
 }
 
 watch(
@@ -491,6 +514,10 @@ onUnmounted(() => {
 }
 .view-toggles > * {
 	pointer-events: auto;
+}
+
+.spinner {
+	margin-bottom: 15rem;
 }
 
 aside {

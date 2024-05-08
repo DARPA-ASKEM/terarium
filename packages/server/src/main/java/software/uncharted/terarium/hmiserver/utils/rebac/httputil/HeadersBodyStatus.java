@@ -16,57 +16,56 @@
  */
 package software.uncharted.terarium.hmiserver.utils.rebac.httputil;
 
+import java.io.InputStream;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.util.JsonSerialization;
 
-import java.io.InputStream;
-import java.util.Map;
-
-/**
- * @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a>
- */
+/** @author <a href="mailto:mstrukel@redhat.com">Marko Strukelj</a> */
 @Slf4j
 public class HeadersBodyStatus extends HeadersBody {
 
-    private final String status;
+	private final String status;
 
-    public HeadersBodyStatus(String status, Headers headers, InputStream body) {
-        super(headers, body);
-        this.status = status;
-    }
+	public HeadersBodyStatus(String status, Headers headers, InputStream body) {
+		super(headers, body);
+		this.status = status;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    private String getStatusCodeAndReason() {
-        return getStatus().substring(9);
-    }
+	private String getStatusCodeAndReason() {
+		return getStatus().substring(9);
+	}
 
-    public void checkSuccess() {
-        int code = getStatusCode();
-        log.info("status code ", code);
-        if (code < 200 || code >= 300) {
-            String content = readBodyString();
-            if (content == null) { log.info("Content is null"); }
-            Map<String, String> error = null;
-            try {
-                error = JsonSerialization.readValue(content, Map.class);
-            } catch (Exception ignored) {
-            }
+	public void checkSuccess() {
+		int code = getStatusCode();
+		log.info("status code ", code);
+		if (code < 200 || code >= 300) {
+			String content = readBodyString();
+			if (content == null) {
+				log.info("Content is null");
+			}
+			Map<String, String> error = null;
+			try {
+				error = JsonSerialization.readValue(content, Map.class);
+			} catch (Exception ignored) {
+			}
 
-            String message = null;
-            if (error != null) {
-                String description = error.get("error_description");
-                String err = error.get("error");
-                String msg = error.get("errorMessage");
-                message = msg != null ? msg : err != null ? (description + " ["+ error.get("error") + "]") : null;
-            }
-            throw new HttpResponseException(getStatusCodeAndReason(), message, new RuntimeException(content));
-        }
-    }
+			String message = null;
+			if (error != null) {
+				String description = error.get("error_description");
+				String err = error.get("error");
+				String msg = error.get("errorMessage");
+				message = msg != null ? msg : err != null ? (description + " [" + error.get("error") + "]") : null;
+			}
+			throw new HttpResponseException(getStatusCodeAndReason(), message, new RuntimeException(content));
+		}
+	}
 
-    public int getStatusCode() {
-        return Integer.valueOf(status.split(" ")[1]);
-    }
+	public int getStatusCode() {
+		return Integer.valueOf(status.split(" ")[1]);
+	}
 }

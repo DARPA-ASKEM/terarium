@@ -142,7 +142,7 @@
 				viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
-			PDF Extractions may still be processing please refresh in some time...
+			PDF Extractions are processing please come back in some time...
 		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
@@ -154,15 +154,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import type { DocumentAsset } from '@/types/Types';
-import { AssetType, ExtractionAssetType } from '@/types/Types';
+import type { ClientEvent, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
+import { AssetType, ClientEventType, ExtractionAssetType } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -176,6 +176,8 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
+import { getStatus } from '@/services/notificationEventHandlers';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -307,6 +309,25 @@ onUpdated(() => {
 	if (document.value) {
 		emit('asset-loaded');
 	}
+});
+
+onMounted(async () => {
+	await subscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
+});
+
+async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
+	console.log(event.data.message);
+	if (!event.data || event.data.documentId !== props.assetId) return;
+
+	const status = getStatus(event.data);
+	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
+	if (status === 'Completed' || event.data.message.includes('Dispatching')) {
+		document.value = await getDocumentAsset(props.assetId);
+	}
+}
+
+onUnmounted(async () => {
+	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 </script>
 <style scoped>
