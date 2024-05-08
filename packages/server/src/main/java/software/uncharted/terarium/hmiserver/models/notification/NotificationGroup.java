@@ -1,12 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.notification;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -14,6 +8,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.validation.constraints.NotNull;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -31,11 +29,9 @@ public class NotificationGroup extends TerariumEntity {
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
 
-	@NotNull
-	private String userId;
+	@NotNull private String userId;
 
-	@NotNull
-	private String type;
+	@NotNull private String type;
 
 	@TSOptional
 	private UUID projectId;
