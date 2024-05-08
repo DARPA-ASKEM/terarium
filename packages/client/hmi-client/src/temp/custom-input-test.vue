@@ -30,7 +30,7 @@
 			<tera-input-field
 				v-model="scistring"
 				label="Label"
-				type="sci"
+				type="nist"
 				@update:model-value="console.log(scistring)"
 			/>
 		</div>
