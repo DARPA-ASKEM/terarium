@@ -34,7 +34,7 @@
 						@llm-thought-output="(data: any) => (llmThought = data)"
 					/>
 				</Suspense>
-				<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"

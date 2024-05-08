@@ -50,7 +50,7 @@
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => (llmThought = data)"
 					/>
-					<tera-notebook-jupyter-thought-output :llmThought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
