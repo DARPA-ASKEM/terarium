@@ -13,7 +13,6 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.models.ClientEventType;
 
 @Accessors(chain = true)
 @NoArgsConstructor

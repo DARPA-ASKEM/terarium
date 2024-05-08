@@ -19,6 +19,7 @@ public class TaskResponse implements Serializable {
 	private TaskStatus status;
 	private byte[] output;
 	protected String userId;
+
 	private UUID projectId;
 
 	// The value of this will be whatever it was set to on the TaskRequest.
