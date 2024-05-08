@@ -1,15 +1,13 @@
 package db.migration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class V10__CodeMetadata extends BaseJavaMigration {
 
@@ -24,8 +22,8 @@ public class V10__CodeMetadata extends BaseJavaMigration {
 					"SELECT code_id, metadata, metadata_key FROM code_metadata ORDER BY code_id;");
 
 			// Prepare the update statement for the simulation table
-			final PreparedStatement preparedStatement = context.getConnection()
-					.prepareStatement("UPDATE code SET metadata = ?::json WHERE id = ?;");
+			final PreparedStatement preparedStatement =
+					context.getConnection().prepareStatement("UPDATE code SET metadata = ?::json WHERE id = ?;");
 
 			UUID prevId = null;
 			Map<String, String> metadataMap = new HashMap<>();

@@ -1,15 +1,13 @@
 package db.migration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class V8__SimulationResultFiles extends BaseJavaMigration {
 

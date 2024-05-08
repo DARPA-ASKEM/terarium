@@ -15,7 +15,7 @@ import org.springframework.web.context.WebApplicationContext;
 @AutoConfigureMockMvc
 @SpringBootTest
 @Transactional
-@ActiveProfiles({ "local", "test" })
+@ActiveProfiles({"local", "test"})
 public class TerariumApplicationTests {
 	@Autowired
 	private WebApplicationContext context;
