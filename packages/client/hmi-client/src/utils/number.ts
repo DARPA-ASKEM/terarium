@@ -73,17 +73,32 @@ export function displayNumber(num: string): string {
 	return numberToNist(parseFloat(num).toString());
 }
 
+/**
+ * Scrubs the input string by removing all whitespace and checks if it can be parsed as a number.
+ *
+ * @param {string} v - The input string to scrub and parse.
+ * @returns {boolean} - Returns true if the scrubbed string can be parsed as a number (either in decimal or exponential form), otherwise returns false.
+ *
+ * The function performs the following checks:
+ * 1. If the last character is a decimal point, it returns false.
+ * 2. If the scrubbed string can be parsed as a number, it returns true.
+ * 3. If the scrubbed string is in exponential form (i.e., contains exactly one 'e' or 'E'), it checks if the part before the 'e' or 'E' can be parsed as a number and if the part after the 'e' or 'E' is an integer. If both conditions are met, it returns true.
+ */
 export function scrubAndParse(v) {
+	// remove all whitespace
 	const scrubbed = v.replace(/\s/g, '');
 
 	// check if last digit is a decimal point
 	if (scrubbed[scrubbed.length - 1] === '.') return false;
 
+	// check if the string is a number
 	if (!Number.isNaN(Number(scrubbed))) return true;
 
+	// check if the string is in exponential form and if there's only one 'e'/'E'
 	const parts = scrubbed.split(/[eE]/);
 	if (parts.length > 2) return false;
 
+	// check if the string is in exponential form and if the second part is an integer
 	if (parts.length === 2) {
 		if (Number(parts[0])) {
 			if (Number.isInteger(parts[1])) return true;

@@ -2,12 +2,12 @@
 	<div class="flex flex-column pl-8 gap-5">
 		<div class="w-2">
 			<label>normal input</label>
-			<tera-input-field v-model="teststring" label="Label" />
+			<tera-input v-model="teststring" label="Label" />
 		</div>
 
 		<div class="w-2">
 			<label>Error input</label>
-			<tera-input-field
+			<tera-input
 				label="Label"
 				:error-message="errormessage"
 				v-model="errorstring"
@@ -17,17 +17,17 @@
 
 		<div class="w-2">
 			<label>Disabled input</label>
-			<tera-input-field label="Label" model-value="Disabled" disabled />
+			<tera-input label="Label" model-value="Disabled" disabled />
 		</div>
 
 		<div class="w-2">
 			<label>Number input</label>
-			<tera-input-field label="Label" v-model="numberstring" type="number" />
+			<tera-input label="Label" v-model="numberstring" type="number" />
 		</div>
 
 		<div class="w-2">
 			<label>sci input</label>
-			<tera-input-field
+			<tera-input
 				v-model="scistring"
 				label="Label"
 				type="nist"
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import teraInputField from '@/components/widgets/tera-input-field.vue';
+import teraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 
 const teststring = ref<string>('');

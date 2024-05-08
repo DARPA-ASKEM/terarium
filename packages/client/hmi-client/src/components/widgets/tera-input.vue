@@ -30,9 +30,9 @@ const attrs = useAttrs();
 const error = ref('');
 const maskedValue = ref('');
 
-const textAlign = computed(() => (attrs.type === 'number' || isNistType.value ? 'right' : 'left'));
-
-const isNistType = computed(() => attrs.type === 'nist');
+const isNistType = attrs.type === 'nist';
+const textAlign = attrs.type === 'number' || isNistType ? 'right' : 'left';
+const getType = isNistType ? 'text' : (attrs.type as InputTypeHTMLAttribute);
 
 const focusInput = () => {
 	inputField.value?.focus();
@@ -40,17 +40,13 @@ const focusInput = () => {
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
-const getValue = () => (isNistType.value ? maskedValue.value : props.modelValue);
-
-const getType = computed<InputTypeHTMLAttribute>(() =>
-	isNistType.value ? 'text' : (attrs.type as InputTypeHTMLAttribute)
-);
+const getValue = () => (isNistType ? maskedValue.value : props.modelValue);
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 
-	if (isNistType.value) {
+	if (isNistType) {
 		maskedValue.value = value;
 		if (scrubAndParse(maskedValue.value)) {
 			// update the model value only when the value is a valid nist
@@ -67,21 +63,21 @@ const updateValue = (event: Event) => {
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isNistType.value) {
+		if (isNistType) {
 			maskedValue.value = numberToNist(newValue);
 		}
 	}
 );
 
 onMounted(() => {
-	if (isNistType.value) {
+	if (isNistType) {
 		maskedValue.value = numberToNist(props.modelValue);
 	}
 });
 
 const unmask = () => {
 	// convert back to a number when finished
-	if (isNistType.value && !getErrorMessage.value) {
+	if (isNistType && !getErrorMessage.value) {
 		emit('update:modelValue', nistToNumber(maskedValue.value));
 	}
 };
