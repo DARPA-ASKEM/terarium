@@ -1,21 +1,27 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapKeyColumn;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -34,7 +40,9 @@ public class Code extends TerariumAsset {
 	/* Files that contain dynamics */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	@JdbcTypeCode(SqlTypes.JSON)
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@MapKeyColumn(name = "fileName")
+	@JoinColumn(name = "code_id")
 	private Map<String, CodeFile> files;
 
 	/* The optional URL for where this code came from */
@@ -46,14 +54,13 @@ public class Code extends TerariumAsset {
 	/* The optional metadata for this code */
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
-	@ElementCollection
-	@Column(columnDefinition = "text")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Map<String, String> metadata;
 
-	@ManyToOne
-	@JoinColumn(name = "project_id")
-	@JsonBackReference
 	@TSOptional
+	@ManyToOne
+	@JsonBackReference
 	private Project project;
 
 	@Override

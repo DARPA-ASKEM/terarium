@@ -1,118 +1,143 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 /** Represents a column in a dataset */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
-public class DatasetColumn {
+@Entity
+public class DatasetColumn extends TerariumEntity {
 
-	/** Name of the column */
-	@Column(length = 255)
-	private String name;
+    /** Name of the column */
+    @Column(length = 255)
+    private String name;
 
-	/**
-	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
-	 */
-	@JsonAlias("data_type")
-	@Enumerated(EnumType.STRING)
-	private ColumnType dataType;
+    @TSOptional
+    @ManyToOne
+    @JoinColumn(name = "dataset_id")
+    @JsonBackReference
+    private Dataset dataset;
 
-	/** (Optional) String that describes the formatting of the value */
-	@TSOptional
-	@JsonAlias("format_str")
-	@Column(length = 255)
-	private String formatStr;
+    /**
+     * Datatype. One of: unknown, boolean, string, char, integer, int, float,
+     * double, timestamp, datetime, date, time
+     */
+    @JsonAlias("data_type")
+    @Enumerated(EnumType.STRING)
+    private ColumnType dataType;
 
-	/** Column annotations from the MIT data profiling tool */
-	@Column(columnDefinition = "text")
-	private List<String> annotations;
+    /** (Optional) String that describes the formatting of the value */
+    @TSOptional
+    @JsonAlias("format_str")
+    @Column(length = 255)
+    private String formatStr;
 
-	/** (Optional) Unformatted metadata about the dataset */
-	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
-	private Map<String, Object> metadata;
+    /** Column annotations from the MIT data profiling tool */
+    @Column(columnDefinition = "json")
+    @Type(JsonType.class)
+    private List<String> annotations;
 
-	/** (Optional) Grounding of ontological concepts related to the column */
-	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
-	private Grounding grounding;
+    /** (Optional) Unformatted metadata about the dataset */
+    @TSOptional
+    @Type(JsonType.class)
+    @Column(columnDefinition = "json")
+    private Map<String, Object> metadata;
 
-	@TSOptional
-	@Column(columnDefinition = "text")
-	private String description;
+    /** (Optional) Grounding of ontological concepts related to the column */
+    @TSOptional
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "grounding_id")
+    private Grounding grounding;
 
-	public void updateMetadata(final Map<String, Object> metadata) {
-		if (this.metadata == null) {
-			this.metadata = metadata;
-		} else {
-			this.metadata.putAll(metadata);
-		}
-	}
+    @TSOptional
+    @Column(columnDefinition = "text")
+    private String description;
 
-	@Override
-	public DatasetColumn clone() {
-		final DatasetColumn clone = new DatasetColumn();
+    public void updateMetadata(final Map<String, Object> metadata) {
+        if (this.metadata == null) {
+            this.metadata = metadata;
+        } else {
+            this.metadata.putAll(metadata);
+        }
+    }
 
-		clone.name = this.name;
-		clone.dataType = this.dataType;
-		clone.formatStr = this.formatStr;
-		if (this.annotations != null) {
-			clone.annotations = new ArrayList<>();
-			clone.annotations.addAll(this.annotations);
-		}
+    @Override
+    public DatasetColumn clone() {
+        final DatasetColumn clone = new DatasetColumn();
 
-		if (this.metadata != null) {
-			clone.metadata = new HashMap<>();
-			clone.metadata.putAll(this.metadata);
-		}
+        clone.name = this.name;
+        clone.dataType = this.dataType;
+        clone.formatStr = this.formatStr;
+        if (this.annotations != null) {
+            clone.annotations = new ArrayList<>();
+            clone.annotations.addAll(this.annotations);
+        }
 
-		if (this.grounding != null) clone.grounding = this.grounding.clone();
+        if (this.metadata != null) {
+            clone.metadata = new HashMap<>();
+            clone.metadata.putAll(this.metadata);
+        }
 
-		clone.description = this.description;
+        if (this.grounding != null)
+            clone.grounding = this.grounding.clone();
 
-		return clone;
-	}
+        clone.description = this.description;
 
-	public enum ColumnType {
-		@JsonAlias("unknown")
-		UNKNOWN,
-		@JsonAlias("boolean")
-		BOOLEAN,
-		@JsonAlias("string")
-		STRING,
-		@JsonAlias("char")
-		CHAR,
-		@JsonAlias("integer")
-		INTEGER,
-		@JsonAlias("int")
-		INT,
-		@JsonAlias("float")
-		FLOAT,
-		@JsonAlias("double")
-		DOUBLE,
-		@JsonAlias("timestamp")
-		TIMESTAMP,
-		@JsonAlias("datetime")
-		DATETIME,
-		@JsonAlias("date")
-		DATE,
-		@JsonAlias("time")
-		TIME
-	}
+        return clone;
+    }
+
+    public enum ColumnType {
+        @JsonAlias("unknown")
+        UNKNOWN,
+        @JsonAlias("boolean")
+        BOOLEAN,
+        @JsonAlias("string")
+        STRING,
+        @JsonAlias("char")
+        CHAR,
+        @JsonAlias("integer")
+        INTEGER,
+        @JsonAlias("int")
+        INT,
+        @JsonAlias("float")
+        FLOAT,
+        @JsonAlias("double")
+        DOUBLE,
+        @JsonAlias("timestamp")
+        TIMESTAMP,
+        @JsonAlias("datetime")
+        DATETIME,
+        @JsonAlias("date")
+        DATE,
+        @JsonAlias("time")
+        TIME
+    }
 }

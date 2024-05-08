@@ -1,22 +1,29 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hibernate.annotations.Type;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -39,7 +46,9 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 255)
 	private String userId;
 
-	/** ESGF id of the dataset. This will be null for datasets that are not from ESGF */
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 */
 	@TSOptional
 	@Column(length = 255)
 	private String esgfId;
@@ -53,14 +62,13 @@ public class Dataset extends TerariumAsset {
 	/** (Optional) list of file names associated with the dataset */
 	@TSOptional
 	@JsonAlias("file_names")
-	@ElementCollection
-	@Column(length = 1024)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<String> fileNames;
 
-	@ManyToOne
-	@JoinColumn(name = "project_id")
-	@JsonBackReference
 	@TSOptional
+	@ManyToOne
+	@JsonBackReference
 	private Project project;
 
 	@TSOptional
@@ -68,21 +76,25 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 1024)
 	private String datasetUrl;
 
-	/** (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets */
+	/**
+	 * (Optional) List of urls from which the dataset can be downloaded/fetched.
+	 * Used for ESGF datasets
+	 */
 	@TSOptional
-	@Column(length = 1024)
-	@ElementCollection
-	private List<String> datasetUrls;
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private List<String> datasetUrls = new ArrayList<>();
 
 	/** Information regarding the columns that make up the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@OneToMany(mappedBy = "dataset", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JsonManagedReference
 	private List<DatasetColumn> columns;
 
 	/** (Optional) Unformatted metadata about the dataset */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(columnDefinition = "text")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode metadata;
 
 	/** (Optional) Source of dataset */
@@ -90,9 +102,13 @@ public class Dataset extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private String source;
 
-	/** (Optional) Grounding of ontological concepts related to the dataset as a whole */
+	/**
+	 * (Optional) Grounding of ontological concepts related to the dataset as a
+	 * whole
+	 */
 	@TSOptional
-	@JdbcTypeCode(SqlTypes.JSON)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
 
 	@Override
@@ -120,9 +136,11 @@ public class Dataset extends TerariumAsset {
 			}
 		}
 
-		if (this.metadata != null) clone.metadata = this.metadata.deepCopy();
+		if (this.metadata != null)
+			clone.metadata = this.metadata.deepCopy();
 		clone.source = this.source;
-		if (this.grounding != null) clone.grounding = this.grounding.clone();
+		if (this.grounding != null)
+			clone.grounding = this.grounding.clone();
 
 		return clone;
 	}
