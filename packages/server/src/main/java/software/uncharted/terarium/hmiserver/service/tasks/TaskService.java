@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
-import org.aspectj.weaver.ast.Not;
 import org.redisson.api.RLock;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -40,9 +39,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
+import software.uncharted.terarium.hmiserver.models.task.TaskNotificationEventData;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -88,6 +90,7 @@ public class TaskService {
 			input = req.getInput();
 			userId = req.getUserId();
 			timeoutMinutes = req.getTimeoutMinutes();
+			notificationEventType = req.getNotificationEventType();
 			additionalProperties = req.getAdditionalProperties();
 		}
 
@@ -95,8 +98,10 @@ public class TaskService {
 			return new TaskResponse()
 					.setId(id)
 					.setStatus(status)
+					.setType(type)
 					.setUserId(userId)
 					.setScript(getScript())
+					.setNotificationEventType(notificationEventType)
 					.setAdditionalProperties(getAdditionalProperties());
 		}
 	}
@@ -216,6 +221,12 @@ public class TaskService {
 			taskIdCache.clear();
 			rLock.unlock();
 		}
+	}
+
+	private ClientEventType ensureNotificationEventType(final ClientEventType eventType) {
+		return eventType == null
+			? ClientEventType.TASK_UNDEFINED_EVENT
+			: eventType;
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
@@ -432,13 +443,30 @@ public class TaskService {
 			try {
 				// create the notification event
 				final NotificationEvent event = new NotificationEvent();
-				event.setData(resp.getAdditionalProperties());
+				event.setData(TaskNotificationEventData.createFrom(resp));
 
 				log.info("Creating notification event under group id: {}", resp.getId());
 
 				notificationService.createNotificationEvent(resp.getId(), event);
+
 			} catch (final Exception e) {
 				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			}
+
+			try {
+				// send the client event
+				final ClientEventType clientEventType = ensureNotificationEventType(resp.getNotificationEventType());
+				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+
+				final ClientEvent<TaskNotificationEventData> clientEvent = ClientEvent.<TaskNotificationEventData>builder()
+					.notificationGroupId(resp.getId())
+					.type(clientEventType)
+					.data(TaskNotificationEventData.createFrom(resp))
+					.build();
+				clientEventService.sendToUser(clientEvent, resp.getUserId());
+
+			} catch (final Exception e) {
+				log.error("Failed to send client event for for task {}", resp.getId(), e);
 			}
 
 			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
@@ -552,7 +580,7 @@ public class TaskService {
 				// create the notification group for the task
 				final NotificationGroup group = new NotificationGroup();
 				group.setId(req.getId()); // use the task id
-				group.setType(req.getType().toString());
+				group.setType(ensureNotificationEventType(req.getNotificationEventType()).toString());
 				group.setUserId(req.getUserId());
 				notificationService.createNotificationGroup(group);
 

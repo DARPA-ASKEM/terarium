@@ -18,7 +18,11 @@ public class TaskRequest implements Serializable {
 	private String script;
 	private byte[] input;
 	private int timeoutMinutes = 30;
+
+	private Object type;
+	private Object notificationEventType;
 	private Object additionalProperties;
+
 	protected String userId;
 
 	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
@@ -27,6 +31,8 @@ public class TaskRequest implements Serializable {
 				.setStatus(status)
 				.setScript(script)
 				.setUserId(userId)
+				.setType(type)
+				.setNotificationEventType(notificationEventType)
 				.setAdditionalProperties(additionalProperties)
 				.setStdout(stdout)
 				.setStderr(stderr);

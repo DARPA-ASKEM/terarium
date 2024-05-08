@@ -8,6 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 
 @Accessors(chain = true)
 @NoArgsConstructor
@@ -15,10 +18,14 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @TSModel
 public class TaskResponse implements Serializable {
 	private UUID id;
+	private TaskType type;
 	private String script;
 	private TaskStatus status;
 	private byte[] output;
 	protected String userId;
+
+	@TSOptional
+	private ClientEventType notificationEventType;
 
 	// The value of this will be whatever it was set to on the TaskRequest.
 	private Object additionalProperties;

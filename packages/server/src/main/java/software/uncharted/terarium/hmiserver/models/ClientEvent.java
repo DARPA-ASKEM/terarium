@@ -20,10 +20,10 @@ public class ClientEvent<T> implements Serializable {
 	private ClientEventType type;
 
 	@TSOptional
-	private String projectId;
+	private UUID projectId;
 
 	@TSOptional
-	private String notificationGroupId;
+	private UUID notificationGroupId;
 
 	private T data;
 }

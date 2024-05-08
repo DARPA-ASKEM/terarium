@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -131,6 +132,7 @@ public class GoLLMController {
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setNotificationEventType(ClientEventType.TASK_GOLLM_MODEL_CARD);
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 			props.setDocumentId(documentId);

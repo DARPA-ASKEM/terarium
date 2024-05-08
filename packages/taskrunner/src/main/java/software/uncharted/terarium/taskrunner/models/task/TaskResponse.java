@@ -15,6 +15,8 @@ public class TaskResponse implements Serializable {
 	private String script;
 	private TaskStatus status;
 	private byte[] output;
+	private Object type;
+	private Object notificationEventType;
 	private Object additionalProperties;
 	protected String userId;
 	private String stdout;
