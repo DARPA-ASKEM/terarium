@@ -8,6 +8,7 @@
 			@input="updateValue"
 			:style="{ 'text-align': textAlign }"
 			@blur="unmask"
+			:type="getType"
 		/>
 	</div>
 	<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
@@ -15,7 +16,7 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { computed, onMounted, ref, useAttrs, watch } from 'vue';
+import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
 
 const props = defineProps<{
 	modelValue: string;
@@ -40,6 +41,10 @@ const focusInput = () => {
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
 const getValue = () => (isNistType.value ? maskedValue.value : props.modelValue);
+
+const getType = computed<InputTypeHTMLAttribute>(() =>
+	isNistType.value ? 'text' : (attrs.type as InputTypeHTMLAttribute)
+);
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
