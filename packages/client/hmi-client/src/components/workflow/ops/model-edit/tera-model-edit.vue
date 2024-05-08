@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -132,7 +132,7 @@ interface SaveOptions {
 }
 
 const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
@@ -142,7 +142,7 @@ const outputs = computed(() => {
 	}
 	return [];
 });
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
@@ -283,18 +283,9 @@ const buildJupyterContext = () => {
 	};
 };
 
-const inputChangeHandler = async () => {
-	const input = props.node.inputs[0];
-	if (!input) return;
-
-	let modelId: string | null = null;
-	if (input.type === 'modelId') {
-		modelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
+const onSelectModelOutput = async () => {
+	const modelId = activeOutput.value?.value?.[0];
 	if (!modelId) return;
-
 	amr.value = await getModel(modelId);
 	if (!amr.value) return;
 
@@ -308,12 +299,8 @@ const inputChangeHandler = async () => {
 				// when coming from output dropdown change we should shutdown first
 				kernelManager.shutdown();
 			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 			isKernelReady.value = true;
-		}
-
-		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper();
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
@@ -326,7 +313,7 @@ const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPor
 			id: uuidv4(),
 			label: savedModel.name,
 			type: 'modelId',
-			state: _.cloneDeep(props.node.state),
+			state: cloneDeep(props.node.state),
 			value: [savedModel.id]
 		});
 	}
@@ -338,7 +325,7 @@ const initializeAceEditor = (editorInstance: any) => {
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
 
 	// for now only save the last code executed, may want to save all code executed in the future
@@ -362,17 +349,35 @@ watch(
 	async () => {
 		// Update selected output
 		if (props.node.active) {
-			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
-
-			await inputChangeHandler();
+			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) as any;
+			await onSelectModelOutput();
 		}
 	},
 	{ immediate: true }
 );
 
 onMounted(async () => {
-	await inputChangeHandler();
+	if (isEmpty(outputs.value)) {
+		const input = props.node.inputs[0];
+		if (!input) return;
+
+		// Get input model id
+		let modelId: string | null = null;
+		if (input.type === 'modelId') {
+			modelId = input.value?.[0];
+		} else if (input.type === 'modelConfigId') {
+			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		}
+		if (!modelId) return;
+
+		// Get model
+		const originalModel = await getModel(modelId);
+		if (!originalModel) return;
+
+		// Set default output which is the input (original model)
+		onSaveModel(originalModel);
+	}
 });
 
 onUnmounted(() => {
