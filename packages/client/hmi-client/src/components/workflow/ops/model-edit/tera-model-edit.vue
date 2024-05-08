@@ -165,7 +165,8 @@ const sampleAgentQuestions = [
 	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
-	'Rename the transition infection to inf.'
+	'Rename the transition infection to inf.',
+	'Change rate law of inf to S * I * z.'
 ];
 
 const contextLanguage = ref<string>('python3');
