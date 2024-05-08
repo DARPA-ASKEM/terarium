@@ -1,5 +1,5 @@
 <template>
-	<div :class="{ error: errorMessage }" @click.self.stop="focusInput">
+	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input
 			v-bind="attrs"
@@ -10,12 +10,12 @@
 			@blur="unmask"
 		/>
 	</div>
-	<aside v-if="errorMessage"><i class="pi pi-exclamation-circle" /> {{ errorMessage }}</aside>
+	<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 </template>
 
 <script setup lang="ts">
-import { maskToNistNumber, nistToNumber } from '@/utils/number';
-import { computed, ref, useAttrs } from 'vue';
+import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
+import { computed, onMounted, ref, useAttrs, watch } from 'vue';
 
 const props = defineProps<{
 	modelValue: string;
@@ -26,6 +26,8 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue']);
 const inputField = ref<HTMLInputElement | null>(null);
 const attrs = useAttrs();
+const error = ref('');
+const maskedValue = ref('');
 
 const textAlign = computed(() =>
 	attrs.type === 'number' || attrs.type === 'sci' ? 'right' : 'left'
@@ -34,26 +36,48 @@ const focusInput = () => {
 	inputField.value?.focus();
 };
 
-const getValue = () =>
-	attrs.type === 'sci' ? maskToNistNumber(props.modelValue) : props.modelValue;
+const getErrorMessage = computed(() => props.errorMessage || error.value);
+
+const getValue = () => (attrs.type === 'sci' ? maskedValue.value : props.modelValue);
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 
 	if (attrs.type === 'sci') {
-		// Mask the value before emitting the update
-		const maskedValue = maskToNistNumber(value);
-
-		emit('update:modelValue', maskedValue);
+		maskedValue.value = value;
+		if (scrubAndParse(value)) {
+			// update the model value only when the value is a valid nist
+			error.value = '';
+			emit('update:modelValue', maskedValue.value);
+		} else {
+			error.value = 'Invalid number';
+		}
 	} else {
 		emit('update:modelValue', value);
 	}
 };
 
-// convert back to a number when finished
+watch(
+	() => props.modelValue,
+	(newValue) => {
+		if (attrs.type === 'sci') {
+			maskedValue.value = numberToNist(newValue);
+		}
+	}
+);
+
+onMounted(() => {
+	if (attrs.type === 'sci') {
+		maskedValue.value = numberToNist(props.modelValue);
+	}
+});
+
 const unmask = () => {
-	if (attrs.type === 'sci') emit('update:modelValue', nistToNumber(props.modelValue));
+	// convert back to a number when finished
+	if (attrs.type === 'sci' && !getErrorMessage.value) {
+		emit('update:modelValue', nistToNumber(maskedValue.value));
+	}
 };
 </script>
 

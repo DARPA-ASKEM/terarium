@@ -15,13 +15,14 @@ export function exponentialToNumber(num: string): string {
  * @returns {string} The number in NIST form.
  */
 export function numberToNist(num: string) {
-	num = parseFloat(num).toString();
+	num = num.replace(/\s/g, '');
+
+	if (Number.isNaN(Number(num))) return '';
 
 	// Split the input by decimal point
 	let [integerPart, decimalPart] = num.split('.');
 
 	// Format the integer part
-
 	if (integerPart.length > 4 || decimalPart?.length > 4) {
 		integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
@@ -69,60 +70,24 @@ export function displayNumber(num: string): string {
 	digitString = digitString.replace('.', '');
 
 	if (digitString.length > 6) return parseFloat(num).toExponential(3);
-	return numberToNist(num);
+	return numberToNist(parseFloat(num).toString());
 }
 
-export function maskToNistNumber(input: string): string {
-	// Remove any characters that are not digits, '.', '+', '-', or 'e'
-	let maskedInput = input.replace(/[^0-9e+-.]/g, '');
+export function scrubAndParse(v) {
+	const scrubbed = v.replace(/\s/g, '');
 
-	// If '.' is the first character, replace it with '0.'
-	if (maskedInput.startsWith('.')) {
-		maskedInput = `0${maskedInput}`;
-	}
+	// check if last digit is a decimal point
+	if (scrubbed[scrubbed.length - 1] === '.') return false;
 
-	// Ensure '+' is only directly after 'e'
-	maskedInput = maskedInput.replace(/([^e])\+/g, '$1');
+	if (!Number.isNaN(Number(scrubbed))) return true;
 
-	// Ensure '-' is only the first character or directly after 'e'
-	maskedInput = maskedInput.replace(/(?<!^)(?<!e)-/g, '');
+	const parts = scrubbed.split(/[eE]/);
+	if (parts.length > 2) return false;
 
-	// Ensure there is only one decimal point
-	const decimalIndex = maskedInput.indexOf('.');
-	if (decimalIndex !== -1) {
-		maskedInput =
-			maskedInput.substring(0, decimalIndex + 1) +
-			maskedInput.substring(decimalIndex + 1).replace(/\./g, '');
-	}
-
-	// Split the input by 'e' if it's present
-	let [base, exponent] = maskedInput.split('e');
-
-	// If the base part has a decimal point, ensure that there are no more than two decimal places
-	if (base.includes('.')) {
-		let [integerPart, decimalPart] = base.split('.');
-
-		if (integerPart.length > 4 || decimalPart?.length > 4) {
-			// Group the integer part in groups of 3 digits
-			integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-
-			// Group the decimal part in groups of 3 digits
-			decimalPart = decimalPart.replace(/(\d{3})(?=\d)/g, '$1 ');
+	if (parts.length === 2) {
+		if (Number(parts[0])) {
+			if (Number.isInteger(parts[1])) return true;
 		}
-
-		base = `${integerPart}.${decimalPart}`;
-	} else if (base.length > 4) {
-		// If there's no decimal point, just group the integer part in groups of 3 digits
-		base = base.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-	}
-
-	// If an exponent part is present, remove any decimal points from it
-	if (exponent !== undefined) {
-		exponent = exponent.replace(/\./g, '');
-		maskedInput = `${base}e${exponent}`;
-	} else {
-		maskedInput = base;
-	}
-
-	return maskedInput;
+	} else if (Number(parts[0])) return true;
+	return false;
 }
