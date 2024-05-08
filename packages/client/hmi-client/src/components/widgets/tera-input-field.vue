@@ -50,7 +50,7 @@ const updateValue = (event: Event) => {
 		if (scrubAndParse(maskedValue.value)) {
 			// update the model value only when the value is a valid nist
 			error.value = '';
-			emit('update:modelValue', maskedValue.value);
+			maskedValue.value = numberToNist(maskedValue.value);
 		} else {
 			error.value = 'Invalid number';
 		}
