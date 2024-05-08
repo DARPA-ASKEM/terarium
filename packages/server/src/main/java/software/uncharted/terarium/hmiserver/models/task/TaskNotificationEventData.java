@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
-import lombok.Value;
-import lombok.Builder;
-
 import java.io.Serializable;
 import java.util.UUID;
-
+import lombok.Builder;
+import lombok.Value;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 

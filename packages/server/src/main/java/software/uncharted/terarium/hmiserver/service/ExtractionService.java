@@ -109,8 +109,7 @@ public class ExtractionService {
 		@Override
 		public ClientEvent<ExtractionStatusUpdate> produceClientEvent(
 				final Double t, final String message, final String error) {
-			final ExtractionStatusUpdate update =
-					new ExtractionStatusUpdate(documentId, t, message, error);
+			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
 			return ClientEvent.<ExtractionStatusUpdate>builder()
 					.type(this.clientEventType)
 					.notificationGroupId(this.getNotificationGroupId())

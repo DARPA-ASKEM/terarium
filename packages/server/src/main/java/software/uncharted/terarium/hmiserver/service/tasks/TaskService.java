@@ -451,11 +451,12 @@ public class TaskService {
 				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
 				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
 
-				final ClientEvent<TaskNotificationEventData> clientEvent = ClientEvent.<TaskNotificationEventData>builder()
-					.notificationGroupId(resp.getId())
-					.type(clientEventType)
-					.data(TaskNotificationEventData.createFrom(resp))
-					.build();
+				final ClientEvent<TaskNotificationEventData> clientEvent =
+						ClientEvent.<TaskNotificationEventData>builder()
+								.notificationGroupId(resp.getId())
+								.type(clientEventType)
+								.data(TaskNotificationEventData.createFrom(resp))
+								.build();
 				clientEventService.sendToUser(clientEvent, resp.getUserId());
 
 			} catch (final Exception e) {
