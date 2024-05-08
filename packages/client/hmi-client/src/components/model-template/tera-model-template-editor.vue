@@ -8,14 +8,14 @@
 			<section class="template-options">
 				<header>Model templates</header>
 				<ul>
-					<li v-for="(model, index) in modelTemplatingService.modelTemplateOptions" :key="index">
+					<li v-for="(card, index) in modelTemplatingService.modelTemplateCardOptions" :key="index">
 						<tera-model-template
-							:model="model"
+							:model="card.model"
 							:is-editable="false"
 							is-decomposed
 							:style="isDecomposedLoading && { cursor: 'wait' }"
 							:draggable="!isDecomposedLoading"
-							@dragstart="sidebarTemplateToAdd = model"
+							@dragstart="sidebarTemplateToAdd = cloneDeep(card)"
 						/>
 					</li>
 				</ul>
@@ -70,7 +70,7 @@
 					@dragging="(event) => updatePosition(event, card)"
 				>
 					<tera-model-template
-						:model="currentCanvas.models[index]"
+						:model="currentCanvas.cards[index].model"
 						is-editable
 						:is-decomposed="currentModelFormat === EditorFormat.Decomposed"
 						:id="card.id"
@@ -78,8 +78,8 @@
 							(name: string) =>
 								modelTemplatingService.updateDecomposedTemplateNameInKernel(
 									kernelManager,
-									currentCanvas.models[index],
-									flattenedCanvas.models[0],
+									currentCanvas.cards[index].model,
+									flattenedCanvas.cards[0].model,
 									name,
 									outputCode,
 									syncWithMiraModel
@@ -108,7 +108,7 @@
 					:style="{ width: 'fit-content', top: `${junction.y}px`, left: `${junction.x}px` }"
 					@dragging="(event) => updatePosition(event, junction)"
 				>
-					<tera-model-junction :junction="junction" :template-cards="cards" />
+					<tera-model-junction :junction="junction" :cards="cards" />
 				</tera-canvas-item>
 			</template>
 			<template #background>
@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash'; // debounce
+import { isEmpty, isEqual, cloneDeep } from 'lodash'; // debounce
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { getAStarPath } from '@graph-scaffolder/core';
 import * as d3 from 'd3';
@@ -193,24 +193,22 @@ const currentCanvas = computed(() =>
 		? decomposedCanvas.value
 		: flattenedCanvas.value
 );
-const cards = computed<ModelTemplateCard[]>(
-	() => currentCanvas.value.models.map(({ metadata }) => metadata?.templateCard) ?? []
-);
+const cards = computed<ModelTemplateCard[]>(() => currentCanvas.value.cards);
 const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
 
-const sidebarTemplateToAdd = ref<Model | null>(null);
+const sidebarTemplateToAdd = ref<ModelTemplateCard | null>(null);
 const newEdge = ref();
 
-const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.models));
+const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.cards));
 const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
-	return cards.value.some(({ x, y, width, height }) => {
-		const withinXRange = p.x >= x - buffer && p.x <= x + width + buffer;
-		const withinYRange = p.y >= y - buffer && p.y <= y + height + buffer;
+	return cards.value.some(({ x, y }) => {
+		const withinXRange = p.x >= x - buffer && p.x <= x + buffer;
+		const withinYRange = p.y >= y - buffer && p.y <= y + buffer;
 		return withinXRange && withinYRange;
 	});
 }
@@ -348,15 +346,13 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function updateNewCardPosition(event) {
-	if (!sidebarTemplateToAdd.value?.metadata) return;
-	sidebarTemplateToAdd.value.metadata.templateCard.x =
-		(event.offsetX - canvasTransform.x) / canvasTransform.k;
-	sidebarTemplateToAdd.value.metadata.templateCard.y =
-		(event.offsetY - canvasTransform.y) / canvasTransform.k;
+	if (!sidebarTemplateToAdd.value) return;
+	sidebarTemplateToAdd.value.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	sidebarTemplateToAdd.value.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function onDrop(event) {
-	if (!sidebarTemplateToAdd.value?.metadata) return;
+	if (!sidebarTemplateToAdd.value) return;
 
 	updateNewCardPosition(event);
 
@@ -373,13 +369,11 @@ function onDrop(event) {
 	else {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
-		const decomposedTemplateToAdd = modelTemplatingService.prepareDecomposedTemplateAddition(
+		modelTemplatingService.prepareDecomposedTemplateAddition(
 			flattenedCanvas.value,
 			sidebarTemplateToAdd.value
 		);
-		if (decomposedTemplateToAdd) {
-			modelTemplatingService.addTemplateInView(flattenedCanvas.value, decomposedTemplateToAdd);
-		}
+		modelTemplatingService.addTemplateInView(flattenedCanvas.value, sidebarTemplateToAdd.value);
 	}
 
 	sidebarTemplateToAdd.value = null;
