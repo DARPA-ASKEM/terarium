@@ -14,7 +14,7 @@
 								<i class="pi pi-share-alt" /><span>Models</span
 								><span>(AMR, sbml, vensim, stella)</span>
 							</div>
-							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
+							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf, rds)</span></div>
 						</div>
 						<tera-drag-and-drop-importer
 							:accept-types="[
@@ -32,7 +32,8 @@
 								AcceptedTypes.MDL,
 								AcceptedTypes.XMILE,
 								AcceptedTypes.ITMX,
-								AcceptedTypes.STMX
+								AcceptedTypes.STMX,
+								AcceptedTypes.RDS
 							]"
 							:accept-extensions="[
 								AcceptedExtensions.PDF,
@@ -49,7 +50,8 @@
 								AcceptedExtensions.MDL,
 								AcceptedExtensions.XMILE,
 								AcceptedExtensions.ITMX,
-								AcceptedExtensions.STMX
+								AcceptedExtensions.STMX,
+								AcceptedExtensions.RDS
 							]"
 							:import-action="processFiles"
 							:progress="progress"
@@ -115,9 +117,10 @@ const importedFiles = ref<File[]>([]);
 
 async function processFiles(files: File[], description: string) {
 	return files.map(async (file) => {
-		switch (file.name.split('.').pop()) {
+		switch (file.name.toLowerCase().split('.').pop()) {
 			case AcceptedExtensions.CSV:
 			case AcceptedExtensions.NC:
+			case AcceptedExtensions.RDS:
 				return processDataset(file, description);
 			case AcceptedExtensions.PDF:
 			case AcceptedExtensions.TXT:

@@ -122,8 +122,10 @@ const addFiles = (addedFiles: File[] | undefined) => {
 			// if we do not have a file type specified, check to see if the name ends with an accepted extension
 			const addedFile = addedFiles[i];
 			if (
-				props.acceptTypes.includes(addedFile.type as AcceptedTypes) ||
-				props.acceptExtensions.includes(addedFile.name.split('.').pop() as AcceptedExtensions)
+				props.acceptTypes.includes(addedFile.type.toLowerCase() as AcceptedTypes) ||
+				props.acceptExtensions.includes(
+					addedFile.name.toLowerCase().split('.').pop() as AcceptedExtensions
+				)
 			) {
 				// only add files that weren't added before
 				const index = importFiles.value.findIndex((item) => item.name === addedFile.name);
@@ -189,13 +191,12 @@ const removeFile = (index: number) => {
 	importFiles.value.splice(index, 1);
 };
 
-async function processFiles(files) {
+async function processFiles(files: File[]) {
 	isProcessing.value = true;
 	const r = await props.importAction(files, csvDescription.value);
 	processResponse.value = await Promise.all(r);
 	isProcessing.value = false;
 	emit('import-completed', processResponse.value);
-	files.value = [];
 }
 
 watch(

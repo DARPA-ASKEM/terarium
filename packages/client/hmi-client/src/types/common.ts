@@ -149,7 +149,8 @@ export enum AcceptedTypes {
 	MDL = `application/vnd.vensim.mdl`,
 	XMILE = 'application/vnd.stella.xmile',
 	ITMX = 'application/vnd.stella.itmx',
-	STMX = 'application/vnd.stella.stmx'
+	STMX = 'application/vnd.stella.stmx',
+	RDS = 'application/x-rds'
 }
 
 export enum AcceptedExtensions {
@@ -172,7 +173,8 @@ export enum AcceptedExtensions {
 	// Stella formats
 	XMILE = 'xmile',
 	ITMX = 'itmx',
-	STMX = 'stmx'
+	STMX = 'stmx',
+	RDS = 'rds'
 }
 
 export enum AMRSchemaNames {
