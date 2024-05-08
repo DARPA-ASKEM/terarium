@@ -5,13 +5,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -48,12 +41,24 @@ import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
+
+import javax.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/code-asset")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class TDSCodeController {
+
+	final Messages messages;
 
 	final JsDelivrProxy jsdelivrProxy;
 
@@ -220,10 +225,14 @@ public class TDSCodeController {
 			final Optional<Code> updated = codeService.updateAsset(code);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final NotFoundException e) {
+			log.error("Unable to find code resource", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.not-found"));
 		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update code resource");
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.unable-to-update"));
 		}
 	}
 
