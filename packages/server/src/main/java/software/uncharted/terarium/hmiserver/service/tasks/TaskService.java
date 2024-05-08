@@ -574,7 +574,8 @@ public class TaskService {
 				// create the notification group for the task
 				final NotificationGroup group = new NotificationGroup();
 				group.setId(req.getId()); // use the task id
-				group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+				group.setType(
+						TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
 				group.setUserId(req.getUserId());
 				group.setProjectId(req.getProjectId());
 
