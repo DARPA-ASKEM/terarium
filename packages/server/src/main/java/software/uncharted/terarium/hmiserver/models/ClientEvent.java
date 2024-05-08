@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models;
 
 import java.io.Serializable;
 import java.util.UUID;
-
 import lombok.Builder;
 import lombok.Value;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
