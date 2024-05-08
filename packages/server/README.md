@@ -158,10 +158,10 @@ To add a `.sql` migration, add the migraiton file to the `resources/db/migration
 
 ### .java migrations:
 
-To add a `.java` migration to the `packages/server/src/main/java/software/uncharted/terarium/hmiserver/migration` dir in the following form:
+To add a `.java` migration to the `packages/server/src/main/java/db/migration` dir in the following form:
 
 ```java
-package software.uncharted.terarium.hmiserver.migration;
+package db.migration;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;

@@ -26,6 +26,8 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Transform transform;
 
 	@Type(JsonType.class)
