@@ -2,6 +2,13 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
 import jakarta.validation.constraints.NotNull;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,14 +18,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -56,10 +55,7 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> createProjectAsset(
-			final Project project,
-			final AssetType assetType,
-			final TerariumAsset asset
-	) {
+			final Project project, final AssetType assetType, final TerariumAsset asset) {
 		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
 		projectAsset.setAssetId(asset.getId());
