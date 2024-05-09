@@ -7,6 +7,7 @@ import {
 	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
+	ProgressState,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
@@ -205,7 +206,7 @@ export interface NotificationItem {
 	type: ClientEventType;
 	assetId: string;
 	assetName: string;
-	status: 'Completed' | 'Failed' | 'Running';
+	status: ProgressState;
 	msg: string;
 	error: string;
 	progress: number;

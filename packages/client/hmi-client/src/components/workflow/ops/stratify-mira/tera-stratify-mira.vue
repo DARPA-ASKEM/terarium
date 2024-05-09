@@ -39,6 +39,7 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
+    <!--
 			<tera-drilldown-section>
 				<header class="pt-3 inline-flex lg:justify-content-between">
 					<span class="mt-3 ml-4">Code Editor - Python</span>
@@ -50,6 +51,18 @@
 						class="ml-4"
 					/>
 				</header>
+        -->
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="[]"
+						:context-language="'python3'"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => (llmThought = data)"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -87,7 +100,7 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="stratifiedAmr"
 		:model="stratifiedAmr"
 		:is-visible="showSaveModelModal"
@@ -104,8 +117,10 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
@@ -171,6 +186,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmThought = ref();
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -180,6 +196,11 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 
 const stratifyModel = () => {
 	stratifyRequest();
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+	saveCodeToState(data.content.code, false);
 };
 
 const resetModel = () => {
@@ -465,6 +486,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .code-executed-warning {
 	background-color: #ffe6e6;
 	color: #cc0000;

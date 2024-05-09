@@ -12,6 +12,8 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+    projectId?: string;
+    notificationGroupId?: string;
     data: T;
 }
 
@@ -22,15 +24,18 @@ export interface ClientLog {
     args?: string[];
 }
 
-export interface TerariumAsset {
-    id?: string;
+export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
     deletedOn?: Date;
     temporary?: boolean;
     publicAsset?: boolean;
+}
+
+export interface TerariumEntity {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
 }
 
 export interface User {
@@ -93,9 +98,9 @@ export interface CsvColumnStats {
     sd: number;
 }
 
-export interface Grounding {
+export interface Grounding extends TerariumEntity {
     identifiers: Identifier[];
-    context?: { [index: string]: any };
+    context?: any;
 }
 
 export interface Identifier {
@@ -127,9 +132,10 @@ export interface Code extends TerariumAsset {
     project?: Project;
 }
 
-export interface CodeFile {
-    language: ProgrammingLanguage;
+export interface CodeFile extends TerariumEntity {
+    fileName: string;
     dynamics: Dynamics;
+    language: ProgrammingLanguage;
 }
 
 export interface Dynamics {
@@ -165,16 +171,18 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
+    project?: Project;
 }
 
-export interface DatasetColumn {
+export interface DatasetColumn extends TerariumEntity {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     grounding?: Grounding;
     description?: string;
+    dataset?: Dataset;
 }
 
 export interface AddDocumentAssetFromXDDRequest {
@@ -404,6 +412,7 @@ export interface Project extends TerariumAsset {
      */
     projectAssets: ProjectAsset[];
     codeAssets: Code[];
+    datasetAssets: Dataset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -535,7 +544,6 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
-    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
@@ -607,22 +615,18 @@ export interface EntitySimilarityResult {
     similarity: number;
 }
 
-export interface NotificationEvent {
-    id: string;
+export interface NotificationEvent extends TerariumEntity {
     progress: number;
     state: ProgressState;
-    createdOn: Date;
     acknowledgedOn: Date;
     data: any;
     notificationGroup: NotificationGroup;
 }
 
-export interface NotificationGroup {
-    id: string;
+export interface NotificationGroup extends TerariumEntity {
     userId: string;
     type: string;
     projectId?: string;
-    createdOn: Date;
     notificationEvents: NotificationEvent[];
 }
 
@@ -1258,6 +1262,8 @@ export enum ClientEventType {
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
 }
 
 export enum FileType {

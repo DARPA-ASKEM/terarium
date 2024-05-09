@@ -532,7 +532,7 @@ public class TDSCodeController {
 						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get code");
 			}
 			final CodeFile codeFile = new CodeFile();
-			codeFile.setProgrammingLanguageFromFileName(fileName);
+			codeFile.setFileNameAndProgrammingLanguage(fileName);
 
 			Map<String, CodeFile> fileMap = code.get().getFiles();
 
