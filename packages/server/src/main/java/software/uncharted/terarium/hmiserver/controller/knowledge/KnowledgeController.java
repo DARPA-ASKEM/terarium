@@ -403,7 +403,7 @@ public class KnowledgeController {
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
-			codeFile.setProgrammingLanguageFromFileName(filename);
+			codeFile.setFileNameAndProgrammingLanguage(filename);
 
 			if (code.getFiles() == null) {
 				code.setFiles(new HashMap<>());
