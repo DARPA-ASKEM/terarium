@@ -124,7 +124,18 @@ public class DataMigrationESToPG {
 
 				if (!assets.isEmpty()) {
 					log.info("Saving {} rows to SQL...", assets.size());
-					service.getRepository().saveAll(assets);
+					long failed = 0;
+					for (final T asset : assets) {
+						try {
+							service.getRepository().save(asset);
+						} catch (final Exception e) {
+							log.warn("Failed to insert id: {}", asset.getId(), e);
+							failed += 1;
+						}
+					}
+					if (failed == assets.size()) {
+						throw new RuntimeException("All assets faield to insert");
+					}
 				}
 
 				if (Objects.equals(lastId, lastPagesLastId) || assets.size() < PAGE_SIZE) {

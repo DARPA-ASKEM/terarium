@@ -33,8 +33,7 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	private CurrentUserService currentUserService;
 
 	ClientEvent<ExtractionStatusUpdate> produceClientEvent(final Double t, final String message, final String error) {
-		final ExtractionStatusUpdate update =
-				new ExtractionStatusUpdate(UUID.randomUUID(), UUID.randomUUID(), t, message, error);
+		final ExtractionStatusUpdate update = new ExtractionStatusUpdate(UUID.randomUUID(), t, message, error);
 		return ClientEvent.<ExtractionStatusUpdate>builder()
 				.type(ClientEventType.HEARTBEAT)
 				.data(update)
