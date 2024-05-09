@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
@@ -26,15 +26,6 @@ const thought = computed(() => {
 	});
 	return aString;
 });
-
-// Set model, modelNodeOptions
-watch(
-	() => props.llmThoughts,
-	async () => {
-		console.log(props.llmThoughts);
-	},
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
