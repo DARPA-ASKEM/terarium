@@ -206,7 +206,6 @@ const syncWithMiraModel = (data: any) => {
 	} else {
 		amr.value = updatedModel;
 		readyToSaveOutputModel.value = true;
-		console.log(amr.value, 'updated model in ui');
 	}
 };
 
