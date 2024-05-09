@@ -12,6 +12,8 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+    projectId?: string;
+    notificationGroupId?: string;
     data: T;
 }
 
@@ -98,7 +100,7 @@ export interface CsvColumnStats {
 
 export interface Grounding extends TerariumEntity {
     identifiers: Identifier[];
-    context?: { [index: string]: any };
+    context?: any;
 }
 
 export interface Identifier {
@@ -177,7 +179,7 @@ export interface DatasetColumn extends TerariumEntity {
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     grounding?: Grounding;
     description?: string;
     dataset?: Dataset;
@@ -543,7 +545,6 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
-    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
@@ -1287,6 +1288,8 @@ export enum ClientEventType {
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
 }
 
 export enum FileType {

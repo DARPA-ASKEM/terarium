@@ -16,7 +16,7 @@ import java.util.Map;
  * the object.
  *
  * <p>This causes unwanted behavior for classes that we specifically override to behave a particular way with jackson.
- * Ex. classes that extend SupportsAdditionalProperties.
+ * Ex. classes that extend SupportAdditionalProperties.
  *
  * <p>This code is coped from
  * https://github.com/vladmihalcea/hypersistence-utils/blob/master/hypersistence-utils-hibernate-62/src/main/java/io/hypersistence/utils/hibernate/type/util/ObjectMapperJsonSerializer.java
