@@ -54,8 +54,7 @@ public class CodeFile extends TerariumEntity {
 		final CodeFile clone = new CodeFile();
 		clone.fileName = this.fileName;
 		clone.language = this.language;
-		if(this.dynamics != null)
-			clone.dynamics = this.dynamics.clone();
+		if (this.dynamics != null) clone.dynamics = this.dynamics.clone();
 		return clone;
 	}
 }

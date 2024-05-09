@@ -1,6 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +17,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.ProgrammingLanguage;
 
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 public class CodeServiceTests extends TerariumApplicationTests {
 
 	@Autowired
@@ -27,12 +24,11 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 	static ObjectMapper objectMapper = new ObjectMapper();
 
-
-	static CodeFile createCodeFile(final String name){
-		return new CodeFile().setFileName(name).setLanguage(ProgrammingLanguage.PYTHON).setDynamics(
-			new Dynamics().setName("hello").setDescription("world")
-		);
-
+	static CodeFile createCodeFile(final String name) {
+		return new CodeFile()
+				.setFileName(name)
+				.setLanguage(ProgrammingLanguage.PYTHON)
+				.setDynamics(new Dynamics().setName("hello").setDescription("world"));
 	}
 
 	static Code createCode(final String key) {
@@ -97,8 +93,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
 		final Code code = codeService.createAsset(createCode("0"));
-		final Code fetchedCode =
-			codeService.getAsset(code.getId()).get();
+		final Code fetchedCode = codeService.getAsset(code.getId()).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -107,7 +102,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(code.getDeletedOn(), fetchedCode.getDeletedOn());
 		Assertions.assertEquals(code.getRepoUrl(), fetchedCode.getRepoUrl());
 		Assertions.assertEquals(code.getFiles().size(), fetchedCode.getFiles().size());
-		Assertions.assertEquals(code.getMetadata().keySet().size(), fetchedCode.getMetadata().keySet().size());
+		Assertions.assertEquals(
+				code.getMetadata().keySet().size(),
+				fetchedCode.getMetadata().keySet().size());
 	}
 
 	@Test
@@ -117,8 +114,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		final Code code = codeService.createAsset(createCode("A"));
 		code.setName("new name");
 
-		final Code updatedCode =
-			codeService.updateAsset(code).orElseThrow();
+		final Code updatedCode = codeService.updateAsset(code).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());
@@ -151,7 +147,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(code.getName(), cloned.getName());
 		Assertions.assertEquals(code.getRepoUrl(), cloned.getRepoUrl());
 		Assertions.assertEquals(code.getFiles().size(), cloned.getFiles().size());
-		Assertions.assertEquals(code.getMetadata().keySet().size(), cloned.getMetadata().keySet().size());
+		Assertions.assertEquals(
+				code.getMetadata().keySet().size(),
+				cloned.getMetadata().keySet().size());
 	}
 
 	@Test
@@ -171,6 +169,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(code.getDescription(), imported.getDescription());
 		Assertions.assertEquals(code.getRepoUrl(), imported.getRepoUrl());
 		Assertions.assertEquals(code.getFiles().size(), imported.getFiles().size());
-		Assertions.assertEquals(code.getMetadata().keySet().size(), imported.getMetadata().keySet().size());
+		Assertions.assertEquals(
+				code.getMetadata().keySet().size(),
+				imported.getMetadata().keySet().size());
 	}
 }

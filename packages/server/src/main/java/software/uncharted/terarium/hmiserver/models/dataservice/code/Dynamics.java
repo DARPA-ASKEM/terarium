@@ -20,8 +20,7 @@ public class Dynamics {
 		final Dynamics clone = new Dynamics();
 		clone.setName(name);
 		clone.setDescription(description);
-		if(this.block != null)
-			clone.setBlock(new ArrayList<>(block));
+		if (this.block != null) clone.setBlock(new ArrayList<>(block));
 		return clone;
 	}
 }

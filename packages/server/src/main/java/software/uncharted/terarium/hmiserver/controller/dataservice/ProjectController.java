@@ -548,7 +548,7 @@ public class ProjectController {
 							project.get().setArtifactAssets(new ArrayList<>());
 						if (project.get().getArtifactAssets().contains(artifact.get())) {
 							throw new ResponseStatusException(
-								HttpStatus.CONFLICT, "Artifact Asset already exists on project");
+									HttpStatus.CONFLICT, "Artifact Asset already exists on project");
 						}
 
 						artifact.get().setProject(project.get());
@@ -641,7 +641,7 @@ public class ProjectController {
 					final Optional<Artifact> deletedArtifact = artifactService.deleteAsset(assetId);
 					if (deletedArtifact.isEmpty() || deletedArtifact.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete artifact asset");
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete artifact asset");
 					}
 				}
 
