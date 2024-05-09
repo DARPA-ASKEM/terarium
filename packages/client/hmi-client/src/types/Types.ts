@@ -12,6 +12,8 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+    projectId?: string;
+    notificationGroupId?: string;
     data: T;
 }
 
@@ -542,7 +544,6 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
-    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
@@ -1261,6 +1262,8 @@ export enum ClientEventType {
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
 }
 
 export enum FileType {
