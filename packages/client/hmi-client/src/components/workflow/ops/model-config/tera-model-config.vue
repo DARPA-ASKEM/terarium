@@ -240,10 +240,11 @@
 							:defaultOptions="sampleAgentQuestions"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => (llmThought = data)"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="llmThoughts = []"
 						/>
 					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -442,7 +443,7 @@ const buildJupyterContext = () => {
 const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,

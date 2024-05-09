@@ -58,7 +58,7 @@ const props = defineProps<{
 	contextLanguage: string;
 }>();
 
-const emit = defineEmits(['llm-output', 'llm-thought-output']);
+const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
@@ -73,6 +73,7 @@ const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
 	});
+	emit('question-asked');
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
 	message.register('status', (data) => {
 		kernelStatus.value = data.content.execution_state;
@@ -81,6 +82,10 @@ const submitQuestion = () => {
 		emit('llm-output', data);
 	});
 	message.register('llm_thought', (data) => {
+		thoughts.value = data;
+		emit('llm-thought-output', data);
+	});
+	message.register('llm_response', (data) => {
 		thoughts.value = data;
 		emit('llm-thought-output', data);
 	});
