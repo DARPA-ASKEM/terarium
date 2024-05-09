@@ -78,13 +78,13 @@ export function useProjects() {
 	 * If `projectId` is defined, add an asset to that project.
 	 * Otherwise, add an asset to the active project and refresh it.
 	 *
-	 * @param {string} assetType Type of asset to be added, e.g., 'documents'.
+	 * @param {AssetType} assetType Type of asset to be added, e.g., 'documents'.
 	 * @param {string} assetId Id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections.
 	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
 	async function addAsset(
-		assetType: string,
+		assetType: AssetType,
 		assetId: ProjectAsset['id'],
 		projectId?: Project['id']
 	): Promise<ProjectAsset['id']> {

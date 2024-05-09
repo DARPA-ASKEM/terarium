@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class Dynamics {
+
 	private String name;
 	private String description;
 	private List<String> block;

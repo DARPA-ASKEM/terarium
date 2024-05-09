@@ -148,7 +148,7 @@ public class DatasetController {
 			if (query == null) {
 				return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
 			} else {
-				return ResponseEntity.ok(datasetService.getAssets(page, pageSize, query));
+				return ResponseEntity.ok(datasetService.searchAssets(page, pageSize, query));
 			}
 
 		} catch (final IOException e) {
@@ -221,7 +221,7 @@ public class DatasetController {
 			}
 			return dataset.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -476,7 +476,7 @@ public class DatasetController {
 			if (dataset.isEmpty()) {
 				throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dataset not found");
 			}
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -598,6 +598,10 @@ public class DatasetController {
 			final String csvString = new String(csvBytes);
 			final String[] csvRows = csvString.split("\\R");
 			final String[] headers = csvRows[0].split(",");
+			for (int i = 0; i < headers.length; i++) {
+				// this is very ugly but we're removing opening and closing "'s around these strings.
+				headers[i] = headers[i].replaceAll("^\"|\"$", "");
+			}
 			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";

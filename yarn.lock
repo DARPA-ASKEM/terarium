@@ -8458,7 +8458,7 @@ __metadata:
     primeflex: "npm:3.3.1"
     primeicons: "npm:6.0.1"
     primevue: "npm:3.43.0"
-    pyodide: "npm:0.23.4"
+    pyodide: "npm:0.25.1"
     sass: "npm:1.56.1"
     typescript: "npm:5.3.3"
     uuid: "npm:9.0.1"
@@ -11033,7 +11033,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.0, node-fetch@npm:^2.6.1":
+"node-fetch@npm:^2.6.0":
   version: 2.7.0
   resolution: "node-fetch@npm:2.7.0"
   dependencies:
@@ -11955,14 +11955,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pyodide@npm:0.23.4":
-  version: 0.23.4
-  resolution: "pyodide@npm:0.23.4"
+"pyodide@npm:0.25.1":
+  version: 0.25.1
+  resolution: "pyodide@npm:0.25.1"
   dependencies:
     base-64: "npm:^1.0.0"
-    node-fetch: "npm:^2.6.1"
     ws: "npm:^8.5.0"
-  checksum: 9f85790565fdd2ea9e39f7f18e81ff7dce2d8aeace2d5cb9c62e068258ceca511da501cabd67f68d16d011aaf854047bd8691fd9f402d4700b6e5aec9da6a44f
+  checksum: 6a2aa972ce15565089469524231da03706886d3f0c87fa411444c501300d7765f04576d889683a43fcd9fdb1a44c8bafd829bd223057a9dd2c5eec4399672eae
   languageName: node
   linkType: hard
 

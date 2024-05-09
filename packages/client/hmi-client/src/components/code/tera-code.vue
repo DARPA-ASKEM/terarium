@@ -34,8 +34,8 @@
 							class="toolbar-button white-space-nowrap"
 							severity="secondary"
 							outlined
-							label="Save as new"
-							@click="isCodeNamingModalVisible = true"
+							label="Save as"
+							@click="showSaveAssetModal = true"
 						/>
 						<Dropdown
 							class="toolbar-button"
@@ -141,78 +141,49 @@
 					/>
 				</template>
 			</tera-modal>
-			<tera-modal
-				v-if="isCodeNamingModalVisible"
-				@modal-mask-clicked="isCodeNamingModalVisible = false"
-				@modal-enter-press="isCodeNamingModalVisible = false"
-			>
-				<template #header>
-					<h4>Save code file</h4>
-					<p>Choose a descriptive and unique name for your code file.</p>
-				</template>
-				<template #default>
-					<form @submit.prevent>
-						<label class="text-sm" for="model-name">Name</label>
-						<InputText id="model-name" type="text" placeholder="Filename" v-model="newCodeName" />
-					</form>
-				</template>
-				<template #footer>
-					<Button
-						label="Save"
-						size="large"
-						@click="
-							() => {
-								isCodeNamingModalVisible = false;
-								saveNewCode();
-							}
-						"
-					/>
-					<Button
-						label="Cancel"
-						size="large"
-						outlined
-						severity="secondary"
-						class="p-button-secondary"
-						@click="isCodeNamingModalVisible = false"
-					/>
-				</template>
-			</tera-modal>
 		</Teleport>
+		<tera-save-asset-modal
+			v-if="codeText"
+			:is-visible="showSaveAssetModal"
+			:asset="codeText"
+			:assetType="AssetType.Code"
+			:initial-name="codeName"
+			@close-modal="showSaveAssetModal = false"
+		/>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import Button from 'primevue/button';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import {
 	getCodeAsset,
 	getCodeFileAsText,
 	getProgrammingLanguage,
 	setFileExtension,
-	updateCodeAsset,
-	uploadCodeToProject
+	updateCodeAsset
 } from '@/services/code';
+import * as saveAssetService from '@/services/save-asset';
 import { useToastService } from '@/services/toast';
 import type { Code, CodeFile } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
-import router from '@/router';
-import { RouteName } from '@/router/routes';
-import Textarea from 'primevue/textarea';
-import TeraAsset from '@/components/asset/tera-asset.vue';
-import { useProjects } from '@/composables/project';
-import Dropdown from 'primevue/dropdown';
+import { extractDynamicRows } from '@/utils/code-asset';
+import { logger } from '@/utils/logger';
 import { Ace, Range } from 'ace-builds';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { extractDynamicRows } from '@/utils/code-asset';
+import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { logger } from '@/utils/logger';
-import TeraDirectory from './tera-directory.vue';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import { computed, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
+import TeraDirectory from './tera-directory.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -235,9 +206,8 @@ const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const selectionRange = ref<Ace.Range | null>(null);
 const progress = ref(0);
-const isCodeNamingModalVisible = ref(false);
+const showSaveAssetModal = ref(false);
 const isDynamicsModalVisible = ref(false);
-const newCodeName = ref('');
 const newDynamicsName = ref('');
 const newDynamicsDescription = ref('');
 const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
@@ -333,6 +303,7 @@ async function addDynamic() {
 			);
 		} else {
 			codeAssetCopy.value.files[codeSelectedFile.value] = {
+				fileName: codeSelectedFile.value,
 				language: getProgrammingLanguage(codeName.value),
 				dynamics: {
 					name: newDynamicsName.value,
@@ -359,35 +330,13 @@ async function saveCode(codeAssetToSave: Code | null = codeAssetCopy.value) {
 		await refreshCodeAsset(res.id);
 		toast.success('', `Saved Code Asset`);
 		highlightDynamics();
+		isRenamingCode.value = false;
 	} else {
-		newCodeName.value = codeName.value;
-		await saveNewCode();
+		saveAssetService.saveAs(
+			new File([codeText.value], setFileExtension(codeName.value, programmingLanguage.value)),
+			AssetType.Code
+		);
 	}
-}
-
-async function saveNewCode() {
-	newCodeName.value = setFileExtension(newCodeName.value, programmingLanguage.value);
-	const file = new File([codeText.value], newCodeName.value);
-	const newCode = await uploadCodeToProject(file, progress);
-	let newAsset;
-	if (newCode?.id) {
-		newAsset = await useProjects().addAsset(AssetType.Code, newCode.id);
-	}
-	if (!newAsset) {
-		toast.error('', 'Unable to save file');
-		return;
-	}
-	toast.success('', `File saved as ${codeName.value}`);
-	codeAsset.value = newCode;
-
-	router.push({
-		name: RouteName.Project,
-		params: {
-			pageType: AssetType.Code,
-			projectId: useProjects().activeProject.value?.id,
-			assetId: codeAsset?.value?.id
-		}
-	});
 }
 
 async function refreshCodeAsset(codeId: string) {
@@ -497,34 +446,24 @@ watch(
 watch(
 	() => props.assetId,
 	async () => {
-		if (props.assetId === AssetType.Code) {
-			// FIXME: assetId is 'code' for a newly opened code asset; a hack to get around some weird tab behaviour
+		isLoading.value = true;
+		const code = await getCodeAsset(props.assetId);
+		if (code?.files && Object.keys(code.files)[0]) {
+			codeAsset.value = code;
+			codeName.value = code.name ?? '';
+
+			const filename = Object.keys(code.files)[0];
+			codeSelectedFile.value = filename;
+
+			codeText.value = (await getCodeFileAsText(props.assetId, filename)) ?? INITIAL_TEXT;
+
+			programmingLanguage.value =
+				code.files[filename].language ?? getProgrammingLanguage(codeName.value);
+		} else {
 			codeAsset.value = null;
 			codeName.value = 'newcode.py';
 			codeText.value = INITIAL_TEXT;
 			programmingLanguage.value = ProgrammingLanguage.Python;
-		} else {
-			isLoading.value = true;
-			const code = await getCodeAsset(props.assetId);
-			if (code && code.files && Object.keys(code.files)[0]) {
-				codeAsset.value = code;
-				codeName.value = code.name ?? '';
-
-				const filename = Object.keys(code.files)[0];
-				codeSelectedFile.value = filename;
-
-				const text = await getCodeFileAsText(props.assetId, filename);
-				if (text) {
-					codeText.value = text;
-				}
-				programmingLanguage.value =
-					code.files[filename].language ?? getProgrammingLanguage(codeName.value);
-			} else {
-				codeAsset.value = null;
-				codeName.value = 'newcode.py';
-				codeText.value = INITIAL_TEXT;
-				programmingLanguage.value = ProgrammingLanguage.Python;
-			}
 		}
 		codeAssetCopy.value = cloneDeep(codeAsset.value);
 		// Remove dynamics of previous file then add the new ones
