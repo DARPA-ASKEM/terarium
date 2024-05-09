@@ -1,19 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -41,10 +43,12 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	}
 
 	static Grounding createGrounding(final String key) {
+		final ObjectMapper mapper = new ObjectMapper();
+
 		final Grounding grounding = new Grounding();
-		grounding.setContext(new HashMap<>());
-		grounding.getContext().put("hello", "world-" + key);
-		grounding.getContext().put("foo", "bar-" + key);
+		grounding.setContext(mapper.createObjectNode()
+				.put("hello", "world-" + key)
+				.put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
 		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
 		return grounding;
@@ -56,15 +60,23 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 	static Dataset createDataset(final String key) throws Exception {
 
+		final ObjectMapper mapper = new ObjectMapper();
+
 		final DatasetColumn column1 = new DatasetColumn()
 				.setName("Title")
 				.setDataType(DatasetColumn.ColumnType.STRING)
 				.setDescription("hello world")
+				.setMetadata(mapper.createObjectNode()
+						.put("hello", "world-" + key)
+						.put("foo", "bar-" + key))
 				.setGrounding(createGrounding(key));
 		final DatasetColumn column2 = new DatasetColumn()
 				.setName("Value")
 				.setDataType(DatasetColumn.ColumnType.FLOAT)
 				.setDescription("3.1415926")
+				.setMetadata(mapper.createObjectNode()
+						.put("hello", "world-" + key)
+						.put("foo", "bar-" + key))
 				.setGrounding(createGrounding(key));
 
 		final Dataset dataset = new Dataset();
@@ -74,6 +86,9 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		dataset.getColumns().add(column1);
 		dataset.getColumns().add(column2);
 		dataset.setGrounding(createGrounding(key));
+		dataset.setMetadata(mapper.createObjectNode()
+				.put("hello", "world-" + key)
+				.put("foo", "bar-" + key));
 		dataset.setPublicAsset(true);
 
 		return dataset;

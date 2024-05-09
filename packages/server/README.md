@@ -27,13 +27,15 @@ docker buildx build -f modules/server/docker/Dockerfile.native -t docker.unchart
 
 ## When to use `json` / `jsonb` vs when to create a new `@Entity`
 
-The deciding factor for whether to write the type out as serialized JSON vs creating a separate table is based how "dynamic" or "opaque" the type is. If the property is completely dynamic, for example a `Map<String,Object>`, `List<Object>`, or `JsonNode` it makes sense to simply serialize it and store it as `text`. This is because the container is resilient to change. If the properties in the  `JsonNode` change, deserialization will not fail.
+The deciding factor for whether to write the type out as serialized JSON vs creating a separate table is based how "dynamic" or "opaque" the type is. If the property is completely dynamic, for example a `JsonNode`, `Map<String, JsonNode>`, `List<JsonNode>`, or  it makes sense to simply serialize it and store it as `text`. This is because the container is resilient to change. If the properties in the  `JsonNode` change, deserialization will not fail.
 
 For most cases `json` is recommended as it enforces that the field is stored as valid JSON while not has less overhead compared to `jsonb` as there is no processing. The only use case for `jsonb` is to provide indexing capabilities, which in our case is not needed as search will be done through elasticsearch instead.
 
 If the type has defined fields, it makes sense to create it as a separate `@Entity` and create a new table, because if the type does change, having it in its own table and schema will allow us to migrate it easier.
 
-An alternative approach to using a completely dynamic container is to create a typed class that extends the `SupportsAdditionalProperties` class. This allows specifying static typed fields on the class itself, and allowing anything not typed to be retained in a `Map<String, Object>`. This type is then stored as a `json` / `jsonb`.
+An alternative approach to using a completely dynamic container is to create a typed class that extends the `SupportAdditionalProperties` class. This allows specifying static typed fields on the class itself, and allowing anything not typed to be retained in a `Map<String, JsonNode>`. This type is then stored as a `json` / `jsonb`.
+
+*Note*: for dynamic objects it is recommended to use a `JsonNode` rather than `Object` as jackson will default the container as a `LinkedHashMap`, which will fail for nested array types.
 
 ## Relationships:
 
