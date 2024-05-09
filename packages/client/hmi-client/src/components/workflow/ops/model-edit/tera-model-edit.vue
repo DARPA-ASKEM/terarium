@@ -91,7 +91,6 @@
 		:model="amr"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="createOutput"
 	/>
 </template>
 
@@ -119,6 +118,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import { saveCodeToState } from '@/services/notebook';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -185,7 +185,7 @@ const appendCode = (data: any, property: string) => {
 		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', newCode);
 
 		if (property === 'executed_code') {
-			saveCodeToState(codeText.value, true);
+			updateCodeState();
 		}
 	} else {
 		logger.error('No code to append');
@@ -242,7 +242,7 @@ const runFromCode = (code: string) => {
 			syncWithMiraModel(data);
 
 			if (executedCode) {
-				saveCodeToState(executedCode, true);
+				updateCodeState(executedCode);
 			}
 		})
 		.register('any_execute_reply', (data) => {
@@ -272,7 +272,7 @@ const handleResetResponse = (data: any) => {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
 		codeText.value = defaultCodeText;
-		saveCodeToState('', false);
+		updateCodeState('', false);
 
 		logger.info('Model reset');
 	} else {
@@ -284,22 +284,10 @@ const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = cloneDeep(props.node.state);
-	state.hasCodeBeenRun = hasCodeBeenRun;
-
-	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
-	const timestamp = Date.now();
-	if (codeHistoryLength > 0) {
-		state.modelEditCodeHistory[0] = { code, timestamp };
-	} else {
-		state.modelEditCodeHistory.push({ code, timestamp });
-	}
-
+function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
+	const state = saveCodeToState(props.node, code, hasCodeRun);
 	emit('update-state', state);
-};
+}
 
 // Saves the output model in the backend
 // Not called after every little model edit to avoid too many requests
@@ -349,7 +337,7 @@ const handleOutputChange = async () => {
 	amr.value = await getModel(activeModelId);
 	if (!amr.value) return;
 
-	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
+	codeText.value = props.node.state.notebookHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -379,7 +367,7 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) as any;
+			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
 			await handleOutputChange();
 		}
 	},
