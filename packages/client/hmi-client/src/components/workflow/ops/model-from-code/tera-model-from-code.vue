@@ -137,11 +137,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-model-modal
-		:modelId="selectedModel?.id"
-		:is-visible="isNewModelModalVisible"
+	<tera-save-asset-modal
+		v-if="selectedModel"
+		:model="selectedModel"
+		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@update="onAddModel"
+		@on-save="onAddModel"
 	/>
 </template>
 
@@ -156,7 +157,7 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -192,7 +193,7 @@ enum ModelFramework {
 	Petrinet = 'Petrinet',
 	Decapodes = 'Decapodes'
 }
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const isProcessing = ref(false);
 const fetchingInputBlocks = ref(false);
 
@@ -399,7 +400,7 @@ async function handleCode() {
 }
 
 function openModal() {
-	isNewModelModalVisible.value = true;
+	if (selectedModel.value) showSaveModelModal.value = true;
 }
 
 function onAddModel(modelName: string) {
@@ -407,7 +408,7 @@ function onAddModel(modelName: string) {
 	updateNodeLabel(selectedOutputId.value, modelName);
 }
 function onCloseModelModal() {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 }
 
 function handleCompileExprResponse() {

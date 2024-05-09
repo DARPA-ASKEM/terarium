@@ -26,14 +26,18 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:default-options="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => (llmThought = data)"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeAceEditor"
@@ -64,12 +68,6 @@
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
 					<template #footer>
-						<InputText
-							v-model="newModelName"
-							placeholder="model name"
-							type="text"
-							class="input-small"
-						/>
 						<div class="flex gap-2">
 							<Button
 								:disabled="!amr"
@@ -79,9 +77,7 @@
 								class="white-space-nowrap"
 								style="margin-right: auto"
 								label="Save as new model"
-								@click="
-									() => saveNewModel(newModelName, { addToProject: true, appendOutputPort: true })
-								"
+								@click="showSaveModelModal = true"
 							/>
 							<Button label="Close" size="large" @click="emit('close')" />
 						</div>
@@ -90,22 +86,26 @@
 			</div>
 		</div>
 	</tera-drilldown>
+	<tera-save-asset-modal
+		v-if="amr"
+		:model="amr"
+		:is-visible="showSaveModelModal"
+		@close-modal="showSaveModelModal = false"
+		@on-save="onSaveModel"
+	/>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import { createModel, getModel } from '@/services/model';
+import { getModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
-import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -114,8 +114,11 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -150,8 +153,8 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
-const modelId = props.node.inputs[0].value?.[0];
-const newModelName = ref('');
+const showSaveModelModal = ref(false);
+
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
 	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
@@ -170,6 +173,8 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmThought = ref();
+
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -191,7 +196,12 @@ const appendCode = (data: any, property: string) => {
 };
 
 const syncWithMiraModel = (data: any) => {
-	amr.value = data.content['application/json'];
+	const updatedModel = data.content?.['application/json'];
+	if (!updatedModel) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
+	amr.value = updatedModel;
 };
 
 // Reset model, then execute the code
@@ -281,6 +291,15 @@ const buildJupyterContext = () => {
 };
 
 const inputChangeHandler = async () => {
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -308,29 +327,15 @@ const inputChangeHandler = async () => {
 	}
 };
 
-const saveNewModel = async (modelName: string, options: SaveOptions) => {
-	if (!amr.value || !modelName) return;
-	amr.value.header.name = modelName;
-
-	const projectResource = useProjects();
-	const modelData = await createModel(amr.value);
-	const projectId = projectResource.activeProject.value?.id;
-
-	if (!modelData) return;
-
-	if (options.addToProject) {
-		await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	}
-
+const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPort: true }) => {
 	if (options.appendOutputPort) {
 		emit('append-output', {
 			id: uuidv4(),
-			label: modelName,
+			label: savedModel.name,
 			type: 'modelId',
 			state: _.cloneDeep(props.node.state),
-			value: [modelData.id]
+			value: [savedModel.id]
 		});
-		emit('close');
 	}
 };
 
@@ -403,8 +408,7 @@ onUnmounted(() => {
 	position: relative;
 }
 
-.notebook-section:deep(main .notebook-toolbar),
-.notebook-section:deep(main .ai-assistant) {
+.notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
 .toolbar-right-side {

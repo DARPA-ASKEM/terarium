@@ -18,19 +18,16 @@ export interface ModelTemplateCanvas {
 		y: number;
 		k: number;
 	};
-	models: Model[];
+	cards: ModelTemplateCard[];
 	junctions: ModelTemplateJunction[];
 }
 
 export interface ModelTemplateCard {
 	id: string;
-	name: string; // FIXME: name may not be necessary if it's already in model.header
-	templateType: DecomposedModelTemplateTypes;
+	model: Model;
+	templateType: DecomposedModelTemplateTypes | null;
 	x: number;
 	y: number;
-	// For collisionFn
-	width: number;
-	height: number;
 }
 
 export interface ModelTemplateJunction {
@@ -48,4 +45,11 @@ export interface ModelTemplateEdge {
 		portId: string;
 	};
 	points: Position[];
+}
+
+export interface OffsetValues {
+	offsetLeft: number;
+	offsetTop: number;
+	offsetWidth: number;
+	offsetHeight: number;
 }

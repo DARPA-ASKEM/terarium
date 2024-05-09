@@ -1,21 +1,6 @@
 import { updateModelConfiguration } from '@/services/model-configurations';
 import { Model, ModelConfiguration } from '@/types/Types';
 
-export interface NodeData {
-	type: string;
-	strataType?: string;
-	expression?: string;
-}
-
-export interface EdgeData {
-	numEdges: number;
-}
-
-export enum StratifiedModel {
-	Mira = 'mira',
-	Catlab = 'catlab'
-}
-
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
@@ -105,12 +90,6 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 				rate.expression_mathml = replaceValuesInMathML(rate.expression_mathml, id, newId);
 			}
 		});
-
-		// if there's a timeseries field with the old parameter id then update it to the new id
-		if (amr.metadata?.timeseries && amr.metadata.timeseries[id]) {
-			amr.metadata.timeseries[newId] = amr.metadata.timeseries[id];
-			delete amr.metadata.timeseries[id];
-		}
 	}
 };
 
@@ -127,7 +106,7 @@ export const updateConfigFields = async (
 	});
 };
 
-export function newAMR(modelName: string) {
+export function newAMR(modelName: string = '') {
 	const amr: Model = {
 		header: {
 			name: modelName,
@@ -137,7 +116,6 @@ export function newAMR(modelName: string) {
 			schema_name: 'petrinet',
 			model_version: '0.1'
 		},
-		id: '',
 		model: {
 			states: [],
 			transitions: []

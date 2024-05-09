@@ -1,9 +1,13 @@
 <template>
 	<header>
 		<div class="title-row">
-			<h4><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
+			<h4 class="title">
+				<slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" />
+			</h4>
 			<slot name="inputs" />
-			<!-- <a :href="documentationUrl" rel="noopener noreferrer">Documentation</a> -->
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer"
+				>Documentation</a
+			>
 			<Button
 				class="close-mask"
 				icon="pi pi-times"
@@ -71,6 +75,12 @@ header > * {
 .p-button:deep(.p-button-icon) {
 	font-size: 16px;
 	color: var(--text-color-primary);
+}
+
+header .title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 header .tabs-row {

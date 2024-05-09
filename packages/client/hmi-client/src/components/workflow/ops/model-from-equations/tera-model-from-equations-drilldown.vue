@@ -96,7 +96,7 @@
 						:disabled="!selectedModel"
 						outlined
 						:loading="savingAsset"
-						@click="isNewModelModalVisible = true"
+						@click="showSaveModelModal = true"
 					></Button>
 					<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />
 					<Button
@@ -110,11 +110,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-model-modal
-		:modelId="selectedModel?.id"
-		:is-visible="isNewModelModalVisible"
+	<tera-save-asset-modal
+		v-if="selectedModel"
+		:model="selectedModel"
+		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@update="onAddModel"
+		@on-save="onAddModel"
 	/>
 </template>
 
@@ -138,7 +139,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
@@ -234,7 +235,7 @@ const selectedModel = ref<Model | null>(null);
 const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const savingAsset = ref(false);
 const isGeneratingCard = ref(false);
 onMounted(async () => {
@@ -367,7 +368,7 @@ function onAddModel(modelName: string) {
 }
 
 function onCloseModelModal() {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 }
 
 function updateNodeLabel(id: string, label: string) {

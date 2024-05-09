@@ -373,7 +373,7 @@ onMounted(async () => {
 	csvAsset.value = csv;
 	datasetColumnNames.value = csv?.headers;
 
-	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name);
+	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 
 	// initalize ensembleConfigs when its length is less than the amount of models provided to node (- 1 due to dataset, -1 due to last empty )
 	if (knobs.value.ensembleConfigs.length < props.node.inputs.length - 2) {

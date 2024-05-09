@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -434,27 +435,37 @@ public class KnowledgeController {
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
 
 		try {
-			final Provenance provenancePayload = new Provenance(
-					ProvenanceRelationType.EXTRACTED_FROM,
-					modelId,
-					ProvenanceType.MODEL,
-					documentId,
-					ProvenanceType.DOCUMENT);
-			provenanceService.createProvenance(provenancePayload);
-		} catch (final Exception e) {
-			final String error = "Unable to create provenance for profile-model";
-			log.error(error, e);
-		}
 
-		try {
-			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
 			String documentText = "";
-			if (documentOptional.isPresent()) {
-				final int MAX_CHAR_LIMIT = 9000;
+			if (documentId != null) {
+				final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
+				if (documentOptional.isPresent()) {
+					final int MAX_CHAR_LIMIT = 9000;
 
-				final DocumentAsset document = documentOptional.get();
-				documentText = document.getText()
-						.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+					final DocumentAsset document = documentOptional.get();
+
+					if (document.getText() != null) {
+						documentText = document.getText()
+								.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+					} else {
+						throw new ResponseStatusException(
+								HttpStatus.BAD_REQUEST,
+								"Supplied document is still in the extraction process. Please try again later...");
+					}
+
+					try {
+						final Provenance provenancePayload = new Provenance(
+								ProvenanceRelationType.EXTRACTED_FROM,
+								modelId,
+								ProvenanceType.MODEL,
+								documentId,
+								ProvenanceType.DOCUMENT);
+						provenanceService.createProvenance(provenancePayload);
+					} catch (final Exception e) {
+						final String error = "Unable to create provenance for profile-model";
+						log.error(error, e);
+					}
+				}
 			}
 
 			final Model model = modelService.getAsset(modelId).orElseThrow();
@@ -584,9 +595,11 @@ public class KnowledgeController {
 						continue;
 					}
 					if (groundings.getIdentifiers() == null) {
-						groundings.setIdentifiers(new HashMap<>());
+						groundings.setIdentifiers(new ArrayList<>());
 					}
-					groundings.getIdentifiers().put(g.get(0).asText(), g.get(1).asText());
+					groundings
+							.getIdentifiers()
+							.add(new Identifier(g.get(0).asText(), g.get(1).asText()));
 				}
 
 				// remove groundings from annotation object
@@ -596,10 +609,11 @@ public class KnowledgeController {
 				newCol.setName(col.getName());
 				newCol.setDataType(col.getDataType());
 				newCol.setFormatStr(col.getFormatStr());
-				newCol.setGrounding(col.getGrounding());
+				newCol.setGrounding(groundings);
 				newCol.setAnnotations(col.getAnnotations());
 				newCol.setDescription(annotation.get("description").asText());
-				newCol.setMetadata(mapper.convertValue(annotation, Map.class));
+				newCol.setMetadata(col.getMetadata());
+				newCol.updateMetadata(mapper.convertValue(annotation, Map.class));
 				columns.add(newCol);
 			}
 

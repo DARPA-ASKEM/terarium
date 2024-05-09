@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,8 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.DataMigration;
 import software.uncharted.terarium.hmiserver.models.DataMigration.MigrationState;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.repository.DataMigrationRepository;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
-import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
@@ -47,6 +46,8 @@ public class DataMigrationESToPG {
 	private final DataMigrationRepository migrationRepository;
 
 	private final WorkflowService workflowService;
+	private final SimulationService simulationService;
+	private final CodeService codeService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -70,11 +71,11 @@ public class DataMigrationESToPG {
 		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
 			if (!elasticService.indexExists(index)) {
-				throw new RuntimeException("Index " + index + " does not exist");
+				return;
 			}
 
 			if (elasticService.count(index) == 0) {
-				throw new RuntimeException("Index " + index + " has no documents");
+				return;
 			}
 
 			// check if the data has already been migrated
@@ -114,18 +115,18 @@ public class DataMigrationESToPG {
 						log.warn("Null document payload for id: {}, skipping", hit.id());
 						continue;
 					}
-					if (asset.getId() == null || asset.getId().toString() != hit.id()) {
+					if (asset.getId() == null || !asset.getId().toString().equals(hit.id())) {
 						asset.setId(UUID.fromString(hit.id()));
 					}
 					assets.add(asset);
 				}
 
-				if (assets.size() > 0) {
+				if (!assets.isEmpty()) {
 					log.info("Saving {} rows to SQL...", assets.size());
 					service.getRepository().saveAll(assets);
 				}
 
-				if (lastId == lastPagesLastId || assets.size() < PAGE_SIZE) {
+				if (Objects.equals(lastId, lastPagesLastId) || assets.size() < PAGE_SIZE) {
 					break;
 				}
 
@@ -138,7 +139,10 @@ public class DataMigrationESToPG {
 
 	List<MigrationConfig<?, ?>> getMigrations() {
 		return List.of(
-				new MigrationConfig<Workflow, WorkflowRepository>(workflowService, elasticConfig.getWorkflowIndex()));
+				new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
+				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()),
+				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()));
+		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 
 	@PostConstruct

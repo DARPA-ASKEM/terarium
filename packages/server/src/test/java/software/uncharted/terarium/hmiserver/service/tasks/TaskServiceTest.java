@@ -53,7 +53,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final String additionalProps = "These are additional properties";
 
-		final byte[] input = "{\"input\":\"This is my input string\"}".getBytes();
+		final byte[] input = "{\"input\":\"This is my input string\",\"include_progress\":true}".getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -87,7 +87,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final int STRING_LENGTH = 1048576;
 
-		final byte[] input = ("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\"}").getBytes();
+		final byte[] input =
+				("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}").getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -109,7 +110,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:model_card");
+		req.setScript("gollm_task:model_card");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req, 300);
@@ -128,7 +129,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:embedding");
+		req.setScript("gollm_task:embedding");
 		req.setInput(
 				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
 						.getBytes());
@@ -231,7 +232,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("gollm:dataset_configure");
+		req.setScript("gollm_task:dataset_configure");
 		req.setInput(content.getBytes());
 
 		final TaskResponse resp = taskService.runTaskSync(req);

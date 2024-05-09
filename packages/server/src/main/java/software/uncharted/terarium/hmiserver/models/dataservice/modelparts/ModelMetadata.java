@@ -43,9 +43,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private List<JsonNode> attributes;
 
 	@TSOptional
-	private Map<String, Object> timeseries;
-
-	@TSOptional
 	private Map<String, Object> initials;
 
 	@TSOptional
@@ -72,4 +69,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@TSOptional
 	@JsonProperty("code_id")
 	String codeId;
+
+	@TSOptional
+	JsonNode source;
 }

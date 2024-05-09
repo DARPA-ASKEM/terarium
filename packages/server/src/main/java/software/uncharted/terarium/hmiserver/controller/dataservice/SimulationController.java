@@ -81,7 +81,7 @@ public class SimulationController {
 	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation) {
 		try {
 
-			final Simulation sim = simulationService.createSimulation(simulation);
+			final Simulation sim = simulationService.createAsset(simulation);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -116,7 +116,7 @@ public class SimulationController {
 			})
 	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
 		try {
-			Optional<Simulation> simulation = simulationService.getSimulation(id);
+			Optional<Simulation> simulation = simulationService.getAsset(id);
 
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
@@ -150,7 +150,7 @@ public class SimulationController {
 						sim.setStatusMessage("Failed running simulation " + sim.getId());
 					}
 
-					simulation = simulationService.updateSimulation(sim);
+					simulation = simulationService.updateAsset(sim);
 				}
 			}
 
@@ -186,7 +186,8 @@ public class SimulationController {
 	public ResponseEntity<Simulation> updateSimulation(
 			@PathVariable("id") final UUID id, @RequestBody final Simulation simulation) {
 		try {
-			final Optional<Simulation> updated = simulationService.updateSimulation(simulation.setId(id));
+			simulation.setId(id);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -212,7 +213,7 @@ public class SimulationController {
 			})
 	public String deleteSimulation(@PathVariable("id") final UUID id) {
 		try {
-			simulationService.deleteSimulation(id);
+			simulationService.deleteAsset(id);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -296,7 +297,7 @@ public class SimulationController {
 			@RequestParam("dataset-name") final String datasetName) {
 
 		try {
-			final Optional<Simulation> sim = simulationService.getSimulation(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}

@@ -41,8 +41,17 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
-			<tera-drilldown-section>
-				<p class="mt-3 ml-4">Code Editor - Python</p>
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="[]"
+						:context-language="'python3'"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => (llmThought = data)"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -97,65 +106,47 @@
 						severity="secondary"
 						size="large"
 						label="Save as new model"
-						@click="isNewModelModalVisible = true"
+						@click="showSaveModelModal = true"
 					/>
 					<Button label="Close" size="large" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
-		<template #header>
-			<h4>Save as a new model</h4>
-		</template>
-		<form @submit.prevent class="mt-3">
-			<label for="new-model">What would you like to call it?</label>
-			<InputText
-				id="new-model"
-				type="text"
-				v-model="newModelName"
-				placeholder="Enter a unique name for your model"
-			/>
-		</form>
-		<template #footer>
-			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
-			<Button
-				class="p-button-secondary"
-				size="large"
-				label="Cancel"
-				@click="isNewModelModalVisible = false"
-			/>
-		</template>
-	</tera-modal>
+	<tera-save-asset-modal
+		v-if="stratifiedAmr"
+		:model="stratifiedAmr"
+		:is-visible="showSaveModelModal"
+		@close-modal="showSaveModelModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import _ from 'lodash';
-import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useProjects } from '@/composables/project';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { useToastService } from '@/services/toast';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -190,9 +181,7 @@ const executeResponse = ref({
 	traceback: ''
 });
 const modelNodeOptions = ref<string[]>([]);
-
-const isNewModelModalVisible = ref(false);
-const newModelName = ref('');
+const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
 const outputs = computed(() => {
@@ -211,6 +200,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmThought = ref();
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -220,6 +210,11 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 
 const stratifyModel = () => {
 	stratifyRequest();
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+	saveCodeToState(data.content.code, false);
 };
 
 const resetModel = () => {
@@ -288,6 +283,10 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	if (!stratifiedAmr.value) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
 
 	// Create output
 	const modelData = await createModel(stratifiedAmr.value);
@@ -321,7 +320,7 @@ const buildJupyterContext = () => {
 };
 
 const getStatesAndParameters = (amrModel: Model) => {
-	const modelFramework = amrModel.header.schema_name;
+	const modelFramework = amrModel.header.schema_name?.toLowerCase();
 	const modelStates: string[] = [];
 	const modelParameters: string[] = [];
 
@@ -358,7 +357,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -376,21 +383,6 @@ const inputChangeHandler = async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
-};
-
-const saveNewModel = async (modelName: string) => {
-	if (!stratifiedAmr.value || !modelName) return;
-	stratifiedAmr.value.header.name = modelName;
-
-	const projectResource = useProjects();
-	const modelData = await createModel(stratifiedAmr.value);
-	const projectId = projectResource.activeProject.value?.id;
-
-	if (!modelData) return;
-	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	useToastService().success('', `Saved to project ${projectResource.activeProject.value?.name}`);
-
-	isNewModelModalVisible.value = false;
 };
 
 const initialize = (editorInstance: any) => {
@@ -508,6 +500,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .code-executed-warning {
 	background-color: #ffe6e6;
 	color: #cc0000;

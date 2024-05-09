@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from core.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 
 # Funman imports
 from funman import Funman
@@ -15,7 +15,6 @@ from funman.server.query import (
     FunmanResults,
     FunmanWorkUnit,
 )
-import pydantic
 from pydantic import TypeAdapter
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
 
@@ -72,15 +71,19 @@ def taskrunner_wrapper():
         taskrunner.on_cancellation(cleanup)
 
         # Input wrangling
-        data = taskrunner.read_input_with_timeout()
+        data = taskrunner.read_input_str_with_timeout()
         data_json = json.loads(data)
 
         # Create work unit
-        model = adapter.validate_python(test["model"])
+        model = adapter.validate_python(data_json["model"])
         model = _wrap_with_internal_model(model)
         request = data_json["request"]
         result = run_validate(model, request)
-        taskrunner.write_output_with_timeout({"response": result})
+        taskrunner.write_output_dict_with_timeout({"response": result})
+
+        taskrunner.log("Shutting down")
+        taskrunner.shutdown()
+        print("Validation finished")
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")

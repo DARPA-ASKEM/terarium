@@ -28,7 +28,14 @@ public abstract class TerariumAsset implements Serializable {
 	private UUID id = UUID.randomUUID();
 
 	@TSOptional
+	@Column(length = 512)
+	@Schema(defaultValue = "Default Name")
 	private String name;
+
+	@TSOptional
+	@Schema(defaultValue = "Default Description")
+	@Column(columnDefinition = "text")
+	private String description;
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -41,6 +48,7 @@ public abstract class TerariumAsset implements Serializable {
 	protected void onCreate() {
 		this.createdOn =
 				Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
+		this.updatedOn = this.createdOn;
 	}
 
 	@TSOptional
@@ -68,6 +76,7 @@ public abstract class TerariumAsset implements Serializable {
 	private Boolean publicAsset = false;
 
 	// This is here just to satisfy the service interface.
+	@Override
 	public TerariumAsset clone() {
 		throw new RuntimeException(
 				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");
@@ -76,6 +85,7 @@ public abstract class TerariumAsset implements Serializable {
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
 		asset.id = UUID.randomUUID(); // ensure we create a new id
 		asset.name = name;
+		asset.description = description;
 		asset.createdOn = this.createdOn != null ? new Timestamp(this.createdOn.getTime()) : null;
 		asset.updatedOn = this.updatedOn != null ? new Timestamp(this.updatedOn.getTime()) : null;
 		asset.deletedOn = this.deletedOn != null ? new Timestamp(this.deletedOn.getTime()) : null;
