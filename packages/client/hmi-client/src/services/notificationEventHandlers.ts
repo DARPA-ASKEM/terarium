@@ -1,4 +1,10 @@
-import { ClientEvent, ClientEventType, ExtractionStatusUpdate, TaskResponse, ProgressState } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	ExtractionStatusUpdate,
+	ProgressState,
+	TaskResponse
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
