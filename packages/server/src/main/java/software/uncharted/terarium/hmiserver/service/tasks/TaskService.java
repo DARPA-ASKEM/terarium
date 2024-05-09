@@ -436,7 +436,7 @@ public class TaskService {
 			try {
 				// create the notification event
 				final NotificationEvent event = new NotificationEvent();
-				event.setData(TaskNotificationEventData.createFrom(resp));
+				event.setData(resp);
 
 				log.info("Creating notification event under group id: {}", resp.getId());
 
@@ -451,11 +451,11 @@ public class TaskService {
 				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
 				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
 
-				final ClientEvent<TaskNotificationEventData> clientEvent =
-						ClientEvent.<TaskNotificationEventData>builder()
+				final ClientEvent<TaskResponse> clientEvent =
+						ClientEvent.<TaskResponse>builder()
 								.notificationGroupId(resp.getId())
 								.type(clientEventType)
-								.data(TaskNotificationEventData.createFrom(resp))
+								.data(resp)
 								.build();
 				clientEventService.sendToUser(clientEvent, resp.getUserId());
 
