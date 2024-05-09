@@ -154,11 +154,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
-import Button from 'primevue/button';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useProjects } from '@/composables/project';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import {
 	getCodeAsset,
 	getCodeFileAsText,
@@ -166,24 +166,24 @@ import {
 	setFileExtension,
 	updateCodeAsset
 } from '@/services/code';
+import * as saveAssetService from '@/services/save-asset';
 import { useToastService } from '@/services/toast';
 import type { Code, CodeFile } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
-import TeraAsset from '@/components/asset/tera-asset.vue';
-import { useProjects } from '@/composables/project';
-import Dropdown from 'primevue/dropdown';
+import { extractDynamicRows } from '@/utils/code-asset';
+import { logger } from '@/utils/logger';
 import { Ace, Range } from 'ace-builds';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import { extractDynamicRows } from '@/utils/code-asset';
+import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { logger } from '@/utils/logger';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import * as saveAssetService from '@/services/save-asset';
-import TeraDirectory from './tera-directory.vue';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import { computed, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
+import TeraDirectory from './tera-directory.vue';
 
 const INITIAL_TEXT = '# Paste some code here';
 
@@ -303,6 +303,7 @@ async function addDynamic() {
 			);
 		} else {
 			codeAssetCopy.value.files[codeSelectedFile.value] = {
+				fileName: codeSelectedFile.value,
 				language: getProgrammingLanguage(codeName.value),
 				dynamics: {
 					name: newDynamicsName.value,

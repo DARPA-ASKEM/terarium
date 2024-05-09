@@ -26,14 +26,18 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:default-options="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => (llmThought = data)"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeAceEditor"
@@ -110,6 +114,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
@@ -164,6 +169,8 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmThought = ref();
+
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -405,8 +412,7 @@ onUnmounted(() => {
 	position: relative;
 }
 
-.notebook-section:deep(main .notebook-toolbar),
-.notebook-section:deep(main .ai-assistant) {
+.notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
 .toolbar-right-side {

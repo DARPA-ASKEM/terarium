@@ -61,11 +61,11 @@ public class NotificationService {
 
 		notificationEvent.setNotificationGroup(group);
 
-		final NotificationEvent created = notificationEventRepository.save(notificationEvent);
+		group.getNotificationEvents().add(notificationEvent);
 
-		group.getNotificationEvents().add(created);
+		notificationGroupRepository.save(group);
 
-		return created;
+		return notificationEvent;
 	}
 
 	public void acknowledgeNotificationGroup(final UUID groupId) {

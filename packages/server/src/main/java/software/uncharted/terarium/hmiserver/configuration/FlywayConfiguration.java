@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.configuration;
 
+import java.beans.BeanProperty;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -10,9 +11,11 @@ import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer;
 import org.springframework.boot.autoconfigure.flyway.FlywayProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -38,9 +41,24 @@ public class FlywayConfiguration {
 	 * Set the baseline version to be the latest script. In the case where flyway is not initialized, we assume
 	 * hibernate correctly sets up the database
 	 */
-	@Bean
+	@BeanProperty
 	FlywayConfigurationCustomizer customizeBaselineVersion() {
 		return configuration -> configuration.baselineVersion(getBaselineVersion());
+	}
+
+	/** Load properties */
+	@Bean
+	@ConfigurationProperties(prefix = "spring.flyway")
+	public FlywayProperties flywayProperties() {
+		return new FlywayProperties();
+	}
+
+	/** Configure empty beans if disabled. */
+	@Bean
+	@ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "false")
+	public Flyway flyway() {
+		// Create a Flyway instance with default settings
+		return Flyway.configure().load();
 	}
 
 	/**
@@ -66,10 +84,12 @@ public class FlywayConfiguration {
 	@Bean
 	@DependsOn("entityManagerFactory")
 	FlywayVoid delayedFlywayInitializer(final Flyway flyway, final FlywayProperties flywayProperties) {
-		if (flywayProperties.isEnabled() && !isFlywayInitialized()) {
-			flyway.baseline();
+		if (flywayProperties.isEnabled()) {
+			if (!isFlywayInitialized()) {
+				flyway.baseline();
+			}
+			flyway.migrate();
 		}
-		flyway.migrate();
 		return new FlywayVoid();
 	}
 
