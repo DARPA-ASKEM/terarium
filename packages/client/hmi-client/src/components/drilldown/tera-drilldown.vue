@@ -77,7 +77,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
-import _, { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
@@ -122,7 +122,7 @@ const selectedOutputId = computed(() => {
 	return null;
 });
 const outputOptions = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
