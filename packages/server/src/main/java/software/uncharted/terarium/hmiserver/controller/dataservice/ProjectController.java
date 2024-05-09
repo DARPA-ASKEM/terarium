@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -45,6 +46,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.UserService;
+import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
@@ -81,6 +83,8 @@ public class ProjectController {
 	final CodeService codeService;
 
 	final DatasetService datasetService;
+
+	final ArtifactService artifactService;
 
 	final UserService userService;
 
@@ -533,6 +537,22 @@ public class ProjectController {
 
 						dataset.get().setProject(project.get());
 						datasetService.updateAsset(dataset.get());
+					} else if (assetType.equals(AssetType.ARTIFACT)) {
+
+						final Optional<Artifact> artifact = artifactService.getAsset(assetId);
+						if (artifact.isEmpty()) {
+							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Artifact Asset does not exist");
+						}
+
+						if (project.get().getArtifactAssets() == null)
+							project.get().setArtifactAssets(new ArrayList<>());
+						if (project.get().getArtifactAssets().contains(artifact.get())) {
+							throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Artifact Asset already exists on project");
+						}
+
+						artifact.get().setProject(project.get());
+						artifactService.updateAsset(artifact.get());
 					}
 
 					// double check that this asset is not already a part of this project, and if it
@@ -615,6 +635,13 @@ public class ProjectController {
 					if (deletedDataset.isEmpty() || deletedDataset.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete dataset asset");
+					}
+				} else if (assetType.equals(AssetType.ARTIFACT)) {
+
+					final Optional<Artifact> deletedArtifact = artifactService.deleteAsset(assetId);
+					if (deletedArtifact.isEmpty() || deletedArtifact.get().getDeletedOn() == null) {
+						throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete artifact asset");
 					}
 				}
 
