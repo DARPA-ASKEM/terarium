@@ -1,19 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.hibernate.annotations.Type;
-
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;

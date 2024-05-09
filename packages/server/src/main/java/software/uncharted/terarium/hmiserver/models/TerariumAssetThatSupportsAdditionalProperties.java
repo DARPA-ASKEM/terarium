@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.util.HashMap;
+import java.util.Map;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
 public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
