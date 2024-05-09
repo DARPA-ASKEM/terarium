@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import io.hypersistence.utils.hibernate.type.util.JsonSerializer;
@@ -28,15 +27,14 @@ import io.hypersistence.utils.hibernate.type.util.ObjectMapperWrapper;
  * <p>
  * This code is coped from
  * https://github.com/vladmihalcea/hypersistence-utils/blob/master/hypersistence-utils-hibernate-62/src/main/java/io/hypersistence/utils/hibernate/type/util/ObjectMapperJsonSerializer.java
- * and modified to omit the specialized Serializable behavior and make a more
- * robust `jsonClone` method
+ * and modified to omit the specialized Serializable behavior.
  */
 public class HypersistenceJsonSerializerSupplier implements JsonSerializerSupplier {
 
 	public static class HypersistenceJsonSerializer implements JsonSerializer {
 
-		private final ObjectMapper objectMapper = new ObjectMapper();
-		private final ObjectMapperWrapper objectMapperWrapper = new ObjectMapperWrapper(objectMapper);
+		private final ObjectMapperWrapper objectMapperWrapper = new ObjectMapperWrapper(
+				new HypersistenceObjectMapperSupplier().get());
 
 		@Override
 		@SuppressWarnings("unchecked")
@@ -86,11 +84,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 
 		@SuppressWarnings("unchecked")
 		private <T> T jsonClone(final T object) {
-			try {
-				return (T) objectMapper.readValue(objectMapper.writeValueAsBytes(object), object.getClass());
-			} catch (final Exception e) {
-				throw new RuntimeException("Failed to clone object", e);
-			}
+			return objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), (Class<T>) object.getClass());
 		}
 	}
 
