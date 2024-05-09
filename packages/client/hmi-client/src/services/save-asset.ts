@@ -14,12 +14,17 @@ export type AssetToSave = Model | Workflow | File;
 
 // TODO: Once assets have a type property, we can remove the assetType parameter
 
+interface SaveOptions {
+	openOnSave?: boolean;
+	addToProject?: boolean;
+	onSaveFunction?: Function;
+}
+
 // Saves the asset as a new asset
 export async function saveAs(
 	newAsset: AssetToSave,
 	assetType: AssetType,
-	openOnSave: boolean = false,
-	onSaveFunction?: Function
+	options: SaveOptions = { openOnSave: false, addToProject: true }
 ) {
 	let response: any = null;
 
@@ -43,30 +48,31 @@ export async function saveAs(
 		return;
 	}
 
-	// TODO: Potentially add a flag in case we don't want to add the asset to the project
-	const projectId = useProjects().activeProject.value?.id;
-	if (!projectId) {
-		logger.error(`Asset can't be saved since target project doesn't exist.`);
-		return;
-	}
-	await useProjects().addAsset(assetType, response.id, projectId);
+	if (options.addToProject) {
+		const projectId = useProjects().activeProject.value?.id;
+		if (!projectId) {
+			logger.error(`Asset can't be saved since target project doesn't exist.`);
+			return;
+		}
+		await useProjects().addAsset(assetType, response.id, projectId);
 
-	// After saving notify the user and do any necessary actions
-	logger.info(
-		`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`
-	);
-	if (openOnSave) {
+		// After saving notify the user and do any necessary actions
+		logger.info(
+			`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`
+		);
+	}
+
+	if (options.openOnSave) {
 		router.push({
 			name: RouteName.Project,
 			params: {
-				projectId,
 				pageType: assetType,
 				assetId: response.id
 			}
 		});
 	}
 
-	if (onSaveFunction) onSaveFunction(response);
+	if (options.onSaveFunction) options.onSaveFunction(response);
 }
 
 // Overwrites/updates the asset

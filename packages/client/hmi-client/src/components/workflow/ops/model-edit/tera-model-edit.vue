@@ -87,7 +87,7 @@
 		:model="amr"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="onSaveModel"
+		@on-save="appendOutput"
 	/>
 </template>
 
@@ -115,6 +115,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
+// import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -124,11 +125,6 @@ const emit = defineEmits(['append-output', 'update-state', 'close', 'select-outp
 enum ModelEditTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
-}
-
-interface SaveOptions {
-	addToProject?: boolean;
-	appendOutputPort?: boolean;
 }
 
 const outputs = computed(() => {
@@ -196,7 +192,7 @@ const syncWithMiraModel = (data: any) => {
 	}
 	const firstOutputId = outputs.value?.[0].items[0].id;
 	if (firstOutputId === selectedOutputId.value) {
-		// onSaveModel(updatedModel, { appendOutputPort: false });
+		appendOutput(updatedModel);
 	}
 	amr.value = updatedModel;
 };
@@ -311,16 +307,14 @@ const onSelectModelOutput = async () => {
 	}
 };
 
-const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPort: true }) => {
-	if (options.appendOutputPort) {
-		emit('append-output', {
-			id: uuidv4(),
-			label: savedModel.name,
-			type: 'modelId',
-			state: cloneDeep(props.node.state),
-			value: [savedModel.id]
-		});
-	}
+const appendOutput = (savedModel: Model) => {
+	emit('append-output', {
+		id: uuidv4(),
+		label: savedModel.name,
+		type: 'modelId',
+		state: cloneDeep(props.node.state),
+		value: [savedModel.id]
+	});
 };
 
 const initializeAceEditor = (editorInstance: any) => {
@@ -381,7 +375,7 @@ onMounted(async () => {
 		if (!originalModel) return;
 
 		// Set default output which is the input (original model)
-		onSaveModel(originalModel);
+		appendOutput(originalModel);
 	}
 });
 

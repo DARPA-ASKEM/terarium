@@ -120,7 +120,11 @@ function save() {
 	if (props.isOverwriting) {
 		saveAssetService.update(newAsset, props.assetType, onSave);
 	} else {
-		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
+		saveAssetService.saveAs(newAsset, props.assetType, {
+			openOnSave: props.openOnSave,
+			addToProject: true,
+			onSaveFunction: onSave
+		});
 	}
 
 	closeModal();
