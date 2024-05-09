@@ -328,16 +328,13 @@ const buildJupyterContext = () => {
 };
 
 const handleOutputChange = async () => {
-	// Save previously opened model
-	updateOutputModel();
-
 	// Switch to model from output
 	activeModelId = activeOutput.value?.value?.[0];
 	if (!activeModelId) return;
 	amr.value = await getModel(activeModelId);
 	if (!amr.value) return;
 
-	codeText.value = props.node.state.notebookHistory?.[0]?.code ?? defaultCodeText;
+	codeText.value = props.node.state.notebookHistory[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -357,6 +354,7 @@ const handleOutputChange = async () => {
 
 // Triggers output change
 const onSelection = (id: string) => {
+	updateOutputModel(); // Save the model before switching to the new one
 	emit('select-output', id);
 };
 
