@@ -1,9 +1,4 @@
-import {
-	ClientEvent,
-	ClientEventType,
-	ExtractionStatusUpdate,
-	TaskNotificationEventData
-} from '@/types/Types';
+import { ClientEvent, ClientEventType, ExtractionStatusUpdate, TaskResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
@@ -84,9 +79,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		});
 	};
 
-	handlers[ClientEventType.TaskGollmModelCard] = (
-		event: ClientEvent<TaskNotificationEventData>
-	) => {
+	handlers[ClientEventType.TaskGollmModelCard] = (event: ClientEvent<TaskResponse>) => {
 		// TODO: Create a notification item and implement notification item UI for this event
 		console.log(event);
 	};
