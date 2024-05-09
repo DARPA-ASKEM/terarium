@@ -260,16 +260,13 @@ const stratifyRequest = () => {
 	});
 
 	const messageContent = {
-		stratify_args: {
-			key: strataOption.name,
-			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-			concepts_to_stratify: conceptsToStratify,
-			params_to_stratify: parametersToStratify,
-			cartesian_control: strataOption.cartesianProduct,
-			structure: strataOption.useStructure === true ? null : []
-		}
+		key: strataOption.name,
+		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
+		concepts_to_stratify: conceptsToStratify,
+		params_to_stratify: parametersToStratify,
+		cartesian_control: strataOption.cartesianProduct,
+		structure: strataOption.useStructure === true ? null : []
 	};
-
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
