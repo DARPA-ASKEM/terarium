@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -36,7 +35,7 @@ public class Grounding extends TerariumEntity {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, Object> context;
+	private JsonNode context;
 
 	@Override
 	public Grounding clone() {
@@ -47,10 +46,7 @@ public class Grounding extends TerariumEntity {
 			clone.identifiers.addAll(this.identifiers);
 		}
 		if (this.context != null) {
-			clone.context = new HashMap<>();
-			for (final String key : this.context.keySet()) {
-				clone.context.put(key, context.get(key));
-			}
+			clone.context = this.context.deepCopy();
 		}
 
 		return clone;
