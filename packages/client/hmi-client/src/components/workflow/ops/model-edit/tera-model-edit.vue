@@ -91,7 +91,7 @@
 		:model="amr"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="appendOutput"
+		@on-save="createOutput"
 	/>
 </template>
 
@@ -104,7 +104,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
-import { getModel } from '@/services/model';
+import { getModel, createModel, updateModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -120,7 +120,6 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
-// import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
@@ -149,6 +148,8 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
+let activeModelId: string | null = null;
+const readyToSaveOutputModel = ref(false);
 const showSaveModelModal = ref(false);
 
 let editor: VAceEditorInstance['_editor'] | null;
@@ -193,15 +194,20 @@ const appendCode = (data: any, property: string) => {
 
 const syncWithMiraModel = (data: any) => {
 	const updatedModel = data.content?.['application/json'];
-	if (!updatedModel) {
+	if (!updatedModel || !activeModelId) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
+	updatedModel.id = activeModelId;
 	const firstOutputId = outputs.value?.[0].items[0].id;
+	// If the first output is edited, create a new output
 	if (firstOutputId === selectedOutputId.value) {
-		appendOutput(updatedModel);
+		createOutput(updatedModel);
+	} else {
+		amr.value = updatedModel;
+		readyToSaveOutputModel.value = true;
+		console.log(amr.value, 'updated model in ui');
 	}
-	amr.value = updatedModel;
 };
 
 // Reset model, then execute the code
@@ -275,55 +281,6 @@ const handleResetResponse = (data: any) => {
 	}
 };
 
-const buildJupyterContext = () => {
-	if (!amr.value) {
-		logger.warn('Cannot build Jupyter context without a model');
-		return null;
-	}
-
-	return {
-		context: 'mira_model_edit',
-		language: 'python3',
-		context_info: {
-			id: amr.value.id
-		}
-	};
-};
-
-const onSelectModelOutput = async () => {
-	const modelId = activeOutput.value?.value?.[0];
-	if (!modelId) return;
-	amr.value = await getModel(modelId);
-	if (!amr.value) return;
-
-	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
-
-	// Create a new session and context based on model
-	try {
-		const jupyterContext = buildJupyterContext();
-		if (jupyterContext) {
-			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
-				kernelManager.shutdown();
-			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			isKernelReady.value = true;
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
-};
-
-const appendOutput = (savedModel: Model) => {
-	emit('append-output', {
-		id: uuidv4(),
-		label: savedModel.name,
-		type: 'modelId',
-		state: cloneDeep(props.node.state),
-		value: [savedModel.id]
-	});
-};
-
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
@@ -345,10 +302,78 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	emit('update-state', state);
 };
 
+// Saves the output model in the backend
+// Not called after every little model edit to avoid too many requests
+// Called when the selected output is changed, component unmounts or before the window is closed
+function updateOutputModel() {
+	if (readyToSaveOutputModel.value && amr.value) {
+		updateModel(amr.value);
+		readyToSaveOutputModel.value = false;
+	}
+}
+
+const createOutput = async (modelToSave: Model) => {
+	// If it's the original model, use that otherwise create a new one
+	const modelData = isEmpty(outputs.value) ? modelToSave : await createModel(modelToSave);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: isEmpty(outputs.value) ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
+		type: 'modelId',
+		state: cloneDeep(props.node.state),
+		value: [modelData.id]
+	});
+};
+
+const buildJupyterContext = () => {
+	if (!amr.value) {
+		logger.warn('Cannot build Jupyter context without a model');
+		return null;
+	}
+	return {
+		context: 'mira_model_edit',
+		language: 'python3',
+		context_info: {
+			id: amr.value.id
+		}
+	};
+};
+
+const handleOutputChange = async () => {
+	// Save previously opened model
+	updateOutputModel();
+
+	// Switch to model from output
+	activeModelId = activeOutput.value?.value?.[0];
+	if (!activeModelId) return;
+	amr.value = await getModel(activeModelId);
+	if (!amr.value) return;
+
+	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
+
+	// Create a new session and context based on model
+	try {
+		const jupyterContext = buildJupyterContext();
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				// when coming from output dropdown change we should shutdown first
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			isKernelReady.value = true;
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+};
+
+// Triggers output change
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+// Updates output selection
 watch(
 	() => props.node.active,
 	async () => {
@@ -356,7 +381,7 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) as any;
-			await onSelectModelOutput();
+			await handleOutputChange();
 		}
 	},
 	{ immediate: true }
@@ -382,11 +407,13 @@ onMounted(async () => {
 		if (!originalModel) return;
 
 		// Set default output which is the input (original model)
-		appendOutput(originalModel);
+		createOutput(originalModel);
 	}
+	window.addEventListener('beforeunload', updateOutputModel);
 });
 
 onUnmounted(() => {
+	updateOutputModel();
 	kernelManager.shutdown();
 });
 </script>
