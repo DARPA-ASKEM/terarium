@@ -10,7 +10,7 @@
 				@close="emit('on-close-clicked')"
 			>
 				{{ title ?? node.displayName }}
-				<template #inputs>
+				<template #top-header-actions>
 					<div class="input-chips">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
@@ -22,16 +22,12 @@
 							</template>
 						</Chip>
 					</div>
-				</template>
-				<template #output>
 					<tera-output-dropdown
-						v-if="outputOptions && output"
+						v-if="outputOptions && selectedOutputId"
 						:options="outputOptions"
-						:output="output"
+						:output="selectedOutputId"
 						@update:selection="(e) => emit('update:selection', e)"
 					/>
-				</template>
-				<template #menu>
 					<section v-if="!isEmpty(menuItems)" class="mr-3 ml-3">
 						<Button
 							icon="pi pi-ellipsis-v"
@@ -77,11 +73,11 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
-import { isEmpty } from 'lodash';
+import _, { isEmpty } from 'lodash';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
@@ -92,8 +88,6 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
-	output?: WorkflowOutput<any>['id'];
-	outputOptions?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 }>();
 
 const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
@@ -121,9 +115,27 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
 
-function toggle(event) {
+const selectedOutputId = computed(() => {
+	if (props.node.active) {
+		return props.node.active;
+	}
+	return null;
+});
+const outputOptions = computed(() => {
+	if (!_.isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
+
+const toggle = (event) => {
 	menu.value.toggle(event);
-}
+};
 </script>
 
 <style scoped>

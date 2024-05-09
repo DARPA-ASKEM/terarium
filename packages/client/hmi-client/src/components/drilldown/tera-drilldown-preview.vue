@@ -15,13 +15,10 @@
 <script setup lang="ts">
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import { WorkflowOutput } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 defineProps<{
 	title?: string;
-	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
-	output?: WorkflowOutput<any>['id'];
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
 	hideHeader?: boolean;

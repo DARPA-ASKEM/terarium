@@ -4,8 +4,6 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		:menu-items="menuItems"
-		:output="selectedOutputId"
-		:output-options="outputs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4 pt-3">
@@ -66,7 +64,6 @@
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"
-				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
@@ -169,17 +166,6 @@ const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const kernelManager = new KernelSessionManager();
 
