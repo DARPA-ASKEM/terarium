@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -13,9 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 /** Represents a column in a dataset */
 @Data
@@ -65,7 +66,7 @@ public class DatasetColumn extends TerariumEntity {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, Object> metadata;
+	private JsonNode metadata;
 
 	/** (Optional) Grounding of ontological concepts related to the column */
 	@TSOptional
@@ -77,11 +78,11 @@ public class DatasetColumn extends TerariumEntity {
 	@Column(columnDefinition = "text")
 	private String description;
 
-	public void updateMetadata(final Map<String, Object> metadata) {
+	public void updateMetadata(final JsonNode metadata) {
 		if (this.metadata == null) {
 			this.metadata = metadata;
 		} else {
-			this.metadata.putAll(metadata);
+			JsonUtil.setAll((ObjectNode) this.metadata, metadata);
 		}
 	}
 
@@ -98,8 +99,7 @@ public class DatasetColumn extends TerariumEntity {
 		}
 
 		if (this.metadata != null) {
-			clone.metadata = new HashMap<>();
-			clone.metadata.putAll(this.metadata);
+			clone.metadata = this.metadata.deepCopy();
 		}
 
 		if (this.grounding != null) clone.grounding = this.grounding.clone();
