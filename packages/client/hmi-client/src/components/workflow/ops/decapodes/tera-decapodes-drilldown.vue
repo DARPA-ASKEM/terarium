@@ -31,10 +31,11 @@
 						:defaultOptions="sampleAgentQuestions"
 						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => (llmThought = data)"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
 					/>
 				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -118,7 +119,7 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 const codeText = ref();
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',
