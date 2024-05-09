@@ -48,9 +48,10 @@
 						:default-options="[]"
 						:context-language="'python3'"
 						@llm-output="(data: any) => processLLMOutput(data)"
-						@llm-thought-output="(data: any) => (llmThought = data)"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
 					/>
-					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -200,7 +201,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
