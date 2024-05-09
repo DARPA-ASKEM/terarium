@@ -17,10 +17,11 @@ public class Dynamics {
 
 	@Override
 	public Dynamics clone() {
-		Dynamics clone = new Dynamics();
+		final Dynamics clone = new Dynamics();
 		clone.setName(name);
 		clone.setDescription(description);
-		clone.setBlock(new ArrayList<>(block));
+		if(this.block != null)
+			clone.setBlock(new ArrayList<>(block));
 		return clone;
 	}
 }
