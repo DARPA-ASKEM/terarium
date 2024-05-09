@@ -1,31 +1,24 @@
 package software.uncharted.terarium.hmiserver.utils;
 
-import java.util.Collection;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-
 import io.hypersistence.utils.hibernate.type.util.JsonSerializer;
 import io.hypersistence.utils.hibernate.type.util.JsonSerializerSupplier;
 import io.hypersistence.utils.hibernate.type.util.ObjectMapperWrapper;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * This overrides the default JsonSerializer used in hypersistence.
  *
- * <p>
- * The default JsonSerializer will clone `Serializable` objects by _not_ using
- * jackson to serialize and deserialize
+ * <p>The default JsonSerializer will clone `Serializable` objects by _not_ using jackson to serialize and deserialize
  * the object.
  *
- * <p>
- * This causes unwanted behavior for classes that we specifically override to
- * behave a particular way with jackson.
+ * <p>This causes unwanted behavior for classes that we specifically override to behave a particular way with jackson.
  * Ex. classes that extend SupportsAdditionalProperties.
  *
- * <p>
- * This code is coped from
+ * <p>This code is coped from
  * https://github.com/vladmihalcea/hypersistence-utils/blob/master/hypersistence-utils-hibernate-62/src/main/java/io/hypersistence/utils/hibernate/type/util/ObjectMapperJsonSerializer.java
  * and modified to omit the specialized Serializable behavior.
  */
@@ -33,8 +26,8 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 
 	public static class HypersistenceJsonSerializer implements JsonSerializer {
 
-		private final ObjectMapperWrapper objectMapperWrapper = new ObjectMapperWrapper(
-				new HypersistenceObjectMapperSupplier().get());
+		private final ObjectMapperWrapper objectMapperWrapper =
+				new ObjectMapperWrapper(new HypersistenceObjectMapperSupplier().get());
 
 		@Override
 		@SuppressWarnings("unchecked")
