@@ -537,7 +537,6 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
-    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
@@ -786,24 +785,13 @@ export interface TimeSpan {
     end: number;
 }
 
-export interface TaskNotificationEventData {
-    taskId: string;
-    taskType: TaskType;
-    status: TaskStatus;
-    message: string;
-    error: string;
-    data: any;
-}
-
 export interface TaskResponse {
     id: string;
-    type: TaskType;
     script: string;
     status: TaskStatus;
     output: any;
     userId: string;
     projectId: string;
-    notificationEventType?: ClientEventType;
     additionalProperties: any;
     stdout: string;
     stderr: string;
@@ -1390,12 +1378,6 @@ export enum ProgressState {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
-}
-
-export enum TaskType {
-    Gollm = "GOLLM",
-    Mira = "MIRA",
-    Funman = "FUNMAN",
 }
 
 export enum ExtractionAssetType {
