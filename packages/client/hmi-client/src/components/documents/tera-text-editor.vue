@@ -1,5 +1,5 @@
 <template>
-	<QuillEditor theme="snow" v-model:content="text" contentType="html" />
+	<QuillEditor theme="snow" v-model:content="text" contentType="text" />
 </template>
 
 <script setup lang="ts">

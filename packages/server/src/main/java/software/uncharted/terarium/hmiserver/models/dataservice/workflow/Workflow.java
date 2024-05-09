@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Convert;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -17,6 +19,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -30,20 +33,21 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Transform transform;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
-	@ManyToOne
-	@JoinColumn(name = "project_id")
-	@JsonBackReference
 	@TSOptional
+	@ManyToOne
+	@JsonBackReference
 	private Project project;
 
 	@Override

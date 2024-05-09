@@ -5,7 +5,7 @@
 			<main>
 				<header>
 					<span :class="{ 'edit-name': isEditable }" @click="turnOnNameEdit" v-if="!isEditingName">
-						{{ card?.name }}
+						{{ model.header.name }}
 					</span>
 					<Textarea
 						v-else
@@ -45,7 +45,6 @@ import { ref, computed, nextTick } from 'vue';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import type { ModelTemplateCard } from '@/types/model-templating';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -89,16 +88,6 @@ const ports = computed(() =>
 	props.showParameters
 		? [...props.model.model.states, ...props.model.semantics.ode.parameters]
 		: props.model.model.states
-);
-
-const card = computed<ModelTemplateCard>(
-	() =>
-		props.model.metadata.templateCard ?? {
-			id: '',
-			name: props.model.header.name,
-			x: 0,
-			y: 0
-		}
 );
 
 async function turnOnNameEdit() {

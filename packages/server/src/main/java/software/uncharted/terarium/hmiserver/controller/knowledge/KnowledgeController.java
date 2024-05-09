@@ -403,7 +403,7 @@ public class KnowledgeController {
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
-			codeFile.setProgrammingLanguageFromFileName(filename);
+			codeFile.setFileNameAndProgrammingLanguage(filename);
 
 			if (code.getFiles() == null) {
 				code.setFiles(new HashMap<>());
@@ -443,8 +443,15 @@ public class KnowledgeController {
 					final int MAX_CHAR_LIMIT = 9000;
 
 					final DocumentAsset document = documentOptional.get();
-					documentText = document.getText()
-							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+
+					if (document.getText() != null) {
+						documentText = document.getText()
+								.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+					} else {
+						throw new ResponseStatusException(
+								HttpStatus.BAD_REQUEST,
+								"Supplied document is still in the extraction process. Please try again later...");
+					}
 
 					try {
 						final Provenance provenancePayload = new Provenance(
