@@ -45,7 +45,7 @@
 				<div class="toolbar">
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
-						:default-options="[]"
+						:default-options="sampleAgentQuestions"
 						:context-language="'python3'"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
@@ -202,6 +202,12 @@ const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 const llmThoughts = ref<any[]>([]);
+
+const sampleAgentQuestions = [
+	'Stratify my model by the ages young and old',
+	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'What is cartesian_control in stratify?'
+];
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
