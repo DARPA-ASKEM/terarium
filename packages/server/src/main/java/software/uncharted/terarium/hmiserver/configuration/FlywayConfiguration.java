@@ -6,9 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.sql.DataSource;
-
+import lombok.RequiredArgsConstructor;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationVersion;
@@ -20,13 +19,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import lombok.RequiredArgsConstructor;
-
 /**
- * This configuration class ensures that hibernate runs BEFORE flyway. This is
- * to preserve the schema generation
- * provided by Hibernate, but still get the benefits of having a proper version
- * migration system in Flyway
+ * This configuration class ensures that hibernate runs BEFORE flyway. This is to preserve the schema generation
+ * provided by Hibernate, but still get the benefits of having a proper version migration system in Flyway
  */
 @Configuration
 @RequiredArgsConstructor
@@ -45,12 +40,10 @@ public class FlywayConfiguration {
 	 */
 	@Bean
 	FlywayMigrationInitializer flywayInitializer(final Flyway flyway) {
-		return new FlywayMigrationInitializer(flyway, (f) -> {
-		});
+		return new FlywayMigrationInitializer(flyway, (f) -> {});
 	}
 
-	static class FlywayVoid {
-	}
+	static class FlywayVoid {}
 
 	private String removeJavaMigrationPackage(final String str) {
 		final int index = str.indexOf('V');
@@ -61,8 +54,7 @@ public class FlywayConfiguration {
 	}
 
 	/**
-	 * Once the entityManagerFactory (aka, Hibernate) has been created it's safe to
-	 * run migrations
+	 * Once the entityManagerFactory (aka, Hibernate) has been created it's safe to run migrations
 	 *
 	 * @param flyway
 	 * @param flywayProperties
@@ -83,7 +75,8 @@ public class FlywayConfiguration {
 			final String baselineVersion = getBaselineVersion(migrations);
 
 			// re-create the flyway object with the correct baseline
-			final FluentConfiguration config = Flyway.configure().configuration(flyway.getConfiguration())
+			final FluentConfiguration config = Flyway.configure()
+					.configuration(flyway.getConfiguration())
 					.baselineVersion(MigrationVersion.fromVersion(baselineVersion));
 			flywayWithCorrectBaseline = new Flyway(config);
 			flywayWithCorrectBaseline.baseline();
@@ -93,8 +86,7 @@ public class FlywayConfiguration {
 	}
 
 	/**
-	 * Tests if flyway is initialized by checking if the schema is present in the
-	 * database
+	 * Tests if flyway is initialized by checking if the schema is present in the database
 	 *
 	 * @return true if flyway is initialized, false otherwise
 	 */
