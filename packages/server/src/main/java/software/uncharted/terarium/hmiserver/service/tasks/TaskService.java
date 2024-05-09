@@ -44,7 +44,6 @@ import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
-import software.uncharted.terarium.hmiserver.models.task.TaskNotificationEventData;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -451,12 +450,11 @@ public class TaskService {
 				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
 				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
 
-				final ClientEvent<TaskResponse> clientEvent =
-						ClientEvent.<TaskResponse>builder()
-								.notificationGroupId(resp.getId())
-								.type(clientEventType)
-								.data(resp)
-								.build();
+				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
+						.notificationGroupId(resp.getId())
+						.type(clientEventType)
+						.data(resp)
+						.build();
 				clientEventService.sendToUser(clientEvent, resp.getUserId());
 
 			} catch (final Exception e) {
