@@ -38,6 +38,10 @@ public class DatasetColumn extends TerariumEntity {
 	@Column(length = 255)
 	private String name;
 
+	public String getName() {
+		return name.replace("\0", "");
+	}
+
 	@TSOptional
 	@ManyToOne
 	@JoinColumn(name = "dataset_id")

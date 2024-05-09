@@ -98,7 +98,7 @@ export interface CsvColumnStats {
 
 export interface Grounding extends TerariumEntity {
     identifiers: Identifier[];
-    context?: { [index: string]: any };
+    context?: any;
 }
 
 export interface Identifier {
@@ -177,7 +177,7 @@ export interface DatasetColumn extends TerariumEntity {
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     grounding?: Grounding;
     description?: string;
     dataset?: Dataset;
