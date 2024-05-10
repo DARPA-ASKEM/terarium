@@ -25,7 +25,6 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 
 	@PostConstruct
 	public void init() {
-		// mapper.setSerializationInclusion(Include.NON_NULL)
 		mapper.setPropertyNamingStrategy(
 				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
