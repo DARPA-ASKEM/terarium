@@ -1,36 +1,44 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAdapter;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
 @Slf4j
 public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
-	private final ObjectMapper snakecaseMapper;
-	private final ObjectMapper camelcaseMapper;
+
+	@Autowired
+	private ObjectMapper snakecaseMapper;
+
+	@Autowired
+	private ObjectMapper camelcaseMapper;
 
 	@PostConstruct
 	public void init() {
-		camelcaseMapper.setPropertyNamingStrategy(
+		camelcaseMapper = camelcaseMapper.copy().setPropertyNamingStrategy(
 				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
-		snakecaseMapper.setPropertyNamingStrategy(
+		snakecaseMapper = snakecaseMapper.copy().setPropertyNamingStrategy(
 				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 

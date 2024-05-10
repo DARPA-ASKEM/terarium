@@ -1,11 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,16 +9,24 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+
+import jakarta.annotation.PostConstruct;
 import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
-	private final ObjectMapper mapper;
+
+	@Autowired
+	private ObjectMapper mapper;
 
 	@PostConstruct
 	public void init() {
-		mapper.setPropertyNamingStrategy(
+		mapper = mapper.copy().setPropertyNamingStrategy(
 				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
