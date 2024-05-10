@@ -1,19 +1,32 @@
+import _ from 'lodash';
 import {
 	ClientEvent,
 	ClientEventType,
 	ExtractionStatusUpdate,
 	ProgressState,
-	TaskResponse
+	TaskResponse,
+	TaskStatus
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { NotificationItem } from '@/types/common';
+import { NotificationItem, NotificationItemStatus } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
 export const getStatus = (data: { error: string; t: number }) => {
 	if (data.error) return ProgressState.Failed;
 	if (data.t >= 1.0) return ProgressState.Complete;
 	return ProgressState.Running;
+};
+export const getStatusFromTaskResponse = (data: TaskResponse) => {
+	const statusMap = {
+		[TaskStatus.Queued]: ProgressState.Queued,
+		[TaskStatus.Running]: ProgressState.Running,
+		[TaskStatus.Success]: ProgressState.Complete,
+		[TaskStatus.Failed]: ProgressState.Failed,
+		[TaskStatus.Cancelled]: ProgressState.Cancelled,
+		[TaskStatus.Cancelling]: ProgressState.Cancelling
+	};
+	return statusMap[data.status];
 };
 
 const toastTitle = {
@@ -43,52 +56,78 @@ const logStatusMessage = (
 		});
 };
 
+const updateStatusFromTaskResponse = (
+	event: ClientEvent<TaskResponse>
+): NotificationItemStatus => ({
+	status: getStatusFromTaskResponse(event.data),
+	msg: `${_.startCase(_.toLower(event.type))} in progress...`,
+	error: event.data.stderr
+});
+
 // Creates notification event handlers for each type of client events that manipulates given notification items ref
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
 	const handlers = {} as Record<ClientEventType, (event: ClientEvent<any>) => void>;
 
-	handlers[ClientEventType.ExtractionPdf] = (event: ClientEvent<ExtractionStatusUpdate>) => {
-		if (!event.data) return;
-
-		const existingItem = notificationItems.value.find(
-			(item) => item.notificationGroupId === event.notificationGroupId
-		);
-		if (!existingItem) {
-			// Create a new notification item
-			const newItem: NotificationItem = {
-				notificationGroupId: event.notificationGroupId ?? '',
-				type: ClientEventType.ExtractionPdf,
-				assetId: event.data.documentId,
-				assetName: '',
-				status: getStatus(event.data),
-				msg: event.data.message,
-				progress: event.data.t,
-				lastUpdated: new Date(event.createdAtMs).getTime(),
-				error: event.data.error,
-				acknowledged: false
-			};
-			notificationItems.value.push(newItem);
-			// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
-			// Update the asset name asynchronously on the next tick to avoid blocking the event handler
-			getDocumentAsset(event.data.documentId).then((document) =>
-				Object.assign(newItem, { assetName: document?.name || '' })
+	const registerHandler = <T>(
+		eventType: ClientEventType,
+		updateStatusFn: (event: ClientEvent<T>) => NotificationItemStatus,
+		onCreate: (event: ClientEvent<T>, createdItem: NotificationItem) => void = () => {}
+	) => {
+		handlers[eventType] = (event: ClientEvent<T>) => {
+			if (!event.data) return;
+			const existingItem = notificationItems.value.find(
+				(item) => item.notificationGroupId === event.notificationGroupId
 			);
-			return;
-		}
-		// Update the existing item
-		Object.assign(existingItem, {
+			const lastUpdated = new Date(event.createdAtMs).getTime();
+			if (!existingItem) {
+				const newItem: NotificationItem = {
+					notificationGroupId: event.notificationGroupId ?? '',
+					type: event.type,
+					lastUpdated,
+					acknowledged: false,
+					assetId: '',
+					assetName: '',
+					...updateStatusFn(event)
+				};
+				notificationItems.value.push(newItem);
+				onCreate(event, newItem);
+				return;
+			}
+			// Update existing item status
+			Object.assign(existingItem, {
+				lastUpdated,
+				...updateStatusFn(event)
+			});
+		};
+	};
+
+	registerHandler<ExtractionStatusUpdate>(
+		ClientEventType.ExtractionPdf,
+		(event) => ({
 			status: getStatus(event.data),
 			msg: event.data.message,
 			progress: event.data.t,
-			lastUpdated: new Date(event.createdAtMs).getTime(),
 			error: event.data.error
-		});
-	};
+		}),
+		(event, created) => {
+			created.assetId = event.data.documentId;
+			// TODO: make sure UI is updated after updating assetId and name
+			getDocumentAsset(event.data.documentId).then((document) =>
+				Object.assign(created, { assetName: document?.name || '' })
+			);
+		}
+	);
 
-	handlers[ClientEventType.TaskGollmModelCard] = (event: ClientEvent<TaskResponse>) => {
-		// TODO: Create a notification item and implement notification item UI for this event
-		console.log(event);
-	};
+	registerHandler<TaskResponse>(
+		ClientEventType.TaskGollmModelCard,
+		updateStatusFromTaskResponse,
+		(event, created) => {
+			created.assetId = event.data.additionalProperties.documentId;
+			getDocumentAsset(created.assetId).then((document) =>
+				Object.assign(created, { assetName: document?.name || '' })
+			);
+		}
+	);
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 

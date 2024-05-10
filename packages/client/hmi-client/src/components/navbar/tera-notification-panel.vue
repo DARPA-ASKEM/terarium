@@ -36,10 +36,14 @@
 					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
 					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
-				<div v-if="isRunning(item)" class="progressbar-container">
-					<p class="action">{{ getActionText(item) }} {{ Math.round(item.progress * 100) }}%</p>
+				<div v-if="isRunning(item) || isCancelling(item)" class="progressbar-container">
+					<p class="action">
+						{{ getActionText(item) }}
+						<span v-if="item.progress !== undefined"> {{ Math.round(item.progress * 100) }}%</span>
+					</p>
 
-					<ProgressBar :value="item.progress * 100" />
+					<ProgressBar v-if="item.progress !== undefined" :value="item.progress * 100" />
+					<ProgressBar v-else mode="indeterminate" />
 					<!--					Disabled until backend process cancel feature is done-->
 					<!--					<Button-->
 					<!--						class="cancel-button"-->
@@ -52,6 +56,9 @@
 				<div v-else class="done-container">
 					<div class="status-msg ok" v-if="isComplete(item)">
 						<i class="pi pi-check-circle" />Completed
+					</div>
+					<div class="status-msg cancel" v-if="isCancelled(item)">
+						<i class="pi pi-exclamation-circle" />Cancelled
 					</div>
 					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
@@ -101,6 +108,8 @@ const getTitleText = (item: NotificationItem) => {
 const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
 const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
 const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
+const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
+const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
 
 const getActionText = (item: NotificationItem) => {
 	switch (item.type) {
@@ -253,7 +262,8 @@ header {
 		.status-msg.ok {
 			color: var(--primary-color);
 		}
-		.status-msg.error {
+		.status-msg.error,
+		.status-msg.cancel {
 			color: var(--error-color);
 		}
 		.time-msg {
