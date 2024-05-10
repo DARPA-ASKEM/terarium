@@ -28,13 +28,14 @@
 							@change="setKernelContext"
 						/>
 						<span
-							><label>Model framework</label
-							><Dropdown
+							><label>Model framework</label>
+							<Dropdown
 								size="small"
 								v-model="clonedState.modelFramework"
 								:options="modelFrameworks"
 								@change="setKernelContext"
-						/></span>
+							/>
+						</span>
 						<span class="mr-auto">
 							<label>Service</label>
 							<Dropdown
@@ -351,6 +352,7 @@ async function handleCode() {
 			description: 'tempDescription',
 			files: {
 				[fileName]: {
+					fileName,
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
@@ -575,6 +577,7 @@ span {
 	align-items: center;
 	gap: 0.5rem;
 }
+
 .p-dropdown {
 	max-height: 40px;
 }

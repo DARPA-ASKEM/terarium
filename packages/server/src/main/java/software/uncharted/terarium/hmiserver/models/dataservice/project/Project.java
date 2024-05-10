@@ -2,7 +2,9 @@ package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
@@ -13,14 +15,15 @@ import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -50,20 +53,30 @@ public class Project extends TerariumAsset {
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] overviewContent;
 
-	@OneToMany(mappedBy = "project")
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
 	@JsonManagedReference
 	@Deprecated // This will be going away once the PG migration is done.
 	private List<ProjectAsset> projectAssets = new ArrayList<>();
 
-	@OneToMany(mappedBy = "project")
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@ToString.Exclude
 	@JsonManagedReference
 	private List<Code> codeAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<Dataset> datasetAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<Artifact> artifactAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient
