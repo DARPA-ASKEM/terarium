@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +15,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -35,6 +39,11 @@ public class Workflow extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
+
+	@TSOptional
+	@ManyToOne
+	@JsonBackReference
+	private Project project;
 
 	@Override
 	public Workflow clone() {
