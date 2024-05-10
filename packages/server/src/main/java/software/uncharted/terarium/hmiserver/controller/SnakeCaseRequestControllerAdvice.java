@@ -34,6 +34,8 @@ public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
 
 	@PostConstruct
 	public void init() {
+		// We modify the injected object mappers because Spring injects an ObjectMapper
+		// different from one that is returned via `new ObjectMapper()`
 		camelcaseMapper = camelcaseMapper
 				.copy()
 				.setPropertyNamingStrategy(
