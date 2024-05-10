@@ -185,10 +185,10 @@
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
 								(data: Intervention) => {
-									updateIntervention(data, idx);
+									setIntervention(knobs.transientModelConfig, data, idx);
 								}
 							"
-							@delete="deleteIntervention(idx)"
+							@delete="removeIntervention(knobs.transientModelConfig, idx)"
 						/>
 					</AccordionTab>
 				</Accordion>
@@ -362,7 +362,11 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
+import {
+	createModelConfiguration,
+	setIntervention,
+	removeIntervention
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type {
 	Initial,
@@ -668,20 +672,6 @@ const addIntervention = () => {
 		});
 	} else {
 		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
-	}
-};
-
-const deleteIntervention = (index: number) => {
-	if (knobs.value.transientModelConfig.interventions?.[index]) {
-		knobs.value.transientModelConfig.interventions.splice(index, 1);
-	}
-};
-
-const updateIntervention = (value: Intervention, index: number) => {
-	if (knobs.value.transientModelConfig.interventions?.[index]) {
-		knobs.value.transientModelConfig.interventions[index] = value;
-	} else {
-		logger.error(`Failed to update intervention at position ${index}`);
 	}
 };
 

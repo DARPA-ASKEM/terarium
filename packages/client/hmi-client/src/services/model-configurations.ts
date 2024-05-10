@@ -1,6 +1,13 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import type { ModelConfiguration, Model, Intervention } from '@/types/Types';
+import type {
+	ModelConfiguration,
+	Model,
+	Intervention,
+	ModelParameter,
+	ModelDistribution,
+	Initial
+} from '@/types/Types';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -66,4 +73,76 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 
 	const response = await API.put(`/model-configurations/${config.id}`, config);
 	return response?.data ?? null;
+};
+
+export const getInitial = (config: ModelConfiguration, initialId: string): Initial | undefined =>
+	config.configuration.semantics?.ode.initials?.find((initial) => initial.target === initialId);
+
+export const getInitialSource = (config: ModelConfiguration, initialId: string): string =>
+	config.configuration.metadata?.initials?.[initialId].source ?? '';
+
+export const setInitialSource = (
+	config: ModelConfiguration,
+	initialId: string,
+	source: string
+): void => {
+	const initial = config.configuration.metadata?.initials?.[initialId];
+	if (initial) {
+		initial.source = source;
+	}
+};
+
+export const getParameter = (
+	config: ModelConfiguration,
+	parameterId: string
+): ModelParameter | undefined =>
+	config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
+
+export const setDistribution = (
+	config: ModelConfiguration,
+	distribution: ModelDistribution,
+	parameterId: string
+): void => {
+	const parameter = getParameter(config, parameterId);
+	if (parameter) {
+		parameter.distribution = distribution;
+	}
+};
+
+export const removeDistribution = (config: ModelConfiguration, parameterId: string): void => {
+	const parameter = getParameter(config, parameterId);
+	if (parameter?.distribution) {
+		delete parameter.distribution;
+	}
+};
+
+export const getInterventions = (config: ModelConfiguration): Intervention[] =>
+	config.interventions ?? [];
+
+export const setIntervention = (
+	config: ModelConfiguration,
+	intervention: Intervention,
+	index: number
+): void => {
+	const interventions = getInterventions(config);
+	interventions[index] = intervention;
+};
+
+export const removeIntervention = (config: ModelConfiguration, index: number): void => {
+	const interventions = getInterventions(config);
+	interventions.splice(index, 1);
+};
+
+export const getParameterSource = (config: ModelConfiguration, parameterId: string): string =>
+	config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
+
+export const setParameterSource = (
+	config: ModelConfiguration,
+	parameterId: string,
+	source: string
+): void => {
+	const parameter = config.configuration.metadata?.parameters?.[parameterId];
+	if (parameter) {
+		parameter.source = source;
+	}
 };
