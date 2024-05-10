@@ -11,7 +11,7 @@
 		</div>
 		<div class="toolbar-right-side">
 			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
-			<Button label="Run" size="large" icon="pi pi-play" @click="() => runCommand" />
+			<Button label="Run" size="large" icon="pi pi-play" @click="() => runCommand()" />
 		</div>
 	</div>
 
@@ -57,7 +57,7 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 	defaultOptions?: string[];
 	contextLanguage: string;
-	runCommand?: object | undefined;
+	runCommand?: Function;
 }>();
 
 const emit = defineEmits(['llm-output', 'llm-thought-output']);
