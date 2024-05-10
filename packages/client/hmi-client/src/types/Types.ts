@@ -78,7 +78,7 @@ export interface Artifact extends TerariumAsset {
     userId: string;
     fileNames: string[];
     metadata?: any;
-    concepts?: OntologyConcept[];
+    project?: Project;
 }
 
 export interface CsvAsset {
@@ -414,6 +414,7 @@ export interface Project extends TerariumAsset {
     codeAssets: Code[];
     datasetAssets: Dataset[];
     workflowAssets: Workflow[];
+    artifactAssets: Artifact[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
