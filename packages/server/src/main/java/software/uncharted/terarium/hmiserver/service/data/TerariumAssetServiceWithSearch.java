@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		extends TerariumAssetServiceWithoutSearch<T, R> {
 
 	public TerariumAssetServiceWithSearch(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
@@ -42,7 +44,7 @@ public abstract class TerariumAssetServiceWithSearch<
 			final R repository,
 			final Class<T> assetClass) {
 
-		super(config, projectAssetService, repository, s3ClientService, assetClass);
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, assetClass);
 
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;

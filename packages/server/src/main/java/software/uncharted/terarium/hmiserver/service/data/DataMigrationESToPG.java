@@ -48,6 +48,8 @@ public class DataMigrationESToPG {
 	private final WorkflowService workflowService;
 	private final SimulationService simulationService;
 	private final CodeService codeService;
+	private final DatasetService datasetService;
+	private final ArtifactService artifactService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -123,7 +125,18 @@ public class DataMigrationESToPG {
 
 				if (!assets.isEmpty()) {
 					log.info("Saving {} rows to SQL...", assets.size());
-					service.getRepository().saveAll(assets);
+					long failed = 0;
+					for (final T asset : assets) {
+						try {
+							service.getRepository().save(asset);
+						} catch (final Exception e) {
+							log.warn("Failed to insert id: {}", asset.getId(), e);
+							failed += 1;
+						}
+					}
+					if (failed == assets.size()) {
+						throw new RuntimeException("All assets faield to insert");
+					}
 				}
 
 				if (Objects.equals(lastId, lastPagesLastId) || assets.size() < PAGE_SIZE) {
@@ -141,7 +154,9 @@ public class DataMigrationESToPG {
 		return List.of(
 				new MigrationConfig<>(workflowService, elasticConfig.getWorkflowIndex()),
 				new MigrationConfig<>(simulationService, elasticConfig.getSimulationIndex()),
-				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()));
+				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()),
+				new MigrationConfig<>(datasetService, elasticConfig.getDatasetIndex()),
+				new MigrationConfig<>(artifactService, elasticConfig.getArtifactIndex()));
 		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 

@@ -87,7 +87,7 @@
 			</div>
 		</div>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="amr"
 		:model="amr"
 		:is-visible="showSaveModelModal"
@@ -119,7 +119,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
