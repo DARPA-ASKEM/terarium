@@ -1,5 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -7,15 +18,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -26,15 +29,17 @@ import software.uncharted.terarium.hmiserver.service.elasticsearch.Elasticsearch
 @Service
 public class ModelService extends TerariumAssetService<Model> {
 
+	private final ObjectMapper objectMapper;
+
 	public ModelService(
 			final ElasticsearchConfiguration elasticConfig,
 			final Config config,
 			final ElasticsearchService elasticService,
-			final ProjectAssetService projectAssetService) {
+			final ProjectAssetService projectAssetService,
+			final ObjectMapper objectMapper) {
 		super(elasticConfig, config, elasticService, projectAssetService, Model.class);
+		this.objectMapper = objectMapper;
 	}
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Observed(name = "function_profile")
 	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
@@ -77,8 +82,8 @@ public class ModelService extends TerariumAssetService<Model> {
 			final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
 			query = new Query.Builder()
 					.bool(b -> b.must(new Query.Builder()
-									.withJson(new ByteArrayInputStream(bytes))
-									.build())
+							.withJson(new ByteArrayInputStream(bytes))
+							.build())
 							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
 							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();

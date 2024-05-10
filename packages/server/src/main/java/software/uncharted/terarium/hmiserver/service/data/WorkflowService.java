@@ -1,9 +1,13 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -17,13 +21,15 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository, Workflow.class);
+		super(objectMapper, config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository,
+				Workflow.class);
 	}
 
 	@Override

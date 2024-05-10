@@ -1,10 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -14,11 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
@@ -29,6 +20,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -38,196 +41,200 @@ import software.uncharted.terarium.hmiserver.models.User;
 @Slf4j
 @RequiredArgsConstructor
 public class ClientEventService {
-	private final ObjectMapper mapper;
-	private final RabbitTemplate rabbitTemplate;
-	private final RabbitAdmin rabbitAdmin;
-	private final Config config;
+    private final ObjectMapper mapper;
+    private final RabbitTemplate rabbitTemplate;
+    private final RabbitAdmin rabbitAdmin;
+    private final Config config;
 
-	@Value("${terarium.client-user-event-queue}")
-	private String CLIENT_USER_EVENT_QUEUE;
+    @Value("${terarium.client-user-event-queue}")
+    private String CLIENT_USER_EVENT_QUEUE;
 
-	@Value("${terarium.client-all-user-event-queue}")
-	private String CLIENT_ALL_USERS_EVENT_QUEUE;
+    @Value("${terarium.client-all-user-event-queue}")
+    private String CLIENT_ALL_USERS_EVENT_QUEUE;
 
-	final Map<String, List<SseEmitter>> userIdToEmitter = new ConcurrentHashMap<>();
+    final Map<String, List<SseEmitter>> userIdToEmitter = new ConcurrentHashMap<>();
 
-	Queue allUsersQueue;
-	Queue userQueue;
+    Queue allUsersQueue;
+    Queue userQueue;
 
-	@Data
-	@Accessors(chain = true)
-	@NoArgsConstructor
-	public static class UserClientEvent<T> implements Serializable {
-		@Serial
-		private static final long serialVersionUID = -7617118669979761035L;
+    @Data
+    @Accessors(chain = true)
+    @NoArgsConstructor
+    public static class UserClientEvent<T> implements Serializable {
+        @Serial
+        private static final long serialVersionUID = -7617118669979761035L;
 
-		private String userId;
-		private ClientEvent<T> event;
-	}
+        private String userId;
+        private ClientEvent<T> event;
+    }
 
-	@PostConstruct
-	void init() {
-		allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues(), false, false);
-		rabbitAdmin.declareQueue(allUsersQueue);
+    @PostConstruct
+    void init() {
+        allUsersQueue = new Queue(CLIENT_ALL_USERS_EVENT_QUEUE, config.getDurableQueues(), false, false);
+        rabbitAdmin.declareQueue(allUsersQueue);
 
-		userQueue = new Queue(CLIENT_USER_EVENT_QUEUE, config.getDurableQueues(), false, false);
-		rabbitAdmin.declareQueue(userQueue);
-	}
+        userQueue = new Queue(CLIENT_USER_EVENT_QUEUE, config.getDurableQueues(), false, false);
+        rabbitAdmin.declareQueue(userQueue);
+    }
 
-	/**
-	 * Connects a user to the SSE service
-	 *
-	 * @param user the user to connect
-	 * @return the emitter to send messages to the user
-	 */
-	public SseEmitter connect(final User user) {
-		final SseEmitter emitter = new SseEmitter();
-		if (!userIdToEmitter.containsKey(user.getId())) {
-			userIdToEmitter.put(user.getId(), new ArrayList<>());
-		}
-		userIdToEmitter.get(user.getId()).add(emitter);
-		return emitter;
-	}
+    /**
+     * Connects a user to the SSE service
+     *
+     * @param user the user to connect
+     * @return the emitter to send messages to the user
+     */
+    public SseEmitter connect(final User user) {
+        final SseEmitter emitter = new SseEmitter();
+        if (!userIdToEmitter.containsKey(user.getId())) {
+            userIdToEmitter.put(user.getId(), new ArrayList<>());
+        }
+        userIdToEmitter.get(user.getId()).add(emitter);
+        return emitter;
+    }
 
-	/**
-	 * Sends a message to all users
-	 *
-	 * @param event the event to send
-	 * @param <T> the type of the event
-	 */
-	public <T> void sendToAllUsers(final ClientEvent<T> event) {
-		try {
-			final String jsonStr = mapper.writeValueAsString(event);
-			rabbitTemplate.convertAndSend(allUsersQueue.getName(), jsonStr);
-		} catch (final IOException e) {
-			log.error("Error sending all users message", e);
-		}
-	}
+    /**
+     * Sends a message to all users
+     *
+     * @param event the event to send
+     * @param <T>   the type of the event
+     */
+    public <T> void sendToAllUsers(final ClientEvent<T> event) {
+        try {
+            final String jsonStr = mapper.writeValueAsString(event);
+            rabbitTemplate.convertAndSend(allUsersQueue.getName(), jsonStr);
+        } catch (final IOException e) {
+            log.error("Error sending all users message", e);
+        }
+    }
 
-	/**
-	 * Sends a message to a user
-	 *
-	 * @param event the event to send
-	 * @param userId the id of the user to send the message to
-	 * @param <T> the type of the event
-	 */
-	public <T> void sendToUser(final ClientEvent<T> event, final String userId) {
-		try {
-			final String jsonStr = mapper.writeValueAsString(
-					new UserClientEvent<T>().setEvent(event).setUserId(userId));
-			rabbitTemplate.convertAndSend(userQueue.getName(), jsonStr);
-		} catch (final JsonProcessingException e) {
-			log.error("Error sending all users message", e);
-		}
-	}
+    /**
+     * Sends a message to a user
+     *
+     * @param event  the event to send
+     * @param userId the id of the user to send the message to
+     * @param <T>    the type of the event
+     */
+    public <T> void sendToUser(final ClientEvent<T> event, final String userId) {
+        try {
+            final String jsonStr = mapper.writeValueAsString(
+                    new UserClientEvent<T>().setEvent(event).setUserId(userId));
+            rabbitTemplate.convertAndSend(userQueue.getName(), jsonStr);
+        } catch (final JsonProcessingException e) {
+            log.error("Error sending all users message", e);
+        }
+    }
 
-	/**
-	 * Send the message to all users connected
-	 *
-	 * @param message the message to send
-	 * @param channel the channel to send the message on
-	 */
-	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-	@RabbitListener(queues = "${terarium.client-all-user-event-queue}", concurrency = "1")
-	void onSendToAllUsersEvent(final Message message, final Channel channel) {
-		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
-		if (messageJson == null) {
-			return;
-		}
-		synchronized (userIdToEmitter) {
-			// Send the message to each user connected and remove disconnected users
-			final Set<String> userIdsToRemove = new HashSet<>();
-			userIdToEmitter.forEach((userId, emitterList) -> {
-				send(messageJson, emitterList, userId);
-			});
-		}
-	}
+    /**
+     * Send the message to all users connected
+     *
+     * @param message the message to send
+     * @param channel the channel to send the message on
+     */
+    // TODO: use anonymous queues, currently this wont behave correctly with
+    // multiple hmi-server instances. Issue #2679
+    @RabbitListener(queues = "${terarium.client-all-user-event-queue}", concurrency = "1")
+    void onSendToAllUsersEvent(final Message message, final Channel channel) {
+        final JsonNode messageJson = decodeMessage(message, JsonNode.class);
+        if (messageJson == null) {
+            return;
+        }
+        synchronized (userIdToEmitter) {
+            // Send the message to each user connected and remove disconnected users
+            final Set<String> userIdsToRemove = new HashSet<>();
+            userIdToEmitter.forEach((userId, emitterList) -> {
+                send(messageJson, emitterList, userId);
+            });
+        }
+    }
 
-	private void send(Object message, List<SseEmitter> emitterList, String userId) {
-		List<SseEmitter> emittersToRemove = new ArrayList<>();
-		emitterList.forEach((emitter) -> {
-			try {
-				emitter.send(message);
-			} catch (final IllegalStateException | ClientAbortException e) {
-				log.warn("Error sending all users message to user {}. User likely disconnected", userId);
-				emittersToRemove.add(emitter);
-			} catch (final IOException e) {
-				log.error("Error sending all users message to user {}", userId, e);
-			}
-		});
-		emittersToRemove.forEach((emitter) -> {
-			userIdToEmitter.get(userId).remove(emitter);
-			if (userIdToEmitter.get(userId).size() == 0) {
-				userIdToEmitter.remove(userId);
-			}
-		});
-	}
+    private void send(final Object message, final List<SseEmitter> emitterList, final String userId) {
+        final List<SseEmitter> emittersToRemove = new ArrayList<>();
+        emitterList.forEach((emitter) -> {
+            try {
+                emitter.send(message);
+            } catch (final IllegalStateException | ClientAbortException e) {
+                log.warn("Error sending all users message to user {}. User likely disconnected", userId);
+                emittersToRemove.add(emitter);
+            } catch (final IOException e) {
+                log.error("Error sending all users message to user {}", userId, e);
+            }
+        });
+        emittersToRemove.forEach((emitter) -> {
+            userIdToEmitter.get(userId).remove(emitter);
+            if (userIdToEmitter.get(userId).size() == 0) {
+                userIdToEmitter.remove(userId);
+            }
+        });
+    }
 
-	/**
-	 * Lisens for messages to send to a user and if we have the SSE connection, send it
-	 *
-	 * @param message the message to send
-	 * @param channel the channel to send the message on
-	 * @throws IOException if there was an error sending the message
-	 */
-	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
-	@RabbitListener(
-			queues = {"${terarium.client-user-event-queue}"},
-			concurrency = "1")
-	void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
-		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
-		if (messageJson == null) {
-			return;
-		}
-		final String userId = messageJson.at("/userId").asText();
-		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
-		synchronized (userIdToEmitter) {
-			send(messageJson.at("/event"), emitterList, userId);
-		}
-	}
+    /**
+     * Lisens for messages to send to a user and if we have the SSE connection, send
+     * it
+     *
+     * @param message the message to send
+     * @param channel the channel to send the message on
+     * @throws IOException if there was an error sending the message
+     */
+    // TODO: use anonymous queues, currently this wont behave correctly with
+    // multiple hmi-server instances. Issue #2679
+    @RabbitListener(queues = { "${terarium.client-user-event-queue}" }, concurrency = "1")
+    void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
+        final JsonNode messageJson = decodeMessage(message, JsonNode.class);
+        if (messageJson == null) {
+            return;
+        }
+        final String userId = messageJson.at("/userId").asText();
+        final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
+        synchronized (userIdToEmitter) {
+            send(messageJson.at("/event"), emitterList, userId);
+        }
+    }
 
-	/**
-	 * Decodes a message into the given class. If there is an issue parsing to this class we will attempt to just parse
-	 * it as a JsonNode and log the error. If that fails we will log the error and hope for the best
-	 *
-	 * @param message the message to decode
-	 * @param clazz the class to decode the message to
-	 * @return the decoded message or null if there was an error
-	 * @param <T>
-	 */
-	public static <T> T decodeMessage(final Message message, final Class<T> clazz) {
+    /**
+     * Decodes a message into the given class. If there is an issue parsing to this
+     * class we will attempt to just parse
+     * it as a JsonNode and log the error. If that fails we will log the error and
+     * hope for the best
+     *
+     * @param message the message to decode
+     * @param clazz   the class to decode the message to
+     * @return the decoded message or null if there was an error
+     * @param <T>
+     */
+    public static <T> T decodeMessage(final Message message, final Class<T> clazz) {
 
-		final ObjectMapper mapper = new ObjectMapper();
+        final ObjectMapper mapper = new ObjectMapper();
 
-		try {
-			return mapper.readValue(message.getBody(), clazz);
-		} catch (final Exception e) {
-			try {
-				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
-				return null;
-			} catch (final Exception e1) {
-				log.error(
-						"Error decoding message as either {} or {}. Raw message is: {}",
-						clazz.getName(),
-						JsonNode.class.getName(),
-						message.getBody());
-				log.error("", e1);
-				return null;
-			}
-		}
-	}
+        try {
+            return mapper.readValue(message.getBody(), clazz);
+        } catch (final Exception e) {
+            try {
+                final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
+                log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
+                return null;
+            } catch (final Exception e1) {
+                log.error(
+                        "Error decoding message as either {} or {}. Raw message is: {}",
+                        clazz.getName(),
+                        JsonNode.class.getName(),
+                        message.getBody());
+                log.error("", e1);
+                return null;
+            }
+        }
+    }
 
-	/**
-	 * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does not receive a
-	 * heartbeat within the configured interval, it will attempt to reconnect.
-	 */
-	@Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
-	public void sendHeartbeat() {
-		final ClientEvent<Void> event = ClientEvent.<Void>builder()
-				.type(ClientEventType.HEARTBEAT)
-				.data(null)
-				.build();
-		sendToAllUsers(event);
-	}
+    /**
+     * Heartbeat to ensure that the clients are subscribed to the SSE service. If
+     * the client does not receive a
+     * heartbeat within the configured interval, it will attempt to reconnect.
+     */
+    @Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
+    public void sendHeartbeat() {
+        final ClientEvent<Void> event = ClientEvent.<Void>builder()
+                .type(ClientEventType.HEARTBEAT)
+                .data(null)
+                .build();
+        sendToAllUsers(event);
+    }
 }

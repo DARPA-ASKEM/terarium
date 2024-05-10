@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
 import java.util.UUID;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -20,18 +24,19 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	/**
 	 * Constructor for SimulationService
 	 *
-	 * @param config application config
+	 * @param config              application config
 	 * @param projectAssetService project asset service
-	 * @param repository simulation repository
-	 * @param s3ClientService S3 client service
+	 * @param repository          simulation repository
+	 * @param s3ClientService     S3 client service
 	 */
 	public SimulationService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ProjectAssetService projectAssetService,
 			final SimulationRepository repository,
 			final S3ClientService s3ClientService,
 			final SimulationUpdateRepository simulationUpdateRepository) {
-		super(config, projectAssetService, repository, s3ClientService, Simulation.class);
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, Simulation.class);
 		this.simulationUpdateRepository = simulationUpdateRepository;
 	}
 
