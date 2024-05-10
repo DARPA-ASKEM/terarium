@@ -30,6 +30,7 @@ jobs:
   server-tests:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
+    needs: lint-server
 
     permissions:
       contents: read
