@@ -34,7 +34,7 @@ public class StructuredLog {
 	 * @param user the current user, may be null if there is no user context
 	 * @param keyValuePairs a list of key value pairs to output, must be an even number of arguments or null
 	 */
-	public void log(@NonNull final Type type, final String user, Object... keyValuePairs) {
+	public void log(@NonNull final Type type, final String user, final Object... keyValuePairs) {
 		if (keyValuePairs != null && keyValuePairs.length % 2 != 0) {
 			throw new RuntimeException("Structured logs must have an even number of key value pairs");
 		}
@@ -71,10 +71,10 @@ public class StructuredLog {
 	 * @param o the object
 	 * @return the json stringified representation of the object
 	 */
-	private String asJsonString(Object o) {
+	private String asJsonString(final Object o) {
 		try {
 			return mapper.writeValueAsString(o);
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			return null;
 		}
 	}
