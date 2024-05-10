@@ -45,7 +45,7 @@
 						:kernel-manager="kernelManager"
 						:default-options="[]"
 						:context-language="'python3'"
-						:run-command="runCodeStratify"
+						@run-command="runCodeStratify"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => (llmThought = data)"
 					/>

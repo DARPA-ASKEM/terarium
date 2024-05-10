@@ -11,7 +11,7 @@
 		</div>
 		<div class="toolbar-right-side">
 			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
-			<Button label="Run" size="large" icon="pi pi-play" @click="() => runCommand()" />
+			<Button label="Run" size="large" icon="pi pi-play" @click="runCommand" />
 		</div>
 	</div>
 
@@ -57,10 +57,9 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 	defaultOptions?: string[];
 	contextLanguage: string;
-	runCommand?: Function;
 }>();
 
-const emit = defineEmits(['llm-output', 'llm-thought-output']);
+const emit = defineEmits(['llm-output', 'llm-thought-output', 'run-command']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
@@ -70,6 +69,8 @@ const thoughts = ref();
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
 const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
+
+const runCommand = () => emit('run-command');
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
