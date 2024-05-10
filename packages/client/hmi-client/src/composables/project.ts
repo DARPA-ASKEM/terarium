@@ -55,6 +55,14 @@ export function useProjects() {
 	}
 
 	/**
+	 * Return Active Project Name or empty string
+	 * @returns string
+	 */
+	function getActiveProjectName() {
+		return activeProject.value?.name ?? '';
+	}
+
+	/**
 	 * Return all the asset of a certain AssetType from the active project.
 	 * @param assetType
 	 * @returns ProjectAsset[]
@@ -270,6 +278,7 @@ export function useProjects() {
 		get,
 		getAll,
 		getActiveProjectAssets,
+		getActiveProjectName,
 		addAsset,
 		findAsset,
 		getAssetName,

@@ -32,16 +32,28 @@
 					{{ getTitleText(item) }}
 					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
-				<p class="msg">{{ item.msg }}</p>
-				<div v-if="item.status === 'Running'" class="progressbar-container">
-					<p class="action">{{ getActionText(item) }}</p>
+				<div class="notification-path-text msg">
+					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
+					<p v-if="!isComplete(item)">{{ item.msg }}</p>
+				</div>
+				<div v-if="isRunning(item)" class="progressbar-container">
+					<p class="action">{{ getActionText(item) }} {{ Math.round(item.progress * 100) }}%</p>
+
 					<ProgressBar :value="item.progress * 100" />
+					<!--					Disabled until backend process cancel feature is done-->
+					<!--					<Button-->
+					<!--						class="cancel-button"-->
+					<!--						label="Cancel"-->
+					<!--						text-->
+					<!--						aria-label="Cancel"-->
+					<!--						@click="togglePanel"-->
+					<!--					/>-->
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="item.status === 'Completed'">
+					<div class="status-msg ok" v-if="isComplete(item)">
 						<i class="pi pi-check-circle" />Completed
 					</div>
-					<div class="status-msg error" v-else-if="item.status === 'Failed'">
+					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
 					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
@@ -58,10 +70,11 @@
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
-import { AssetType, ClientEventType } from '@/types/Types';
+import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
+import { useProjects } from '@/composables/project';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -84,6 +97,10 @@ const getTitleText = (item: NotificationItem) => {
 			return 'Process';
 	}
 };
+
+const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
+const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
+const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
 
 const getActionText = (item: NotificationItem) => {
 	switch (item.type) {
@@ -119,7 +136,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 .notification-panel-container.p-overlaypanel {
 	top: var(--navbar-outer-height) !important;
 	width: 34rem;
-	box-shadow: 0px 4px 4px 0px #00000040;
+	box-shadow: 0 4px 4px 0 #00000040;
 	padding: var(--content-padding);
 	padding-bottom: 1.5rem;
 	gap: var(--gap);
@@ -182,6 +199,14 @@ header {
 	overflow: auto;
 }
 
+.notification-path-text {
+	padding-top: 3px;
+}
+
+.cancel-button {
+	font-size: var(--font-caption);
+}
+
 .notification-item {
 	padding: 1rem 0;
 	&:not(:first-child) {
@@ -222,7 +247,6 @@ header {
 		gap: var(--gap-small);
 		.status-msg {
 			display: flex;
-			align-items: top;
 			gap: 0.5rem;
 			font-size: var(--font-caption);
 		}

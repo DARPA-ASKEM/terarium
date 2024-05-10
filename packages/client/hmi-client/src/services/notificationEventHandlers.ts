@@ -1,13 +1,19 @@
-import { ClientEvent, ClientEventType, ExtractionStatusUpdate, TaskResponse } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	ExtractionStatusUpdate,
+	ProgressState,
+	TaskResponse
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
 export const getStatus = (data: { error: string; t: number }) => {
-	if (data.error) return 'Failed';
-	if (data.t >= 1.0) return 'Completed';
-	return 'Running';
+	if (data.error) return ProgressState.Failed;
+	if (data.t >= 1.0) return ProgressState.Complete;
+	return ProgressState.Running;
 };
 
 const toastTitle = {
@@ -19,18 +25,18 @@ const toastTitle = {
 
 const logStatusMessage = (
 	eventType: ClientEventType,
-	status: string,
+	status: ProgressState,
 	msg: string,
 	error: string
 ) => {
-	if (!['Completed', 'Failed'].includes(status)) return;
+	if (![ProgressState.Complete, ProgressState.Failed].includes(status)) return;
 
-	if (status === 'Completed')
+	if (status === ProgressState.Complete)
 		logger.success(msg, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
 		});
-	if (status === 'Failed')
+	if (status === ProgressState.Failed)
 		logger.error(error, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
