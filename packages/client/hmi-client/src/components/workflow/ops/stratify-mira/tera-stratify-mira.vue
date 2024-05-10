@@ -39,25 +39,13 @@
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
-    <!--
-			<tera-drilldown-section>
-				<header class="pt-3 inline-flex lg:justify-content-between">
-					<span class="mt-3 ml-4">Code Editor - Python</span>
-					<Button
-						label="Run"
-						size="large"
-						icon="pi pi-play"
-						@click="runCodeStratify"
-						class="ml-4"
-					/>
-				</header>
-        -->
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<tera-notebook-jupyter-input
 						:kernel-manager="kernelManager"
 						:default-options="[]"
 						:context-language="'python3'"
+						:run-command="runCodeStratify"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => (llmThought = data)"
 					/>
