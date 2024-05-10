@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,14 +17,18 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
-	private final ObjectMapper mapper;
+
+	@Autowired
+	private ObjectMapper mapper;
 
 	@PostConstruct
 	public void init() {
-		mapper.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+		// We modify the injected object mappers because Spring injects an ObjectMapper
+		// different from one that is returned via `new ObjectMapper()`
+		mapper = mapper.copy()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
