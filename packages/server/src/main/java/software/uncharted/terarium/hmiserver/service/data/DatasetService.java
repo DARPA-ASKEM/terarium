@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -13,13 +14,22 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
 
 	public DatasetService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final DatasetRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository, Dataset.class);
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				Dataset.class);
 	}
 
 	@Override
