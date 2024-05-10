@@ -413,6 +413,7 @@ export interface Project extends TerariumAsset {
     projectAssets: ProjectAsset[];
     codeAssets: Code[];
     datasetAssets: Dataset[];
+    workflowAssets: Workflow[];
     artifactAssets: Artifact[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -940,6 +941,13 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface Workflow extends TerariumAsset {
+    transform: Transform;
+    nodes: WorkflowNode[];
+    edges: WorkflowEdge[];
+    project?: Project;
+}
+
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1061,6 +1069,24 @@ export interface PetriNetTransitionProperties {
     name: string;
     description: string;
     grounding?: ModelGrounding;
+}
+
+export interface Transform {
+    x: number;
+    y: number;
+    k: number;
+}
+
+export interface WorkflowNode {
+    id: string;
+    workflowId: string;
+}
+
+export interface WorkflowEdge {
+    id: string;
+    workflowId: string;
+    source: string;
+    target: string;
 }
 
 export interface XDDFacetBucket {

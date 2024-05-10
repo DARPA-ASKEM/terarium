@@ -40,6 +40,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
@@ -53,6 +54,7 @@ import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
+import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -83,6 +85,8 @@ public class ProjectController {
 	final CodeService codeService;
 
 	final DatasetService datasetService;
+
+	final WorkflowService workflowService;
 
 	final ArtifactService artifactService;
 
@@ -521,6 +525,22 @@ public class ProjectController {
 
 						code.get().setProject(project.get());
 						codeService.updateAsset(code.get());
+					} else if (assetType.equals(AssetType.WORKFLOW)) {
+
+						final Optional<Workflow> workflow = workflowService.getAsset(assetId);
+						if (workflow.isEmpty()) {
+							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Workflow Asset does not exist");
+						}
+
+						if (project.get().getWorkflowAssets() == null)
+							project.get().setWorkflowAssets(new ArrayList<>());
+						if (project.get().getWorkflowAssets().contains(workflow.get())) {
+							throw new ResponseStatusException(
+									HttpStatus.CONFLICT, "Workflow Asset already exists on project");
+						}
+
+						workflow.get().setProject(project.get());
+						workflowService.updateAsset(workflow.get());
 					} else if (assetType.equals(AssetType.DATASET)) {
 
 						final Optional<Dataset> dataset = datasetService.getAsset(assetId);
@@ -628,6 +648,13 @@ public class ProjectController {
 					if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
+					}
+				} else if (assetType.equals(AssetType.WORKFLOW)) {
+
+					final Optional<Workflow> deletedWorkflow = workflowService.deleteAsset(assetId);
+					if (deletedWorkflow.isEmpty() || deletedWorkflow.get().getDeletedOn() == null) {
+						throw new ResponseStatusException(
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete workflow asset");
 					}
 				} else if (assetType.equals(AssetType.DATASET)) {
 
