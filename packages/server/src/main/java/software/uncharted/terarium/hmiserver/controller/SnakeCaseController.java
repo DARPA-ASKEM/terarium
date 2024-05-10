@@ -9,8 +9,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 public interface SnakeCaseController {
 
 	/**
-	 * Serialize a given object to be in snake-case instead of camelCase, as may be
-	 * required by the proxied endpoint.
+	 * Serialize a given object to be in snake-case instead of camelCase, as may be required by the proxied endpoint.
 	 *
 	 * @param object
 	 * @return

@@ -1,13 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
-
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -28,7 +25,14 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
-		super(objectMapper, config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository,
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
 				Workflow.class);
 	}
 

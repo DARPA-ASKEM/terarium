@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.micrometer.observation.annotation.Observed;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -23,7 +21,14 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final DatasetRepository repository) {
-		super(objectMapper, config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository,
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
 				Dataset.class);
 	}
 

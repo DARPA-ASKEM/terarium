@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.micrometer.observation.annotation.Observed;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.repository.data.CodeRepository;
