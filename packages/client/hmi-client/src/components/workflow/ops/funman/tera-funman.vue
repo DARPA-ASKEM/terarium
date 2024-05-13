@@ -491,10 +491,10 @@ const setModelOptions = async () => {
 // eslint-disable-next-line
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	const previous = props.node.state.requestParameters;
-	if (previous && previous.length > 0) {
-		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
-		return;
-	}
+	const labelMap = new Map<string, string>();
+	previous.forEach((p) => {
+		labelMap.set(p.name, p.label);
+	});
 
 	requestParameters.value = modelParameters.map((ele) => {
 		let interval = { lb: ele.value, ub: ele.value };
@@ -504,11 +504,12 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 				ub: ele.distribution.parameters.maximum
 			};
 		}
-		return {
-			name: ele.id,
-			interval,
-			label: 'any'
-		};
+
+		const param = { name: ele.id, interval, label: 'any' };
+		if (labelMap.has(param.name)) {
+			param.label = labelMap.get(param.name) as string;
+		}
+		return param;
 	});
 };
 
