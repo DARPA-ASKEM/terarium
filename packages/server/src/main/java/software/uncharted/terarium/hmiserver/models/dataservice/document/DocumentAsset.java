@@ -2,12 +2,21 @@ package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -25,32 +34,41 @@ public class DocumentAsset extends TerariumAsset {
 	private static final long serialVersionUID = -8425680186002783351L;
 
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
 	@TSOptional
 	@JsonAlias("file_names")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<String> fileNames;
 
 	@TSOptional
 	@JsonAlias("document_url")
+	@Column(length = 1024)
 	private String documentUrl;
 
 	@TSOptional
-	private HashMap<String, Object> metadata;
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Map<String, Object> metadata;
 
 	@TSOptional
+	@Column(columnDefinition = "text")
 	private String source;
 
 	@TSOptional
+	@Column(columnDefinition = "text")
 	private String text;
 
 	@TSOptional
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
 
 	@TSOptional
-	private List<OntologyConcept> concepts;
-
-	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
 
 	/**
@@ -70,5 +88,40 @@ public class DocumentAsset extends TerariumAsset {
 			}
 		}
 		return docIdentifier;
+	}
+
+	@Override
+	public DocumentAsset clone(){
+		final DocumentAsset clone = new DocumentAsset();
+		super.cloneSuperFields(clone);
+
+		if(this.fileNames != null){
+			clone.fileNames = new ArrayList<>(this.fileNames.size());
+			clone.fileNames.addAll(this.fileNames);
+		}
+
+		clone.documentUrl = this.documentUrl;
+
+		if(this.metadata != null){
+			clone.metadata = new HashMap<>();
+			for(final String key : this.metadata.keySet()){
+				// I don't like that this is an "object" because it doesn't clone nicely...
+				clone.metadata.put(key, this.metadata.get(key));
+			}
+		}
+
+		clone.source = this.source;
+		clone.text = this.text;
+
+		if(this.grounding != null) {
+				clone.grounding = this.grounding.clone();
+		}
+
+		if(this.assets != null) {
+			clone.assets = new ArrayList<>();
+			clone.assets.addAll(this.assets);
+		}
+
+		return clone;
 	}
 }
