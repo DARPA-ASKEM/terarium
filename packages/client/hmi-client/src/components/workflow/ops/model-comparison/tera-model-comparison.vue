@@ -86,10 +86,11 @@
 						:kernelManager="kernelManager"
 						:defaultOptions="sampleAgentQuestions"
 						@llm-output="appendCode"
-						@llm-thought-output="(data: any) => (llmThought = data)"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
 						:context-language="contextLanguage"
 					/>
-					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="code"
@@ -191,7 +192,7 @@ const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');

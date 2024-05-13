@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
@@ -20,18 +20,27 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAd
 import software.uncharted.terarium.hmiserver.annotations.AMRPropertyNamingStrategy;
 
 @RestControllerAdvice
-@RequiredArgsConstructor
 @Slf4j
 public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
-	private final ObjectMapper snakecaseMapper;
-	private final ObjectMapper camelcaseMapper;
+
+	@Autowired
+	private ObjectMapper snakecaseMapper;
+
+	@Autowired
+	private ObjectMapper camelcaseMapper;
 
 	@PostConstruct
 	public void init() {
-		camelcaseMapper.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
-		snakecaseMapper.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+		// We modify the injected object mappers because Spring injects an ObjectMapper
+		// different from one that is returned via `new ObjectMapper()`
+		camelcaseMapper = camelcaseMapper
+				.copy()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
+		snakecaseMapper = snakecaseMapper
+				.copy()
+				.setPropertyNamingStrategy(
+						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override

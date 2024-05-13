@@ -506,9 +506,7 @@ export interface Simulation extends TerariumAsset {
     updates: SimulationUpdate[];
 }
 
-export interface SimulationUpdate {
-    id: string;
-    createdOn: Date;
+export interface SimulationUpdate extends TerariumEntity {
     data: any;
     simulation: Simulation;
 }
