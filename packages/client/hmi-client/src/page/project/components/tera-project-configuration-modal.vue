@@ -79,6 +79,7 @@
 				:loading="isApplyingConfiguration"
 				:label="isApplyingConfiguration ? 'Loading' : confirmText"
 				size="large"
+				:disabled="isTitleInvalid"
 			/>
 			<Button
 				severity="secondary"
@@ -92,13 +93,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Types';
@@ -114,6 +115,7 @@ const emit = defineEmits(['close-modal']);
 const router = useRouter();
 
 const title = ref(props.project?.name ?? '');
+const isTitleInvalid = computed(() => isEmpty(title.value));
 const description = ref(props.project?.description ?? '');
 const isApplyingConfiguration = ref(false);
 
@@ -210,7 +212,7 @@ img {
 
 .select-thumbnail-panel {
 	background: var(--surface-50);
-	padding: 1rem;
+	padding: var(--gap);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;
