@@ -2,15 +2,15 @@
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
 		<div class="toolbar-left-side">
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 			<div class="flex gap-1 mr-2">
 				<InputSwitch v-model="showAssistant" class="mr-1" />
 				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 				<span>AI assistant</span>
 			</div>
-			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		</div>
 		<div class="toolbar-right-side">
-			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
+			<Button label="Run" size="large" icon="pi pi-play" @click="runCommand" />
 		</div>
 	</div>
 
@@ -58,7 +58,7 @@ const props = defineProps<{
 	contextLanguage: string;
 }>();
 
-const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output']);
+const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output', 'run-command']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
@@ -68,6 +68,8 @@ const thoughts = ref();
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
 const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
+
+const runCommand = () => emit('run-command');
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
@@ -102,6 +104,7 @@ const submitQuestion = () => {
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
+	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
 	padding-top: var(--gap);
