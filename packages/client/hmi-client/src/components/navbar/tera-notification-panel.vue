@@ -44,14 +44,14 @@
 
 					<ProgressBar v-if="item.progress !== undefined" :value="item.progress * 100" />
 					<ProgressBar v-else mode="indeterminate" />
-					<!--					Disabled until backend process cancel feature is done-->
-					<!--					<Button-->
-					<!--						class="cancel-button"-->
-					<!--						label="Cancel"-->
-					<!--						text-->
-					<!--						aria-label="Cancel"-->
-					<!--						@click="togglePanel"-->
-					<!--					/>-->
+					<Button
+						v-if="item.supportCancel"
+						class="cancel-button"
+						label="Cancel"
+						text
+						aria-label="Cancel"
+						@click="cancelTask(item)"
+					/>
 				</div>
 				<div v-else class="done-container">
 					<div class="status-msg ok" v-if="isComplete(item)">
@@ -82,6 +82,7 @@ import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
+import { snakeToCapitalSentence } from '@/utils/text';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -101,7 +102,7 @@ const getTitleText = (item: NotificationItem) => {
 		case ClientEventType.ExtractionPdf:
 			return 'PDF extraction from';
 		default:
-			return 'Process';
+			return `${snakeToCapitalSentence(item.type)} for `;
 	}
 };
 
@@ -133,6 +134,10 @@ const getElapsedTimeText = (item: NotificationItem) => {
 	const time = Date.now() - item.lastUpdated;
 	const minutes = Math.floor(time / (1000 * 60));
 	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
+};
+
+const cancelTask = (item: NotificationItem) => {
+	console.log(item);
 };
 </script>
 

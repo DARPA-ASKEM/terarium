@@ -208,6 +208,7 @@ export interface NotificationItem extends NotificationItemStatus {
 	assetName: string;
 	lastUpdated: number;
 	acknowledged: boolean;
+	supportCancel: boolean;
 }
 export interface NotificationItemStatus {
 	status: ProgressState;
