@@ -363,7 +363,11 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
+import {
+	cleanModelConfiguration,
+	createModelConfiguration,
+	sanityCheck
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type {
 	Initial,
@@ -710,36 +714,6 @@ const updateConfigFromModel = (inputModel: Model) => {
 	if (knobs.value.transientModelConfig) knobs.value.transientModelConfig.configuration = inputModel;
 };
 
-const runSanityCheck = () => {
-	const errors: string[] = [];
-	const modelToCheck = knobs.value?.transientModelConfig?.configuration;
-	if (!modelToCheck) {
-		errors.push('no model defined in configuration');
-		return errors;
-	}
-
-	const parameters: ModelParameter[] = getParameters(modelToCheck);
-
-	parameters.forEach((p) => {
-		const val = p.value || 0;
-		const max = p.distribution?.parameters.maximum;
-		const min = p.distribution?.parameters.minimum;
-		if (val > max) {
-			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
-		}
-		if (val < min) {
-			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
-		}
-
-		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
-		const interval = Math.abs(max - min);
-		if (val !== 0 && Math.abs(interval / val) < 0.003) {
-			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
-		}
-	});
-	return errors;
-};
-
 const downloadConfiguredModel = async () => {
 	const rawModel = knobs.value?.transientModelConfig?.configuration;
 	if (rawModel) {
@@ -762,12 +736,14 @@ const createConfiguration = async (force: boolean = false) => {
 
 	sanityCheckErrors.value = [];
 	if (!force) {
-		const errors = runSanityCheck();
+		const errors = sanityCheck(knobs.value.transientModelConfig);
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
 			return;
 		}
 	}
+
+	cleanModelConfiguration(knobs.value.transientModelConfig);
 
 	const data = await createModelConfiguration(
 		model.value.id,
