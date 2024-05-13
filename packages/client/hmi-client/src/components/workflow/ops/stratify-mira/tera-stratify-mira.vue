@@ -447,7 +447,6 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 };
 
 const onSelection = (id: string) => {
-	console.log('test:', id);
 	emit('select-output', id);
 };
 
