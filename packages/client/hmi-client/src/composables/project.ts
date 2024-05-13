@@ -152,11 +152,10 @@ export function useProjects() {
 	 *
 	 * @param {string} name Name of the project.
 	 * @param {string} description Short description.
-	 * @param {string} userId ID of the owner of the project.
 	 * @returns {Promise<Project|null>} The created project, or null if none returned by the API.
 	 */
-	async function create(name: string, description: string, userId: string) {
-		const created = await ProjectService.create(name, description, userId);
+	async function create(name: string, description: string) {
+		const created = await ProjectService.create(name, description);
 		setTimeout(async () => {
 			getAll();
 		}, TIMEOUT_MS);

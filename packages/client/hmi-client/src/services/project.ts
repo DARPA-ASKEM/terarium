@@ -14,18 +14,14 @@ import { AssetType, EventType, PermissionRelationships, Project } from '@/types/
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
- * @param [userId] Project['userId']
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
 	name: Project['name'],
-	description: Project['description'] = '',
-	userId: Project['userId'] = ''
+	description: Project['description'] = ''
 ): Promise<Project | null> {
 	try {
-		const response = await API.post(
-			`/projects?name=${name}&description=${description}&userId=${userId}`
-		);
+		const response = await API.post(`/projects?name=${name}&description=${description}`);
 		const { status, data } = response;
 		if (status !== 201) return null;
 		return data ?? null;

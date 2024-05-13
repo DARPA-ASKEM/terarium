@@ -98,7 +98,6 @@ import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import useAuthStore from '@/stores/auth';
 import { cloneDeep } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -112,20 +111,18 @@ const props = defineProps<{
 
 const emit = defineEmits(['close-modal']);
 
-const auth = useAuthStore();
 const router = useRouter();
-const userId = auth.user?.id ?? '';
 
 const title = ref(props.project?.name ?? '');
 const description = ref(props.project?.description ?? '');
 const isApplyingConfiguration = ref(false);
 
-async function createProject() {
+async function createProject(name: string, desc: string) {
 	isApplyingConfiguration.value = true;
-	const project = await useProjects().create(title.value, description.value, userId);
+	const project = await useProjects().create(name, desc);
 	if (project?.id) {
-		router.push({ name: RouteName.Project, params: { projectId: project.id } });
 		emit('close-modal');
+		await router.push({ name: RouteName.Project, params: { projectId: project.id } });
 	}
 }
 
@@ -142,7 +139,7 @@ async function updateProjectConfiguration() {
 
 function applyConfiguration() {
 	if (props.project) updateProjectConfiguration();
-	else createProject();
+	else createProject(title.value, description.value);
 }
 </script>
 
