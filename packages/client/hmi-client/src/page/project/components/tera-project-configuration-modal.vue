@@ -11,7 +11,7 @@
 			<section>
 				<form @submit.prevent>
 					<div>
-						<label for="new-project-name">Project title</label>
+						<label for="new-project-name">Project title <span>Required</span></label>
 						<Textarea
 							id="new-project-name"
 							rows="2"
@@ -34,7 +34,7 @@
 							This section might have similarities to tera-filter-bar.vue.
 						-->
 						<label>Domain</label>
-						<span>
+						<span class="flex">
 							<Dropdown placeholder="Select domain" disabled :style="{ width: '100%' }" />
 							<Button disabled label="Suggest" text />
 						</span>
@@ -148,7 +148,7 @@ function applyConfiguration() {
 <style scoped>
 :deep(.content) {
 	display: flex;
-	gap: 1rem;
+	gap: var(--gap);
 }
 
 section {
@@ -159,7 +159,14 @@ form {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	gap: 1rem;
+	gap: var(--gap);
+}
+
+label span {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	margin-left: var(--gap);
+	text-transform: lowercase;
 }
 
 p {
@@ -194,14 +201,10 @@ img {
 	color: var(--gray-400);
 }
 
-:deep(.content span) {
-	display: flex;
-}
-
 /*
-Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
-Should probably switch everything to use gap (like here) at some point
-*/
+		Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
+		Should probably switch everything to use gap (like here) at some point
+		*/
 :deep(.content input),
 :deep(.content textarea) {
 	margin-bottom: 0;
