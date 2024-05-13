@@ -29,13 +29,7 @@
 						@update:selection="(e) => emit('update:selection', e)"
 					/>
 					<section v-if="!isEmpty(menuItems)" class="mr-3 ml-3">
-						<Button
-							icon="pi pi-ellipsis-v"
-							rounded
-							text
-							@click.stop="toggle"
-							:disabled="isEmpty(menuItems)"
-						/>
+						<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
 						<Menu ref="menu" :model="menuItems" :popup="true" />
 					</section>
 				</template>

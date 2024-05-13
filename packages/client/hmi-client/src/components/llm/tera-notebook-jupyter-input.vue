@@ -10,7 +10,6 @@
 			</div>
 		</div>
 		<div class="toolbar-right-side">
-			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
 			<Button label="Run" size="large" icon="pi pi-play" @click="runCommand" />
 		</div>
 	</div>
@@ -105,7 +104,7 @@ const submitQuestion = () => {
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
-	margin-bottom: 4px;
+	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
 	padding-top: var(--gap);
