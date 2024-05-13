@@ -50,6 +50,7 @@
 						label="Cancel"
 						text
 						aria-label="Cancel"
+						:disabled="isCancelling(item)"
 						@click="cancelTask(item)"
 					/>
 				</div>
@@ -83,6 +84,7 @@ import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
 import { snakeToCapitalSentence } from '@/utils/text';
+import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -102,7 +104,7 @@ const getTitleText = (item: NotificationItem) => {
 		case ClientEventType.ExtractionPdf:
 			return 'PDF extraction from';
 		default:
-			return `${snakeToCapitalSentence(item.type)} for `;
+			return `${snakeToCapitalSentence(item.type)} from`;
 	}
 };
 
@@ -113,6 +115,9 @@ const isCancelling = (item: NotificationItem) => item.status === ProgressState.C
 const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
 
 const getActionText = (item: NotificationItem) => {
+	if (isCancelling(item)) {
+		return 'Cancelling...';
+	}
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
 			return 'Extracting...';
@@ -137,7 +142,9 @@ const getElapsedTimeText = (item: NotificationItem) => {
 };
 
 const cancelTask = (item: NotificationItem) => {
-	console.log(item);
+	if ([ClientEventType.TaskGollmModelCard].includes(item.type)) {
+		cancelGoLLMTask(item.notificationGroupId);
+	}
 };
 </script>
 

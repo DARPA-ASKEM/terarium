@@ -12,10 +12,16 @@ import { NotificationItem, NotificationItemStatus } from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { getDocumentAsset } from './document-assets';
 
+export const getStatusFromProgress = (data: { error: string; t: number }) => {
+	if (data.error) return ProgressState.Failed;
+	if (data.t >= 1.0) return ProgressState.Complete;
+	return ProgressState.Running;
+};
+
 const isTaskResponse = (data: any): data is TaskResponse =>
 	data.id !== undefined && data.script !== undefined && data.status;
 
-export const getStatusFromTaskResponse = (data: TaskResponse) => {
+const getStatusFromTaskResponse = (data: TaskResponse) => {
 	const statusMap = {
 		[TaskStatus.Queued]: ProgressState.Queued,
 		[TaskStatus.Running]: ProgressState.Running,
@@ -25,12 +31,6 @@ export const getStatusFromTaskResponse = (data: TaskResponse) => {
 		[TaskStatus.Cancelling]: ProgressState.Cancelling
 	};
 	return statusMap[data.status];
-};
-
-export const getStatusFromProgress = (data: { error: string; t: number }) => {
-	if (data.error) return ProgressState.Failed;
-	if (data.t >= 1.0) return ProgressState.Complete;
-	return ProgressState.Running;
 };
 
 const toastTitle = {
@@ -46,7 +46,8 @@ const logStatusMessage = (
 	msg: string,
 	error: string
 ) => {
-	if (![ProgressState.Complete, ProgressState.Failed].includes(status)) return;
+	if (![ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(status))
+		return;
 
 	if (status === ProgressState.Complete)
 		logger.success(msg, {
@@ -58,15 +59,26 @@ const logStatusMessage = (
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.error ?? `${snakeToCapitalSentence(eventType)} Failed`
 		});
+	if (status === ProgressState.Cancelled)
+		logger.info(msg, {
+			showToast: true,
+			toastTitle:
+				toastTitle[eventType]?.cancelled ?? `${snakeToCapitalSentence(eventType)} Cancelled`
+		});
 };
 
-const updateStatusFromTaskResponse = (
-	event: ClientEvent<TaskResponse>
-): NotificationItemStatus => ({
-	status: getStatusFromTaskResponse(event.data),
-	msg: `${snakeToCapitalSentence(event.type)} in progress...`,
-	error: event.data.stderr
-});
+const updateStatusFromTaskResponse = (event: ClientEvent<TaskResponse>): NotificationItemStatus => {
+	const status = getStatusFromTaskResponse(event.data);
+	const error = status === ProgressState.Failed ? event.data.stderr : '';
+	const statusMsg = {
+		[ProgressState.Running]: 'in progress...',
+		[ProgressState.Cancelling]: 'is cancelling...',
+		[ProgressState.Cancelled]: 'was cancelled.',
+		[ProgressState.Complete]: 'completed.'
+	};
+	const msg = `${snakeToCapitalSentence(event.type)} ${statusMsg[status] ?? ''}`;
+	return { status, msg, error };
+};
 
 const buildNotificationItemStatus = <T>(
 	event: ClientEvent<T | TaskResponse>
@@ -128,7 +140,6 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.documentId;
-		// TODO: make sure UI is updated after updating assetId and name
 		getDocumentAsset(event.data.documentId).then((document) =>
 			Object.assign(created, { assetName: document?.name || '' })
 		);
@@ -158,11 +169,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 export const createNotificationEventLogger = (
 	visibleNotificationItems: Ref<NotificationItem[]>
 ) => {
-	const handleLogging = <
-		T extends { notificationGroupId: string; t: number; message: string; error: string }
-	>(
-		event: ClientEvent<T>
-	) => {
+	const handleLogging = <T>(event: ClientEvent<T>) => {
 		if (!event.notificationGroupId) return;
 		const notificationItem = visibleNotificationItems.value.find(
 			(item) => item.notificationGroupId === event.notificationGroupId

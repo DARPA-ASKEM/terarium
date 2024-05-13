@@ -19,6 +19,9 @@ const { findAsset } = useProjects();
 
 const isNotificationForActiveProject = (item: NotificationItem) => !!findAsset(item.assetId);
 
+const isFinished = (item: NotificationItem) =>
+	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
+
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
 
@@ -26,16 +29,11 @@ export function useNotificationManager() {
 	const itemsForActiveProject = computed(() => items.value.filter(isNotificationForActiveProject));
 
 	const hasFinishedItems = computed(() =>
-		itemsForActiveProject.value.some(
-			(item: NotificationItem) =>
-				item.status === ProgressState.Complete || item.status === ProgressState.Failed
-		)
+		itemsForActiveProject.value.some((item: NotificationItem) => isFinished(item))
 	);
 	const unacknowledgedFinishedItems = computed(() =>
 		itemsForActiveProject.value.filter(
-			(item: NotificationItem) =>
-				(item.status === ProgressState.Complete || item.status === ProgressState.Failed) &&
-				!item.acknowledged
+			(item: NotificationItem) => isFinished(item) && !item.acknowledged
 		)
 	);
 
@@ -72,7 +70,7 @@ export function useNotificationManager() {
 
 	function acknowledgeFinishedItems() {
 		items.value.forEach((item) => {
-			if ([ProgressState.Complete, ProgressState.Failed].includes(item.status)) {
+			if (isFinished(item)) {
 				item.acknowledged = true;
 			}
 		});
