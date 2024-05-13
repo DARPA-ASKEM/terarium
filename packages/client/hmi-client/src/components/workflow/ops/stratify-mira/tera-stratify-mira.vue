@@ -67,6 +67,7 @@
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"
+				:options="outputOptions"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
@@ -100,7 +101,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -171,6 +172,17 @@ const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
+const outputOptions = computed(() => {
+	if (!isEmpty(props.node.outputs)) {
+		return [
+			{
+				label: 'Select outputs to display in operator',
+				items: props.node.outputs
+			}
+		];
+	}
+	return [];
+});
 
 const kernelManager = new KernelSessionManager();
 
@@ -435,6 +447,7 @@ const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 };
 
 const onSelection = (id: string) => {
+	console.log('test:', id);
 	emit('select-output', id);
 };
 

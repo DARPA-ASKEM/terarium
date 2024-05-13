@@ -22,12 +22,13 @@
 							</template>
 						</Chip>
 					</div>
-					<tera-output-dropdown
-						v-if="outputOptions && selectedOutputId"
-						:options="outputOptions"
-						:output="selectedOutputId"
-						@update:selection="(e) => emit('update:selection', e)"
-					/>
+					<!--		Need some more testing			-->
+					<!--					<tera-output-dropdown-->
+					<!--						v-if="outputOptions && selectedOutputId"-->
+					<!--						:options="outputOptions"-->
+					<!--						:output="selectedOutputId"-->
+					<!--						@update:selection="(e) => emit('update:selection', e)"-->
+					<!--					/>-->
 					<section v-if="!isEmpty(menuItems)" class="mr-3 ml-3">
 						<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
 						<Menu ref="menu" :model="menuItems" :popup="true" />
@@ -74,7 +75,6 @@ import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.
 import { isEmpty } from 'lodash';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -109,23 +109,23 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
 
-const selectedOutputId = computed(() => {
-	if (props.node.active) {
-		return props.node.active;
-	}
-	return null;
-});
-const outputOptions = computed(() => {
-	if (!isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
+// const selectedOutputId = computed(() => {
+// 	if (props.node.active) {
+// 		return props.node.active;
+// 	}
+// 	return null;
+// });
+// const outputOptions = computed(() => {
+// 	if (!isEmpty(props.node.outputs)) {
+// 		return [
+// 			{
+// 				label: 'Select outputs to display in operator',
+// 				items: props.node.outputs
+// 			}
+// 		];
+// 	}
+// 	return [];
+// });
 
 const toggle = (event) => {
 	menu.value.toggle(event);

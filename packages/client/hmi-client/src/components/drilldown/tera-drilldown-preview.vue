@@ -1,6 +1,16 @@
 <template>
 	<tera-drilldown-section>
 		<div class="content-container">
+			<header v-if="!hideHeader">
+				<h5>{{ title ?? 'Preview' }}</h5>
+				<tera-output-dropdown
+					v-if="options && output"
+					:options="options"
+					:is-loading="isLoading"
+					:output="output"
+					@update:selection="(e) => emit('update:selection', e)"
+				/>
+			</header>
 			<main>
 				<slot v-if="!isLoading" />
 				<tera-progress-spinner v-else :font-size="2" is-centered style="height: 100%" />
@@ -15,9 +25,13 @@
 <script setup lang="ts">
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
+import { WorkflowOutput } from '@/types/workflow';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
 defineProps<{
+	options?: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
+	output?: WorkflowOutput<any>['id'];
 	title?: string;
 	canSaveAsset?: boolean;
 	isLoading?: boolean;
@@ -25,6 +39,8 @@ defineProps<{
 }>();
 
 const slots = useSlots();
+
+const emit = defineEmits(['update:selection']);
 </script>
 
 <style scoped>
