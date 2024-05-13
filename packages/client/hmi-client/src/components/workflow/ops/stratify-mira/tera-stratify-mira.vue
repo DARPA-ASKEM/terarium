@@ -323,7 +323,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 		});
 	} else if (modelFramework === AMRSchemaNames.REGNET) {
 		model.vertices.forEach((v) => {
-			modelStates.push(v.id);
+			modelStates.push(v.name);
 		});
 		model.parameters.forEach((p) => {
 			modelParameters.push(p.id);
