@@ -3,6 +3,8 @@ model and dataset found here: https://drive.google.com/drive/u/0/folders/1sU3-CG
 Please go through __every__ step of the test scenario.\
 When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
 
+Estimated time to completion: [X] minutes
+
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
