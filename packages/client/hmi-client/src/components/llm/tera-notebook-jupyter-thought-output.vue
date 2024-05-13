@@ -15,14 +15,22 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	llmThought?: any;
+	llmThoughts: any[];
 }>();
 const showThoughts = ref(false);
-const thought = computed(() => props?.llmThought?.content?.thought ?? '');
+const thought = computed(() => {
+	let aString = '';
+	props.llmThoughts.forEach((ele) => {
+		const llmResponse = ele.content?.thought ?? ele.content?.text ?? '';
+		aString = aString.concat(llmResponse, '\n \n');
+	});
+	return aString;
+});
 </script>
 
 <style scoped>
 .thought-bubble {
+	white-space: pre-line;
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: var(--gap-small);

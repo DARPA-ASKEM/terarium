@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
@@ -10,11 +11,12 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class ArtifactService extends TerariumAssetServiceWithoutSearch<Artifact, ArtifactRepository> {
 	public ArtifactService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ProjectAssetService projectAssetService,
 			final ArtifactRepository repository,
 			final S3ClientService s3ClientService) {
-		super(config, projectAssetService, repository, s3ClientService, Artifact.class);
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, Artifact.class);
 	}
 
 	@Override

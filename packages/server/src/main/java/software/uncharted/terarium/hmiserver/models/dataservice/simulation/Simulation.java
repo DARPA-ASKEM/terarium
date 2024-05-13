@@ -38,7 +38,8 @@ public class Simulation extends TerariumAsset {
 	private static final long serialVersionUID = 5467224100686908152L;
 
 	@JsonAlias("execution_payload")
-	@Column(columnDefinition = "text")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode executionPayload;
 
 	@JsonAlias("result_files")

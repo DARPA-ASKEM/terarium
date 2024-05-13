@@ -127,7 +127,8 @@ public class ClientEventService {
 	 * @param message the message to send
 	 * @param channel the channel to send the message on
 	 */
-	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	// TODO: use anonymous queues, currently this wont behave correctly with
+	// multiple hmi-server instances. Issue #2679
 	@RabbitListener(queues = "${terarium.client-all-user-event-queue}", concurrency = "1")
 	void onSendToAllUsersEvent(final Message message, final Channel channel) {
 		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
@@ -143,8 +144,8 @@ public class ClientEventService {
 		}
 	}
 
-	private void send(Object message, List<SseEmitter> emitterList, String userId) {
-		List<SseEmitter> emittersToRemove = new ArrayList<>();
+	private void send(final Object message, final List<SseEmitter> emitterList, final String userId) {
+		final List<SseEmitter> emittersToRemove = new ArrayList<>();
 		emitterList.forEach((emitter) -> {
 			try {
 				emitter.send(message);
@@ -170,7 +171,8 @@ public class ClientEventService {
 	 * @param channel the channel to send the message on
 	 * @throws IOException if there was an error sending the message
 	 */
-	// TODO: use anonymous queues, currently this wont behave correctly with multiple hmi-server instances. Issue #2679
+	// TODO: use anonymous queues, currently this wont behave correctly with
+	// multiple hmi-server instances. Issue #2679
 	@RabbitListener(
 			queues = {"${terarium.client-user-event-queue}"},
 			concurrency = "1")
