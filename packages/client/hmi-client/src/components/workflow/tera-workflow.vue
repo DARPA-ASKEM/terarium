@@ -444,12 +444,14 @@ const closeDrilldown = async () => {
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
+	workflowDirty = true;
 };
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
 
 	cloneNoteBookSessions();
+	workflowDirty = true;
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
