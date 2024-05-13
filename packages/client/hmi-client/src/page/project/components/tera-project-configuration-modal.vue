@@ -17,6 +17,7 @@
 							rows="2"
 							v-model="title"
 							placeholder="What do you want to call your project?"
+							required
 						/>
 					</div>
 					<div>
