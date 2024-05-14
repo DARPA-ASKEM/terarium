@@ -54,7 +54,7 @@ import type { RunResults } from '@/types/SimulateConfig';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
-	getSimulationInterventions
+	getOptimizedInterventions
 } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
@@ -138,7 +138,7 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getSimulationInterventions(optId);
+			const simulationIntervetions = await getOptimizedInterventions(optId);
 			const forecastResponse = await startForecast(simulationIntervetions);
 			const forecastId = forecastResponse.id;
 

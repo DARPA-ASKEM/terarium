@@ -350,7 +350,7 @@ import {
 	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
-	getSimulationInterventions
+	getOptimizedInterventions
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -585,7 +585,7 @@ const saveModelConfiguration = async () => {
 		logger.error('No optimization run to create model configuration from');
 	}
 	const optRunId = knobs.value.optimizationRunId;
-	const interventions = await getSimulationInterventions(optRunId);
+	const interventions = await getOptimizedInterventions(optRunId);
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,

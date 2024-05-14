@@ -106,7 +106,8 @@ export const OptimizeCiemssOperation: Operation = {
 	}
 };
 
-export async function getSimulationInterventions(optimizeRunId: string) {
+// Get the intervention output from a given optimization run
+export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
