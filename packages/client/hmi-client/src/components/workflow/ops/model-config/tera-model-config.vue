@@ -730,22 +730,23 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const state = cloneDeep(props.node.state);
 
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 	sanityCheckErrors.value = [];
 	if (!force) {
-		const errors = sanityCheck(knobs.value.transientModelConfig);
+		const errors = sanityCheck(modelConfig);
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
 			return;
 		}
 	}
 
-	cleanModel(knobs.value.transientModelConfig.configuration);
+	cleanModel(modelConfig.configuration);
 
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value?.transientModelConfig?.name ?? '',
 		knobs.value?.transientModelConfig?.description ?? '',
-		knobs.value?.transientModelConfig?.configuration,
+		modelConfig.configuration,
 		false,
 		knobs.value.transientModelConfig.interventions ?? []
 	);
