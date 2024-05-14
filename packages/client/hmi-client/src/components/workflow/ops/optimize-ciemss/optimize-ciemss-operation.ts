@@ -75,7 +75,7 @@ export const OptimizeCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
 	],
-	outputs: [{ type: 'simulationId' }, { type: 'modelConfigId' }],
+	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
 
 	initState: () => {
