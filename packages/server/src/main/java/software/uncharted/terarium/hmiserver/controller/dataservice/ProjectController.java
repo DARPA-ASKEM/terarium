@@ -38,6 +38,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -50,6 +51,7 @@ import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -89,6 +91,8 @@ public class ProjectController {
 	final WorkflowService workflowService;
 
 	final ArtifactService artifactService;
+
+	final DocumentAssetService documentAssetService;
 
 	final UserService userService;
 
@@ -573,6 +577,22 @@ public class ProjectController {
 
 						artifact.get().setProject(project.get());
 						artifactService.updateAsset(artifact.get());
+					} else if (assetType.equals(AssetType.DOCUMENT)) {
+
+						final Optional<DocumentAsset> documentAsset = documentAssetService.getAsset(assetId);
+						if (documentAsset.isEmpty()) {
+							throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document Asset does not exist");
+						}
+
+						if (project.get().getDocumentAssets() == null)
+							project.get().setDocumentAssets(new ArrayList<>());
+						if (project.get().getDocumentAssets().contains(documentAsset.get())) {
+							throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Artifact Asset already exists on project");
+						}
+
+						documentAsset.get().setProject(project.get());
+						documentAssetService.updateAsset(documentAsset.get());
 					}
 
 					// double check that this asset is not already a part of this project, and if it
@@ -670,7 +690,15 @@ public class ProjectController {
 						throw new ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete artifact asset");
 					}
+				} else if (assetType.equals(AssetType.DOCUMENT)) {
+
+					final Optional<DocumentAsset> deletedDocumentAsset = documentAssetService.deleteAsset(assetId);
+					if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
+						throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete document asset");
+					}
 				}
+
 
 				final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 				if (deleted) {

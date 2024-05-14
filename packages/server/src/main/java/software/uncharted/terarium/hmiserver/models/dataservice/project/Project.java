@@ -13,6 +13,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -24,6 +25,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @EqualsAndHashCode(callSuper = true)
@@ -84,6 +86,12 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<Artifact> artifactAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<DocumentAsset> documentAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient
