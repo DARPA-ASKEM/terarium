@@ -138,8 +138,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUMED_PERMISSION);
 
-		final Workflow fetchedWorkflow =
-				workflowService.getAsset(workflow.getId(), Schema.Permission.READ).get();
+		final Workflow fetchedWorkflow = workflowService
+				.getAsset(workflow.getId(), Schema.Permission.READ)
+				.get();
 
 		Assertions.assertEquals(workflow, fetchedWorkflow);
 		Assertions.assertEquals(workflow.getId(), fetchedWorkflow.getId());
@@ -156,7 +157,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUMED_PERMISSION);
 		workflow.setName("new name");
 
-		final Workflow updatedWorkflow = workflowService.updateAsset(workflow, ASSUMED_PERMISSION).orElseThrow();
+		final Workflow updatedWorkflow =
+				workflowService.updateAsset(workflow, ASSUMED_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(workflow, updatedWorkflow);
 		Assertions.assertNotNull(updatedWorkflow.getUpdatedOn());

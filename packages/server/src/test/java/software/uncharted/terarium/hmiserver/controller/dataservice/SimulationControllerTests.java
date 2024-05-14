@@ -85,7 +85,8 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				simulationAssetService.getAsset(simulationAsset.getId(), ASSUMED_PERMISSION).isEmpty());
+		Assertions.assertTrue(simulationAssetService
+				.getAsset(simulationAsset.getId(), ASSUMED_PERMISSION)
+				.isEmpty());
 	}
 }

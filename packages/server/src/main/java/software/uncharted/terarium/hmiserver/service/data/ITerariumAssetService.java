@@ -21,5 +21,6 @@ public interface ITerariumAssetService<T extends TerariumAsset> {
 
 	Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException;
 
-	T cloneAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException;
+	T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException;
 }

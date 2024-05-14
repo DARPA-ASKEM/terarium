@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +28,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -72,7 +69,8 @@ public class FunmanController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNodeProjectIdRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			JsonNode input = request.getJsonNode();

@@ -99,7 +99,8 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(UUID.fromString(update.getId()), simulationUpdate, assumedPermission);
+			simulationService.appendUpdateToSimulation(
+					UUID.fromString(update.getId()), simulationUpdate, assumedPermission);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}
@@ -161,7 +162,8 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(UUID.fromString(update.getJobId()), simulationUpdate, assumedPermission);
+			simulationService.appendUpdateToSimulation(
+					UUID.fromString(update.getJobId()), simulationUpdate, assumedPermission);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}

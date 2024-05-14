@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +43,8 @@ public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
 	final ObjectMapper objectMapper;
-	final private ProjectService projectService;
-	final private CurrentUserService currentUserService;
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	/**
 	 * Retrieve the list of NotebookSessions
@@ -113,7 +112,8 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSessionRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			NotebookSession session = request.getNotebookSession();
@@ -158,8 +158,10 @@ public class NotebookSessionController {
 						description = "There was an issue retrieving the session from the data store",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> getNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+	ResponseEntity<NotebookSession> getNotebookSession(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
@@ -204,7 +206,8 @@ public class NotebookSessionController {
 			})
 	ResponseEntity<NotebookSession> updateNotebookSession(
 			@PathVariable("id") final UUID id, @RequestBody final NotebookSessionRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			NotebookSession session = request.getNotebookSession();
@@ -238,8 +241,10 @@ public class NotebookSessionController {
 						description = "There was an issue cloning the session",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> cloneNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	ResponseEntity<NotebookSession> cloneNotebookSession(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			final NotebookSession clone = sessionService.cloneAsset(id, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
@@ -273,8 +278,10 @@ public class NotebookSessionController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	ResponseEntity<ResponseDeleted> deleteNotebookSession(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	ResponseEntity<ResponseDeleted> deleteNotebookSession(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			sessionService.deleteAsset(id, permission);

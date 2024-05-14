@@ -4,7 +4,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
-	final protected Schema.Permission assumePermission = Schema.Permission.WRITE;
+	protected final Schema.Permission assumePermission = Schema.Permission.WRITE;
 
 	public abstract String getName();
 

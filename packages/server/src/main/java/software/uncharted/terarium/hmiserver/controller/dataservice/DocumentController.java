@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -163,7 +162,8 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> createDocument(@RequestBody CreateDocumentRequestBody requestBody) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), requestBody.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), requestBody.getProjectId());
 
 		try {
 			DocumentAsset document = documentAssetService.createAsset(requestBody.getDocument(), permission);
@@ -203,7 +203,8 @@ public class DocumentController {
 			})
 	public ResponseEntity<DocumentAsset> updateDocument(
 			@PathVariable("id") final UUID id, @RequestBody final DocumentAsset document) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		// if the document asset does not have an id, set it to the id in the path
 		if (document.getId() == null) {
@@ -251,7 +252,8 @@ public class DocumentController {
 			})
 	public ResponseEntity<DocumentAsset> getDocument(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
 
 		try {
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
@@ -280,7 +282,7 @@ public class DocumentController {
 			});
 
 			// Update data-service with the updated metadata
-//			documentAssetService.updateAsset(document.get());  // Why?
+			//			documentAssetService.updateAsset(document.get());  // Why?
 
 			// Return the updated document
 			return ResponseEntity.ok(document.get());
@@ -375,7 +377,8 @@ public class DocumentController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteDocument(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			documentAssetService.deleteAsset(id, permission);
@@ -397,7 +400,8 @@ public class DocumentController {
 	 */
 	private ResponseEntity<Void> uploadDocumentHelper(
 			final UUID documentId, final String fileName, final HttpEntity fileEntity) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), documentId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), documentId, Schema.Permission.WRITE);
 
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
@@ -531,7 +535,8 @@ public class DocumentController {
 		final Document document = body.getDocument();
 		final UUID projectId = body.getProjectId();
 
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// get preliminary info to build document asset
@@ -547,17 +552,19 @@ public class DocumentController {
 			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
 
 			final XDDResponse<XDDExtractionsResponseOK> extractionResponse =
-				extractionProxy.getExtractions(doi, null, null, null, null, apikey);
+					extractionProxy.getExtractions(doi, null, null, null, null, apikey);
 
 			final String summaries = getSummaries(doi);
 
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(
-				document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
+					document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
 			if (filename != null) {
 				documentAsset.getFileNames().add(filename);
-				documentAsset = documentAssetService.updateAsset(documentAsset, permission).orElseThrow();
+				documentAsset = documentAssetService
+						.updateAsset(documentAsset, permission)
+						.orElseThrow();
 			}
 
 			// add asset to project
@@ -790,7 +797,11 @@ public class DocumentController {
 	 * @return document asset
 	 */
 	private DocumentAsset createDocumentAssetFromXDDDocument(
-			final Document document, final String userId, final List<Extraction> extractions, final String summary, Schema.Permission permission)
+			final Document document,
+			final String userId,
+			final List<Extraction> extractions,
+			final String summary,
+			Schema.Permission permission)
 			throws IOException {
 
 		final String name = document.getTitle();
@@ -841,7 +852,11 @@ public class DocumentController {
 	 * @return extraction job id
 	 */
 	private void uploadPDFFileToDocumentThenExtract(
-			final String doi, final String filename, final UUID docId, final String domain, Schema.Permission hasWritePermission) {
+			final String doi,
+			final String filename,
+			final UUID docId,
+			final String domain,
+			Schema.Permission hasWritePermission) {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);

@@ -116,7 +116,9 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model, ASSUMED_PERMISSION);
 
-		model = extractionService.alignAMR(documentAsset.getId(), model.getId(), ASSUMED_PERMISSION).get();
+		model = extractionService
+				.alignAMR(documentAsset.getId(), model.getId(), ASSUMED_PERMISSION)
+				.get();
 	}
 
 	// // @Test
@@ -138,7 +140,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAssetService.uploadFile(
 				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
 
-		documentAsset =
-				extractionService.extractPDF(documentAsset.getId(), "epi", ASSUMED_PERMISSION).get();
+		documentAsset = extractionService
+				.extractPDF(documentAsset.getId(), "epi", ASSUMED_PERMISSION)
+				.get();
 	}
 }

@@ -16,7 +16,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Component
 @RequiredArgsConstructor

@@ -22,8 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -104,7 +102,8 @@ public class KnowledgeController {
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNodeProjectIdRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		final Model responseAMR;
 
@@ -226,8 +225,9 @@ public class KnowledgeController {
 			@RequestParam(name = "name", required = false, defaultValue = "") final String name,
 			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
-		@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -391,9 +391,13 @@ public class KnowledgeController {
 			})
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<Model> codeBlocksToModel(@RequestParam("project-id") final UUID projectId,
-			@RequestPart final Code code, @RequestPart("file") final MultipartFile input) throws IOException {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<Model> codeBlocksToModel(
+			@RequestParam("project-id") final UUID projectId,
+			@RequestPart final Code code,
+			@RequestPart("file") final MultipartFile input)
+			throws IOException {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// 1. create code asset from code blocks
@@ -443,7 +447,8 @@ public class KnowledgeController {
 			@PathVariable("model-id") final UUID modelId,
 			@RequestParam("project-id") final UUID projectId,
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -536,7 +541,8 @@ public class KnowledgeController {
 			@PathVariable("dataset-id") final UUID datasetId,
 			@RequestParam("project-id") final UUID projectId,
 			@RequestParam(name = "document-id", required = false) final Optional<UUID> documentId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// Provenance call if a document id is provided
@@ -566,7 +572,8 @@ public class KnowledgeController {
 						"There is no documentation for this dataset", "document.txt", "application/text");
 			}
 
-			final Dataset dataset = datasetService.getAsset(datasetId, permission).orElseThrow();
+			final Dataset dataset =
+					datasetService.getAsset(datasetId, permission).orElseThrow();
 
 			if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
@@ -638,7 +645,8 @@ public class KnowledgeController {
 			}
 			((ObjectNode) dataset.getMetadata()).set("dataCard", card);
 
-			return ResponseEntity.ok(datasetService.updateAsset(dataset, permission).orElseThrow());
+			return ResponseEntity.ok(
+					datasetService.updateAsset(dataset, permission).orElseThrow());
 
 		} catch (final FeignException e) {
 			final String error = "Unable to get profile dataset";
@@ -670,8 +678,11 @@ public class KnowledgeController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> alignModel(
-			@RequestParam("document-id") final UUID documentId, @RequestParam("model-id") final UUID modelId, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam("model-id") final UUID modelId,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			return ResponseEntity.ok(
@@ -698,8 +709,10 @@ public class KnowledgeController {
 			@RequestParam(name = "model-ids", required = false) final List<UUID> modelIds,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-		extractionService.extractVariables(documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		extractionService.extractVariables(
+				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -721,7 +734,8 @@ public class KnowledgeController {
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractPDF(documentId, domain, permission);
 		return ResponseEntity.accepted().build();
 	}

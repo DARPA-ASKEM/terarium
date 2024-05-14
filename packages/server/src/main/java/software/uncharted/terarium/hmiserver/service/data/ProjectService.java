@@ -111,7 +111,8 @@ public class ProjectService {
 		}
 	}
 
-	public Schema.Permission checkPermissionCanAdministrate(String userId, UUID projectId) throws ResponseStatusException {
+	public Schema.Permission checkPermissionCanAdministrate(String userId, UUID projectId)
+			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);

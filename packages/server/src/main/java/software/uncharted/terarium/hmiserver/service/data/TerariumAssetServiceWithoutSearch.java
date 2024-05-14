@@ -102,7 +102,9 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Observed(name = "function_profile")
 	public List<T> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) {
 		final Pageable pageable = PageRequest.of(page, pageSize);
-		return repository.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable).getContent();
+		return repository
+				.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable)
+				.getContent();
 	}
 
 	/**
@@ -168,7 +170,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
 
@@ -193,7 +196,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
 		if (targetAsset.isEmpty()) {
 			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
@@ -203,7 +207,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	/** Clone asset, write it to the db under a new id, and return it. */
 	@Observed(name = "function_profile")
-	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 		return createAsset(cloneAsset(id, hasWritePermission), hasWritePermission);
 	}
 

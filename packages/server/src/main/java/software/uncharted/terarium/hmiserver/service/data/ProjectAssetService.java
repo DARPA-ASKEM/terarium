@@ -44,14 +44,19 @@ public class ProjectAssetService {
 	 */
 	@Observed(name = "function_profile")
 	public List<ProjectAsset> findActiveAssetsForProject(
-			@NotNull final UUID projectId, final Collection<@NotNull AssetType> types, final Schema.Permission hasReadPermission) {
+			@NotNull final UUID projectId,
+			final Collection<@NotNull AssetType> types,
+			final Schema.Permission hasReadPermission) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
 				projectId, types);
 	}
 
 	@Observed(name = "function_profile")
 	public boolean deleteByAssetId(
-		@NotNull final UUID projectId, @NotNull final AssetType type, @NotNull final UUID originalAssetId, final Schema.Permission hasWritePermission) {
+			@NotNull final UUID projectId,
+			@NotNull final AssetType type,
+			@NotNull final UUID originalAssetId,
+			final Schema.Permission hasWritePermission) {
 		final ProjectAsset asset =
 				projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
 		if (asset == null) {
@@ -64,7 +69,11 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> createProjectAsset(
-			final Project project, final AssetType assetType, final TerariumAsset asset, final Schema.Permission hasWritePermission) throws IOException {
+			final Project project,
+			final AssetType assetType,
+			final TerariumAsset asset,
+			final Schema.Permission hasWritePermission)
+			throws IOException {
 
 		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
@@ -83,7 +92,8 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset projectAsset, final Schema.Permission hasWritePermission) {
+	public Optional<ProjectAsset> updateProjectAsset(
+			final ProjectAsset projectAsset, final Schema.Permission hasWritePermission) {
 		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
 		}
@@ -107,25 +117,31 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
+	public Optional<ProjectAsset> getProjectAssetByNameAndType(
+			final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(
 				projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(
-			final UUID projectId, final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
+			final UUID projectId,
+			final String assetName,
+			final AssetType assetType,
+			final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
 				projectId, assetName, assetType));
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
+	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(
+			final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
 
 	@Observed(name = "function_profile")
-	public Schema.Permission checkForPermission(String userId, final UUID assetId, Schema.Permission desiredPermission) {
+	public Schema.Permission checkForPermission(
+			String userId, final UUID assetId, Schema.Permission desiredPermission) {
 		Optional<List<ProjectAsset>> projectAssets = projectAssetRepository.findByAssetId(assetId);
 		if (projectAssets.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not associated with a project");

@@ -158,7 +158,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUMED_PERMISSION);
 
-		final Dataset fetchedDataset = datasetService.getAsset(dataset.getId(), ASSUMED_PERMISSION).get();
+		final Dataset fetchedDataset =
+				datasetService.getAsset(dataset.getId(), ASSUMED_PERMISSION).get();
 
 		Assertions.assertEquals(dataset, fetchedDataset);
 		Assertions.assertEquals(dataset.getId(), fetchedDataset.getId());
@@ -175,7 +176,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUMED_PERMISSION);
 		dataset.setName("new name");
 
-		final Dataset updatedDataset = datasetService.updateAsset(dataset, ASSUMED_PERMISSION).orElseThrow();
+		final Dataset updatedDataset =
+				datasetService.updateAsset(dataset, ASSUMED_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(dataset, updatedDataset);
 		Assertions.assertNotNull(updatedDataset.getUpdatedOn());

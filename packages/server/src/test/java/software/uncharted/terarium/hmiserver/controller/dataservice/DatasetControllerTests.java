@@ -68,7 +68,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
 						.with(csrf()))
@@ -80,13 +81,16 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDatasets() throws Exception {
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf()))
 				.andExpect(status().isOk())
@@ -98,13 +102,15 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(datasetService.getAsset(dataset.getId(), ASSUMED_PERMISSION).isEmpty());
+		Assertions.assertTrue(
+				datasetService.getAsset(dataset.getId(), ASSUMED_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -112,7 +118,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetCSV() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -142,7 +149,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetFromGithub() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
 						.with(csrf())
@@ -158,7 +166,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDatasetCSV() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -199,7 +208,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final String content = "This is my small test dataset\n";
 
@@ -229,7 +239,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -269,7 +280,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetUploadUrl() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		// Perform the multipart file upload request
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
@@ -300,7 +312,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDownloadUrl() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-document-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-document-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		// Perform the multipart file upload request
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")

@@ -139,7 +139,8 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<Code> createCode(@RequestBody Code code) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), code.getId(), Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), code.getId(), Schema.Permission.WRITE);
 
 		try {
 			code = codeService.createAsset(code, permission);
@@ -182,7 +183,8 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<Code> getCode(@PathVariable("id") final UUID id) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
 
 		try {
 			final Optional<Code> code = codeService.getAsset(id, permission);
@@ -227,7 +229,8 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<Code> updateCode(@PathVariable("id") final UUID codeId, @RequestBody final Code code) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
 
 		try {
 			code.setId(codeId);
@@ -268,7 +271,8 @@ public class TDSCodeController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteCode(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			codeService.deleteAsset(id, permission);
@@ -429,7 +433,8 @@ public class TDSCodeController {
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input)
 			throws IOException {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
 
 		log.debug("Uploading code {} to project", codeId);
 
@@ -461,7 +466,8 @@ public class TDSCodeController {
 			@RequestParam("filename") final String filename) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
 
 		// download file from GitHub
 		final String fileString =
@@ -505,7 +511,8 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), codeId, Schema.Permission.WRITE);
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
 
@@ -536,7 +543,10 @@ public class TDSCodeController {
 	 * @return A response containing the status of the upload
 	 */
 	private ResponseEntity<Integer> uploadCodeHelper(
-			final UUID codeId, final String fileName, final HttpEntity codeHttpEntity, Schema.Permission hasWritePermission) {
+			final UUID codeId,
+			final String fileName,
+			final HttpEntity codeHttpEntity,
+			Schema.Permission hasWritePermission) {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 

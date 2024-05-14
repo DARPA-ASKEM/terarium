@@ -127,7 +127,8 @@ public class ExtractionService {
 		return filename;
 	}
 
-	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain, final Schema.Permission hasWritePermission) {
+	public Future<DocumentAsset> extractPDF(
+			final UUID documentId, final String domain, final Schema.Permission hasWritePermission) {
 
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
@@ -138,7 +139,8 @@ public class ExtractionService {
 			try {
 				notificationInterface.sendMessage("Starting extraction...");
 
-				DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+				DocumentAsset document =
+						documentService.getAsset(documentId, hasWritePermission).get();
 				notificationInterface.sendMessage("Document found, fetching file...");
 
 				if (document.getFileNames().isEmpty()) {
@@ -296,7 +298,9 @@ public class ExtractionService {
 				}
 
 				// update the document
-				document = documentService.updateAsset(document, hasWritePermission).orElseThrow();
+				document = documentService
+						.updateAsset(document, hasWritePermission)
+						.orElseThrow();
 
 				// if there is text, run variable extraction
 				if (!responseText.isEmpty()) {
@@ -304,7 +308,8 @@ public class ExtractionService {
 					// run variable extraction
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
-						document = runVariableExtraction(notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
+						document = runVariableExtraction(
+								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -373,7 +378,8 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Starting variable extraction.");
 		try {
 			// Fetch the text from the document
-			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).orElseThrow();
+			final DocumentAsset document =
+					documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 			notificationInterface.sendMessage("Document found, fetching text.");
 			if (document.getText() == null || document.getText().isEmpty()) {
 				throw new RuntimeException("No text found in paper document");
@@ -454,20 +460,25 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractVariables(
-			final UUID documentId, final List<UUID> modelIds, final String domain, final Schema.Permission hasWritePermission) {
+			final UUID documentId,
+			final List<UUID> modelIds,
+			final String domain,
+			final Schema.Permission hasWritePermission) {
 		// Set up the client interface
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc = runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
+			final DocumentAsset doc =
+					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
-	public Future<Model> alignAMR(final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
+	public Future<Model> alignAMR(
+			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
 
 		final ExtractionGroupInstance notificationInterface =
 				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
@@ -479,7 +490,8 @@ public class ExtractionService {
 				final DocumentAsset document =
 						documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 
-				final Model model = modelService.getAsset(modelId, hasWritePermission).orElseThrow();
+				final Model model =
+						modelService.getAsset(modelId, hasWritePermission).orElseThrow();
 
 				final String modelString = objectMapper.writeValueAsString(model);
 
