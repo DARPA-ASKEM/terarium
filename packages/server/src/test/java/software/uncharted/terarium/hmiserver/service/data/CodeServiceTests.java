@@ -93,7 +93,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
 		final Code code = codeService.createAsset(createCode("0"), ASSUMED_PERMISSION);
-		final Code fetchedCode = codeService.getAsset(code.getId(), ASSUMED_PERMISSION).get();
+		final Code fetchedCode =
+				codeService.getAsset(code.getId(), ASSUMED_PERMISSION).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -114,7 +115,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		final Code code = codeService.createAsset(createCode("A"), ASSUMED_PERMISSION);
 		code.setName("new name");
 
-		final Code updatedCode = codeService.updateAsset(code, ASSUMED_PERMISSION).orElseThrow();
+		final Code updatedCode =
+				codeService.updateAsset(code, ASSUMED_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());

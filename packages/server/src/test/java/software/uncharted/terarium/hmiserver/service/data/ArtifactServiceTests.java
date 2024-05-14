@@ -93,7 +93,8 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 		final Artifact artifact = artifactService.createAsset(createArtifact("A"), ASSUMED_PERMISSION);
 		artifact.setName("new name");
 
-		final Artifact updatedArtifact = artifactService.updateAsset(artifact, ASSUMED_PERMISSION).orElseThrow();
+		final Artifact updatedArtifact =
+				artifactService.updateAsset(artifact, ASSUMED_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(artifact, updatedArtifact);
 		Assertions.assertNotNull(updatedArtifact.getUpdatedOn());
