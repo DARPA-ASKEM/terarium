@@ -10,6 +10,7 @@ import java.util.Map;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -21,13 +22,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.concept.OntologyConcept;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
 @Accessors(chain = true)
+@Entity
 public class DocumentAsset extends TerariumAsset {
 
 	@Serial
