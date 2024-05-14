@@ -268,6 +268,7 @@
 				outlined
 				severity="secondary"
 				label="Save as a new model configuration"
+				:disabled="knobs.optimizationRunId === ''"
 				@click="showModelModal = true"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
@@ -348,7 +349,8 @@ import {
 	InterventionTypes,
 	ContextMethods,
 	InterventionPolicyGroup,
-	blankInterventionPolicyGroup
+	blankInterventionPolicyGroup,
+	getSimulationInterventions
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -579,14 +581,19 @@ const runOptimize = async () => {
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
-	// TODO: This should be taking some values from our output result but its TBD
+	if (!knobs.value.optimizationRunId) {
+		logger.error('No optimization run to create model configuration from');
+	}
+	const optRunId = knobs.value.optimizationRunId;
+	const interventions = await getSimulationInterventions(optRunId);
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
 		knobs.value.modelConfigDesc,
-		modelConfiguration.value.configuration
+		modelConfiguration.value.configuration,
+		false,
+		interventions
 	);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
@@ -649,12 +656,8 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
+			initialize();
 		}
-
-		// Update knobs with current selected output state
-		// timespan.value = props.node.state.currentTimespan;
-		// numSamples.value = props.node.state.numSamples;
-		// method.value = props.node.state.method;
 	},
 	{ immediate: true }
 );

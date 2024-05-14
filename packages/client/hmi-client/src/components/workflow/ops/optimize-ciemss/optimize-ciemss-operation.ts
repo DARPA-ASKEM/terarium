@@ -1,4 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import { Intervention as SimulationIntervention } from '@/types/Types';
+import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
@@ -73,7 +75,7 @@ export const OptimizeCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
 	],
-	outputs: [{ type: 'simulationId' }],
+	outputs: [{ type: 'simulationId' }, { type: 'modelConfigId' }],
 	isRunnable: true,
 
 	initState: () => {
@@ -103,3 +105,23 @@ export const OptimizeCiemssOperation: Operation = {
 		return init;
 	}
 };
+
+export async function getSimulationInterventions(optimizeRunId: string) {
+	// Get the interventionPolicyGroups from the run. This will prevent any inconsistencies being passed via knobs or state.
+	// Where for eg the user could update the UI after running the optimization
+	const simulation = await getSimulation(optimizeRunId);
+	const paramNames: string[] = simulation?.executionPayload?.interventions.param_names ?? [];
+	const startTime: number[] = simulation?.executionPayload?.interventions.start_time ?? [];
+
+	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
+	const simulationIntervetions: SimulationIntervention[] = [];
+	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
+	for (let i = 0; i < paramNames.length; i++) {
+		simulationIntervetions.push({
+			name: paramNames[i],
+			timestep: startTime[i],
+			value: policyResult[i]
+		});
+	}
+	return simulationIntervetions;
+}
