@@ -28,13 +28,14 @@
 							@change="setKernelContext"
 						/>
 						<span
-							><label>Model framework</label
-							><Dropdown
+							><label>Model framework</label>
+							<Dropdown
 								size="small"
 								v-model="clonedState.modelFramework"
 								:options="modelFrameworks"
 								@change="setKernelContext"
-						/></span>
+							/>
+						</span>
 						<span class="mr-auto">
 							<label>Service</label>
 							<Dropdown
@@ -137,7 +138,7 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="selectedModel"
 		:model="selectedModel"
 		:is-visible="showSaveModelModal"
@@ -157,7 +158,7 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -351,6 +352,7 @@ async function handleCode() {
 			description: 'tempDescription',
 			files: {
 				[fileName]: {
+					fileName,
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
@@ -575,6 +577,7 @@ span {
 	align-items: center;
 	gap: 0.5rem;
 }
+
 .p-dropdown {
 	max-height: 40px;
 }

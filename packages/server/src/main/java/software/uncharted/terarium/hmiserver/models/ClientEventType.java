@@ -8,4 +8,7 @@ public enum ClientEventType {
 	FILE_UPLOAD_PROGRESS,
 	EXTRACTION,
 	EXTRACTION_PDF,
+	// Events for the task runner notifications
+	TASK_UNDEFINED_EVENT,
+	TASK_GOLLM_MODEL_CARD,
 }

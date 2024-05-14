@@ -48,7 +48,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		implements ITerariumAssetService<T> {
 
-	protected final ObjectMapper objectMapper = new ObjectMapper();
+	protected final ObjectMapper objectMapper;
 
 	/** The configuration for the application */
 	protected final Config config;
