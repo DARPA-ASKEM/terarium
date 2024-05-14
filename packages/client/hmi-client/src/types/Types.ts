@@ -1397,7 +1397,6 @@ export enum SimulationType {
 }
 
 export enum ProgressState {
-    Cancelling = "CANCELLING",
     Cancelled = "CANCELLED",
     Complete = "COMPLETE",
     Error = "ERROR",
@@ -1405,6 +1404,7 @@ export enum ProgressState {
     Queued = "QUEUED",
     Retrieving = "RETRIEVING",
     Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {
