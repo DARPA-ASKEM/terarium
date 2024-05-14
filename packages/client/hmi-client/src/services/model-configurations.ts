@@ -106,10 +106,9 @@ export function sanityCheck(config: ModelConfiguration): string[] {
 	return errors;
 }
 
-export function cleanModelConfiguration(config: ModelConfiguration): void {
-	const modelToClean = config.configuration;
-
-	const parameters: ModelParameter[] = getParameters(modelToClean);
+// cleans a model by removing distributions that are not needed
+export function cleanModel(model: Model): void {
+	const parameters: ModelParameter[] = getParameters(model);
 
 	parameters.forEach((p) => {
 		const val = p.value;

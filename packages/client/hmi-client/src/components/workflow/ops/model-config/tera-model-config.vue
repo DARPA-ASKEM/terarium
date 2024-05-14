@@ -363,11 +363,7 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
-import {
-	cleanModelConfiguration,
-	createModelConfiguration,
-	sanityCheck
-} from '@/services/model-configurations';
+import { cleanModel, createModelConfiguration, sanityCheck } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type {
 	Initial,
@@ -743,7 +739,7 @@ const createConfiguration = async (force: boolean = false) => {
 		}
 	}
 
-	cleanModelConfiguration(knobs.value.transientModelConfig);
+	cleanModel(knobs.value.transientModelConfig.configuration);
 
 	const data = await createModelConfiguration(
 		model.value.id,
@@ -790,7 +786,7 @@ const createTempModelConfig = async () => {
 		model.value.id,
 		'Temp_config_name',
 		'Utilized in model config node for beaker purposes',
-		model.value,
+		cloneDeep(model.value),
 		true
 	);
 
@@ -813,7 +809,7 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value ?? ({} as Model),
+			configuration: cloneDeep(model.value) ?? ({} as Model),
 			interventions: []
 		};
 
@@ -821,31 +817,10 @@ const initialize = async () => {
 	}
 	// State already been set up use it instead:
 	else {
-		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		const modelConfig = cloneDeep(state.transientModelConfig);
+		cleanModel(modelConfig.configuration);
+		knobs.value.transientModelConfig = modelConfig;
 	}
-
-	// Ensure the parameters have constant and distributions for editing in children components
-	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
-	parameters.forEach((param) => {
-		if (!param.distribution) {
-			// provide a non-zero range, unless val is itself 0
-			const val = param.value;
-			let lb = 0;
-			let ub = 0;
-			if (val && val !== 0) {
-				lb = val - Math.abs(0.05 * val);
-				ub = val + Math.abs(0.05 * val);
-			}
-
-			param.distribution = {
-				type: 'StandardUniform1',
-				parameters: {
-					minimum: lb,
-					maximum: ub
-				}
-			};
-		}
-	});
 
 	// Create a new session and context based on model
 	try {
@@ -910,7 +885,9 @@ onMounted(async () => {
 
 watch(
 	() => knobs.value.transientModelConfig,
-	async (config) => {
+	async () => {
+		const config = cloneDeep(knobs.value.transientModelConfig);
+		cleanModel(config.configuration);
 		if (isEmpty(config) || isEmpty(config.configuration)) return;
 		const response: any = await getMMT(config.configuration);
 		mmt.value = response.mmt;

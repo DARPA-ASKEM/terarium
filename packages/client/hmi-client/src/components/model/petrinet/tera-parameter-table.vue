@@ -343,6 +343,18 @@ const buildParameterTable = () => {
 				const paramType = getParamType(param);
 				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
+				// If the parameter does not have a distribution, add a default distribution for editing purposes
+				if (param && !param.distribution) {
+					const lb = '';
+					const ub = '';
+					param.distribution = {
+						type: 'StandardUniform1',
+						parameters: {
+							minimum: lb,
+							maximum: ub
+						}
+					};
+				}
 				return {
 					id: v,
 					name: param?.name ?? '',
@@ -375,6 +387,17 @@ const buildParameterTable = () => {
 
 			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
+			if (!param.distribution) {
+				const lb = '';
+				const ub = '';
+				param.distribution = {
+					type: 'StandardUniform1',
+					parameters: {
+						minimum: lb,
+						maximum: ub
+					}
+				};
+			}
 			formattedParams.push({
 				id: init,
 				name: param.name ?? '',
@@ -500,12 +523,12 @@ const countSuggestions = (id): number =>
 	).length ?? 0;
 
 watch(
-	() => parameters.value,
-	(params) => {
-		if (!params) return;
+	() => [parameters.value, props.model],
+	(val) => {
+		if (!val) return;
 		buildParameterTable();
 	},
-	{ immediate: true }
+	{ deep: true, immediate: true }
 );
 </script>
 
