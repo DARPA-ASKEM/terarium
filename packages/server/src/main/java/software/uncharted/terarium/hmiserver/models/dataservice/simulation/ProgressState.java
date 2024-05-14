@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 public enum ProgressState {
-	@JsonAlias("cancelling")
-	CANCELLING,
 	@JsonAlias("cancelled")
 	CANCELLED,
 	@JsonAlias("complete")
@@ -18,5 +16,7 @@ public enum ProgressState {
 	@JsonAlias("retrieving")
 	RETRIEVING,
 	@JsonAlias("running")
-	RUNNING
+	RUNNING,
+	@JsonAlias("cancelling")
+	CANCELLING,
 }
