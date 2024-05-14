@@ -158,7 +158,7 @@ const projectOptions = computed(() => [
 								selectedAsset.value.esgfId
 							);
 							if (climateDataset) {
-								const dataset: Dataset | null = await createDataset(climateDataset);
+								const dataset: Dataset | null = await createDataset(climateDataset, useProjects().activeProjectId.value);
 								if (dataset) {
 									datasetId = dataset.id;
 								}
