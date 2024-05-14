@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -111,7 +110,8 @@ public class NotebookSessionController {
 						description = "There was an issue creating the session",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
+	ResponseEntity<NotebookSession> createNotebookSession(
+			@RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -198,7 +198,9 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> updateNotebookSession(
-			@PathVariable("id") final UUID id, @RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final NotebookSession session,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

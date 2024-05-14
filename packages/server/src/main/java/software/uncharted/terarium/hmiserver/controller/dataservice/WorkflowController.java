@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -134,7 +133,8 @@ public class WorkflowController {
 						description = "There was an issue creating the workflow",
 						content = @Content)
 			})
-	public ResponseEntity<Workflow> createWorkflow(@RequestBody final Workflow item, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Workflow> createWorkflow(
+			@RequestBody final Workflow item, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
@@ -167,7 +167,9 @@ public class WorkflowController {
 						content = @Content)
 			})
 	public ResponseEntity<Workflow> updateWorkflow(
-			@PathVariable("id") final UUID id, @RequestBody final Workflow workflow, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Workflow workflow,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {

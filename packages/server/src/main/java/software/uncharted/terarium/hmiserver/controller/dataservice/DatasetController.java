@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -186,7 +185,8 @@ public class DatasetController {
 						description = "There was an issue creating the dataset",
 						content = @Content)
 			})
-	public ResponseEntity<Dataset> createDataset(@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Dataset> createDataset(
+			@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

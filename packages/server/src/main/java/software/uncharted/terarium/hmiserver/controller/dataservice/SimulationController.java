@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -94,7 +93,8 @@ public class SimulationController {
 						description = "There was an issue creating the simulation",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Simulation> createSimulation(
+			@RequestBody final Simulation simulation, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -207,7 +207,9 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> updateSimulation(
-			@PathVariable("id") final UUID id, @RequestBody final Simulation simulation, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Simulation simulation,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

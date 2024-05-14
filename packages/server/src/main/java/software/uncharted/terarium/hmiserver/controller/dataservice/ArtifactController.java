@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -114,12 +113,12 @@ public class ArtifactController {
 						description = "There was an issue creating the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Artifact> createArtifact(
+			@RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(artifactService.createAsset(artifact, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, permission));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
@@ -183,7 +182,9 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> updateArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID artifactId,
+			@RequestBody final Artifact artifact,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
