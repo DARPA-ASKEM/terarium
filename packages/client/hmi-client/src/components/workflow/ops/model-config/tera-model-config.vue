@@ -185,7 +185,7 @@
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
 								(data: Intervention) => {
-									setIntervention(knobs.transientModelConfig, data, idx);
+									setIntervention(knobs.transientModelConfig, idx, data);
 								}
 							"
 							@delete="removeIntervention(knobs.transientModelConfig, idx)"
