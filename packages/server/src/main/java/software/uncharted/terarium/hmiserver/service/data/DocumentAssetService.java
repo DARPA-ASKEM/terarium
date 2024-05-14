@@ -14,22 +14,22 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 public class DocumentAssetService extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
 
 	public DocumentAssetService(
-		final ObjectMapper objectMapper,
-		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
-		final ProjectAssetService projectAssetService,
-		final S3ClientService s3ClientService,
-		final DocumentRepository repository) {
+			final ObjectMapper objectMapper,
+			final Config config,
+			final ElasticsearchConfiguration elasticConfig,
+			final ElasticsearchService elasticService,
+			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
+			final DocumentRepository repository) {
 		super(
-			objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			DocumentAsset.class);
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				DocumentAsset.class);
 	}
 
 	@Override

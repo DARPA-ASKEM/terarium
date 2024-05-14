@@ -404,7 +404,7 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A project name is required");
 		}
 
-		String userId = currentUserService.get().getId();
+		final String userId = currentUserService.get().getId();
 
 		Project project = (Project) new Project()
 				.setOverviewContent(WELCOME_MESSAGE.getBytes())
@@ -598,7 +598,7 @@ public class ProjectController {
 							project.get().setDocumentAssets(new ArrayList<>());
 						if (project.get().getDocumentAssets().contains(documentAsset.get())) {
 							throw new ResponseStatusException(
-								HttpStatus.CONFLICT, "Artifact Asset already exists on project");
+									HttpStatus.CONFLICT, "Document Asset already exists on project");
 						}
 
 						documentAsset.get().setProject(project.get());
@@ -703,12 +703,12 @@ public class ProjectController {
 				} else if (assetType.equals(AssetType.DOCUMENT)) {
 
 					final Optional<DocumentAsset> deletedDocumentAsset = documentAssetService.deleteAsset(assetId);
-					if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
+					if (deletedDocumentAsset.isEmpty()
+							|| deletedDocumentAsset.get().getDeletedOn() == null) {
 						throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete document asset");
+								HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete document asset");
 					}
 				}
-
 
 				final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 				if (deleted) {

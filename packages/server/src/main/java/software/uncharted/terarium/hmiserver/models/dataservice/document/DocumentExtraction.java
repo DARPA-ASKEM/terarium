@@ -24,14 +24,14 @@ public class DocumentExtraction implements Serializable {
 	private Map<String, Object> metadata;
 
 	@Override
-	public DocumentExtraction clone(){
+	public DocumentExtraction clone() {
 		final DocumentExtraction clone = new DocumentExtraction();
 
 		clone.fileName = this.fileName;
 		clone.assetType = this.assetType;
-		if(this.metadata != null){
+		if (this.metadata != null) {
 			clone.metadata = new HashMap<>();
-			for(final String key : this.metadata.keySet()){
+			for (final String key : this.metadata.keySet()) {
 				// I don't like that this is an "object" because it doesn't clone nicely...
 				clone.metadata.put(key, this.metadata.get(key));
 			}
@@ -39,5 +39,4 @@ public class DocumentExtraction implements Serializable {
 
 		return clone;
 	}
-
 }
