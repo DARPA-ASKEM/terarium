@@ -125,26 +125,26 @@ const showSummaries = ref(true);
 
 const csvContent = computed(() => props.rawContent?.data || props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
-const chartData = computed(
-	() => props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
+const chartData = computed(() =>
+	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
 );
 
 const selectedColumns = ref(csvHeaders?.value);
 
-const csvMinsToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
+const csvMinsToDisplay = computed(() =>
+	props.rawContent?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
 );
-const csvMaxsToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
+const csvMaxsToDisplay = computed(() =>
+	props.rawContent?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
 );
-const csvMeansToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
+const csvMeansToDisplay = computed(() =>
+	props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
 );
-const csvMedianToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
+const csvMedianToDisplay = computed(() =>
+	props.rawContent?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
 );
-const csvSdToDisplay = computed(
-	() => props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
+const csvSdToDisplay = computed(() =>
+	props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
 );
 const chartOptions = computed(() => setChartOptions());
 

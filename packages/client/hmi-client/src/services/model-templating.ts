@@ -585,9 +585,8 @@ export async function flattenedToDecomposedInView(
 
 	repeatedInitialTargets.forEach((repeatedInitialTarget) => {
 		// Find cards that have the repeated initial and add edges to its junction
-		const templatesWithRepeatedInitial = decomposedCanvas.cards.filter(
-			(card: ModelTemplateCard) =>
-				card.model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTarget)
+		const templatesWithRepeatedInitial = decomposedCanvas.cards.filter((card: ModelTemplateCard) =>
+			card.model.semantics?.ode?.initials?.some(({ target }) => target === repeatedInitialTarget)
 		);
 
 		// Collect port positions that the junction will be connected to

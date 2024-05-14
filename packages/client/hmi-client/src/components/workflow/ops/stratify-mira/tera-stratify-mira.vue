@@ -3,15 +3,33 @@
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
-					<h5>Stratify model</h5>
-					<p>The model will be stratified with the following settings.</p>
-					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-						Note: Code has been executed which may not be reflected here.
-					</p>
+					<header class="inline-flex justify-content-between">
+						<section>
+							<h5>Stratify model</h5>
+							<p>The model will be stratified with the following settings.</p>
+							<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+								Note: Code has been executed which may not be reflected here.
+							</p>
+						</section>
+						<section>
+							<Button
+								style="margin-right: auto"
+								size="large"
+								severity="secondary"
+								outlined
+								label="Reset"
+								@click="resetModel"
+								class="mr-2"
+							/>
+							<Button label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
+						</section>
+					</header>
 					<tera-stratification-group-form
 						class="mt-2"
 						:model-node-options="modelNodeOptions"
@@ -19,25 +37,6 @@
 						@update-self="updateStratifyGroupForm"
 					/>
 				</div>
-				<template #footer>
-					<div class="flex flex-row gap-2 w-full mb-2">
-						<Button
-							outlined
-							label="Stratify"
-							size="large"
-							icon="pi pi-play"
-							@click="stratifyModel"
-						/>
-						<Button
-							style="margin-right: auto"
-							size="large"
-							severity="secondary"
-							outlined
-							label="Reset"
-							@click="resetModel"
-						/>
-					</div>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
@@ -47,6 +46,7 @@
 						:kernel-manager="kernelManager"
 						:default-options="sampleAgentQuestions"
 						:context-language="'python3'"
+						@run-command="runCodeStratify"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
 						@question-asked="llmThoughts = []"
@@ -62,24 +62,11 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
-
-				<template #footer>
-					<Button
-						outlined
-						style="margin-right: auto"
-						label="Run"
-						size="large"
-						icon="pi pi-play"
-						@click="runCodeStratify"
-						class="ml-4 mb-2"
-					/>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"
-				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
@@ -100,17 +87,6 @@
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</div>
-				<template #footer>
-					<Button
-						:disabled="!amr"
-						outlined
-						severity="secondary"
-						size="large"
-						label="Save as new model"
-						@click="showSaveModelModal = true"
-					/>
-					<Button label="Close" size="large" @click="emit('close')" />
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -168,6 +144,16 @@ const emit = defineEmits([
 	'select-output'
 ]);
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
+
 enum StratifyTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
@@ -185,17 +171,6 @@ const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const kernelManager = new KernelSessionManager();
 
