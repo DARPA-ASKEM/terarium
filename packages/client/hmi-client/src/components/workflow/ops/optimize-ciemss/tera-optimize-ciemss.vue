@@ -61,6 +61,14 @@
 								]"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+						</div>
 					</div>
 					<Button
 						v-if="showAdditionalOptions"
@@ -149,14 +157,6 @@
 								:min-fraction-digits="1"
 								:max-fraction-digits="10"
 							/>
-						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
 						</div>
 					</div>
 				</div>
