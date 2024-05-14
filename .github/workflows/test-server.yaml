@@ -25,7 +25,7 @@ on:
 jobs:
   lint-server:
     name: Lint and format server
-    uses: ./.github/workflows/lint-server.yml
+    uses: ./.github/workflows/lint-server.yaml
 
   server-tests:
     # The type of runner that the job will run on
