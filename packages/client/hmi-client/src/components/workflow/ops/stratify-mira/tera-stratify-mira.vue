@@ -20,14 +20,14 @@
 						<section>
 							<Button
 								style="margin-right: auto"
-								size="large"
+								size="small"
 								severity="secondary"
 								outlined
 								label="Reset"
 								@click="resetModel"
 								class="mr-2"
 							/>
-							<Button label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
+							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
 						</section>
 					</header>
 					<tera-stratification-group-form
@@ -46,11 +46,14 @@
 						:kernel-manager="kernelManager"
 						:default-options="sampleAgentQuestions"
 						:context-language="'python3'"
-						@run-command="runCodeStratify"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
 						@question-asked="llmThoughts = []"
-					/>
+					>
+						<template #toolbar-right-side>
+							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
+						</template>
+					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor

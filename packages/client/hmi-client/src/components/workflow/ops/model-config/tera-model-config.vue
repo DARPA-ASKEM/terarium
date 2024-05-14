@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -198,41 +199,11 @@
 					<div>Model config id: {{ selectedConfigId }}</div>
 					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
 				</div>
-
-				<template #footer>
-					<div class="footer">
-						<Button
-							outlined
-							size="large"
-							:disabled="isSaveDisabled"
-							label="Run"
-							icon="pi pi-play"
-							@click="createConfiguration(false)"
-						/>
-						<Button
-							outlined
-							size="large"
-							:disabled="isSaveDisabled"
-							label="Download"
-							icon="pi pi-download"
-							@click="downloadConfiguredModel()"
-						/>
-						<Button style="margin-left: auto" size="large" label="Close" @click="emit('close')" />
-					</div>
-				</template>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
-				<div class="toolbar-right-side">
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						@click="runFromCode"
-					/>
-				</div>
+				<div class="toolbar-right-side"></div>
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -242,7 +213,11 @@
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
 							@question-asked="llmThoughts = []"
-						/>
+						>
+							<template #toolbar-right-side>
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+							</template>
+						</tera-notebook-jupyter-input>
 					</Suspense>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
@@ -255,19 +230,13 @@
 					class="ace-editor"
 				/>
 				<template #footer>
-					<InputText
-						v-model="knobs.transientModelConfig.name"
-						placeholder="Configuration Name"
-						type="text"
-						class="input-small"
-					/>
-					<Button
-						:disabled="isSaveDisabled"
-						outlined
-						style="margin-right: auto"
-						label="Save as new configuration"
-						@click="createConfiguration(false)"
-					/>
+					<!-- should be a default option -->
+					<!--					<InputText-->
+					<!--						v-model="knobs.transientModelConfig.name"-->
+					<!--						placeholder="Configuration Name"-->
+					<!--						type="text"-->
+					<!--						class="input-small"-->
+					<!--					/>-->
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
@@ -390,6 +359,24 @@ enum ConfigTabs {
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new configuration',
+		icon: 'pi pi-pencil',
+		command: () => {
+			createConfiguration(false);
+		}
+	},
+	{
+		label: 'Download',
+		icon: 'pi pi-download',
+		disabled: isSaveDisabled,
+		command: () => {
+			downloadConfiguredModel();
+		}
+	}
+]);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
