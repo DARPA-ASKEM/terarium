@@ -39,13 +39,15 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
-	handlers: TaskEventHandlers
+	handlers: TaskEventHandlers,
+	metadata: any
 ): Promise<TaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
 				'model-id': modelId,
-				'document-id': documentId
+				'document-id': documentId,
+				metadata: metadata
 			}
 		});
 

@@ -173,7 +173,9 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam("project-id") final UUID projectId,
+			@RequestParam("metadata") final Object metadata) {
 
 		try {
 
@@ -208,10 +210,12 @@ public class GoLLMController {
 			req.setScript(ConfigureModelResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
 			props.setDocumentId(documentId);
 			props.setModelId(modelId);
+			props.setMetadata(metadata);
 			req.setAdditionalProperties(props);
 
 			// send the request
