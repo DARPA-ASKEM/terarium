@@ -107,8 +107,8 @@ export const OptimizeCiemssOperation: Operation = {
 };
 
 export async function getSimulationInterventions(optimizeRunId: string) {
-	// Get the interventionPolicyGroups from the run. This will prevent any inconsistencies being passed via knobs or state.
-	// Where for eg the user could update the UI after running the optimization
+	// Get the interventionPolicyGroups from the simulation object.
+	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
 	const paramNames: string[] = simulation?.executionPayload?.interventions.param_names ?? [];
 	const startTime: number[] = simulation?.executionPayload?.interventions.start_time ?? [];
