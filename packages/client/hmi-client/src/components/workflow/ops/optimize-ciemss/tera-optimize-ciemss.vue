@@ -657,18 +657,11 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			initialize();
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => props.node.state.forecastRunId,
-	async () => {
-		if (props.node.state.forecastRunId !== '') {
-			knobs.value.optimizationRunId = props.node.state.optimizationRunId;
-			knobs.value.forecastRunId = props.node.state.forecastRunId;
-			setOutputValues();
+			if (props.node.state.forecastRunId !== '') {
+				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
+				knobs.value.forecastRunId = props.node.state.forecastRunId;
+				setOutputValues();
+			}
 		}
 	},
 	{ immediate: true }

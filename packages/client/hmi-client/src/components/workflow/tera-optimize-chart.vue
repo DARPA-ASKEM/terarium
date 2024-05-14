@@ -174,6 +174,7 @@ const setChartData = () => {
 watch(
 	[() => props.riskResults, () => props.threshold],
 	async () => {
+		if (!props.riskResults) return;
 		chartOptions.value = setChartOptions();
 		chartData.value = setChartData();
 		renderChart();
