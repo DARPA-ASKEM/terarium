@@ -1,24 +1,13 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
@@ -29,6 +18,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -93,7 +94,7 @@ public class ClientEventService {
 	 * Sends a message to all users
 	 *
 	 * @param event the event to send
-	 * @param <T> the type of the event
+	 * @param <T>   the type of the event
 	 */
 	public <T> void sendToAllUsers(final ClientEvent<T> event) {
 		try {
@@ -107,9 +108,9 @@ public class ClientEventService {
 	/**
 	 * Sends a message to a user
 	 *
-	 * @param event the event to send
+	 * @param event  the event to send
 	 * @param userId the id of the user to send the message to
-	 * @param <T> the type of the event
+	 * @param <T>    the type of the event
 	 */
 	public <T> void sendToUser(final ClientEvent<T> event, final String userId) {
 		try {
@@ -137,7 +138,6 @@ public class ClientEventService {
 		}
 		synchronized (userIdToEmitter) {
 			// Send the message to each user connected and remove disconnected users
-			final Set<String> userIdsToRemove = new HashSet<>();
 			userIdToEmitter.forEach((userId, emitterList) -> {
 				send(messageJson, emitterList, userId);
 			});
@@ -156,16 +156,20 @@ public class ClientEventService {
 				log.error("Error sending all users message to user {}", userId, e);
 			}
 		});
-		emittersToRemove.forEach((emitter) -> {
-			userIdToEmitter.get(userId).remove(emitter);
-			if (userIdToEmitter.get(userId).size() == 0) {
-				userIdToEmitter.remove(userId);
-			}
-		});
+
+		synchronized (userIdToEmitter) {
+			emittersToRemove.forEach((emitter) -> {
+				userIdToEmitter.get(userId).remove(emitter);
+				if (userIdToEmitter.get(userId).size() == 0) {
+					userIdToEmitter.remove(userId);
+				}
+			});
+		}
 	}
 
 	/**
-	 * Lisens for messages to send to a user and if we have the SSE connection, send it
+	 * Lisens for messages to send to a user and if we have the SSE connection, send
+	 * it
 	 *
 	 * @param message the message to send
 	 * @param channel the channel to send the message on
@@ -173,34 +177,35 @@ public class ClientEventService {
 	 */
 	// TODO: use anonymous queues, currently this wont behave correctly with
 	// multiple hmi-server instances. Issue #2679
-	@RabbitListener(
-			queues = {"${terarium.client-user-event-queue}"},
-			concurrency = "1")
+	@RabbitListener(queues = { "${terarium.client-user-event-queue}" }, concurrency = "1")
 	void onSendToUserEvent(final Message message, final Channel channel) throws IOException {
 		final JsonNode messageJson = decodeMessage(message, JsonNode.class);
 		if (messageJson == null) {
 			return;
 		}
+
 		final String userId = messageJson.at("/userId").asText();
-		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
 		synchronized (userIdToEmitter) {
-			send(messageJson.at("/event"), emitterList, userId);
+			final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
+			if (emitterList != null) {
+				send(messageJson.at("/event"), emitterList, userId);
+			}
 		}
 	}
 
 	/**
-	 * Decodes a message into the given class. If there is an issue parsing to this class we will attempt to just parse
-	 * it as a JsonNode and log the error. If that fails we will log the error and hope for the best
+	 * Decodes a message into the given class. If there is an issue parsing to this
+	 * class we will attempt to just parse
+	 * it as a JsonNode and log the error. If that fails we will log the error and
+	 * hope for the best
 	 *
 	 * @param message the message to decode
-	 * @param clazz the class to decode the message to
+	 * @param clazz   the class to decode the message to
 	 * @return the decoded message or null if there was an error
 	 * @param <T>
 	 */
 	public static <T> T decodeMessage(final Message message, final Class<T> clazz) {
-
 		final ObjectMapper mapper = new ObjectMapper();
-
 		try {
 			return mapper.readValue(message.getBody(), clazz);
 		} catch (final Exception e) {
@@ -221,7 +226,8 @@ public class ClientEventService {
 	}
 
 	/**
-	 * Heartbeat to ensure that the clients are subscribed to the SSE service. If the client does not receive a
+	 * Heartbeat to ensure that the clients are subscribed to the SSE service. If
+	 * the client does not receive a
 	 * heartbeat within the configured interval, it will attempt to reconnect.
 	 */
 	@Scheduled(fixedDelayString = "${terarium.clientConfig.sseHeartbeatIntervalMillis}")
