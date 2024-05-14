@@ -75,74 +75,82 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	return response?.data ?? null;
 };
 
-export const getInitial = (config: ModelConfiguration, initialId: string): Initial | undefined =>
-	config.configuration.semantics?.ode.initials?.find((initial) => initial.target === initialId);
+export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
+	return config.configuration.semantics?.ode.initials?.find(
+		(initial) => initial.target === initialId
+	);
+}
 
-export const getInitialSource = (config: ModelConfiguration, initialId: string): string =>
-	config.configuration.metadata?.initials?.[initialId].source ?? '';
+export function getInitialSource(config: ModelConfiguration, initialId: string): string {
+	return config.configuration.metadata?.initials?.[initialId].source ?? '';
+}
 
-export const setInitialSource = (
+export function setInitialSource(
 	config: ModelConfiguration,
 	initialId: string,
 	source: string
-): void => {
+): void {
 	const initial = config.configuration.metadata?.initials?.[initialId];
 	if (initial) {
 		initial.source = source;
 	}
-};
+}
 
-export const getParameter = (
+export function getParameter(
 	config: ModelConfiguration,
 	parameterId: string
-): ModelParameter | undefined =>
-	config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
+): ModelParameter | undefined {
+	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
+}
 
-export const setDistribution = (
+export function setDistribution(
 	config: ModelConfiguration,
-	distribution: ModelDistribution,
-	parameterId: string
-): void => {
+	parameterId: string,
+	distribution: ModelDistribution
+): void {
 	const parameter = getParameter(config, parameterId);
 	if (parameter) {
 		parameter.distribution = distribution;
 	}
-};
+}
 
-export const removeDistribution = (config: ModelConfiguration, parameterId: string): void => {
+export function removeDistribution(config: ModelConfiguration, parameterId: string): void {
 	const parameter = getParameter(config, parameterId);
 	if (parameter?.distribution) {
 		delete parameter.distribution;
 	}
-};
+}
 
-export const getInterventions = (config: ModelConfiguration): Intervention[] =>
-	config.interventions ?? [];
+export function getInterventions(config: ModelConfiguration): Intervention[] {
+	return config.interventions ?? [];
+}
 
-export const setIntervention = (
+// FIXME: for set and remove interventions, we should not be using the index.  This should be addressed when we move to the new model config data structure.
+export function setIntervention(
 	config: ModelConfiguration,
-	intervention: Intervention,
-	index: number
-): void => {
+	index: number,
+	intervention: Intervention
+): void {
 	const interventions = getInterventions(config);
 	interventions[index] = intervention;
-};
+}
 
-export const removeIntervention = (config: ModelConfiguration, index: number): void => {
+export function removeIntervention(config: ModelConfiguration, index: number): void {
 	const interventions = getInterventions(config);
 	interventions.splice(index, 1);
-};
+}
 
-export const getParameterSource = (config: ModelConfiguration, parameterId: string): string =>
-	config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
+export function getParameterSource(config: ModelConfiguration, parameterId: string): string {
+	return config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
+}
 
-export const setParameterSource = (
+export function setParameterSource(
 	config: ModelConfiguration,
 	parameterId: string,
 	source: string
-): void => {
+): void {
 	const parameter = config.configuration.metadata?.parameters?.[parameterId];
 	if (parameter) {
 		parameter.source = source;
 	}
-};
+}
