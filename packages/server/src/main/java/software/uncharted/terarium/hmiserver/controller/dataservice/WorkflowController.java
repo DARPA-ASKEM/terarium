@@ -104,8 +104,10 @@ public class WorkflowController {
 						description = "There was an issue retrieving the workflow from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Workflow> getWorkflow(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<Workflow> getWorkflow(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		return workflow.map(ResponseEntity::ok)
@@ -206,8 +208,10 @@ public class WorkflowController {
 						description = "There was an issue deleting the workflow",
 						content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteWorkflow(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ResponseDeleted> deleteWorkflow(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			workflowService.deleteAsset(id, permission);

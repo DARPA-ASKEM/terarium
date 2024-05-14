@@ -156,8 +156,10 @@ public class ModelController {
 						description = "There was an issue retrieving the model from the data store",
 						content = @Content)
 			})
-	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	ResponseEntity<Model> getModel(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -277,8 +279,12 @@ public class ModelController {
 						description = "There was an issue updating the model",
 						content = @Content)
 			})
-	ResponseEntity<Model> updateModel(@PathVariable("id") final UUID id, @RequestBody final Model model, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	ResponseEntity<Model> updateModel(
+			@PathVariable("id") final UUID id,
+			@RequestBody final Model model,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			model.setId(id);
@@ -312,8 +318,10 @@ public class ModelController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	ResponseEntity<ResponseDeleted> deleteModel(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	ResponseEntity<ResponseDeleted> deleteModel(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			modelService.deleteAsset(id, permission);
@@ -385,8 +393,10 @@ public class ModelController {
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 			@PathVariable("id") final UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =

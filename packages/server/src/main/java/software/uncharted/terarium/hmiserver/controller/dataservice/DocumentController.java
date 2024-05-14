@@ -196,8 +196,11 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> updateDocument(
-			@PathVariable("id") final UUID id, @RequestBody final DocumentAsset document, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			@PathVariable("id") final UUID id,
+			@RequestBody final DocumentAsset document,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// if the document asset does not have an id, set it to the id in the path
 		if (document.getId() == null) {
@@ -243,8 +246,10 @@ public class DocumentController {
 						description = "There was an issue retrieving the document from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<DocumentAsset> getDocument(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<DocumentAsset> getDocument(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
@@ -366,8 +371,10 @@ public class DocumentController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteDocument(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ResponseDeleted> deleteDocument(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			documentAssetService.deleteAsset(id, permission);
@@ -388,8 +395,12 @@ public class DocumentController {
 	 * @return A response containing the status of the upload
 	 */
 	private ResponseEntity<Void> uploadDocumentHelper(
-			final UUID documentId, final String fileName, final HttpEntity fileEntity, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			final UUID documentId,
+			final String fileName,
+			final HttpEntity fileEntity,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
@@ -446,7 +457,8 @@ public class DocumentController {
 	public ResponseEntity<Void> uploadDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile file, @RequestParam("project-id") final UUID projectId) {
+			@RequestPart("file") final MultipartFile file,
+			@RequestParam("project-id") final UUID projectId) {
 
 		try {
 			final byte[] fileAsBytes = file.getBytes();
@@ -483,7 +495,8 @@ public class DocumentController {
 			@PathVariable("documentId") final UUID documentId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("filename") final String filename, @RequestParam("project-id") final UUID projectId) {
+			@RequestParam("filename") final String filename,
+			@RequestParam("project-id") final UUID projectId) {
 
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 

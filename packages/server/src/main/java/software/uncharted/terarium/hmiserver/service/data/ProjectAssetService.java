@@ -12,9 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -23,8 +21,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectA
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 @RequiredArgsConstructor
 @Service
