@@ -11,9 +11,9 @@ export interface CalibrateMap {
 
 // Used in the setup of calibration node and drill down
 // Takes a model config Id and grabs relevant objects
-export const setupModelInput = async (modelConfigId: string | undefined, projectId: string) => {
+export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId, projectId);
+		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
 		const modelOptions: State[] = modelConfiguration.configuration.model.states;
 
 		// add observables

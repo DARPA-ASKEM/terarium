@@ -40,7 +40,6 @@ import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
-import {useProjects} from "@/composables/project";
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -59,7 +58,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {

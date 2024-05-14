@@ -33,7 +33,6 @@ import { getModel } from '@/services/model';
 import { addDefaultConfiguration } from '@/services/model-configurations';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
-import { useProjects } from '@/composables/project';
 import { ModelTransformerState } from './model-transformer-operation';
 
 const props = defineProps<{
@@ -63,8 +62,7 @@ onMounted(async () => {
 				name: props.node.id,
 				description: '',
 				data: { history: [] }
-			},
-			useProjects().activeProjectId.value
+			}
 		);
 		notebookSessionId = response?.id;
 
@@ -74,10 +72,7 @@ onMounted(async () => {
 			emit('update-state', state);
 		}
 	}
-	notebookSession.value = await getNotebookSessionById(
-		notebookSessionId!,
-		useProjects().activeProjectId.value
-	);
+	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
 });
 
 const addOutputPort = async (data) => {
@@ -93,7 +88,7 @@ const addOutputPort = async (data) => {
 	emit('update-state', state);
 
 	// set default configuration
-	await addDefaultConfiguration(useProjects().activeProjectId.value, model);
+	await addDefaultConfiguration(model);
 
 	emit('append-output', {
 		id: uuidv4(),

@@ -107,7 +107,6 @@ import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
-import { useProjects } from '@/composables/project';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
@@ -180,9 +179,9 @@ const sendForEnrichment = async () => {
 	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === AssetType.Model) {
-		await profileModel(props.assetId, useProjects().activeProjectId.value, selectedResourceId);
+		await profileModel(props.assetId, selectedResourceId);
 	} else if (props.assetType === AssetType.Dataset) {
-		await profileDataset(props.assetId, useProjects().activeProjectId.value, selectedResourceId);
+		await profileDataset(props.assetId, selectedResourceId);
 	}
 
 	isLoading.value = false;
@@ -196,7 +195,7 @@ const sendForExtractions = async () => {
 
 	// Dataset extraction
 	if (props.assetType === AssetType.Dataset) {
-		await extractPDF(selectedResourceId, useProjects().activeProjectId.value);
+		await extractPDF(selectedResourceId);
 		await createProvenance({
 			relation_type: RelationshipType.EXTRACTED_FROM,
 			left: props.assetId!,

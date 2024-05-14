@@ -58,7 +58,6 @@ import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import {useProjects} from "@/composables/project";
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -83,7 +82,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(4000)
 		.setThreshold(350)
-		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -97,7 +96,7 @@ const pollResult = async (runId: string) => {
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(runId, useProjects().activeProjectId.value);
+		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';

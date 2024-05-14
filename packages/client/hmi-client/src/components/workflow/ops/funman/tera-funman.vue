@@ -193,7 +193,6 @@ import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { useProjects } from '@/composables/project';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
@@ -368,7 +367,7 @@ const runMakeQuery = async () => {
 			request.request.config.normalization_constant = parseFloat(mass.value);
 		}
 	}
-	const response = await makeQueries(request, useProjects().activeProjectId.value);
+	const response = await makeQueries(request);
 
 	// Setup the in-progress id
 	const state = _.cloneDeep(props.node.state);
@@ -422,7 +421,7 @@ function getStepList() {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId, useProjects().activeProjectId.value);
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 	model.value = modelConfiguration.value.configuration;
 };
 

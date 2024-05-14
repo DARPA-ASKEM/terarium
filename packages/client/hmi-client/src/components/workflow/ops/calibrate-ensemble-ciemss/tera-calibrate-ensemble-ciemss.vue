@@ -221,7 +221,6 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import {useProjects} from "@/composables/project";
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -362,7 +361,7 @@ onMounted(async () => {
 	// Model configuration input
 	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id, useProjects().activeProjectId.value);
+			const { modelConfiguration, modelOptions } = await setupModelInput(id);
 			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
 			if (modelOptions) allModelOptions.value.push(modelOptions);
 		})

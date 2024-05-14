@@ -205,7 +205,6 @@ async function processModel(file: File) {
 	const artifact = await uploadArtifactToProject(
 		file,
 		useAuthStore().user?.id ?? '',
-		useProjects().activeProjectId.value,
 		'',
 		progress
 	);
@@ -234,12 +233,12 @@ async function upload() {
 		createdAssets.forEach((_, index) => {
 			const { name, id } = (results.value ?? [])[index];
 			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id, useProjects().activeProjectId.value);
+				extractPDF(id);
 			} else if (
 				name &&
 				(name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))
 			) {
-				modelCard(id, useProjects().activeProjectId.value);
+				modelCard(id);
 			}
 		});
 		emit('close');

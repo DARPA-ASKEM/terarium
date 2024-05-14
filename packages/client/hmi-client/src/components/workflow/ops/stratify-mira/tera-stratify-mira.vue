@@ -127,7 +127,6 @@ import { getModelIdFromModelConfigurationId } from '@/services/model-configurati
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import {useProjects} from "@/composables/project";
 import {
 	blankStratifyGroup,
 	StratifyGroup,
@@ -344,7 +343,7 @@ const inputChangeHandler = async () => {
 	if (input.type === 'modelId') {
 		modelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0], useProjects().activeProjectId.value);
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
 	}
 	if (!modelId) return;
 

@@ -408,8 +408,7 @@ watch(
 					name: props.notebookSession.name,
 					description: props.notebookSession.description,
 					data: { history: notebookItems.value }
-				},
-				useProjects().activeProjectId.value
+				}
 			);
 		}
 	},

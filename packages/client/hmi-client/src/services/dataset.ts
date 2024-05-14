@@ -157,8 +157,8 @@ async function getDownloadURL(datasetId: string, filename: string): Promise<Pres
  * Creates a new dataset in TDS from the dataset given (required name, url, description).
  * @param dataset the dataset with updated storage ID from tds
  */
-async function createDataset(dataset: Dataset, projectId: string): Promise<Dataset | null> {
-	const resp = await API.post('/datasets', { dataset, projectId });
+async function createDataset(dataset: Dataset): Promise<Dataset | null> {
+	const resp = await API.post('/datasets', dataset);
 	if (resp && resp.status < 400 && resp.data) {
 		return resp.data;
 	}
@@ -179,7 +179,6 @@ async function createNewDatasetFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userId: string,
-	projectId: string,
 	url: string
 ) {
 	// Find the file name by removing the path portion
@@ -199,7 +198,7 @@ async function createNewDatasetFromGithubFile(
 		userId
 	};
 
-	const newDataset: Dataset | null = await createDataset(dataset, projectId);
+	const newDataset: Dataset | null = await createDataset(dataset);
 	if (!newDataset || !newDataset.id) return null;
 
 	const urlResponse = await API.put(
@@ -222,14 +221,12 @@ async function createNewDatasetFromGithubFile(
  * @param progress reference to display in ui
  * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
- * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromFile(
 	progress: Ref<number>,
 	file: File,
 	userId: string,
-	projectId: string,
 	description?: string
 ): Promise<Dataset | null> {
 	const fileType = file.name.endsWith('.csv') ? 'csv' : 'file';
@@ -244,7 +241,7 @@ async function createNewDatasetFromFile(
 		userId
 	};
 
-	const newDataset: Dataset | null = await createDataset(dataset, projectId);
+	const newDataset: Dataset | null = await createDataset(dataset);
 	if (!newDataset || !newDataset.id) return null;
 
 	const formData = new FormData();

@@ -44,7 +44,6 @@ async function getDocumentAsset(documentId: string): Promise<DocumentAsset | nul
 async function uploadDocumentAssetToProject(
 	file: File,
 	userId: string,
-	projectId: string,
 	description?: string,
 	progress?: Ref<number>
 ): Promise<DocumentAsset | null> {
@@ -56,10 +55,7 @@ async function uploadDocumentAssetToProject(
 		userId
 	};
 
-	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(
-		documentAsset,
-		projectId
-	);
+	const newDocumentAsset: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
 	if (!newDocumentAsset || !newDocumentAsset.id) return null;
 
 	const successfulUpload = await addFileToDocumentAsset(newDocumentAsset.id, file, progress);
@@ -72,7 +68,6 @@ async function createNewDocumentFromGithubFile(
 	repoOwnerAndName: string,
 	path: string,
 	userId: string,
-	projectId: string,
 	description?: string
 ) {
 	// Find the file name by removing the path portion
@@ -88,7 +83,7 @@ async function createNewDocumentFromGithubFile(
 		userId
 	};
 
-	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset, projectId);
+	const newDocument: DocumentAsset | null = await createNewDocumentAsset(documentAsset);
 	if (!newDocument || !newDocument.id) return null;
 
 	const urlResponse = await API.put(
@@ -110,10 +105,9 @@ async function createNewDocumentFromGithubFile(
  * @param document the document asset to create
  */
 async function createNewDocumentAsset(
-	documentAsset: DocumentAsset,
-	projectId: string
+	documentAsset: DocumentAsset
 ): Promise<DocumentAsset | null> {
-	const response = await API.post('/document-asset', { documentAsset, projectId });
+	const response = await API.post('/document-asset', documentAsset);
 	if (!response || response.status >= 400) return null;
 	return response.data;
 }

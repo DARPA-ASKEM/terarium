@@ -46,7 +46,6 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
-import {useProjects} from "@/composables/project";
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -72,7 +71,7 @@ const getStatus = async (simulationId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(simulationId, useProjects().activeProjectId.value));
+		.setPollAction(async () => pollAction(simulationId));
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -84,7 +83,7 @@ const getStatus = async (simulationId: string) => {
 		logger.error(`Simulation: ${simulationId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(simulationId, useProjects().activeProjectId.value);
+		const simulation = await getSimulation(simulationId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressSimulationId = '';

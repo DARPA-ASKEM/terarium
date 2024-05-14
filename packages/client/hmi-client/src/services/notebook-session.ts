@@ -6,40 +6,38 @@ export const getAllNotebookSessions = async () => {
 	return (response?.data as NotebookSession[]) ?? null;
 };
 
-export const getNotebookSessionById = async (notebook_id: string, projectId: string) => {
-	const response = await API.get(`/sessions/${notebook_id}?project-id=${projectId}`);
+export const getNotebookSessionById = async (notebook_id: string) => {
+	const response = await API.get(`/sessions/${notebook_id}`);
 	return (response?.data as NotebookSession) ?? null;
 };
 
-export const createNotebookSession = async (
-	notebookSession: NotebookSession,
-	projectId: string
-) => {
+export const createNotebookSession = async (notebookSession: NotebookSession) => {
 	const response = await API.post(`/sessions`, {
-		notebookSession,
-		projectId
-	});
+		id: notebookSession.id,
+		name: notebookSession.name,
+		description: notebookSession.description,
+		data: notebookSession.data
+	} as NotebookSession);
 	return response?.data ?? null;
 };
 
-export const updateNotebookSession = async (
-	notebookSession: NotebookSession,
-	projectId: string
-) => {
+export const updateNotebookSession = async (notebookSession: NotebookSession) => {
 	const response = await API.put(`/sessions/${notebookSession.id}`, {
-		notebookSession,
-		projectId
+		id: notebookSession.id,
+		name: notebookSession.name,
+		description: notebookSession.description,
+		data: notebookSession.data
 	});
 
 	return response?.data ?? null;
 };
 
-export const deleteNotebookSession = async (notebook_id: string, projectId: string) => {
-	const response = await API.delete(`/sessions/${notebook_id}?project-id=${projectId}`);
+export const deleteNotebookSession = async (notebook_id: string) => {
+	const response = await API.delete(`/sessions/${notebook_id}`);
 	return response?.data ?? null;
 };
 
-export const cloneNoteBookSession = async (notebookId: string, projectId: string) => {
-	const response = await API.post(`/sessions/${notebookId}/clone?project-id=${projectId}`);
+export const cloneNoteBookSession = async (notebookId: string) => {
+	const response = await API.post(`/sessions/${notebookId}/clone`);
 	return response?.data ?? null;
 };

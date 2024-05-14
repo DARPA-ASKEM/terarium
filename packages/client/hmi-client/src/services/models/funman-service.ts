@@ -32,9 +32,9 @@ export interface RenderOptions {
 	click?: Function;
 }
 
-export async function makeQueries(body: FunmanPostQueriesRequest, projectId: string) {
+export async function makeQueries(body: FunmanPostQueriesRequest) {
 	try {
-		const resp = await API.post('/funman/queries', { body, projectId });
+		const resp = await API.post('/funman/queries', body);
 		const output = resp.data;
 		return output;
 	} catch (err) {

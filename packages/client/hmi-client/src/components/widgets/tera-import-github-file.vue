@@ -306,7 +306,7 @@ async function openSelectedFiles(event?: DropdownChangeEvent) {
 	].filter((file) => file.fileCategory === FileCategory.Data);
 
 	if (selectedDataFiles.length > 0) {
-		await importDataFiles(selectedDataFiles, useProjects().activeProjectId.value);
+		await importDataFiles(selectedDataFiles);
 	}
 
 	const selectedDocumentFiles: GithubFile[] = selectedFiles.value.filter(
@@ -367,7 +367,6 @@ async function importDataFiles(githubFiles: GithubFile[], projectId: string) {
 			repoOwnerAndName.value,
 			githubFile.path,
 			auth.user?.id ?? '',
-			projectId,
 			githubFile.htmlUrl
 		);
 		if (newDataset && newDataset.id) {
@@ -376,20 +375,19 @@ async function importDataFiles(githubFiles: GithubFile[], projectId: string) {
 	});
 }
 
-async function importDocumentFiles(githubFiles: GithubFile[], projectId: string) {
+async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string) {
 	githubFiles.forEach(async (githubFile) => {
 		const document: DocumentAsset | null = await createNewDocumentFromGithubFile(
 			repoOwnerAndName.value,
 			githubFile.path,
-			useAuthStore().user?.id ?? '',
-			projectId
+			useAuthStore().user?.id ?? ''
 		);
 		let newAsset;
 		if (document && document.id) {
 			newAsset = await useProjects().addAsset(AssetType.Document, document.id, projectId);
 		}
 		if (document?.id && newAsset && githubFile.name?.toLowerCase().endsWith('.pdf')) {
-			extractPDF(document.id, projectId);
+			extractPDF(document.id);
 		}
 	});
 }

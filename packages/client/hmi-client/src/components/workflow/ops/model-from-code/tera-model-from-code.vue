@@ -365,8 +365,7 @@ async function handleCode() {
 
 		const model: Model | null = await codeBlocksToAmr(
 			newCode,
-			file,
-			useProjects().activeProjectId.value
+			file
 		);
 
 		if (!model || !model.id) {
@@ -534,7 +533,6 @@ async function generateCard(docId, modelId) {
 	await generateModelCard(
 		docId,
 		modelId,
-		useProjects().activeProjectId.value,
 		clonedState.value.modelService
 	);
 	isGeneratingCard.value = false;

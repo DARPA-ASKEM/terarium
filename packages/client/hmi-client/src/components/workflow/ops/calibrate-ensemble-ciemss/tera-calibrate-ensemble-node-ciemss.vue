@@ -59,7 +59,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import {useProjects} from "@/composables/project";
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -83,7 +82,7 @@ const pollResult = async (runId: string) => {
 	poller
 		.setInterval(3000)
 		.setThreshold(300)
-		.setPollAction(async () => pollAction(runId, useProjects().activeProjectId.value));
+		.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
 
 	if (pollerResults.state === PollerState.Cancelled) {

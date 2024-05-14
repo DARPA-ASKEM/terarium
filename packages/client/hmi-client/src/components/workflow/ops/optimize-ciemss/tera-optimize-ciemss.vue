@@ -343,7 +343,6 @@ import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import {useProjects} from "@/composables/project";
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -502,7 +501,7 @@ const formatJsonValue = (value) => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId, useProjects().activeProjectId.value);
+	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 	const model = modelConfiguration.value.configuration;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
@@ -582,7 +581,6 @@ const saveModelConfiguration = async () => {
 
 	// TODO: This should be taking some values from our output result but its TBD
 	const data = await createModelConfiguration(
-    useProjects().activeProjectId.value,
 		modelConfiguration.value.model_id,
 		knobs.value.modelConfigName,
 		knobs.value.modelConfigDesc,

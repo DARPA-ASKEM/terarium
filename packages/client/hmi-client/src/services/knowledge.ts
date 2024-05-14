@@ -34,19 +34,15 @@ export const equationsToAMR = async (
  * Given a model, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileModel = async (
-	modelId: Model['id'],
-	projectId: string,
-	documentId: string | null = null
-) => {
+export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
 	let response: any;
 	try {
 		if (documentId && modelId) {
 			response = await API.post(
-				`/knowledge/profile-model/${modelId}?project=id=${projectId}&document-id=${documentId}`
+				`/knowledge/profile-model/${modelId}?document-id=${documentId}`
 			);
 		} else {
-			response = await API.post(`/knowledge/profile-model/${modelId}?project=id=${projectId}`);
+			response = await API.post(`/knowledge/profile-model/${modelId}`);
 		}
 		return response.data.id;
 	} catch (error: unknown) {
@@ -73,25 +69,24 @@ export const alignModel = async (
  */
 export const profileDataset = async (
 	datasetId: Dataset['id'],
-	projectId: string,
 	documentId: string | null = null
 ) => {
 	let response: any;
 	if (documentId && datasetId) {
 		response = await API.post(
-			`/knowledge/profile-dataset/${datasetId}?project=id=${projectId}&document-id=${documentId}`
+			`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`
 		);
 	} else {
-		response = await API.post(`/knowledge/profile-dataset/${datasetId}?project=id=${projectId}`);
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
 	return response.data.id;
 };
 
 /** Extract text and artifacts from a PDF document */
-export const extractPDF = async (documentId: DocumentAsset['id'], projectId: string) => {
+export const extractPDF = async (documentId: DocumentAsset['id']) => {
 	console.group('PDF COSMOS Extraction');
 	if (documentId) {
-		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}&project-id=${projectId}`);
+		const response = await API.post(`/knowledge/pdf-extractions?document-id=${documentId}`);
 		if (response?.status === 202) {
 			await subscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 		} else {
@@ -140,27 +135,19 @@ export async function codeToAMR(
 	return null;
 }
 
-export async function codeBlocksToAmr(
-	code: Code,
-	file: File,
-	projectId: string
-): Promise<Model | null> {
+export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | null> {
 	const formData = new FormData();
 	const blob = new Blob([JSON.stringify(code)], {
 		type: 'application/json'
 	});
 	formData.append('code', blob);
 	formData.append('file', file);
-	const response = await API.post(
-		`/knowledge/code-blocks-to-model?project-id=${projectId}`,
-		formData,
-		{
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'multipart/form-data'
-			}
-		}
-	);
+	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
+		 headers: {
+			 Accept: 'application/json',
+			 'Content-Type': 'multipart/form-data'
+		 }
+	});
 	if (response?.status === 200) {
 		return response.data;
 	}

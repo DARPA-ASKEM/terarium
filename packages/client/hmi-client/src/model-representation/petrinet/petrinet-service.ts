@@ -96,14 +96,13 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 export const updateConfigFields = async (
 	modelConfigs: ModelConfiguration[],
 	id: string,
-	newId: string,
-	projectId: string
+	newId: string
 ) => {
 	modelConfigs.forEach((config) => {
 		updateParameterId(config.configuration, id, newId);
 		// note that this is making an async call but we don't need to wait for it to finish
 		// since we don't immediately need the updated configs
-		updateModelConfiguration(config, projectId);
+		updateModelConfiguration(config);
 	});
 };
 

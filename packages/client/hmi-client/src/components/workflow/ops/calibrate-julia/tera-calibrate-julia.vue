@@ -231,7 +231,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 
 import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
-import {useProjects} from "@/composables/project";
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
@@ -443,7 +442,7 @@ async function getAutoMapping() {
 
 const initialize = async () => {
 	// Set up model config + dropdown names
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value, useProjects().activeProjectId.value);
+	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
 

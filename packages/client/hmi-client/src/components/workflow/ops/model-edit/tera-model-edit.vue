@@ -120,7 +120,6 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import {useProjects} from "@/composables/project";
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -301,7 +300,7 @@ const inputChangeHandler = async () => {
 	if (input.type === 'modelId') {
 		modelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0], useProjects().activeProjectId.value);
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
 	}
 	if (!modelId) return;
 

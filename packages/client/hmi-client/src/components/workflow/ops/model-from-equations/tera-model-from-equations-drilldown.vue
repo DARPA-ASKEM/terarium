@@ -411,7 +411,6 @@ async function generateCard(docId, modelId) {
 	await generateModelCard(
 		docId,
 		modelId,
-		useProjects().activeProjectId.value,
 		ModelServiceType.TA1
 	);
 	isGeneratingCard.value = false;
