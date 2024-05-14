@@ -111,12 +111,11 @@ public class NotebookSessionController {
 						description = "There was an issue creating the session",
 						content = @Content)
 			})
-	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSessionRequestBody request) {
+	ResponseEntity<NotebookSession> createNotebookSession(@RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			NotebookSession session = request.getNotebookSession();
 			sessionService.createAsset(session, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
@@ -124,12 +123,6 @@ public class NotebookSessionController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class NotebookSessionRequestBody {
-		NotebookSession notebookSession;
-		UUID projectId;
 	}
 
 	/**
@@ -205,12 +198,11 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> updateNotebookSession(
-			@PathVariable("id") final UUID id, @RequestBody final NotebookSessionRequestBody request) {
+			@PathVariable("id") final UUID id, @RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			NotebookSession session = request.getNotebookSession();
 			session.setId(id);
 			final Optional<NotebookSession> updated = sessionService.updateAsset(session, permission);
 			return updated.map(ResponseEntity::ok)

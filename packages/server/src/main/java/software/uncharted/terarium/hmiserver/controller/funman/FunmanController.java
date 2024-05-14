@@ -14,7 +14,6 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.JsonNodeProjectIdRequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
@@ -28,6 +27,8 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -68,12 +69,11 @@ public class FunmanController {
 						description = "There was an issue dispatching the request",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNodeProjectIdRequestBody request) {
+	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNode input, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			JsonNode input = request.getJsonNode();
 			final TaskRequest taskRequest = new TaskRequest();
 			taskRequest.setType(TaskType.FUNMAN);
 			taskRequest.setScript(ValidateModelConfigHandler.NAME);

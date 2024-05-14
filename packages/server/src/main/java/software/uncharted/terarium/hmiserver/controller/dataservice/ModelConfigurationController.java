@@ -99,12 +99,11 @@ public class ModelConfigurationController {
 						content = @Content)
 			})
 	public ResponseEntity<ModelConfiguration> createModelConfiguration(
-			@RequestBody final ModelConfigurationRequestBody request) {
+			@RequestBody final ModelConfiguration config, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			ModelConfiguration config = request.getModelConfiguration();
 			return ResponseEntity.status(HttpStatus.CREATED)
 					.body(modelConfigurationService.createAsset(config, permission));
 		} catch (final IOException e) {
@@ -112,12 +111,6 @@ public class ModelConfigurationController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class ModelConfigurationRequestBody {
-		ModelConfiguration modelConfiguration;
-		UUID projectId;
 	}
 
 	@GetMapping("/{id}")
@@ -183,12 +176,11 @@ public class ModelConfigurationController {
 						content = @Content)
 			})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
-			@PathVariable("id") final UUID id, @RequestBody final ModelConfigurationRequestBody request) {
+			@PathVariable("id") final UUID id, @RequestBody final ModelConfiguration config, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			ModelConfiguration config = request.getModelConfiguration();
 			config.setId(id);
 			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, permission);
 			return updated.map(ResponseEntity::ok)

@@ -134,23 +134,16 @@ public class WorkflowController {
 						description = "There was an issue creating the workflow",
 						content = @Content)
 			})
-	public ResponseEntity<Workflow> createWorkflow(@RequestBody final WorkflowRequestBody request) {
+	public ResponseEntity<Workflow> createWorkflow(@RequestBody final Workflow item, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			final Workflow item = request.getWorkflow();
 			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class WorkflowRequestBody {
-		Workflow workflow;
-		UUID projectId;
 	}
 
 	@PutMapping("/{id}")
@@ -174,11 +167,10 @@ public class WorkflowController {
 						content = @Content)
 			})
 	public ResponseEntity<Workflow> updateWorkflow(
-			@PathVariable("id") final UUID id, @RequestBody final WorkflowRequestBody request) {
+			@PathVariable("id") final UUID id, @RequestBody final Workflow workflow, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			Workflow workflow = request.getWorkflow();
 			workflow.setId(id);
 			final Optional<Workflow> updated = workflowService.updateAsset(workflow, permission);
 			return updated.map(ResponseEntity::ok)

@@ -94,12 +94,11 @@ public class SimulationController {
 						description = "There was an issue creating the simulation",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createSimulation(@RequestBody final SimulationRequestBody request) {
+	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			Simulation simulation = request.getSimulation();
 			final Simulation sim = simulationService.createAsset(simulation, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
@@ -108,12 +107,6 @@ public class SimulationController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class SimulationRequestBody {
-		Simulation simulation;
-		UUID projectId;
 	}
 
 	@GetMapping("/{id}")
@@ -214,12 +207,11 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> updateSimulation(
-			@PathVariable("id") final UUID id, @RequestBody final SimulationRequestBody request) {
+			@PathVariable("id") final UUID id, @RequestBody final Simulation simulation, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Simulation simulation = request.getSimulation();
 			simulation.setId(id);
 			final Optional<Simulation> updated = simulationService.updateAsset(simulation, permission);
 			return updated.map(ResponseEntity::ok)

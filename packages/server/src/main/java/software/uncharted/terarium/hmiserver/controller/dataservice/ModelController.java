@@ -351,12 +351,11 @@ public class ModelController {
 						description = "There was an issue creating the model",
 						content = @Content)
 			})
-	ResponseEntity<Model> createModel(@RequestBody ModelRequestBody request) {
+	ResponseEntity<Model> createModel(@RequestBody Model model, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			Model model = request.getModel();
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
@@ -368,12 +367,6 @@ public class ModelController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class ModelRequestBody {
-		Model model;
-		UUID projectId;
 	}
 
 	@GetMapping("/{id}/model-configurations")

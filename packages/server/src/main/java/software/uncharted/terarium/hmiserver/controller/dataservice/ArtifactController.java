@@ -114,23 +114,17 @@ public class ArtifactController {
 						description = "There was an issue creating the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody final ArtifactRequestBody request) {
+	public ResponseEntity<Artifact> createArtifact(@RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(artifactService.createAsset(request.getArtifact(), permission));
+					.body(artifactService.createAsset(artifact, permission));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class ArtifactRequestBody {
-		Artifact artifact;
-		UUID projectId;
 	}
 
 	@GetMapping("/{id}")
@@ -189,12 +183,11 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> updateArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestBody final ArtifactRequestBody request) {
+			@PathVariable("id") final UUID artifactId, @RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			Artifact artifact = request.getArtifact();
 			artifact.setId(artifactId);
 			final Optional<Artifact> updated = artifactService.updateAsset(artifact, permission);
 			return updated.map(ResponseEntity::ok)

@@ -186,24 +186,17 @@ public class DatasetController {
 						description = "There was an issue creating the dataset",
 						content = @Content)
 			})
-	public ResponseEntity<Dataset> createDataset(@RequestBody final DatasetRequestBody request) {
+	public ResponseEntity<Dataset> createDataset(@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			Dataset dataset = request.getDataset();
 			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class DatasetRequestBody {
-		Dataset dataset;
-		UUID projectId;
 	}
 
 	@GetMapping("/{id}")

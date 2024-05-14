@@ -41,7 +41,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.JsonNodeProjectIdRequestBody;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -101,14 +100,13 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNodeProjectIdRequestBody request) {
+	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Model responseAMR;
 
 		// Get an AMR from Skema Unified Service
-		final JsonNode req = request.getJsonNode();
 		try {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 

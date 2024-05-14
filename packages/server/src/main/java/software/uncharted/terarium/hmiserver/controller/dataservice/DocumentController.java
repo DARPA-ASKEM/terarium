@@ -161,24 +161,18 @@ public class DocumentController {
 						description = "There was an issue creating the document",
 						content = @Content)
 			})
-	public ResponseEntity<DocumentAsset> createDocument(@RequestBody CreateDocumentRequestBody requestBody) {
+	public ResponseEntity<DocumentAsset> createDocument(@RequestBody DocumentAsset documentAsset, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), requestBody.getProjectId());
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			DocumentAsset document = documentAssetService.createAsset(requestBody.getDocument(), permission);
+			DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	@Data
-	class CreateDocumentRequestBody {
-		DocumentAsset document;
-		UUID projectId;
 	}
 
 	@PutMapping("/{id}")
