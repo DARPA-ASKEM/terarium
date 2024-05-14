@@ -30,20 +30,14 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DocumentAssetService documentAssetService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
-
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		documentAssetService.teardownIndexAndAlias();
 	}
 
 	@Test
