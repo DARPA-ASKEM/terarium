@@ -52,8 +52,8 @@ import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { chartActionsProxy } from '@/components/workflow/util';
 import type { CsvAsset } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
 import {useProjects} from "@/composables/project";
+import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;

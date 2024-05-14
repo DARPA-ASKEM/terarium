@@ -51,8 +51,8 @@ import { chartActionsProxy } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
-import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import {useProjects} from "@/composables/project";
+import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;

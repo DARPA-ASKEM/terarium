@@ -343,6 +343,7 @@ import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import {useProjects} from "@/composables/project";
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -350,7 +351,6 @@ import {
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup
 } from './optimize-ciemss-operation';
-import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;

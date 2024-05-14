@@ -215,8 +215,8 @@ import {
 
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import {useProjects} from "@/composables/project";
+import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;

@@ -59,8 +59,8 @@ import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 import {useProjects} from "@/composables/project";
+import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;

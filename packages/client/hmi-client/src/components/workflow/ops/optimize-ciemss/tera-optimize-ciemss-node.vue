@@ -52,8 +52,8 @@ import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
 import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
 import {useProjects} from "@/composables/project";
+import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 

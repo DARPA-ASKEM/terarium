@@ -46,11 +46,11 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
+import {useProjects} from "@/composables/project";
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
 } from './simulate-ensemble-ciemss-operation';
-import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;

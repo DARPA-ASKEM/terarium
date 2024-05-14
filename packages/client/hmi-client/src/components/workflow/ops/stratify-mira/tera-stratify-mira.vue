@@ -127,12 +127,12 @@ import { getModelIdFromModelConfigurationId } from '@/services/model-configurati
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
+import {useProjects} from "@/composables/project";
 import {
 	blankStratifyGroup,
 	StratifyGroup,
 	StratifyOperationStateMira
 } from './stratify-mira-operation';
-import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;

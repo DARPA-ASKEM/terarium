@@ -120,8 +120,8 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import { ModelEditOperationState } from './model-edit-operation';
 import {useProjects} from "@/composables/project";
+import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;

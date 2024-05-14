@@ -231,12 +231,12 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 
 import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
+import {useProjects} from "@/composables/project";
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
 	CalibrationOperationStateJulia
 } from './calibrate-operation';
-import {useProjects} from "@/composables/project";
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;

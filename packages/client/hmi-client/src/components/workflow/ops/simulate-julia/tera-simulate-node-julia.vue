@@ -40,8 +40,8 @@ import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
-import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 import {useProjects} from "@/composables/project";
+import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateJuliaOperationState>;
