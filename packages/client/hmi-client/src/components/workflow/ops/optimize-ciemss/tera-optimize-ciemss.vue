@@ -663,9 +663,11 @@ watch(
 );
 
 watch(
-	() => knobs.value.forecastRunId,
+	() => props.node.state.forecastRunId,
 	async () => {
-		if (knobs.value.forecastRunId !== '') {
+		if (props.node.state.forecastRunId !== '') {
+			knobs.value.optimizationRunId = props.node.state.optimizationRunId;
+			knobs.value.forecastRunId = props.node.state.forecastRunId;
 			setOutputValues();
 		}
 	},
