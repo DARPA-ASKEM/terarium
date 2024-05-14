@@ -116,7 +116,7 @@
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
 							<tera-initial-table
-								v-if="!isEmpty(knobs.transientModelConfig)"
+								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
 								:model="knobs.transientModelConfig.configuration"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
@@ -158,7 +158,7 @@
 							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
 						<tera-parameter-table
-							v-if="!isEmpty(knobs.transientModelConfig)"
+							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
 							:model-configurations="suggestedConfigurationContext.tableData"
 							:model="knobs.transientModelConfig.configuration"
 							:mmt="mmt"
@@ -233,14 +233,19 @@
 						@click="runFromCode"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:defaultOptions="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="llmThoughts = []"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -345,6 +350,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
@@ -438,6 +444,7 @@ const buildJupyterContext = () => {
 const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
+const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -1045,6 +1052,9 @@ onUnmounted(() => {
 	gap: var(--gap-small);
 	display: flex;
 	align-items: center;
+}
+.toolbar {
+	padding-left: var(--gap-medium);
 }
 
 :deep(.p-datatable-loading-overlay.p-component-overlay) {

@@ -1,6 +1,6 @@
 <template>
 	<Transition name="modal">
-		<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="$emit('modal-enter-press')">
+		<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
 			<section>
 				<header>
 					<slot name="header" />
@@ -11,7 +11,7 @@
 					<slot name="footer" />
 				</footer>
 			</section>
-			<aside @click.self="$emit('modalMaskClicked')" />
+			<aside @click.self="emit('modal-mask-clicked')" />
 		</main>
 	</Transition>
 </template>
@@ -33,6 +33,8 @@
 
 import { onMounted, ref } from 'vue';
 
+const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
+
 const modal = ref(null);
 
 defineProps<{
@@ -53,6 +55,8 @@ onMounted(() => {
 		});
 		element.dispatchEvent(event);
 	}
+
+	emit('on-modal-open'); // For triggering a parent event when the modal is opened
 });
 </script>
 

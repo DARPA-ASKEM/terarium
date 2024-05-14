@@ -8,9 +8,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -22,7 +26,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -50,7 +62,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class SimulationController {
 
-	private final ReBACService reBACService;
+	private final ObjectMapper mapper;
 
 	private final SimulationService simulationService;
 
@@ -137,7 +149,8 @@ public class SimulationController {
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
 
-				// If the simulation failed, then set an error message for the front end to display nicely.  We want to
+				// If the simulation failed, then set an error message for the front end to
+				// display nicely. We want to
 				// save this to the simulaiton object
 				// so that its available for the front end to display forever.
 				if (sim.getStatus() != null
@@ -330,7 +343,6 @@ public class SimulationController {
 			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
 			dataset.setName(datasetName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
-			final ObjectMapper mapper = new ObjectMapper();
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());
 			dataset.setDataSourceDate(sim.get().getCompletedTime());

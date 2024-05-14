@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
@@ -18,13 +19,22 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, s3ClientService, repository, Workflow.class);
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				Workflow.class);
 	}
 
 	@Override

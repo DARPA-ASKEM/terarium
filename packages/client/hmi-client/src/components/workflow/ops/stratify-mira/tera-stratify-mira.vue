@@ -3,15 +3,33 @@
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4 pt-3">
 				<div class="form-section">
-					<h5>Stratify model</h5>
-					<p>The model will be stratified with the following settings.</p>
-					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-						Note: Code has been executed which may not be reflected here.
-					</p>
+					<header class="inline-flex justify-content-between">
+						<section>
+							<h5>Stratify model</h5>
+							<p>The model will be stratified with the following settings.</p>
+							<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+								Note: Code has been executed which may not be reflected here.
+							</p>
+						</section>
+						<section>
+							<Button
+								style="margin-right: auto"
+								size="large"
+								severity="secondary"
+								outlined
+								label="Reset"
+								@click="resetModel"
+								class="mr-2"
+							/>
+							<Button label="Stratify" size="large" icon="pi pi-play" @click="stratifyModel" />
+						</section>
+					</header>
 					<tera-stratification-group-form
 						class="mt-2"
 						:model-node-options="modelNodeOptions"
@@ -19,30 +37,22 @@
 						@update-self="updateStratifyGroupForm"
 					/>
 				</div>
-				<template #footer>
-					<div class="flex flex-row gap-2 w-full mb-2">
-						<Button
-							outlined
-							label="Stratify"
-							size="large"
-							icon="pi pi-play"
-							@click="stratifyModel"
-						/>
-						<Button
-							style="margin-right: auto"
-							size="large"
-							severity="secondary"
-							outlined
-							label="Reset"
-							@click="resetModel"
-						/>
-					</div>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
-			<tera-drilldown-section>
-				<p class="mt-3 ml-4">Code Editor - Python</p>
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="sampleAgentQuestions"
+						:context-language="'python3'"
+						@run-command="runCodeStratify"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -52,24 +62,11 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
-
-				<template #footer>
-					<Button
-						outlined
-						style="margin-right: auto"
-						label="Run"
-						size="large"
-						icon="pi pi-play"
-						@click="runCodeStratify"
-						class="ml-4 mb-2"
-					/>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"
-				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
@@ -90,21 +87,10 @@
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</div>
-				<template #footer>
-					<Button
-						:disabled="!amr"
-						outlined
-						severity="secondary"
-						size="large"
-						label="Save as new model"
-						@click="showSaveModelModal = true"
-					/>
-					<Button label="Close" size="large" @click="emit('close')" />
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="stratifiedAmr"
 		:model="stratifiedAmr"
 		:is-visible="showSaveModelModal"
@@ -121,8 +107,10 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
@@ -157,6 +145,16 @@ const emit = defineEmits([
 	'select-output'
 ]);
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
+
 enum StratifyTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
@@ -174,22 +172,18 @@ const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmThoughts = ref<any[]>([]);
+
+const sampleAgentQuestions = [
+	'Stratify my model by the ages young and old',
+	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'What is cartesian_control in stratify?'
+];
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -199,6 +193,11 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 
 const stratifyModel = () => {
 	stratifyRequest();
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+	saveCodeToState(data.content.code, false);
 };
 
 const resetModel = () => {
@@ -237,16 +236,13 @@ const stratifyRequest = () => {
 	});
 
 	const messageContent = {
-		stratify_args: {
-			key: strataOption.name,
-			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-			concepts_to_stratify: conceptsToStratify,
-			params_to_stratify: parametersToStratify,
-			cartesian_control: strataOption.cartesianProduct,
-			structure: strataOption.useStructure === true ? null : []
-		}
+		key: strataOption.name,
+		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
+		concepts_to_stratify: conceptsToStratify,
+		params_to_stratify: parametersToStratify,
+		cartesian_control: strataOption.cartesianProduct,
+		structure: strataOption.useStructure === true ? null : []
 	};
-
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
@@ -295,7 +291,7 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		context: 'mira_model',
+		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
 			id: amr.value.id
@@ -328,7 +324,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 		});
 	} else if (modelFramework === AMRSchemaNames.REGNET) {
 		model.vertices.forEach((v) => {
-			modelStates.push(v.id);
+			modelStates.push(v.name);
 		});
 		model.parameters.forEach((p) => {
 			modelParameters.push(p.id);
@@ -484,6 +480,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .code-executed-warning {
 	background-color: #ffe6e6;
 	color: #cc0000;

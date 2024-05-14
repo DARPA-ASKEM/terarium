@@ -81,12 +81,17 @@
 						@click="runCode"
 					/>
 				</div>
-				<tera-notebook-jupyter-input
-					:kernelManager="kernelManager"
-					:defaultOptions="sampleAgentQuestions"
-					@llm-output="appendCode"
-					:context-language="contextLanguage"
-				/>
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernelManager="kernelManager"
+						:defaultOptions="sampleAgentQuestions"
+						@llm-output="appendCode"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
+						:context-language="contextLanguage"
+					/>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -158,6 +163,8 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
@@ -186,6 +193,7 @@ const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
+const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
@@ -403,6 +411,9 @@ ul {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+}
+.toolbar {
+	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

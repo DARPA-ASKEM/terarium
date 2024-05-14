@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -42,6 +43,7 @@ public class TaskRequest implements Serializable {
 	protected byte[] input;
 	protected int timeoutMinutes = 30;
 	protected String userId;
+	protected UUID projectId;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are

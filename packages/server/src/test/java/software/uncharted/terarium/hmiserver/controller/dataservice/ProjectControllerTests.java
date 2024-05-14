@@ -60,13 +60,9 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProject() throws Exception {
 
-		final Project project = (Project) new Project().setName("test-name").setDescription("test-description");
-		project.setUserId(MockUser.URSULA);
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/projects")
+		mockMvc.perform(MockMvcRequestBuilders.post("/projects?name=test&userId=abc123&description=desc")
 						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(project)))
+						.contentType("application/json"))
 				.andExpect(status().isCreated());
 	}
 

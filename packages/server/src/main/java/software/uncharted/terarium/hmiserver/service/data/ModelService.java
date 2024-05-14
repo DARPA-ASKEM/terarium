@@ -27,15 +27,17 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetService<Model> {
 
+	private final ObjectMapper objectMapper;
+
 	public ModelService(
 			final ElasticsearchConfiguration elasticConfig,
 			final Config config,
 			final ElasticsearchService elasticService,
-			final ProjectAssetService projectAssetService) {
+			final ProjectAssetService projectAssetService,
+			final ObjectMapper objectMapper) {
 		super(elasticConfig, config, elasticService, projectAssetService, Model.class);
+		this.objectMapper = objectMapper;
 	}
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Observed(name = "function_profile")
 	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
@@ -144,7 +146,8 @@ public class ModelService extends TerariumAssetService<Model> {
 	@Observed(name = "function_profile")
 	public Model createAsset(final Model asset, Schema.Permission hasWritePermission) throws IOException {
 		// Make sure that the model framework is set to lowercase
-		asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
+		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
+			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
 
 		// Set default value for model parameters (0.0)
 		if (asset.getSemantics() != null

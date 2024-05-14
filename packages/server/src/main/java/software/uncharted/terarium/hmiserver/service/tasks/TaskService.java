@@ -39,12 +39,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
 @Service
@@ -85,6 +88,7 @@ public class TaskService {
 			script = req.getScript();
 			input = req.getInput();
 			userId = req.getUserId();
+			projectId = req.getProjectId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
@@ -94,6 +98,7 @@ public class TaskService {
 					.setId(id)
 					.setStatus(status)
 					.setUserId(userId)
+					.setProjectId(projectId)
 					.setScript(getScript())
 					.setAdditionalProperties(getAdditionalProperties());
 		}
@@ -153,6 +158,7 @@ public class TaskService {
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
+	private final ClientEventService clientEventService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
@@ -434,8 +440,25 @@ public class TaskService {
 				log.info("Creating notification event under group id: {}", resp.getId());
 
 				notificationService.createNotificationEvent(resp.getId(), event);
+
 			} catch (final Exception e) {
 				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			}
+
+			try {
+				// send the client event
+				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
+				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+
+				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
+						.notificationGroupId(resp.getId())
+						.type(clientEventType)
+						.data(resp)
+						.build();
+				clientEventService.sendToUser(clientEvent, resp.getUserId());
+
+			} catch (final Exception e) {
+				log.error("Failed to send client event for for task {}", resp.getId(), e);
 			}
 
 			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
@@ -549,8 +572,11 @@ public class TaskService {
 				// create the notification group for the task
 				final NotificationGroup group = new NotificationGroup();
 				group.setId(req.getId()); // use the task id
-				group.setType(req.getType().toString());
+				group.setType(
+						TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
 				group.setUserId(req.getUserId());
+				group.setProjectId(req.getProjectId());
+
 				notificationService.createNotificationGroup(group);
 
 			} catch (final Exception e) {

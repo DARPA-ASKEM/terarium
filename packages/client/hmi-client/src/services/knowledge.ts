@@ -40,15 +40,19 @@ export const profileModel = async (
 	documentId: string | null = null
 ) => {
 	let response: any;
-	if (documentId && modelId) {
-		response = await API.post(
-			`/knowledge/profile-model/${modelId}?project=id=${projectId}&document-id=${documentId}`
-		);
-	} else {
-		response = await API.post(`/knowledge/profile-model/${modelId}?project=id=${projectId}`);
+	try {
+		if (documentId && modelId) {
+			response = await API.post(
+				`/knowledge/profile-model/${modelId}?project=id=${projectId}&document-id=${documentId}`
+			);
+		} else {
+			response = await API.post(`/knowledge/profile-model/${modelId}?project=id=${projectId}`);
+		}
+		return response.data.id;
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false });
+		return null;
 	}
-	console.log('model profile response', response.data);
-	return response.data.id;
 };
 
 export const alignModel = async (

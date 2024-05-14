@@ -1,13 +1,19 @@
-import { ClientEvent, ClientEventType, ExtractionStatusUpdate } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	ExtractionStatusUpdate,
+	ProgressState,
+	TaskResponse
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem } from '@/types/common';
 import { getDocumentAsset } from './document-assets';
 
 export const getStatus = (data: { error: string; t: number }) => {
-	if (data.error) return 'Failed';
-	if (data.t >= 1.0) return 'Completed';
-	return 'Running';
+	if (data.error) return ProgressState.Failed;
+	if (data.t >= 1.0) return ProgressState.Complete;
+	return ProgressState.Running;
 };
 
 const toastTitle = {
@@ -19,18 +25,18 @@ const toastTitle = {
 
 const logStatusMessage = (
 	eventType: ClientEventType,
-	status: string,
+	status: ProgressState,
 	msg: string,
 	error: string
 ) => {
-	if (!['Completed', 'Failed'].includes(status)) return;
+	if (![ProgressState.Complete, ProgressState.Failed].includes(status)) return;
 
-	if (status === 'Completed')
+	if (status === ProgressState.Complete)
 		logger.success(msg, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
 		});
-	if (status === 'Failed')
+	if (status === ProgressState.Failed)
 		logger.error(error, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
@@ -45,12 +51,12 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		if (!event.data) return;
 
 		const existingItem = notificationItems.value.find(
-			(item) => item.notificationGroupId === event.data.notificationGroupId
+			(item) => item.notificationGroupId === event.notificationGroupId
 		);
 		if (!existingItem) {
 			// Create a new notification item
 			const newItem: NotificationItem = {
-				notificationGroupId: event.data.notificationGroupId,
+				notificationGroupId: event.notificationGroupId ?? '',
 				type: ClientEventType.ExtractionPdf,
 				assetId: event.data.documentId,
 				assetName: '',
@@ -79,6 +85,11 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		});
 	};
 
+	handlers[ClientEventType.TaskGollmModelCard] = (event: ClientEvent<TaskResponse>) => {
+		// TODO: Create a notification item and implement notification item UI for this event
+		console.log(event);
+	};
+
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
 	return {
@@ -100,8 +111,9 @@ export const createNotificationEventLogger = (
 	>(
 		event: ClientEvent<T>
 	) => {
+		if (!event.notificationGroupId) return;
 		const found = visibleNotificationItems.value.find(
-			(item) => item.notificationGroupId === event.data.notificationGroupId
+			(item) => item.notificationGroupId === event.notificationGroupId
 		);
 		if (!found) return;
 		logStatusMessage(

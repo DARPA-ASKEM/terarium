@@ -35,22 +35,28 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.UserService;
+import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
+import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -80,9 +86,32 @@ public class ProjectController {
 
 	final CodeService codeService;
 
+	final DatasetService datasetService;
+
+	final WorkflowService workflowService;
+
+	final ArtifactService artifactService;
+
 	final UserService userService;
 
 	final ObjectMapper objectMapper;
+
+	static final String WELCOME_MESSAGE =
+			"""
+			<div>
+				<h2>Hey there!</h2>
+				<p>This is your project overview page. Use this space however you like. Not sure where to start? Here are some things you can try:</p>
+				<br>
+					<ul>
+						<li><strong>Upload stuff:</strong> Upload documents, models, code or datasets with the green button in the bottom left corner.</li>
+						<li><strong>Explore and add:</strong> Use the project selector in the top nav to switch to the Explorer where you can find documents, models and datasets that you can add to your project.</li>
+						<li><strong>Build a model:</strong> Create a model that fits just what you need.</li>
+						<li><strong>Create a workflow:</strong> Connect resources with operators so you can focus on the science and not the plumbing.</li>
+					</ul>
+				<br>
+				<p>Feel free to erase this text and make it your own.</p>
+			</div>
+			""";
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -347,38 +376,37 @@ public class ProjectController {
 													implementation = Project.class)),
 						}),
 				@ApiResponse(
+						responseCode = "400",
+						description = "The provided information is not valid to create a project",
+						content = @Content),
+				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving sessions from the data store",
 						content = @Content)
 			})
 	@PostMapping
 	@Secured(Roles.USER)
-	public ResponseEntity<Project> createProject(@RequestBody Project project) {
-		if (project.getOverviewContent() == null) {
-			final String welcomeMessage =
-					"""
-					<div>
-						<h2>Hey there!</h2>
-						<p>This is your project overview page. Use this space however you like. Not sure where to start? Here are some things you can try:</p>
-						<br>
-							<ul>
-								<li><strong>Upload stuff:</strong> Upload documents, models, code or datasets with the green button in the bottom left corner.</li>
-								<li><strong>Explore and add:</strong> Use the project selector in the top nav to switch to the Explorer where you can find documents, models and datasets that you can add to your project.</li>
-								<li><strong>Build a model:</strong> Create a model that fits just what you need.</li>
-								<li><strong>Create a workflow:</strong> Connect resources with operators so you can focus on the science and not the plumbing.</li>
-							</ul>
-						<br>
-						<p>Feel free to erase this text and make it your own.</p>
-					</div>
-					""";
-			project.setOverviewContent(welcomeMessage.getBytes());
+	public ResponseEntity<Project> createProject(
+			@RequestParam("name") final String name, @RequestParam("description") final String description) {
+
+		if (name == null || name.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A project name is required");
 		}
+
+		String userId = currentUserService.get().getId();
+
+		Project project = (Project) new Project()
+				.setOverviewContent(WELCOME_MESSAGE.getBytes())
+				.setUserId(userId)
+				.setName(name)
+				.setDescription(description);
+
 		project = projectService.createProject(project);
 
 		try {
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
+			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 
 			rebacUser.createCreatorRelationship(rebacProject);
 			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
@@ -486,11 +514,59 @@ public class ProjectController {
 					if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
 					if (project.get().getCodeAssets().contains(code.get())) {
 						throw new ResponseStatusException(
-							HttpStatus.CONFLICT, "Code Asset already exists on project");
+								HttpStatus.CONFLICT, "Code Asset already exists on project");
 					}
 
 					code.get().setProject(project.get());
 					codeService.updateAsset(code.get(), permission);
+				} else if (assetType.equals(AssetType.WORKFLOW)) {
+
+					final Optional<Workflow> workflow = workflowService.getAsset(assetId, permission);
+					if (workflow.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Workflow Asset does not exist");
+					}
+
+					if (project.get().getWorkflowAssets() == null)
+						project.get().setWorkflowAssets(new ArrayList<>());
+					if (project.get().getWorkflowAssets().contains(workflow.get())) {
+						throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Workflow Asset already exists on project");
+					}
+
+					workflow.get().setProject(project.get());
+					workflowService.updateAsset(workflow.get(), permission);
+				} else if (assetType.equals(AssetType.DATASET)) {
+
+					final Optional<Dataset> dataset = datasetService.getAsset(assetId, permission);
+					if (dataset.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset Asset does not exist");
+					}
+
+					if (project.get().getDatasetAssets() == null)
+						project.get().setDatasetAssets(new ArrayList<>());
+					if (project.get().getDatasetAssets().contains(dataset.get())) {
+						throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Dataset Asset already exists on project");
+					}
+
+					dataset.get().setProject(project.get());
+					datasetService.updateAsset(dataset.get(), permission);
+				} else if (assetType.equals(AssetType.ARTIFACT)) {
+
+					final Optional<Artifact> artifact = artifactService.getAsset(assetId, permission);
+					if (artifact.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Artifact Asset does not exist");
+					}
+
+					if (project.get().getArtifactAssets() == null)
+						project.get().setArtifactAssets(new ArrayList<>());
+					if (project.get().getArtifactAssets().contains(artifact.get())) {
+						throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Artifact Asset already exists on project");
+					}
+
+					artifact.get().setProject(project.get());
+					artifactService.updateAsset(artifact.get(), permission);
 				}
 
 				// double check that this asset is not already a part of this project, and if it
@@ -551,25 +627,50 @@ public class ProjectController {
 
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		if (assetType.equals(AssetType.CODE)) {
+		try {
+				/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
+										projects will directly hold a reference to the assets associated with them.  During this
+										transition we need to properly create the relationships when users add assets to their
+										projects. However the exact API may not look like this in the end, and in fact may be
+										directly in the controllers for these assets and not in this ProjectController
+				*/
+			if (assetType.equals(AssetType.CODE)) {
 
-					/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-											projects will directly hold a reference to the assets associated with them.  During this
-											transition we need to properly create the relationships when users add assets to their
-											projects. However the exact API may not look like this in the end, and in fact may be
-											directly in the controllers for these assets and not in this ProjectController
-					*/
-
-			try {
 				final Optional<Code> deletedCode = codeService.deleteAsset(assetId, permission);
 				if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
 					throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete code asset");
 				}
-			} catch (final Exception e) {
-				log.error("Error deleting project assets", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project asset");
+			} else if (assetType.equals(AssetType.WORKFLOW)) {
+
+				final Optional<Workflow> deletedWorkflow = workflowService.deleteAsset(assetId, permission);
+				if (deletedWorkflow.isEmpty() || deletedWorkflow.get().getDeletedOn() == null) {
+					throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete workflow asset");
+				}
+			} else if (assetType.equals(AssetType.DATASET)) {
+
+				final Optional<Dataset> deletedDataset = datasetService.deleteAsset(assetId, permission);
+				if (deletedDataset.isEmpty() || deletedDataset.get().getDeletedOn() == null) {
+					throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete dataset asset");
+				}
+			} else if (assetType.equals(AssetType.ARTIFACT)) {
+
+				final Optional<Artifact> deletedArtifact = artifactService.deleteAsset(assetId, permission);
+				if (deletedArtifact.isEmpty() || deletedArtifact.get().getDeletedOn() == null) {
+					throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete artifact asset");
+				}
 			}
+
+			final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);
+			if (deleted) {
+				return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
+			}
+		} catch (final Exception e) {
+			log.error("Error deleting project assets", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete project asset");
 		}
 
 		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);

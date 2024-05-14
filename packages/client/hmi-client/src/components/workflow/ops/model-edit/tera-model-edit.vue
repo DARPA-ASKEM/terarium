@@ -26,14 +26,19 @@
 						@click="runFromCodeWrapper"
 					/>
 				</div>
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-					/>
-				</Suspense>
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:default-options="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="llmThoughts = []"
+						/>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeAceEditor"
@@ -82,7 +87,7 @@
 			</div>
 		</div>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="amr"
 		:model="amr"
 		:is-visible="showSaveModelModal"
@@ -110,10 +115,11 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraModelTemplateEditor from '@/components/model-template/tera-model-template-editor.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelEditOperationState } from './model-edit-operation';
 import {useProjects} from "@/composables/project";
 
@@ -161,7 +167,8 @@ const sampleAgentQuestions = [
 	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
-	'Rename the transition infection to inf.'
+	'Rename the transition infection to inf.',
+	'Change rate law of inf to S * I * z.'
 ];
 
 const contextLanguage = ref<string>('python3');
@@ -169,6 +176,8 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmThoughts = ref<any[]>([]);
+
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
 	name: '',
@@ -402,8 +411,7 @@ onUnmounted(() => {
 	position: relative;
 }
 
-.notebook-section:deep(main .notebook-toolbar),
-.notebook-section:deep(main .ai-assistant) {
+.notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
 .toolbar-right-side {
