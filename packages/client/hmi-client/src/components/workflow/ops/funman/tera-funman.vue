@@ -235,59 +235,58 @@ const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
 const MAX = 99999999999;
-const requestConstraints = computed(
-	() =>
-		// Same as node state's except typing for state vs linear constraint
-		props.node.state.constraintGroups?.map((ele) => {
-			if (ele.constraintType === 'monotonicityConstraint') {
-				const weights = ele.weights ? ele.weights : [1.0];
-				const constraint: any = {
-					soft: true,
-					name: ele.name,
-					timepoints: null,
-					additive_bounds: {
-						lb: 0.0,
-						// ub: 0.0,
-						// closed_upper_bound: true,
-						original_width: MAX
-					},
-					variables: ele.variables,
-					weights: weights.map((d) => -Math.abs(d)), // should be all negative
-					derivative: true
-				};
-
-				if (ele.derivativeType === 'increasing') {
-					// delete constraint.additive_bounds.closed_upper_bound;
-					// delete constraint.additive_bounds.ub;
-					// constraint.additive_bounds.lb = 0;
-					constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
-				}
-				return constraint;
-			}
-
-			if (ele.timepoints) {
-				ele.timepoints.closed_upper_bound = true;
-			}
-			if (ele.variables.length === 1) {
-				// State Variable Constraint
-				const singleVarConstraint = {
-					name: ele.name,
-					variable: ele.variables[0],
-					interval: ele.interval,
-					timepoints: ele.timepoints
-				};
-				return singleVarConstraint;
-			}
-
-			return {
-				// Linear Constraint
+const requestConstraints = computed(() =>
+	// Same as node state's except typing for state vs linear constraint
+	props.node.state.constraintGroups?.map((ele) => {
+		if (ele.constraintType === 'monotonicityConstraint') {
+			const weights = ele.weights ? ele.weights : [1.0];
+			const constraint: any = {
+				soft: true,
 				name: ele.name,
+				timepoints: null,
+				additive_bounds: {
+					lb: 0.0,
+					// ub: 0.0,
+					// closed_upper_bound: true,
+					original_width: MAX
+				},
 				variables: ele.variables,
-				weights: ele.weights,
-				additive_bounds: ele.interval,
+				weights: weights.map((d) => -Math.abs(d)), // should be all negative
+				derivative: true
+			};
+
+			if (ele.derivativeType === 'increasing') {
+				// delete constraint.additive_bounds.closed_upper_bound;
+				// delete constraint.additive_bounds.ub;
+				// constraint.additive_bounds.lb = 0;
+				constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
+			}
+			return constraint;
+		}
+
+		if (ele.timepoints) {
+			ele.timepoints.closed_upper_bound = true;
+		}
+		if (ele.variables.length === 1) {
+			// State Variable Constraint
+			const singleVarConstraint = {
+				name: ele.name,
+				variable: ele.variables[0],
+				interval: ele.interval,
 				timepoints: ele.timepoints
 			};
-		})
+			return singleVarConstraint;
+		}
+
+		return {
+			// Linear Constraint
+			name: ele.name,
+			variables: ele.variables,
+			weights: ele.weights,
+			additive_bounds: ele.interval,
+			timepoints: ele.timepoints
+		};
+	})
 );
 
 const requestParameters = ref<any[]>([]);
