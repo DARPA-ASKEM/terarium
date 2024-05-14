@@ -138,32 +138,4 @@ public class ProjectAssetService {
 			final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
-
-	@Observed(name = "function_profile")
-	public Schema.Permission checkForPermission(
-			String userId, final UUID assetId, Schema.Permission desiredPermission) {
-		Optional<List<ProjectAsset>> projectAssets = projectAssetRepository.findByAssetId(assetId);
-		if (projectAssets.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not associated with a project");
-		}
-		Schema.Permission foundPermission = null;
-		for (ProjectAsset projectAsset : projectAssets.get()) {
-			UUID projectId = projectAsset.getProject().getId();
-			try {
-				final RebacUser rebacUser = new RebacUser(userId, reBACService);
-				final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-				if (rebacUser.can(rebacProject, desiredPermission)) {
-					foundPermission = desiredPermission;
-					break;
-				}
-			} catch (final Exception e) {
-				log.error("Error updating project", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update project");
-			}
-		}
-		if (foundPermission != null && foundPermission == desiredPermission) {
-			return desiredPermission;
-		}
-		throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions");
-	}
 }

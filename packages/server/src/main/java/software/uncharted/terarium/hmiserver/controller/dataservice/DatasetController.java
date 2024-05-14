@@ -219,9 +219,8 @@ public class DatasetController {
 						description = "There was an issue retrieving the dataset from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
-		Schema.Permission permission =
-				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			Optional<Dataset> dataset = datasetService.getAsset(id, permission);
@@ -290,9 +289,8 @@ public class DatasetController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteDataset(@PathVariable("id") final UUID id) {
-		Schema.Permission permission =
-				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+	public ResponseEntity<ResponseDeleted> deleteDataset(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			datasetService.deleteAsset(id, permission);
@@ -324,9 +322,8 @@ public class DatasetController {
 						description = "There was an issue updating the dataset",
 						content = @Content)
 			})
-	ResponseEntity<Dataset> updateDataset(@PathVariable("id") final UUID id, @RequestBody final Dataset dataset) {
-		Schema.Permission permission =
-				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+	ResponseEntity<Dataset> updateDataset(@PathVariable("id") final UUID id, @RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			dataset.setId(id);
@@ -474,9 +471,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<PresignedURL> getDownloadURL(
-			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
-		Schema.Permission permission =
-				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Optional<Dataset> dataset;
 		try {
@@ -546,7 +542,8 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("filename") final String filename) {
+			@RequestParam("filename") final String filename, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
@@ -563,7 +560,7 @@ public class DatasetController {
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
 		final String[] csvRows = csvString.split("\\R");
 		final String[] headers = csvRows[0].split(",");
-		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
+		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
 	}
 
 	/**
@@ -595,7 +592,9 @@ public class DatasetController {
 	public ResponseEntity<ResponseStatus> uploadCsv(
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile input) {
+			@RequestPart("file") final MultipartFile input,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			log.debug("Uploading CSV file to dataset {}", datasetId);
@@ -610,7 +609,7 @@ public class DatasetController {
 				// this is very ugly but we're removing opening and closing "'s around these strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
-			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
+			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
@@ -640,9 +639,8 @@ public class DatasetController {
 	public ResponseEntity<Void> uploadData( // HttpServletRequest request,
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile input) {
-		Schema.Permission permission = projectAssetService.checkForPermission(
-				currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
+			@RequestPart("file") final MultipartFile input, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
@@ -727,10 +725,7 @@ public class DatasetController {
 	 * @return Response from the upload
 	 */
 	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(
-			final UUID datasetId, final String filename, final HttpEntity csvEntity, final String[] headers) {
-		Schema.Permission permission = projectAssetService.checkForPermission(
-				currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
-
+			final UUID datasetId, final String filename, final HttpEntity csvEntity, final String[] headers, final Schema.Permission hasWritePermission) {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 
@@ -745,7 +740,7 @@ public class DatasetController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, permission);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, hasWritePermission);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
@@ -760,7 +755,7 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateAsset(updatedDataset.get(), permission);
+				datasetService.updateAsset(updatedDataset.get(), hasWritePermission);
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));
