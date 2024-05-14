@@ -58,12 +58,11 @@ const props = defineProps({
 	}
 });
 
-const selectedOutputs = computed(
-	() =>
-		props.outputs?.filter((output) => {
-			if (!('isSelected' in output)) return true;
-			return output.isSelected;
-		})
+const selectedOutputs = computed(() =>
+	props.outputs?.filter((output) => {
+		if (!('isSelected' in output)) return true;
+		return output.isSelected;
+	})
 );
 </script>
 

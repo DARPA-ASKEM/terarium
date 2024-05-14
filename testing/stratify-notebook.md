@@ -1,4 +1,4 @@
-## [Name of the Test Scenario]
+## Stratify model via the notebook interface
 Please go through __every__ step of the test scenario.\
 When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
 
@@ -10,14 +10,15 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
     ```
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
-### 2. Test Stratify LLM Responses
+### 2. Setup workflow
 1. Make sure you have a model in your project.
 2. Create a workflow
-    Drop in your model in the workflow
-    Create a Stratify node
-    Connect the model to the stratify node
-3. Drill down into the Stratify node and go to the notebook section.
+3. Drop in your model in the workflow 
+4. Create a Stratify node 
+5. Connect the model to the stratify node
+6. Drill down into the Stratify node and go to the notebook section.
 
+### 3. Test Stratify LLM Responses
 Ask the follow questions one at a time, wait for the response, check the response matches
 reset the code block move on to the next.
 
