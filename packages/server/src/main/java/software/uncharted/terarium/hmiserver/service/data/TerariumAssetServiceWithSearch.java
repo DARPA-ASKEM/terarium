@@ -194,7 +194,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
 		final Optional<T> updated = super.updateAsset(asset, hasWritePermission);
 

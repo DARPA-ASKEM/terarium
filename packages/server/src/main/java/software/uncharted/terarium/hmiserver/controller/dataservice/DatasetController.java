@@ -24,7 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -188,7 +187,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> createDataset(@RequestBody final DatasetRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			Dataset dataset = request.getDataset();
@@ -227,7 +227,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
 
 		try {
 			Optional<Dataset> dataset = datasetService.getAsset(id, permission);
@@ -247,7 +248,8 @@ public class DatasetController {
 	 * @return the dataset with columns extracted and saved
 	 * @throws IOException if there is an issue saving the dataset after extracting columns
 	 */
-	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, Schema.Permission hasWritePermission) throws IOException {
+	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, Schema.Permission hasWritePermission)
+			throws IOException {
 		if (dataset.getColumns() != null && !dataset.getColumns().isEmpty()) {
 			// columns are set. No need to extract
 			return dataset;
@@ -260,8 +262,7 @@ public class DatasetController {
 		for (final String filename : dataset.getFileNames()) {
 			if (!filename.endsWith(".nc")) {
 				try {
-					final List<List<String>> csv =
-							getCSVFile(filename, dataset.getId(), 1);
+					final List<List<String>> csv = getCSVFile(filename, dataset.getId(), 1);
 					if (csv == null || csv.isEmpty()) {
 						continue;
 					}
@@ -297,7 +298,8 @@ public class DatasetController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDataset(@PathVariable("id") final UUID id) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			datasetService.deleteAsset(id, permission);
@@ -330,7 +332,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	ResponseEntity<Dataset> updateDataset(@PathVariable("id") final UUID id, @RequestBody final Dataset dataset) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			dataset.setId(id);
@@ -479,7 +482,8 @@ public class DatasetController {
 			})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
 
 		final Optional<Dataset> dataset;
 		try {
@@ -644,7 +648,8 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
 
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
@@ -730,7 +735,8 @@ public class DatasetController {
 	 */
 	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(
 			final UUID datasetId, final String filename, final HttpEntity csvEntity, final String[] headers) {
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
+		Schema.Permission permission = projectAssetService.checkForPermission(
+				currentUserService.get().getId(), datasetId, Schema.Permission.WRITE);
 
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {

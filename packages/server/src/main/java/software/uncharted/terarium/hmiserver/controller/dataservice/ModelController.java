@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -160,7 +159,8 @@ public class ModelController {
 			})
 	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 
@@ -282,7 +282,8 @@ public class ModelController {
 			})
 	ResponseEntity<Model> updateModel(@PathVariable("id") final UUID id, @RequestBody final Model model) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			model.setId(id);
@@ -318,7 +319,8 @@ public class ModelController {
 			})
 	ResponseEntity<ResponseDeleted> deleteModel(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			modelService.deleteAsset(id, permission);
@@ -350,7 +352,8 @@ public class ModelController {
 						content = @Content)
 			})
 	ResponseEntity<Model> createModel(@RequestBody ModelRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			Model model = request.getModel();
@@ -398,7 +401,8 @@ public class ModelController {
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
@@ -446,7 +450,8 @@ public class ModelController {
 				datasetIds.forEach(datasetId -> {
 					try {
 						// Fetch the Document extractions
-						final Optional<Dataset> dataset = datasetService.getAsset(UUID.fromString(datasetId), permission);
+						final Optional<Dataset> dataset =
+								datasetService.getAsset(UUID.fromString(datasetId), permission);
 						if (dataset.isPresent()) {
 							final String name = dataset.get().getName();
 							documentSourceNames.add(name);

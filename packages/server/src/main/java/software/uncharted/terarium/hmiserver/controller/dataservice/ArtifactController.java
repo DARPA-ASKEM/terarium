@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,8 +61,8 @@ public class ArtifactController {
 
 	final ObjectMapper objectMapper;
 
-	final private ProjectService projectService;
-	final private CurrentUserService currentUserService;
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -116,9 +115,11 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> createArtifact(@RequestBody final ArtifactRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(request.getArtifact(), permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(artifactService.createAsset(request.getArtifact(), permission));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
@@ -152,8 +153,10 @@ public class ArtifactController {
 						description = "There was an issue retrieving the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+	public ResponseEntity<Artifact> getArtifact(
+			@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
 			return artifact.map(ResponseEntity::ok)
@@ -187,7 +190,8 @@ public class ArtifactController {
 			})
 	public ResponseEntity<Artifact> updateArtifact(
 			@PathVariable("id") final UUID artifactId, @RequestBody final ArtifactRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			Artifact artifact = request.getArtifact();
@@ -221,8 +225,10 @@ public class ArtifactController {
 						description = "There was an issue deleting the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ResponseDeleted> deleteArtifact(
+			@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			artifactService.deleteAsset(artifactId, permission);

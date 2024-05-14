@@ -155,7 +155,8 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), conversionRequest.getProjectId());
+		Schema.Permission permission = projectService.checkPermissionCanRead(
+				currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
 

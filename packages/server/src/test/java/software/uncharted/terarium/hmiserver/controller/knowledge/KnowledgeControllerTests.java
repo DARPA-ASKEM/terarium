@@ -413,7 +413,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
 		Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -489,7 +490,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		files.put(filename, codeFile);
 
 		final Code code = codeService.createAsset(
-				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -521,7 +523,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		files.put(filename, codeFile);
 
 		final Code code = codeService.createAsset(
-				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -554,7 +557,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		files.put(filename, codeFile);
 
 		final Code code = codeService.createAsset(
-				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);

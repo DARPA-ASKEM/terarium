@@ -49,12 +49,13 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setName("test-framework")
-						.setDescription("test-desc"), ASSUMED_PERMISSION);
+						.setDescription("test-desc"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf()))
@@ -82,12 +83,13 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setDescription("test-desc")
-						.setName("test-framework"), ASSUMED_PERMISSION);
+						.setName("test-framework"),
+				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.with(csrf())
@@ -110,7 +112,8 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUMED_PERMISSION).isEmpty());
+		Assertions.assertTrue(modelConfigurationService
+				.getAsset(modelConfiguration.getId(), ASSUMED_PERMISSION)
+				.isEmpty());
 	}
 }

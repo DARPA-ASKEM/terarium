@@ -76,7 +76,8 @@ public class AssetController {
 
 		if (projectId == null) {
 
-			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType, assumedPermission);
+			final Optional<ProjectAsset> asset =
+					projectAssetService.getProjectAssetByNameAndType(assetName, assetType, assumedPermission);
 			if (asset.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is already in use");
 			} else {

@@ -100,8 +100,9 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulationById() throws IOException {
 		final Simulation simulation = simulationService.createAsset(createSimulation("0"), ASSUMED_PERMISSION);
-		final Simulation fetchedSimulation =
-				simulationService.getAsset(simulation.getId(), ASSUMED_PERMISSION).get();
+		final Simulation fetchedSimulation = simulationService
+				.getAsset(simulation.getId(), ASSUMED_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(simulation, fetchedSimulation);
 		Assertions.assertEquals(simulation.getId(), fetchedSimulation.getId());
@@ -195,7 +196,9 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 			final SimulationUpdate update1 = createSimulationUpdate(data);
 			simulationService.appendUpdateToSimulation(after.getId(), update1, ASSUMED_PERMISSION);
 
-			after = simulationService.getAsset(after.getId(), ASSUMED_PERMISSION).orElseThrow();
+			after = simulationService
+					.getAsset(after.getId(), ASSUMED_PERMISSION)
+					.orElseThrow();
 
 			Assertions.assertEquals(2, after.getUpdates().size());
 

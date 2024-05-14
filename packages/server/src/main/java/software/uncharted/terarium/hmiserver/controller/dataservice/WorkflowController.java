@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,7 +107,8 @@ public class WorkflowController {
 			})
 	public ResponseEntity<Workflow> getWorkflow(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.READ);
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		return workflow.map(ResponseEntity::ok)
@@ -135,7 +135,8 @@ public class WorkflowController {
 						content = @Content)
 			})
 	public ResponseEntity<Workflow> createWorkflow(@RequestBody final WorkflowRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 		try {
 			final Workflow item = request.getWorkflow();
 			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, permission));
@@ -174,7 +175,8 @@ public class WorkflowController {
 			})
 	public ResponseEntity<Workflow> updateWorkflow(
 			@PathVariable("id") final UUID id, @RequestBody final WorkflowRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 		try {
 			Workflow workflow = request.getWorkflow();
 			workflow.setId(id);
@@ -214,7 +216,8 @@ public class WorkflowController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteWorkflow(@PathVariable("id") final UUID id) {
 
-		Schema.Permission permission = projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
+		Schema.Permission permission =
+				projectAssetService.checkForPermission(currentUserService.get().getId(), id, Schema.Permission.WRITE);
 
 		try {
 			workflowService.deleteAsset(id, permission);

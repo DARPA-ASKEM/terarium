@@ -180,7 +180,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
 
@@ -204,7 +205,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/** Clone asset on ES, retrieve and save document with a different id */
 	@Override
 	@Observed(name = "function_profile")
-	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException, IllegalArgumentException {
+	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
 		if (targetAsset.isEmpty()) {
 			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id);

@@ -49,8 +49,9 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
 			final Properties props = objectMapper.readValue(serializedString, Properties.class);
 			log.info("Writing model card to database for document {}", props.getDocumentId());
-			final DocumentAsset document =
-					documentAssetService.getAsset(props.getDocumentId(), assumePermission).orElseThrow();
+			final DocumentAsset document = documentAssetService
+					.getAsset(props.getDocumentId(), assumePermission)
+					.orElseThrow();
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (document.getMetadata() == null) {
 				document.setMetadata(new java.util.HashMap<>());

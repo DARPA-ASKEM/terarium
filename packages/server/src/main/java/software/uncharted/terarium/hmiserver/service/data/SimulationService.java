@@ -51,7 +51,8 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update, Schema.Permission hasReadPermission) {
+	public SimulationUpdate appendUpdateToSimulation(
+			final UUID simulationId, final SimulationUpdate update, Schema.Permission hasReadPermission) {
 
 		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
 

@@ -106,7 +106,8 @@ public class GoLLMController {
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			// Grab the document
@@ -180,7 +181,8 @@ public class GoLLMController {
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -271,7 +273,8 @@ public class GoLLMController {
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam("project-id") final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			// Grab the datasets
@@ -377,7 +380,8 @@ public class GoLLMController {
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			final List<String> modelCards = new ArrayList<>();
 			for (final UUID modelId : modelIds) {

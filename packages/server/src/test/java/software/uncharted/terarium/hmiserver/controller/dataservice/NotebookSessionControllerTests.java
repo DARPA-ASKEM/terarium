@@ -72,9 +72,12 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetNotebookSessions() throws Exception {
 
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
-		notebookSessionService.createAsset((NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
+		notebookSessionService.createAsset(
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
+		notebookSessionService.createAsset(
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
+		notebookSessionService.createAsset(
+				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/sessions").with(csrf()))
 				.andExpect(status().isOk())
@@ -92,7 +95,8 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				notebookSessionService.getAsset(notebookSession.getId(), ASSUMED_PERMISSION).isEmpty());
+		Assertions.assertTrue(notebookSessionService
+				.getAsset(notebookSession.getId(), ASSUMED_PERMISSION)
+				.isEmpty());
 	}
 }

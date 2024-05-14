@@ -109,8 +109,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-				new DocumentAsset().setName("test-document-name").setDescription("my description"), ASSUMED_PERMISSION);
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				(DocumentAsset)
+						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
 				.setAssetId(documentAsset.getId())
@@ -142,8 +144,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-				new DocumentAsset().setName("test-document-name").setDescription("my description"), ASSUMED_PERMISSION);
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				(DocumentAsset)
+						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				ASSUMED_PERMISSION);
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUMED_PERMISSION);
 

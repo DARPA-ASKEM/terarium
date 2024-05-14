@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +44,7 @@ public class ModelConfigurationController {
 	final ObjectMapper objectMapper;
 
 	final ProjectService projectService;
-final CurrentUserService currentUserService;
+	final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -99,12 +98,15 @@ final CurrentUserService currentUserService;
 						description = "There was an issue creating the configuration",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody final ModelConfigurationRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+	public ResponseEntity<ModelConfiguration> createModelConfiguration(
+			@RequestBody final ModelConfigurationRequestBody request) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			ModelConfiguration config = request.getModelConfiguration();
-			return ResponseEntity.status(HttpStatus.CREATED).body(modelConfigurationService.createAsset(config, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(modelConfigurationService.createAsset(config, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create model configuration";
 			log.error(error, e);
@@ -141,8 +143,10 @@ final CurrentUserService currentUserService;
 						description = "There was an issue retrieving the configuration from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> getModelConfiguration(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ModelConfiguration> getModelConfiguration(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
@@ -180,7 +184,8 @@ final CurrentUserService currentUserService;
 			})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
 			@PathVariable("id") final UUID id, @RequestBody final ModelConfigurationRequestBody request) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
 
 		try {
 			ModelConfiguration config = request.getModelConfiguration();
@@ -212,8 +217,10 @@ final CurrentUserService currentUserService;
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			modelConfigurationService.deleteAsset(id, permission);
