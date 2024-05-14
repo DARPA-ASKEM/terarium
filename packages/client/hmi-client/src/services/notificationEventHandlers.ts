@@ -152,6 +152,18 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { assetName: document?.name || '' })
 		);
 	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (_event, created) => {
+		created.supportCancel = true;
+		console.log(created);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmDatasetConfigure, (_event, created) => {
+		created.supportCancel = true;
+		console.log(created);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (_event, created) => {
+		created.supportCancel = true;
+		console.log(created);
+	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 

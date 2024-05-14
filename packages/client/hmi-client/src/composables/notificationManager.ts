@@ -18,6 +18,7 @@ let initialized = false;
 const { findAsset } = useProjects();
 
 const isNotificationForActiveProject = (item: NotificationItem) => !!findAsset(item.assetId);
+// const isNotificationForActiveProject = (item: NotificationItem) => { console.log(item); return true };
 
 const isFinished = (item: NotificationItem) =>
 	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
