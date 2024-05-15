@@ -1,13 +1,11 @@
 package db.migration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.UUID;
-
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class V13__NotificationEventProgress extends BaseJavaMigration {
 
@@ -48,8 +46,8 @@ public class V13__NotificationEventProgress extends BaseJavaMigration {
 					"SELECT id, state_old FROM notification_event WHERE state_old IS NOT NULL ORDER BY id;");
 
 			// Prepare the update statement for the simulation table
-			final PreparedStatement preparedStatement = context.getConnection()
-					.prepareStatement("UPDATE notification_event SET state = ? WHERE id = ?;");
+			final PreparedStatement preparedStatement =
+					context.getConnection().prepareStatement("UPDATE notification_event SET state = ? WHERE id = ?;");
 
 			// Iterate through the result set
 			while (resultSet.next()) {
@@ -63,7 +61,6 @@ public class V13__NotificationEventProgress extends BaseJavaMigration {
 
 				// Execute the update statement
 				preparedStatement.executeUpdate();
-
 			}
 
 			// Create new json column transform
