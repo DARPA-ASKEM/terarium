@@ -8,6 +8,7 @@ import type {
 	ModelDistribution,
 	Initial
 } from '@/types/Types';
+import { getParameters } from '@/model-representation/service';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -74,6 +75,61 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	const response = await API.put(`/model-configurations/${config.id}`, config);
 	return response?.data ?? null;
 };
+
+export function sanityCheck(config: ModelConfiguration): string[] {
+	const errors: string[] = [];
+	const modelToCheck = config.configuration;
+	if (!modelToCheck) {
+		errors.push('no model defined in configuration');
+		return errors;
+	}
+
+	const parameters: ModelParameter[] = getParameters(modelToCheck);
+
+	parameters.forEach((p) => {
+		const val = p.value;
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+		if (val && val > max) {
+			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
+		}
+		if (val && val < min) {
+			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
+		}
+
+		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
+		const interval = Math.abs(max - min);
+		if (val !== 0 && val !== undefined && Math.abs(interval / val) < 0.003) {
+			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
+		}
+
+		// no constant & no/partial distribution
+		if (val === undefined || Number.isNaN(val)) {
+			if (Number.isNaN(max) || Number.isNaN(min)) {
+				errors.push(`${p.id} has no constant value and partial/no distribution`);
+			}
+		}
+	});
+	return errors;
+}
+
+// cleans a model by removing distributions that are not needed
+export function cleanModel(model: Model): void {
+	const parameters: ModelParameter[] = getParameters(model);
+
+	parameters.forEach((p) => {
+		const val = p.value;
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+
+		// we delete the distribution when there is a constant + partial/no distribution
+		if (val !== undefined && !Number.isNaN(val)) {
+			if (Number.isNaN(max) || Number.isNaN(min)) {
+				delete p.distribution;
+			}
+		}
+	});
+}
 
 export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
 	return config.configuration.semantics?.ode.initials?.find(

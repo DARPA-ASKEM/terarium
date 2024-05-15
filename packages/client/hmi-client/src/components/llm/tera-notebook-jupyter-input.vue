@@ -10,7 +10,7 @@
 			</div>
 		</div>
 		<div class="toolbar-right-side">
-			<Button label="Run" size="large" icon="pi pi-play" @click="runCommand" />
+			<slot name="toolbar-right-side" />
 		</div>
 	</div>
 
@@ -58,7 +58,7 @@ const props = defineProps<{
 	contextLanguage: string;
 }>();
 
-const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output', 'run-command']);
+const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
@@ -68,8 +68,6 @@ const thoughts = ref();
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
 const contextLanguageOptions = ref<string[]>(['python3', 'julia-1.10']);
-
-const runCommand = () => emit('run-command');
 
 const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
