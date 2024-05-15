@@ -23,7 +23,7 @@
 				<template #header-controls>
 					<Button
 						outlined
-						size="large"
+						size="small"
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
@@ -240,13 +240,12 @@
 					class="ace-editor"
 				/>
 				<template #footer>
-					<!-- should be a default option -->
-					<!--					<InputText-->
-					<!--						v-model="knobs.transientModelConfig.name"-->
-					<!--						placeholder="Configuration Name"-->
-					<!--						type="text"-->
-					<!--						class="input-small"-->
-					<!--					/>-->
+					<InputText
+						v-model="knobs.transientModelConfig.name"
+						placeholder="Configuration Name"
+						type="text"
+						class="input-small"
+					/>
 				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
