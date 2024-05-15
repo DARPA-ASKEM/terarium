@@ -126,7 +126,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label>Qoi Method</label>
+							<label>QoI Method</label>
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="[
