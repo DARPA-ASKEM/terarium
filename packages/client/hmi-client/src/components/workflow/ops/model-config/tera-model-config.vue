@@ -185,10 +185,10 @@
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
 								(data: Intervention) => {
-									updateIntervention(data, idx);
+									setIntervention(knobs.transientModelConfig, idx, data);
 								}
 							"
-							@delete="deleteIntervention(idx)"
+							@delete="removeIntervention(knobs.transientModelConfig, idx)"
 						/>
 					</AccordionTab>
 				</Accordion>
@@ -240,10 +240,11 @@
 							:defaultOptions="sampleAgentQuestions"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => (llmThought = data)"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="llmThoughts = []"
 						/>
 					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -362,7 +363,13 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
-import { createModelConfiguration } from '@/services/model-configurations';
+import {
+	cleanModel,
+	sanityCheck,
+	createModelConfiguration,
+	setIntervention,
+	removeIntervention
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type {
 	Initial,
@@ -442,7 +449,7 @@ const buildJupyterContext = () => {
 const codeText = ref(
 	'# This environment contains the variable "model_config" to be read and updated'
 );
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -671,20 +678,6 @@ const addIntervention = () => {
 	}
 };
 
-const deleteIntervention = (index: number) => {
-	if (knobs.value.transientModelConfig.interventions?.[index]) {
-		knobs.value.transientModelConfig.interventions.splice(index, 1);
-	}
-};
-
-const updateIntervention = (value: Intervention, index: number) => {
-	if (knobs.value.transientModelConfig.interventions?.[index]) {
-		knobs.value.transientModelConfig.interventions[index] = value;
-	} else {
-		logger.error(`Failed to update intervention at position ${index}`);
-	}
-};
-
 const updateConfigParam = (params: ModelParameter[]) => {
 	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
 	for (let i = 0; i < parameters.length; i++) {
@@ -709,36 +702,6 @@ const updateConfigFromModel = (inputModel: Model) => {
 	if (knobs.value.transientModelConfig) knobs.value.transientModelConfig.configuration = inputModel;
 };
 
-const runSanityCheck = () => {
-	const errors: string[] = [];
-	const modelToCheck = knobs.value?.transientModelConfig?.configuration;
-	if (!modelToCheck) {
-		errors.push('no model defined in configuration');
-		return errors;
-	}
-
-	const parameters: ModelParameter[] = getParameters(modelToCheck);
-
-	parameters.forEach((p) => {
-		const val = p.value || 0;
-		const max = p.distribution?.parameters.maximum;
-		const min = p.distribution?.parameters.minimum;
-		if (val > max) {
-			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
-		}
-		if (val < min) {
-			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
-		}
-
-		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
-		const interval = Math.abs(max - min);
-		if (val !== 0 && Math.abs(interval / val) < 0.003) {
-			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
-		}
-	});
-	return errors;
-};
-
 const downloadConfiguredModel = async () => {
 	const rawModel = knobs.value?.transientModelConfig?.configuration;
 	if (rawModel) {
@@ -759,20 +722,23 @@ const createConfiguration = async (force: boolean = false) => {
 
 	const state = cloneDeep(props.node.state);
 
+	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
 	sanityCheckErrors.value = [];
 	if (!force) {
-		const errors = runSanityCheck();
+		const errors = sanityCheck(modelConfig);
 		if (errors.length > 0) {
 			sanityCheckErrors.value = errors;
 			return;
 		}
 	}
 
+	cleanModel(modelConfig.configuration);
+
 	const data = await createModelConfiguration(
 		model.value.id,
 		knobs.value?.transientModelConfig?.name ?? '',
 		knobs.value?.transientModelConfig?.description ?? '',
-		knobs.value?.transientModelConfig?.configuration,
+		modelConfig.configuration,
 		false,
 		knobs.value.transientModelConfig.interventions ?? []
 	);
@@ -813,7 +779,7 @@ const createTempModelConfig = async () => {
 		model.value.id,
 		'Temp_config_name',
 		'Utilized in model config node for beaker purposes',
-		model.value,
+		cloneDeep(model.value),
 		true
 	);
 
@@ -836,7 +802,7 @@ const initialize = async () => {
 			name: '',
 			description: '',
 			model_id: modelId,
-			configuration: model.value ?? ({} as Model),
+			configuration: cloneDeep(model.value) ?? ({} as Model),
 			interventions: []
 		};
 
@@ -844,31 +810,10 @@ const initialize = async () => {
 	}
 	// State already been set up use it instead:
 	else {
-		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		const modelConfig = cloneDeep(state.transientModelConfig);
+		cleanModel(modelConfig.configuration);
+		knobs.value.transientModelConfig = modelConfig;
 	}
-
-	// Ensure the parameters have constant and distributions for editing in children components
-	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
-	parameters.forEach((param) => {
-		if (!param.distribution) {
-			// provide a non-zero range, unless val is itself 0
-			const val = param.value;
-			let lb = 0;
-			let ub = 0;
-			if (val && val !== 0) {
-				lb = val - Math.abs(0.05 * val);
-				ub = val + Math.abs(0.05 * val);
-			}
-
-			param.distribution = {
-				type: 'StandardUniform1',
-				parameters: {
-					minimum: lb,
-					maximum: ub
-				}
-			};
-		}
-	});
 
 	// Create a new session and context based on model
 	try {
@@ -933,7 +878,9 @@ onMounted(async () => {
 
 watch(
 	() => knobs.value.transientModelConfig,
-	async (config) => {
+	async () => {
+		const config = cloneDeep(knobs.value.transientModelConfig);
+		cleanModel(config.configuration);
 		if (isEmpty(config) || isEmpty(config.configuration)) return;
 		const response: any = await getMMT(config.configuration);
 		mmt.value = response.mmt;

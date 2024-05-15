@@ -21,8 +21,11 @@ import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -70,6 +73,24 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<Dataset> datasetAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<Workflow> workflowAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<Artifact> artifactAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	private List<DocumentAsset> documentAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient

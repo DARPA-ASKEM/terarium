@@ -204,10 +204,9 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
-	WorkflowPort,
-	OperatorStatus
+	WorkflowPort
 } from '@/types/workflow';
-import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -365,6 +364,9 @@ function appendOutput(
 ) {
 	if (!node) return;
 
+	// we assume that if we can produce an output, the status is okay
+	node.status = OperatorStatus.SUCCESS;
+
 	const uuid = uuidv4();
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
@@ -375,7 +377,8 @@ function appendOutput(
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
 		isSelected: true,
-		timestamp: new Date()
+		timestamp: new Date(),
+		operatorStatus: node.status
 	};
 
 	// Append and set active
@@ -441,12 +444,14 @@ const closeDrilldown = async () => {
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
+	workflowDirty = true;
 };
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
 
 	cloneNoteBookSessions();
+	workflowDirty = true;
 };
 
 // We need to clone data-transform sessions, unlike other operators that are

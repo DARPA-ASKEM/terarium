@@ -33,10 +33,11 @@
 							:default-options="sampleAgentQuestions"
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => (llmThought = data)"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="llmThoughts = []"
 						/>
 					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thought="llmThought" />
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
 					v-model:value="codeText"
@@ -162,7 +163,8 @@ const sampleAgentQuestions = [
 	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
 	'Add an observable titled sample with the expression A * B  * p.',
 	'Rename the state S to Susceptible in the infection transition.',
-	'Rename the transition infection to inf.'
+	'Rename the transition infection to inf.',
+	'Change rate law of inf to S * I * z.'
 ];
 
 const contextLanguage = ref<string>('python3');
@@ -170,7 +172,7 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
-const llmThought = ref();
+const llmThoughts = ref<any[]>([]);
 
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,

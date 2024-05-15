@@ -16,7 +16,7 @@
 		<template #edit-buttons>
 			<SelectButton
 				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
+				@change="changeView"
 				:options="viewOptions"
 				option-value="value"
 				option-disabled="disabled"
@@ -162,7 +162,7 @@ import { FeatureConfig } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { ClientEvent, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
-import { AssetType, ClientEventType, ExtractionAssetType } from '@/types/Types';
+import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -202,6 +202,12 @@ const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' 
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
+
+const changeView = (event) => {
+	if (event.value) {
+		view.value = event.value;
+	}
+};
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
@@ -321,7 +327,7 @@ async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>)
 
 	const status = getStatus(event.data);
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
-	if (status === 'Completed' || event.data.message.includes('Dispatching')) {
+	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);
 	}
 }
