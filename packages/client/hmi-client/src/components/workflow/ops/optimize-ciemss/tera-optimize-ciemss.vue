@@ -116,8 +116,8 @@
 					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label>Target-variable(s)</label>
-							<MultiSelect
+							<label>Target-variable</label>
+							<Dropdown
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
@@ -305,7 +305,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
