@@ -107,18 +107,36 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
+	const interventionType = simulation?.executionPayload?.interventions.selection ?? '';
 	const paramNames: string[] = simulation?.executionPayload?.interventions.param_names ?? [];
+	const paramValue: number[] = simulation?.executionPayload?.interventions.param_values ?? [];
 	const startTime: number[] = simulation?.executionPayload?.interventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
 	const simulationIntervetions: SimulationIntervention[] = [];
-	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-	for (let i = 0; i < paramNames.length; i++) {
-		simulationIntervetions.push({
-			name: paramNames[i],
-			timestep: startTime[i],
-			value: policyResult[i]
-		});
+	if (interventionType === InterventionTypes.paramValue && startTime.length !== 0) {
+		// intervention type == parameter value
+		for (let i = 0; i < paramNames.length; i++) {
+			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
+			simulationIntervetions.push({
+				name: paramNames[i],
+				timestep: startTime[i],
+				value: policyResult[i]
+			});
+		}
+	} else if (interventionType === InterventionTypes.startTime && paramValue.length !== 0) {
+		for (let i = 0; i < paramNames.length; i++) {
+			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
+			simulationIntervetions.push({
+				name: paramNames[i],
+				timestep: policyResult[i],
+				value: paramValue[i]
+			});
+		}
+	} else {
+		// Should realistically not be hit unless we change the interface and do not update
+		console.error(`Unable to find the intevention for optimization run: ${optimizeRunId}`);
 	}
+
 	return simulationIntervetions;
 }
