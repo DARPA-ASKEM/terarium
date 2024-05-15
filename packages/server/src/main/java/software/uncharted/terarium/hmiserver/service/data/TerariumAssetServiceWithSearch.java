@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
@@ -112,11 +113,29 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Observed(name = "function_profile")
 	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
+		return searchAssets(page, pageSize, query, null);
+	}
+
+	/**
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
+	 *
+	 * @param page The page number
+	 * @param pageSize The number of assets per page
+	 * @param query The query to filter the assets
+	 * @return The list of assets
+	 * @throws IOException If there is an error retrieving the assets
+	 */
+	@Observed(name = "function_profile")
+	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query, final SourceConfig source) throws IOException {
 		final SearchRequest.Builder builder =
-				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
+			new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
+		}
+
+		if (source != null) {
+			builder.source(source);
 		}
 
 		final SearchRequest req = builder.build();
