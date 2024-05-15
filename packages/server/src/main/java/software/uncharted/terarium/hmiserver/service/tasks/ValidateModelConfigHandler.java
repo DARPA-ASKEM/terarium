@@ -47,13 +47,15 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 			System.out.println(intermediateResult);
 			System.out.println(">>>>");
+			double progress = intermediateResult.get("progress").doubleValue();
 
-			// float progress = intermediateResult.get("progress").floatValue();
-			// final Properties props = resp.getAdditionalProperties(Properties.class);
-			// final UUID simulationId = props.getSimulationId();
-			// Optional<Simulation> sim = simulationService.getAsset(simulationId);
-			// if (!sim.isEmpty()) {
-			// }
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final UUID simulationId = props.getSimulationId();
+			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			if (!sim.isEmpty()) {
+				sim.get().setProgress(progress);
+				simulationService.updateAsset(sim.get());
+			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
