@@ -20,6 +20,16 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+				<template #header-controls>
+					<Button
+						outlined
+						size="large"
+						:disabled="isSaveDisabled"
+						label="Run"
+						icon="pi pi-play"
+						@click="createConfiguration(false)"
+					/>
+				</template>
 				<!-- Suggested configurations -->
 				<div class="box-container mt-3" v-if="model">
 					<Accordion multiple :active-index="[0]">
