@@ -551,8 +551,12 @@ public class ProjectController {
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		return updatedProject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
-				.build());
+		if (!updatedProject.isPresent()) {
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-update"));
+		}
+
+		return ResponseEntity.ok(updatedProject.get());
 	}
 
 	// --------------------------------------------------------------------------
@@ -746,9 +750,11 @@ public class ProjectController {
 		final Optional<ProjectAsset> projectAsset =
 				projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
 
-		return projectAsset
-				.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa))
-				.orElseGet(() -> ResponseEntity.notFound().build());
+		if (!projectAsset.isPresent()) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+		}
+
+		return ResponseEntity.ok(projectAsset.get());
 	}
 
 	@Operation(summary = "Deletes an asset inside of a given project")
