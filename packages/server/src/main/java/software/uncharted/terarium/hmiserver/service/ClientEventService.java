@@ -9,10 +9,8 @@ import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -137,7 +135,6 @@ public class ClientEventService {
 		}
 		synchronized (userIdToEmitter) {
 			// Send the message to each user connected and remove disconnected users
-			final Set<String> userIdsToRemove = new HashSet<>();
 			userIdToEmitter.forEach((userId, emitterList) -> {
 				send(messageJson, emitterList, userId);
 			});
@@ -156,12 +153,15 @@ public class ClientEventService {
 				log.error("Error sending all users message to user {}", userId, e);
 			}
 		});
-		emittersToRemove.forEach((emitter) -> {
-			userIdToEmitter.get(userId).remove(emitter);
-			if (userIdToEmitter.get(userId).size() == 0) {
-				userIdToEmitter.remove(userId);
-			}
-		});
+
+		synchronized (userIdToEmitter) {
+			emittersToRemove.forEach((emitter) -> {
+				userIdToEmitter.get(userId).remove(emitter);
+				if (userIdToEmitter.get(userId).size() == 0) {
+					userIdToEmitter.remove(userId);
+				}
+			});
+		}
 	}
 
 	/**
@@ -181,10 +181,13 @@ public class ClientEventService {
 		if (messageJson == null) {
 			return;
 		}
+
 		final String userId = messageJson.at("/userId").asText();
-		final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
 		synchronized (userIdToEmitter) {
-			send(messageJson.at("/event"), emitterList, userId);
+			final List<SseEmitter> emitterList = userIdToEmitter.get(userId);
+			if (emitterList != null) {
+				send(messageJson.at("/event"), emitterList, userId);
+			}
 		}
 	}
 
@@ -198,9 +201,7 @@ public class ClientEventService {
 	 * @param <T>
 	 */
 	public static <T> T decodeMessage(final Message message, final Class<T> clazz) {
-
 		final ObjectMapper mapper = new ObjectMapper();
-
 		try {
 			return mapper.readValue(message.getBody(), clazz);
 		} catch (final Exception e) {
