@@ -37,6 +37,24 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 	}
 
 	@Override
+	public TaskResponse onRunning(final TaskResponse resp) {
+		// FIXME: remove when we distinguish between "initialized" vs "running" state
+		if (resp.getOutput() == null) {
+			return resp;
+		}
+
+		try {
+			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			System.out.println(intermediateResult);
+			System.out.println(">>>>");
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return resp;
+	}
+
+	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		final String resultFilename = "validation.json";
 		try {
