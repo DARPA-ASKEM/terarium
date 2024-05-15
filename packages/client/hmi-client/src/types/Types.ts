@@ -205,8 +205,8 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
-    concepts?: OntologyConcept[];
     assets?: DocumentExtraction[];
+    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -415,6 +415,7 @@ export interface Project extends TerariumAsset {
     datasetAssets: Dataset[];
     workflowAssets: Workflow[];
     artifactAssets: Artifact[];
+    documentAssets: DocumentAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -1397,7 +1398,6 @@ export enum SimulationType {
 }
 
 export enum ProgressState {
-    Cancelling = "CANCELLING",
     Cancelled = "CANCELLED",
     Complete = "COMPLETE",
     Error = "ERROR",
@@ -1405,6 +1405,7 @@ export enum ProgressState {
     Queued = "QUEUED",
     Retrieving = "RETRIEVING",
     Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {

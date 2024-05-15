@@ -15,6 +15,20 @@ import { ProjectPages } from '@/types/Project';
 import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
 
+/**
+ * We use ProgressState to represent the status of the notification for a task/job.
+ * Since the task status from the task runners response (TaskResponse) is represented by TaskStatus, we need to map TaskStatus to ProgressState.
+ */
+const taskStatusToProgressState = {
+	[TaskStatus.Queued]: ProgressState.Queued,
+	[TaskStatus.Running]: ProgressState.Running,
+	[TaskStatus.Success]: ProgressState.Complete,
+	[TaskStatus.Failed]: ProgressState.Failed,
+	[TaskStatus.Cancelled]: ProgressState.Cancelled,
+	[TaskStatus.Cancelling]: ProgressState.Cancelling
+};
+const getStatusFromTaskResponse = (data: TaskResponse) => taskStatusToProgressState[data.status];
+
 export const getStatusFromProgress = (data: { error: string; t: number }) => {
 	if (data.error) return ProgressState.Failed;
 	if (data.t >= 1.0) return ProgressState.Complete;
@@ -23,18 +37,6 @@ export const getStatusFromProgress = (data: { error: string; t: number }) => {
 
 const isTaskResponse = (data: any): data is TaskResponse =>
 	data.id !== undefined && data.script !== undefined && data.status;
-
-const getStatusFromTaskResponse = (data: TaskResponse) => {
-	const statusMap = {
-		[TaskStatus.Queued]: ProgressState.Queued,
-		[TaskStatus.Running]: ProgressState.Running,
-		[TaskStatus.Success]: ProgressState.Complete,
-		[TaskStatus.Failed]: ProgressState.Failed,
-		[TaskStatus.Cancelled]: ProgressState.Cancelled,
-		[TaskStatus.Cancelling]: ProgressState.Cancelling
-	};
-	return statusMap[data.status];
-};
 
 const toastTitle = {
 	[ClientEventType.ExtractionPdf]: {

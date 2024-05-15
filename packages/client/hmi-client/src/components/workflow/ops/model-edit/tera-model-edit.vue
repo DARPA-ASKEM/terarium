@@ -1,12 +1,14 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
-				v-if="amr && isKernelReady"
+				v-if="amr"
 				:model="amr"
 				:kernel-manager="kernelManager"
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
@@ -15,17 +17,6 @@
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar-right-side">
-					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						size="small"
-						@click="runFromCodeWrapper"
-					/>
-				</div>
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -35,7 +26,18 @@
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
 							@question-asked="llmThoughts = []"
-						/>
+						>
+							<template #toolbar-right-side>
+								<Button
+									label="Reset"
+									outlined
+									severity="secondary"
+									size="small"
+									@click="resetModel"
+								/>
+								<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							</template>
+						</tera-notebook-jupyter-input>
 					</Suspense>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
@@ -68,21 +70,6 @@
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
-					<template #footer>
-						<div class="flex gap-2">
-							<Button
-								:disabled="!amr"
-								size="large"
-								severity="secondary"
-								outlined
-								class="white-space-nowrap"
-								style="margin-right: auto"
-								label="Save as new model"
-								@click="showSaveModelModal = true"
-							/>
-							<Button label="Close" size="large" @click="emit('close')" />
-						</div>
-					</template>
 				</tera-drilldown-preview>
 			</div>
 		</div>
@@ -92,12 +79,11 @@
 		:model="amr"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
-		@on-save="onSaveModel"
 	/>
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { VAceEditor } from 'vue3-ace-editor';
@@ -105,7 +91,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
-import { getModel } from '@/services/model';
+import { getModel, createModel, updateModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -120,6 +106,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import { saveCodeToState } from '@/services/notebook';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -132,13 +119,8 @@ enum ModelEditTabs {
 	Notebook = 'Notebook'
 }
 
-interface SaveOptions {
-	addToProject?: boolean;
-	appendOutputPort?: boolean;
-}
-
 const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
+	if (!isEmpty(props.node.outputs)) {
 		return [
 			{
 				label: 'Select outputs to display in operator',
@@ -148,12 +130,13 @@ const outputs = computed(() => {
 	}
 	return [];
 });
-const selectedOutputId = ref<string>();
+const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
-const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
+let activeModelId: string | null = null;
+const readyToSaveOutputModel = ref(false);
 const showSaveModelModal = ref(false);
 
 let editor: VAceEditorInstance['_editor'] | null;
@@ -184,13 +167,23 @@ const executeResponse = ref({
 	traceback: ''
 });
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
+
 const appendCode = (data: any, property: string) => {
 	const newCode = data.content[property] as string;
 	if (newCode) {
 		codeText.value = (codeText.value ?? defaultCodeText).concat(' \n', newCode);
 
 		if (property === 'executed_code') {
-			saveCodeToState(codeText.value, true);
+			updateCodeState();
 		}
 	} else {
 		logger.error('No code to append');
@@ -199,11 +192,19 @@ const appendCode = (data: any, property: string) => {
 
 const syncWithMiraModel = (data: any) => {
 	const updatedModel = data.content?.['application/json'];
-	if (!updatedModel) {
+	if (!updatedModel || !activeModelId) {
 		logger.error('Error getting updated model from beaker');
 		return;
 	}
-	amr.value = updatedModel;
+	updatedModel.id = activeModelId;
+	const firstOutputId = outputs.value?.[0].items[0].id;
+	// If the first output is edited, create a new output
+	if (firstOutputId === selectedOutputId.value) {
+		createOutput(updatedModel);
+	} else {
+		amr.value = updatedModel;
+		readyToSaveOutputModel.value = true;
+	}
 };
 
 // Reset model, then execute the code
@@ -239,7 +240,7 @@ const runFromCode = (code: string) => {
 			syncWithMiraModel(data);
 
 			if (executedCode) {
-				saveCodeToState(executedCode, true);
+				updateCodeState(executedCode);
 			}
 		})
 		.register('any_execute_reply', (data) => {
@@ -269,7 +270,7 @@ const handleResetResponse = (data: any) => {
 		// updateStratifyGroupForm(blankStratifyGroup);
 
 		codeText.value = defaultCodeText;
-		saveCodeToState('', false);
+		updateCodeState('', false);
 
 		logger.info('Model reset');
 	} else {
@@ -277,37 +278,58 @@ const handleResetResponse = (data: any) => {
 	}
 };
 
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
+};
+
+function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
+	const state = saveCodeToState(props.node, code, hasCodeRun);
+	emit('update-state', state);
+}
+
+// Saves the output model in the backend
+// Not called after every little model edit to avoid too many requests
+// Called when the selected output is changed, component unmounts or before the window is closed
+function updateOutputModel() {
+	if (readyToSaveOutputModel.value && amr.value) {
+		updateModel(amr.value);
+		readyToSaveOutputModel.value = false;
+	}
+}
+
+const createOutput = async (modelToSave: Model) => {
+	// If it's the original model, use that otherwise create a new one
+	const modelData = isEmpty(outputs.value) ? modelToSave : await createModel(modelToSave);
+	if (!modelData) return;
+
+	emit('append-output', {
+		id: uuidv4(),
+		label: isEmpty(outputs.value) ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
+		type: 'modelId',
+		state: cloneDeep(props.node.state),
+		value: [modelData.id]
+	});
+};
+
 const buildJupyterContext = () => {
-	if (!amr.value) {
+	if (!activeModelId) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
-
 	return {
 		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
-			id: amr.value.id
+			id: activeModelId
 		}
 	};
 };
 
-const inputChangeHandler = async () => {
-	const input = props.node.inputs[0];
-	if (!input) return;
-
-	let modelId: string | null = null;
-	if (input.type === 'modelId') {
-		modelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
-	if (!modelId) return;
-
-	amr.value = await getModel(modelId);
-	if (!amr.value) return;
-
-	codeText.value = props.node.state.modelEditCodeHistory?.[0]?.code ?? defaultCodeText;
+const handleOutputChange = async () => {
+	// Switch to model from output
+	activeModelId = activeOutput.value?.value?.[0];
+	if (!activeModelId) return;
+	codeText.value = props.node.state.notebookHistory[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -317,74 +339,62 @@ const inputChangeHandler = async () => {
 				// when coming from output dropdown change we should shutdown first
 				kernelManager.shutdown();
 			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', buildJupyterContext());
-			isKernelReady.value = true;
-		}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 
-		if (codeText.value && codeText.value.length > 0) {
-			runFromCodeWrapper();
+			// Get the model after the kernel is ready so function in model-template-editor can be triggered with an existing kernel
+			amr.value = await getModel(activeModelId);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 };
 
-const onSaveModel = (savedModel: Model, options: SaveOptions = { appendOutputPort: true }) => {
-	if (options.appendOutputPort) {
-		emit('append-output', {
-			id: uuidv4(),
-			label: savedModel.name,
-			type: 'modelId',
-			state: _.cloneDeep(props.node.state),
-			value: [savedModel.id]
-		});
-	}
-};
-
-const initializeAceEditor = (editorInstance: any) => {
-	editor = editorInstance;
-};
-
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
-const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	const state = _.cloneDeep(props.node.state);
-	state.hasCodeBeenRun = hasCodeBeenRun;
-
-	// for now only save the last code executed, may want to save all code executed in the future
-	const codeHistoryLength = props.node.state.modelEditCodeHistory.length;
-	const timestamp = Date.now();
-	if (codeHistoryLength > 0) {
-		state.modelEditCodeHistory[0] = { code, timestamp };
-	} else {
-		state.modelEditCodeHistory.push({ code, timestamp });
-	}
-
-	emit('update-state', state);
-};
-
 const onSelection = (id: string) => {
+	updateOutputModel(); // Save the model before switching to the new one
 	emit('select-output', id);
 };
 
+// Updates output selection
 watch(
 	() => props.node.active,
 	async () => {
 		// Update selected output
 		if (props.node.active) {
-			activeOutput.value = props.node.outputs.find((d) => d.id === props.node.active) as any;
 			selectedOutputId.value = props.node.active;
-
-			await inputChangeHandler();
+			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
+			await handleOutputChange();
 		}
 	},
 	{ immediate: true }
 );
 
 onMounted(async () => {
-	await inputChangeHandler();
+	// By default the first output option is the original model
+	if (isEmpty(outputs.value)) {
+		const input = props.node.inputs[0];
+		if (!input) return;
+
+		// Get input model id
+		let modelId: string | null = null;
+		if (input.type === 'modelId') {
+			modelId = input.value?.[0];
+		} else if (input.type === 'modelConfigId') {
+			modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		}
+		if (!modelId) return;
+
+		// Get model
+		const originalModel = await getModel(modelId);
+		if (!originalModel) return;
+
+		// Set default output which is the input (original model)
+		createOutput(originalModel);
+	}
+	window.addEventListener('beforeunload', updateOutputModel);
 });
 
 onUnmounted(() => {
+	updateOutputModel();
 	kernelManager.shutdown();
 });
 </script>
@@ -412,14 +422,6 @@ onUnmounted(() => {
 
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
-}
-.toolbar-right-side {
-	position: absolute;
-	top: var(--gap);
-	right: 0;
-	gap: var(--gap-small);
-	display: flex;
-	align-items: center;
 }
 
 .preview-container {

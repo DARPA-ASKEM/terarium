@@ -2,15 +2,15 @@
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
 		<div class="toolbar-left-side">
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 			<div class="flex gap-1 mr-2">
 				<InputSwitch v-model="showAssistant" class="mr-1" />
 				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 				<span>AI assistant</span>
 			</div>
-			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		</div>
 		<div class="toolbar-right-side">
-			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
+			<slot name="toolbar-right-side" />
 		</div>
 	</div>
 
@@ -102,6 +102,7 @@ const submitQuestion = () => {
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
+	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
 	padding-top: var(--gap);
