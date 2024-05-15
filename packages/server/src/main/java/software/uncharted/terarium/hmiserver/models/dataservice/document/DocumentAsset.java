@@ -127,7 +127,7 @@ public class DocumentAsset extends TerariumAsset {
 
 		if (this.assets != null) {
 			clone.assets = new ArrayList<>();
-			for(final DocumentExtraction asset : this.assets) {
+			for (final DocumentExtraction asset : this.assets) {
 				clone.assets.add(asset.clone());
 			}
 		}
