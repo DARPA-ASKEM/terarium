@@ -1291,7 +1291,7 @@ export enum ClientEventType {
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
 }
 
