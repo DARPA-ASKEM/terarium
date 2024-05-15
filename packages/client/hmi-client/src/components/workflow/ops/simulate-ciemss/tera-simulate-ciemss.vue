@@ -34,6 +34,15 @@
 					<!-- Number of Samples & Method -->
 					<div class="input-row mt-3">
 						<div class="label-and-input">
+							<label for="4">Preset (optional)</label>
+							<Dropdown
+								v-model="presetType"
+								placeholder="Select an option"
+								:options="[PresetTypes.Speed, PresetTypes.Quality]"
+								@update:model-value="setPresetValues"
+							/>
+						</div>
+						<div class="label-and-input">
 							<label for="4">Number of samples</label>
 							<InputNumber
 								id="4"
@@ -183,6 +192,21 @@ enum OutputView {
 	Data = 'Data'
 }
 
+enum PresetTypes {
+	Speed = 'Speed',
+	Quality = ' Quality'
+}
+
+const speedValues = {
+	numSamples: 10,
+	method: ciemssMethodOptions.value[1]
+};
+
+const qualityValues = {
+	numSamples: 100,
+	method: ciemssMethodOptions.value[0]
+};
+
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
@@ -205,6 +229,18 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const presetType = computed(() => {
+	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+		return PresetTypes.Speed;
+	}
+	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+		return PresetTypes.Quality;
+	}
+
+	return '';
+});
+
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(
 	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
@@ -217,6 +253,18 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
+
+const setPresetValues = (data) => {
+	console.log(data);
+	if (data === PresetTypes.Quality) {
+		numSamples.value = qualityValues.numSamples;
+		method.value = qualityValues.method;
+	}
+	if (data === PresetTypes.Speed) {
+		numSamples.value = speedValues.numSamples;
+		method.value = speedValues.method;
+	}
+};
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
