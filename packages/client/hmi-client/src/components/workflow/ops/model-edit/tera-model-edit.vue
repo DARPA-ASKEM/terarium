@@ -2,6 +2,7 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>

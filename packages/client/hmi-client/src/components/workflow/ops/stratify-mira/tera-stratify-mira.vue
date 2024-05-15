@@ -1,9 +1,9 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
-		:menu-items="menuItems"
 		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
