@@ -1,6 +1,8 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -15,17 +17,6 @@
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar-right-side">
-					<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						size="small"
-						@click="runFromCodeWrapper"
-					/>
-				</div>
 				<div class="toolbar">
 					<Suspense>
 						<tera-notebook-jupyter-input
@@ -35,7 +26,18 @@
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
 							@question-asked="llmThoughts = []"
-						/>
+						>
+							<template #toolbar-right-side>
+								<Button
+									label="Reset"
+									outlined
+									severity="secondary"
+									size="small"
+									@click="resetModel"
+								/>
+								<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							</template>
+						</tera-notebook-jupyter-input>
 					</Suspense>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
@@ -68,21 +70,6 @@
 					<div v-else>
 						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 					</div>
-					<template #footer>
-						<div class="flex gap-2">
-							<Button
-								:disabled="!amr"
-								size="large"
-								severity="secondary"
-								outlined
-								class="white-space-nowrap"
-								style="margin-right: auto"
-								label="Save as new model"
-								@click="showSaveModelModal = true"
-							/>
-							<Button label="Close" size="large" @click="emit('close')" />
-						</div>
-					</template>
 				</tera-drilldown-preview>
 			</div>
 		</div>
@@ -180,6 +167,16 @@ const executeResponse = ref({
 	value: '',
 	traceback: ''
 });
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
 
 const appendCode = (data: any, property: string) => {
 	const newCode = data.content[property] as string;
@@ -354,7 +351,6 @@ const handleOutputChange = async () => {
 	}
 };
 
-// Triggers output change
 const onSelection = (id: string) => {
 	updateOutputModel(); // Save the model before switching to the new one
 	emit('select-output', id);
@@ -428,14 +424,6 @@ onUnmounted(() => {
 
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
-}
-.toolbar-right-side {
-	position: absolute;
-	top: var(--gap);
-	right: 0;
-	gap: var(--gap-small);
-	display: flex;
-	align-items: center;
 }
 
 .preview-container {

@@ -38,8 +38,7 @@ export async function getLatestUnacknowledgedNotifications(
  */
 export function convertToClientEvents<T>(notificationGroup: NotificationGroup) {
 	const { notificationEvents, type } = notificationGroup;
-
-	if (Object.values(ClientEventType).includes(type as ClientEventType)) {
+	if (!Object.values(ClientEventType).includes(type as ClientEventType)) {
 		logger.error(`Notification type: ${type} is not supported client event type`, {
 			showToast: false
 		});
