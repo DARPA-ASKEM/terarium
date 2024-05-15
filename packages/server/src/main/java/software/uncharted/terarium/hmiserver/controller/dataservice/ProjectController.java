@@ -40,6 +40,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -52,6 +53,7 @@ import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -96,6 +98,7 @@ public class ProjectController {
 	final CodeService codeService;
 	final CurrentUserService currentUserService;
 	final DatasetService datasetService;
+	final DocumentAssetService documentAssetService;
 	final ProjectAssetService projectAssetService;
 	final ProjectService projectService;
 	final ReBACService reBACService;
@@ -674,7 +677,7 @@ public class ProjectController {
 			try {
 				workflowService.updateAsset(workflow.get());
 			} catch (final Exception e) {
-				log.error("Error updating code asset", e);
+				log.error("Error updating workflow asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("workflow.unable-to-update"));
 			}
@@ -696,7 +699,7 @@ public class ProjectController {
 			try {
 				datasetService.updateAsset(dataset.get());
 			} catch (final Exception e) {
-				log.error("Error updating code asset", e);
+				log.error("Error updating dataset asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
 			}
@@ -718,9 +721,30 @@ public class ProjectController {
 			try {
 				artifactService.updateAsset(artifact.get());
 			} catch (final Exception e) {
-				log.error("Error updating code asset", e);
+				log.error("Error updating artifact asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-update"));
+			}
+		} else if (assetType.equals(AssetType.DOCUMENT)) {
+
+			final Optional<DocumentAsset> documentAsset = documentAssetService.getAsset(assetId);
+			if (documentAsset.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+			}
+
+			if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
+			if (project.get().getDocumentAssets().contains(documentAsset.get())) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+			}
+
+			documentAsset.get().setProject(project.get());
+
+			try {
+				documentAssetService.updateAsset(documentAsset.get());
+			} catch (final Exception e) {
+				log.error("Error updating document asset", e);
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
 			}
 		}
 
@@ -868,6 +892,20 @@ public class ProjectController {
 			if (deletedArtifact.isEmpty() || deletedArtifact.get().getDeletedOn() == null) {
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-delete"));
+			}
+		} else if (assetType.equals(AssetType.DOCUMENT)) {
+
+			final Optional<DocumentAsset> deletedDocumentAsset;
+			try {
+				deletedDocumentAsset = documentAssetService.deleteAsset(assetId);
+			} catch (final IOException e) {
+				throw new ResponseStatusException(
+						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
+
+			if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-delete"));
 			}
 		}
 

@@ -129,6 +129,14 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	return promise;
 }
 
+export async function cancelTask(taskId: string): Promise<void> {
+	try {
+		await API.put<TaskResponse>(`/gollm/${taskId}`);
+	} catch (err) {
+		logger.error(`An issue occurred while cancelling task with id: ${taskId}. ${err}`);
+	}
+}
+
 /**
  * Handles task for a given task ID.
  * @param {string} id - The task ID.
