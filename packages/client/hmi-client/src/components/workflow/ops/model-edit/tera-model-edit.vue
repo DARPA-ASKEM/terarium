@@ -8,7 +8,7 @@
 	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
-				v-if="amr && isKernelReady"
+				v-if="amr"
 				:model="amr"
 				:kernel-manager="kernelManager"
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
@@ -134,7 +134,6 @@ const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
-const isKernelReady = ref(false);
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
 const readyToSaveOutputModel = ref(false);
@@ -341,7 +340,6 @@ const handleOutputChange = async () => {
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			isKernelReady.value = true;
 
 			// Get the model after the kernel is ready so function in model-template-editor can be triggered with an existing kernel
 			amr.value = await getModel(activeModelId);

@@ -157,7 +157,7 @@ import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
-	model?: Model;
+	model: Model;
 	kernelManager: KernelSessionManager;
 }>();
 
