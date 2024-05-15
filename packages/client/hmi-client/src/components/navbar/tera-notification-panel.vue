@@ -64,7 +64,7 @@
 					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
-					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
+					<span class="time-msg">{{ getElapsedTimeText(item.lastUpdated) }}</span>
 				</div>
 			</li>
 		</ul>
@@ -83,6 +83,7 @@ import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
+import { getElapsedTimeText } from '@/utils/date';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
@@ -135,17 +136,12 @@ const getAssetRoute = (item: NotificationItem) => {
 	}
 };
 
-const getElapsedTimeText = (item: NotificationItem) => {
-	const time = Date.now() - item.lastUpdated;
-	const minutes = Math.floor(time / (1000 * 60));
-	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
-};
-
 const cancelTask = (item: NotificationItem) => {
 	if ([ClientEventType.TaskGollmModelCard].includes(item.type)) {
 		cancelGoLLMTask(item.notificationGroupId);
 	}
 };
+
 </script>
 
 <style>
