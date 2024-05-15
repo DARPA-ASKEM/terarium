@@ -313,7 +313,7 @@ const createOutput = async (modelToSave: Model) => {
 };
 
 const buildJupyterContext = () => {
-	if (!amr.value) {
+	if (!activeModelId) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
 	}
@@ -321,7 +321,7 @@ const buildJupyterContext = () => {
 		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
-			id: amr.value.id
+			id: activeModelId
 		}
 	};
 };
@@ -330,9 +330,6 @@ const handleOutputChange = async () => {
 	// Switch to model from output
 	activeModelId = activeOutput.value?.value?.[0];
 	if (!activeModelId) return;
-	amr.value = await getModel(activeModelId);
-	if (!amr.value) return;
-
 	codeText.value = props.node.state.notebookHistory[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
@@ -345,6 +342,9 @@ const handleOutputChange = async () => {
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 			isKernelReady.value = true;
+
+			// Get the model after the kernel is ready so function in model-template-editor can be triggered with an existing kernel
+			amr.value = await getModel(activeModelId);
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
