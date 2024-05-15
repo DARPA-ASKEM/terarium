@@ -1290,6 +1290,9 @@ export enum ClientEventType {
     ExtractionPdf = "EXTRACTION_PDF",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
+    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
 }
 
 export enum FileType {
@@ -1402,6 +1405,7 @@ export enum ProgressState {
     Queued = "QUEUED",
     Retrieving = "RETRIEVING",
     Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {
