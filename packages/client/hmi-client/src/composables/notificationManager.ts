@@ -11,17 +11,14 @@ import {
 	createNotificationEventLogger
 } from '@/services/notificationEventHandlers';
 import { ProgressState } from '@/types/Types';
-// import { useProjects } from './project';
+import { useProjects } from './project';
 
 let initialized = false;
 
-// const { findAsset } = useProjects();
+const { activeProject } = useProjects();
 
-// const isNotificationForActiveProject = (item: NotificationItem) => !!findAsset(item.assetId);
-const isNotificationForActiveProject = (item: NotificationItem) => {
-	console.log(item);
-	return true;
-};
+const isNotificationForActiveProject = (item: NotificationItem) =>
+	item.projectId === activeProject.value?.id;
 
 const isFinished = (item: NotificationItem) =>
 	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);

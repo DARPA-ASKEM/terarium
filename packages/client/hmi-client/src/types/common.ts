@@ -201,11 +201,13 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface NotificationItem extends NotificationItemStatus {
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
-	assetId: string;
-	assetName: string;
+	sourceName: string;
+	contextPath: string;
+	projectId?: string;
+	nodeId?: string;
 	lastUpdated: number;
 	acknowledged: boolean;
 	supportCancel: boolean;

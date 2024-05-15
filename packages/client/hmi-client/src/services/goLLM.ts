@@ -40,14 +40,18 @@ export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
 	handlers: TaskEventHandlers,
-	metadata: any
+	projectId?: string,
+	workflowId?: string,
+	nodeId?: string
 ): Promise<TaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
 				'model-id': modelId,
 				'document-id': documentId,
-				metadata: metadata
+				'project-id': projectId,
+				'workflow-id': workflowId,
+				'node-id': nodeId
 			}
 		});
 

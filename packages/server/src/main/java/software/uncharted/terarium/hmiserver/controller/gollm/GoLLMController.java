@@ -174,8 +174,9 @@ public class GoLLMController {
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam("project-id") final UUID projectId,
-			@RequestParam("metadata") final Object metadata) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId) {
 
 		try {
 
@@ -215,7 +216,8 @@ public class GoLLMController {
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
 			props.setDocumentId(documentId);
 			props.setModelId(modelId);
-			props.setMetadata(metadata);
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
 
 			// send the request

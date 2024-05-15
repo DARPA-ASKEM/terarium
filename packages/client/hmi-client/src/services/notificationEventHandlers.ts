@@ -1,4 +1,5 @@
 import {
+	AssetType,
 	ClientEvent,
 	ClientEventType,
 	ExtractionStatusUpdate,
@@ -10,7 +11,9 @@ import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
 import { NotificationItem, NotificationItemStatus } from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
+import { ProjectPages } from '@/types/Project';
 import { getDocumentAsset } from './document-assets';
+import { getWorkflow } from './workflow';
 
 export const getStatusFromProgress = (data: { error: string; t: number }) => {
 	if (data.error) return ProgressState.Failed;
@@ -116,12 +119,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			if (!existingItem) {
 				const newItem: NotificationItem = {
 					notificationGroupId: event.notificationGroupId ?? '',
+					projectId: event.projectId,
 					type: event.type,
 					lastUpdated,
 					acknowledged: false,
 					supportCancel: false,
+					contextPath: '',
+					sourceName: '',
 					assetId: '',
-					assetName: '',
+					pageType: ProjectPages.OVERVIEW, // Default to overview page
 					...buildNotificationItemStatus(event)
 				};
 				notificationItems.value.push(newItem);
@@ -140,29 +146,48 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.documentId;
-		getDocumentAsset(event.data.documentId).then((document) =>
-			Object.assign(created, { assetName: document?.name || '' })
+		created.pageType = AssetType.Document;
+		getDocumentAsset(created.assetId).then((document) =>
+			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
 		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.documentId;
+		created.assetId = event.data.additionalProperties.documentId as string;
+		created.pageType = AssetType.Document;
 		getDocumentAsset(created.assetId).then((document) =>
-			Object.assign(created, { assetName: document?.name || '' })
+			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (_event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
 		created.supportCancel = true;
-		console.log(created);
+		created.sourceName = 'Configure Model';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId).then((workflow) =>
+			Object.assign(created, { contextPath: workflow?.name || '' })
+		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmDatasetConfigure, (_event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmDatasetConfigure, (event, created) => {
 		created.supportCancel = true;
-		console.log(created);
+		created.sourceName = 'Configure Model';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId).then((workflow) =>
+			Object.assign(created, { contextPath: workflow?.name || '' })
+		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (_event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
 		created.supportCancel = true;
-		console.log(created);
+		created.sourceName = 'Compare Models';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId).then((workflow) =>
+			Object.assign(created, { contextPath: workflow?.name || '' })
+		);
 	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});

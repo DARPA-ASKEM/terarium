@@ -30,7 +30,11 @@
 			>
 				<p class="heading">
 					{{ getTitleText(item) }}
-					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
+					<tera-asset-link
+						:label="item.sourceName"
+						:asset-route="getAssetRoute(item)"
+						:route-query="getAssetRouteQuery(item)"
+					/>
 				</p>
 				<div class="notification-path-text msg">
 					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
@@ -126,14 +130,12 @@ const getActionText = (item: NotificationItem) => {
 	}
 };
 
-const getAssetRoute = (item: NotificationItem) => {
-	switch (item.type) {
-		case ClientEventType.ExtractionPdf:
-			return { assetId: item.assetId, pageType: AssetType.Document };
-		default:
-			return { assetId: item.assetId, pageType: AssetType.Document };
-	}
-};
+const getAssetRoute = (item: NotificationItem) => ({
+	assetId: item.assetId as string,
+	pageType: item.pageType
+});
+const getAssetRouteQuery = (item: NotificationItem) =>
+	item.pageType === AssetType.Workflow && item.nodeId ? { operator: item.nodeId } : {};
 
 const getElapsedTimeText = (item: NotificationItem) => {
 	const time = Date.now() - item.lastUpdated;
