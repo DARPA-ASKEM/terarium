@@ -141,7 +141,6 @@ const cancelTask = (item: NotificationItem) => {
 		cancelGoLLMTask(item.notificationGroupId);
 	}
 };
-
 </script>
 
 <style>
