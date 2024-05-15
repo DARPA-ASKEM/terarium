@@ -555,6 +555,10 @@ public class ProjectController {
 				.build());
 	}
 
+	// --------------------------------------------------------------------------
+	// Project Assets
+	// --------------------------------------------------------------------------
+
 	@Operation(summary = "Creates an asset inside of a given project")
 	@ApiResponses(
 			value = {
@@ -746,10 +750,6 @@ public class ProjectController {
 				.map(pa -> ResponseEntity.status(HttpStatus.CREATED).body(pa))
 				.orElseGet(() -> ResponseEntity.notFound().build());
 	}
-
-	// --------------------------------------------------------------------------
-	// Project Assets
-	// --------------------------------------------------------------------------
 
 	@Operation(summary = "Deletes an asset inside of a given project")
 	@ApiResponses(
