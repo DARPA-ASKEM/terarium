@@ -498,6 +498,7 @@ export interface Simulation extends TerariumAsset {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    progress?: number;
     statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
