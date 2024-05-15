@@ -22,7 +22,6 @@
 			<tera-drilldown-section class="pl-3 pr-3 gap-0">
 				<template #header-controls>
 					<Button
-						outlined
 						size="small"
 						:disabled="isSaveDisabled"
 						label="Run"
@@ -225,6 +224,12 @@
 							@question-asked="llmThoughts = []"
 						>
 							<template #toolbar-right-side>
+								<InputText
+									v-model="knobs.transientModelConfig.name"
+									placeholder="Configuration Name"
+									type="text"
+									class="input-small"
+								/>
 								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
 							</template>
 						</tera-notebook-jupyter-input>
@@ -239,14 +244,6 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
-				<template #footer>
-					<InputText
-						v-model="knobs.transientModelConfig.name"
-						placeholder="Configuration Name"
-						type="text"
-						class="input-small"
-					/>
-				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
 				<tera-notebook-error
