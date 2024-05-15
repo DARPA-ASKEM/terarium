@@ -656,6 +656,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 			initialize();
 			if (props.node.state.forecastRunId !== '') {
+				// The run has finished
 				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
 				knobs.value.forecastRunId = props.node.state.forecastRunId;
 				setOutputValues();
