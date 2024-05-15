@@ -280,8 +280,8 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 const selectedOutputId = ref<string>('');
-const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
-	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
+const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(() =>
+	props.node.outputs?.find((output) => selectedOutputId.value === output.id)
 );
 
 const card = ref<Card | null>(null);
