@@ -48,8 +48,6 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressForecastId: string;
 	forecastRunId: string;
 	optimizationRunId: string;
-	modelConfigName: string;
-	modelConfigDesc: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
@@ -97,8 +95,6 @@ export const OptimizeCiemssOperation: Operation = {
 			inProgressForecastId: '',
 			forecastRunId: '',
 			optimizationRunId: '',
-			modelConfigName: '',
-			modelConfigDesc: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};

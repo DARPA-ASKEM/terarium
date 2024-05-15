@@ -283,14 +283,14 @@
 	>
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<InputText v-model="knobs.modelConfigName" />
+			<InputText v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<InputText v-model="knobs.modelConfigDesc" />
+			<InputText v-model="modelConfigDesc" />
 		</div>
 		<Button
-			:disabled="knobs.modelConfigName === ''"
+			:disabled="modelConfigName === ''"
 			outlined
 			label="Save as a new model configuration"
 			@click="saveModelConfiguration"
@@ -382,8 +382,6 @@ interface BasicKnobs {
 	isMinimized: boolean;
 	forecastRunId: string;
 	optimizationRunId: string;
-	modelConfigName: string;
-	modelConfigDesc: string;
 	interventionType: InterventionTypes;
 }
 
@@ -400,10 +398,11 @@ const knobs = ref<BasicKnobs>({
 	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
+
+const modelConfigName = ref<string>('');
+const modelConfigDesc = ref<string>('');
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -588,8 +587,8 @@ const saveModelConfiguration = async () => {
 	const interventions = await getOptimizedInterventions(optRunId);
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
-		knobs.value.modelConfigName,
-		knobs.value.modelConfigDesc,
+		modelConfigName.value,
+		modelConfigDesc.value,
 		modelConfiguration.value.configuration,
 		false,
 		interventions
@@ -640,8 +639,6 @@ watch(
 		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.modelConfigName = knobs.value.modelConfigName;
-		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
 		state.isMinimized = knobs.value.isMinimized;
 		state.qoiMethod = knobs.value.qoiMethod;
