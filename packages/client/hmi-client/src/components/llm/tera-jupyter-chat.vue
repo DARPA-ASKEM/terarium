@@ -402,14 +402,12 @@ watch(
 	() => notebookItems.value,
 	async () => {
 		if (props.notebookSession) {
-			await updateNotebookSession(
-				{
-					id: props.notebookSession.id,
-					name: props.notebookSession.name,
-					description: props.notebookSession.description,
-					data: { history: notebookItems.value }
-				}
-			);
+			await updateNotebookSession({
+				id: props.notebookSession.id,
+				name: props.notebookSession.name,
+				description: props.notebookSession.description,
+				data: { history: notebookItems.value }
+			});
 		}
 	},
 	{ deep: true }

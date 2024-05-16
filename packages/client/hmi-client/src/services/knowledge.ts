@@ -38,9 +38,7 @@ export const profileModel = async (modelId: Model['id'], documentId: string | nu
 	let response: any;
 	try {
 		if (documentId && modelId) {
-			response = await API.post(
-				`/knowledge/profile-model/${modelId}?document-id=${documentId}`
-			);
+			response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
 		} else {
 			response = await API.post(`/knowledge/profile-model/${modelId}`);
 		}
@@ -73,9 +71,7 @@ export const profileDataset = async (
 ) => {
 	let response: any;
 	if (documentId && datasetId) {
-		response = await API.post(
-			`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`
-		);
+		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
 	} else {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}`);
 	}
@@ -143,10 +139,10 @@ export async function codeBlocksToAmr(code: Code, file: File): Promise<Model | n
 	formData.append('code', blob);
 	formData.append('file', file);
 	const response = await API.post(`/knowledge/code-blocks-to-model`, formData, {
-		 headers: {
-			 Accept: 'application/json',
-			 'Content-Type': 'multipart/form-data'
-		 }
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'multipart/form-data'
+		}
 	});
 	if (response?.status === 200) {
 		return response.data;

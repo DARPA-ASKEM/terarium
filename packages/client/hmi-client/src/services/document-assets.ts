@@ -104,9 +104,7 @@ async function createNewDocumentFromGithubFile(
  * Creates a new document asset in TDS and returns the new document asset object id
  * @param document the document asset to create
  */
-async function createNewDocumentAsset(
-	documentAsset: DocumentAsset
-): Promise<DocumentAsset | null> {
+async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<DocumentAsset | null> {
 	const response = await API.post('/document-asset', documentAsset);
 	if (!response || response.status >= 400) return null;
 	return response.data;

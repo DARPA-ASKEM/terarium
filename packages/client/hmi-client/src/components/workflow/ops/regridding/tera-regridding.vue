@@ -48,14 +48,12 @@ onMounted(async () => {
 	let notebookSessionId = props.node.state?.notebookSessionId;
 	if (!notebookSessionId) {
 		// create a new notebook session log if it does not exist
-		const response = await createNotebookSession(
-			{
-				id: uuidv4(),
-				name: props.node.id,
-				description: '',
-				data: { history: [] }
-			}
-		);
+		const response = await createNotebookSession({
+			id: uuidv4(),
+			name: props.node.id,
+			description: '',
+			data: { history: [] }
+		});
 		notebookSessionId = response?.id;
 
 		if (notebookSessionId) {

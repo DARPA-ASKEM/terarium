@@ -202,12 +202,7 @@ async function processAMRJson(file: File) {
  */
 async function processModel(file: File) {
 	// Upload file as an artifact, create an empty model, and link them
-	const artifact = await uploadArtifactToProject(
-		file,
-		useAuthStore().user?.id ?? '',
-		'',
-		progress
-	);
+	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
 	if (!artifact) return { id: '', assetType: '' };
 	const newModelId = await processAndAddModelToProject(artifact);
 	await createProvenance({
