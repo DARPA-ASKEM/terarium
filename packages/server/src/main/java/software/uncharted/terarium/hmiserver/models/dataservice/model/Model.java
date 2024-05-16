@@ -9,9 +9,14 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -25,20 +30,28 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
+@Entity
 @TSModel
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Serial
 	private static final long serialVersionUID = 398195277271188277L;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelHeader header;
 
 	@TSOptional
+	@Column(length = 255)
 	private String userId;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Map<String, JsonNode> model;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode properties;
 
 	@TSOptional
@@ -85,7 +98,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(
-					this.getModel().get("parameters"), new TypeReference<List<ModelParameter>>() {});
+					this.getModel().get("parameters"), new TypeReference<>() {});
 		} else {
 			return this.getSemantics().getOde().getParameters();
 		}
@@ -96,7 +109,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<Initial> getInitials() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<List<Initial>>() {});
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
 			return this.getSemantics().getOde().getInitials();
 		}
