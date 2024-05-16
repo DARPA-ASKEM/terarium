@@ -19,11 +19,10 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 6. Drill down into the Stratify node and go to the notebook section.
 
 ### 3. Test Stratify LLM Responses
-Ask the follow questions one at a time, wait for the response, check the response matches
-reset the code block move on to the next.
+Enter the following prompts one at a time, wait for the response, check if the response matches the code block move on to the next.
 
-Q) "Stratify my model by the ages young and old",
-A) 
+1. Stratify my model by the ages young and old
+```
 model = stratify(
     template_model=model,
     key= "Age",
@@ -33,9 +32,10 @@ model = stratify(
     cartesian_control=False,
     modify_names=True
 )
+```
 
-Q) Stratify my model by the ages young and old where young can transition to old
-A) 
+2. Stratify my model by the ages young and old where young can transition to old
+``` 
 model = stratify(
     template_model=model,
     key= "Age",
@@ -45,9 +45,10 @@ model = stratify(
     cartesian_control=False,
     modify_names=True
 )
+```
 
-Q) Stratify my model by the ages young and old where young and old can become old, but old cannot become young
-A) 
+3. Stratify my model by the ages young and old where young and old can become old, but old cannot become young
+``` 
 model = stratify(
     template_model=model,
     key= "Age",
@@ -57,9 +58,9 @@ model = stratify(
     cartesian_control=False,
     modify_names=True
 )
-
-Q) Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact
-A) 
+```
+4. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact 
+```
 model = stratify(
     template_model=model,
     key= "Location",
@@ -69,9 +70,10 @@ model = stratify(
     cartesian_control=False,
     modify_names=True
 )
+```
 
-Q) Stratify my model by the locations Toronto and Montreal where Toronto and Montreal can interact
-A) 
+5. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal can interact
+```
 model = stratify(
     template_model=model,
     key= "Location",
@@ -81,8 +83,10 @@ model = stratify(
     cartesian_control=True,
     modify_names=True
 )
+```
 
 OR
+```
 model = stratify(
     template_model=model,
     key= "Location",
@@ -92,10 +96,10 @@ model = stratify(
     cartesian_control=True,
     modify_names=True
 )
+```
 
-Q) What is cartesian_control in stratify?
-A)
-No code response, instead just a message in the thought section.
+6. What is cartesian_control in stratify? 
+- This should have no code response, just a message in the thought section.
 
 
 ### 4. End test
