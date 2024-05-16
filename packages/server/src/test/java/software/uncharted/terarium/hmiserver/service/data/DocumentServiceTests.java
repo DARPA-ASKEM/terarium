@@ -137,8 +137,9 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), ASSUMED_PERMISSION);
 
-		final DocumentAsset fetchedDocumentAsset =
-				documentAssetService.getAsset(documentAsset.getId(), ASSUMED_PERMISSION).get();
+		final DocumentAsset fetchedDocumentAsset = documentAssetService
+				.getAsset(documentAsset.getId(), ASSUMED_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(documentAsset, fetchedDocumentAsset);
 		Assertions.assertEquals(documentAsset.getId(), fetchedDocumentAsset.getId());
@@ -155,8 +156,9 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), ASSUMED_PERMISSION);
 		documentAsset.setName("new name");
 
-		final DocumentAsset updatedDocumentAsset =
-				documentAssetService.updateAsset(documentAsset, ASSUMED_PERMISSION).orElseThrow();
+		final DocumentAsset updatedDocumentAsset = documentAssetService
+				.updateAsset(documentAsset, ASSUMED_PERMISSION)
+				.orElseThrow();
 
 		Assertions.assertEquals(documentAsset, updatedDocumentAsset);
 		Assertions.assertNotNull(updatedDocumentAsset.getUpdatedOn());
@@ -170,7 +172,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		documentAssetService.deleteAsset(documentAsset.getId(), ASSUMED_PERMISSION);
 
-		final Optional<DocumentAsset> deleted = documentAssetService.getAsset(documentAsset.getId(), ASSUMED_PERMISSION);
+		final Optional<DocumentAsset> deleted =
+				documentAssetService.getAsset(documentAsset.getId(), ASSUMED_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}

@@ -766,7 +766,6 @@ public class ProjectController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-
 		/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
 								projects will directly hold a reference to the assets associated with them.  During this
 								transition we need to properly create the relationships when users add assets to their
