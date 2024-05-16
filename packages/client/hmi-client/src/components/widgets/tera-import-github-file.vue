@@ -359,7 +359,7 @@ async function previewTextFile(file: GithubFile) {
  * async function to import the selected data files and create new datasets from them
  * @param githubFiles the data files to open
  */
-async function importDataFiles(githubFiles: GithubFile[], projectId: string) {
+async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
 		// Create a new dataset from this GitHub file
