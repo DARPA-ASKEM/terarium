@@ -29,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
@@ -97,7 +96,7 @@ public class ExtractionService {
 				final UUID projectId,
 				final Double halfTimeSeconds,
 				ClientEventType clientEventType) {
-				super(
+			super(
 					extractionService.clientEventService,
 					extractionService.notificationService,
 					clientEventType,
@@ -107,8 +106,7 @@ public class ExtractionService {
 		}
 
 		@Override
-		public ExtractionStatusUpdate produceClientEventData(
-				final Double t, final String message, final String error) {
+		public ExtractionStatusUpdate produceClientEventData(final Double t, final String message, final String error) {
 			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
 			return update;
 		}
@@ -124,8 +122,8 @@ public class ExtractionService {
 
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain, final UUID projectId) {
 
-		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, projectId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
+		final ExtractionGroupInstance notificationInterface = new ExtractionGroupInstance(
+				this, documentId, projectId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
 
 		final String userId = currentUserService.get().getId();
 

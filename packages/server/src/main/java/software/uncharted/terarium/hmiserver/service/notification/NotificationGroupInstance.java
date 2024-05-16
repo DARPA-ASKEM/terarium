@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
 import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -39,7 +38,8 @@ public abstract class NotificationGroupInstance<T> {
 		this.type = type;
 
 		// create the notification group
-		this.notificationGroup = notificationService.createNotificationGroup(new NotificationGroup().setType(type.name()).setProjectId(projectId));
+		this.notificationGroup = notificationService.createNotificationGroup(
+				new NotificationGroup().setType(type.name()).setProjectId(projectId));
 	}
 
 	public NotificationGroupInstance(
@@ -64,11 +64,11 @@ public abstract class NotificationGroupInstance<T> {
 	private void sendNotification(final String message, final String error, final Double t) {
 		// produce the event
 		final ClientEvent<T> event = ClientEvent.<T>builder()
-			.type(type)
-			.projectId(projectId)
-			.notificationGroupId(notificationGroup.getId())
-			.data(produceClientEventData(t, message, error))
-			.build();
+				.type(type)
+				.projectId(projectId)
+				.notificationGroupId(notificationGroup.getId())
+				.data(produceClientEventData(t, message, error))
+				.build();
 
 		// generate the notification event
 		final NotificationEvent notification = new NotificationEvent();
