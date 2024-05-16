@@ -321,6 +321,7 @@ public class ExtractionService {
 						req.setScript(ModelCardResponseHandler.NAME);
 						req.setInput(objectMapper.writeValueAsBytes(input));
 						req.setUserId(userId);
+						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 						props.setDocumentId(documentId);

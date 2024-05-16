@@ -163,7 +163,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure Model';
+		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -173,7 +173,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Configure Model';
+		created.sourceName = 'Configure model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
@@ -183,7 +183,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
 		created.supportCancel = true;
-		created.sourceName = 'Compare Models';
+		created.sourceName = 'Compare models';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
