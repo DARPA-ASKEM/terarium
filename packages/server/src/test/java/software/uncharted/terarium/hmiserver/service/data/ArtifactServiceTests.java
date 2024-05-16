@@ -26,6 +26,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 		artifact.setName("test-artifact-name-" + key);
 		artifact.setDescription("test-artifact-description-" + key);
 		artifact.setFileNames(Arrays.asList("never", "gonna", "give", "you", "up"));
+		artifact.setPublicAsset(true);
 
 		return artifact;
 	}

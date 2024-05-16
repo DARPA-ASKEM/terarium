@@ -44,6 +44,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		simulation.setResultFiles(Arrays.asList("never", "gonna", "give", "you", "up"));
 		simulation.setStatus(ProgressState.RUNNING);
 		simulation.setEngine(SimulationEngine.SCIML);
+		simulation.setPublicAsset(true);
 
 		return simulation;
 	}

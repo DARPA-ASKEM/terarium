@@ -44,6 +44,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		code.getMetadata().put("cat", "kitten");
 		code.getMetadata().put("otter", "kit");
 		code.getMetadata().put("horse", "foal");
+		code.setPublicAsset(true);
 		return code;
 	}
 
