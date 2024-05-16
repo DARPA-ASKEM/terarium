@@ -37,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
 import { getElapsedTimeText } from '@/utils/date';
@@ -48,18 +49,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update:selection']);
+const items = computed(() => props.options.flatMap((option) => option.items));
 
-const getOptionById = (id, items) => items.find((option) => option.id === id);
+const getOptionById = (id: string) => items.value.find((option) => option.id === id);
 
 const getCreateTimeById = (id: string) => {
-	const items = props.options.flatMap((option) => option.items);
-	const option = getOptionById(id, items);
+	const option = getOptionById(id);
 	return getElapsedTimeText(option.timestamp);
 };
 
 const getLabelById = (id: string) => {
-	const items = props.options.flatMap((option) => option.items);
-	const option = getOptionById(id, items);
+	const option = getOptionById(id);
 	return option.label;
 };
 </script>
@@ -92,7 +92,7 @@ const getLabelById = (id: string) => {
 
 .dropdown-option-group {
 	display: flex;
-	gap: 0.2rem;
+	justify-content: space-between;
 	align-items: center;
 	font-size: var(--font-caption);
 	color: var(--gray-600);
@@ -101,7 +101,7 @@ const getLabelById = (id: string) => {
 	font-size: var(--font-caption);
 	color: var(--primary-color);
 	display: flex;
-	gap: 0.2rem;
+	gap: var(--gap-small);
 	align-items: center;
 	margin-left: auto;
 }
