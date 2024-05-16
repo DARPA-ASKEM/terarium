@@ -452,6 +452,7 @@ public class TaskService {
 
 				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
 						.notificationGroupId(resp.getId())
+						.projectId(resp.getProjectId())
 						.type(clientEventType)
 						.data(resp)
 						.build();

@@ -205,7 +205,7 @@ export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
 	sourceName: string;
-	contextPath: string;
+	context: string;
 	projectId?: string;
 	nodeId?: string;
 	lastUpdated: number;

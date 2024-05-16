@@ -597,7 +597,9 @@ const extractConfigurationsFromInputs = async () => {
 						fetchConfigurations(model.value.id);
 					}
 				}
-			}
+			},
+			props.node.workflowId,
+			props.node.id
 		);
 	}
 	console.groupEnd();

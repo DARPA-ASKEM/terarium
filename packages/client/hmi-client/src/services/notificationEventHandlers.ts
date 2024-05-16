@@ -126,7 +126,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 					lastUpdated,
 					acknowledged: false,
 					supportCancel: false,
-					contextPath: '',
+					context: '',
 					sourceName: '',
 					assetId: '',
 					pageType: ProjectPages.OVERVIEW, // Default to overview page
@@ -168,17 +168,17 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
 		getWorkflow(created.assetId).then((workflow) =>
-			Object.assign(created, { contextPath: workflow?.name || '' })
+			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmDatasetConfigure, (event, created) => {
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
 		created.supportCancel = true;
 		created.sourceName = 'Configure Model';
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
 		getWorkflow(created.assetId).then((workflow) =>
-			Object.assign(created, { contextPath: workflow?.name || '' })
+			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
@@ -188,7 +188,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
 		getWorkflow(created.assetId).then((workflow) =>
-			Object.assign(created, { contextPath: workflow?.name || '' })
+			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
 

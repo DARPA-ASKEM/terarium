@@ -11,14 +11,8 @@ import {
 	createNotificationEventLogger
 } from '@/services/notificationEventHandlers';
 import { ProgressState } from '@/types/Types';
-import { useProjects } from './project';
 
 let initialized = false;
-
-const { activeProject } = useProjects();
-
-const isNotificationForActiveProject = (item: NotificationItem) =>
-	item.projectId === activeProject.value?.id;
 
 const isFinished = (item: NotificationItem) =>
 	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
@@ -27,15 +21,11 @@ const isFinished = (item: NotificationItem) =>
 const items = ref<NotificationItem[]>([]);
 
 export function useNotificationManager() {
-	const itemsForActiveProject = computed(() => items.value.filter(isNotificationForActiveProject));
-
 	const hasFinishedItems = computed(() =>
-		itemsForActiveProject.value.some((item: NotificationItem) => isFinished(item))
+		items.value.some((item: NotificationItem) => isFinished(item))
 	);
 	const unacknowledgedFinishedItems = computed(() =>
-		itemsForActiveProject.value.filter(
-			(item: NotificationItem) => isFinished(item) && !item.acknowledged
-		)
+		items.value.filter((item: NotificationItem) => isFinished(item) && !item.acknowledged)
 	);
 
 	async function init() {
@@ -54,19 +44,17 @@ export function useNotificationManager() {
 		supportedEventTypes.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		// Attach handlers for logging
 		supportedEventTypes.forEach((eventType) =>
-			subscribe(eventType, createNotificationEventLogger(itemsForActiveProject))
+			subscribe(eventType, createNotificationEventLogger(items))
 		);
 
 		initialized = true;
 	}
 
 	function clearFinishedItems() {
-		itemsForActiveProject.value.forEach((item) => {
+		items.value.forEach((item) => {
 			if (item.status !== ProgressState.Running) acknowledgeNotification(item.notificationGroupId);
 		});
-		items.value = items.value.filter(
-			(item) => !isNotificationForActiveProject(item) || item.status === ProgressState.Running
-		);
+		items.value = items.value.filter((item) => item.status === ProgressState.Running);
 	}
 
 	function acknowledgeFinishedItems() {
@@ -79,7 +67,7 @@ export function useNotificationManager() {
 
 	return {
 		init,
-		itemsForActiveProject,
+		notificationItems: items,
 		clearFinishedItems,
 		acknowledgeFinishedItems,
 		hasFinishedItems,

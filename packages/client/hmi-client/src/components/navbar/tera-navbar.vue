@@ -40,7 +40,7 @@
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
-			<tera-notification-panel v-if="isProjectPage" />
+			<tera-notification-panel />
 
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
@@ -410,7 +410,6 @@ const explorerItem: MenuItem = {
 const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
 const currentRoute = useCurrentRoute();
 const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorer);
-const isProjectPage = computed(() => currentRoute.value.name === RouteName.Project);
 
 /*
  * User Menu

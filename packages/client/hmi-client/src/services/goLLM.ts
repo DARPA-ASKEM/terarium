@@ -68,7 +68,9 @@ export async function configureModelFromDatasets(
 	modelId: string,
 	datasetIds: string[],
 	matrixStr: string,
-	handlers: TaskEventHandlers
+	handlers: TaskEventHandlers,
+	workflowId?: string,
+	nodeId?: string
 ): Promise<TaskHandler | null> {
 	try {
 		// FIXME: Using first dataset for now...
@@ -78,7 +80,9 @@ export async function configureModelFromDatasets(
 			{
 				params: {
 					'model-id': modelId,
-					'dataset-ids': datasetIds.join()
+					'dataset-ids': datasetIds.join(),
+					'workflow-id': workflowId,
+					'node-id': nodeId
 				}
 			}
 		);
@@ -92,7 +96,11 @@ export async function configureModelFromDatasets(
 	return null;
 }
 
-export async function compareModels(modelIds: string[]): Promise<CompareModelsResponseType> {
+export async function compareModels(
+	modelIds: string[],
+	workflowId?: string,
+	nodeId?: string
+): Promise<CompareModelsResponseType> {
 	let resolve;
 	let reject;
 
@@ -104,7 +112,9 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	try {
 		const response = await API.get<TaskResponse>('/gollm/compare-models', {
 			params: {
-				'model-ids': modelIds.join(',')
+				'model-ids': modelIds.join(','),
+				'workflow-id': workflowId,
+				'node-id': nodeId
 			}
 		});
 

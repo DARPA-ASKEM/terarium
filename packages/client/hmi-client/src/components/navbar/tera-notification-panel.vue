@@ -37,7 +37,9 @@
 					/>
 				</p>
 				<div class="notification-path-text msg">
-					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
+					<p>
+						<span v-if="item.context">{{ item.context }}/</span>{{ getProjectName(item) }}
+					</p>
 					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
 				<div v-if="isRunning(item) || isCancelling(item)" class="progressbar-container">
@@ -93,7 +95,7 @@ import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
-	itemsForActiveProject: notificationItems,
+	notificationItems,
 	clearFinishedItems,
 	acknowledgeFinishedItems,
 	hasFinishedItems,
@@ -119,6 +121,9 @@ const isRunning = (item: NotificationItem) => item.status === ProgressState.Runn
 const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
 const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
 
+const getProjectName = (item: NotificationItem) =>
+	(useProjects().allProjects.value || []).find((p) => p.id === item.projectId)?.name || '';
+
 const getActionText = (item: NotificationItem) => {
 	if (isCancelling(item)) {
 		return 'Cancelling...';
@@ -133,13 +138,21 @@ const getActionText = (item: NotificationItem) => {
 
 const getAssetRoute = (item: NotificationItem) => ({
 	assetId: item.assetId as string,
+	projectId: item.projectId,
 	pageType: item.pageType
 });
 const getAssetRouteQuery = (item: NotificationItem) =>
 	item.pageType === AssetType.Workflow && item.nodeId ? { operator: item.nodeId } : {};
 
 const cancelTask = (item: NotificationItem) => {
-	if ([ClientEventType.TaskGollmModelCard].includes(item.type)) {
+	if (
+		[
+			ClientEventType.TaskGollmModelCard,
+			ClientEventType.TaskGollmConfigureModel,
+			ClientEventType.TaskGollmConfigureFromDataset,
+			ClientEventType.TaskGollmCompareModel
+		].includes(item.type)
+	) {
 		cancelGoLLMTask(item.notificationGroupId);
 	}
 };
