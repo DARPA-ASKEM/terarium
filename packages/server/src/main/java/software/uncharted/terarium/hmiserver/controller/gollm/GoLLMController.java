@@ -332,6 +332,7 @@ public class GoLLMController {
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureFromDatasetResponseHandler.Properties props =
 					new ConfigureFromDatasetResponseHandler.Properties();
@@ -411,6 +412,7 @@ public class GoLLMController {
 			req.setScript(CompareModelsResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final CompareModelsResponseHandler.Properties props =
 					new CompareModelsResponseHandler.Properties();
