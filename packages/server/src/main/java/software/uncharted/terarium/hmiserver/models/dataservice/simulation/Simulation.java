@@ -56,6 +56,9 @@ public class Simulation extends TerariumAsset {
 	private ProgressState status;
 
 	@TSOptional
+	private Double progress = 0.0;
+
+	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "text")
 	private String statusMessage;
