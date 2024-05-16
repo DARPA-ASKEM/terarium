@@ -19,7 +19,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 6. Drill down into the Stratify node and go to the notebook section.
 
 ### 3. Test Stratify LLM Responses
-Ask the following questions one at a time, wait for the response, check the response matches the code block move on to the next.
+Enter the following prompts one at a time, wait for the response, check if the response matches the code block move on to the next.
 
 1. Stratify my model by the ages young and old
 ```
