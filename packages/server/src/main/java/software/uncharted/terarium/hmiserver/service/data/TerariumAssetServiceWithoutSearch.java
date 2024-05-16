@@ -164,10 +164,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The updated asset
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 * @throws NotFoundException If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset) throws NotFoundException, IllegalArgumentException, IOException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId());
 

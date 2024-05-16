@@ -3,6 +3,7 @@
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update:selection="onSelection"
 	>
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
