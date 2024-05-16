@@ -40,7 +40,6 @@ export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
 	handlers: TaskEventHandlers,
-	projectId?: string,
 	workflowId?: string,
 	nodeId?: string
 ): Promise<TaskHandler | null> {
@@ -49,7 +48,6 @@ export async function configureModelFromDocument(
 			params: {
 				'model-id': modelId,
 				'document-id': documentId,
-				'project-id': projectId,
 				'workflow-id': workflowId,
 				'node-id': nodeId
 			}

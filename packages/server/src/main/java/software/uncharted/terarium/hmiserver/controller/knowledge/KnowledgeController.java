@@ -703,8 +703,9 @@ public class KnowledgeController {
 			})
 	public ResponseEntity<Void> pdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
+			@RequestParam("project-id") final UUID projectId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		extractionService.extractPDF(documentId, domain);
+		extractionService.extractPDF(documentId, domain, projectId);
 		return ResponseEntity.accepted().build();
 	}
 }

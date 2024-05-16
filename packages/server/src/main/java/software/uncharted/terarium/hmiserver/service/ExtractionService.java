@@ -90,31 +90,27 @@ public class ExtractionService {
 	private static class ExtractionGroupInstance extends NotificationGroupInstance<ExtractionStatusUpdate> {
 
 		private final UUID documentId;
-		private final ClientEventType clientEventType;
 
 		ExtractionGroupInstance(
 				final ExtractionService extractionService,
 				final UUID documentId,
+				final UUID projectId,
 				final Double halfTimeSeconds,
 				ClientEventType clientEventType) {
-			super(
+				super(
 					extractionService.clientEventService,
 					extractionService.notificationService,
-					clientEventType.name(),
+					clientEventType,
+					projectId,
 					halfTimeSeconds);
 			this.documentId = documentId;
-			this.clientEventType = clientEventType;
 		}
 
 		@Override
-		public ClientEvent<ExtractionStatusUpdate> produceClientEvent(
+		public ExtractionStatusUpdate produceClientEventData(
 				final Double t, final String message, final String error) {
 			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
-			return ClientEvent.<ExtractionStatusUpdate>builder()
-					.type(this.clientEventType)
-					.notificationGroupId(this.getNotificationGroupId())
-					.data(update)
-					.build();
+			return update;
 		}
 	}
 
@@ -126,10 +122,10 @@ public class ExtractionService {
 		return filename;
 	}
 
-	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain) {
+	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain, final UUID projectId) {
 
 		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
+				new ExtractionGroupInstance(this, documentId, projectId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
 
 		final String userId = currentUserService.get().getId();
 
@@ -455,7 +451,7 @@ public class ExtractionService {
 			final UUID documentId, final List<UUID> modelIds, final String domain) {
 		// Set up the client interface
 		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
+				new ExtractionGroupInstance(this, documentId, null, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
@@ -468,7 +464,7 @@ public class ExtractionService {
 	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
 
 		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
+				new ExtractionGroupInstance(this, documentId, null, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
 
 		return executor.submit(() -> {
 			try {

@@ -361,7 +361,6 @@ import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
 import { getInitials, getParameters } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
-import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -562,7 +561,6 @@ const extractConfigurationsFromInputs = async () => {
 					}
 				}
 			},
-			useProjects().activeProject.value?.id,
 			props.node.workflowId,
 			props.node.id
 		);

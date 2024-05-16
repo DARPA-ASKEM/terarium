@@ -2,8 +2,10 @@ package software.uncharted.terarium.hmiserver.service.notification;
 
 import java.sql.Timestamp;
 import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
@@ -17,30 +19,38 @@ public abstract class NotificationGroupInstance<T> {
 	private final NotificationService notificationService;
 	private final NotificationGroup notificationGroup;
 
+	private final UUID projectId;
+
+	private final ClientEventType type;
+
 	public static final Double DEFAULT_HALF_TIME_SECONDS = 2.0;
 
 	public NotificationGroupInstance(
 			final ClientEventService clientEventService,
 			final NotificationService notificationService,
-			final String type,
+			final ClientEventType type,
+			final UUID projectId,
 			final Double halfTimeSeconds) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
 		this.halfTimeSeconds = halfTimeSeconds;
 		this.startSeconds = System.currentTimeMillis() / 1000.0;
+		this.projectId = projectId;
+		this.type = type;
 
 		// create the notification group
-		this.notificationGroup = notificationService.createNotificationGroup(new NotificationGroup().setType(type));
+		this.notificationGroup = notificationService.createNotificationGroup(new NotificationGroup().setType(type.name()).setProjectId(projectId));
 	}
 
 	public NotificationGroupInstance(
 			final ClientEventService clientEventService,
 			final NotificationService notificationService,
-			final String type) {
-		this(clientEventService, notificationService, type, DEFAULT_HALF_TIME_SECONDS);
+			final ClientEventType type,
+			final UUID projectId) {
+		this(clientEventService, notificationService, type, projectId, DEFAULT_HALF_TIME_SECONDS);
 	}
 
-	public abstract ClientEvent<T> produceClientEvent(final Double t, final String message, final String error);
+	public abstract T produceClientEventData(final Double t, final String message, final String error);
 
 	private Double estimateT() {
 		// Make sure this value never reaches 1.0 since 1.0 is reserved for the final message
@@ -53,7 +63,12 @@ public abstract class NotificationGroupInstance<T> {
 
 	private void sendNotification(final String message, final String error, final Double t) {
 		// produce the event
-		final ClientEvent<T> event = produceClientEvent(t, message, error);
+		final ClientEvent<T> event = ClientEvent.<T>builder()
+			.type(type)
+			.projectId(projectId)
+			.notificationGroupId(notificationGroup.getId())
+			.data(produceClientEventData(t, message, error))
+			.build();
 
 		// generate the notification event
 		final NotificationEvent notification = new NotificationEvent();
@@ -72,10 +87,6 @@ public abstract class NotificationGroupInstance<T> {
 
 		// send the update to the user
 		clientEventService.sendToUser(event, notificationGroup.getUserId());
-	}
-
-	public UUID getNotificationGroupId() {
-		return this.notificationGroup.getId();
 	}
 
 	public void sendMessage(final String msg) {
