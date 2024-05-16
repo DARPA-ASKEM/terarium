@@ -293,6 +293,8 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
+// FIXME: Output port should not be updated as outputs are read only, this is a temporary fix so that code and model are in sync
+// FIXME: We should create the output once a Save button is clicked, any edits made on an output would be saved as a draft
 // Saves the output model in the backend
 // Not called after every little model edit to avoid too many requests
 // Called when the selected output is changed, component unmounts or before the window is closed
