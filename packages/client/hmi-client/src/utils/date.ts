@@ -37,12 +37,15 @@ export function isDateToday(timestamp): boolean {
 	);
 }
 
-export function getElapsedTimeText(timestamp, showHours: boolean = false): string {
-	const time = Date.now() - timestamp;
+export function getElapsedTimeText(timestamp): string {
+	const time = Date.now() - new Date(timestamp).getTime();
 	const minutes = Math.floor(time / (1000 * 60));
-	if (minutes > 0 && showHours) {
-		const hours = Math.floor(time / (1000 * 60 * 60));
-		return hours > 0 ? `${hours} hours ago` : `${minutes} minutes ago`;
+	const hours = Math.floor(time / (1000 * 60 * 60));
+	if (hours > 25) {
+		return formatDdMmmYyyy(timestamp);
+	}
+	if (hours > 0 && hours < 25) {
+		return `${hours} hours ago`;
 	}
 	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
 }

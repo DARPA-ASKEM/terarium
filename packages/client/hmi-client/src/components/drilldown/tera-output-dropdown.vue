@@ -6,7 +6,7 @@
 		:model-value="output"
 		:options="options"
 		option-value="id"
-		option-label="label"
+		:option-label="(option) => getLabel(option)"
 		option-group-children="items"
 		option-group-label="label"
 		@update:model-value="emit('update:selection', $event)"
@@ -23,6 +23,9 @@
 					class="connection-indicator"
 					><i class="pi pi-link" />Connected</span
 				>
+				<span class="dropdown-option-group">
+					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
+				</span>
 			</div>
 		</template>
 	</Dropdown>
@@ -31,6 +34,7 @@
 <script setup lang="ts">
 import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
+import { getElapsedTimeText } from '@/utils/date';
 
 defineProps<{
 	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
@@ -39,6 +43,8 @@ defineProps<{
 }>();
 
 const emit = defineEmits(['update:selection']);
+
+const getLabel = (option) => `${option.label}  ${getElapsedTimeText(option.timestamp)}`;
 </script>
 
 <style scoped>
