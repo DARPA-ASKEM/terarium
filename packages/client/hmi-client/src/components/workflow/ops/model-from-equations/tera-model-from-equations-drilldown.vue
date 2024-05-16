@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -408,11 +409,7 @@ async function generateCard(docId, modelId) {
 
 	isGeneratingCard.value = true;
 	// await generateModelCard(docId, modelId, clonedState.value.modelService);
-	await generateModelCard(
-		docId,
-		modelId,
-		ModelServiceType.TA1
-	);
+	await generateModelCard(docId, modelId, ModelServiceType.TA1);
 	isGeneratingCard.value = false;
 	fetchModel();
 }

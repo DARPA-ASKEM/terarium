@@ -134,7 +134,7 @@ public class DocumentController {
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(documentAssetService.getPublicNotTemporaryAssets(page, pageSize));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get documents";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -251,42 +251,36 @@ public class DocumentController {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		try {
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
-			if (document.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
+		 final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
+		 if (document.isEmpty()) {
+			 return ResponseEntity.notFound().build();
+		 }
 
-			// Test if the document as any assets
-			if (document.get().getAssets() == null) {
-				return ResponseEntity.ok(document.get());
-			}
+		 // Test if the document as any assets
+		 if (document.get().getAssets() == null) {
+			 return ResponseEntity.ok(document.get());
+		 }
 
-			document.get().getAssets().forEach(asset -> {
-				try {
-					// Add the S3 bucket url to each asset metadata
-					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
-					if (url.isEmpty()) {
-						return;
-					}
-					final PresignedURL presignedURL = url.get();
-					asset.getMetadata().put("url", presignedURL.getUrl());
+		 document.get().getAssets().forEach(asset -> {
+			 try {
+				 // Add the S3 bucket url to each asset metadata
+				 final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
+				 if (url.isEmpty()) {
+					  return;
+				 }
+				 final PresignedURL presignedURL = url.get();
+				 asset.getMetadata().put("url", presignedURL.getUrl());
 
-				} catch (final Exception e) {
-					log.error("Unable to extract S3 url for assets or extract equations", e);
-				}
-			});
+			 } catch (final Exception e) {
+				 log.error("Unable to extract S3 url for assets or extract equations", e);
+			 }
+		 });
 
-			// Update data-service with the updated metadata
-			//			documentAssetService.updateAsset(document.get());  // Why?
+		 // Update data-service with the updated metadata
+		 //			documentAssetService.updateAsset(document.get());  // Why?
 
-			// Return the updated document
-			return ResponseEntity.ok(document.get());
-		} catch (final IOException e) {
-			final String error = "Unable to get document";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
+		 // Return the updated document
+		 return ResponseEntity.ok(document.get());
 	}
 
 	@GetMapping("/{id}/upload-url")
@@ -379,7 +373,7 @@ public class DocumentController {
 		try {
 			documentAssetService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to delete document";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);

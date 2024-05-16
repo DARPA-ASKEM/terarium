@@ -3,18 +3,37 @@ import {
 	ClientEventType,
 	ExtractionStatusUpdate,
 	ProgressState,
-	TaskResponse
+	TaskResponse,
+	TaskStatus
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { NotificationItem } from '@/types/common';
+import { NotificationItem, NotificationItemStatus } from '@/types/common';
+import { snakeToCapitalSentence } from '@/utils/text';
 import { getDocumentAsset } from './document-assets';
 
-export const getStatus = (data: { error: string; t: number }) => {
+/**
+ * We use ProgressState to represent the status of the notification for a task/job.
+ * Since the task status from the task runners response (TaskResponse) is represented by TaskStatus, we need to map TaskStatus to ProgressState.
+ */
+const taskStatusToProgressState = {
+	[TaskStatus.Queued]: ProgressState.Queued,
+	[TaskStatus.Running]: ProgressState.Running,
+	[TaskStatus.Success]: ProgressState.Complete,
+	[TaskStatus.Failed]: ProgressState.Failed,
+	[TaskStatus.Cancelled]: ProgressState.Cancelled,
+	[TaskStatus.Cancelling]: ProgressState.Cancelling
+};
+const getStatusFromTaskResponse = (data: TaskResponse) => taskStatusToProgressState[data.status];
+
+export const getStatusFromProgress = (data: { error: string; t: number }) => {
 	if (data.error) return ProgressState.Failed;
 	if (data.t >= 1.0) return ProgressState.Complete;
 	return ProgressState.Running;
 };
+
+const isTaskResponse = (data: any): data is TaskResponse =>
+	data.id !== undefined && data.script !== undefined && data.status;
 
 const toastTitle = {
 	[ClientEventType.ExtractionPdf]: {
@@ -29,66 +48,112 @@ const logStatusMessage = (
 	msg: string,
 	error: string
 ) => {
-	if (![ProgressState.Complete, ProgressState.Failed].includes(status)) return;
+	if (![ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(status))
+		return;
 
 	if (status === ProgressState.Complete)
 		logger.success(msg, {
 			showToast: true,
-			toastTitle: toastTitle[eventType]?.success ?? 'Process Completed'
+			toastTitle: toastTitle[eventType]?.success ?? `${snakeToCapitalSentence(eventType)} Completed`
 		});
 	if (status === ProgressState.Failed)
 		logger.error(error, {
 			showToast: true,
-			toastTitle: toastTitle[eventType]?.error ?? 'Process Failed'
+			toastTitle: toastTitle[eventType]?.error ?? `${snakeToCapitalSentence(eventType)} Failed`
 		});
+	if (status === ProgressState.Cancelled)
+		logger.info(msg, {
+			showToast: true,
+			toastTitle:
+				toastTitle[eventType]?.cancelled ?? `${snakeToCapitalSentence(eventType)} Cancelled`
+		});
+};
+
+const updateStatusFromTaskResponse = (event: ClientEvent<TaskResponse>): NotificationItemStatus => {
+	const status = getStatusFromTaskResponse(event.data);
+	const error = status === ProgressState.Failed ? event.data.stderr : '';
+	const statusMsg = {
+		[ProgressState.Running]: 'in progress...',
+		[ProgressState.Cancelling]: 'is cancelling...',
+		[ProgressState.Cancelled]: 'was cancelled.',
+		[ProgressState.Complete]: 'completed.'
+	};
+	const msg = `${snakeToCapitalSentence(event.type)} ${statusMsg[status] ?? ''}`;
+	return { status, msg, error };
+};
+
+const buildNotificationItemStatus = <T>(
+	event: ClientEvent<T | TaskResponse>
+): NotificationItemStatus => {
+	if (isTaskResponse(event.data))
+		return updateStatusFromTaskResponse(event as ClientEvent<TaskResponse>);
+	// Currently only ExtractionPdf events are supported. Assume all other events are ExtractionPdf events for now.
+	// TODO: Replace ExtractionStatusUpdate with more generic type (e.g NotificationEventStatus<T>) that represent a notification event data type for other events.
+	const eventData: ExtractionStatusUpdate = event.data as ExtractionStatusUpdate;
+	return {
+		status: getStatusFromProgress(eventData),
+		msg: eventData.message,
+		progress: eventData.t,
+		error: eventData.error
+	};
 };
 
 // Creates notification event handlers for each type of client events that manipulates given notification items ref
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
 	const handlers = {} as Record<ClientEventType, (event: ClientEvent<any>) => void>;
 
-	handlers[ClientEventType.ExtractionPdf] = (event: ClientEvent<ExtractionStatusUpdate>) => {
-		if (!event.data) return;
-
-		const existingItem = notificationItems.value.find(
-			(item) => item.notificationGroupId === event.notificationGroupId
-		);
-		if (!existingItem) {
-			// Create a new notification item
-			const newItem: NotificationItem = {
-				notificationGroupId: event.notificationGroupId ?? '',
-				type: ClientEventType.ExtractionPdf,
-				assetId: event.data.documentId,
-				assetName: '',
-				status: getStatus(event.data),
-				msg: event.data.message,
-				progress: event.data.t,
-				lastUpdated: new Date(event.createdAtMs).getTime(),
-				error: event.data.error,
-				acknowledged: false
-			};
-			notificationItems.value.push(newItem);
-			// There's a delay until newly created asset (with assetName) is added to the active project's assets list so we need to fetch the asset name separately.
-			// Update the asset name asynchronously on the next tick to avoid blocking the event handler
-			getDocumentAsset(event.data.documentId).then((document) =>
-				Object.assign(newItem, { assetName: document?.name || '' })
+	const registerHandler = <T>(
+		eventType: ClientEventType,
+		onCreateNewNotificationItem: (
+			event: ClientEvent<T>,
+			createdItem: NotificationItem
+		) => void = () => {}
+	) => {
+		handlers[eventType] = (event: ClientEvent<T>) => {
+			if (!event.data) return;
+			const existingItem = notificationItems.value.find(
+				(item) => item.notificationGroupId === event.notificationGroupId
 			);
-			return;
-		}
-		// Update the existing item
-		Object.assign(existingItem, {
-			status: getStatus(event.data),
-			msg: event.data.message,
-			progress: event.data.t,
-			lastUpdated: new Date(event.createdAtMs).getTime(),
-			error: event.data.error
-		});
+			const lastUpdated = new Date(event.createdAtMs).getTime();
+			if (!existingItem) {
+				const newItem: NotificationItem = {
+					notificationGroupId: event.notificationGroupId ?? '',
+					type: event.type,
+					lastUpdated,
+					acknowledged: false,
+					supportCancel: false,
+					assetId: '',
+					assetName: '',
+					...buildNotificationItemStatus(event)
+				};
+				notificationItems.value.push(newItem);
+				onCreateNewNotificationItem(event, newItem);
+				return;
+			}
+			// Update existing item status
+			Object.assign(existingItem, {
+				lastUpdated,
+				...buildNotificationItemStatus(event)
+			});
+		};
 	};
 
-	handlers[ClientEventType.TaskGollmModelCard] = (event: ClientEvent<TaskResponse>) => {
-		// TODO: Create a notification item and implement notification item UI for this event
-		console.log(event);
-	};
+	// Register handlers for each client event type
+
+	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
+		created.assetId = event.data.documentId;
+		getDocumentAsset(event.data.documentId).then((document) =>
+			Object.assign(created, { assetName: document?.name || '' })
+		);
+	});
+
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
+		created.supportCancel = true;
+		created.assetId = event.data.additionalProperties.documentId;
+		getDocumentAsset(created.assetId).then((document) =>
+			Object.assign(created, { assetName: document?.name || '' })
+		);
+	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
@@ -106,22 +171,14 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 export const createNotificationEventLogger = (
 	visibleNotificationItems: Ref<NotificationItem[]>
 ) => {
-	const handleLogging = <
-		T extends { notificationGroupId: string; t: number; message: string; error: string }
-	>(
-		event: ClientEvent<T>
-	) => {
+	const handleLogging = <T>(event: ClientEvent<T>) => {
 		if (!event.notificationGroupId) return;
-		const found = visibleNotificationItems.value.find(
+		const notificationItem = visibleNotificationItems.value.find(
 			(item) => item.notificationGroupId === event.notificationGroupId
 		);
-		if (!found) return;
-		logStatusMessage(
-			event.type,
-			getStatus(event.data),
-			event.data.message || '',
-			event.data.error || ''
-		);
+		if (!notificationItem) return;
+		const status = buildNotificationItemStatus(event);
+		logStatusMessage(event.type, status.status, status.msg, status.error);
 	};
 	return handleLogging;
 };

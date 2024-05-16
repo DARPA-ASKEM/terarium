@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
@@ -59,11 +60,14 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
 
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+				group.getId(),
+				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.QUEUED));
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+				group.getId(),
+				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.RUNNING));
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+				group.getId(),
+				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.CANCELLED));
 
 		final NotificationGroup after =
 				notificationService.getNotificationGroup(group.getId()).orElseThrow();

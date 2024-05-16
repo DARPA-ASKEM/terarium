@@ -1,6 +1,14 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import type { ModelConfiguration, Model, Intervention } from '@/types/Types';
+import type {
+	ModelConfiguration,
+	Model,
+	Intervention,
+	ModelParameter,
+	ModelDistribution,
+	Initial
+} from '@/types/Types';
+import { getParameters } from '@/model-representation/service';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -67,3 +75,138 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	const response = await API.put(`/model-configurations/${config.id}`, config);
 	return response?.data ?? null;
 };
+
+export function sanityCheck(config: ModelConfiguration): string[] {
+	const errors: string[] = [];
+	const modelToCheck = config.configuration;
+	if (!modelToCheck) {
+		errors.push('no model defined in configuration');
+		return errors;
+	}
+
+	const parameters: ModelParameter[] = getParameters(modelToCheck);
+
+	parameters.forEach((p) => {
+		const val = p.value;
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+		if (val && val > max) {
+			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
+		}
+		if (val && val < min) {
+			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
+		}
+
+		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
+		const interval = Math.abs(max - min);
+		if (val !== 0 && val !== undefined && Math.abs(interval / val) < 0.003) {
+			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
+		}
+
+		// no constant & no/partial distribution
+		if (val === undefined || Number.isNaN(val)) {
+			if (Number.isNaN(max) || Number.isNaN(min)) {
+				errors.push(`${p.id} has no constant value and partial/no distribution`);
+			}
+		}
+	});
+	return errors;
+}
+
+// cleans a model by removing distributions that are not needed
+export function cleanModel(model: Model): void {
+	const parameters: ModelParameter[] = getParameters(model);
+
+	parameters.forEach((p) => {
+		const val = p.value;
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+
+		// we delete the distribution when there is a constant + partial/no distribution
+		if (val !== undefined && !Number.isNaN(val)) {
+			if (Number.isNaN(max) || Number.isNaN(min)) {
+				delete p.distribution;
+			}
+		}
+	});
+}
+
+export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
+	return config.configuration.semantics?.ode.initials?.find(
+		(initial) => initial.target === initialId
+	);
+}
+
+export function getInitialSource(config: ModelConfiguration, initialId: string): string {
+	return config.configuration.metadata?.initials?.[initialId].source ?? '';
+}
+
+export function setInitialSource(
+	config: ModelConfiguration,
+	initialId: string,
+	source: string
+): void {
+	const initial = config.configuration.metadata?.initials?.[initialId];
+	if (initial) {
+		initial.source = source;
+	}
+}
+
+export function getParameter(
+	config: ModelConfiguration,
+	parameterId: string
+): ModelParameter | undefined {
+	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
+}
+
+export function setDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	distribution: ModelDistribution
+): void {
+	const parameter = getParameter(config, parameterId);
+	if (parameter) {
+		parameter.distribution = distribution;
+	}
+}
+
+export function removeDistribution(config: ModelConfiguration, parameterId: string): void {
+	const parameter = getParameter(config, parameterId);
+	if (parameter?.distribution) {
+		delete parameter.distribution;
+	}
+}
+
+export function getInterventions(config: ModelConfiguration): Intervention[] {
+	return config.interventions ?? [];
+}
+
+// FIXME: for set and remove interventions, we should not be using the index.  This should be addressed when we move to the new model config data structure.
+export function setIntervention(
+	config: ModelConfiguration,
+	index: number,
+	intervention: Intervention
+): void {
+	const interventions = getInterventions(config);
+	interventions[index] = intervention;
+}
+
+export function removeIntervention(config: ModelConfiguration, index: number): void {
+	const interventions = getInterventions(config);
+	interventions.splice(index, 1);
+}
+
+export function getParameterSource(config: ModelConfiguration, parameterId: string): string {
+	return config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
+}
+
+export function setParameterSource(
+	config: ModelConfiguration,
+	parameterId: string,
+	source: string
+): void {
+	const parameter = config.configuration.metadata?.parameters?.[parameterId];
+	if (parameter) {
+		parameter.source = source;
+	}
+}

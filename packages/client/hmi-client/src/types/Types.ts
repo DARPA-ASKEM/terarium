@@ -205,8 +205,8 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
-    concepts?: OntologyConcept[];
     assets?: DocumentExtraction[];
+    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -415,6 +415,7 @@ export interface Project extends TerariumAsset {
     datasetAssets: Dataset[];
     workflowAssets: Workflow[];
     artifactAssets: Artifact[];
+    documentAssets: DocumentAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -1289,6 +1290,9 @@ export enum ClientEventType {
     ExtractionPdf = "EXTRACTION_PDF",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
+    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
 }
 
 export enum FileType {
@@ -1401,6 +1405,7 @@ export enum ProgressState {
     Queued = "QUEUED",
     Retrieving = "RETRIEVING",
     Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {

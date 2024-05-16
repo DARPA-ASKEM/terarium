@@ -11,4 +11,7 @@ public enum ClientEventType {
 	// Events for the task runner notifications
 	TASK_UNDEFINED_EVENT,
 	TASK_GOLLM_MODEL_CARD,
+	TASK_GOLLM_CONFIGURE_MODEL,
+	TASK_GOLLM_DATASET_CONFIGURE,
+	TASK_GOLLM_COMPARE_MODEL,
 }

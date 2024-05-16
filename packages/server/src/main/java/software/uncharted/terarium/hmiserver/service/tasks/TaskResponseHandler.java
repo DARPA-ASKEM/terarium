@@ -8,19 +8,19 @@ public abstract class TaskResponseHandler {
 
 	public abstract String getName();
 
-	public static TaskResponse onQueued(final TaskResponse response) {
+	public TaskResponse onQueued(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onRunning(final TaskResponse response) {
+	public TaskResponse onRunning(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onCancelling(final TaskResponse response) {
+	public TaskResponse onCancelling(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onCancelled(final TaskResponse response) {
+	public TaskResponse onCancelled(final TaskResponse response) {
 		return response;
 	}
 
@@ -28,7 +28,7 @@ public abstract class TaskResponseHandler {
 		return response;
 	}
 
-	public static TaskResponse onFailure(final TaskResponse response) {
+	public TaskResponse onFailure(final TaskResponse response) {
 		return response;
 	}
 

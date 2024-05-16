@@ -153,7 +153,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(projectAsset)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 
 		project2 = projectService.createProject((Project) new Project().setName("test-proj-2"));
 
@@ -171,6 +171,6 @@ public class AssetControllerTests extends TerariumApplicationTests {
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(projectAsset2)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 	}
 }

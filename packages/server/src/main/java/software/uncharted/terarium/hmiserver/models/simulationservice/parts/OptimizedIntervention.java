@@ -19,7 +19,7 @@ public class OptimizedIntervention {
 
 	@TSOptional
 	@JsonAlias("param_values")
-	private List<Integer> paramValues;
+	private List<Double> paramValues;
 
 	@TSOptional
 	@JsonAlias("start_time")

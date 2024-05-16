@@ -1,4 +1,4 @@
-import { computed, shallowRef } from 'vue/dist/vue';
+import { computed, shallowRef } from 'vue';
 import type { Project } from '@/types/Types';
 
 export const activeProject = shallowRef<Project | null>(null);

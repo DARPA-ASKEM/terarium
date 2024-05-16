@@ -48,12 +48,12 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		documentAssetService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -124,7 +124,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(projectAsset)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 						.param("types", AssetType.DOCUMENT.name())

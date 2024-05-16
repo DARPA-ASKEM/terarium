@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -363,10 +364,7 @@ async function handleCode() {
 			}
 		};
 
-		const model: Model | null = await codeBlocksToAmr(
-			newCode,
-			file
-		);
+		const model: Model | null = await codeBlocksToAmr(newCode, file);
 
 		if (!model || !model.id) {
 			isProcessing.value = false;
@@ -530,11 +528,7 @@ async function generateCard(docId, modelId) {
 	}
 
 	isGeneratingCard.value = true;
-	await generateModelCard(
-		docId,
-		modelId,
-		clonedState.value.modelService
-	);
+	await generateModelCard(docId, modelId, clonedState.value.modelService);
 	isGeneratingCard.value = false;
 	fetchModel();
 }

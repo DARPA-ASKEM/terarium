@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
@@ -68,14 +67,14 @@ public class ProjectAssetService {
 			final Project project,
 			final AssetType assetType,
 			final TerariumAsset asset,
-			final Schema.Permission hasWritePermission)
-			throws IOException {
+			final Schema.Permission hasWritePermission) {
 
 		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
 		projectAsset.setAssetId(asset.getId());
 		projectAsset.setAssetType(assetType);
 		projectAsset.setAssetName(asset.getName());
+
 		if (asset instanceof Model) {
 			projectAsset.setAssetName(((Model) asset).getHeader().getName());
 		}

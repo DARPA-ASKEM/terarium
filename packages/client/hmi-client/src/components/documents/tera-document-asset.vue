@@ -177,7 +177,7 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import { getStatus } from '@/services/notificationEventHandlers';
+import { getStatusFromProgress } from '@/services/notificationEventHandlers';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -325,7 +325,7 @@ async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>)
 	console.log(event.data.message);
 	if (!event.data || event.data.documentId !== props.assetId) return;
 
-	const status = getStatus(event.data);
+	const status = getStatusFromProgress(event.data);
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
 	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);

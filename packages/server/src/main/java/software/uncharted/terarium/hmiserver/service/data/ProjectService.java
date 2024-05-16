@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
@@ -28,6 +29,7 @@ public class ProjectService {
 	final ProjectRepository projectRepository;
 	final UserRepository userRepository;
 	final ReBACService reBACService;
+	final Messages messages;
 
 	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
@@ -90,10 +92,11 @@ public class ProjectService {
 			if (rebacUser.canRead(rebacProject)) {
 				return Schema.Permission.READ;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update project");
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
 
@@ -104,10 +107,11 @@ public class ProjectService {
 			if (rebacUser.canWrite(rebacProject)) {
 				return Schema.Permission.WRITE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update project");
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
 
@@ -119,10 +123,11 @@ public class ProjectService {
 			if (rebacUser.canAdministrate(rebacProject)) {
 				return Schema.Permission.ADMINISTRATE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Insufficient permissions");
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update project");
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
 }

@@ -7,6 +7,8 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
@@ -30,6 +32,8 @@ public class NotificationEvent extends TerariumEntity {
 	private static final long serialVersionUID = -3382397588627700379L;
 
 	private Double progress = 0.0;
+
+	@Enumerated(EnumType.STRING)
 	private ProgressState state = null;
 
 	@ManyToOne
