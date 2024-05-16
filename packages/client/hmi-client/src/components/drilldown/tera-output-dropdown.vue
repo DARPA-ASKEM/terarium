@@ -6,26 +6,31 @@
 		:model-value="output"
 		:options="options"
 		option-value="id"
-		:option-label="(option) => getLabel(option)"
 		option-group-children="items"
 		option-group-label="label"
 		@update:model-value="emit('update:selection', $event)"
 		:loading="isLoading"
 	>
+		<template #value="slotProps">
+			{{ getLabelById(slotProps.value) }}
+			<span class="ml-2 dropdown-option-group">
+				{{ getCreateTimeById(slotProps.value) }}
+			</span>
+		</template>
 		<template #optiongroup="slotProps">
 			<span class="dropdown-option-group">{{ slotProps.option?.label }}</span>
 		</template>
 		<template #option="slotProps">
 			<div class="dropdown-option">
 				<span>{{ slotProps.option?.label }}</span>
+				<span class="dropdown-option-group">
+					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
+				</span>
 				<span
 					v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
 					class="connection-indicator"
 					><i class="pi pi-link" />Connected</span
 				>
-				<span class="dropdown-option-group">
-					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
-				</span>
 			</div>
 		</template>
 	</Dropdown>
@@ -36,7 +41,7 @@ import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
 import { getElapsedTimeText } from '@/utils/date';
 
-defineProps<{
+const props = defineProps<{
 	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 	output: WorkflowOutput<any>['id'];
 	isLoading?: boolean;
@@ -44,7 +49,19 @@ defineProps<{
 
 const emit = defineEmits(['update:selection']);
 
-const getLabel = (option) => `${option.label}  ${getElapsedTimeText(option.timestamp)}`;
+const getOptionById = (id, items) => items.find((option) => option.id === id);
+
+const getCreateTimeById = (id: string) => {
+	const items = props.options.flatMap((option) => option.items);
+	const option = getOptionById(id, items);
+	return getElapsedTimeText(option.timestamp);
+};
+
+const getLabelById = (id: string) => {
+	const items = props.options.flatMap((option) => option.items);
+	const option = getOptionById(id, items);
+	return option.label;
+};
 </script>
 
 <style scoped>
@@ -74,6 +91,9 @@ const getLabel = (option) => `${option.label}  ${getElapsedTimeText(option.times
 }
 
 .dropdown-option-group {
+	display: flex;
+	gap: 0.2rem;
+	align-items: center;
 	font-size: var(--font-caption);
 	color: var(--gray-600);
 }

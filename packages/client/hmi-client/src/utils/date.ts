@@ -41,7 +41,7 @@ export function getElapsedTimeText(timestamp): string {
 	const time = Date.now() - new Date(timestamp).getTime();
 	const minutes = Math.floor(time / (1000 * 60));
 	const hours = Math.floor(time / (1000 * 60 * 60));
-	if (hours > 25) {
+	if (hours > 24) {
 		return formatDdMmmYyyy(timestamp);
 	}
 	if (hours > 0 && hours < 25) {
