@@ -23,4 +23,13 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 
 	@JsonProperty("expression_mathml")
 	private String expressionMathml;
+
+	@Override
+	public Initial clone(){
+		Initial clone = (Initial) super.clone();
+		clone.setTarget(target);
+		clone.setExpression(expression);
+		clone.setExpressionMathml(expressionMathml);
+		return clone;
+	}
 }

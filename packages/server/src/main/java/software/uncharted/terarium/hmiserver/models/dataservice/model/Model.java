@@ -55,9 +55,13 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	private JsonNode properties;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelSemantics semantics;
 
 	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
 	public Model() {

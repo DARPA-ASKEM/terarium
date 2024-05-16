@@ -64,7 +64,7 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 	@TSOptional
 	@JsonProperty("templateCard")
-	private Object templateCard;
+	private JsonNode templateCard;
 
 	@TSOptional
 	@JsonProperty("code_id")
