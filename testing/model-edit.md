@@ -34,12 +34,12 @@ Estimated time to completion: [X] minutes
 4. Open the decomposed view and verify that port R from the t1 template is connected to port R (or what used to be port A) in the Natural Conversion template.
 
 ### 4. Save as new model
-1. Open the Notebook tab and click the 'Save as new model' button.
+1. Click the kebab menu icon button in the top right corner of the header, select "Save as new model"
 2. Give the new model a name and save it.
 3. Close the operator and then check if your new model is in your project.
 
 ### 5. Running notebook code
-1. If your model edit operator is open, close it then reopen it.
+1. If your Edit Model operator is open, close it then reopen it.
 2. You will notice that your Wizard edits are gone but the code in the Notebook tab is still present.
 3. In the Notebook tab click the 'Run' button. 
 4. Verify if your model edits from step 3 are reapplied. 
