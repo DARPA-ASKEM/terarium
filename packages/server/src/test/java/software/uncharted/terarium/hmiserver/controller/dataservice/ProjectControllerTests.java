@@ -128,6 +128,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 						.param("types", AssetType.DOCUMENT.name())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();

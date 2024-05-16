@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,8 +44,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		final Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name0");
 		workflow.setDescription("test-workflow-description");
+		workflow.setPublicAsset(true);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/workflows")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(workflow)))
@@ -57,14 +61,17 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		final Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
+		workflow.setPublicAsset(true);
 
 		final Workflow workflow2 = new Workflow();
 		workflow2.setName("test-workflow-name2");
 		workflow2.setDescription("test-workflow-description2");
+		workflow2.setPublicAsset(true);
 
 		final Workflow workflow3 = new Workflow();
 		workflow3.setName("test-workflow-name3");
 		workflow3.setDescription("test-workflow-description3");
+		workflow3.setPublicAsset(true);
 
 		workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 		workflowService.createAsset(workflow2, ASSUMED_PERMISSION);
@@ -85,6 +92,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -99,6 +107,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(workflow)))
@@ -108,13 +117,13 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
-
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
 		workflow = workflowService.createAsset(workflow, ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 

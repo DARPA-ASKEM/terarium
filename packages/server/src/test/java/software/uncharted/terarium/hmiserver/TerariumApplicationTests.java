@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+import java.util.UUID;
+
 @AutoConfigureMockMvc
 @SpringBootTest
 @Transactional
@@ -32,4 +34,6 @@ public class TerariumApplicationTests {
 	}
 
 	public Schema.Permission ASSUMED_PERMISSION = Schema.Permission.WRITE;
+	public UUID PROJECT_ID = UUID.randomUUID();
+
 }

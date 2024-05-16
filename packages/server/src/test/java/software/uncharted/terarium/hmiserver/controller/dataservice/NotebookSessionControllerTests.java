@@ -50,6 +50,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 		final NotebookSession notebookSession = (NotebookSession) new NotebookSession().setName("test-notebook-name");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/sessions")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(notebookSession)))
@@ -64,6 +65,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -92,6 +94,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 				(NotebookSession) new NotebookSession().setName("test-notebook-name"), ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 

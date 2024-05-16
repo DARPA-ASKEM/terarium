@@ -56,6 +56,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(model)))
@@ -76,7 +77,9 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setSchemaName("petrinet")),
 				ASSUMED_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId()).with(csrf()))
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -95,6 +98,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(model)))
@@ -116,6 +120,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 

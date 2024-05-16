@@ -46,6 +46,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				new DocumentAsset().setName("test-document-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/document-asset")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(documentAsset)))
@@ -62,6 +63,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -100,6 +102,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 				ASSUMED_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
@@ -129,6 +132,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart(
 								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
+						.param("project-id", PROJECT_ID.toString())
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -150,6 +154,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		mockMvc.perform(MockMvcRequestBuilders.put(
 								"/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -181,6 +186,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart(
 								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
+						.param("project-id", PROJECT_ID.toString())
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -225,6 +231,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart(
 								"/document-asset/" + documentAsset.getId() + "/upload-document")
 						.file(file)
+						.param("project-id", PROJECT_ID.toString())
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
