@@ -10,6 +10,7 @@
 			@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 			@focus="() => {}"
 			@focusout="() => {}"
+			@mousedown.stop
 		>
 			<section>
 				<div class="port-container">
