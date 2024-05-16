@@ -45,8 +45,6 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 		try {
 			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-			System.out.println(intermediateResult);
-			System.out.println(">>>>");
 			double progress = intermediateResult.get("progress").doubleValue();
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
