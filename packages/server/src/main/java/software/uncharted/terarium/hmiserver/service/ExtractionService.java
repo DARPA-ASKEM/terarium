@@ -19,7 +19,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,8 +102,12 @@ public class ExtractionService {
 	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain, final UUID projectId) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
-				clientEventService, notificationService, ClientEventType.EXTRACTION_PDF, projectId,
-				new Properties(documentId), HALFTIME_SECONDS);
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION_PDF,
+				projectId,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 
 		final String userId = currentUserService.get().getId();
 
@@ -431,8 +434,12 @@ public class ExtractionService {
 			final UUID documentId, final List<UUID> modelIds, final String domain) {
 		// Set up the client interface
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
-			clientEventService, notificationService, ClientEventType.EXTRACTION, null,
-			new Properties(documentId), HALFTIME_SECONDS);
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION,
+				null,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
@@ -445,8 +452,12 @@ public class ExtractionService {
 	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
-			clientEventService, notificationService, ClientEventType.EXTRACTION, null,
-			new Properties(documentId), HALFTIME_SECONDS);
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION,
+				null,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {

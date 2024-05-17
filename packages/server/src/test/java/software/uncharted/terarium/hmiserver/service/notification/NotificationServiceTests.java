@@ -1,14 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.notification;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import co.elastic.clients.elasticsearch.snapshot.Status;
-
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -37,11 +33,8 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	private CurrentUserService currentUserService;
 
 	ClientEvent<StatusUpdate<Object>> produceClientEvent(final Double t, final String message, final String error) {
-		final StatusUpdate<Object> update = StatusUpdate.builder()
-				.progress(t)
-				.message(message)
-				.error(error)
-				.build();
+		final StatusUpdate<Object> update =
+				StatusUpdate.builder().progress(t).message(message).error(error).build();
 		return ClientEvent.<StatusUpdate<Object>>builder()
 				.type(ClientEventType.HEARTBEAT)
 				.data(update)
