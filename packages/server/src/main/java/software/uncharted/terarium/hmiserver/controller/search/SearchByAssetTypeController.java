@@ -48,7 +48,7 @@ public class SearchByAssetTypeController {
 	private final ElasticsearchConfiguration esConfig;
 	private final CurrentUserService currentUserService;
 
-	private static final long REQUEST_TIMEOUT_SECONDS = 30;
+	private static final int REQUEST_TIMEOUT_MINUTES = 1;
 	private static final String EMBEDDING_MODEL = "text-embedding-ada-002";
 
 	private static final List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
@@ -120,12 +120,13 @@ public class SearchByAssetTypeController {
 				embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
 
 				final TaskRequest req = new TaskRequest();
+				req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 				req.setType(TaskType.GOLLM);
 				req.setInput(embeddingRequest);
 				req.setScript("gollm_task:embedding");
 				req.setUserId(currentUserService.get().getId());
 
-				final TaskResponse resp = taskService.runTaskSync(req, REQUEST_TIMEOUT_SECONDS);
+				final TaskResponse resp = taskService.runTaskSync(req);
 
 				if (resp.getStatus() != TaskStatus.SUCCESS) {
 					throw new ResponseStatusException(

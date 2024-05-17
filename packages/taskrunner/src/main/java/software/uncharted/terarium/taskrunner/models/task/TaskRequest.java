@@ -17,7 +17,7 @@ public class TaskRequest implements Serializable {
 	private UUID id;
 	private String script;
 	private byte[] input;
-	private int timeoutMinutes = 30;
+	private int timeoutMinutes = 5;
 	private Object additionalProperties;
 	protected String userId;
 	protected UUID projectId;
