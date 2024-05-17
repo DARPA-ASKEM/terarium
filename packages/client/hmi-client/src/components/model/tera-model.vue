@@ -42,8 +42,25 @@
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@fetch-model="fetchModel"
-			class="pl-1 pr-1"
 		/>
+		<template #nav>
+			<tera-asset-nav
+				:asset-content-ids="[
+					'Description',
+					'Diagram',
+					'Provenance',
+					'Model-equations',
+					'Initial-variables',
+					'Parameters',
+					'Observables',
+					'Flows',
+					'Other concepts',
+					'Transitions',
+					'Time',
+					'Associated-resources'
+				]"
+			/>
+		</template>
 	</tera-asset>
 </template>
 
@@ -52,6 +69,7 @@ import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraAssetNav from '@/components/widgets/tera-asset-nav.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';

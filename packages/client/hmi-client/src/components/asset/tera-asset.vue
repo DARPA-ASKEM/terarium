@@ -1,6 +1,5 @@
 <template>
 	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="flex align-items-center">
@@ -72,11 +71,12 @@
 				</aside>
 			</header>
 		</template>
-		<section :class="overflowHiddenClass" :style="stretchContentStyle">
+		<section :class="overflowHiddenClass">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
+			<slot name="nav" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -150,9 +150,6 @@ const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
 const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
-const stretchContentStyle = computed(() =>
-	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
-);
 
 const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
@@ -183,11 +180,9 @@ watch(
 
 <style scoped>
 main {
-	display: grid;
-	/* minmax prevents grid blowout caused by datatable */
-	grid-template-columns: auto minmax(0, 1fr);
-	grid-template-rows: auto 1fr;
-	height: 100%;
+	display: flex;
+	flex-direction: column;
+	/* height: 100%; */
 	background-color: var(--surface-section);
 	/* accounts for sticky header height */
 	scroll-margin-top: v-bind('scrollMarginTopStyle');
@@ -196,14 +191,18 @@ main {
 }
 
 main > section {
-	grid-column-start: 2;
+	display: flex;
+	height: 100%;
+	width: 100%;
+	& > :deep(*:not(:last-child)) {
+		flex: 1;
+	}
 }
 
 header {
 	display: flex;
 	flex-direction: row;
 	height: fit-content;
-	grid-column-start: 2;
 	color: var(--text-color-subdued);
 	padding: var(--gap-small) var(--gap-medium);
 	display: flex;
@@ -318,11 +317,6 @@ main:deep(.p-accordion-header > a > header) {
 
 main:deep(.p-accordion-content) {
 	padding-bottom: var(--gap-small);
-}
-
-main:deep(.p-accordion-content > p),
-main:deep(.p-accordion-content > ul),
-main:deep(.data-row) {
 }
 
 main:deep(.p-accordion-content ul) {

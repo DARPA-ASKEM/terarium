@@ -1,0 +1,41 @@
+<template>
+	<nav>
+		<a v-for="content in assetContentIdsInView" :key="content" @click="scrollTo(content)">
+			{{ content.replace('-', ' ') }}
+		</a>
+	</nav>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, nextTick } from 'vue';
+
+const props = defineProps<{
+	assetContentIds: string[];
+}>();
+
+const assetContentIdsInView = ref<string[]>([]);
+
+function scrollTo(elementId: string) {
+	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+onMounted(async () => {
+	await nextTick();
+	assetContentIdsInView.value = props.assetContentIds.filter((id) => document.getElementById(id));
+});
+</script>
+
+<style scoped>
+nav {
+	display: flex;
+	flex-direction: column;
+	min-width: 14rem;
+	width: fit-content;
+	gap: 1rem;
+	padding-top: 3.5rem;
+	/* Responsible for stickiness */
+	position: sticky;
+	top: 0;
+	height: fit-content;
+}
+</style>
