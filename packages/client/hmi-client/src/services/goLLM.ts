@@ -98,7 +98,7 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	});
 
 	try {
-		const response = await API.get<TaskResponse>(`/gollm/compare-models`, {
+		const response = await API.get<TaskResponse>('/gollm/compare-models', {
 			params: {
 				'model-ids': modelIds.join(',')
 			}
