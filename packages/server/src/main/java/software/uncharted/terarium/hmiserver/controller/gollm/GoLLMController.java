@@ -414,8 +414,7 @@ public class GoLLMController {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 			req.setProjectId(projectId);
 
-			final CompareModelsResponseHandler.Properties props =
-					new CompareModelsResponseHandler.Properties();
+			final CompareModelsResponseHandler.Properties props = new CompareModelsResponseHandler.Properties();
 			props.setWorkflowId(workflowId);
 			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
