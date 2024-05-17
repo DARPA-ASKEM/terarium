@@ -34,6 +34,9 @@ export interface FunmanOperationState extends BaseState {
 	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
+
+	// selected state in ouptut
+	trajectoryState?: string;
 }
 
 export const FunmanOperation: Operation = {
