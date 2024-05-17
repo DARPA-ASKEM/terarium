@@ -642,8 +642,12 @@ public class TaskService {
 				rLock.unlock();
 			}
 
-			// if the task is still running, or hasn't started yet, lets cancel it
-			cancelTask(future.getId());
+			try {
+				// if the task is still running, or hasn't started yet, lets cancel it
+				cancelTask(future.getId());
+			} catch (final Exception ee) {
+				log.warn("Failed to cancel task: {}", future.getId(), ee);
+			}
 
 			throw new TimeoutException(
 					"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
