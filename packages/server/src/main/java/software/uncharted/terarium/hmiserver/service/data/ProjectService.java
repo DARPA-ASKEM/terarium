@@ -89,7 +89,7 @@ public class ProjectService {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.canRead(rebacProject)) {
+			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
 				return Schema.Permission.READ;
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
@@ -104,7 +104,7 @@ public class ProjectService {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.canWrite(rebacProject)) {
+			if (rebacUser.can(rebacProject, Schema.Permission.WRITE)) {
 				return Schema.Permission.WRITE;
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
@@ -120,7 +120,7 @@ public class ProjectService {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.canAdministrate(rebacProject)) {
+			if (rebacUser.can(rebacProject, Schema.Permission.ADMINISTRATE)) {
 				return Schema.Permission.ADMINISTRATE;
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));

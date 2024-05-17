@@ -85,33 +85,23 @@ public class AssetController {
 			}
 
 		} else {
-			final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			try {
-				if (rebacUser.canRead(rebacProject)) {
-					final Optional<Project> project = projectService.getProject(projectId);
-					if (project.isPresent()) {
+				 final Optional<Project> project = projectService.getProject(projectId);
+				 if (project.isPresent()) {
 						final Optional<ProjectAsset> asset =
 								projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
-										projectId, assetName, assetType, assumedPermission);
+										 projectId, assetName, assetType, assumedPermission);
 						if (asset.isPresent()) {
 							throw new ResponseStatusException(
-									HttpStatus.CONFLICT, "Asset name is not available in this project");
+									 HttpStatus.CONFLICT, "Asset name is not available in this project");
 						} else {
 							return ResponseEntity.noContent().build();
 						}
-					} else {
+				 } else {
 						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
-					}
-				} else {
-					throw new ResponseStatusException(
-							HttpStatus.FORBIDDEN, "User does not have permission to access this project");
-				}
+				 }
 			} catch (final ResponseStatusException e) {
 				throw e; // Like any responsible fisher, we're going to catch and release!
-			} catch (final Exception e) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, "Unable to verify project permissions");
 			}
 		}
 	}

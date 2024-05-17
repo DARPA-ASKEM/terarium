@@ -313,6 +313,14 @@ public class ReBACService {
 		return permissionGroup;
 	}
 
+	/**
+	 * Determines if user `who` has `permission` on resource `what`
+	 * @param who User requesting access
+	 * @param permission Granted permission
+	 * @param what Resource being questioned
+	 * @return true if resource grants permission for user, otherwise false
+	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is unavailable
+	 */
 	public boolean can(SchemaObject who, Schema.Permission permission, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		if (SPICEDB_LAUNCHMODE.equals("TEST")) {

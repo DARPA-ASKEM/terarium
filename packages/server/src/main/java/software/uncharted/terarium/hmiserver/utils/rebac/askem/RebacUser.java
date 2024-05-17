@@ -20,20 +20,8 @@ public class RebacUser extends RebacObject {
 		return new SchemaObject(Schema.Type.USER, getId());
 	}
 
-	public boolean can(RebacProject rebacProject, Schema.Permission permission) throws Exception {
-		return reBACService.can(getSchemaObject(), permission, rebacProject.getSchemaObject());
-	}
-
-	public boolean canRead(RebacProject rebacProject) throws Exception {
-		return reBACService.can(getSchemaObject(), Schema.Permission.READ, rebacProject.getSchemaObject());
-	}
-
-	public boolean canWrite(RebacProject rebacProject) throws Exception {
-		return reBACService.can(getSchemaObject(), Schema.Permission.WRITE, rebacProject.getSchemaObject());
-	}
-
-	public boolean canAdministrate(RebacObject rebacObject) throws Exception {
-		return reBACService.can(getSchemaObject(), Schema.Permission.ADMINISTRATE, rebacObject.getSchemaObject());
+	public boolean can(RebacObject rebacObject, Schema.Permission permission) throws Exception {
+		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
 	}
 
 	public boolean isMemberOf(RebacGroup rebacGroup) throws Exception {
@@ -55,11 +43,11 @@ public class RebacUser extends RebacObject {
 	public String getPermissionFor(RebacProject rebacProject) throws Exception {
 		if (reBACService.isCreator(getSchemaObject(), rebacProject.getSchemaObject())) {
 			return Schema.Relationship.CREATOR.toString();
-		} else if (canAdministrate(rebacProject)) {
+		} else if (can(rebacProject, Schema.Permission.ADMINISTRATE)) {
 			return Schema.Relationship.ADMIN.toString();
-		} else if (canWrite(rebacProject)) {
+		} else if (can(rebacProject, Schema.Permission.WRITE)) {
 			return Schema.Relationship.WRITER.toString();
-		} else if (canRead(rebacProject)) {
+		} else if (can(rebacProject, Schema.Permission.READ)) {
 			return Schema.Relationship.READER.toString();
 		}
 		return "none";
