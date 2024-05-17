@@ -75,7 +75,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -95,7 +95,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -117,7 +117,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -125,7 +125,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				modelService.getAsset(model.getId(), ASSUMED_PERMISSION).isEmpty());
+				modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
 						.with(csrf()))
@@ -159,7 +159,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
 				.andExpect(status().isOk());

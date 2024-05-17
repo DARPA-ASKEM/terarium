@@ -69,7 +69,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanGetCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"), ASSUMED_PERMISSION);
+				(Code) new Code().setName("test-code-name").setDescription("my description"), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset/" + codeAsset.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -102,7 +102,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		codeAssetService.createAsset(
 				(Code) new Code()
@@ -110,7 +110,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		codeAssetService.createAsset(
 				(Code) new Code()
@@ -118,7 +118,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf()))
 				.andExpect(status().isOk())
@@ -135,7 +135,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/code-asset/" + codeAsset.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -143,7 +143,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				codeAssetService.getAsset(codeAsset.getId(), ASSUMED_PERMISSION).isEmpty());
+				codeAssetService.getAsset(codeAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -156,7 +156,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -189,7 +189,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
 						.param("project-id", PROJECT_ID.toString())
@@ -210,7 +210,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
 						.param("project-id", PROJECT_ID.toString())
@@ -230,7 +230,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadCode test";
 

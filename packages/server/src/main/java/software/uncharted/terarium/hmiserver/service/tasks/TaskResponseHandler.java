@@ -4,7 +4,11 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
-	protected final Schema.Permission assumePermission = Schema.Permission.WRITE;
+	/**
+	 * Without tracking "on behalf of" user and corresponding project to check for permissions,
+	 * assume the user had permissions at the time of the Task's creation
+	 */
+	protected final Schema.Permission ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER = Schema.Permission.WRITE;
 
 	public abstract String getName();
 

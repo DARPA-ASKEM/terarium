@@ -50,7 +50,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			final Properties props = objectMapper.readValue(serializedString, Properties.class);
 			log.info("Writing model card to database for document {}", props.getDocumentId());
 			final DocumentAsset document = documentAssetService
-					.getAsset(props.getDocumentId(), assumePermission)
+					.getAsset(props.getDocumentId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
 					.orElseThrow();
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (document.getMetadata() == null) {
@@ -58,7 +58,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			}
 			document.getMetadata().put("gollmCard", card.response);
 
-			documentAssetService.updateAsset(document, assumePermission);
+			documentAssetService.updateAsset(document, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);

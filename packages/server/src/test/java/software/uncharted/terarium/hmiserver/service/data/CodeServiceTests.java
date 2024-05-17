@@ -53,7 +53,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateCode() {
 		final Code before = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			final Code after = codeService.createAsset(before, ASSUMED_PERMISSION);
+			final Code after = codeService.createAsset(before, ASSUME_WRITE_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -69,8 +69,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCantCreateDuplicates() {
 		final Code code = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			codeService.createAsset(code, ASSUMED_PERMISSION);
-			codeService.createAsset(code, ASSUMED_PERMISSION);
+			codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
+			codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 
 		} catch (final Exception e) {
@@ -81,9 +81,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodes() throws IOException {
-		codeService.createAsset(createCode("0"), ASSUMED_PERMISSION);
-		codeService.createAsset(createCode("1"), ASSUMED_PERMISSION);
-		codeService.createAsset(createCode("2"), ASSUMED_PERMISSION);
+		codeService.createAsset(createCode("0"), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("1"), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("2"), ASSUME_WRITE_PERMISSION);
 
 		final List<Code> sims = codeService.getPublicNotTemporaryAssets(0, 10);
 
@@ -93,9 +93,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
-		final Code code = codeService.createAsset(createCode("0"), ASSUMED_PERMISSION);
+		final Code code = codeService.createAsset(createCode("0"), ASSUME_WRITE_PERMISSION);
 		final Code fetchedCode =
-				codeService.getAsset(code.getId(), ASSUMED_PERMISSION).get();
+				codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -113,11 +113,11 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateCode() throws Exception {
 
-		final Code code = codeService.createAsset(createCode("A"), ASSUMED_PERMISSION);
+		final Code code = codeService.createAsset(createCode("A"), ASSUME_WRITE_PERMISSION);
 		code.setName("new name");
 
 		final Code updatedCode =
-				codeService.updateAsset(code, ASSUMED_PERMISSION).orElseThrow();
+				codeService.updateAsset(code, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());
@@ -127,11 +127,11 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteCode() throws Exception {
 
-		final Code code = codeService.createAsset(createCode("B"), ASSUMED_PERMISSION);
+		final Code code = codeService.createAsset(createCode("B"), ASSUME_WRITE_PERMISSION);
 
-		codeService.deleteAsset(code.getId(), ASSUMED_PERMISSION);
+		codeService.deleteAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Code> deleted = codeService.getAsset(code.getId(), ASSUMED_PERMISSION);
+		final Optional<Code> deleted = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -142,9 +142,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		Code code = createCode("A");
 
-		code = codeService.createAsset(code, ASSUMED_PERMISSION);
+		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
 
-		final Code cloned = codeService.cloneAsset(code.getId(), ASSUMED_PERMISSION);
+		final Code cloned = codeService.cloneAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertNotEquals(code.getId(), cloned.getId());
 		Assertions.assertEquals(code.getName(), cloned.getName());
@@ -161,11 +161,11 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		Code code = createCode("A");
 
-		code = codeService.createAsset(code, ASSUMED_PERMISSION);
+		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = codeService.exportAsset(code.getId(), ASSUMED_PERMISSION);
+		final byte[] exported = codeService.exportAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Code imported = codeService.importAsset(exported, ASSUMED_PERMISSION);
+		final Code imported = codeService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertNotEquals(code.getId(), imported.getId());
 		Assertions.assertEquals(code.getName(), imported.getName());

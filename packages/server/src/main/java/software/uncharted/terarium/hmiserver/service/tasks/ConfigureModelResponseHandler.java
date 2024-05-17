@@ -64,7 +64,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model =
-					modelService.getAsset(props.getModelId(), assumePermission).orElseThrow();
+					modelService.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
@@ -111,7 +111,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				configuration.setConfiguration(modelCopy);
 
 				final ModelConfiguration newConfig =
-						modelConfigurationService.createAsset(configuration, assumePermission);
+						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()
 						.setLeft(newConfig.getId())

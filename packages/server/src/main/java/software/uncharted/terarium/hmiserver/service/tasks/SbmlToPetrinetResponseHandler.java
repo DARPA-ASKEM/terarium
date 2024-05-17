@@ -40,7 +40,7 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 				}
 			});
 
-			model = modelService.createAsset(modelResp.getResponse(), assumePermission);
+			model = modelService.createAsset(modelResp.getResponse(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

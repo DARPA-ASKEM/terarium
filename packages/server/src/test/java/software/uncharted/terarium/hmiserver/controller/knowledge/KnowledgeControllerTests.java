@@ -261,7 +261,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -280,13 +280,13 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model, ASSUMED_PERMISSION);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -306,17 +306,17 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi", ASSUMED_PERMISSION)
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model, ASSUMED_PERMISSION);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/align-model")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -345,7 +345,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-pdf-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.uploadFile(
 				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
@@ -386,13 +386,13 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-pdf-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model, ASSUMED_PERMISSION);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-model/" + model.getId())
 						.contentType(MediaType.APPLICATION_JSON)
@@ -400,7 +400,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		model = modelService.getAsset(model.getId(), ASSUMED_PERMISSION).orElseThrow();
+		model = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertTrue(model.getMetadata().getCard() != null);
 	}
@@ -414,7 +414,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -461,7 +461,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.setName("test-pdf-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUMED_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-dataset/" + dataset.getId())
 						.contentType(MediaType.APPLICATION_JSON)
@@ -469,7 +469,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		dataset = datasetService.getAsset(dataset.getId(), ASSUMED_PERMISSION).orElseThrow();
+		dataset = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
 	}
@@ -491,7 +491,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final Code code = codeService.createAsset(
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -524,7 +524,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final Code code = codeService.createAsset(
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
@@ -558,7 +558,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final Code code = codeService.createAsset(
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
 		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);

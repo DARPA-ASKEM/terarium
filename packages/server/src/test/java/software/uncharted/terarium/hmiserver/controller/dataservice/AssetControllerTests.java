@@ -141,7 +141,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
 				.setAssetId(documentAsset.getId())
@@ -159,7 +159,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset2 = documentAssetService.createAsset(
 				(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"),
-				ASSUMED_PERMISSION);
+                ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset2 = new ProjectAsset()
 				.setAssetId(documentAsset.getId())
