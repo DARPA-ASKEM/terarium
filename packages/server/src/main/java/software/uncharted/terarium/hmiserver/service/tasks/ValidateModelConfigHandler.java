@@ -49,10 +49,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			Optional<Simulation> sim = simulationService.getAsset(simulationId, assumePermission);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
-				simulationService.updateAsset(sim.get());
+				simulationService.updateAsset(sim.get(), assumePermission);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
