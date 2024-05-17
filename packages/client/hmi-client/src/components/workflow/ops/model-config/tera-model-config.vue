@@ -14,7 +14,7 @@
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
 			<tera-drilldown-section class="pl-3 pr-3 gap-0">
-				<template #header-controls>
+				<template #header-controls-right>
 					<Button
 						size="small"
 						:disabled="isSaveDisabled"

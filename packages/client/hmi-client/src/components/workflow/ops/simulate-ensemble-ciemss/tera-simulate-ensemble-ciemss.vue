@@ -6,8 +6,12 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
+			yyy
 			<Accordion :multiple="true" :active-index="[0, 1, 2]">
+				xxx
+				<section>test</section>
 				<!-- Model weights -->
+				xxxxxx
 				<AccordionTab header="Model weights">
 					<p class="subheader">
 						How do you want to distribute weights of the attached models? You can distribute them

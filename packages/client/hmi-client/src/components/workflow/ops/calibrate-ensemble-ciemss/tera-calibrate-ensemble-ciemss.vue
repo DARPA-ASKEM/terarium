@@ -6,7 +6,15 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
-			<tera-drilldown-section class="ml-3 mr-2 pt-2">
+			<tera-drilldown-section class="ml-3 mr-2 pt-3">
+				<template #header-controls-right>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runEnsemble" />
+					<tera-pyciemss-cancel-button
+						class="mr-auto"
+						:disabled="cancelRunId === ''"
+						:simulation-run-id="cancelRunId"
+					/>
+				</template>
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
@@ -138,7 +146,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mt-3 mr-4 mb-3"
+				class="mr-4 mb-3"
 			>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
@@ -172,20 +180,7 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button
-				:disabled="isRunDisabled"
-				outlined
-				label="Run"
-				icon="pi pi-play"
-				@click="runEnsemble"
-			/>
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>

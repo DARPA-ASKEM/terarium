@@ -1,7 +1,12 @@
 <template>
 	<section>
-		<header class="inline-flex justify-content-end m-2">
-			<slot name="header-controls" />
+		<header class="inline-flex justify-content-between mr-1 mt-1">
+			<section>
+				<slot name="header-controls-left" />
+			</section>
+			<section class="flex-row">
+				<slot name="header-controls-right" />
+			</section>
 		</header>
 		<main>
 			<slot v-if="!isLoading" />
