@@ -55,7 +55,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setConfiguration(new Model())
 						.setName("test-framework")
 						.setDescription("test-desc"),
-                ASSUME_WRITE_PERMISSION);
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -91,7 +91,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setConfiguration(new Model())
 						.setDescription("test-desc")
 						.setName("test-framework"),
-                ASSUME_WRITE_PERMISSION);
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())

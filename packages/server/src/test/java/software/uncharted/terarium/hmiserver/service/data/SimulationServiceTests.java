@@ -121,8 +121,9 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		final Simulation simulation = simulationService.createAsset(createSimulation("A"), ASSUME_WRITE_PERMISSION);
 		simulation.setName("new name");
 
-		final Simulation updatedSimulation =
-				simulationService.updateAsset(simulation, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Simulation updatedSimulation = simulationService
+				.updateAsset(simulation, ASSUME_WRITE_PERMISSION)
+				.orElseThrow();
 
 		Assertions.assertEquals(simulation, updatedSimulation);
 		Assertions.assertNotNull(updatedSimulation.getUpdatedOn());

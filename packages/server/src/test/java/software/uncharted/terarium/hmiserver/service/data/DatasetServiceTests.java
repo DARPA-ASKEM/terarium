@@ -158,8 +158,9 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 
-		final Dataset fetchedDataset =
-				datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Dataset fetchedDataset = datasetService
+				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(dataset, fetchedDataset);
 		Assertions.assertEquals(dataset.getId(), fetchedDataset.getId());

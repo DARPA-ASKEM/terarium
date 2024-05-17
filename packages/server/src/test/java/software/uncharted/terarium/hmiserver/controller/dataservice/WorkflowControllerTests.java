@@ -125,7 +125,8 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				workflowService.getAsset(workflow.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(workflowService
+				.getAsset(workflow.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 }

@@ -49,7 +49,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
@@ -68,7 +69,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());

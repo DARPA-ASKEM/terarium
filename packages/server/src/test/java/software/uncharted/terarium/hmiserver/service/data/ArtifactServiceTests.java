@@ -77,8 +77,9 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifactById() throws IOException {
 		final Artifact artifact = artifactService.createAsset(createArtifact("0"), ASSUME_WRITE_PERMISSION);
-		final Artifact fetchedArtifact =
-				artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Artifact fetchedArtifact = artifactService
+				.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(artifact, fetchedArtifact);
 		Assertions.assertEquals(artifact.getId(), fetchedArtifact.getId());
