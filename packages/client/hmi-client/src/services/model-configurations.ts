@@ -118,15 +118,13 @@ export function cleanModel(model: Model): void {
 	const parameters: ModelParameter[] = getParameters(model);
 
 	parameters.forEach((p) => {
-		const val = p.value;
 		const max = parseFloat(p.distribution?.parameters.maximum);
 		const min = parseFloat(p.distribution?.parameters.minimum);
 
-		// we delete the distribution when there is a constant + partial/no distribution
-		if (val !== undefined && !Number.isNaN(val)) {
-			if (Number.isNaN(max) || Number.isNaN(min)) {
-				delete p.distribution;
-			}
+		// we delete the distribution when there is partial/no distribution
+
+		if (Number.isNaN(max) || Number.isNaN(min)) {
+			delete p.distribution;
 		}
 	});
 }
