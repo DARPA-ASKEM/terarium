@@ -47,27 +47,16 @@ public class FunmanController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a model configuration validation task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNode input) {
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
+			taskRequest.setTimeoutMinutes(30);
 			taskRequest.setType(TaskType.FUNMAN);
 			taskRequest.setScript(ValidateModelConfigHandler.NAME);
 			taskRequest.setUserId(currentUserService.get().getId());
@@ -80,7 +69,7 @@ public class FunmanController {
 			sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
-			Simulation newSimulation = simulationService.createAsset(sim);
+			final Simulation newSimulation = simulationService.createAsset(sim);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(newSimulation.getId());
