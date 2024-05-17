@@ -1,8 +1,22 @@
 package software.uncharted.terarium.hmiserver.controller.search;
 
+import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,23 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import co.elastic.clients.elasticsearch._types.KnnQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -72,11 +69,23 @@ public class SearchByAssetTypeController {
 	@GetMapping("/{asset-type}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Executes a knn search against the provided asset type")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Query results", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class))),
-			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the concept from the data store", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Query results",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = JsonNode.class))),
+				@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving the concept from the data store",
+						content = @Content)
+			})
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
 			@PathVariable("asset-type") final String assetTypeName,
 			@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
@@ -145,8 +154,8 @@ public class SearchByAssetTypeController {
 							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
 					.build();
 
-			final SearchResponse<JsonNode> res = esService.knnSearch(index, knn, query, page, pageSize, EXCLUDE_FIELDS,
-					JsonNode.class);
+			final SearchResponse<JsonNode> res =
+					esService.knnSearch(index, knn, query, page, pageSize, EXCLUDE_FIELDS, JsonNode.class);
 
 			final List<JsonNode> docs = new ArrayList<>();
 			for (final Hit<JsonNode> hit : res.hits().hits()) {
