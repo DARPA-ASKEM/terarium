@@ -98,7 +98,7 @@
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index + Date.now()"
+						:key="selectedOutputId + ':' + index"
 						:config="cfg"
 						:index="index"
 						:model-states="modelStates"
