@@ -539,7 +539,7 @@ public class DocumentController {
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset);
 
 			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain());
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain(), projectId);
 
 			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
@@ -815,7 +815,7 @@ public class DocumentController {
 	 * @return extraction job id
 	 */
 	private void uploadPDFFileToDocumentThenExtract(
-			final String doi, final String filename, final UUID docId, final String domain) {
+			final String doi, final String filename, final UUID docId, final String domain, final UUID projectId) {
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
@@ -839,7 +839,7 @@ public class DocumentController {
 			}
 
 			// fire and forgot pdf extractions
-			extractionService.extractPDF(docId, domain);
+			extractionService.extractPDF(docId, domain, projectId);
 		} catch (final ResponseStatusException e) {
 			log.error("Unable to upload PDF document then extract", e);
 			throw e;

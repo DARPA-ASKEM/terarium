@@ -139,6 +139,6 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
 
 		documentAsset =
-				extractionService.extractPDF(documentAsset.getId(), "epi").get();
+				extractionService.extractPDF(documentAsset.getId(), "epi", null).get();
 	}
 }

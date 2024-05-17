@@ -8,6 +8,7 @@ import {
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
+	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { ConceptFacets } from './Concept';
@@ -200,6 +201,8 @@ export enum ModelServiceType {
 export interface CompareModelsResponseType {
 	response: string;
 }
+
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
 
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
