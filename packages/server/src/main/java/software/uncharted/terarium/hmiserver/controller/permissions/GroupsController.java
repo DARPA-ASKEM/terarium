@@ -106,7 +106,8 @@ public class GroupsController {
 		try {
 			final RebacGroup what = new RebacGroup(groupId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).can(what, Schema.Permission.ADMINISTRATE)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService)
+					.can(what, Schema.Permission.ADMINISTRATE)) {
 				try {
 					what.setPermissionRelationships(who, relationship);
 					return ResponseEntity.ok().build();
@@ -134,7 +135,8 @@ public class GroupsController {
 			}
 			final RebacGroup what = new RebacGroup(groupId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).can(what, Schema.Permission.ADMINISTRATE)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService)
+					.can(what, Schema.Permission.ADMINISTRATE)) {
 				try {
 					what.removePermissionRelationships(who, oldRelationship);
 					what.setPermissionRelationships(who, newRelationship);
@@ -159,7 +161,8 @@ public class GroupsController {
 		try {
 			final RebacGroup what = new RebacGroup(groupdId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).can(what, Schema.Permission.ADMINISTRATE)) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService)
+					.can(what, Schema.Permission.ADMINISTRATE)) {
 				try {
 					what.removePermissionRelationships(who, relationship);
 					return ResponseEntity.ok().build();
