@@ -315,6 +315,7 @@ public class ReBACService {
 
 	/**
 	 * Determines if user `who` has `permission` on resource `what`
+	 *
 	 * @param who User requesting access
 	 * @param permission Granted permission
 	 * @param what Resource being questioned

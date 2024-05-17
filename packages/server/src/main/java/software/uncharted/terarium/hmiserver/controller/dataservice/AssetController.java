@@ -25,8 +25,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 @RequestMapping("/assets")
 @RestController
@@ -86,20 +84,19 @@ public class AssetController {
 
 		} else {
 			try {
-				 final Optional<Project> project = projectService.getProject(projectId);
-				 if (project.isPresent()) {
-						final Optional<ProjectAsset> asset =
-								projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
-										 projectId, assetName, assetType, assumedPermission);
-						if (asset.isPresent()) {
-							throw new ResponseStatusException(
-									 HttpStatus.CONFLICT, "Asset name is not available in this project");
-						} else {
-							return ResponseEntity.noContent().build();
-						}
-				 } else {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
-				 }
+				final Optional<Project> project = projectService.getProject(projectId);
+				if (project.isPresent()) {
+					final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
+							projectId, assetName, assetType, assumedPermission);
+					if (asset.isPresent()) {
+						throw new ResponseStatusException(
+								HttpStatus.CONFLICT, "Asset name is not available in this project");
+					} else {
+						return ResponseEntity.noContent().build();
+					}
+				} else {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
+				}
 			} catch (final ResponseStatusException e) {
 				throw e; // Like any responsible fisher, we're going to catch and release!
 			}
