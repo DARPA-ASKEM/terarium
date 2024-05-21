@@ -27,20 +27,15 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ModelService modelService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelIndex());
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getModelIndex());
+		modelService.teardownIndexAndAlias();
 	}
 
 	@Test

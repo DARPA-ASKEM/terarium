@@ -29,7 +29,6 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
-	private final ObjectMapper objectMapper;
 
 	public ModelService(
 		final ObjectMapper objectMapper,
@@ -47,7 +46,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			s3ClientService,
 			repository,
 			Model.class);
-		this.objectMapper = objectMapper;
 	}
 
 	@Observed(name = "function_profile")
@@ -60,7 +58,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				.build();
 
 		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getModelIndex())
+				.index(getAssetIndex())
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
@@ -76,10 +74,16 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Observed(name = "function_profile")
 	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
-		final ModelDescription md = ModelDescription.fromModel(
-				elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
 
-		return Optional.of(md);
+		final Optional<Model> model = getAsset(id);
+		if(model.isPresent()) {
+			final ModelDescription md = ModelDescription.fromModel(model.get());
+			return Optional.of(md);
+		}
+
+		return Optional.empty();
+
+
 	}
 
 
