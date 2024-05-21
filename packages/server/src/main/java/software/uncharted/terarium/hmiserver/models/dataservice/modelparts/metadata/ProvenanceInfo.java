@@ -19,4 +19,12 @@ public class ProvenanceInfo extends SupportAdditionalProperties implements Seria
 	private String method;
 
 	private String description;
+
+	@Override
+	public ProvenanceInfo clone(){
+		ProvenanceInfo clone = (ProvenanceInfo)super.clone();
+		clone.method = this.method;
+		clone.description = this.description;
+		return clone;
+	}
 }

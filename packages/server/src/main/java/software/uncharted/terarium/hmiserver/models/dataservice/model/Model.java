@@ -64,6 +64,38 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
+
+	@Override
+	public Model clone(){
+		final Model clone = (Model)super.clone();
+
+		if(header != null){
+			clone.header = header.clone();
+		}
+		clone.userId = this.userId;
+
+		if(model != null){
+			clone.model = new HashMap<>();
+			for(Map.Entry<String, JsonNode> entry : model.entrySet()){
+				clone.model.put(entry.getKey(), entry.getValue().deepCopy());
+			}
+		}
+
+		if(properties != null){
+			clone.properties = properties.deepCopy();
+		}
+
+		if(semantics != null){
+			clone.semantics = semantics.clone();
+		}
+
+		if(metadata != null){
+			clone.metadata = metadata.clone();
+		}
+
+		return clone;
+	}
+
 	public Model() {
 		super();
 	}
@@ -77,15 +109,15 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		this.setPublicAsset(other.getPublicAsset());
 
 		if (other.getCreatedOn() != null) {
-			this.setCreatedOn((Timestamp) other.getCreatedOn());
+			this.setCreatedOn(other.getCreatedOn());
 		}
 
 		if (other.getUpdatedOn() != null) {
-			this.setUpdatedOn((Timestamp) other.getUpdatedOn());
+			this.setUpdatedOn(other.getUpdatedOn());
 		}
 
 		if (other.getDeletedOn() != null) {
-			this.setDeletedOn((Timestamp) other.getDeletedOn());
+			this.setDeletedOn(other.getDeletedOn());
 		}
 
 		this.header = other.header;

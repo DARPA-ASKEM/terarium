@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -55,4 +56,44 @@ public class Annotations extends SupportAdditionalProperties implements Serializ
 	@TSOptional
 	@JsonProperty("model_types")
 	private List<String> modelTypes;
+
+	@Override
+	public Annotations clone(){
+		Annotations clone = (Annotations)super.clone();
+
+		clone.license = this.license;
+		if(authors != null){
+			clone.authors = new ArrayList<>(authors);
+		}
+
+		if(references != null){
+			clone.references = new ArrayList<>(references);
+		}
+
+		clone.timeScale = timeScale;
+		clone.timeStart = timeStart;
+		clone.timeEnd = timeEnd;
+
+		if(locations != null){
+			clone.locations = new ArrayList<>(locations);
+		}
+
+		if(pathogens != null){
+			clone.pathogens = new ArrayList<>(pathogens);
+		}
+
+		if(diseases != null){
+			clone.diseases = new ArrayList<>(diseases);
+		}
+
+		if(hosts != null){
+			clone.hosts = new ArrayList<>(hosts);
+		}
+
+		if(modelTypes != null){
+			clone.modelTypes = new ArrayList<>(modelTypes);
+		}
+
+		return clone;
+	}
 }

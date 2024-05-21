@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
-public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
+//TODO "Clonable" should be moved back to Terarium Asset and all other classes need to be changed to use that
+public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset implements Cloneable{
 
 	@TSIgnore
 	protected Map<String, JsonNode> additionalProperties = new HashMap<>();
@@ -24,5 +25,17 @@ public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset
 	public void setAdditionalProperty(final String name, final Object value) {
 		final ObjectMapper mapper = new ObjectMapper();
 		additionalProperties.put(name, mapper.valueToTree(value));
+	}
+
+	@Override
+	public TerariumAssetThatSupportsAdditionalProperties clone(){
+		final TerariumAssetThatSupportsAdditionalProperties clone = new TerariumAssetThatSupportsAdditionalProperties();
+		if(additionalProperties != null){
+			clone.additionalProperties = new HashMap<>();
+			for(final Map.Entry<String, JsonNode> entry : additionalProperties.entrySet()){
+				clone.additionalProperties.put(entry.getKey(), entry.getValue().deepCopy());
+			}
+		}
+		return clone;
 	}
 }
