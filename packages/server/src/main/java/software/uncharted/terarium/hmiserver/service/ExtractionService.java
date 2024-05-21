@@ -101,7 +101,10 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractPDF(
-			final UUID documentId, final String domain, final UUID projectId, final Schema.Permission hasWritePermission) {
+			final UUID documentId,
+			final String domain,
+			final UUID projectId,
+			final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
 				clientEventService,

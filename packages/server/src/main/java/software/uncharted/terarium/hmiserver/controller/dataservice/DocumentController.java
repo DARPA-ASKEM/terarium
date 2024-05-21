@@ -566,7 +566,8 @@ public class DocumentController {
 			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset, permission);
 
 			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain(), projectId, permission);
+			uploadPDFFileToDocumentThenExtract(
+					doi, filename, documentAsset.getId(), body.getDomain(), projectId, permission);
 
 			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
