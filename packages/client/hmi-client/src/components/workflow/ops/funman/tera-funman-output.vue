@@ -1,7 +1,12 @@
 <template>
 	<div class="section-row">
 		<label>Trajectory State</label>
-		<Dropdown v-model="selectedTrajState" :options="modelStates"> </Dropdown>
+		<Dropdown
+			v-model="selectedTrajState"
+			:options="modelStates"
+			@update:model-value="emit('update:trajectoryState', $event)"
+		>
+		</Dropdown>
 	</div>
 	<div ref="trajRef"></div>
 
@@ -85,7 +90,10 @@ import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
+	trajectoryState?: string;
 }>();
+
+const emit = defineEmits(['update:trajectoryState']);
 
 const parameterOptions = ref<string[]>([]);
 const selectedParam = ref<string>('');
@@ -147,7 +155,8 @@ const initalizeParameters = async () => {
 	funmanResult.model.petrinet.model.states.forEach((element) => {
 		modelStates.value.push(element.id);
 	});
-	selectedTrajState.value = modelStates.value[0];
+
+	selectedTrajState.value = props.trajectoryState || modelStates.value[0];
 
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 

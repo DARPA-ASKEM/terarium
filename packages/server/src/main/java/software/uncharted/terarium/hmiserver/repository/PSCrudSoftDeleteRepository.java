@@ -13,7 +13,5 @@ public interface PSCrudSoftDeleteRepository<T, ID> extends PSCrudRepository<T, I
 
 	Optional<T> getByIdAndDeletedOnIsNull(final ID id);
 
-	Page<T> findAllByDeletedOnIsNull(final Pageable pageable);
-
 	Page<T> findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(final Pageable pageable);
 }
