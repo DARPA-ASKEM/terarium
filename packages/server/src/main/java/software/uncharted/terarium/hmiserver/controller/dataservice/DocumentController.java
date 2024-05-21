@@ -886,3 +886,4 @@ public class DocumentController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to upload document");
 		}
 	}
+}
