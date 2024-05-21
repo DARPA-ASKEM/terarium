@@ -12,7 +12,7 @@
 				/>
 			</aside>
 		</header>
-		<template v-if="!hideIntro">
+		<template v-if="!hideIntro && name">
 			<header
 				id="asset-top"
 				:class="{
@@ -148,8 +148,8 @@ const shrinkHeader = computed(() => {
 
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
-// Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+// Scroll padding for anchors are adjusted depending on the header (inserted in css)
+const scrollPaddingTop = computed(() => (shrinkHeader.value ? '3.5rem' : '1rem'));
 
 const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
@@ -184,17 +184,19 @@ main {
 	flex-direction: column;
 	flex: 1;
 	background-color: var(--surface-section);
-	/* accounts for sticky header height */
-	scroll-margin-top: v-bind('scrollMarginTopStyle');
 	overflow-y: auto;
 	overflow-x: hidden;
 }
 
 main > section {
 	display: flex;
-	height: 100%;
+	flex: 1;
 	& > :deep(*:not(nav)) {
 		flex: 1;
+	}
+
+	& > :deep(nav) {
+		padding-top: v-bind(scrollPaddingTop);
 	}
 }
 
@@ -311,7 +313,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: v-bind('scrollMarginTopStyle');
+	scroll-padding-top: v-bind('scrollPaddingTop');
 }
 
 main:deep(.p-accordion-content) {

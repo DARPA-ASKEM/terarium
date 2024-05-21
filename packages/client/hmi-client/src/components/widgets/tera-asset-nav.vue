@@ -15,8 +15,10 @@ const props = defineProps<{
 
 const assetContentIdsInView = ref<string[]>([]);
 
-function scrollTo(elementId: string) {
-	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
+async function scrollTo(elementId: string) {
+	const element = document.getElementById(elementId);
+	if (!element) return;
+	element.scrollIntoView({ behavior: 'smooth' });
 }
 
 onMounted(async () => {
@@ -35,6 +37,6 @@ nav {
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
-	/* height: fit-content; */
+	height: fit-content;
 }
 </style>
