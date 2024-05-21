@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizedIntervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizedInterventions;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -23,9 +23,8 @@ public class OptimizeRequestCiemss implements Serializable {
 	private TimeSpan timespan;
 
 	@TSOptional
-	// FIXME: make pluraal more consistent here:
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-	private OptimizedIntervention interventions;
+	private OptimizedInterventions interventions;
 
 	@JsonAlias("step_size")
 	@TSOptional

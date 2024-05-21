@@ -193,6 +193,21 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(@RequestBody final CalibrationRequestCiemss request) {
+		//Set model config's interventions
+		try {
+			final Optional<ModelConfiguration> modelConfiguration =
+					modelConfigService.getAsset(request.getModelConfigId());
+			final List<Intervention> modelInterventions =
+					modelConfiguration.get().getInterventions();
+			if (modelInterventions != null) {
+				log.warn("Model interventions not null");
+				request.setInterventions(modelInterventions);
+			}
+		} catch (IOException e) {
+			String error = "Unable to find model configuration";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
 		return ResponseEntity.ok(simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request))
 				.getBody());

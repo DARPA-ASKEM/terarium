@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 // Used to specify any interventions provided by the AMR and given to the simulation-service.
-public class OptimizedIntervention {
+public class OptimizedInterventions {
 	private String selection;
 
 	@JsonAlias("param_names")
