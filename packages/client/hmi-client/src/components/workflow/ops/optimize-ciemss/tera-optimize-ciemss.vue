@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -61,6 +62,14 @@
 								]"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+						</div>
 					</div>
 					<Button
 						v-if="showAdditionalOptions"
@@ -107,8 +116,8 @@
 					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label>Target-variable(s)</label>
-							<MultiSelect
+							<label>Target-variable</label>
+							<Dropdown
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
@@ -117,7 +126,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label>Qoi Method</label>
+							<label>QoI Method</label>
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="[
@@ -149,14 +158,6 @@
 								:min-fraction-digits="1"
 								:max-fraction-digits="10"
 							/>
-						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
 						</div>
 					</div>
 				</div>
@@ -268,6 +269,7 @@
 				outlined
 				severity="secondary"
 				label="Save as a new model configuration"
+				:disabled="knobs.optimizationRunId === ''"
 				@click="showModelModal = true"
 			/>
 			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
@@ -282,14 +284,14 @@
 	>
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<InputText v-model="knobs.modelConfigName" />
+			<InputText v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<InputText v-model="knobs.modelConfigDesc" />
+			<InputText v-model="modelConfigDesc" />
 		</div>
 		<Button
-			:disabled="knobs.modelConfigName === ''"
+			:disabled="modelConfigName === ''"
 			outlined
 			label="Save as a new model configuration"
 			@click="saveModelConfiguration"
@@ -303,7 +305,6 @@ import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
@@ -348,7 +349,8 @@ import {
 	InterventionTypes,
 	ContextMethods,
 	InterventionPolicyGroup,
-	blankInterventionPolicyGroup
+	blankInterventionPolicyGroup,
+	getOptimizedInterventions
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -380,8 +382,6 @@ interface BasicKnobs {
 	isMinimized: boolean;
 	forecastRunId: string;
 	optimizationRunId: string;
-	modelConfigName: string;
-	modelConfigDesc: string;
 	interventionType: InterventionTypes;
 }
 
@@ -398,10 +398,11 @@ const knobs = ref<BasicKnobs>({
 	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
+
+const modelConfigName = ref<string>('');
+const modelConfigDesc = ref<string>('');
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -579,14 +580,19 @@ const runOptimize = async () => {
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
-	// TODO: This should be taking some values from our output result but its TBD
+	if (!knobs.value.optimizationRunId) {
+		logger.error('No optimization run to create model configuration from');
+	}
+	const optRunId = knobs.value.optimizationRunId;
+	const interventions = await getOptimizedInterventions(optRunId);
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
-		knobs.value.modelConfigName,
-		knobs.value.modelConfigDesc,
-		modelConfiguration.value.configuration
+		modelConfigName.value,
+		modelConfigDesc.value,
+		modelConfiguration.value.configuration,
+		false,
+		interventions
 	);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
@@ -633,8 +639,6 @@ watch(
 		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.modelConfigName = knobs.value.modelConfigName;
-		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
 		state.isMinimized = knobs.value.isMinimized;
 		state.qoiMethod = knobs.value.qoiMethod;
@@ -649,21 +653,13 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-		}
-
-		// Update knobs with current selected output state
-		// timespan.value = props.node.state.currentTimespan;
-		// numSamples.value = props.node.state.numSamples;
-		// method.value = props.node.state.method;
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => knobs.value.forecastRunId,
-	async () => {
-		if (knobs.value.forecastRunId !== '') {
-			setOutputValues();
+			initialize();
+			if (props.node.state.forecastRunId !== '') {
+				// The run has finished
+				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
+				knobs.value.forecastRunId = props.node.state.forecastRunId;
+				setOutputValues();
+			}
 		}
 	},
 	{ immediate: true }

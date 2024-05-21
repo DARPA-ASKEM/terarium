@@ -48,25 +48,21 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
+		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getDocumentIndex());
+		documentAssetService.teardownIndexAndAlias();
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProject() throws Exception {
 
-		final Project project = (Project) new Project().setName("test-name").setDescription("test-description");
-		project.setUserId(MockUser.URSULA);
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/projects")
+		mockMvc.perform(MockMvcRequestBuilders.post("/projects?name=test&userId=abc123&description=desc")
 						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(project)))
+						.contentType("application/json"))
 				.andExpect(status().isCreated());
 	}
 
@@ -126,7 +122,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(projectAsset)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 						.param("types", AssetType.DOCUMENT.name())

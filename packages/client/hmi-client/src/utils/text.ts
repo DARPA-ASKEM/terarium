@@ -1,4 +1,4 @@
-import { upperFirst, lowerCase } from 'lodash';
+import { upperFirst, lowerCase, startCase, toLower } from 'lodash';
 
 // Highlight text by search terms
 function highlightText(text: string, searchTerms: string): string {
@@ -33,4 +33,13 @@ function snakeToCapitalized(snakeCaseString) {
 	return upperFirst(lowerCase(words.join(' ')));
 }
 
-export { highlightText as highlight, pascalCaseToCapitalSentence, snakeToCapitalized };
+function snakeToCapitalSentence(snakeCaseString) {
+	return startCase(toLower(snakeCaseString));
+}
+
+export {
+	highlightText as highlight,
+	pascalCaseToCapitalSentence,
+	snakeToCapitalized,
+	snakeToCapitalSentence
+};

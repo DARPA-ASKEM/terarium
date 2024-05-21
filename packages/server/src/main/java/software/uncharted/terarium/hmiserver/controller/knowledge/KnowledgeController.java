@@ -403,7 +403,7 @@ public class KnowledgeController {
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
-			codeFile.setProgrammingLanguageFromFileName(filename);
+			codeFile.setFileNameAndProgrammingLanguage(filename);
 
 			if (code.getFiles() == null) {
 				code.setFiles(new HashMap<>());
@@ -613,7 +613,7 @@ public class KnowledgeController {
 				newCol.setAnnotations(col.getAnnotations());
 				newCol.setDescription(annotation.get("description").asText());
 				newCol.setMetadata(col.getMetadata());
-				newCol.updateMetadata(mapper.convertValue(annotation, Map.class));
+				newCol.updateMetadata(annotation);
 				columns.add(newCol);
 			}
 

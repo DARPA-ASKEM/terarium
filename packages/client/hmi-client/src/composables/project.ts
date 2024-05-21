@@ -10,7 +10,6 @@ import { computed, shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import useAuthStore from '@/stores/auth';
 
 const TIMEOUT_MS = 100;
 
@@ -55,6 +54,14 @@ export function useProjects() {
 	}
 
 	/**
+	 * Return Active Project Name or empty string
+	 * @returns string
+	 */
+	function getActiveProjectName() {
+		return activeProject.value?.name ?? '';
+	}
+
+	/**
 	 * Return all the asset of a certain AssetType from the active project.
 	 * @param assetType
 	 * @returns ProjectAsset[]
@@ -70,13 +77,13 @@ export function useProjects() {
 	 * If `projectId` is defined, add an asset to that project.
 	 * Otherwise, add an asset to the active project and refresh it.
 	 *
-	 * @param {string} assetType Type of asset to be added, e.g., 'documents'.
+	 * @param {AssetType} assetType Type of asset to be added, e.g., 'documents'.
 	 * @param {string} assetId Id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections.
 	 * @param {Project['id']} [projectId] Id of the project to add the asset to.
 	 * @returns {Promise<string|null>} Id of the added asset, if successful. Null, otherwise.
 	 */
 	async function addAsset(
-		assetType: string,
+		assetType: AssetType,
 		assetId: ProjectAsset['id'],
 		projectId?: Project['id']
 	): Promise<ProjectAsset['id']> {
@@ -100,10 +107,9 @@ export function useProjects() {
 	 * @returns {ProjectAsset | undefined}
 	 */
 	function findAsset(assetId: ProjectAsset['assetId']): ProjectAsset | undefined {
-		const asset = activeProject.value?.projectAssets.find(
+		return activeProject.value?.projectAssets.find(
 			(projectAsset) => projectAsset.assetId === assetId
 		);
-		return asset;
 	}
 
 	/**
@@ -144,11 +150,10 @@ export function useProjects() {
 	 *
 	 * @param {string} name Name of the project.
 	 * @param {string} description Short description.
-	 * @param {string} userId ID of the owner of the project.
 	 * @returns {Promise<Project|null>} The created project, or null if none returned by the API.
 	 */
-	async function create(name: string, description: string, userId: string) {
-		const created = await ProjectService.create(name, description, userId);
+	async function create(name: string, description: string) {
+		const created = await ProjectService.create(name, description);
 		setTimeout(async () => {
 			getAll();
 		}, TIMEOUT_MS);
@@ -232,33 +237,17 @@ export function useProjects() {
 	}
 
 	async function clone(projectId: Project['id']) {
-		const userId = useAuthStore().user?.id;
-		if (!userId) {
-			return null;
-		}
 		const projectToClone = await ProjectService.get(projectId);
 		if (!projectToClone) {
 			return null;
 		}
 		const created = await ProjectService.create(
 			`Copy of ${projectToClone.name}`,
-			projectToClone.description,
-			userId
+			projectToClone.description
 		);
 		if (!created || !created.id) {
 			return null;
 		}
-		// There doesn't seem to be a way to add multiple assets in one call yet
-		// Object.entries(projectToClone.assets).forEach(async (projectAsset) => {
-		// 	const [assetType, assets] = projectAsset;
-		// 	if (assets.length) {
-		// 		await Promise.all(
-		// 			assets.map(async (asset) => {
-		// 				await ProjectService.addAsset(created.id!, assetType, asset.id);
-		// 			})
-		// 		);
-		// 	}
-		// });
 		return created;
 	}
 
@@ -270,6 +259,7 @@ export function useProjects() {
 		get,
 		getAll,
 		getActiveProjectAssets,
+		getActiveProjectName,
 		addAsset,
 		findAsset,
 		getAssetName,

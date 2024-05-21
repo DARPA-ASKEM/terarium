@@ -10,6 +10,7 @@ import {
 	createNotificationEventHandlers,
 	createNotificationEventLogger
 } from '@/services/notificationEventHandlers';
+import { ProgressState } from '@/types/Types';
 import { useProjects } from './project';
 
 let initialized = false;
@@ -18,6 +19,9 @@ const { findAsset } = useProjects();
 
 const isNotificationForActiveProject = (item: NotificationItem) => !!findAsset(item.assetId);
 
+const isFinished = (item: NotificationItem) =>
+	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
+
 // Items stores the notifications for all projects
 const items = ref<NotificationItem[]>([]);
 
@@ -25,14 +29,11 @@ export function useNotificationManager() {
 	const itemsForActiveProject = computed(() => items.value.filter(isNotificationForActiveProject));
 
 	const hasFinishedItems = computed(() =>
-		itemsForActiveProject.value.some(
-			(item: NotificationItem) => item.status === 'Completed' || item.status === 'Failed'
-		)
+		itemsForActiveProject.value.some((item: NotificationItem) => isFinished(item))
 	);
 	const unacknowledgedFinishedItems = computed(() =>
 		itemsForActiveProject.value.filter(
-			(item: NotificationItem) =>
-				(item.status === 'Completed' || item.status === 'Failed') && !item.acknowledged
+			(item: NotificationItem) => isFinished(item) && !item.acknowledged
 		)
 	);
 
@@ -60,16 +61,16 @@ export function useNotificationManager() {
 
 	function clearFinishedItems() {
 		itemsForActiveProject.value.forEach((item) => {
-			if (item.status !== 'Running') acknowledgeNotification(item.notificationGroupId);
+			if (item.status !== ProgressState.Running) acknowledgeNotification(item.notificationGroupId);
 		});
 		items.value = items.value.filter(
-			(item) => !isNotificationForActiveProject(item) || item.status === 'Running'
+			(item) => !isNotificationForActiveProject(item) || item.status === ProgressState.Running
 		);
 	}
 
 	function acknowledgeFinishedItems() {
 		items.value.forEach((item) => {
-			if (['Completed', 'Failed'].includes(item.status)) {
+			if (isFinished(item)) {
 				item.acknowledged = true;
 			}
 		});

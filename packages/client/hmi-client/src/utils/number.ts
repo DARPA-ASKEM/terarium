@@ -15,16 +15,20 @@ export function exponentialToNumber(num: string): string {
  * @returns {string} The number in NIST form.
  */
 export function numberToNist(num: string) {
-	num = parseFloat(num).toString();
+	num = num.replace(/\s/g, '');
+
+	if (Number.isNaN(Number(num))) return '';
 
 	// Split the input by decimal point
 	let [integerPart, decimalPart] = num.split('.');
 
 	// Format the integer part
-	integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+	if (integerPart.length > 4 || decimalPart?.length > 4) {
+		integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-	if (num.includes('.') && decimalPart) {
-		decimalPart = decimalPart.replace(/(\d{3})/g, '$1 ').trim();
+		if (num.includes('.') && decimalPart) {
+			decimalPart = decimalPart.replace(/(\d{3})/g, '$1 ').trim();
+		}
 	}
 
 	// Construct the formatted number
@@ -44,7 +48,7 @@ export function numberToNist(num: string) {
  */
 export function nistToNumber(num: string): string {
 	// Remove any spaces from the formatted number
-	let numStr = num.replace(/ /g, '');
+	let numStr = num.replace(/\s/g, '');
 	numStr = parseFloat(numStr).toString();
 	return numStr;
 }
@@ -66,5 +70,39 @@ export function displayNumber(num: string): string {
 	digitString = digitString.replace('.', '');
 
 	if (digitString.length > 6) return parseFloat(num).toExponential(3);
-	return numberToNist(num);
+	return numberToNist(parseFloat(num).toString());
+}
+
+/**
+ * Scrubs the input string by removing all whitespace and checks if it can be parsed as a number.
+ *
+ * @param {string} v - The input string to scrub and parse.
+ * @returns {boolean} - Returns true if the scrubbed string can be parsed as a number (either in decimal or exponential form), otherwise returns false.
+ *
+ * The function performs the following checks:
+ * 1. If the last character is a decimal point, it returns false.
+ * 2. If the scrubbed string can be parsed as a number, it returns true.
+ * 3. If the scrubbed string is in exponential form (i.e., contains exactly one 'e' or 'E'), it checks if the part before the 'e' or 'E' can be parsed as a number and if the part after the 'e' or 'E' is an integer. If both conditions are met, it returns true.
+ */
+export function scrubAndParse(v) {
+	// remove all whitespace
+	const scrubbed = v.replace(/\s/g, '');
+
+	// check if last digit is a decimal point
+	if (scrubbed[scrubbed.length - 1] === '.') return false;
+
+	// check if the string is a number
+	if (!Number.isNaN(Number(scrubbed))) return true;
+
+	// check if the string is in exponential form and if there's only one 'e'/'E'
+	const parts = scrubbed.split(/[eE]/);
+	if (parts.length > 2) return false;
+
+	// check if the string is in exponential form and if the second part is an integer
+	if (parts.length === 2) {
+		if (Number(parts[0])) {
+			if (Number.isInteger(parts[1])) return true;
+		}
+	} else if (Number(parts[0])) return true;
+	return false;
 }

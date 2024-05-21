@@ -12,6 +12,8 @@ export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
     type: ClientEventType;
+    projectId?: string;
+    notificationGroupId?: string;
     data: T;
 }
 
@@ -22,15 +24,18 @@ export interface ClientLog {
     args?: string[];
 }
 
-export interface TerariumAsset {
-    id?: string;
+export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
     deletedOn?: Date;
     temporary?: boolean;
     publicAsset?: boolean;
+}
+
+export interface TerariumEntity {
+    id?: string;
+    createdOn?: Date;
+    updatedOn?: Date;
 }
 
 export interface User {
@@ -73,7 +78,7 @@ export interface Artifact extends TerariumAsset {
     userId: string;
     fileNames: string[];
     metadata?: any;
-    concepts?: OntologyConcept[];
+    project?: Project;
 }
 
 export interface CsvAsset {
@@ -93,9 +98,9 @@ export interface CsvColumnStats {
     sd: number;
 }
 
-export interface Grounding {
+export interface Grounding extends TerariumEntity {
     identifiers: Identifier[];
-    context?: { [index: string]: any };
+    context?: any;
 }
 
 export interface Identifier {
@@ -127,9 +132,10 @@ export interface Code extends TerariumAsset {
     project?: Project;
 }
 
-export interface CodeFile {
-    language: ProgrammingLanguage;
+export interface CodeFile extends TerariumEntity {
+    fileName: string;
     dynamics: Dynamics;
+    language: ProgrammingLanguage;
 }
 
 export interface Dynamics {
@@ -165,16 +171,18 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
+    project?: Project;
 }
 
-export interface DatasetColumn {
+export interface DatasetColumn extends TerariumEntity {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
-    metadata?: { [index: string]: any };
+    metadata?: any;
     grounding?: Grounding;
     description?: string;
+    dataset?: Dataset;
 }
 
 export interface AddDocumentAssetFromXDDRequest {
@@ -197,8 +205,8 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
-    concepts?: OntologyConcept[];
     assets?: DocumentExtraction[];
+    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -404,6 +412,10 @@ export interface Project extends TerariumAsset {
      */
     projectAssets: ProjectAsset[];
     codeAssets: Code[];
+    datasetAssets: Dataset[];
+    workflowAssets: Workflow[];
+    artifactAssets: Artifact[];
+    documentAssets: DocumentAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -486,6 +498,7 @@ export interface Simulation extends TerariumAsset {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    progress?: number;
     statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
@@ -495,9 +508,7 @@ export interface Simulation extends TerariumAsset {
     updates: SimulationUpdate[];
 }
 
-export interface SimulationUpdate {
-    id: string;
-    createdOn: Date;
+export interface SimulationUpdate extends TerariumEntity {
     data: any;
     simulation: Simulation;
 }
@@ -535,7 +546,6 @@ export interface ExtractionResponseResult {
 }
 
 export interface ExtractionStatusUpdate {
-    notificationGroupId: string;
     documentId: string;
     t: number;
     message: string;
@@ -607,22 +617,18 @@ export interface EntitySimilarityResult {
     similarity: number;
 }
 
-export interface NotificationEvent {
-    id: string;
+export interface NotificationEvent extends TerariumEntity {
     progress: number;
     state: ProgressState;
-    createdOn: Date;
     acknowledgedOn: Date;
     data: any;
     notificationGroup: NotificationGroup;
 }
 
-export interface NotificationGroup {
-    id: string;
+export interface NotificationGroup extends TerariumEntity {
     userId: string;
     type: string;
     projectId?: string;
-    createdOn: Date;
     notificationEvents: NotificationEvent[];
 }
 
@@ -935,6 +941,13 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
+export interface Workflow extends TerariumAsset {
+    transform: Transform;
+    nodes: WorkflowNode[];
+    edges: WorkflowEdge[];
+    project?: Project;
+}
+
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1056,6 +1069,24 @@ export interface PetriNetTransitionProperties {
     name: string;
     description: string;
     grounding?: ModelGrounding;
+}
+
+export interface Transform {
+    x: number;
+    y: number;
+    k: number;
+}
+
+export interface WorkflowNode {
+    id: string;
+    workflowId: string;
+}
+
+export interface WorkflowEdge {
+    id: string;
+    workflowId: string;
+    source: string;
+    target: string;
 }
 
 export interface XDDFacetBucket {
@@ -1258,6 +1289,12 @@ export enum ClientEventType {
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
+    TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
+    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
+    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
 }
 
 export enum FileType {
@@ -1370,6 +1407,7 @@ export enum ProgressState {
     Queued = "QUEUED",
     Retrieving = "RETRIEVING",
     Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {

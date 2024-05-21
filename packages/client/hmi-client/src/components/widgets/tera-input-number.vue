@@ -29,9 +29,7 @@ defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 function updateValue({ value }: any) {
-	if (value) {
-		emit('update:modelValue', parseFloat(value));
-	}
+	emit('update:modelValue', parseFloat(value));
 }
 </script>
 

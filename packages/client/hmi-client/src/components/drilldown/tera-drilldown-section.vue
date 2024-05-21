@@ -1,5 +1,8 @@
 <template>
 	<section>
+		<header class="inline-flex justify-content-end m-2">
+			<slot name="header-controls" />
+		</header>
 		<main>
 			<slot v-if="!isLoading" />
 			<tera-progress-spinner v-else :font-size="2" is-centered />

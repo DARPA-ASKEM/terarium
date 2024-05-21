@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -110,7 +111,7 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-save-model-modal
+	<tera-save-asset-modal
 		v-if="selectedModel"
 		:model="selectedModel"
 		:is-visible="showSaveModelModal"
@@ -139,7 +140,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import InputText from 'primevue/inputtext';
-import TeraSaveModelModal from '@/page/project/components/tera-save-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';

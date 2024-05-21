@@ -2,58 +2,39 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.io.Serial;
 import java.util.UUID;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
 @Data
 @TSModel
 @Entity
-public class SimulationUpdate {
+public class SimulationUpdate extends TerariumEntity {
 
-	@Id
-	@NotNull private UUID id = UUID.randomUUID();
+	@Serial
+	private static final long serialVersionUID = -2346524355234700379L;
 
 	@ManyToOne
-	@JoinColumn(name = "simulation_id", nullable = false)
 	@JsonBackReference
-	@EqualsAndHashCode.Exclude
-	private Simulation simulation;
+	@NotNull private Simulation simulation;
 
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	@NotNull private Timestamp createdOn;
-
-	@PrePersist
-	protected void onCreate() {
-		this.createdOn = this.createdOn != null
-				? this.createdOn
-				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-	}
-
-	@Convert(converter = JsonConverter.class)
-	@Column(columnDefinition = "text")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode data;
 
 	public SimulationUpdate clone(final Simulation simulation) {
 		final SimulationUpdate clone = new SimulationUpdate();
 		clone.setId(UUID.randomUUID());
 		clone.setSimulation(simulation);
-		clone.setCreatedOn(this.createdOn);
+		clone.setCreatedOn(this.getCreatedOn());
 		clone.setData(this.data);
 		return clone;
 	}

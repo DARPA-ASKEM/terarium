@@ -14,9 +14,9 @@ public interface SnakeCaseController {
 	 * @param object
 	 * @return
 	 */
-	default JsonNode convertObjectToSnakeCaseJsonNode(Object object) {
+	default JsonNode convertObjectToSnakeCaseJsonNode(final Object object) {
 
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 		return mapper.convertValue(object, JsonNode.class);

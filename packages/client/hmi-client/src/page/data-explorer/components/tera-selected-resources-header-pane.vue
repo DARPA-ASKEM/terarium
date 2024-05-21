@@ -43,8 +43,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'clear-selected']);
 
-const projectOptions = computed(
-	() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
+const projectOptions = computed(() =>
+	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
 );
 
 const addResourcesToProject = async (projectId: string) => {

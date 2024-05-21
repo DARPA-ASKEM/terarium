@@ -3,9 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
-				>
+				<Button v-if="!readonly" @click.stop="cleanAndEmit" class="ml-auto">Save Changes</Button>
 			</template>
 			<tera-initial-table
 				:model="transientModel"
@@ -19,9 +17,7 @@
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
-				>
+				<Button v-if="!readonly" @click.stop="cleanAndEmit" class="ml-auto">Save Changes</Button>
 			</template>
 			<tera-parameter-table
 				:model="transientModel"
@@ -140,6 +136,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
 import Button from 'primevue/button';
+import { cleanModel } from '@/services/model-configurations';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
@@ -232,6 +229,12 @@ function updateMMT() {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	});
+}
+
+function cleanAndEmit() {
+	const modelToClean = cloneDeep(transientModel.value);
+	cleanModel(modelToClean);
+	emit('update-model', modelToClean);
 }
 
 watch(

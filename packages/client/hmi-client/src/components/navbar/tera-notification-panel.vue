@@ -32,19 +32,39 @@
 					{{ getTitleText(item) }}
 					<tera-asset-link :label="item.assetName" :asset-route="getAssetRoute(item)" />
 				</p>
-				<p class="msg">{{ item.msg }}</p>
-				<div v-if="item.status === 'Running'" class="progressbar-container">
-					<p class="action">{{ getActionText(item) }}</p>
-					<ProgressBar :value="item.progress * 100" />
+				<div class="notification-path-text msg">
+					<p>Project: {{ useProjects().getActiveProjectName() }}</p>
+					<p v-if="!isComplete(item)">{{ item.msg }}</p>
+				</div>
+				<div v-if="isRunning(item) || isCancelling(item)" class="progressbar-container">
+					<p class="action">
+						{{ getActionText(item) }}
+						<span v-if="item.progress !== undefined"> {{ Math.round(item.progress * 100) }}%</span>
+					</p>
+
+					<ProgressBar v-if="item.progress !== undefined" :value="item.progress * 100" />
+					<ProgressBar v-else mode="indeterminate" />
+					<Button
+						v-if="item.supportCancel"
+						class="cancel-button"
+						label="Cancel"
+						text
+						aria-label="Cancel"
+						:disabled="isCancelling(item)"
+						@click="cancelTask(item)"
+					/>
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="item.status === 'Completed'">
+					<div class="status-msg ok" v-if="isComplete(item)">
 						<i class="pi pi-check-circle" />Completed
 					</div>
-					<div class="status-msg error" v-else-if="item.status === 'Failed'">
+					<div class="status-msg cancel" v-if="isCancelled(item)">
+						<i class="pi pi-exclamation-circle" />Cancelled
+					</div>
+					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
-					<span class="time-msg">{{ getElapsedTimeText(item) }}</span>
+					<span class="time-msg">{{ getElapsedTimeText(item.lastUpdated) }}</span>
 				</div>
 			</li>
 		</ul>
@@ -58,10 +78,14 @@
 import Button from 'primevue/button';
 import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
-import { AssetType, ClientEventType } from '@/types/Types';
+import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
 import { ref } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
+import { useProjects } from '@/composables/project';
+import { getElapsedTimeText } from '@/utils/date';
+import { snakeToCapitalSentence } from '@/utils/text';
+import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -81,11 +105,20 @@ const getTitleText = (item: NotificationItem) => {
 		case ClientEventType.ExtractionPdf:
 			return 'PDF extraction from';
 		default:
-			return 'Process';
+			return `${snakeToCapitalSentence(item.type)} from`;
 	}
 };
 
+const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
+const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
+const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
+const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
+const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
+
 const getActionText = (item: NotificationItem) => {
+	if (isCancelling(item)) {
+		return 'Cancelling...';
+	}
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
 			return 'Extracting...';
@@ -103,10 +136,10 @@ const getAssetRoute = (item: NotificationItem) => {
 	}
 };
 
-const getElapsedTimeText = (item: NotificationItem) => {
-	const time = Date.now() - item.lastUpdated;
-	const minutes = Math.floor(time / (1000 * 60));
-	return minutes > 0 ? `${minutes} minutes ago` : 'Just now';
+const cancelTask = (item: NotificationItem) => {
+	if ([ClientEventType.TaskGollmModelCard].includes(item.type)) {
+		cancelGoLLMTask(item.notificationGroupId);
+	}
 };
 </script>
 
@@ -119,7 +152,7 @@ const getElapsedTimeText = (item: NotificationItem) => {
 .notification-panel-container.p-overlaypanel {
 	top: var(--navbar-outer-height) !important;
 	width: 34rem;
-	box-shadow: 0px 4px 4px 0px #00000040;
+	box-shadow: 0 4px 4px 0 #00000040;
 	padding: var(--content-padding);
 	padding-bottom: 1.5rem;
 	gap: var(--gap);
@@ -182,6 +215,14 @@ header {
 	overflow: auto;
 }
 
+.notification-path-text {
+	padding-top: 3px;
+}
+
+.cancel-button {
+	font-size: var(--font-caption);
+}
+
 .notification-item {
 	padding: 1rem 0;
 	&:not(:first-child) {
@@ -222,14 +263,14 @@ header {
 		gap: var(--gap-small);
 		.status-msg {
 			display: flex;
-			align-items: top;
 			gap: 0.5rem;
 			font-size: var(--font-caption);
 		}
 		.status-msg.ok {
 			color: var(--primary-color);
 		}
-		.status-msg.error {
+		.status-msg.error,
+		.status-msg.cancel {
 			color: var(--error-color);
 		}
 		.time-msg {

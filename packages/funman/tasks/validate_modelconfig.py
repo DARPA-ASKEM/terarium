@@ -28,7 +28,7 @@ current_results = None
 def cleanup():
     print("Task cleanup")
 
-def run_validate(model: PetrinetModel, request):
+def run_validate(model: PetrinetModel, request, taskrunner):
     current_results = FunmanResults(
         id=dummy_id,
         model=model,
@@ -39,7 +39,12 @@ def run_validate(model: PetrinetModel, request):
     # Update callback
     def update_current_results(scenario: AnalysisScenario, results: ParameterSpace) -> FunmanProgress:
         progress = current_results.update_parameter_space(scenario, results)
+
+        # write_progress_dict_with_timeout(self, progress: dict, timeout_seconds: int):
         print("update hook", progress)
+        if taskrunner is not None:
+            progress_dict = { "progress": progress.progress, "coverage_of_search_space": progress.coverage_of_search_space }
+            taskrunner.write_progress_dict_with_timeout(progress_dict, 5)
 
 
     # Invoke solver
@@ -78,7 +83,7 @@ def taskrunner_wrapper():
         model = adapter.validate_python(data_json["model"])
         model = _wrap_with_internal_model(model)
         request = data_json["request"]
-        result = run_validate(model, request)
+        result = run_validate(model, request, taskrunner)
         taskrunner.write_output_dict_with_timeout({"response": result})
 
         taskrunner.log("Shutting down")

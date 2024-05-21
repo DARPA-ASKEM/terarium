@@ -2,9 +2,11 @@
 Please go through __every__ step of the test scenario.\
 When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
 
-Note: sampling combinations in pyciemss can result in numerical instability, when this happens, you can:
+Estimated time to completion: [X] minutes
+
+Note: sampling combinations in PyCIEMSS can result in numerical instability, when this happens, you can:
 - Retry the simulation, or
-- Fiddle with the paramter distribution ranges, make the intervals larger or smaller
+- Fiddle with the parameter distribution ranges, make the intervals larger or smaller
 
 
 ### 1. Begin test

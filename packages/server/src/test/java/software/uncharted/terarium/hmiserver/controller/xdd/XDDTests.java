@@ -34,7 +34,7 @@ public class XDDTests extends TerariumApplicationTests {
 			authorities = {Roles.USER})
 	public void canStandardDocSearch() throws Exception {
 
-		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
+		final MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
 						.queryParam("dataset", "xdd-covid-19")
 						.queryParam("term", "covid")
 						.queryParam("include_score", "true")
@@ -47,14 +47,14 @@ public class XDDTests extends TerariumApplicationTests {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		ObjectMapper m = new ObjectMapper();
+		final ObjectMapper m = new ObjectMapper();
 		XDDResponse<DocumentsResponseOK> res = null;
 		try {
 			res = m.readValue(
 					result.getResponse().getContentAsByteArray(),
 					new TypeReference<XDDResponse<DocumentsResponseOK>>() {});
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			Assertions.fail("Unable to parse response", e);
 		}
 
@@ -81,7 +81,7 @@ public class XDDTests extends TerariumApplicationTests {
 			authorities = {Roles.USER})
 	public void canSearchWithDateFacet() throws Exception {
 
-		MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
+		final MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/documents")
 						.queryParam("dataset", "xdd-covid-19")
 						.queryParam("term", "covid")
 						.queryParam("include_score", "true")
@@ -96,23 +96,23 @@ public class XDDTests extends TerariumApplicationTests {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		ObjectMapper m = new ObjectMapper();
+		final ObjectMapper m = new ObjectMapper();
 		XDDResponse<DocumentsResponseOK> res = null;
 		try {
 			res = m.readValue(result.getResponse().getContentAsByteArray(), new TypeReference<>() {});
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			Assertions.fail("Unable to parse response", e);
 		}
 
 		Assertions.assertNotNull(res);
 		Assertions.assertFalse(res.getSuccess().getData().isEmpty());
 
-		for (Document doc : res.getSuccess().getData()) {
+		for (final Document doc : res.getSuccess().getData()) {
 			try {
-				int year = Integer.parseInt(doc.getYear());
+				final int year = Integer.parseInt(doc.getYear());
 				Assertions.assertEquals(2022, year);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				Assertions.fail("Unable to parse year", e);
 			}
 		}

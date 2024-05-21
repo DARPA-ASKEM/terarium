@@ -1,7 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import jakarta.persistence.Convert;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +14,10 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -25,15 +28,22 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Transform transform;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
+
+	@TSOptional
+	@ManyToOne
+	@JsonBackReference
+	private Project project;
 
 	@Override
 	public Workflow clone() {

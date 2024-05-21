@@ -31,8 +31,11 @@
 						:defaultOptions="sampleAgentQuestions"
 						:context-language="contextLanguage"
 						@llm-output="(data: any) => appendCode(data, 'code')"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
 					/>
 				</Suspense>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -65,6 +68,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -114,6 +119,7 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 const codeText = ref();
+const llmThoughts = ref<any[]>([]);
 
 const buildJupyterContext = () => ({
 	context: 'decapodes',

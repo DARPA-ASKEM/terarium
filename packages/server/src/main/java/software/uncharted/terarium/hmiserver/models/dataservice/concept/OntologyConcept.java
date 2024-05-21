@@ -3,7 +3,12 @@ package software.uncharted.terarium.hmiserver.models.dataservice.concept;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -51,7 +56,6 @@ public class OntologyConcept implements Serializable {
 	private String curie;
 
 	@ManyToOne
-	@JoinColumn(name = "activeConceptId", nullable = true)
 	@JsonBackReference
 	@JsonAlias("active_concept")
 	private ActiveConcept activeConcept;

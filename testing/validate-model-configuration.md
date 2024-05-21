@@ -17,7 +17,9 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 4. Link and open a _Configure Model_ operator
 5. Verify that the model is configured correctly \
    `β: 0.6, γ: 0.2, S: 1000, I: 2, R: 0`
-6. Save the configuration by giving it a name and clicking `Run`
+6. Verify the parameters β and γ have some ranges, e.g \
+  `β min/max = [0.4, 0.8], γ min/max = [0.1, 0.3]`
+7. Save the configuration by giving it a name and clicking `Run`
 
 ### 3. Operator setup
 1. Link to a _Validate configuration_ operator

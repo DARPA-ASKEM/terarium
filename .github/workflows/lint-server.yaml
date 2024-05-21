@@ -4,14 +4,6 @@ name: Lint Server
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  push:
-    paths:
-      - 'packages/server/**'
-    branches: [ 'main' ]
-  pull_request:
-    paths:
-      - 'packages/server/**'
-    branches: [ 'main' ]
 
 jobs:
   lintServer:

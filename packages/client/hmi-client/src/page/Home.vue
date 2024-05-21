@@ -11,13 +11,13 @@
 						enhance extracted models and data, and test scenarios to simulate real-world problems.
 					</p>
 					<!--Placeholder - button is disabled for now-->
-					<Button
+					<!-- <Button
 						label="Get started"
 						icon="pi pi-play"
 						icon-pos="right"
 						outlined
 						:disabled="true"
-					/>
+					/> -->
 				</section>
 
 				<!-- Video thumbnail image -->

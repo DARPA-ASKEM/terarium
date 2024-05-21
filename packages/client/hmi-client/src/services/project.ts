@@ -8,36 +8,20 @@ import { b64EncodeUnicode } from '@/utils/binary';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import {
-	AssetType,
-	Code,
-	EventType,
-	PermissionRelationships,
-	Project,
-	ProjectAsset
-} from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
 
 /**
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
- * @param [userId] Project['userId']
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
 	name: Project['name'],
-	description: Project['description'] = '',
-	userId: Project['userId'] = ''
+	description: Project['description'] = ''
 ): Promise<Project | null> {
 	try {
-		const project: Project = {
-			name,
-			description,
-			userId,
-			projectAssets: [] as ProjectAsset[],
-			codeAssets: [] as Code[]
-		};
-		const response = await API.post(`/projects`, project);
+		const response = await API.post(`/projects?name=${name}&description=${description}`);
 		const { status, data } = response;
 		if (status !== 201) return null;
 		return data ?? null;

@@ -11,12 +11,13 @@
 			<section>
 				<form @submit.prevent>
 					<div>
-						<label for="new-project-name">Project title</label>
+						<label for="new-project-name">Project title <span>Required</span></label>
 						<Textarea
 							id="new-project-name"
 							rows="2"
 							v-model="title"
 							placeholder="What do you want to call your project?"
+							required
 						/>
 					</div>
 					<div>
@@ -34,7 +35,7 @@
 							This section might have similarities to tera-filter-bar.vue.
 						-->
 						<label>Domain</label>
-						<span>
+						<span class="flex">
 							<Dropdown placeholder="Select domain" disabled :style="{ width: '100%' }" />
 							<Button disabled label="Suggest" text />
 						</span>
@@ -78,6 +79,7 @@
 				:loading="isApplyingConfiguration"
 				:label="isApplyingConfiguration ? 'Loading' : confirmText"
 				size="large"
+				:disabled="isTitleInvalid"
 			/>
 			<Button
 				severity="secondary"
@@ -91,14 +93,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import useAuthStore from '@/stores/auth';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Types';
@@ -111,20 +112,19 @@ const props = defineProps<{
 
 const emit = defineEmits(['close-modal']);
 
-const auth = useAuthStore();
 const router = useRouter();
-const userId = auth.user?.id ?? '';
 
 const title = ref(props.project?.name ?? '');
+const isTitleInvalid = computed(() => isEmpty(title.value));
 const description = ref(props.project?.description ?? '');
 const isApplyingConfiguration = ref(false);
 
-async function createProject() {
+async function createProject(name: string, desc: string) {
 	isApplyingConfiguration.value = true;
-	const project = await useProjects().create(title.value, description.value, userId);
+	const project = await useProjects().create(name, desc);
 	if (project?.id) {
-		router.push({ name: RouteName.Project, params: { projectId: project.id } });
 		emit('close-modal');
+		await router.push({ name: RouteName.Project, params: { projectId: project.id } });
 	}
 }
 
@@ -141,14 +141,14 @@ async function updateProjectConfiguration() {
 
 function applyConfiguration() {
 	if (props.project) updateProjectConfiguration();
-	else createProject();
+	else createProject(title.value, description.value);
 }
 </script>
 
 <style scoped>
 :deep(.content) {
 	display: flex;
-	gap: 1rem;
+	gap: var(--gap);
 }
 
 section {
@@ -159,7 +159,14 @@ form {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	gap: 1rem;
+	gap: var(--gap);
+}
+
+label span {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	margin-left: var(--gap);
+	text-transform: lowercase;
 }
 
 p {
@@ -194,14 +201,10 @@ img {
 	color: var(--gray-400);
 }
 
-:deep(.content span) {
-	display: flex;
-}
-
 /*
-Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
-Should probably switch everything to use gap (like here) at some point
-*/
+		Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
+		Should probably switch everything to use gap (like here) at some point
+		*/
 :deep(.content input),
 :deep(.content textarea) {
 	margin-bottom: 0;
@@ -209,7 +212,7 @@ Should probably switch everything to use gap (like here) at some point
 
 .select-thumbnail-panel {
 	background: var(--surface-50);
-	padding: 1rem;
+	padding: var(--gap);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;

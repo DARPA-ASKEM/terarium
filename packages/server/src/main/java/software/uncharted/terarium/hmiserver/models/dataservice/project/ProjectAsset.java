@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
@@ -28,7 +27,6 @@ public class ProjectAsset extends TerariumAsset {
 	private static final long serialVersionUID = -3382397588627700379L;
 
 	@ManyToOne
-	@JoinColumn(name = "project_id", nullable = false)
 	@JsonBackReference
 	@NotNull private Project project;
 

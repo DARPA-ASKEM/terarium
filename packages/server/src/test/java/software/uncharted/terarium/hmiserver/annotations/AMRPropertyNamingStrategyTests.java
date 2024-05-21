@@ -30,15 +30,15 @@ public class AMRPropertyNamingStrategyTests extends TerariumApplicationTests {
 	@Test
 	void testAMRPropertyNamingStrategy() throws Exception {
 
-		ObjectMapper mapper = new ObjectMapper()
+		final ObjectMapper mapper = new ObjectMapper()
 				.setPropertyNamingStrategy(
 						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 
-		String jsonBefore =
+		final String jsonBefore =
 				"{\"my_field\":\"valueA\",\"myOtherField\":\"123\",\"as_is_snake\":\"value\",\"asIsCamel\": \"456\"}";
 
 		// deserialize it
-		MyAMRType testClass = mapper.readValue(jsonBefore, MyAMRType.class);
+		final MyAMRType testClass = mapper.readValue(jsonBefore, MyAMRType.class);
 
 		Assertions.assertEquals(testClass.getMyField(), "valueA");
 		Assertions.assertEquals(testClass.getMy_other_field(), "123");
@@ -46,10 +46,10 @@ public class AMRPropertyNamingStrategyTests extends TerariumApplicationTests {
 		Assertions.assertEquals(testClass.getAsIsCamel(), "456");
 
 		// serialize it
-		String jsonAfter = mapper.writeValueAsString(testClass);
+		final String jsonAfter = mapper.writeValueAsString(testClass);
 
-		JsonNode tree1 = mapper.readTree(jsonBefore);
-		JsonNode tree2 = mapper.readTree(jsonAfter);
+		final JsonNode tree1 = mapper.readTree(jsonBefore);
+		final JsonNode tree2 = mapper.readTree(jsonAfter);
 
 		// Assert
 		assertEquals(tree1, tree2, "The two JSON strings should be equal");

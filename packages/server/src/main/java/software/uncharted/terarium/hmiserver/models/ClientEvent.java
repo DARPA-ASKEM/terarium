@@ -5,6 +5,7 @@ import java.util.UUID;
 import lombok.Builder;
 import lombok.Value;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Builder
 @Value
@@ -17,6 +18,12 @@ public class ClientEvent<T> implements Serializable {
 	private long createdAtMs = System.currentTimeMillis();
 
 	private ClientEventType type;
+
+	@TSOptional
+	private UUID projectId;
+
+	@TSOptional
+	private UUID notificationGroupId;
 
 	private T data;
 }

@@ -11,7 +11,7 @@ const variableMap: Object = {
 };
 
 const pyodide = await loadPyodide({
-	indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full'
+	indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full'
 });
 await pyodide.loadPackage('sympy');
 pyodide.runPython('import sympy');

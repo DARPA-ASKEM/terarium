@@ -10,6 +10,7 @@
 			@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 			@focus="() => {}"
 			@focusout="() => {}"
+			@mousedown.stop
 		>
 			<section>
 				<div class="port-container">
@@ -58,12 +59,11 @@ const props = defineProps({
 	}
 });
 
-const selectedOutputs = computed(
-	() =>
-		props.outputs?.filter((output) => {
-			if (!('isSelected' in output)) return true;
-			return output.isSelected;
-		})
+const selectedOutputs = computed(() =>
+	props.outputs?.filter((output) => {
+		if (!('isSelected' in output)) return true;
+		return output.isSelected;
+	})
 );
 </script>
 

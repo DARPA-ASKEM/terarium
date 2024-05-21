@@ -173,8 +173,8 @@ async function addFileToCodeAsset(
 
 function getProgrammingLanguage(fileName: string): ProgrammingLanguage {
 	// given the extension of a file, return the programming language
-	const fileExtensiopn: string = fileName.split('.').pop() || '';
-	switch (fileExtensiopn) {
+	const fileExtension: string = fileName.split('.').pop() || '';
+	switch (fileExtension) {
 		case 'py':
 			return ProgrammingLanguage.Python;
 		case 'jl':
@@ -204,15 +204,14 @@ function getFileExtension(language: ProgrammingLanguage): string {
 }
 
 function setFileExtension(fileName: string, language: ProgrammingLanguage) {
-	// find the last '.' to find the file extension index.  Anything before this is the filename.
-	// if there is no extension, add the appropriate one based on the selected language
-	const fileExtensionIndex = fileName.lastIndexOf('.');
-
-	if (fileExtensionIndex !== -1) {
-		return fileName.slice(0, fileExtensionIndex).concat('.').concat(getFileExtension(language));
+	// Find the last '.' to find the file extension index.  Anything before this is the filename.
+	if (fileName.includes('.')) {
+		const fileExtensionIndex = fileName.lastIndexOf('.');
+		fileName = fileName.slice(0, fileExtensionIndex);
 	}
 
-	return fileName;
+	// Add the appropriate extension based on the selected language
+	return fileName.concat('.').concat(getFileExtension(language));
 }
 
 export {

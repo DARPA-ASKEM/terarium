@@ -128,7 +128,7 @@ public class DocumentController {
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
 			return ResponseEntity.ok(documentAssetService.getAssets(page, pageSize));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get documents";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -360,7 +360,7 @@ public class DocumentController {
 		try {
 			documentAssetService.deleteAsset(id);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to delete document";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);

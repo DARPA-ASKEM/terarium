@@ -157,7 +157,7 @@ import TeraCanvasItem from '../widgets/tera-canvas-item.vue';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 const props = defineProps<{
-	model?: Model;
+	model: Model;
 	kernelManager: KernelSessionManager;
 }>();
 
@@ -462,9 +462,22 @@ function onEditorFormatSwitch(newFormat: EditorFormat) {
 	}
 }
 
+// Triggered after syncWithMiraModel() in parent
 watch(
-	() => [props.model],
-	() => refreshFlattenedCanvas() // Triggered after syncWithMiraModel() in parent
+	() => props.model,
+	(newModel, oldModel) => {
+		refreshFlattenedCanvas();
+		// If we are working with a new model id then we must decompose it since it's made of different templates
+		// FIXME: This shouldn't be triggered on the first edit to the original model but should be if we switch from the original model output to a new one
+		if (oldModel?.id !== newModel?.id) {
+			decomposedCanvas.value = modelTemplatingService.initializeCanvas();
+			modelTemplatingService.flattenedToDecomposedInKernel(
+				props.kernelManager,
+				decomposedCanvas.value,
+				interpolatePointsForCurve
+			);
+		}
+	}
 );
 
 onMounted(() => {
