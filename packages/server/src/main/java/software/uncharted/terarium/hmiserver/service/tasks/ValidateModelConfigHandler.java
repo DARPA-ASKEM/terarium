@@ -1,17 +1,20 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -45,11 +48,11 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 		try {
 			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-			double progress = intermediateResult.get("progress").doubleValue();
+			final double progress = intermediateResult.get("progress").doubleValue();
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get());
@@ -68,7 +71,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -79,8 +82,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			// Upload final result into S3
 			final byte[] bytes = objectMapper.writeValueAsBytes(result.get("response"));
-			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.APPLICATION_OCTET_STREAM);
-			simulationService.uploadFile(simulationId, resultFilename, fileEntity, ContentType.TEXT_PLAIN);
+			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
+			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);

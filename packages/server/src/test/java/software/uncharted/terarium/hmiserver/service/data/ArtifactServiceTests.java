@@ -1,18 +1,22 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 
 public class ArtifactServiceTests extends TerariumApplicationTests {
 
@@ -76,8 +80,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifactById() throws IOException {
 		final Artifact artifact = artifactService.createAsset(createArtifact("0"));
-		final Artifact fetchedArtifact =
-				artifactService.getAsset(artifact.getId()).get();
+		final Artifact fetchedArtifact = artifactService.getAsset(artifact.getId()).get();
 
 		Assertions.assertEquals(artifact, fetchedArtifact);
 		Assertions.assertEquals(artifact.getId(), fetchedArtifact.getId());
@@ -138,7 +141,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 		artifact = artifactService.createAsset(artifact);
 
-		final byte[] exported = artifactService.exportAsset(artifact.getId());
+		final AssetExport<Artifact> exported = artifactService.exportAsset(artifact.getId());
 
 		final Artifact imported = artifactService.importAsset(exported);
 

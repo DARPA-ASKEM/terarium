@@ -1,21 +1,25 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -137,8 +141,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument());
 
-		final DocumentAsset fetchedDocumentAsset =
-				documentAssetService.getAsset(documentAsset.getId()).get();
+		final DocumentAsset fetchedDocumentAsset = documentAssetService.getAsset(documentAsset.getId()).get();
 
 		Assertions.assertEquals(documentAsset, fetchedDocumentAsset);
 		Assertions.assertEquals(documentAsset.getId(), fetchedDocumentAsset.getId());
@@ -155,8 +158,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument());
 		documentAsset.setName("new name");
 
-		final DocumentAsset updatedDocumentAsset =
-				documentAssetService.updateAsset(documentAsset).orElseThrow();
+		final DocumentAsset updatedDocumentAsset = documentAssetService.updateAsset(documentAsset).orElseThrow();
 
 		Assertions.assertEquals(documentAsset, updatedDocumentAsset);
 		Assertions.assertNotNull(updatedDocumentAsset.getUpdatedOn());
@@ -199,7 +201,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		DocumentAsset documentAsset = createDocument();
 		documentAsset = documentAssetService.createAsset(documentAsset);
 
-		final byte[] exported = documentAssetService.exportAsset(documentAsset.getId());
+		final AssetExport<DocumentAsset> exported = documentAssetService.exportAsset(documentAsset.getId());
 
 		final DocumentAsset imported = documentAssetService.importAsset(exported);
 

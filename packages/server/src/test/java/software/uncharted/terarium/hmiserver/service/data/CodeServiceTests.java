@@ -1,17 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
@@ -160,7 +164,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		code = codeService.createAsset(code);
 
-		final byte[] exported = codeService.exportAsset(code.getId());
+		final AssetExport<Code> exported = codeService.exportAsset(code.getId());
 
 		final Code imported = codeService.importAsset(exported);
 

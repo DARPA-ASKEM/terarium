@@ -1,7 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -10,15 +19,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -39,12 +42,6 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Column(length = 255)
 	private String userId;
-
-	@TSOptional
-	@JsonAlias("file_names")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<String> fileNames;
 
 	@TSOptional
 	@JsonAlias("document_url")
@@ -102,11 +99,6 @@ public class DocumentAsset extends TerariumAsset {
 	public DocumentAsset clone() {
 		final DocumentAsset clone = new DocumentAsset();
 		super.cloneSuperFields(clone);
-
-		if (this.fileNames != null) {
-			clone.fileNames = new ArrayList<>(this.fileNames.size());
-			clone.fileNames.addAll(this.fileNames);
-		}
 
 		clone.documentUrl = this.documentUrl;
 
