@@ -1,7 +1,7 @@
 <template>
 	<!-- Stratified -->
 	<template v-if="isStratified">
-		<Accordion>
+		<Accordion multiple>
 			<AccordionTab
 				v-for="[key, values] in getUnstratifiedInitials(
 					props.modelConfiguration.configuration
