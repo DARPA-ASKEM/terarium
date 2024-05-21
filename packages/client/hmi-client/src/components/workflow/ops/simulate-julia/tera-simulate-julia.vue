@@ -196,6 +196,8 @@ const run = async () => {
 	emit('update-state', state);
 };
 
+const showSaveDataDialog = ref<boolean>(false);
+
 const hiddenDialog = () => {
 	showSaveDataDialog.value = false;
 };
