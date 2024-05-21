@@ -1,30 +1,36 @@
 <template>
 	<header>
-		<div>
-			<b>{{ initialId }}</b>
-			<span v-if="getInitialName(modelConfiguration, initialId)">{{
-				' | ' + getInitialName(modelConfiguration, initialId)
-			}}</span>
-			<span v-if="getInitialUnit(modelConfiguration, initialId)" class="unit"
-				>({{ getInitialUnit(modelConfiguration, initialId) }})</span
-			>
-		</div>
-		<span>{{ getInitialDescription(modelConfiguration, initialId) }}</span>
+		<b>{{ initialId }}</b>
+		<span v-if="getInitialName(modelConfiguration, initialId)" class="name">{{
+			'| ' + getInitialName(modelConfiguration, initialId)
+		}}</span>
+		<span v-if="getInitialUnit(modelConfiguration, initialId)" class="unit"
+			>({{ getInitialUnit(modelConfiguration, initialId) }})</span
+		>
+		<span v-if="getInitialDescription(modelConfiguration, initialId)" class="description">{{
+			getInitialDescription(modelConfiguration, initialId)
+		}}</span>
 	</header>
 	<main>
-		<tera-input
-			label="Expression"
-			:model-value="getInitialExpression(modelConfiguration, initialId)"
-			@update:model-value="emit('update-expression')"
+		<span class="expression">
+			<tera-input
+				label="Expression"
+				:model-value="getInitialExpression(modelConfiguration, initialId)"
+				@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+			/>
+		</span>
+		<Button
+			:label="getSourceLabel(initialId)"
+			text
+			size="small"
+			@click="sourceOpen = !sourceOpen"
 		/>
-		<Button :label="getSourceLabel(initialId)" text @click="sourceOpen = !sourceOpen" />
-		<div>test</div>
 	</main>
 	<footer v-if="sourceOpen">
 		<tera-input
 			label="Source / notes / etc"
 			:model-value="getInitialSource(modelConfiguration, initialId)"
-			@update:model-value="emit('update-source')"
+			@update:model-value="emit('update-source', { id: initialId, value: $event })"
 		/>
 	</footer>
 </template>
@@ -61,14 +67,25 @@ function getSourceLabel(initialId) {
 <style scoped>
 header {
 	display: flex;
-	justify-content: space-between;
+	padding-bottom: var(--gap-small);
 }
 
+.name {
+	padding-left: var(--gap-xsmall);
+}
 .unit {
 	padding-left: var(--gap-small);
 }
+.description {
+	padding-left: var(--gap-large);
+}
 
+.expression {
+	flex-grow: 1;
+}
 main {
 	display: flex;
+	justify-content: space-between;
+	padding-bottom: var(--gap-small);
 }
 </style>

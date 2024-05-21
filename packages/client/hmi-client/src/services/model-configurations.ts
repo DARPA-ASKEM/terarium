@@ -8,6 +8,7 @@ import type {
 	ModelDistribution,
 	Initial
 } from '@/types/Types';
+import { pythonInstance } from '@/python/PyodideController';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -119,19 +120,19 @@ export function getInitial(config: ModelConfiguration, initialId: string): Initi
 }
 
 export function getInitialSource(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].source ?? '';
+	return config.configuration.metadata?.initials?.[initialId]?.source ?? '';
 }
 
 export function getInitialName(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].name ?? '';
+	return config.configuration.metadata?.initials?.[initialId]?.name ?? '';
 }
 
 export function getInitialUnit(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].unit ?? '';
+	return config.configuration.metadata?.initials?.[initialId]?.unit ?? '';
 }
 
 export function getInitialDescription(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].description ?? '';
+	return config.configuration.metadata?.initials?.[initialId]?.description ?? '';
 }
 
 export function getInitialExpression(config: ModelConfiguration, initialId: string): string {
@@ -147,6 +148,19 @@ export function setInitialSource(
 	const initial = config.configuration.metadata?.initials?.[initialId];
 	if (initial) {
 		initial.source = source;
+	}
+}
+
+export async function setInitialExpression(
+	config: ModelConfiguration,
+	initialId: string,
+	expression: string
+): Promise<void> {
+	const initial = getInitial(config, initialId);
+	if (initial) {
+		initial.expression = expression;
+		const mathml = (await pythonInstance.parseExpression(expression)).mathml;
+		initial.expression_mathml = mathml;
 	}
 }
 
