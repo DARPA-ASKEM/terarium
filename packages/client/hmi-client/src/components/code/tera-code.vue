@@ -523,13 +523,8 @@ header > section {
 	flex-direction: row;
 }
 
-main {
-	height: 100%;
-}
-
 .code-asset-content {
 	display: flex;
-	flex: 1;
 }
 
 .p-dropdown {

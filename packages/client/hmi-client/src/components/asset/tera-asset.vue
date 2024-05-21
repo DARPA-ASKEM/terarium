@@ -182,7 +182,7 @@ watch(
 main {
 	display: flex;
 	flex-direction: column;
-	/* height: 100%; */
+	flex: 1;
 	background-color: var(--surface-section);
 	/* accounts for sticky header height */
 	scroll-margin-top: v-bind('scrollMarginTopStyle');
@@ -193,8 +193,7 @@ main {
 main > section {
 	display: flex;
 	height: 100%;
-	width: 100%;
-	& > :deep(*:not(:last-child)) {
+	& > :deep(*:not(nav)) {
 		flex: 1;
 	}
 }

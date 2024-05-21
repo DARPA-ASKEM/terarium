@@ -29,13 +29,12 @@ onMounted(async () => {
 nav {
 	display: flex;
 	flex-direction: column;
-	min-width: 14rem;
 	width: fit-content;
 	gap: 1rem;
-	padding-top: 3.5rem;
+	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
-	height: fit-content;
+	/* height: fit-content; */
 }
 </style>
