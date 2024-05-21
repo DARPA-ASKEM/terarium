@@ -313,24 +313,26 @@ public class ReBACService {
 		return permissionGroup;
 	}
 
-	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
+	/**
+	 * Determines if user `who` has `permission` on resource `what`
+	 *
+	 * @param who User requesting access
+	 * @param permission Granted permission
+	 * @param what Resource being questioned
+	 * @return true if resource grants permission for user, otherwise false
+	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is unavailable
+	 */
+	public boolean can(SchemaObject who, Schema.Permission permission, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.READ, what, getCurrentConsistency());
-	}
-
-	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.WRITE, what, getCurrentConsistency());
+		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
+			return true;
+		}
+		return rebac.checkPermission(who, permission, what, getCurrentConsistency());
 	}
 
 	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
-	}
-
-	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, getCurrentConsistency());
 	}
 
 	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {

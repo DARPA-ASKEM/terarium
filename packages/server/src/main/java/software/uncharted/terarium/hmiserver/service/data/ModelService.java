@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelService extends TerariumAssetService<Model> {
@@ -137,13 +138,13 @@ public class ModelService extends TerariumAssetService<Model> {
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<Model> getAssets(final Integer page, final Integer pageSize) throws IOException {
+	public List<Model> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) throws IOException {
 		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset) throws IOException {
+	public Model createAsset(final Model asset, Schema.Permission hasWritePermission) throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
@@ -158,6 +159,6 @@ public class ModelService extends TerariumAssetService<Model> {
 				}
 			});
 		}
-		return super.createAsset(asset);
+		return super.createAsset(asset, hasWritePermission);
 	}
 }

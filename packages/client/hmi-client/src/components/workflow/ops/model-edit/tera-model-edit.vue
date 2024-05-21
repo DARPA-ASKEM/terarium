@@ -112,7 +112,13 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'close',
+	'select-output',
+	'update-output-port'
+]);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -287,11 +293,20 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
+// FIXME: Output port should not be updated as outputs are read only, this is a temporary fix so that code and model are in sync
+// FIXME: We should create the output once a Save button is clicked, any edits made on an output would be saved as a draft
 // Saves the output model in the backend
 // Not called after every little model edit to avoid too many requests
 // Called when the selected output is changed, component unmounts or before the window is closed
 function updateOutputModel() {
 	if (readyToSaveOutputModel.value && amr.value) {
+		// Save notebook code to output state
+		if (activeOutput.value) {
+			const updatedOutputPort = cloneDeep(activeOutput.value);
+			updatedOutputPort.state = cloneDeep(props.node.state);
+			emit('update-output-port', updatedOutputPort);
+		}
+		// Save model in backend
 		updateModel(amr.value);
 		readyToSaveOutputModel.value = false;
 	}

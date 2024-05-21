@@ -221,7 +221,6 @@ async function createNewDatasetFromGithubFile(
  * @param progress reference to display in ui
  * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
- * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromFile(
