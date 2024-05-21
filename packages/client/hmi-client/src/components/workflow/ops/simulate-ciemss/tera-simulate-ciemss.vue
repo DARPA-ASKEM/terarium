@@ -81,7 +81,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-4 mb-3"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
@@ -131,7 +130,11 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
+			<tera-save-dataset-from-simulation
+				:simulation-run-id="selectedRunId"
+				:showDialog="showSaveDataDialog"
+				@dialog-hidden="hiddenDialog"
+			/>
 		</template>
 	</tera-drilldown>
 </template>
@@ -161,6 +164,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { useProjects } from '@/composables/project';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -187,18 +191,34 @@ enum OutputView {
 	Data = 'Data'
 }
 
+const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
+const hiddenDialog = () => {
+	showSaveDataDialog.value = false;
+};
+
+const isSaveDisabled = computed<boolean>(() => {
+	if (
+		selectedRunId.value === undefined ||
+		selectedRunId.value === '' ||
+		!useProjects().activeProject.value?.id
+	)
+		return true;
+	return false;
+});
+
 const menuItems = computed(() => [
 	{
 		label: 'Save as new model',
 		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled.value,
 		command: () => {
-			showSaveModelModal.value = true;
+			showSaveDataDialog.value = true;
 		}
 	}
 ]);

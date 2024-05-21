@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -146,7 +147,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 mb-3"
 			>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
@@ -179,10 +179,12 @@
 				/>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
-		</template>
 	</tera-drilldown>
+	<tera-save-dataset-from-simulation
+		:simulation-run-id="knobs.forecastRunId"
+		:showDialog="showSaveDataDialog"
+		@dialog-hidden="hiddenDialog"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -199,6 +201,7 @@ import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -225,6 +228,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
+const showSaveDataDialog = ref<boolean>(false);
 const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum CalibrateEnsembleTabs {
@@ -238,6 +242,28 @@ interface BasicKnobs {
 	forecastRunId: string;
 	timestampColName: string;
 }
+
+const hiddenDialog = () => {
+	showSaveDataDialog.value = false;
+};
+
+const isSaveDisabled = computed<boolean>(() => {
+	if (props.node.state.forecastRunId === '' || !useProjects().activeProject.value?.id) {
+		return true;
+	}
+	return false;
+});
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
 
 const knobs = ref<BasicKnobs>({
 	ensembleConfigs: props.node.state.ensembleConfigs ?? [],

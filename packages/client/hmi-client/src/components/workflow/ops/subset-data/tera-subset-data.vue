@@ -1,12 +1,22 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						class="mr-auto mb-2"
+						@click="run"
+						:label="isSubsetLoading ? 'Processing' : 'Run'"
+						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
+						:disabled="isSubsetLoading"
+					/>
+				</template>
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
 				<p class="subheader">
@@ -83,20 +93,6 @@
 						<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
 					</span>
 				</div>
-				<template #footer>
-					<!--FIXME: A lot of these drilldowns have this margin auto for the left footer's button.
-						We should make it so the left footer is aligned left and the right
-						footer is aligned right-->
-					<Button
-						class="mr-auto mb-2"
-						@click="run"
-						:label="isSubsetLoading ? 'Processing' : 'Run'"
-						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
-						:disabled="isSubsetLoading"
-						outlined
-						severity="secondary"
-					/>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="SubsetDataTabs.Notebook"></div>
@@ -107,7 +103,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-2"
 			>
 				<tera-progress-spinner v-if="isSubsetLoading" is-inline>
 					Please wait for the subset to generate. This usually takes a few minutes...
@@ -168,16 +163,6 @@
 						</table>
 					</TabPanel>
 				</TabView>
-				<template #footer>
-					<Button
-						@click="addSubsetToProject"
-						label="Add subset to project datasets"
-						:disabled="!subset"
-						outlined
-						severity="secondary"
-					/>
-					<Button label="Close" @click="emit('close')" />
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -366,6 +351,17 @@ function mutateLoadingState(isLoading: boolean) {
 	state.isSubsetLoading = isLoading;
 	emit('update-state', state);
 }
+
+const menuItems = computed(() => [
+	{
+		label: 'Add subset to project dataset',
+		icon: 'pi pi-pencil',
+		disabled: !subset.value,
+		command: () => {
+			addSubsetToProject();
+		}
+	}
+]);
 
 function updateState() {
 	const state = cloneDeep(props.node.state);

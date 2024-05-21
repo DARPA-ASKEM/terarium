@@ -1,12 +1,12 @@
 <template>
 	<section>
-		<header class="inline-flex justify-content-between mr-1 mt-1">
-			<section>
+		<header class="inline-flex justify-content-between mr-1 ml-3">
+			<div class="inline-flex header-controls-gap">
 				<slot name="header-controls-left" />
-			</section>
-			<section class="flex-row">
+			</div>
+			<div class="inline-flex header-controls-gap">
 				<slot name="header-controls-right" />
-			</section>
+			</div>
 		</header>
 		<main>
 			<slot v-if="!isLoading" />
@@ -34,6 +34,15 @@ footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
+}
+
+header {
+	margin-top: 1em;
+	gap: 0.75rem;
+}
+
+.header-controls-gap {
+	gap: var(--gap-small);
 }
 
 section {

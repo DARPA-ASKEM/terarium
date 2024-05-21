@@ -1,12 +1,22 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:style="{ marginRight: 'auto' }"
+						label="Run"
+						icon="pi pi-play"
+						@click="run"
+						:disabled="showSpinner"
+					/>
+				</template>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
 					<div class="input-row">
@@ -45,7 +55,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<SelectButton
 					:model-value="view"
@@ -88,19 +97,12 @@
 				</template>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="run"
-				:disabled="showSpinner"
-			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
-			<Button label="Close" @click="emit('close')" />
-		</template>
 	</tera-drilldown>
+	<tera-save-dataset-from-simulation
+		:simulation-run-id="selectedRunId"
+		:showDialog="showSaveDataDialog"
+		@dialog-hidden="hiddenDialog"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -193,6 +195,28 @@ const run = async () => {
 	state.inProgressSimulationId = simulationId;
 	emit('update-state', state);
 };
+
+const hiddenDialog = () => {
+	showSaveDataDialog.value = false;
+};
+
+const isSaveDisabled = computed<boolean>(() => {
+	if (selectedRunId.value === '' || !useProjects().activeProject.value?.id) {
+		return true;
+	}
+	return false;
+});
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
 
 const makeForecastRequest = async (): Promise<string> => {
 	const configId = props.node.inputs[0].value?.[0];

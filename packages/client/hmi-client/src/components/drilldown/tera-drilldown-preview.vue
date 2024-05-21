@@ -35,6 +35,7 @@ const slots = useSlots();
 	background-color: var(--surface-50);
 	flex-grow: 1;
 	padding: 1rem;
+	margin: 0 1rem 1rem 1rem;
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	overflow: hidden;

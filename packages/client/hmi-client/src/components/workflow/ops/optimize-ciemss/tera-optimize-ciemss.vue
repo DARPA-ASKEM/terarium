@@ -1,12 +1,21 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+					<tera-pyciemss-cancel-button
+						class="mr-auto"
+						:disabled="cancelRunId === ''"
+						:simulation-run-id="cancelRunId"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Settings</h5>
 					<div class="input-row">
@@ -174,7 +183,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
 				<!-- Optimize result.json display: -->
@@ -252,28 +260,11 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button
-				:disabled="isRunDisabled"
-				outlined
-				severity="secondary"
-				label="Run"
-				icon="pi pi-play"
-				@click="runOptimize"
+			<tera-save-dataset-from-simulation
+				:simulation-run-id="knobs.forecastRunId"
+				:showDialog="showSaveDataDialog"
+				@dialog-hidden="hiddenDialog"
 			/>
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
-			<Button
-				outlined
-				severity="secondary"
-				label="Save as a new model configuration"
-				:disabled="knobs.optimizationRunId === ''"
-				@click="showModelModal = true"
-			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 	<Dialog
@@ -344,6 +335,7 @@ import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { useProjects } from '@/composables/project';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -403,6 +395,7 @@ const knobs = ref<BasicKnobs>({
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
+const showSaveDataDialog = ref<boolean>(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -410,6 +403,39 @@ const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(
 	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
 );
+
+const hiddenDialog = () => {
+	showSaveDataDialog.value = false;
+};
+
+const isSaveDisabled = computed<boolean>(() => {
+	if (
+		props.node.state.forecastRunId === undefined ||
+		props.node.state.forecastRunId === '' ||
+		!useProjects().activeProject.value?.id
+	)
+		return true;
+	return false;
+});
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as a new model configuration',
+		icon: 'pi pi-pencil',
+		disabled: modelConfigName.value === '',
+		command: () => {
+			showModelModal.value = true;
+		}
+	},
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
 
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);

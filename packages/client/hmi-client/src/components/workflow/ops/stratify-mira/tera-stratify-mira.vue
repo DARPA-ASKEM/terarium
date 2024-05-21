@@ -73,7 +73,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error
