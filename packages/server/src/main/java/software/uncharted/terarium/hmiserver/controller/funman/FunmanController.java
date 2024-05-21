@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +22,12 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RestController
 @RequestMapping("/funman/queries")
@@ -35,6 +38,7 @@ public class FunmanController {
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
+	private final ProjectService projectService;
 
 	private final ValidateModelConfigHandler validateModelConfigHandler;
 	private final SimulationService simulationService;
@@ -64,10 +68,14 @@ public class FunmanController {
 						description = "There was an issue dispatching the request",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createValidationRequest(@RequestBody final JsonNode input) {
+	public ResponseEntity<Simulation> createValidationRequest(
+			@RequestBody final JsonNode input, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
+			taskRequest.setTimeoutMinutes(30);
 			taskRequest.setType(TaskType.FUNMAN);
 			taskRequest.setScript(ValidateModelConfigHandler.NAME);
 			taskRequest.setUserId(currentUserService.get().getId());
@@ -80,7 +88,7 @@ public class FunmanController {
 			sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
-			Simulation newSimulation = simulationService.createAsset(sim);
+			final Simulation newSimulation = simulationService.createAsset(sim, permission);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(newSimulation.getId());

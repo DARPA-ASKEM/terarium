@@ -54,6 +54,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @RequiredArgsConstructor
@@ -99,7 +100,8 @@ public class ExtractionService {
 		return filename;
 	}
 
-	public Future<DocumentAsset> extractPDF(final UUID documentId, final String domain, final UUID projectId) {
+	public Future<DocumentAsset> extractPDF(
+			final UUID documentId, final String domain, final UUID projectId, final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
 				clientEventService,
@@ -115,7 +117,8 @@ public class ExtractionService {
 			try {
 				notificationInterface.sendMessage("Starting extraction...");
 
-				DocumentAsset document = documentService.getAsset(documentId).get();
+				DocumentAsset document =
+						documentService.getAsset(documentId, hasWritePermission).get();
 				notificationInterface.sendMessage("Document found, fetching file...");
 
 				if (document.getFileNames().isEmpty()) {
@@ -273,7 +276,9 @@ public class ExtractionService {
 				}
 
 				// update the document
-				document = documentService.updateAsset(document).orElseThrow();
+				document = documentService
+						.updateAsset(document, hasWritePermission)
+						.orElseThrow();
 
 				// if there is text, run variable extraction
 				if (!responseText.isEmpty()) {
@@ -281,7 +286,8 @@ public class ExtractionService {
 					// run variable extraction
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
-						document = runVariableExtraction(notificationInterface, documentId, new ArrayList<>(), domain);
+						document = runVariableExtraction(
+								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -321,7 +327,7 @@ public class ExtractionService {
 				notificationInterface.sendFinalMessage("Extraction complete");
 
 				// return the final document
-				return documentService.getAsset(documentId).orElseThrow();
+				return documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
@@ -345,12 +351,14 @@ public class ExtractionService {
 			final NotificationGroupInstance<Properties> notificationInterface,
 			final UUID documentId,
 			final List<UUID> modelIds,
-			final String domain) {
+			final String domain,
+			final Schema.Permission hasWritePermission) {
 
 		notificationInterface.sendMessage("Starting variable extraction.");
 		try {
 			// Fetch the text from the document
-			final DocumentAsset document = documentService.getAsset(documentId).orElseThrow();
+			final DocumentAsset document =
+					documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 			notificationInterface.sendMessage("Document found, fetching text.");
 			if (document.getText() == null || document.getText().isEmpty()) {
 				throw new RuntimeException("No text found in paper document");
@@ -359,7 +367,7 @@ public class ExtractionService {
 			// add optional models
 			final List<Model> models = new ArrayList<>();
 			for (final UUID modelId : modelIds) {
-				models.add(modelService.getAsset(modelId).orElseThrow());
+				models.add(modelService.getAsset(modelId, hasWritePermission).orElseThrow());
 			}
 			notificationInterface.sendMessage("Model(s) found, added to extraction request.");
 
@@ -405,7 +413,7 @@ public class ExtractionService {
 				for (final UUID modelId : modelIds) {
 					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
 					try {
-						alignAMR(documentId, modelId).get();
+						alignAMR(documentId, modelId, hasWritePermission).get();
 						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
@@ -414,7 +422,7 @@ public class ExtractionService {
 			}
 
 			// update the document
-			return documentService.updateAsset(document).orElseThrow();
+			return documentService.updateAsset(document, hasWritePermission).orElseThrow();
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
 			log.error(error, e.contentUTF8(), e);
@@ -431,7 +439,10 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractVariables(
-			final UUID documentId, final List<UUID> modelIds, final String domain) {
+			final UUID documentId,
+			final List<UUID> modelIds,
+			final String domain,
+			final Schema.Permission hasWritePermission) {
 		// Set up the client interface
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
 				clientEventService,
@@ -443,13 +454,15 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc = runVariableExtraction(notificationInterface, documentId, modelIds, domain);
+			final DocumentAsset doc =
+					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
-	public Future<Model> alignAMR(final UUID documentId, final UUID modelId) {
+	public Future<Model> alignAMR(
+			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
 				clientEventService,
@@ -464,9 +477,10 @@ public class ExtractionService {
 				notificationInterface.sendMessage("Starting model alignment...");
 
 				final DocumentAsset document =
-						documentService.getAsset(documentId).orElseThrow();
+						documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 
-				final Model model = modelService.getAsset(modelId).orElseThrow();
+				final Model model =
+						modelService.getAsset(modelId, hasWritePermission).orElseThrow();
 
 				final String modelString = objectMapper.writeValueAsString(model);
 
@@ -510,7 +524,7 @@ public class ExtractionService {
 				JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
 				// update the model
-				modelService.updateAsset(model);
+				modelService.updateAsset(model, hasWritePermission);
 
 				// create provenance
 				final Provenance provenance = new Provenance(

@@ -92,7 +92,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateDataset() throws Exception {
 
 		final Dataset before = (Dataset) createDataset().setId(UUID.randomUUID());
-		final Dataset after = datasetService.createAsset(before);
+		final Dataset after = datasetService.createAsset(before, ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
@@ -129,10 +129,10 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		final Dataset dataset = (Dataset) createDataset().setId(UUID.randomUUID());
 
-		datasetService.createAsset(dataset);
+		datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
 		try {
-			datasetService.createAsset(dataset);
+			datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 		} catch (final IllegalArgumentException e) {
 			Assertions.assertTrue(e.getMessage().contains("already exists"));
@@ -143,11 +143,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDatasets() throws Exception {
 
-		datasetService.createAsset(createDataset("0"));
-		datasetService.createAsset(createDataset("1"));
-		datasetService.createAsset(createDataset("2"));
+		datasetService.createAsset(createDataset("0"), ASSUME_WRITE_PERMISSION);
+		datasetService.createAsset(createDataset("1"), ASSUME_WRITE_PERMISSION);
+		datasetService.createAsset(createDataset("2"), ASSUME_WRITE_PERMISSION);
 
-		final List<Dataset> datasets = datasetService.getAssets(0, 3);
+		final List<Dataset> datasets = datasetService.getPublicNotTemporaryAssets(0, 3);
 
 		Assertions.assertEquals(3, datasets.size());
 	}
@@ -156,9 +156,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDataset() throws Exception {
 
-		final Dataset dataset = datasetService.createAsset(createDataset());
+		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 
-		final Dataset fetchedDataset = datasetService.getAsset(dataset.getId()).get();
+		final Dataset fetchedDataset = datasetService
+				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(dataset, fetchedDataset);
 		Assertions.assertEquals(dataset.getId(), fetchedDataset.getId());
@@ -172,10 +174,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateDataset() throws Exception {
 
-		final Dataset dataset = datasetService.createAsset(createDataset());
+		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 		dataset.setName("new name");
 
-		final Dataset updatedDataset = datasetService.updateAsset(dataset).orElseThrow();
+		final Dataset updatedDataset =
+				datasetService.updateAsset(dataset, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(dataset, updatedDataset);
 		Assertions.assertNotNull(updatedDataset.getUpdatedOn());
@@ -185,11 +188,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDataset() throws Exception {
 
-		final Dataset dataset = datasetService.createAsset(createDataset());
+		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 
-		datasetService.deleteAsset(dataset.getId());
+		datasetService.deleteAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId());
+		final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -199,9 +202,9 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneDataset() throws Exception {
 
 		Dataset dataset = createDataset();
-		dataset = datasetService.createAsset(dataset);
+		dataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
-		final Dataset cloned = datasetService.cloneAsset(dataset.getId());
+		final Dataset cloned = datasetService.cloneAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertNotEquals(dataset.getId(), cloned.getId());
 		Assertions.assertEquals(
@@ -239,11 +242,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	public void testItCanExportAndImportDataset() throws Exception {
 
 		Dataset dataset = createDataset();
-		dataset = datasetService.createAsset(dataset);
+		dataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = datasetService.exportAsset(dataset.getId());
+		final byte[] exported = datasetService.exportAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Dataset imported = datasetService.importAsset(exported);
+		final Dataset imported = datasetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertNotEquals(dataset.getId(), imported.getId());
 		Assertions.assertEquals(dataset.getName(), imported.getName());
@@ -289,7 +292,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			datasets.add(createDataset(String.valueOf(i)));
 		}
-		datasets = datasetService.createAssets(datasets);
+		datasets = datasetService.createAssets(datasets, ASSUME_WRITE_PERMISSION);
 
 		final List<Dataset> results = datasetService.searchAssets(0, NUM, null);
 
@@ -326,7 +329,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			datasets.add(createDataset(String.valueOf(i)));
 		}
-		datasetService.createAssets(datasets);
+		datasetService.createAssets(datasets, ASSUME_WRITE_PERMISSION);
 
 		final String currentIndex = datasetService.getCurrentAssetIndex();
 

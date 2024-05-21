@@ -68,7 +68,9 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Model model = modelService
+					.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+					.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// Map the parameters values to the model
@@ -91,7 +93,8 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
-					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
+							configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 					// add provenance
 					provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())

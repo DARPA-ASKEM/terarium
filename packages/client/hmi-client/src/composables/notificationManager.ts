@@ -51,10 +51,10 @@ export function useNotificationManager() {
 	}
 
 	function clearFinishedItems() {
-		items.value.forEach((item) => {
-			if (item.status !== ProgressState.Running) acknowledgeNotification(item.notificationGroupId);
-		});
-		items.value = items.value.filter((item) => item.status === ProgressState.Running);
+		items.value
+			.filter(isFinished)
+			.forEach((item) => acknowledgeNotification(item.notificationGroupId));
+		items.value = items.value.filter((item) => !isFinished(item));
 	}
 
 	function acknowledgeFinishedItems() {

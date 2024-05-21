@@ -131,7 +131,7 @@ class TaskRunnerInterface:
                 return future.result(timeout=timeout_seconds)
             except concurrent.futures.TimeoutError:
                 print('Writing to progress pipe {} timed out'.format(self.progress_pipe), flush=True)
-                raise TimeoutError('Writing to output pipe timed out')
+                raise TimeoutError('Writing to progress pipe timed out')
 
     def write_progress_dict_with_timeout(self, progress: dict, timeout_seconds: int):
         return self.write_progress_str_with_timeout(json.dumps(progress), timeout_seconds)

@@ -57,7 +57,7 @@ def write_progress_with_timeout(progress_pipe: str, output: dict, timeout_second
 			return future.result(timeout=timeout_seconds)
 		except concurrent.futures.TimeoutError:
 			print('Writing to progress pipe {} timed out'.format(progress_pipe), flush=True)
-			raise TimeoutError('Writing to output pipe timed out')
+			raise TimeoutError('Writing to progress pipe timed out')
 
 def finish_progress_with_timeout(progress_pipe: str, timeout_seconds: int):
 	with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -66,7 +66,7 @@ def finish_progress_with_timeout(progress_pipe: str, timeout_seconds: int):
 			return future.result(timeout=timeout_seconds)
 		except concurrent.futures.TimeoutError:
 			print('Writing to progress pipe {} timed out'.format(progress_pipe), flush=True)
-			raise TimeoutError('Writing to output pipe timed out')
+			raise TimeoutError('Writing to progress pipe timed out')
 
 def signal_handler(sig, frame):
 	print('Process cancelled, cleanup logic goes here', flush=True)

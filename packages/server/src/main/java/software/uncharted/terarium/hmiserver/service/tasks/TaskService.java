@@ -215,6 +215,7 @@ public class TaskService {
 		if (isRunningLocalProfile()) {
 			// sanity check for local development to clear the caches
 			rLock.lock();
+
 			responseCache.clear();
 			taskIdCache.clear();
 			rLock.unlock();
@@ -638,7 +639,7 @@ public class TaskService {
 		}
 	}
 
-	public TaskResponse runTaskSync(final TaskRequest req, final long timeoutSeconds)
+	public TaskResponse runTaskSync(final TaskRequest req)
 			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 
 		// send the request
@@ -647,7 +648,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(timeoutSeconds, TimeUnit.SECONDS);
+			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -670,16 +671,17 @@ public class TaskService {
 			} finally {
 				rLock.unlock();
 			}
-			throw new TimeoutException(
-					"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
+
+			try {
+				// if the task is still running, or hasn't started yet, lets cancel it
+				cancelTask(future.getId());
+			} catch (final Exception ee) {
+				log.warn("Failed to cancel task: {}", future.getId(), ee);
+			}
+
+			throw new TimeoutException("Task " + future.getId().toString() + " did not complete within "
+					+ req.getTimeoutMinutes() + " minutes");
 		}
-	}
-
-	public TaskResponse runTaskSync(final TaskRequest req)
-			throws JsonProcessingException, TimeoutException, ExecutionException, InterruptedException {
-
-		final int DEFAULT_TIMEOUT_SECONDS = 60 * 5; // 5 minutes
-		return runTaskSync(req, DEFAULT_TIMEOUT_SECONDS);
 	}
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
