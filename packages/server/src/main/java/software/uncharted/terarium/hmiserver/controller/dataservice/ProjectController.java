@@ -1,15 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -34,6 +23,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -61,8 +64,8 @@ import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
@@ -77,8 +80,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @Tags(@Tag(name = "Projects", description = "Project related operations"))
 public class ProjectController {
 
-	static final String WELCOME_MESSAGE =
-			"""
+	static final String WELCOME_MESSAGE = """
 			<div>
 				<h2>Hey there!</h2>
 				<p>This is your project overview page. Use this space however you like. Not sure where to start? Here are some things you can try:</p>
@@ -114,31 +116,12 @@ public class ProjectController {
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all projects (which are visible to this user)")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Projects found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Project.class)))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no errors, but also no projects for this user",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue with rebac permissions",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "There was an issue communicating with back-end services",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Projects found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no errors, but also no projects for this user", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content),
+			@ApiResponse(responseCode = "503", description = "There was an issue communicating with back-end services", content = @Content)
+	})
 	public ResponseEntity<List<Project>> getProjects(
 			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
@@ -179,7 +162,8 @@ public class ProjectController {
 
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 
-			// Set the user permission for the project. If we are unable to get the user permission, we remove the
+			// Set the user permission for the project. If we are unable to get the user
+			// permission, we remove the
 			// project.
 			try {
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
@@ -192,7 +176,8 @@ public class ProjectController {
 				return;
 			}
 
-			// Set the public status for the project. If we are unable to get the public status, we default to private.
+			// Set the public status for the project. If we are unable to get the public
+			// status, we default to private.
 			try {
 				project.setPublicProject(rebacProject.isPublic());
 			} catch (final Exception e) {
@@ -203,7 +188,8 @@ public class ProjectController {
 				project.setPublicProject(false);
 			}
 
-			// Set the contributors for the project. If we are unable to get the contributors, we default to an empty
+			// Set the contributors for the project. If we are unable to get the
+			// contributors, we default to an empty
 			// list.
 			List<Contributor> contributors = null;
 			try {
@@ -212,10 +198,11 @@ public class ProjectController {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
 			}
 
-			// Set the metadata for the project. If we are unable to get the metadata, we default to empty values.
+			// Set the metadata for the project. If we are unable to get the metadata, we
+			// default to empty values.
 			try {
-				final List<ProjectAsset> assets =
-						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes);
+				final List<ProjectAsset> assets = projectAssetService.findActiveAssetsForProject(project.getId(),
+						assetTypes);
 
 				final Map<String, String> metadata = new HashMap<>();
 
@@ -248,11 +235,11 @@ public class ProjectController {
 						e);
 			}
 
-			// Set the author name for the project. If we are unable to get the author name, we don't set a value.
+			// Set the author name for the project. If we are unable to get the author name,
+			// we don't set a value.
 			try {
 				if (project.getUserId() != null) {
-					final String authorName =
-							userService.getById(project.getUserId()).getName();
+					final String authorName = userService.getById(project.getUserId()).getName();
 					if (authorName != null) {
 						project.setUserName(authorName);
 					}
@@ -303,35 +290,20 @@ public class ProjectController {
 	 * Gets the project by id
 	 *
 	 * @param id the UUID for a project
-	 * @return The project wrapped in a response entity, a 404 if missing or a 500 if there is a rebac permissions
-	 *     issue.
+	 * @return The project wrapped in a response entity, a 404 if missing or a 500
+	 *         if there is a rebac permissions
+	 *         issue.
 	 */
 	@Operation(summary = "Gets a project by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project found.",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))
-						}),
-				@ApiResponse(
-						responseCode = "403",
-						description = "User does not have permission to view this project",
-						content = @Content),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue with rebac permissions",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "Error communicating with back-end services",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project found.", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))
+			}),
+			@ApiResponse(responseCode = "403", description = "User does not have permission to view this project", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue with rebac permissions", content = @Content),
+			@ApiResponse(responseCode = "503", description = "Error communicating with back-end services", content = @Content)
+	})
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> getProject(@PathVariable("id") final UUID id) {
@@ -375,8 +347,7 @@ public class ProjectController {
 		}
 
 		if (project.get().getUserId() != null) {
-			final String authorName =
-					userService.getById(project.get().getUserId()).getName();
+			final String authorName = userService.getById(project.get().getUserId()).getName();
 			if (authorName != null) {
 				project.get().setUserName(authorName);
 			}
@@ -386,25 +357,13 @@ public class ProjectController {
 	}
 
 	@Operation(summary = "Soft deletes project by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project marked for deletion",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(
-						responseCode = "403",
-						description = "The current user does not have delete privileges to this project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions or deleting the project",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project marked for deletion", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
+			}),
+			@ApiResponse(responseCode = "403", description = "The current user does not have delete privileges to this project", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions or deleting the project", content = @Content)
+	})
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
@@ -426,37 +385,21 @@ public class ProjectController {
 		}
 
 		final boolean deleted = projectService.delete(id);
-		if (deleted) return ResponseEntity.ok(new ResponseDeleted("project", id));
+		if (deleted)
+			return ResponseEntity.ok(new ResponseDeleted("project", id));
 
 		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-delete"));
 	}
 
 	@Operation(summary = "Creates a new project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Project created",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = Project.class)),
-						}),
-				@ApiResponse(
-						responseCode = "400",
-						description = "The provided information is not valid to create a project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was a rebac issue when creating the project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "There was an issue communicating with the data store or rebac service",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Project created", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class)),
+			}),
+			@ApiResponse(responseCode = "400", description = "The provided information is not valid to create a project", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was a rebac issue when creating the project", content = @Content),
+			@ApiResponse(responseCode = "503", description = "There was an issue communicating with the data store or rebac service", content = @Content)
+	})
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
@@ -503,27 +446,15 @@ public class ProjectController {
 	}
 
 	@Operation(summary = "Updates a project by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project marked for deletion",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(
-						responseCode = "403",
-						description = "The current user does not have update privileges to this project",
-						content = @Content),
-				@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "An error occurred when trying to communicate with either the postgres or spicedb"
-								+ " databases",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project marked for deletion", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
+			}),
+			@ApiResponse(responseCode = "403", description = "The current user does not have update privileges to this project", content = @Content),
+			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+			@ApiResponse(responseCode = "503", description = "An error occurred when trying to communicate with either the postgres or spicedb"
+					+ " databases", content = @Content)
+	})
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(
@@ -567,33 +498,16 @@ public class ProjectController {
 	// --------------------------------------------------------------------------
 
 	@Operation(summary = "Creates an asset inside of a given project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Asset Created",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ProjectAsset.class))
-						}),
-				@ApiResponse(
-						responseCode = "403",
-						description = "The current user does not have write privileges to this project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "409",
-						description = "Asset already exists in this project",
-						content = @Content),
-				@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "An error occurred when trying to communicate with either the postgres or spicedb"
-								+ " databases",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Asset Created", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class))
+			}),
+			@ApiResponse(responseCode = "403", description = "The current user does not have write privileges to this project", content = @Content),
+			@ApiResponse(responseCode = "409", description = "Asset already exists in this project", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
+			@ApiResponse(responseCode = "503", description = "An error occurred when trying to communicate with either the postgres or spicedb"
+					+ " databases", content = @Content)
+	})
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
@@ -630,53 +544,97 @@ public class ProjectController {
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-								projects will directly hold a reference to the assets associated with them.  During this
-								transition we need to properly create the relationships when users add assets to their
-								projects. However the exact API may not look like this in the end, and in fact may be
-								directly in the controllers for these assets and not in this ProjectController.
+		/*
+		 * TODO: At the end of the Postgres migration we will be getting rid of
+		 * ProjectAsset and instead
+		 * projects will directly hold a reference to the assets associated with them.
+		 * During this
+		 * transition we need to properly create the relationships when users add assets
+		 * to their
+		 * projects. However the exact API may not look like this in the end, and in
+		 * fact may be
+		 * directly in the controllers for these assets and not in this
+		 * ProjectController.
+		 *
+		 * Once all TerariumAssets have been migrated we can move this all to be a lot
+		 * more generic
+		 * and not need to have this ugly if/else statement
+		 */
 
-								Once all TerariumAssets have been migrated we can move this all to be a lot more generic
-								and not need to have this ugly if/else statement
-		*/
+		// check if the asset is associated with a project, if it is, we should clone it
+		// and create a new asset
+		final boolean alreadyPartOfAProject = projectAssetService.isPartOfExistingProject(assetId);
+
+		UUID addedAssetId = assetId;
+
 		if (assetType.equals(AssetType.CODE)) {
 
-			final Optional<Code> code = codeService.getAsset(assetId);
-			if (code.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
-			}
-
-			if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
-			if (project.get().getCodeAssets().contains(code.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			code.get().setProject(project.get());
-
 			try {
-				codeService.updateAsset(code.get());
-			} catch (final Exception e) {
+				Code code = null;
+				if (alreadyPartOfAProject) {
+					code = codeService.cloneAndPersistAsset(assetId);
+				} else {
+					final Optional<Code> codeOptional = codeService.getAsset(assetId);
+					if (codeOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
+					}
+					code = codeOptional.get();
+				}
+
+				if (code.getProject() != null) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getCodeAssets() == null)
+					project.get().setCodeAssets(new ArrayList<>());
+				if (project.get().getCodeAssets().contains(code)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				code.setProject(project.get());
+
+				codeService.updateAsset(code);
+
+				addedAssetId = code.getId();
+
+			} catch (final IOException e) {
 				log.error("Error updating code asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.unable-to-update"));
 			}
 		} else if (assetType.equals(AssetType.WORKFLOW)) {
 
-			final Optional<Workflow> workflow = workflowService.getAsset(assetId);
-			if (workflow.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("workflow.not-found"));
-			}
-
-			if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
-			if (project.get().getWorkflowAssets().contains(workflow.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			workflow.get().setProject(project.get());
-
 			try {
-				workflowService.updateAsset(workflow.get());
-			} catch (final Exception e) {
+				Workflow workflow = null;
+				if (alreadyPartOfAProject) {
+					workflow = workflowService.cloneAndPersistAsset(assetId);
+				} else {
+					final Optional<Workflow> workflowOptional = workflowService.getAsset(assetId);
+					if (workflowOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("workflow.not-found"));
+					}
+					workflow = workflowOptional.get();
+				}
+
+				if (workflow.getProject() != null) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getWorkflowAssets() == null)
+					project.get().setWorkflowAssets(new ArrayList<>());
+				if (project.get().getWorkflowAssets().contains(workflow)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				workflow.setProject(project.get());
+
+				workflowService.updateAsset(workflow);
+
+				addedAssetId = workflow.getId();
+
+			} catch (final IOException e) {
 				log.error("Error updating workflow asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("workflow.unable-to-update"));
@@ -684,21 +642,35 @@ public class ProjectController {
 
 		} else if (assetType.equals(AssetType.DATASET)) {
 
-			final Optional<Dataset> dataset = datasetService.getAsset(assetId);
-			if (dataset.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-			}
-
-			if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
-			if (project.get().getDatasetAssets().contains(dataset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			dataset.get().setProject(project.get());
-
 			try {
-				datasetService.updateAsset(dataset.get());
-			} catch (final Exception e) {
+				Dataset dataset = null;
+				if (alreadyPartOfAProject) {
+					dataset = datasetService.cloneAndPersistAsset(assetId);
+				} else {
+					final Optional<Dataset> datasetOptional = datasetService.getAsset(assetId);
+					if (datasetOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+					}
+					dataset = datasetOptional.get();
+				}
+
+				if (dataset.getProject() != null) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getDatasetAssets() == null)
+					project.get().setDatasetAssets(new ArrayList<>());
+				if (project.get().getDatasetAssets().contains(dataset)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				dataset.setProject(project.get());
+
+				datasetService.updateAsset(dataset);
+
+				addedAssetId = dataset.getId();
+			} catch (final IOException e) {
 				log.error("Error updating dataset asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
@@ -706,62 +678,82 @@ public class ProjectController {
 
 		} else if (assetType.equals(AssetType.ARTIFACT)) {
 
-			final Optional<Artifact> artifact = artifactService.getAsset(assetId);
-			if (artifact.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
-			}
-
-			if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
-			if (project.get().getArtifactAssets().contains(artifact.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			artifact.get().setProject(project.get());
-
 			try {
-				artifactService.updateAsset(artifact.get());
-			} catch (final Exception e) {
+				Artifact artifact = null;
+				if (alreadyPartOfAProject) {
+					artifact = artifactService.cloneAndPersistAsset(assetId);
+				} else {
+					final Optional<Artifact> artifactOptional = artifactService.getAsset(assetId);
+					if (artifactOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
+					}
+					artifact = artifactOptional.get();
+				}
+
+				if (artifact.getProject() != null) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getArtifactAssets() == null)
+					project.get().setArtifactAssets(new ArrayList<>());
+				if (project.get().getArtifactAssets().contains(artifact)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				artifact.setProject(project.get());
+
+				artifactService.updateAsset(artifact);
+
+				addedAssetId = artifact.getId();
+			} catch (final IOException e) {
 				log.error("Error updating artifact asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-update"));
 			}
 		} else if (assetType.equals(AssetType.DOCUMENT)) {
 
-			final Optional<DocumentAsset> documentAsset = documentAssetService.getAsset(assetId);
-			if (documentAsset.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-			}
-
-			if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
-			if (project.get().getDocumentAssets().contains(documentAsset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			documentAsset.get().setProject(project.get());
-
 			try {
-				documentAssetService.updateAsset(documentAsset.get());
-			} catch (final Exception e) {
+				DocumentAsset documentAsset = null;
+				if (alreadyPartOfAProject) {
+					documentAsset = documentAssetService.cloneAndPersistAsset(assetId);
+				} else {
+					final Optional<DocumentAsset> documentOptional = documentAssetService.getAsset(assetId);
+					if (documentOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+					}
+					documentAsset = documentOptional.get();
+				}
+
+				if (documentAsset.getProject() != null) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getDocumentAssets() == null)
+					project.get().setDocumentAssets(new ArrayList<>());
+				if (project.get().getDocumentAssets().contains(documentAsset)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				documentAsset.setProject(project.get());
+
+				documentAssetService.updateAsset(documentAsset);
+
+				addedAssetId = documentAsset.getId();
+			} catch (final IOException e) {
 				log.error("Error updating document asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
 			}
 		}
 
-		// double check that this asset is not already a part of this project, and if it
-		// does exist return a 409 to the front end
-		final Optional<ProjectAsset> existingAsset =
-				projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId);
-		if (existingAsset.isPresent()) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
-		}
-
-		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
-				terariumAssetServices.getServiceByType(assetType);
+		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService = terariumAssetServices
+				.getServiceByType(assetType);
 
 		final Optional<? extends TerariumAsset> asset;
 		try {
-			asset = terariumAssetService.getAsset(assetId);
+			asset = terariumAssetService.getAsset(addedAssetId);
 		} catch (final IOException e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -771,42 +763,28 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
 		}
 
-		final Optional<ProjectAsset> projectAsset =
-				projectAssetService.createProjectAsset(project.get(), assetType, asset.get());
+		final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project.get(), assetType,
+				asset.get());
 
 		if (!projectAsset.isPresent()) {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
 		}
 
 		return ResponseEntity.ok(projectAsset.get());
+
 	}
 
 	@Operation(summary = "Deletes an asset inside of a given project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Asset Deleted",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(
-						responseCode = "204",
-						description = "The asset was not deleted and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "403",
-						description = "The current user does not have write privileges to this project",
-						content = @Content),
-				@ApiResponse(responseCode = "500", description = "Error deleting asset", content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "An error occurred when trying to communicate with either the postgres or spicedb"
-								+ " databases",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Asset Deleted", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
+			}),
+			@ApiResponse(responseCode = "204", description = "The asset was not deleted and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "403", description = "The current user does not have write privileges to this project", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error deleting asset", content = @Content),
+			@ApiResponse(responseCode = "503", description = "An error occurred when trying to communicate with either the postgres or spicedb"
+					+ " databases", content = @Content)
+	})
 	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
@@ -831,12 +809,18 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-write"));
 		}
 
-		/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-								projects will directly hold a reference to the assets associated with them.  During this
-								transition we need to properly create the relationships when users add assets to their
-								projects. However the exact API may not look like this in the end, and in fact may be
-								directly in the controllers for these assets and not in this ProjectController
-		*/
+		/*
+		 * TODO: At the end of the Postgres migration we will be getting rid of
+		 * ProjectAsset and instead
+		 * projects will directly hold a reference to the assets associated with them.
+		 * During this
+		 * transition we need to properly create the relationships when users add assets
+		 * to their
+		 * projects. However the exact API may not look like this in the end, and in
+		 * fact may be
+		 * directly in the controllers for these assets and not in this
+		 * ProjectController
+		 */
 		if (assetType.equals(AssetType.CODE)) {
 
 			final Optional<Code> deletedCode;
@@ -920,26 +904,11 @@ public class ProjectController {
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets the permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions found",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(
-						responseCode = "403",
-						description = "The current user does not have read privileges to this project",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "An error occurred when trying to communicate with spicedb database",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions found", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "403", description = "The current user does not have read privileges to this project", content = @Content),
+			@ApiResponse(responseCode = "503", description = "An error occurred when trying to communicate with spicedb database", content = @Content)
+	})
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(@PathVariable("id") final UUID id) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
@@ -983,25 +952,13 @@ public class ProjectController {
 	// --------------------------------------------------------------------------
 
 	@PostMapping("/{id}/permissions/group/{group-id}/{relationship}")
-	@Secured({Roles.USER, Roles.SERVICE})
+	@Secured({ Roles.USER, Roles.SERVICE })
 	@Operation(summary = "Sets a group's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions set",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions set", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> setProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("group-id") final String groupId,
@@ -1014,23 +971,11 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a group's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions updated",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> updateProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("groupId") final String groupId,
@@ -1044,23 +989,11 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a group's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions deleted",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> removeProjectGroupPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("group-id") final String groupId,
@@ -1075,25 +1008,13 @@ public class ProjectController {
 	}
 
 	@Operation(summary = "Toggle a project public, or restricted, by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Project visibility has been updated",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
-						}),
-				@ApiResponse(
-						responseCode = "304",
-						description = "The current user does not have privileges to modify this project.",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Project visibility has been updated", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
+			}),
+			@ApiResponse(responseCode = "304", description = "The current user does not have privileges to modify this project.", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	@PutMapping("/set-public/{id}/{isPublic}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
@@ -1132,23 +1053,11 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions set",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions set", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> setProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
@@ -1161,23 +1070,11 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a user's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions updated",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions updated", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "404", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> updateProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
@@ -1191,24 +1088,12 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a user's permissions for a project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Permissions deleted",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PermissionRelationships.class))),
-				@ApiResponse(responseCode = "304", description = "Permission not modified", content = @Content),
-				@ApiResponse(responseCode = "403", description = "Project not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "An error occurred verifying permissions",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Permissions deleted", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PermissionRelationships.class))),
+			@ApiResponse(responseCode = "304", description = "Permission not modified", content = @Content),
+			@ApiResponse(responseCode = "403", description = "Project not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+	})
 	public ResponseEntity<JsonNode> removeProjectUserPermissions(
 			@PathVariable("id") final UUID projectId,
 			@PathVariable("user-id") final String userId,
