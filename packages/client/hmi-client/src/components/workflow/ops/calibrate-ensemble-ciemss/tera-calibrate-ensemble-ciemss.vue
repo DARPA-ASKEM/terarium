@@ -220,6 +220,7 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import { isSaveDataSetDisabled } from '@/components/dataset/utils';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -243,12 +244,9 @@ interface BasicKnobs {
 	timestampColName: string;
 }
 
-const isSaveDisabled = computed<boolean>(() => {
-	if (props.node.state.forecastRunId === '' || !useProjects().activeProject.value?.id) {
-		return true;
-	}
-	return false;
-});
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+);
 
 const menuItems = computed(() => [
 	{

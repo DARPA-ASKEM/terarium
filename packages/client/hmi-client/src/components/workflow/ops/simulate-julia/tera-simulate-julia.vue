@@ -128,6 +128,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
+import { isSaveDataSetDisabled } from '@/components/dataset/utils';
 import { SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -198,12 +199,9 @@ const run = async () => {
 
 const showSaveDataDialog = ref<boolean>(false);
 
-const isSaveDisabled = computed<boolean>(() => {
-	if (selectedRunId.value === '' || !useProjects().activeProject.value?.id) {
-		return true;
-	}
-	return false;
-});
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDataSetDisabled(selectedRunId.value, !useProjects().activeProject.value?.id)
+);
 
 const menuItems = computed(() => [
 	{
