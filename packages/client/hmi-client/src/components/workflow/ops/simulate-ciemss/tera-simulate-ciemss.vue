@@ -210,7 +210,7 @@ const isSaveDisabled = computed<boolean>(() => {
 
 const menuItems = computed(() => [
 	{
-		label: 'Save as new model',
+		label: 'Save as new dataset',
 		icon: 'pi pi-pencil',
 		disabled: isSaveDisabled.value,
 		command: () => {
