@@ -4,18 +4,12 @@
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update:selection="onSelection"
 	>
 		<template #header-actions>
 			<tera-operator-annotation
 				:state="node.state"
 				@update-state="(state: any) => emit('update-state', state)"
-			/>
-			<tera-output-dropdown
-				@click.stop
-				:output="selectedOutputId"
-				is-selectable
-				:options="outputs"
-				@update:selection="onSelection"
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
@@ -319,7 +313,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
@@ -389,18 +382,6 @@ const menuItems = computed(() => [
 		}
 	}
 ]);
-
-const outputs = computed(() => {
-	if (!isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 

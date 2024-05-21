@@ -68,6 +68,7 @@ public class FunmanController {
 
 		try {
 			final TaskRequest taskRequest = new TaskRequest();
+			taskRequest.setTimeoutMinutes(30);
 			taskRequest.setType(TaskType.FUNMAN);
 			taskRequest.setScript(ValidateModelConfigHandler.NAME);
 			taskRequest.setUserId(currentUserService.get().getId());
@@ -80,7 +81,7 @@ public class FunmanController {
 			sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
 
 			// Create new simulatin object to proxy the funman validation process
-			Simulation newSimulation = simulationService.createAsset(sim);
+			final Simulation newSimulation = simulationService.createAsset(sim);
 
 			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
 			props.setSimulationId(newSimulation.getId());
