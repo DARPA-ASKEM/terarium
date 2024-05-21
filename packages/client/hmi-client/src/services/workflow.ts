@@ -276,8 +276,8 @@ export const updateWorkflow = async (workflow: Workflow) => {
 };
 
 // Get
-export const getWorkflow = async (id: string) => {
-	const response = await API.get(`/workflows/${id}`);
+export const getWorkflow = async (id: string, projectId?: string) => {
+	const response = await API.get(`/workflows/${id}`, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 

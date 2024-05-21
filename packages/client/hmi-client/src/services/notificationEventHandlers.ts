@@ -141,7 +141,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
 		created.pageType = AssetType.Document;
-		getDocumentAsset(created.assetId).then((document) =>
+		getDocumentAsset(created.assetId, created.projectId).then((document) =>
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
@@ -149,7 +149,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.supportCancel = true;
 		created.assetId = event.data.additionalProperties.documentId as string;
 		created.pageType = AssetType.Document;
-		getDocumentAsset(created.assetId).then((document) =>
+		getDocumentAsset(created.assetId, created.projectId).then((document) =>
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
@@ -159,7 +159,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
-		getWorkflow(created.assetId).then((workflow) =>
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
@@ -169,7 +169,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
-		getWorkflow(created.assetId).then((workflow) =>
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
@@ -179,7 +179,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		created.assetId = event.data.additionalProperties.workflowId as string;
 		created.pageType = AssetType.Workflow;
 		created.nodeId = event.data.additionalProperties.nodeId as string;
-		getWorkflow(created.assetId).then((workflow) =>
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});

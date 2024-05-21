@@ -24,8 +24,13 @@ async function getAll(): Promise<DocumentAsset[] | null> {
  * Get DocumentAsset from the data service
  * @return DocumentAsset|null - the dataset, or null if none returned by API
  */
-async function getDocumentAsset(documentId: string): Promise<DocumentAsset | null> {
-	const response = await API.get(`/document-asset/${documentId}`).catch((error) => {
+async function getDocumentAsset(
+	documentId: string,
+	projectId?: string
+): Promise<DocumentAsset | null> {
+	const response = await API.get(`/document-asset/${documentId}`, {
+		params: { 'project-id': projectId }
+	}).catch((error) => {
 		logger.error(
 			`Error: data-service was not able to retreive the document asset ${documentId} ${error}`
 		);
