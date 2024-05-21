@@ -1,10 +1,10 @@
 <template>
 	<section>
-		<header class="inline-flex justify-content-between mr-1 ml-3">
-			<div class="inline-flex header-controls-gap">
+		<header>
+			<div>
 				<slot name="header-controls-left" />
 			</div>
-			<div class="inline-flex header-controls-gap">
+			<div>
 				<slot name="header-controls-right" />
 			</div>
 		</header>
@@ -37,11 +37,14 @@ footer {
 }
 
 header {
+	display: inline-flex;
+	justify-content: space-between;
 	margin-top: 1em;
 	gap: 0.75rem;
 }
 
-.header-controls-gap {
+header > div {
+	display: inline-flex;
 	gap: var(--gap-small);
 }
 

@@ -263,7 +263,7 @@
 			<tera-save-dataset-from-simulation
 				:simulation-run-id="knobs.forecastRunId"
 				:showDialog="showSaveDataDialog"
-				@dialog-hidden="hiddenDialog"
+				@dialog-hide="showSaveDataDialog = false"
 			/>
 		</template>
 	</tera-drilldown>
@@ -403,10 +403,6 @@ const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(
 	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
 );
-
-const hiddenDialog = () => {
-	showSaveDataDialog.value = false;
-};
 
 const isSaveDisabled = computed<boolean>(() => {
 	if (

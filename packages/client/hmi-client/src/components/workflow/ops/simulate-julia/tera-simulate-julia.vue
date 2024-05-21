@@ -101,7 +101,7 @@
 	<tera-save-dataset-from-simulation
 		:simulation-run-id="selectedRunId"
 		:showDialog="showSaveDataDialog"
-		@dialog-hidden="hiddenDialog"
+		@dialog-hide="showSaveDataDialog = false"
 	/>
 </template>
 
@@ -197,10 +197,6 @@ const run = async () => {
 };
 
 const showSaveDataDialog = ref<boolean>(false);
-
-const hiddenDialog = () => {
-	showSaveDataDialog.value = false;
-};
 
 const isSaveDisabled = computed<boolean>(() => {
 	if (selectedRunId.value === '' || !useProjects().activeProject.value?.id) {

@@ -315,7 +315,7 @@ const toggleAdditonalOptions = () => {
 
 const menuItems = computed(() => [
 	{
-		label: 'Save as new model',
+		label: 'Save as new model configurations',
 		icon: 'pi pi-pencil',
 		disabled: true,
 		command: () => {}

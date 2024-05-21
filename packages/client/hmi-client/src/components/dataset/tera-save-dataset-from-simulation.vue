@@ -32,13 +32,13 @@ import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	simulationRunId?: string;
-	showDialog?: boolean;
+	showDialog: boolean;
 }>();
 
 const saveAsName = ref('');
 const showSaveInput = ref<boolean>(false);
 const hasValidDatasetName = computed<boolean>(() => saveAsName.value !== '');
-const emit = defineEmits(['dialog-hidden']);
+const emit = defineEmits(['hide-dialog']);
 const saveDatasetToProject = async () => {
 	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
@@ -52,7 +52,7 @@ const saveDatasetToProject = async () => {
 
 const closedSaveInput = () => {
 	showSaveInput.value = false;
-	emit('dialog-hidden');
+	emit('hide-dialog');
 };
 
 watch(

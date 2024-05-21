@@ -183,7 +183,7 @@
 	<tera-save-dataset-from-simulation
 		:simulation-run-id="knobs.forecastRunId"
 		:showDialog="showSaveDataDialog"
-		@dialog-hidden="hiddenDialog"
+		@dialog-hide="showSaveDataDialog = false"
 	/>
 </template>
 
@@ -242,10 +242,6 @@ interface BasicKnobs {
 	forecastRunId: string;
 	timestampColName: string;
 }
-
-const hiddenDialog = () => {
-	showSaveDataDialog.value = false;
-};
 
 const isSaveDisabled = computed<boolean>(() => {
 	if (props.node.state.forecastRunId === '' || !useProjects().activeProject.value?.id) {

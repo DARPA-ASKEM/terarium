@@ -12,7 +12,7 @@
 					<h5>Set simulation parameters</h5>
 				</template>
 				<template #header-controls-right>
-					<Button outlined label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
 					<tera-pyciemss-cancel-button
 						class="mr-auto"
 						:disabled="cancelRunId === ''"
@@ -133,7 +133,7 @@
 			<tera-save-dataset-from-simulation
 				:simulation-run-id="selectedRunId"
 				:showDialog="showSaveDataDialog"
-				@dialog-hidden="hiddenDialog"
+				@hide-dialog="showSaveDataDialog = false"
 			/>
 		</template>
 	</tera-drilldown>
@@ -197,10 +197,6 @@ const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
-
-const hiddenDialog = () => {
-	showSaveDataDialog.value = false;
-};
 
 const isSaveDisabled = computed<boolean>(() => {
 	if (
