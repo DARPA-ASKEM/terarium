@@ -63,7 +63,7 @@ public class ReBACService {
 	@Value("${spicedb.launchmode}")
 	String SPICEDB_LAUNCHMODE;
 
-	@Value("${keycloak.api.service.name}")
+	@Value("${terarium.keycloak.api-service-name}")
 	String API_SERVICE_USER_NAME = "api-service";
 
 	private BearerToken spiceDbBearerToken;
