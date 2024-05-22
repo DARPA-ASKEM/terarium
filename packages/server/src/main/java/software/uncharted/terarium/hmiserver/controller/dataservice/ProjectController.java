@@ -178,7 +178,6 @@ public class ProjectController {
 					AssetType.DATASET, AssetType.MODEL, AssetType.DOCUMENT, AssetType.WORKFLOW, AssetType.PUBLICATION);
 
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-			// Not Sure why we need to check this as the list of ids initially retrieved
 			final Schema.Permission permission = projectService.checkPermissionCanRead(
 					currentUserService.get().getId(), project.getId());
 
