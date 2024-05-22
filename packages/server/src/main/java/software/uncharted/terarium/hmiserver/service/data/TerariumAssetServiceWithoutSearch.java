@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
  * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
@@ -75,7 +76,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> getAsset(final UUID id) {
+	public Optional<T> getAsset(final UUID id, final Schema.Permission hasReadPermission) {
 		return repository.getByIdAndDeletedOnIsNull(id);
 	}
 
@@ -99,9 +100,11 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> getAssets(final Integer page, final Integer pageSize) {
+	public List<T> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) {
 		final Pageable pageable = PageRequest.of(page, pageSize);
-		return repository.findAllByDeletedOnIsNull(pageable).getContent();
+		return repository
+				.findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(pageable)
+				.getContent();
 	}
 
 	/**
@@ -112,8 +115,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id) throws IOException {
-		final Optional<T> asset = getAsset(id);
+	public Optional<T> deleteAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException {
+		final Optional<T> asset = getAsset(id, hasWritePermission);
 		if (asset.isEmpty()) {
 			return Optional.empty();
 		}
@@ -131,7 +134,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset) throws IOException {
+	public T createAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
 		}
@@ -147,7 +150,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> createAssets(final List<T> assets) throws IOException {
+	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
 		if (existing.size() > 0) {
@@ -164,12 +167,14 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 * @return The updated asset
 	 * @throws IOException If there is an error updating the asset
 	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 * @throws NotFoundException If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
-		final Optional<T> oldAsset = getAsset(asset.getId());
+		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
 
 		if (oldAsset.isEmpty()) {
 			throw new NotFoundException(
@@ -183,7 +188,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final T updated = repository.save(asset);
 
 		// Update the related ProjectAsset
-		projectAssetService.updateByAsset(updated);
+		projectAssetService.updateByAsset(updated, hasWritePermission);
 
 		return Optional.of(updated);
 	}
@@ -192,8 +197,9 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id);
+	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
+		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
 		if (targetAsset.isEmpty()) {
 			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
 		}
@@ -202,15 +208,16 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	/** Clone asset, write it to the db under a new id, and return it. */
 	@Observed(name = "function_profile")
-	public T cloneAndPersistAsset(final UUID id) throws IOException, IllegalArgumentException {
-		return createAsset(cloneAsset(id));
+	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
+		return createAsset(cloneAsset(id, hasWritePermission), hasWritePermission);
 	}
 
 	/** Returns the asset as a byte payload. */
 	@Observed(name = "function_profile")
-	public byte[] exportAsset(final UUID id) {
+	public byte[] exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
 		try {
-			return objectMapper.writeValueAsBytes(cloneAsset(id));
+			return objectMapper.writeValueAsBytes(cloneAsset(id, hasReadPermission));
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to export asset", e);
 		}
@@ -218,13 +225,13 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	/** Imports the asset from a byte payload. */
 	@Observed(name = "function_profile")
-	public T importAsset(final byte[] bytes) {
+	public T importAsset(final byte[] bytes, final Schema.Permission hasWritePermission) {
 		try {
 			final T asset = objectMapper.readValue(bytes, assetClass);
 			if (assetExists(asset.getId())) {
 				throw new RuntimeException("Asset already exists for id:" + asset.getId());
 			}
-			return createAsset(asset);
+			return createAsset(asset, hasWritePermission);
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to export asset", e);
 		}

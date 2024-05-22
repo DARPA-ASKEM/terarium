@@ -109,8 +109,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				(DocumentAsset)
+						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
 				.setAssetId(documentAsset.getId())
@@ -122,10 +124,11 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(projectAsset)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isOk());
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 						.param("types", AssetType.DOCUMENT.name())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
@@ -142,10 +145,12 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset((DocumentAsset)
-				new DocumentAsset().setName("test-document-name").setDescription("my description"));
+		final DocumentAsset documentAsset = documentAssetService.createAsset(
+				(DocumentAsset)
+						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset);
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId() + "/assets/"
 								+ AssetType.DOCUMENT.name() + "/" + documentAsset.getId())

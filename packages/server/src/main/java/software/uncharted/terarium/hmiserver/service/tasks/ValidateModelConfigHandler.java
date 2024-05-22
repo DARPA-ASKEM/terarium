@@ -37,13 +37,40 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 	}
 
 	@Override
+	public TaskResponse onRunning(final TaskResponse resp) {
+		// FIXME: remove when we distinguish between "initialized" vs "running" state
+		if (resp.getOutput() == null) {
+			return resp;
+		}
+
+		try {
+			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			double progress = intermediateResult.get("progress").doubleValue();
+
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final UUID simulationId = props.getSimulationId();
+			Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			if (!sim.isEmpty()) {
+				sim.get().setProgress(progress);
+				simulationService.updateAsset(sim.get(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			}
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return resp;
+	}
+
+	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		final String resultFilename = "validation.json";
 		try {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -64,7 +91,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(sim.get());
+			simulationService.updateAsset(sim.get(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

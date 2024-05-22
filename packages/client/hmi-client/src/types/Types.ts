@@ -498,6 +498,7 @@ export interface Simulation extends TerariumAsset {
     resultFiles?: string[];
     type: SimulationType;
     status: ProgressState;
+    progress?: number;
     statusMessage?: string;
     startTime?: Date;
     completedTime?: Date;
@@ -1295,6 +1296,7 @@ export enum ClientEventType {
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
     TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
 }
 
 export enum FileType {
