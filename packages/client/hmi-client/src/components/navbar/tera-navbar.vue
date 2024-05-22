@@ -213,6 +213,7 @@ import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
+import { sortBy, orderBy } from 'lodash';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
@@ -461,22 +462,33 @@ function closeLogoutDialog() {
 	isLogoutDialog.value = false;
 }
 
+function getNavMenuItem(project) {
+	return {
+		label: project.name,
+		icon: 'pi pi-folder',
+		command: () =>
+			router.push({
+				name: RouteName.Project,
+				params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+			})
+	};
+}
+
 watch(
 	() => useProjects().allProjects.value,
 	() => {
 		const items: MenuItem[] = [];
+		const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+
 		useProjects().allProjects.value?.forEach((project) => {
-			items.push({
-				label: project.name,
-				icon: 'pi pi-folder',
-				command: () =>
-					router.push({
-						name: RouteName.Project,
-						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
-					})
-			});
+			if (project?.name !== lastProjectUpdated.name) {
+				items.push(getNavMenuItem(project));
+			}
 		});
-		navMenuItems.value = [homeItem, explorerItem, ...items];
+		navMenuItems.value = [homeItem, explorerItem];
+		if (lastProjectUpdated && lastProjectUpdated.name) {
+			navMenuItems.value.push(...[getNavMenuItem(lastProjectUpdated), ...sortBy(items, 'label')]);
+		}
 	},
 	{ immediate: true }
 );

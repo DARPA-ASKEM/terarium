@@ -133,7 +133,6 @@ const selectedAsset: Ref<ResultType> = ref({} as ResultType);
 const isAdding = ref(false);
 
 const projectOptions = computed(() => {
-	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
 	const items =
 		useProjects().allProjects.value?.map((project) => ({
 			label: project.name,
@@ -185,12 +184,14 @@ const projectOptions = computed(() => {
 				isAdding.value = false;
 			}
 		})) ?? [];
-	const lastUpdatedProjectLabel = remove(items, (item) => item.label === lastProjectUpdated.name);
+
+	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+	const lastUpdatedProjectItem = remove(items, (item) => item.label === lastProjectUpdated.name);
 
 	return [
 		{
 			label: 'Add to which project?',
-			items: [...lastUpdatedProjectLabel, ...sortBy(items, 'label')]
+			items: [...lastUpdatedProjectItem, ...sortBy(items, 'label')]
 		}
 	];
 });
