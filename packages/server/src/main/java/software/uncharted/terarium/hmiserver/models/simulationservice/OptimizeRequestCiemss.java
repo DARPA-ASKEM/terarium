@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizedInterventions;
@@ -24,7 +25,10 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	@TSOptional
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-	private OptimizedInterventions interventions;
+	private OptimizedInterventions policyInterventions;
+
+	@TSOptional
+	private List<Intervention> interventions;
 
 	@JsonAlias("step_size")
 	@TSOptional

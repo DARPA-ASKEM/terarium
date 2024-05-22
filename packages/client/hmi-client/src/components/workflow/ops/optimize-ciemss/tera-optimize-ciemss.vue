@@ -547,9 +547,9 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		interventions: optimizeInterventions,
+		policyInterventions: optimizeInterventions,
 		qoi: {
-			contexts: knobs.value.targetVariables,
+			contexts: [knobs.value.targetVariables],
 			method: knobs.value.qoiMethod
 		},
 		riskBound: knobs.value.threshold,
@@ -568,7 +568,7 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
