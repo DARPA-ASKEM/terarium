@@ -6,12 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
@@ -31,11 +33,14 @@ public class CodeServiceTests extends TerariumApplicationTests {
 				.setDynamics(new Dynamics().setName("hello").setDescription("world"));
 	}
 
-	static Code createCode(final String key) {
+	Code createCode(final String key) {
 		final Code code = new Code();
+		code.setPublicAsset(true);
+		code.setTemporary(false);
 		code.setName("test-code-name-" + key);
 		code.setDescription("test-code-description-" + key);
 		code.setRepoUrl("https://github.com/DARPA-ASKEM/terarium");
+		code.setFileNames(List.of("file1.py", "file2.py"));
 		code.setFiles(new HashMap<>());
 		code.getFiles().put("file1.py", createCodeFile("file1"));
 		code.getFiles().put("file2.py", createCodeFile("file2"));
@@ -44,7 +49,16 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		code.getMetadata().put("cat", "kitten");
 		code.getMetadata().put("otter", "kit");
 		code.getMetadata().put("horse", "foal");
-		code.setPublicAsset(true);
+
+		for (final String filename : code.getFileNames()) {
+			try {
+				codeService.uploadFile(
+						code.getId(), filename, ContentType.TEXT_PLAIN, new String("Test content").getBytes());
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		return code;
 	}
 
@@ -163,7 +177,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = codeService.exportAsset(code.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<Code> exported = codeService.exportAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Code imported = codeService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 

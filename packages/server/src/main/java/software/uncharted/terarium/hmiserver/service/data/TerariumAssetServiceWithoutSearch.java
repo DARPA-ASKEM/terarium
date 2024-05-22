@@ -6,30 +6,33 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
+import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
@@ -197,9 +200,9 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
+	public T cloneAsset(final UUID id, final Schema.Permission hasReadPermission)
 			throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
+		final Optional<T> targetAsset = getAsset(id, hasReadPermission);
 		if (targetAsset.isEmpty()) {
 			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
 		}
@@ -210,28 +213,93 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	@Observed(name = "function_profile")
 	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
-		return createAsset(cloneAsset(id, hasWritePermission), hasWritePermission);
+		final T clonedAsset = cloneAsset(id, hasWritePermission);
+
+		final String bucket = config.getFileStorageS3BucketName();
+
+		final List<String> validFileNames = new ArrayList<>();
+		for (final String fileName : clonedAsset.getFileNames()) {
+			final String srcKey = getPath(id, fileName);
+			final String dstKey = getPath(clonedAsset.getId(), fileName);
+			try {
+				s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
+				validFileNames.add(fileName);
+			} catch (final NoSuchKeyException e) {
+				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+				continue;
+			}
+		}
+
+		clonedAsset.setFileNames(validFileNames);
+		return createAsset(clonedAsset, hasWritePermission);
 	}
 
-	/** Returns the asset as a byte payload. */
+	/** Returns the asset as an AssetExport payload */
 	@Observed(name = "function_profile")
-	public byte[] exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
+	public AssetExport<T> exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
 		try {
-			return objectMapper.writeValueAsBytes(cloneAsset(id, hasReadPermission));
+
+			final T cloned = cloneAsset(id, hasReadPermission);
+
+			final AssetExport<T> export = new AssetExport<>();
+			export.setAsset(cloned);
+
+			final String bucket = config.getFileStorageS3BucketName();
+
+			final Map<String, FileExport> files = new HashMap<>();
+			final List<String> validFileNames = new ArrayList<>();
+			for (final String fileName : cloned.getFileNames()) {
+				final String key = getPath(id, fileName);
+
+				try {
+
+					final ResponseInputStream<GetObjectResponse> stream =
+							s3ClientService.getS3Service().getObject(bucket, key);
+					final byte[] bytes = stream.readAllBytes();
+
+					final String contentType = stream.response().contentType();
+
+					final FileExport fileExport = new FileExport();
+					fileExport.setBytes(bytes);
+					fileExport.setContentType(ContentType.parse(contentType));
+
+					files.put(fileName, fileExport);
+					validFileNames.add(fileName);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
+			}
+			cloned.setFileNames(validFileNames); // override only valid files
+			export.setFiles(files);
+
+			return export;
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to export asset", e);
 		}
 	}
 
-	/** Imports the asset from a byte payload. */
+	/** Imports the asset from a AssetExport payload. */
 	@Observed(name = "function_profile")
-	public T importAsset(final byte[] bytes, final Schema.Permission hasWritePermission) {
+	public T importAsset(final AssetExport<T> payload, final Schema.Permission hasWritePermission) {
 		try {
-			final T asset = objectMapper.readValue(bytes, assetClass);
+			if (payload.getAsset() == null) {
+				throw new RuntimeException("AssetExport is empty");
+			}
+			T asset = payload.getAsset();
 			if (assetExists(asset.getId())) {
 				throw new RuntimeException("Asset already exists for id:" + asset.getId());
 			}
-			return createAsset(asset, hasWritePermission);
+
+			asset = createAsset(asset, hasWritePermission);
+
+			for (final Map.Entry<String, FileExport> entry : payload.getFiles().entrySet()) {
+				final String fileName = entry.getKey();
+				final FileExport fileExport = entry.getValue();
+				uploadFile(asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
+			}
+
+			return asset;
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to export asset", e);
 		}
@@ -305,53 +373,50 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 	@Observed(name = "function_profile")
 	public Optional<String> fetchFileAsString(final UUID uuid, final String filename) throws IOException {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
 
-			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
-			if (url.isEmpty()) {
-				return Optional.empty();
-			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			return Optional.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8));
+		final String bucket = config.getFileStorageS3BucketName();
+		final String key = getPath(uuid, filename);
+
+		try {
+			final ResponseInputStream<GetObjectResponse> stream =
+					s3ClientService.getS3Service().getObject(bucket, key);
+			return Optional.of(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
+		} catch (final NoSuchKeyException e) {
+			return Optional.empty();
 		}
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<byte[]> fetchFileAsBytes(final UUID uuid, final String filename) throws IOException {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		final String bucket = config.getFileStorageS3BucketName();
+		final String key = getPath(uuid, filename);
 
-			final Optional<PresignedURL> url = getDownloadUrl(uuid, filename);
-			if (url.isEmpty()) {
-				return Optional.empty();
-			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			return Optional.of(IOUtils.toByteArray(response.getEntity().getContent()));
+		try {
+			final ResponseInputStream<GetObjectResponse> stream =
+					s3ClientService.getS3Service().getObject(bucket, key);
+			return Optional.of(stream.readAllBytes());
+		} catch (final NoSuchKeyException e) {
+			return Optional.empty();
 		}
 	}
 
 	@Observed(name = "function_profile")
-	public void uploadFile(
-			final UUID uuid, final String filename, final HttpEntity fileEntity, final ContentType contentType)
+	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
 			throws IOException {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		final String bucket = config.getFileStorageS3BucketName();
+		final String key = getPath(uuid, filename);
+		final PutObjectResponse res = s3ClientService.getS3Service().putObject(bucket, key, contentType, data);
+		return res.sdkHttpResponse().statusCode();
+	}
 
-			final PresignedURL presignedURL = getUploadUrl(uuid, filename);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			put.setHeader("Content-Type", contentType.toString());
-			final HttpResponse response = httpclient.execute(put);
-			if (response.getStatusLine().getStatusCode() >= 300) {
-				throw new IOException("Failed to upload file to S3: "
-						+ response.getStatusLine().getReasonPhrase());
-			}
-		}
+	@Observed(name = "function_profile")
+	public Integer uploadFile(final UUID uuid, final String filename, final HttpEntity fileEntity) throws IOException {
+
+		return uploadFile(
+				uuid,
+				filename,
+				ContentType.parse(fileEntity.getContentType().getValue()),
+				EntityUtils.toByteArray(fileEntity));
 	}
 
 	private String getPath(final UUID id, final String filename) {

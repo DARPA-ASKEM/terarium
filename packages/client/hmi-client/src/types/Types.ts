@@ -27,6 +27,7 @@ export interface ClientLog {
 export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
+    fileNames?: string[];
     deletedOn?: Date;
     temporary?: boolean;
     publicAsset?: boolean;
@@ -76,7 +77,6 @@ export interface GithubRepo {
 
 export interface Artifact extends TerariumAsset {
     userId: string;
-    fileNames: string[];
     metadata?: any;
     project?: Project;
 }
@@ -164,7 +164,6 @@ export interface Dataset extends TerariumAsset {
     userId?: string;
     esgfId?: string;
     dataSourceDate?: Date;
-    fileNames?: string[];
     datasetUrl?: string;
     datasetUrls?: string[];
     columns?: DatasetColumn[];
@@ -199,7 +198,6 @@ export interface AddDocumentAssetFromXDDResponse {
 
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
-    fileNames?: string[];
     documentUrl?: string;
     metadata?: { [index: string]: any };
     source?: string;
@@ -221,6 +219,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
+    project?: Project;
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
@@ -411,11 +410,6 @@ export interface Project extends TerariumAsset {
      * @deprecated
      */
     projectAssets: ProjectAsset[];
-    codeAssets: Code[];
-    datasetAssets: Dataset[];
-    workflowAssets: Workflow[];
-    artifactAssets: Artifact[];
-    documentAssets: DocumentAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
     userPermission?: string;
@@ -942,13 +936,6 @@ export interface PetriNetTransition {
     properties: PetriNetTransitionProperties;
 }
 
-export interface Workflow extends TerariumAsset {
-    transform: Transform;
-    nodes: WorkflowNode[];
-    edges: WorkflowEdge[];
-    project?: Project;
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1070,24 +1057,6 @@ export interface PetriNetTransitionProperties {
     name: string;
     description: string;
     grounding?: ModelGrounding;
-}
-
-export interface Transform {
-    x: number;
-    y: number;
-    k: number;
-}
-
-export interface WorkflowNode {
-    id: string;
-    workflowId: string;
-}
-
-export interface WorkflowEdge {
-    id: string;
-    workflowId: string;
-    source: string;
-    target: string;
 }
 
 export interface XDDFacetBucket {

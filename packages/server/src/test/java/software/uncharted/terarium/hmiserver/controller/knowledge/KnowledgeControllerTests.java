@@ -347,8 +347,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		documentAssetService.uploadFile(
-				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -495,8 +494,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
 				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -528,8 +527,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
 				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -562,8 +561,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
 				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
