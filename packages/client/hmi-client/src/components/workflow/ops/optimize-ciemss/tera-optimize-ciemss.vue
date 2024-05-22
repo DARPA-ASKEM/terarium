@@ -117,7 +117,7 @@
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable</label>
-							<Dropdown
+							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
@@ -309,6 +309,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -549,7 +550,7 @@ const runOptimize = async () => {
 		},
 		policyInterventions: optimizeInterventions,
 		qoi: {
-			contexts: [knobs.value.targetVariables],
+			contexts: knobs.value.targetVariables,
 			method: knobs.value.qoiMethod
 		},
 		riskBound: knobs.value.threshold,
