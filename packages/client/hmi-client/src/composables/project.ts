@@ -214,9 +214,7 @@ export function useProjects() {
 		}
 	}
 
-	async function getPermissions(
-		projectId: Project['id']
-	): Promise<PermissionRelationships | null> {
+	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
 
@@ -224,11 +222,7 @@ export function useProjects() {
 		return ProjectService.setPermissions(projectId, userId, relationship);
 	}
 
-	async function removePermissions(
-		projectId: Project['id'],
-		userId: string,
-		relationship: string
-	) {
+	async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 

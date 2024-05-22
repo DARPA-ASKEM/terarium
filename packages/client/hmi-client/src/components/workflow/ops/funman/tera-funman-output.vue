@@ -42,14 +42,7 @@
 	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header
-				v-for="(title, index) in [
-					'select',
-					'Parameter',
-					'Lower bound',
-					'Upper bound',
-					'',
-					''
-				]"
+				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']"
 				:key="index"
 			>
 				{{ title }}
@@ -148,9 +141,7 @@ const initalizeParameters = async () => {
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
 
-	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map(
-		(d) => d.expression
-	);
+	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
 
 	funmanResult.model.petrinet.semantics.ode.parameters
 		.filter((ele: any) => !initialVars.includes(ele.id))

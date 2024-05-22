@@ -37,9 +37,7 @@
 					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<div
-								class="input-tolerance fadein animation-ease-in-out animation-duration-350"
-							>
+							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 								<tera-input-number
 									class="w-2"
 									:min="0"
