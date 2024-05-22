@@ -698,7 +698,7 @@ public class ProjectController {
 			}
 		} else if (assetType.equals(AssetType.MODEL)) {
 
-			final Optional<Model> model = modelService.getAsset(assetId);
+			final Optional<Model> model = modelService.getAsset(assetId, permission);
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -711,7 +711,7 @@ public class ProjectController {
 			model.get().setProject(project.get());
 
 			try {
-				modelService.updateAsset(model.get());
+				modelService.updateAsset(model.get(), permission);
 			} catch (final Exception e) {
 				log.error("Error updating model asset", e);
 				throw new ResponseStatusException(
@@ -870,7 +870,7 @@ public class ProjectController {
 
 			final Optional<Model> deletedModel;
 			try {
-				deletedModel = modelService.deleteAsset(assetId);
+				deletedModel = modelService.deleteAsset(assetId, permission);
 			} catch (final IOException e) {
 				throw new ResponseStatusException(
 						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -1227,8 +1227,8 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> setProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+	private static ResponseEntity<JsonNode> setProjectPermissions(
+		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
@@ -1237,8 +1237,8 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> updateProjectPermissions(
-			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
+	private static ResponseEntity<JsonNode> updateProjectPermissions(
+		final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
 			throws Exception {
 		try {
 			what.removePermissionRelationships(who, oldRelationship);
@@ -1249,8 +1249,8 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> removeProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+	private static ResponseEntity<JsonNode> removeProjectPermissions(
+		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
