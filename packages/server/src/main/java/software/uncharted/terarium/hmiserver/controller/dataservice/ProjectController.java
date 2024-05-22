@@ -519,7 +519,7 @@ public class ProjectController {
 			try {
 				Code code = null;
 				if (alreadyPartOfAProject) {
-					code = codeService.cloneAndPersistAsset(assetId);
+					code = codeService.cloneAndPersistAsset(assetId, permission);
 				} else {
 					final Optional<Code> codeOptional = codeService.getAsset(assetId, permission);
 					if (codeOptional.isEmpty()) {
@@ -555,7 +555,7 @@ public class ProjectController {
 			try {
 				Workflow workflow = null;
 				if (alreadyPartOfAProject) {
-					workflow = workflowService.cloneAndPersistAsset(assetId);
+					workflow = workflowService.cloneAndPersistAsset(assetId, permission);
 				} else {
 					final Optional<Workflow> workflowOptional = workflowService.getAsset(assetId, permission);
 					if (workflowOptional.isEmpty()) {
@@ -592,7 +592,7 @@ public class ProjectController {
 			try {
 				Dataset dataset = null;
 				if (alreadyPartOfAProject) {
-					dataset = datasetService.cloneAndPersistAsset(assetId);
+					dataset = datasetService.cloneAndPersistAsset(assetId, permission);
 				} else {
 					final Optional<Dataset> datasetOptional = datasetService.getAsset(assetId, permission);
 					if (datasetOptional.isEmpty()) {
@@ -628,7 +628,7 @@ public class ProjectController {
 			try {
 				Artifact artifact = null;
 				if (alreadyPartOfAProject) {
-					artifact = artifactService.cloneAndPersistAsset(assetId);
+					artifact = artifactService.cloneAndPersistAsset(assetId, permission);
 				} else {
 					final Optional<Artifact> artifactOptional = artifactService.getAsset(assetId, permission);
 					if (artifactOptional.isEmpty()) {
@@ -663,7 +663,7 @@ public class ProjectController {
 			try {
 				DocumentAsset documentAsset = null;
 				if (alreadyPartOfAProject) {
-					documentAsset = documentAssetService.cloneAndPersistAsset(assetId);
+					documentAsset = documentAssetService.cloneAndPersistAsset(assetId, permission);
 				} else {
 					final Optional<DocumentAsset> documentOptional = documentAssetService.getAsset(assetId, permission);
 					if (documentOptional.isEmpty()) {

@@ -113,7 +113,12 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
+	public boolean isPartOfExistingProject(final UUID assetId) {
+		final List<ProjectAsset> projects = projectAssetRepository.findByAssetId(assetId);
+		return !projects.isEmpty();
+	}
 
+	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndType(
 			final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(

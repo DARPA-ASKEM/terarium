@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
