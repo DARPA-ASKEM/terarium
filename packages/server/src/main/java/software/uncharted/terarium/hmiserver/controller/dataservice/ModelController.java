@@ -165,7 +165,8 @@ public class ModelController {
 						content = @Content)
 			})
 	ResponseEntity<Model> getModel(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -315,7 +316,7 @@ public class ModelController {
 	ResponseEntity<Model> updateModel(
 			@PathVariable("id") final UUID id,
 			@RequestBody final Model model,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -352,7 +353,8 @@ public class ModelController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	ResponseEntity<ResponseDeleted> deleteModel(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -385,7 +387,8 @@ public class ModelController {
 						description = "There was an issue creating the model",
 						content = @Content)
 			})
-	ResponseEntity<Model> createModel(@RequestBody Model model, @RequestParam("project-id") final UUID projectId) {
+	ResponseEntity<Model> createModel(
+			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -427,7 +430,7 @@ public class ModelController {
 			@PathVariable("id") final UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

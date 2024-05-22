@@ -68,7 +68,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> getSimulation(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
