@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.utils.rebac.askem;
 
+import java.util.UUID;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 import java.util.UUID;
