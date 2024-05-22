@@ -27,6 +27,7 @@ export interface ClientLog {
 export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
+    fileNames?: string[];
     deletedOn?: Date;
     temporary?: boolean;
     publicAsset?: boolean;
@@ -76,7 +77,6 @@ export interface GithubRepo {
 
 export interface Artifact extends TerariumAsset {
     userId: string;
-    fileNames: string[];
     metadata?: any;
     project?: Project;
 }
@@ -164,7 +164,6 @@ export interface Dataset extends TerariumAsset {
     userId?: string;
     esgfId?: string;
     dataSourceDate?: Date;
-    fileNames?: string[];
     datasetUrl?: string;
     datasetUrls?: string[];
     columns?: DatasetColumn[];
@@ -199,7 +198,6 @@ export interface AddDocumentAssetFromXDDResponse {
 
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
-    fileNames?: string[];
     documentUrl?: string;
     metadata?: { [index: string]: any };
     source?: string;

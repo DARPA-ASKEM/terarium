@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -20,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,9 +30,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -187,7 +184,7 @@ public class DatasetController {
 			})
 	public ResponseEntity<Dataset> createDataset(
 			@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -221,11 +218,11 @@ public class DatasetController {
 			})
 	public ResponseEntity<Dataset> getDataset(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
 			return dataset.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -242,7 +239,7 @@ public class DatasetController {
 	 * @return the dataset with columns extracted and saved
 	 * @throws IOException if there is an issue saving the dataset after extracting columns
 	 */
-	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, Schema.Permission hasWritePermission)
+	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, final Schema.Permission hasWritePermission)
 			throws IOException {
 		if (dataset.getColumns() != null && !dataset.getColumns().isEmpty()) {
 			// columns are set. No need to extract
@@ -293,7 +290,7 @@ public class DatasetController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -330,7 +327,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Dataset dataset,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -402,18 +399,13 @@ public class DatasetController {
 	private List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit)
 			throws IOException {
 		String rawCSV = "";
-		final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build();
 
-		final Optional<PresignedURL> url = datasetService.getDownloadUrl(datasetId, filename);
-		if (url.isEmpty()) {
+		final Optional<byte[]> bytes = datasetService.fetchFileAsBytes(datasetId, filename);
+		if (bytes.isEmpty()) {
 			return null;
 		}
-		final PresignedURL presignedURL = url.get();
-		final HttpGet get = new HttpGet(Objects.requireNonNull(presignedURL).getUrl());
-		final HttpResponse response = httpclient.execute(get);
-		final BufferedReader reader =
-				new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "utf-8"));
+
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes.get())));
 
 		String line = null;
 		Integer count = 0;
@@ -482,7 +474,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Optional<Dataset> dataset;
@@ -555,7 +547,7 @@ public class DatasetController {
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
@@ -607,7 +599,7 @@ public class DatasetController {
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -620,7 +612,8 @@ public class DatasetController {
 			final String[] csvRows = csvString.split("\\R");
 			final String[] headers = csvRows[0].split(",");
 			for (int i = 0; i < headers.length; i++) {
-				// this is very ugly but we're removing opening and closing "'s around these strings.
+				// this is very ugly but we're removing opening and closing "'s around these
+				// strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
 			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
@@ -655,7 +648,7 @@ public class DatasetController {
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -750,11 +743,7 @@ public class DatasetController {
 				HttpClients.custom().disableRedirectHandling().build()) {
 
 			// upload CSV to S3
-			final PresignedURL presignedURL = datasetService.getUploadUrl(datasetId, filename);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(csvEntity);
-			final HttpResponse response = httpclient.execute(put);
-			final int status = response.getStatusLine().getStatusCode();
+			final Integer status = datasetService.uploadFile(datasetId, filename, csvEntity);
 
 			// update dataset with headers if the previous upload was successful
 			if (status == HttpStatus.OK.value()) {
@@ -780,8 +769,8 @@ public class DatasetController {
 
 			return ResponseEntity.ok(new ResponseStatus(status));
 
-		} catch (final Exception e) {
-			log.error("Unable to PUT csv data", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload csv data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to PUT csv data");
 		}

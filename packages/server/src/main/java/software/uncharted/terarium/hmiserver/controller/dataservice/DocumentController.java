@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -20,9 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -161,12 +157,12 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody DocumentAsset documentAsset, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestBody final DocumentAsset documentAsset, @RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -199,7 +195,7 @@ public class DocumentController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final DocumentAsset document,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// if the document asset does not have an id, set it to the id in the path
@@ -248,7 +244,7 @@ public class DocumentController {
 			})
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
@@ -277,7 +273,7 @@ public class DocumentController {
 		});
 
 		// Update data-service with the updated metadata
-		//			documentAssetService.updateAsset(document.get());  // Why?
+		// documentAssetService.updateAsset(document.get()); // Why?
 
 		// Return the updated document
 		return ResponseEntity.ok(document.get());
@@ -367,7 +363,7 @@ public class DocumentController {
 			})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -393,18 +389,14 @@ public class DocumentController {
 			final String fileName,
 			final HttpEntity fileEntity,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try (final CloseableHttpClient httpclient =
 				HttpClients.custom().disableRedirectHandling().build()) {
 
 			// upload file to S3
-			final PresignedURL presignedURL = documentAssetService.getUploadUrl(documentId, fileName);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse response = httpclient.execute(put);
-
+			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
 			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
@@ -418,8 +410,7 @@ public class DocumentController {
 				documentAssetService.updateAsset(document.get(), permission);
 			}
 
-			return ResponseEntity.status(response.getStatusLine().getStatusCode())
-					.build();
+			return ResponseEntity.status(status).build();
 
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
@@ -657,22 +648,12 @@ public class DocumentController {
 	public ResponseEntity<byte[]> downloadDocument(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
-			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
+		try {
+			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
+			if (bytes.isEmpty()) {
+				return null;
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			if (response.getStatusLine().getStatusCode() == HttpStatus.OK.value() && response.getEntity() != null) {
-				final byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
-				return ResponseEntity.ok(fileAsBytes);
-			}
-			return ResponseEntity.status(response.getStatusLine().getStatusCode())
-					.build();
+			return ResponseEntity.ok(bytes.get());
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
@@ -704,20 +685,12 @@ public class DocumentController {
 
 		log.debug("Downloading document file {} for document {}", filename, documentId);
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
-			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
-			if (url.isEmpty()) {
-				return ResponseEntity.notFound().build();
+		try {
+			final Optional<String> file = documentAssetService.fetchFileAsString(documentId, filename);
+			if (file.isEmpty()) {
+				return null;
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet httpGet = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(httpGet);
-			final String textFileAsString =
-					IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-			return ResponseEntity.ok(textFileAsString);
+			return ResponseEntity.ok(file.get());
 		} catch (final Exception e) {
 
 			final String error = "Unable to download document as text";
@@ -755,12 +728,13 @@ public class DocumentController {
 	public ResponseEntity<String> postImageToEquation(
 			@PathVariable("id") final UUID documentId, @RequestParam("filename") final String filename) {
 		try {
-			final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(documentId, filename);
-			if (url.isEmpty()) {
+			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
+			if (bytes.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final byte[] imagesByte = IOUtils.toByteArray(new URL(presignedURL.getUrl()));
+
+			final byte[] imagesByte = bytes.get();
+
 			// Encode the image in Base 64
 			final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
 
@@ -796,7 +770,7 @@ public class DocumentController {
 			final String userId,
 			final List<Extraction> extractions,
 			final String summary,
-			Schema.Permission permission)
+			final Schema.Permission permission)
 			throws IOException {
 
 		final String name = document.getTitle();
@@ -851,9 +825,8 @@ public class DocumentController {
 			final String filename,
 			final UUID docId,
 			final String domain,
-			Schema.Permission hasWritePermission) {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+			final Schema.Permission hasWritePermission) {
+		try {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
 			// if this service fails, return ok with errors
@@ -863,22 +836,16 @@ public class DocumentController {
 			}
 
 			// upload pdf to document asset
-			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-			final PresignedURL presignedURL = documentAssetService.getUploadUrl(docId, filename);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(fileEntity);
-			final HttpResponse pdfUploadResponse = httpclient.execute(put);
+			final Integer status = documentAssetService.uploadFile(
+					docId, filename, ContentType.create("application/pdf"), fileAsBytes);
 
-			if (pdfUploadResponse.getStatusLine().getStatusCode() >= HttpStatus.BAD_REQUEST.value()) {
+			if (status >= HttpStatus.BAD_REQUEST.value()) {
 				throw new ResponseStatusException(
 						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to upload document");
 			}
 
 			// fire and forgot pdf extractions
 			extractionService.extractPDF(docId, domain, hasWritePermission);
-		} catch (final ResponseStatusException e) {
-			log.error("Unable to upload PDF document then extract", e);
-			throw e;
 		} catch (final Exception e) {
 			log.error("Unable to upload PDF document then extract", e);
 			throw new ResponseStatusException(

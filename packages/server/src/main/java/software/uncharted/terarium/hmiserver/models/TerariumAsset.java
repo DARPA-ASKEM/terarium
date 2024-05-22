@@ -1,12 +1,17 @@
 package software.uncharted.terarium.hmiserver.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
@@ -26,6 +31,12 @@ public abstract class TerariumAsset extends TerariumEntity {
 	@Schema(defaultValue = "Default Description")
 	@Column(columnDefinition = "text")
 	private String description;
+
+	@TSOptional
+	@JsonAlias("file_names")
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private List<String> fileNames = new ArrayList<>();
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -51,7 +62,8 @@ public abstract class TerariumAsset extends TerariumEntity {
 
 		asset.name = name;
 		asset.description = description;
-		asset.deletedOn = this.deletedOn != null ? new Timestamp(this.deletedOn.getTime()) : null;
+		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : null;
+		asset.deletedOn = deletedOn != null ? new Timestamp(deletedOn.getTime()) : null;
 		asset.temporary = temporary;
 		asset.publicAsset = publicAsset;
 
