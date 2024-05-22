@@ -87,7 +87,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRun(@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Simulation> makeForecastRun(
+			@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -128,7 +129,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Simulation> makeForecastRunCiemss(
+			@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -203,7 +205,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
+			@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -236,7 +239,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(@RequestBody final OptimizeRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
+			@RequestBody final OptimizeRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
