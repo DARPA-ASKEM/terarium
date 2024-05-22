@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -97,8 +96,7 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public void updateByAsset(final TerariumAsset asset, final Schema.Permission hasWritePermission) {
-		final List<ProjectAsset> projectAssets =
-				projectAssetRepository.findByAssetId(asset.getId()).orElse(Collections.emptyList());
+		final List<ProjectAsset> projectAssets = projectAssetRepository.findByAssetId(asset.getId());
 		if (!projectAssets.isEmpty()) {
 			projectAssets.forEach(projectAsset -> {
 				projectAsset.setAssetName(asset.getName());
@@ -109,6 +107,12 @@ public class ProjectAssetService {
 					"Could not update the project asset name for asset with id: {} because it does not exist.",
 					asset.getId());
 		}
+	}
+
+	@Observed(name = "function_profile")
+	public boolean isPartOfExistingProject(final UUID assetId) {
+		final List<ProjectAsset> projects = projectAssetRepository.findByAssetId(assetId);
+		return !projects.isEmpty();
 	}
 
 	@Observed(name = "function_profile")

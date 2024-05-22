@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 
 public class ArtifactServiceTests extends TerariumApplicationTests {
 
@@ -21,12 +23,21 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 	static ObjectMapper objectMapper = new ObjectMapper();
 
-	static Artifact createArtifact(final String key) {
+	Artifact createArtifact(final String key) {
 		final Artifact artifact = new Artifact();
 		artifact.setName("test-artifact-name-" + key);
 		artifact.setDescription("test-artifact-description-" + key);
 		artifact.setFileNames(Arrays.asList("never", "gonna", "give", "you", "up"));
 		artifact.setPublicAsset(true);
+
+		for (final String filename : artifact.getFileNames()) {
+			try {
+				artifactService.uploadFile(
+						artifact.getId(), filename, ContentType.TEXT_PLAIN, new String("Test content").getBytes());
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		return artifact;
 	}
@@ -141,7 +152,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 		artifact = artifactService.createAsset(artifact, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = artifactService.exportAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<Artifact> exported = artifactService.exportAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Artifact imported = artifactService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 

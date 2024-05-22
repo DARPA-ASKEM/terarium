@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -50,11 +51,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static Dataset createDataset() throws Exception {
+	Dataset createDataset() throws Exception {
 		return createDataset("A");
 	}
 
-	static Dataset createDataset(final String key) throws Exception {
+	Dataset createDataset(final String key) throws Exception {
 
 		final ObjectMapper mapper = new ObjectMapper();
 
@@ -244,7 +245,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Dataset dataset = createDataset();
 		dataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = datasetService.exportAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<Dataset> exported = datasetService.exportAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Dataset imported = datasetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 
