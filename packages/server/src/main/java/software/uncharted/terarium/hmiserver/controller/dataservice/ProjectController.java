@@ -181,7 +181,7 @@ public class ProjectController {
 					AssetType.DATASET, AssetType.MODEL, AssetType.DOCUMENT, AssetType.WORKFLOW, AssetType.PUBLICATION);
 
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-			final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			final Schema.Permission permission = projectService.checkPermissionCanRead(
 					currentUserService.get().getId(), project.getId());
 
 			// Set the user permission for the project. If we are unable to get the user permission, we remove the
