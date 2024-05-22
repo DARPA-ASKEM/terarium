@@ -10,11 +10,7 @@
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
-					<tera-pyciemss-cancel-button
-						class="mr-auto"
-						:disabled="cancelRunId === ''"
-						:simulation-run-id="cancelRunId"
-					/>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
 					<h5>Settings</h5>

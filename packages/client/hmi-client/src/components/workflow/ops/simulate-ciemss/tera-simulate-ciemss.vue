@@ -13,11 +13,7 @@
 				</template>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-					<tera-pyciemss-cancel-button
-						class="mr-auto"
-						:disabled="cancelRunId === ''"
-						:simulation-run-id="cancelRunId"
-					/>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
 					<!-- Start & End -->

@@ -8,11 +8,7 @@
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
-					<tera-pyciemss-cancel-button
-						class="mr-auto"
-						:disabled="cancelRunId === ''"
-						:simulation-run-id="cancelRunId"
-					/>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 					<Button
 						label="Run"
 						icon="pi pi-play"

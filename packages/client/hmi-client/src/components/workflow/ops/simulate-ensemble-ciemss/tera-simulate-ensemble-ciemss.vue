@@ -9,11 +9,7 @@
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
-					<tera-pyciemss-cancel-button
-						class="mr-auto"
-						:disabled="cancelRunId === ''"
-						:simulation-run-id="cancelRunId"
-					/>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<!-- Model weights -->
