@@ -13,7 +13,7 @@
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+			<tera-drilldown-section class="pl-3">
 				<template #header-controls>
 					<Button
 						size="small"
@@ -24,7 +24,7 @@
 					/>
 				</template>
 				<!-- Suggested configurations -->
-				<div class="box-container mt-3" v-if="model">
+				<div class="box-container mr-2" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -80,14 +80,9 @@
 									</template>
 								</Column>
 								<template #loading>
-									<div>
-										<Vue3Lottie
-											:animationData="LoadingWateringCan"
-											:height="200"
-											:width="200"
-										></Vue3Lottie>
-										<p>Fetching suggested configurations.</p>
-									</div>
+									<tera-progress-spinner :font-size="2" is-centered
+										>Fetching suggested configurations...</tera-progress-spinner
+									>
 								</template>
 								<template #empty>
 									<p class="empty-section m-3">No configurations found.</p>
@@ -306,9 +301,8 @@ import Textarea from 'primevue/textarea';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { Vue3Lottie } from 'vue3-lottie';
 
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -931,6 +925,10 @@ onUnmounted(() => {
 	text-align: left;
 }
 
+:deep(.p-datatable-loading-overlay.p-component-overlay) {
+	background-color: var(--surface-section);
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;
@@ -969,12 +967,9 @@ onUnmounted(() => {
 	display: flex;
 	align-items: center;
 }
+
 .toolbar {
 	padding-left: var(--gap-medium);
-}
-
-:deep(.p-datatable-loading-overlay.p-component-overlay) {
-	background-color: #fff;
 }
 
 .use-button {
