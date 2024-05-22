@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -10,9 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
 import javax.ws.rs.NotFoundException;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
@@ -22,13 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -43,8 +39,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets without syncing to
- * Elasticsearch.
+ * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
@@ -53,7 +48,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Data
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+public abstract class TerariumAssetServiceWithoutSearch<
+				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		implements ITerariumAssetService<T> {
 
 	protected final ObjectMapper objectMapper;
@@ -101,7 +97,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	/**
 	 * Get a list of assets, this includes all assets, not just searchable ones.
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
@@ -172,10 +168,9 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
-	 * @throws NotFoundException        If the original asset does not exist
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 * @throws NotFoundException If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
@@ -258,8 +253,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 
 				try {
 
-					final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service()
-							.getObject(bucket, key);
+					final ResponseInputStream<GetObjectResponse> stream =
+							s3ClientService.getS3Service().getObject(bucket, key);
 					final byte[] bytes = stream.readAllBytes();
 
 					final String contentType = stream.response().contentType();
@@ -320,7 +315,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	/**
 	 * Get a presigned URL for uploading a file to S3
 	 *
-	 * @param id       The ID of the asset to upload to
+	 * @param id The ID of the asset to upload to
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
@@ -338,7 +333,7 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	/**
 	 * Get a presigned URL for downloading a file from S3
 	 *
-	 * @param id       The ID of the asset to download from
+	 * @param id The ID of the asset to download from
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
@@ -383,7 +378,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		final String key = getPath(uuid, filename);
 
 		try {
-			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream =
+					s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
@@ -396,7 +392,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		final String key = getPath(uuid, filename);
 
 		try {
-			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream =
+					s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
