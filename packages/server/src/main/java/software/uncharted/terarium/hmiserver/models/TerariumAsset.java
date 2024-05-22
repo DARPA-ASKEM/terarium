@@ -47,7 +47,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
 
-		//TODO this should be a part of the clone method, and this should implement Cloneable
+		// TODO this should be a part of the clone method, and this should implement Cloneable
 
 		super.cloneSuperFields(asset);
 

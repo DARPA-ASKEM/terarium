@@ -21,7 +21,7 @@ public class VariableMetadata extends SupportAdditionalProperties implements Ser
 	private String value;
 
 	@Override
-	public VariableMetadata clone(){
+	public VariableMetadata clone() {
 		final VariableMetadata clone = (VariableMetadata) super.clone();
 		clone.value = this.value;
 		clone.type = this.type;

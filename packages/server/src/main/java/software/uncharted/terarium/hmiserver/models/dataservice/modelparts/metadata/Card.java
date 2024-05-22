@@ -71,8 +71,8 @@ public class Card extends SupportAdditionalProperties implements Serializable {
 	private String strengths;
 
 	@Override
-	public Card clone(){
-		final Card clone = (Card)super.clone();
+	public Card clone() {
+		final Card clone = (Card) super.clone();
 		clone.description = this.description;
 		clone.authorInst = this.authorInst;
 		clone.authorAuthor = this.authorAuthor;

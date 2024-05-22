@@ -39,7 +39,7 @@ public class ModelHeader extends SupportAdditionalProperties implements Serializ
 
 	@Override
 	public ModelHeader clone() {
-		ModelHeader clone = (ModelHeader)super.clone();
+		ModelHeader clone = (ModelHeader) super.clone();
 		clone.setName(this.getName());
 		clone.setModelSchema(this.getModelSchema());
 		clone.setSchemaName(this.getSchemaName());
@@ -49,5 +49,4 @@ public class ModelHeader extends SupportAdditionalProperties implements Serializ
 
 		return clone;
 	}
-
 }

@@ -5,16 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
+import java.io.Serial;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -72,47 +70,44 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonBackReference
 	private Project project;
 
-
 	@Override
-	public Model clone(){
+	public Model clone() {
 		final Model clone = new Model();
 		super.cloneSuperFields(clone);
 
-		if(header != null){
+		if (header != null) {
 			clone.header = header.clone();
 		}
 		clone.userId = this.userId;
 
-		if(model != null){
+		if (model != null) {
 			clone.model = new HashMap<>();
-			for(final Map.Entry<String, JsonNode> entry : model.entrySet()){
+			for (final Map.Entry<String, JsonNode> entry : model.entrySet()) {
 				clone.model.put(entry.getKey(), entry.getValue().deepCopy());
 			}
 		}
 
-		if(properties != null){
+		if (properties != null) {
 			clone.properties = properties.deepCopy();
 		}
 
-		if(semantics != null){
+		if (semantics != null) {
 			clone.semantics = semantics.clone();
 		}
 
-		if(metadata != null){
+		if (metadata != null) {
 			clone.metadata = metadata.clone();
 		}
 
 		return clone;
 	}
 
-
 	@JsonIgnore
 	@TSIgnore
 	public List<ModelParameter> getParameters() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(
-					this.getModel().get("parameters"), new TypeReference<>() {});
+			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		} else {
 			return this.getSemantics().getOde().getParameters();
 		}

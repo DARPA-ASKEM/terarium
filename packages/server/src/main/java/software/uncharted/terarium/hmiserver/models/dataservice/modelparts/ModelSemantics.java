@@ -33,22 +33,21 @@ public class ModelSemantics extends SupportAdditionalProperties implements Seria
 	public ModelSemantics clone() {
 		ModelSemantics clone = (ModelSemantics) super.clone();
 
-		if(this.ode != null){
+		if (this.ode != null) {
 			clone.ode = this.ode.clone();
 		}
 
-		if(this.span != null){
+		if (this.span != null) {
 			clone.span = new ArrayList<>();
-			for(JsonNode s : this.span){
+			for (JsonNode s : this.span) {
 				clone.span.add(s.deepCopy());
 			}
 		}
 
-		if(this.typing != null){
+		if (this.typing != null) {
 			clone.typing = this.typing.deepCopy();
 		}
 
 		return clone;
-
 	}
 }

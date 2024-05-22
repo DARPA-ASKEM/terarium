@@ -768,7 +768,7 @@ public class ProjectController {
 			} catch (final Exception e) {
 				log.error("Error updating model asset", e);
 				throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
 			}
 		}
 
@@ -938,12 +938,12 @@ public class ProjectController {
 				deletedModel = modelService.deleteAsset(assetId);
 			} catch (final IOException e) {
 				throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
 
 			if (deletedModel.isEmpty() || deletedModel.get().getDeletedOn() == null) {
 				throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-delete"));
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-delete"));
 			}
 		}
 

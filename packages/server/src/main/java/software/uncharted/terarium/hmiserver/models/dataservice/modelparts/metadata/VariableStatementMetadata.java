@@ -21,7 +21,7 @@ public class VariableStatementMetadata extends SupportAdditionalProperties imple
 	private String value;
 
 	@Override
-	public VariableStatementMetadata clone(){
+	public VariableStatementMetadata clone() {
 		VariableStatementMetadata clone = (VariableStatementMetadata) super.clone();
 		clone.type = this.type;
 		clone.value = this.value;

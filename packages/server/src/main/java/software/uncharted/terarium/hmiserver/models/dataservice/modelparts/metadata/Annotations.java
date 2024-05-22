@@ -58,15 +58,15 @@ public class Annotations extends SupportAdditionalProperties implements Serializ
 	private List<String> modelTypes;
 
 	@Override
-	public Annotations clone(){
-		Annotations clone = (Annotations)super.clone();
+	public Annotations clone() {
+		Annotations clone = (Annotations) super.clone();
 
 		clone.license = this.license;
-		if(authors != null){
+		if (authors != null) {
 			clone.authors = new ArrayList<>(authors);
 		}
 
-		if(references != null){
+		if (references != null) {
 			clone.references = new ArrayList<>(references);
 		}
 
@@ -74,23 +74,23 @@ public class Annotations extends SupportAdditionalProperties implements Serializ
 		clone.timeStart = timeStart;
 		clone.timeEnd = timeEnd;
 
-		if(locations != null){
+		if (locations != null) {
 			clone.locations = new ArrayList<>(locations);
 		}
 
-		if(pathogens != null){
+		if (pathogens != null) {
 			clone.pathogens = new ArrayList<>(pathogens);
 		}
 
-		if(diseases != null){
+		if (diseases != null) {
 			clone.diseases = new ArrayList<>(diseases);
 		}
 
-		if(hosts != null){
+		if (hosts != null) {
 			clone.hosts = new ArrayList<>(hosts);
 		}
 
-		if(modelTypes != null){
+		if (modelTypes != null) {
 			clone.modelTypes = new ArrayList<>(modelTypes);
 		}
 

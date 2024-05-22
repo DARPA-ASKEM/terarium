@@ -40,7 +40,7 @@ public class Observable extends SupportAdditionalProperties implements Serializa
 
 		clone.setId(this.getId());
 		clone.setName(this.getName());
-		if(this.states != null) {
+		if (this.states != null) {
 			clone.setStates(this.getStates());
 		}
 		clone.setExpression(this.getExpression());

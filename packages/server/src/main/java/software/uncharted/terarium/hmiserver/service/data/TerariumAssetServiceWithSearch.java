@@ -126,9 +126,11 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	@Observed(name = "function_profile")
-	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query, final SourceConfig source) throws IOException {
+	public List<T> searchAssets(
+			final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
+			throws IOException {
 		final SearchRequest.Builder builder =
-			new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
+				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);

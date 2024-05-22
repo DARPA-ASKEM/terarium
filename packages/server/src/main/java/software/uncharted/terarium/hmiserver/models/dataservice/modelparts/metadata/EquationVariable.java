@@ -23,12 +23,11 @@ public class EquationVariable extends SupportAdditionalProperties implements Ser
 	private String image;
 
 	@Override
-	public EquationVariable clone(){
-		EquationVariable clone = (EquationVariable)super.clone();
+	public EquationVariable clone() {
+		EquationVariable clone = (EquationVariable) super.clone();
 		clone.id = this.id;
 		clone.text = this.text;
 		clone.image = this.image;
 		return clone;
-
 	}
 }

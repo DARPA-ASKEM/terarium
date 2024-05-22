@@ -23,12 +23,11 @@ public class DataColumn extends SupportAdditionalProperties implements Serializa
 	private MetadataDataset dataset;
 
 	@Override
-	public DataColumn clone(){
-		DataColumn clone = (DataColumn)super.clone();
+	public DataColumn clone() {
+		DataColumn clone = (DataColumn) super.clone();
 		clone.id = id;
 		clone.name = name;
-		if(dataset != null)
-			clone.dataset = dataset.clone();
+		if (dataset != null) clone.dataset = dataset.clone();
 		return clone;
 	}
 }

@@ -3,14 +3,11 @@ package software.uncharted.terarium.hmiserver.service.data;
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +18,6 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
-import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
@@ -29,23 +25,23 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
-
 	public ModelService(
-		final ObjectMapper objectMapper,
-		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
-		final ProjectAssetService projectAssetService,
-		final S3ClientService s3ClientService,
-		final ModelRepository repository) {
-		super(objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			Model.class);
+			final ObjectMapper objectMapper,
+			final Config config,
+			final ElasticsearchConfiguration elasticConfig,
+			final ElasticsearchService elasticService,
+			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
+			final ModelRepository repository) {
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				Model.class);
 	}
 
 	@Observed(name = "function_profile")
@@ -76,16 +72,13 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
 
 		final Optional<Model> model = getAsset(id);
-		if(model.isPresent()) {
+		if (model.isPresent()) {
 			final ModelDescription md = ModelDescription.fromModel(model.get());
 			return Optional.of(md);
 		}
 
 		return Optional.empty();
-
-
 	}
-
 
 	@Observed(name = "function_profile")
 	public List<ModelConfiguration> getModelConfigurationsByModelId(
@@ -145,6 +138,4 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 		return super.createAsset(asset);
 	}
-
-
 }

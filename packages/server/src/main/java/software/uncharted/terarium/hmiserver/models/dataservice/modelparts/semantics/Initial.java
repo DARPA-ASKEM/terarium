@@ -25,7 +25,7 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 	private String expressionMathml;
 
 	@Override
-	public Initial clone(){
+	public Initial clone() {
 		Initial clone = (Initial) super.clone();
 		clone.setTarget(target);
 		clone.setExpression(expression);

@@ -25,8 +25,8 @@ public class Paper extends SupportAdditionalProperties implements Serializable {
 	private String doi;
 
 	@Override
-	public Paper clone(){
-		final Paper clone = (Paper)super.clone();
+	public Paper clone() {
+		final Paper clone = (Paper) super.clone();
 		clone.id = id;
 		clone.fileDirectory = fileDirectory;
 		clone.doi = doi;

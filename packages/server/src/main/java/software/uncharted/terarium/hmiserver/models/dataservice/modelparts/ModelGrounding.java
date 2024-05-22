@@ -33,15 +33,12 @@ public class ModelGrounding extends SupportAdditionalProperties implements Seria
 
 		// I'm unsure how all of these "Objects" can be cloned?
 
-		if(this.identifiers != null)
-			clone.identifiers = new HashMap<>(this.identifiers);
+		if (this.identifiers != null) clone.identifiers = new HashMap<>(this.identifiers);
 
-		if(this.context != null)
-			clone.context = new HashMap<>(this.context);
+		if (this.context != null) clone.context = new HashMap<>(this.context);
 
 		clone.modifiers = this.modifiers;
 
 		return clone;
-
 	}
 }

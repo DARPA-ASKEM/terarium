@@ -23,7 +23,7 @@ public class ModelUnit extends SupportAdditionalProperties implements Serializab
 	private String expressionMathml;
 
 	@Override
-	public ModelUnit clone(){
+	public ModelUnit clone() {
 		ModelUnit clone = (ModelUnit) super.clone();
 		clone.setExpression(this.getExpression());
 		clone.setExpressionMathml(this.getExpressionMathml());

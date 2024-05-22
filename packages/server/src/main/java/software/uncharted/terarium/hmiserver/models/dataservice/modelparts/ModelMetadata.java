@@ -76,63 +76,63 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	JsonNode source;
 
 	@Override
-	public ModelMetadata clone(){
-		final ModelMetadata clone = (ModelMetadata)super.clone();
+	public ModelMetadata clone() {
+		final ModelMetadata clone = (ModelMetadata) super.clone();
 
 		clone.processedBy = this.processedBy;
 
-		if(this.variableStatements != null){
+		if (this.variableStatements != null) {
 			clone.variableStatements = new ArrayList<>();
-			for(VariableStatement variableStatement : this.variableStatements){
+			for (VariableStatement variableStatement : this.variableStatements) {
 				clone.variableStatements.add(variableStatement.clone());
 			}
 		}
 
-		if(this.annotations != null){
+		if (this.annotations != null) {
 			clone.annotations = this.annotations.clone();
 		}
 
-		if(this.attributes != null){
+		if (this.attributes != null) {
 			clone.attributes = new ArrayList<>();
-			for(JsonNode attribute : this.attributes){
+			for (JsonNode attribute : this.attributes) {
 				clone.attributes.add(attribute.deepCopy());
 			}
 		}
 
-		if(this.initials != null){
+		if (this.initials != null) {
 			clone.initials = new HashMap<>();
 			clone.initials.putAll(this.initials);
 		}
 
-		if(this.parameters != null){
+		if (this.parameters != null) {
 			clone.parameters = new HashMap<>();
 			clone.parameters.putAll(this.parameters);
 		}
 
-		if(clone.card != null){
+		if (clone.card != null) {
 			clone.card = this.card.clone();
 		}
 
-		if(gollmCard != null){
+		if (gollmCard != null) {
 			clone.gollmCard = this.gollmCard.deepCopy();
 		}
 
-		if(gollmExtractions != null){
+		if (gollmExtractions != null) {
 			clone.gollmExtractions = this.gollmExtractions.deepCopy();
 		}
 
-		if(provenance != null){
+		if (provenance != null) {
 			clone.provenance = new ArrayList<>();
 			clone.provenance.addAll(provenance);
 		}
 
-		if(templateCard != null){
+		if (templateCard != null) {
 			clone.templateCard = this.templateCard.deepCopy();
 		}
 
 		clone.codeId = this.codeId;
 
-		if(source != null){
+		if (source != null) {
 			clone.source = this.source.deepCopy();
 		}
 

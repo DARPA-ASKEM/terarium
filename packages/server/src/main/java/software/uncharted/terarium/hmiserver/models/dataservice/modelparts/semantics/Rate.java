@@ -27,7 +27,7 @@ public class Rate extends SupportAdditionalProperties implements Serializable {
 	private String expressionMathml;
 
 	@Override
-	public Rate clone(){
+	public Rate clone() {
 		Rate clone = (Rate) super.clone();
 		clone.setTarget(this.getTarget());
 		clone.setExpression(this.getExpression());

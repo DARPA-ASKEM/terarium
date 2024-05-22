@@ -14,7 +14,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
  * deserialization. This is useful for semi-blackbox types where we have certain concrete fields that we know of, and
  * other dynamic fields we don't.
  */
-public class SupportAdditionalProperties implements Cloneable{
+public class SupportAdditionalProperties implements Cloneable {
 
 	@TSIgnore
 	protected Map<String, JsonNode> additionalProperties = new HashMap<>();
@@ -37,24 +37,23 @@ public class SupportAdditionalProperties implements Cloneable{
 		additionalProperties = props;
 	}
 
-
 	@Override
-	public SupportAdditionalProperties clone(){
+	public SupportAdditionalProperties clone() {
 		final SupportAdditionalProperties clone;
 		try {
-			clone = (SupportAdditionalProperties)super.clone();
+			clone = (SupportAdditionalProperties) super.clone();
 		} catch (final CloneNotSupportedException e) {
 			// this won't be hit.
 			throw new RuntimeException(e);
 		}
-		if(this.additionalProperties != null){
+		if (this.additionalProperties != null) {
 			clone.additionalProperties = new HashMap<>();
-			for(final String key : additionalProperties.keySet()){
-				clone.getAdditionalProperties().put(key, additionalProperties.get(key).deepCopy());
+			for (final String key : additionalProperties.keySet()) {
+				clone.getAdditionalProperties()
+						.put(key, additionalProperties.get(key).deepCopy());
 			}
 		}
 
 		return clone;
-
 	}
 }

@@ -35,28 +35,28 @@ public class Variable extends SupportAdditionalProperties implements Serializabl
 	private List<EquationVariable> equations;
 
 	@Override
-	public Variable clone(){
-		final Variable clone = (Variable)super.clone();
+	public Variable clone() {
+		final Variable clone = (Variable) super.clone();
 		clone.id = this.id;
 		clone.name = this.name;
 
 		if (this.metadata != null) {
 			clone.metadata = new ArrayList<>();
-			for(final VariableMetadata metadata : this.metadata) {
+			for (final VariableMetadata metadata : this.metadata) {
 				clone.metadata.add(metadata.clone());
 			}
 		}
 
 		if (this.dkgGroundings != null) {
 			clone.dkgGroundings = new ArrayList<>();
-			for(final DKGConcept dkg : this.dkgGroundings) {
+			for (final DKGConcept dkg : this.dkgGroundings) {
 				clone.dkgGroundings.add(dkg.clone());
 			}
 		}
 
 		if (this.column != null) {
 			clone.column = new ArrayList<>();
-			for(final DataColumn column : this.column) {
+			for (final DataColumn column : this.column) {
 				clone.column.add(column.clone());
 			}
 		}
@@ -67,12 +67,11 @@ public class Variable extends SupportAdditionalProperties implements Serializabl
 
 		if (this.equations != null) {
 			clone.equations = new ArrayList<>();
-			for(final EquationVariable equation : this.equations) {
+			for (final EquationVariable equation : this.equations) {
 				clone.equations.add(equation.clone());
 			}
 		}
 
 		return clone;
-
 	}
 }

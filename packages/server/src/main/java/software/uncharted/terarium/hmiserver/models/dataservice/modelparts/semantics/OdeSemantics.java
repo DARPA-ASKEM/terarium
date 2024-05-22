@@ -36,38 +36,38 @@ public class OdeSemantics extends SupportAdditionalProperties implements Seriali
 	private JsonNode time;
 
 	@Override
-	public OdeSemantics clone(){
+	public OdeSemantics clone() {
 		final OdeSemantics clone = (OdeSemantics) super.clone();
 
-		if(this.rates != null){
+		if (this.rates != null) {
 			clone.rates = new ArrayList<>();
-			for(final Rate rate : this.rates){
+			for (final Rate rate : this.rates) {
 				clone.rates.add(rate.clone());
 			}
 		}
 
-		if(this.initials != null){
+		if (this.initials != null) {
 			clone.initials = new ArrayList<>();
-			for(final Initial init : this.initials){
+			for (final Initial init : this.initials) {
 				clone.initials.add(init.clone());
 			}
 		}
 
-		if(this.parameters != null){
+		if (this.parameters != null) {
 			clone.parameters = new ArrayList<>();
-			for(final ModelParameter parameter : this.parameters){
+			for (final ModelParameter parameter : this.parameters) {
 				clone.parameters.add(parameter.clone());
 			}
 		}
 
-		if(this.observables != null){
+		if (this.observables != null) {
 			clone.observables = new ArrayList<>();
-			for(final Observable observable : this.observables){
+			for (final Observable observable : this.observables) {
 				clone.observables.add(observable.clone());
 			}
 		}
 
-		if(this.time != null){
+		if (this.time != null) {
 			clone.time = this.time.deepCopy();
 		}
 

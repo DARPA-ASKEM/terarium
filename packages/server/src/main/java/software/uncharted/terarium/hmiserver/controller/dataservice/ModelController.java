@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -249,24 +248,24 @@ public class ModelController {
 				// if query is provided deserialize it, append the soft delete filter
 				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
 				query = new Query.Builder()
-					.bool(b -> b.must(new Query.Builder()
-							.withJson(new ByteArrayInputStream(bytes))
-							.build())
-						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-					.build();
+						.bool(b -> b.must(new Query.Builder()
+										.withJson(new ByteArrayInputStream(bytes))
+										.build())
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
 			} else {
 				query = new Query.Builder()
-					.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-					.build();
+						.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
 			}
 
 			final SourceConfig source = new SourceConfig.Builder()
-				.filter(new SourceFilter.Builder()
-					.excludes("model", "semantics")
-					.build())
-				.build();
+					.filter(new SourceFilter.Builder()
+							.excludes("model", "semantics")
+							.build())
+					.build();
 
 			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
 		} catch (final IOException e) {

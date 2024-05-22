@@ -33,24 +33,20 @@ public class VariableStatement extends SupportAdditionalProperties implements Se
 	private ProvenanceInfo provenance;
 
 	@Override
-	public VariableStatement clone(){
-		VariableStatement clone = (VariableStatement)super.clone();
+	public VariableStatement clone() {
+		VariableStatement clone = (VariableStatement) super.clone();
 		clone.id = this.id;
 		clone.variable = this.variable.clone();
 
-		if(this.value != null)
-			clone.value = this.value.clone();
+		if (this.value != null) clone.value = this.value.clone();
 
-		if(this.metadata != null){
+		if (this.metadata != null) {
 			clone.metadata = new ArrayList<>();
-			for(VariableStatementMetadata metadata : this.metadata)
-				clone.metadata.add(metadata.clone());
+			for (VariableStatementMetadata metadata : this.metadata) clone.metadata.add(metadata.clone());
 		}
 
-		if(this.provenance != null)
-			clone.provenance = this.provenance.clone();
+		if (this.provenance != null) clone.provenance = this.provenance.clone();
 
 		return clone;
-
 	}
 }
