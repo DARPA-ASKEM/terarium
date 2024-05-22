@@ -61,7 +61,13 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.*;
+import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -102,7 +108,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(
 			@RequestBody final JsonNode req, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Model responseAMR;
@@ -225,7 +231,7 @@ public class KnowledgeController {
 			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
 			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -395,7 +401,7 @@ public class KnowledgeController {
 			@RequestPart final Code code,
 			@RequestPart("file") final MultipartFile input)
 			throws IOException {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -404,14 +410,14 @@ public class KnowledgeController {
 
 			// 2. upload file to code asset
 			final byte[] fileAsBytes = input.getBytes();
-			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
 			final String filename = input.getOriginalFilename();
 
 			if (filename == null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name is required");
 			}
 
-			codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+			codeService.uploadFile(code.getId(), filename, fileEntity);
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
@@ -446,7 +452,7 @@ public class KnowledgeController {
 			@PathVariable("model-id") final UUID modelId,
 			@RequestParam("project-id") final UUID projectId,
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -540,7 +546,7 @@ public class KnowledgeController {
 			@PathVariable("dataset-id") final UUID datasetId,
 			@RequestParam("project-id") final UUID projectId,
 			@RequestParam(name = "document-id", required = false) final Optional<UUID> documentId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -680,7 +686,7 @@ public class KnowledgeController {
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam("model-id") final UUID modelId,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -708,7 +714,7 @@ public class KnowledgeController {
 			@RequestParam(name = "model-ids", required = false) final List<UUID> modelIds,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractVariables(
 				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
@@ -733,7 +739,7 @@ public class KnowledgeController {
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractPDF(documentId, domain, permission);
 		return ResponseEntity.accepted().build();

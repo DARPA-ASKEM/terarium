@@ -184,8 +184,8 @@ public class ProjectController {
 			final Schema.Permission permission = projectService.checkPermissionCanRead(
 					currentUserService.get().getId(), project.getId());
 
-			// Set the user permission for the project. If we are unable to get the user permission, we remove the
-			// project.
+			// Set the user permission for the project. If we are unable to get the user
+			// permission, we remove the project.
 			try {
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 			} catch (final Exception e) {
@@ -197,7 +197,8 @@ public class ProjectController {
 				return;
 			}
 
-			// Set the public status for the project. If we are unable to get the public status, we default to private.
+			// Set the public status for the project. If we are unable to get the public
+			// status, we default to private.
 			try {
 				project.setPublicProject(rebacProject.isPublic());
 			} catch (final Exception e) {
@@ -208,7 +209,8 @@ public class ProjectController {
 				project.setPublicProject(false);
 			}
 
-			// Set the contributors for the project. If we are unable to get the contributors, we default to an empty
+			// Set the contributors for the project. If we are unable to get the
+			// contributors, we default to an empty
 			// list.
 			List<Contributor> contributors = null;
 			try {
@@ -217,7 +219,8 @@ public class ProjectController {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
 			}
 
-			// Set the metadata for the project. If we are unable to get the metadata, we default to empty values.
+			// Set the metadata for the project. If we are unable to get the metadata, we
+			// default to empty values.
 			try {
 				final List<ProjectAsset> assets =
 						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes, permission);
@@ -253,7 +256,8 @@ public class ProjectController {
 						e);
 			}
 
-			// Set the author name for the project. If we are unable to get the author name, we don't set a value.
+			// Set the author name for the project. If we are unable to get the author name,
+			// we don't set a value.
 			try {
 				if (project.getUserId() != null) {
 					final String authorName =
@@ -580,53 +584,95 @@ public class ProjectController {
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-								projects will directly hold a reference to the assets associated with them.  During this
-								transition we need to properly create the relationships when users add assets to their
-								projects. However the exact API may not look like this in the end, and in fact may be
-								directly in the controllers for these assets and not in this ProjectController.
+		/*
+		 * TODO: At the end of the Postgres migration we will be getting rid of
+		 * ProjectAsset and instead
+		 * projects will directly hold a reference to the assets associated with them.
+		 * During this
+		 * transition we need to properly create the relationships when users add assets
+		 * to their
+		 * projects. However the exact API may not look like this in the end, and in
+		 * fact may be
+		 * directly in the controllers for these assets and not in this
+		 * ProjectController.
+		 *
+		 * Once all TerariumAssets have been migrated we can move this all to be a lot
+		 * more generic
+		 * and not need to have this ugly if/else statement
+		 */
 
-								Once all TerariumAssets have been migrated we can move this all to be a lot more generic
-								and not need to have this ugly if/else statement
-		*/
+		// check if the asset is associated with a project, if it is, we should clone it
+		// and create a new asset
+		final boolean alreadyPartOfAProject = projectAssetService.isPartOfExistingProject(assetId);
+
+		UUID addedAssetId = assetId;
+
 		if (assetType.equals(AssetType.CODE)) {
 
-			final Optional<Code> code = codeService.getAsset(assetId, permission);
-			if (code.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
-			}
-
-			if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
-			if (project.get().getCodeAssets().contains(code.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-			}
-
-			code.get().setProject(project.get());
-
 			try {
-				codeService.updateAsset(code.get(), permission);
-			} catch (final Exception e) {
+				Code code = null;
+				if (alreadyPartOfAProject) {
+					code = codeService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Code> codeOptional = codeService.getAsset(assetId, permission);
+					if (codeOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
+					}
+					code = codeOptional.get();
+				}
+
+				if (code.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
+				if (project.get().getCodeAssets().contains(code)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				}
+
+				code.setProject(project.get());
+
+				codeService.updateAsset(code, permission);
+
+				addedAssetId = code.getId();
+
+			} catch (final IOException e) {
 				log.error("Error updating code asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.unable-to-update"));
 			}
 		} else if (assetType.equals(AssetType.WORKFLOW)) {
 
-			final Optional<Workflow> workflow = workflowService.getAsset(assetId, permission);
-			if (workflow.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("workflow.not-found"));
-			}
-
-			if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
-			if (project.get().getWorkflowAssets().contains(workflow.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.workflow-conflict"));
-			}
-
-			workflow.get().setProject(project.get());
-
 			try {
-				workflowService.updateAsset(workflow.get(), permission);
-			} catch (final Exception e) {
+				Workflow workflow = null;
+				if (alreadyPartOfAProject) {
+					workflow = workflowService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Workflow> workflowOptional = workflowService.getAsset(assetId, permission);
+					if (workflowOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("workflow.not-found"));
+					}
+					workflow = workflowOptional.get();
+				}
+
+				if (workflow.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
+				if (project.get().getWorkflowAssets().contains(workflow)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.workflow-conflict"));
+				}
+
+				workflow.setProject(project.get());
+
+				workflowService.updateAsset(workflow, permission);
+
+				addedAssetId = workflow.getId();
+
+			} catch (final IOException e) {
 				log.error("Error updating workflow asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("workflow.unable-to-update"));
@@ -634,21 +680,34 @@ public class ProjectController {
 
 		} else if (assetType.equals(AssetType.DATASET)) {
 
-			final Optional<Dataset> dataset = datasetService.getAsset(assetId, permission);
-			if (dataset.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-			}
-
-			if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
-			if (project.get().getDatasetAssets().contains(dataset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.dataset-conflict"));
-			}
-
-			dataset.get().setProject(project.get());
-
 			try {
-				datasetService.updateAsset(dataset.get(), permission);
-			} catch (final Exception e) {
+				Dataset dataset = null;
+				if (alreadyPartOfAProject) {
+					dataset = datasetService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Dataset> datasetOptional = datasetService.getAsset(assetId, permission);
+					if (datasetOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+					}
+					dataset = datasetOptional.get();
+				}
+
+				if (dataset.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
+				if (project.get().getDatasetAssets().contains(dataset)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.dataset-conflict"));
+				}
+
+				dataset.setProject(project.get());
+
+				datasetService.updateAsset(dataset, permission);
+
+				addedAssetId = dataset.getId();
+			} catch (final IOException e) {
 				log.error("Error updating dataset asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
@@ -656,75 +715,106 @@ public class ProjectController {
 
 		} else if (assetType.equals(AssetType.ARTIFACT)) {
 
-			final Optional<Artifact> artifact = artifactService.getAsset(assetId, permission);
-			if (artifact.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
-			}
-
-			if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
-			if (project.get().getArtifactAssets().contains(artifact.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.artifact-conflict"));
-			}
-
-			artifact.get().setProject(project.get());
-
 			try {
-				artifactService.updateAsset(artifact.get(), permission);
-			} catch (final Exception e) {
+				Artifact artifact = null;
+				if (alreadyPartOfAProject) {
+					artifact = artifactService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Artifact> artifactOptional = artifactService.getAsset(assetId, permission);
+					if (artifactOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
+					}
+					artifact = artifactOptional.get();
+				}
+
+				if (artifact.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
+				if (project.get().getArtifactAssets().contains(artifact)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.artifact-conflict"));
+				}
+
+				artifact.setProject(project.get());
+
+				artifactService.updateAsset(artifact, permission);
+
+				addedAssetId = artifact.getId();
+			} catch (final IOException e) {
 				log.error("Error updating artifact asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-update"));
 			}
 		} else if (assetType.equals(AssetType.DOCUMENT)) {
 
-			final Optional<DocumentAsset> documentAsset = documentAssetService.getAsset(assetId, permission);
-			if (documentAsset.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-			}
-
-			if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
-			if (project.get().getDocumentAssets().contains(documentAsset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.document-conflict"));
-			}
-
-			documentAsset.get().setProject(project.get());
-
 			try {
-				documentAssetService.updateAsset(documentAsset.get(), permission);
-			} catch (final Exception e) {
+				DocumentAsset documentAsset = null;
+				if (alreadyPartOfAProject) {
+					documentAsset = documentAssetService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<DocumentAsset> documentOptional = documentAssetService.getAsset(assetId, permission);
+					if (documentOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
+					}
+					documentAsset = documentOptional.get();
+				}
+
+				if (documentAsset.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
+				}
+
+				if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
+				if (project.get().getDocumentAssets().contains(documentAsset)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.document-conflict"));
+				}
+
+				documentAsset.setProject(project.get());
+
+				documentAssetService.updateAsset(documentAsset, permission);
+
+				addedAssetId = documentAsset.getId();
+			} catch (final IOException e) {
 				log.error("Error updating document asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
 			}
 		} else if (assetType.equals(AssetType.MODEL)) {
 
-			final Optional<Model> model = modelService.getAsset(assetId, permission);
-			if (model.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-			}
-
-			if (project.get().getModelAssets() == null) project.get().setModelAssets(new ArrayList<>());
-			if (project.get().getModelAssets().contains(model.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.model-conflict"));
-			}
-
-			model.get().setProject(project.get());
-
 			try {
-				modelService.updateAsset(model.get(), permission);
-			} catch (final Exception e) {
-				log.error("Error updating model asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
-			}
-		}
+				Model model = null;
+				if (alreadyPartOfAProject) {
+					model = modelService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Model> modelOptional = modelService.getAsset(assetId, permission);
+					if (modelOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+					}
+					model = modelOptional.get();
+				}
 
-		// double check that this asset is not already a part of this project, and if it
-		// does exist return a 409 to the front end
-		final Optional<ProjectAsset> existingAsset =
-				projectAssetService.getProjectAssetByProjectIdAndAssetId(projectId, assetId, permission);
-		if (existingAsset.isPresent()) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(existingAsset.get());
+				if (model.getProject() != null) {
+					throw new ResponseStatusException(
+						HttpStatus.CONFLICT, messages.get("projects.model-already-added"));
+				}
+
+				if (project.get().getModelAssets() == null) project.get().setModelAssets(new ArrayList<>());
+				if (project.get().getModelAssets().contains(model)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.model-conflict"));
+				}
+
+				model.setProject(project.get());
+
+				modelService.updateAsset(model, permission);
+
+				addedAssetId = model.getId();
+			} catch (final IOException e) {
+				log.error("Error updating document asset", e);
+				throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
+			}
 		}
 
 		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
@@ -732,7 +822,7 @@ public class ProjectController {
 
 		final Optional<? extends TerariumAsset> asset;
 		try {
-			asset = terariumAssetService.getAsset(assetId, permission);
+			asset = terariumAssetService.getAsset(addedAssetId, permission);
 		} catch (final IOException e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -790,12 +880,18 @@ public class ProjectController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		/* TODO: 	At the end of the Postgres migration we will be getting rid of ProjectAsset and instead
-								projects will directly hold a reference to the assets associated with them.  During this
-								transition we need to properly create the relationships when users add assets to their
-								projects. However the exact API may not look like this in the end, and in fact may be
-								directly in the controllers for these assets and not in this ProjectController
-		*/
+		/*
+		 * TODO: At the end of the Postgres migration we will be getting rid of
+		 * ProjectAsset and instead
+		 * projects will directly hold a reference to the assets associated with them.
+		 * During this
+		 * transition we need to properly create the relationships when users add assets
+		 * to their
+		 * projects. However the exact API may not look like this in the end, and in
+		 * fact may be
+		 * directly in the controllers for these assets and not in this
+		 * ProjectController
+		 */
 		if (assetType.equals(AssetType.CODE)) {
 
 			final Optional<Code> deletedCode;

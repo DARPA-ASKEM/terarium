@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
@@ -233,7 +234,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = workflowService.exportAsset(workflow.getId(), Schema.Permission.READ);
+		final AssetExport<Workflow> exported = workflowService.exportAsset(workflow.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Workflow imported = workflowService.importAsset(exported, Schema.Permission.WRITE);
 
