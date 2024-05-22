@@ -481,7 +481,7 @@ watch(
 		const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
 		useProjects().allProjects.value?.forEach((project) => items.push(getNavMenuItem(project)));
 
-		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated.name);
+		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated?.name);
 		navMenuItems.value = [
 			homeItem,
 			explorerItem,
