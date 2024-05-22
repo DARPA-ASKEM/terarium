@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 

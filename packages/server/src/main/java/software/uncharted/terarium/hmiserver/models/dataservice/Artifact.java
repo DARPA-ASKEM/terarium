@@ -1,29 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import java.io.Serial;
-
-import org.hibernate.annotations.Type;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
+import java.io.Serial;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /**
- * Represents a generic artifact that can be stored in the data service. For
- * example, this could be a text file, a code
- * file, a zip file, or anything else. It should not be used for a dataset or a
- * model, which have their own classes.
+ * Represents a generic artifact that can be stored in the data service. For example, this could be a text file, a code
+ * file, a zip file, or anything else. It should not be used for a dataset or a model, which have their own classes.
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

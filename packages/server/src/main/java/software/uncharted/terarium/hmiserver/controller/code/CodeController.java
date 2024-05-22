@@ -1,7 +1,11 @@
 package software.uncharted.terarium.hmiserver.controller.code;
 
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -15,12 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
 import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.code.GithubFile;
@@ -48,22 +46,23 @@ public class CodeController {
 	 * Stores a model from a code snippet
 	 *
 	 * @param code the python code snippet
-	 * @return a {@link StoredModel} instance containing the model id, inputs, and
-	 *         outputs of the model derived from the
-	 *         code input
+	 * @return a {@link StoredModel} instance containing the model id, inputs, and outputs of the model derived from the
+	 *     code input
 	 */
 	@PostMapping
 	@Secured(Roles.USER)
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Code transformed successfully"),
-			@ApiResponse(responseCode = "204", description = "No content"),
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(responseCode = "200", description = "Code transformed successfully"),
+				@ApiResponse(responseCode = "204", description = "No content"),
+			})
 	public ResponseEntity<StoredModel> transformCode(final String code) {
 
 		// Convert from highlighted code a function network
 		final String skemaResponseStr;
 		try {
-			skemaResponseStr = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
+			skemaResponseStr =
+					skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
 		} catch (final FeignException e) {
 			final String error = "Error creating function network from code";
 			final int status = e.status() >= 400 ? e.status() : 500;
@@ -81,15 +80,18 @@ public class CodeController {
 		// order to pass it on to the
 		// service that will store the model as it expects application/json and not a
 		// string
-		final String unescapedSkemaResponseStr = StringEscapeUtils
-				.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
+		final String unescapedSkemaResponseStr =
+				StringEscapeUtils.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
 
 		// Store the model
 		try {
-			final String modelId = skemaRustProxy.addModel(unescapedSkemaResponseStr).getBody();
+			final String modelId =
+					skemaRustProxy.addModel(unescapedSkemaResponseStr).getBody();
 
-			final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
-			final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
+			final String odiResponseStr =
+					skemaRustProxy.getModelNamedOpis(modelId).getBody();
+			final String odoResponseStr =
+					skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
 			return ResponseEntity.ok(
 					new StoredModel().setId(modelId).setInputs(odiResponseStr).setOutputs(odoResponseStr));
@@ -103,10 +105,11 @@ public class CodeController {
 
 	@GetMapping("/repo-content")
 	@Secured(Roles.USER)
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
-			@ApiResponse(responseCode = "204", description = "No content"),
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
+				@ApiResponse(responseCode = "204", description = "No content"),
+			})
 	public ResponseEntity<GithubRepo> getGithubRepositoryContent(
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("path") final String path) {

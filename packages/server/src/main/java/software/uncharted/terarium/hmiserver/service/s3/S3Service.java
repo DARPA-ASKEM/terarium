@@ -8,14 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.entity.ContentType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -63,7 +61,7 @@ public class S3Service {
 	/**
 	 * Constructor
 	 *
-	 * @param client     The S3 client to use
+	 * @param client The S3 client to use
 	 * @param bufferSize The size of the buffer to use when writing multipart files
 	 */
 	public S3Service(final S3Client client, final S3Presigner preSigner, final int bufferSize) {
@@ -98,7 +96,8 @@ public class S3Service {
 	 */
 	public boolean bucketExists(final String bucketName) {
 		log.debug("Checking if bucket {} exists", bucketName);
-		final HeadBucketRequest request = HeadBucketRequest.builder().bucket(bucketName).build();
+		final HeadBucketRequest request =
+				HeadBucketRequest.builder().bucket(bucketName).build();
 		try {
 			client.headBucket(request);
 			log.debug("Bucket {} exists", bucketName);
@@ -118,7 +117,8 @@ public class S3Service {
 	 */
 	public boolean doesObjectExist(final String bucketName, final String key) {
 		try {
-			final HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+			final HeadObjectRequest headObjectRequest =
+					HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 			client.headObject(headObjectRequest);
 			return true;
 		} catch (final NoSuchKeyException e) {
@@ -134,7 +134,8 @@ public class S3Service {
 	 */
 	public CreateBucketResponse createBucket(final String bucketName) {
 		log.debug("Creating bucket {}", bucketName);
-		final CreateBucketRequest request = CreateBucketRequest.builder().bucket(bucketName).build();
+		final CreateBucketRequest request =
+				CreateBucketRequest.builder().bucket(bucketName).build();
 		return client.createBucket(request);
 	}
 
@@ -146,7 +147,8 @@ public class S3Service {
 	 */
 	public DeleteBucketResponse deleteBucket(final String bucketName) {
 		log.debug("Deleting bucket {}", bucketName);
-		final DeleteBucketRequest request = DeleteBucketRequest.builder().bucket(bucketName).build();
+		final DeleteBucketRequest request =
+				DeleteBucketRequest.builder().bucket(bucketName).build();
 		return client.deleteBucket(request);
 	}
 
@@ -154,13 +156,13 @@ public class S3Service {
 	 * Returns object metadata for an object in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
-	 * @return The {@link S3Object} metadata for the object, or null if the object
-	 *         does not exist
+	 * @param key The key of the object
+	 * @return The {@link S3Object} metadata for the object, or null if the object does not exist
 	 */
 	public S3Object getObjectInformation(final String bucketName, final String key) {
 		log.debug("Getting object {} from bucket {}", key, bucketName);
-		final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+		final HeadObjectRequest request =
+				HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 		try {
 			final HeadObjectResponse response = client.headObject(request);
 			return new S3Object()
@@ -178,13 +180,14 @@ public class S3Service {
 	 * Put an object in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
-	 * @param data       The data to put in the object as a byte array
+	 * @param key The key of the object
+	 * @param data The data to put in the object as a byte array
 	 * @return The response from the put object request
 	 */
 	public PutObjectResponse putObject(final String bucketName, final String key, final byte[] data) {
 		log.debug("Putting object {} in bucket {}", key, bucketName);
-		final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+		final PutObjectRequest request =
+				PutObjectRequest.builder().bucket(bucketName).key(key).build();
 		return client.putObject(request, RequestBody.fromBytes(data));
 	}
 
@@ -192,26 +195,27 @@ public class S3Service {
 	 * Put an object in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
-	 * @param data       The data to put in the object as a byte array
+	 * @param key The key of the object
+	 * @param data The data to put in the object as a byte array
 	 * @return The response from the put object request
 	 */
-	public PutObjectResponse putObject(final String bucketName, final String key, final ContentType contentType,
-			final byte[] data) {
+	public PutObjectResponse putObject(
+			final String bucketName, final String key, final ContentType contentType, final byte[] data) {
 		log.debug("Putting object {} in bucket {}", key, bucketName);
-		final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key)
+		final PutObjectRequest request = PutObjectRequest.builder()
+				.bucket(bucketName)
+				.key(key)
 				.contentType(contentType.toString())
 				.build();
 		return client.putObject(request, RequestBody.fromBytes(data));
 	}
 
 	/**
-	 * Initialize a multipart upload. The caller can use the returned upload ID to
-	 * upload parts and to complete the
+	 * Initialize a multipart upload. The caller can use the returned upload ID to upload parts and to complete the
 	 * multipart upload.
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
+	 * @param key The key of the object
 	 * @return The response from the create multipart upload request
 	 */
 	public CreateMultipartUploadResponse createMultipartUpload(final String bucketName, final String key) {
@@ -224,14 +228,13 @@ public class S3Service {
 	}
 
 	/**
-	 * Put an object in a bucket via an input stream and content length. Useful for
-	 * upload multipart files that are too
+	 * Put an object in a bucket via an input stream and content length. Useful for upload multipart files that are too
 	 * large to fit in memory.
 	 *
-	 * @param uploadId   The upload ID of the multipart upload.
+	 * @param uploadId The upload ID of the multipart upload.
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
-	 * @param stream     The input stream to read from
+	 * @param key The key of the object
+	 * @param stream The input stream to read from
 	 */
 	public void putObject(final String uploadId, final String bucketName, final String key, final InputStream stream) {
 		log.debug("Putting multipart object {} in bucket {}", key, bucketName);
@@ -282,11 +285,11 @@ public class S3Service {
 	 * Write a part of a multipart upload
 	 *
 	 * @param totalBuffersSize The total size of the buffers in bytes
-	 * @param buffers          The buffers to write
-	 * @param bucketName       The name of the bucket
-	 * @param uploadId         The upload ID of the multipart upload
-	 * @param key              The key of the object
-	 * @param partNumber       The part number of the part to write
+	 * @param buffers The buffers to write
+	 * @param bucketName The name of the bucket
+	 * @param uploadId The upload ID of the multipart upload
+	 * @param key The key of the object
+	 * @param partNumber The part number of the part to write
 	 * @return The completed part
 	 */
 	private CompletedPart writePart(
@@ -310,8 +313,8 @@ public class S3Service {
 				.partNumber(partNumber)
 				.build();
 
-		final UploadPartResponse uploadPartResponse = client.uploadPart(uploadPartRequest,
-				RequestBody.fromBytes(newBuffer));
+		final UploadPartResponse uploadPartResponse =
+				client.uploadPart(uploadPartRequest, RequestBody.fromBytes(newBuffer));
 
 		final CompletedPart completedPart = CompletedPart.builder()
 				.partNumber(partNumber)
@@ -325,12 +328,13 @@ public class S3Service {
 	 * Put an object in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
+	 * @param key The key of the object
 	 * @return The response from the put object request
 	 */
 	public ResponseInputStream<GetObjectResponse> getObject(final String bucketName, final String key) {
 		log.debug("Getting object {} from bucket {}", key, bucketName);
-		final GetObjectRequest request = GetObjectRequest.builder().bucket(bucketName).key(key).build();
+		final GetObjectRequest request =
+				GetObjectRequest.builder().bucket(bucketName).key(key).build();
 		return client.getObject(request);
 	}
 
@@ -338,12 +342,13 @@ public class S3Service {
 	 * Tests if an object exists in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
+	 * @param key The key of the object
 	 * @return True if the object exists, false otherwise
 	 */
 	public boolean objectExists(final String bucketName, final String key) {
 		log.debug("Checking if object {} exists in bucket {}", key, bucketName);
-		final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+		final HeadObjectRequest request =
+				HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 		try {
 			client.headObject(request);
 			log.debug("Object {} exists in bucket {}", key, bucketName);
@@ -358,12 +363,13 @@ public class S3Service {
 	 * Delete an object from a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param key        The key of the object
+	 * @param key The key of the object
 	 * @return The response from the delete object request
 	 */
 	public DeleteObjectResponse deleteObject(final String bucketName, final String key) {
 		log.debug("Deleting object {} from bucket {}", key, bucketName);
-		final DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
+		final DeleteObjectRequest request =
+				DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
 		return client.deleteObject(request);
 	}
 
@@ -371,12 +377,13 @@ public class S3Service {
 	 * List objects in a bucket
 	 *
 	 * @param bucketName The name of the bucket
-	 * @param prefix     The prefix to filter on
+	 * @param prefix The prefix to filter on
 	 * @return The list of objects in the bucket
 	 */
 	public S3ObjectListing listObjects(final String bucketName, final String prefix) {
 		log.debug("Listing objects in bucket {} with prefix {}", bucketName, prefix);
-		final ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucketName).prefix(prefix).build();
+		final ListObjectsRequest request =
+				ListObjectsRequest.builder().bucket(bucketName).prefix(prefix).build();
 		final ListObjectsResponse response = client.listObjects(request);
 		final S3ObjectListing listing = new S3ObjectListing();
 		listing.setTruncated(response.isTruncated())
@@ -394,9 +401,9 @@ public class S3Service {
 	/**
 	 * Get the pre-signed signature for a download
 	 *
-	 * @param bucket        The bucket to download from
-	 * @param key           The key to download
-	 * @param s3id          The ID of the S3 client to use
+	 * @param bucket The bucket to download from
+	 * @param key The key to download
+	 * @param s3id The ID of the S3 client to use
 	 * @param encryptionKey The encryption key to use
 	 * @return The signature of this request
 	 */
@@ -410,11 +417,11 @@ public class S3Service {
 	/**
 	 * Gets the signature for a request and timestamp
 	 *
-	 * @param bucket                  The bucket to download from
-	 * @param key                     The key to download
-	 * @param s3Id                    The ID of the S3 client to use
+	 * @param bucket The bucket to download from
+	 * @param key The key to download
+	 * @param s3Id The ID of the S3 client to use
 	 * @param currentTimestampSeconds The current timestamp in seconds
-	 * @param encryptionKey           The encryption key to use
+	 * @param encryptionKey The encryption key to use
 	 * @return The signature of this request
 	 */
 	public static String getSignature(
@@ -428,12 +435,11 @@ public class S3Service {
 	}
 
 	/**
-	 * Get a pre-signed URL for a download. This should only be used for internal
-	 * downloads, as it does not use a custom
+	 * Get a pre-signed URL for a download. This should only be used for internal downloads, as it does not use a custom
 	 * domain name and will likely be blocked if coming from a browser.
 	 *
-	 * @param bucket            The bucket to download from
-	 * @param key               The key to download
+	 * @param bucket The bucket to download from
+	 * @param key The key to download
 	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
@@ -453,12 +459,11 @@ public class S3Service {
 	}
 
 	/**
-	 * Get a pre-signed URL for an upload. This should only be used for internal
-	 * downloads, as it does not use a custom
+	 * Get a pre-signed URL for an upload. This should only be used for internal downloads, as it does not use a custom
 	 * domain name and will likely be blocked if coming from a browser.
 	 *
-	 * @param bucket            The bucket to download from
-	 * @param key               The key to download
+	 * @param bucket The bucket to download from
+	 * @param key The key to download
 	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
@@ -519,15 +524,14 @@ public class S3Service {
 	}
 
 	/**
-	 * Validates a signature for a download by checking if the signature matches any
-	 * of the signatures that would be
+	 * Validates a signature for a download by checking if the signature matches any of the signatures that would be
 	 * valid in the last expirationSeconds seconds
 	 *
-	 * @param bucket            The bucket to download from
-	 * @param key               The key to download
-	 * @param s3Id              The ID of the S3 client to use
-	 * @param signature         The signature to validate
-	 * @param encryptionKey     The encryption key to use
+	 * @param bucket The bucket to download from
+	 * @param key The key to download
+	 * @param s3Id The ID of the S3 client to use
+	 * @param signature The signature to validate
+	 * @param encryptionKey The encryption key to use
 	 * @param expirationSeconds The number of seconds the signature is valid for
 	 * @return True if the signature is valid, false otherwise
 	 */
