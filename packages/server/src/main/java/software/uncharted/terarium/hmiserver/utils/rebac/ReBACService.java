@@ -63,6 +63,9 @@ public class ReBACService {
 	@Value("${spicedb.launchmode}")
 	String SPICEDB_LAUNCHMODE;
 
+	@Value("${keycloak.api.service.name}")
+	String API_SERVICE_USER_NAME = "api-service";
+
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
 
@@ -70,6 +73,8 @@ public class ReBACService {
 	public static String PUBLIC_GROUP_ID;
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 	public static String ASKEM_ADMIN_GROUP_ID;
+
+	public static String API_SERVICE_USER_ID;
 
 	volatile String CURRENT_ZED_TOKEN;
 
@@ -173,6 +178,17 @@ public class ReBACService {
 				}
 			}
 		}
+		API_SERVICE_USER_ID = getUserId(API_SERVICE_USER_NAME);
+	}
+
+	private String getUserId(String name) {
+		List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
+		for (UserRepresentation user : users) {
+			if (user.getUsername().equals(API_SERVICE_USER_NAME)) {
+				return user.getId();
+			}
+		}
+		throw new RuntimeException("Api service user account does not exist");
 	}
 
 	private String getGroupId(String name) {
@@ -457,5 +473,10 @@ public class ReBACService {
 			throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
+	}
+
+	public boolean isServiceUser(String id) {
+		if (API_SERVICE_USER_ID.equals(id)) return true;
+		return false;
 	}
 }
