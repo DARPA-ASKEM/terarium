@@ -19,6 +19,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 	static Model createModel(final String key) {
 		final Model model = new Model();
+		model.setPublicAsset(true);
 		model.setName("test-model-name-" + key);
 		model.setDescription("test-model-description-" + key);
 		return model;
