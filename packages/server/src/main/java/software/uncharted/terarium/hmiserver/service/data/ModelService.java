@@ -128,12 +128,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<Model> getAssets(final Integer page, final Integer pageSize) {
-		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
-	}
-
-	@Override
-	@Observed(name = "function_profile")
 	public Model createAsset(final Model asset) throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)

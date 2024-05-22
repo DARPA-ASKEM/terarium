@@ -40,7 +40,13 @@ public class SupportAdditionalProperties implements Cloneable{
 
 	@Override
 	public SupportAdditionalProperties clone(){
-		final SupportAdditionalProperties clone = new SupportAdditionalProperties();
+		final SupportAdditionalProperties clone;
+		try {
+			clone = (SupportAdditionalProperties)super.clone();
+		} catch (final CloneNotSupportedException e) {
+			// this won't be hit.
+			throw new RuntimeException(e);
+		}
 		if(this.additionalProperties != null){
 			clone.additionalProperties = new HashMap<>();
 			for(final String key : additionalProperties.keySet()){

@@ -27,15 +27,15 @@ public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset
 		additionalProperties.put(name, mapper.valueToTree(value));
 	}
 
-	@Override
-	public TerariumAssetThatSupportsAdditionalProperties clone(){
-		final TerariumAssetThatSupportsAdditionalProperties clone = new TerariumAssetThatSupportsAdditionalProperties();
+	public TerariumAssetThatSupportsAdditionalProperties cloneSuperFields(final TerariumAssetThatSupportsAdditionalProperties asset){
+
+		super.cloneSuperFields(asset);
 		if(additionalProperties != null){
-			clone.additionalProperties = new HashMap<>();
+			asset.additionalProperties = new HashMap<>();
 			for(final Map.Entry<String, JsonNode> entry : additionalProperties.entrySet()){
-				clone.additionalProperties.put(entry.getKey(), entry.getValue().deepCopy());
+				asset.additionalProperties.put(entry.getKey(), entry.getValue().deepCopy());
 			}
 		}
-		return clone;
+		return asset;
 	}
 }

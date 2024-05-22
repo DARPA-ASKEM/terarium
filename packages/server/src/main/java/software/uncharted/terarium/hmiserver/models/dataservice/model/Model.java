@@ -67,7 +67,8 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Override
 	public Model clone(){
-		final Model clone = (Model)super.clone();
+		final Model clone = new Model();
+		super.cloneSuperFields(clone);
 
 		if(header != null){
 			clone.header = header.clone();
@@ -76,7 +77,7 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 		if(model != null){
 			clone.model = new HashMap<>();
-			for(Map.Entry<String, JsonNode> entry : model.entrySet()){
+			for(final Map.Entry<String, JsonNode> entry : model.entrySet()){
 				clone.model.put(entry.getKey(), entry.getValue().deepCopy());
 			}
 		}
@@ -96,37 +97,6 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return clone;
 	}
 
-	public Model() {
-		super();
-	}
-
-	// Copy constructor
-	public Model(final Model other) {
-		super();
-		this.setId(other.getId());
-		this.setName(other.getName());
-		this.setTemporary(other.getTemporary());
-		this.setPublicAsset(other.getPublicAsset());
-
-		if (other.getCreatedOn() != null) {
-			this.setCreatedOn(other.getCreatedOn());
-		}
-
-		if (other.getUpdatedOn() != null) {
-			this.setUpdatedOn(other.getUpdatedOn());
-		}
-
-		if (other.getDeletedOn() != null) {
-			this.setDeletedOn(other.getDeletedOn());
-		}
-
-		this.header = other.header;
-		this.userId = other.userId;
-		this.model = new HashMap<>(other.model);
-		this.properties = other.properties;
-		this.semantics = other.semantics;
-		this.metadata = other.metadata;
-	}
 
 	@JsonIgnore
 	@TSIgnore

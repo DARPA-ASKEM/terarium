@@ -68,7 +68,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
-				final Model modelCopy = new Model(model);
+				final Model modelCopy = model.clone();
+				modelCopy.setId(model.getId());
 
 				// Map the parameters values to the model
 				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
