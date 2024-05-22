@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -25,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @EqualsAndHashCode(callSuper = true)
@@ -66,31 +68,43 @@ public class Project extends TerariumAsset {
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
+	@TSIgnore
 	private List<Code> codeAssets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
+	@TSIgnore
 	private List<Dataset> datasetAssets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
+	@TSIgnore
 	private List<Workflow> workflowAssets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
+	@TSIgnore
 	private List<Artifact> artifactAssets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
+	@TSIgnore
 	private List<DocumentAsset> documentAssets = new ArrayList<>();
+
+	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@Where(clause = "deleted_on IS NULL")
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	@JsonManagedReference
+	@TSIgnore
+	private List<Model> modelAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient

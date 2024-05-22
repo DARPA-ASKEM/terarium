@@ -41,6 +41,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -55,6 +56,7 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
@@ -95,6 +97,7 @@ public class ProjectController {
 			""";
 	final Messages messages;
 	final ArtifactService artifactService;
+	final ModelService modelService;
 	final CodeService codeService;
 	final CurrentUserService currentUserService;
 	final DatasetService datasetService;
@@ -660,7 +663,7 @@ public class ProjectController {
 
 				if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
 				if (project.get().getWorkflowAssets().contains(workflow)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.workflow-conflict"));
 				}
 
 				workflow.setProject(project.get());
@@ -696,7 +699,7 @@ public class ProjectController {
 
 				if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
 				if (project.get().getDatasetAssets().contains(dataset)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.dataset-conflict"));
 				}
 
 				dataset.setProject(project.get());
@@ -731,7 +734,7 @@ public class ProjectController {
 
 				if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
 				if (project.get().getArtifactAssets().contains(artifact)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.artifact-conflict"));
 				}
 
 				artifact.setProject(project.get());
@@ -765,7 +768,7 @@ public class ProjectController {
 
 				if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
 				if (project.get().getDocumentAssets().contains(documentAsset)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.document-conflict"));
 				}
 
 				documentAsset.setProject(project.get());
@@ -773,6 +776,40 @@ public class ProjectController {
 				documentAssetService.updateAsset(documentAsset, permission);
 
 				addedAssetId = documentAsset.getId();
+			} catch (final IOException e) {
+				log.error("Error updating document asset", e);
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
+			}
+		} else if (assetType.equals(AssetType.MODEL)) {
+
+			try {
+				Model model = null;
+				if (alreadyPartOfAProject) {
+					model = modelService.cloneAndPersistAsset(assetId, permission);
+				} else {
+					final Optional<Model> modelOptional = modelService.getAsset(assetId, permission);
+					if (modelOptional.isEmpty()) {
+						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+					}
+					model = modelOptional.get();
+				}
+
+				if (model.getProject() != null) {
+					throw new ResponseStatusException(
+							HttpStatus.CONFLICT, messages.get("projects.model-already-added"));
+				}
+
+				if (project.get().getModelAssets() == null) project.get().setModelAssets(new ArrayList<>());
+				if (project.get().getModelAssets().contains(model)) {
+					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.model-conflict"));
+				}
+
+				model.setProject(project.get());
+
+				modelService.updateAsset(model, permission);
+
+				addedAssetId = model.getId();
 			} catch (final IOException e) {
 				log.error("Error updating document asset", e);
 				throw new ResponseStatusException(
@@ -924,6 +961,20 @@ public class ProjectController {
 			if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-delete"));
+			}
+		} else if (assetType.equals(AssetType.MODEL)) {
+
+			final Optional<Model> deletedModel;
+			try {
+				deletedModel = modelService.deleteAsset(assetId, permission);
+			} catch (final IOException e) {
+				throw new ResponseStatusException(
+						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
+
+			if (deletedModel.isEmpty() || deletedModel.get().getDeletedOn() == null) {
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-delete"));
 			}
 		}
 
@@ -1272,7 +1323,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> setProjectPermissions(
+	private static ResponseEntity<JsonNode> setProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
@@ -1282,7 +1333,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> updateProjectPermissions(
+	private static ResponseEntity<JsonNode> updateProjectPermissions(
 			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
 			throws Exception {
 		try {
@@ -1294,7 +1345,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> removeProjectPermissions(
+	private static ResponseEntity<JsonNode> removeProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);

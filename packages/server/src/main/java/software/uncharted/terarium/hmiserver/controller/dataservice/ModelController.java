@@ -1,5 +1,8 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,10 +128,14 @@ public class ModelController {
 						description = "There was an issue retrieving the description from the data store",
 						content = @Content)
 			})
-	ResponseEntity<ModelDescription> getDescription(@PathVariable("id") final UUID id) {
+	ResponseEntity<ModelDescription> getDescription(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<ModelDescription> model = modelService.getDescription(id);
+			final Optional<ModelDescription> model = modelService.getDescription(id, permission);
 			return model.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -219,7 +227,7 @@ public class ModelController {
 
 			// Return the model
 			return ResponseEntity.ok(model.get());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get model";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -247,12 +255,37 @@ public class ModelController {
 						content = @Content)
 			})
 	public ResponseEntity<List<Model>> searchModels(
-			@RequestBody final JsonNode query,
+			@RequestBody final JsonNode queryJson,
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
-			return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
+
+			Query query = null;
+			if (queryJson != null) {
+				// if query is provided deserialize it, append the soft delete filter
+				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
+				query = new Query.Builder()
+						.bool(b -> b.must(new Query.Builder()
+										.withJson(new ByteArrayInputStream(bytes))
+										.build())
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
+			} else {
+				query = new Query.Builder()
+						.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
+			}
+
+			final SourceConfig source = new SourceConfig.Builder()
+					.filter(new SourceFilter.Builder()
+							.excludes("model", "semantics")
+							.build())
+					.build();
+
+			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
 		} catch (final IOException e) {
 			final String error = "Unable to search models";
 			log.error(error, e);
