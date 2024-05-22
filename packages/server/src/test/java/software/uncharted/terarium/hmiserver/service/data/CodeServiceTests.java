@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,12 @@ public class CodeServiceTests extends TerariumApplicationTests {
 				.setDynamics(new Dynamics().setName("hello").setDescription("world"));
 	}
 
-	static Code createCode(final String key) {
+	Code createCode(final String key) {
 		final Code code = new Code();
 		code.setName("test-code-name-" + key);
 		code.setDescription("test-code-description-" + key);
 		code.setRepoUrl("https://github.com/DARPA-ASKEM/terarium");
+		code.setFileNames(List.of("file1.py", "file2.py"));
 		code.setFiles(new HashMap<>());
 		code.getFiles().put("file1.py", createCodeFile("file1"));
 		code.getFiles().put("file2.py", createCodeFile("file2"));
@@ -48,6 +50,16 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		code.getMetadata().put("cat", "kitten");
 		code.getMetadata().put("otter", "kit");
 		code.getMetadata().put("horse", "foal");
+
+		for (final String filename : code.getFileNames()) {
+			try {
+				codeService.uploadFile(code.getId(), filename, ContentType.TEXT_PLAIN,
+						new String("Test content").getBytes());
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		return code;
 	}
 

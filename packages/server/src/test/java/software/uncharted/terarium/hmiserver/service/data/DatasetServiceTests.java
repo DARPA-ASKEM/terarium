@@ -54,11 +54,11 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static Dataset createDataset() throws Exception {
+	Dataset createDataset() throws Exception {
 		return createDataset("A");
 	}
 
-	static Dataset createDataset(final String key) throws Exception {
+	Dataset createDataset(final String key) throws Exception {
 
 		final ObjectMapper mapper = new ObjectMapper();
 

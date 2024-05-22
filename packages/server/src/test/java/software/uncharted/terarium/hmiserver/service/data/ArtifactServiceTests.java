@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,20 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 	static ObjectMapper objectMapper = new ObjectMapper();
 
-	static Artifact createArtifact(final String key) {
+	Artifact createArtifact(final String key) {
 		final Artifact artifact = new Artifact();
 		artifact.setName("test-artifact-name-" + key);
 		artifact.setDescription("test-artifact-description-" + key);
 		artifact.setFileNames(Arrays.asList("never", "gonna", "give", "you", "up"));
+
+		for (final String filename : artifact.getFileNames()) {
+			try {
+				artifactService.uploadFile(artifact.getId(), filename, ContentType.TEXT_PLAIN,
+						new String("Test content").getBytes());
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		return artifact;
 	}

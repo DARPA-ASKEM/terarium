@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
@@ -400,20 +401,21 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	}
 
 	@Observed(name = "function_profile")
-	public void uploadFile(
+	public Integer uploadFile(
 			final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
 			throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final String key = getPath(uuid, filename);
-		s3ClientService.getS3Service().putObject(bucket, key, contentType, data);
+		final PutObjectResponse res = s3ClientService.getS3Service().putObject(bucket, key, contentType, data);
+		return res.sdkHttpResponse().statusCode();
 	}
 
 	@Observed(name = "function_profile")
-	public void uploadFile(
+	public Integer uploadFile(
 			final UUID uuid, final String filename, final HttpEntity fileEntity)
 			throws IOException {
 
-		uploadFile(uuid, filename, ContentType.parse(fileEntity.getContentType().getValue()),
+		return uploadFile(uuid, filename, ContentType.parse(fileEntity.getContentType().getValue()),
 				EntityUtils.toByteArray(fileEntity));
 	}
 
