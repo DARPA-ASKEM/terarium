@@ -141,7 +141,8 @@ public class TDSCodeController {
 						description = "There was an issue creating the code resource",
 						content = @Content)
 			})
-	public ResponseEntity<Code> createCode(@RequestBody Code code, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+	public ResponseEntity<Code> createCode(
+			@RequestBody Code code, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -186,7 +187,8 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<Code> getCode(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -279,7 +281,8 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteCode(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

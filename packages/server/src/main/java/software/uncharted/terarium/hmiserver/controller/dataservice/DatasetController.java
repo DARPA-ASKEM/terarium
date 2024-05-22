@@ -186,7 +186,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> createDataset(
-			@RequestBody final Dataset dataset, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Dataset dataset,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -220,7 +221,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> getDataset(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -292,7 +294,8 @@ public class DatasetController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

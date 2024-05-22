@@ -101,7 +101,8 @@ public class KnowledgeController {
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(
-			@RequestBody final JsonNode req, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final JsonNode req,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

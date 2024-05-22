@@ -98,7 +98,8 @@ public class ModelConfigurationController {
 						content = @Content)
 			})
 	public ResponseEntity<ModelConfiguration> createModelConfiguration(
-			@RequestBody final ModelConfiguration config, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final ModelConfiguration config,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -136,7 +137,8 @@ public class ModelConfigurationController {
 						content = @Content)
 			})
 	public ResponseEntity<ModelConfiguration> getModelConfiguration(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
@@ -211,7 +213,8 @@ public class ModelConfigurationController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

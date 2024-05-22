@@ -161,7 +161,8 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody DocumentAsset documentAsset, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody DocumentAsset documentAsset,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -247,7 +248,8 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> getDocument(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -366,7 +368,8 @@ public class DocumentController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

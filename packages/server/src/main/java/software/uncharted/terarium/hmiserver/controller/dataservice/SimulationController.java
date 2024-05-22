@@ -94,7 +94,8 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> createSimulation(
-			@RequestBody final Simulation simulation, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Simulation simulation,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -133,7 +134,8 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> getSimulation(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -240,7 +242,8 @@ public class SimulationController {
 						content = @Content)
 			})
 	public String deleteSimulation(
-			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

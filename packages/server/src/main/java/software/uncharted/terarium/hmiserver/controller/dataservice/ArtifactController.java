@@ -114,7 +114,8 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> createArtifact(
-			@RequestBody final Artifact artifact, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Artifact artifact,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
@@ -147,7 +148,8 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> getArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
@@ -220,7 +222,8 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
