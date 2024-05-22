@@ -151,17 +151,25 @@ export function setInitialSource(
 	}
 }
 
-export async function setInitialExpression(
+export function setInitialExpression(
 	config: ModelConfiguration,
 	initialId: string,
 	expression: string
-): Promise<void> {
+): void {
 	const initial = getInitial(config, initialId);
-	if (initial) {
-		initial.expression = expression;
-		const mathml = (await pythonInstance.parseExpression(expression)).mathml;
-		initial.expression_mathml = mathml;
-	}
+	if (!initial) return;
+
+	pythonInstance
+		.parseExpression(expression)
+		.then((result) => {
+			const mathml = result.mathml;
+			initial.expression = expression;
+			initial.expression_mathml = mathml;
+		})
+		.catch((error) => {
+			// Handle error appropriately
+			console.error('Error parsing expression:', error);
+		});
 }
 
 export function setInitialName(config: ModelConfiguration, initialId: string, name: string): void {

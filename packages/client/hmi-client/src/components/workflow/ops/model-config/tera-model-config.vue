@@ -120,7 +120,7 @@
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
 							<tera-initial-table-v2
-								v-if="!isEmpty(knobs.transientModelConfig)"
+								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
 								:model-configuration="knobs.transientModelConfig"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
@@ -130,7 +130,7 @@
 								@update-source="
 									setInitialSource(knobs.transientModelConfig, $event.id, $event.value)
 								"
-							></tera-initial-table-v2>
+							/>
 						</AccordionTab>
 					</template>
 					<template v-else-if="isRegNet">

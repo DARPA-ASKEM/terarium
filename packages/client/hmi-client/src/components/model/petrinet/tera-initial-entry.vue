@@ -1,9 +1,9 @@
 <template>
 	<header>
-		<b>{{ initialId }}</b>
-		<span v-if="name" class="name">{{ '| ' + name }}</span>
-		<span v-if="unit" class="unit">({{ unit }})</span>
-		<span v-if="description" class="description">{{ description }}</span>
+		<strong>{{ initialId }}</strong>
+		<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+		<span v-if="unit" class="ml-2">({{ unit }})</span>
+		<span v-if="description" class="ml-4">{{ description }}</span>
 	</header>
 	<main>
 		<span class="expression">
@@ -39,7 +39,7 @@ import {
 	getInitialSource
 } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
@@ -49,11 +49,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-expression', 'update-source']);
 
-const name = computed(() => getInitialName(props.modelConfiguration, props.initialId));
-const unit = computed(() => getInitialUnit(props.modelConfiguration, props.initialId));
-const description = computed(() =>
-	getInitialDescription(props.modelConfiguration, props.initialId)
-);
+const name = getInitialName(props.modelConfiguration, props.initialId);
+const unit = getInitialUnit(props.modelConfiguration, props.initialId);
+const description = getInitialDescription(props.modelConfiguration, props.initialId);
 
 const sourceOpen = ref(false);
 
@@ -69,17 +67,6 @@ header {
 	display: flex;
 	padding-bottom: var(--gap-small);
 }
-
-.name {
-	padding-left: var(--gap-xsmall);
-}
-.unit {
-	padding-left: var(--gap-small);
-}
-.description {
-	padding-left: var(--gap-large);
-}
-
 .expression {
 	flex-grow: 1;
 }
