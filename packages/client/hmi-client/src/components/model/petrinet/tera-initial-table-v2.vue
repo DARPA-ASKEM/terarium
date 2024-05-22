@@ -78,10 +78,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-expression', 'update-source']);
 
-const isStratified = computed(() => {
-	if (!props.mmt) return false;
-	return isStratifiedModel(props.mmt);
-});
+const isStratified = computed(() => isStratifiedModel(props.mmt));
 
 const matrixModalContext = ref({
 	isOpen: false,
