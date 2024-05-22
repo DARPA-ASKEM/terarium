@@ -186,7 +186,7 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> createDataset(
-			@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final Dataset dataset, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -220,7 +220,7 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> getDataset(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -292,7 +292,7 @@ public class DatasetController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -329,7 +329,7 @@ public class DatasetController {
 	ResponseEntity<Dataset> updateDataset(
 			@PathVariable("id") final UUID id,
 			@RequestBody final Dataset dataset,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -481,7 +481,7 @@ public class DatasetController {
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -554,7 +554,7 @@ public class DatasetController {
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -606,7 +606,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -654,7 +654,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 

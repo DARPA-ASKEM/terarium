@@ -101,7 +101,7 @@ public class KnowledgeController {
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
 	public ResponseEntity<UUID> equationsToModel(
-			@RequestBody final JsonNode req, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final JsonNode req, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -220,7 +220,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	ResponseEntity<Model> postCodeToAMR(
 			@RequestParam("code-id") final UUID codeId,
-			@RequestParam("project-id") final UUID projectId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(name = "name", required = false, defaultValue = "") final String name,
 			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
@@ -391,7 +391,7 @@ public class KnowledgeController {
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> codeBlocksToModel(
-			@RequestParam("project-id") final UUID projectId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestPart final Code code,
 			@RequestPart("file") final MultipartFile input)
 			throws IOException {
@@ -444,7 +444,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> postProfileModel(
 			@PathVariable("model-id") final UUID modelId,
-			@RequestParam("project-id") final UUID projectId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -538,7 +538,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Dataset> postProfileDataset(
 			@PathVariable("dataset-id") final UUID datasetId,
-			@RequestParam("project-id") final UUID projectId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(name = "document-id", required = false) final Optional<UUID> documentId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -679,7 +679,7 @@ public class KnowledgeController {
 	public ResponseEntity<Model> alignModel(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam("model-id") final UUID modelId,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -707,7 +707,7 @@ public class KnowledgeController {
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "model-ids", required = false) final List<UUID> modelIds,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractVariables(
@@ -732,7 +732,7 @@ public class KnowledgeController {
 	public ResponseEntity<Void> pdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractPDF(documentId, domain, permission);

@@ -141,7 +141,7 @@ public class TDSCodeController {
 						description = "There was an issue creating the code resource",
 						content = @Content)
 			})
-	public ResponseEntity<Code> createCode(@RequestBody Code code, @RequestParam("project-id") final UUID projectId) {
+	public ResponseEntity<Code> createCode(@RequestBody Code code, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -186,7 +186,7 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<Code> getCode(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -234,7 +234,7 @@ public class TDSCodeController {
 	public ResponseEntity<Code> updateCode(
 			@PathVariable("id") final UUID codeId,
 			@RequestBody final Code code,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -279,7 +279,7 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteCode(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -441,7 +441,7 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId)
+			@RequestParam(name = "project-id", required = false) final UUID projectId)
 			throws IOException {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -474,7 +474,7 @@ public class TDSCodeController {
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -521,7 +521,7 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
