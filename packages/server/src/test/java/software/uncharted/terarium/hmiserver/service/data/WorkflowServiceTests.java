@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transfo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 public class WorkflowServiceTests extends TerariumApplicationTests {
@@ -91,7 +92,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateWorkflow() throws Exception {
 
 		final Workflow before = (Workflow) createWorkflow().setId(UUID.randomUUID());
-		final Workflow after = workflowService.createAsset(before);
+		final Workflow after = workflowService.createAsset(before, ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
@@ -112,10 +113,10 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		final Workflow workflow = (Workflow) createWorkflow().setId(UUID.randomUUID());
 
-		workflowService.createAsset(workflow);
+		workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
 		try {
-			workflowService.createAsset(workflow);
+			workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 		} catch (final IllegalArgumentException e) {
 			Assertions.assertTrue(e.getMessage().contains("already exists"));
@@ -126,11 +127,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflows() throws Exception {
 
-		workflowService.createAsset(createWorkflow("0"));
-		workflowService.createAsset(createWorkflow("1"));
-		workflowService.createAsset(createWorkflow("2"));
+		workflowService.createAsset(createWorkflow("0"), ASSUME_WRITE_PERMISSION);
+		workflowService.createAsset(createWorkflow("1"), ASSUME_WRITE_PERMISSION);
+		workflowService.createAsset(createWorkflow("2"), ASSUME_WRITE_PERMISSION);
 
-		final List<Workflow> workflows = workflowService.getAssets(0, 3);
+		final List<Workflow> workflows = workflowService.getPublicNotTemporaryAssets(0, 3);
 
 		Assertions.assertEquals(3, workflows.size());
 	}
@@ -139,9 +140,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow());
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUME_WRITE_PERMISSION);
 
-		final Workflow fetchedWorkflow = workflowService.getAsset(workflow.getId()).get();
+		final Workflow fetchedWorkflow = workflowService
+				.getAsset(workflow.getId(), Schema.Permission.READ)
+				.get();
 
 		Assertions.assertEquals(workflow, fetchedWorkflow);
 		Assertions.assertEquals(workflow.getId(), fetchedWorkflow.getId());
@@ -155,10 +158,10 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow());
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUME_WRITE_PERMISSION);
 		workflow.setName("new name");
 
-		final Workflow updatedWorkflow = workflowService.updateAsset(workflow).orElseThrow();
+		final Workflow updatedWorkflow = workflowService.updateAsset(workflow, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(workflow, updatedWorkflow);
 		Assertions.assertNotNull(updatedWorkflow.getUpdatedOn());
@@ -168,11 +171,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow());
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUME_WRITE_PERMISSION);
 
-		workflowService.deleteAsset(workflow.getId());
+		workflowService.deleteAsset(workflow.getId(), Schema.Permission.WRITE);
 
-		final Optional<Workflow> deleted = workflowService.getAsset(workflow.getId());
+		final Optional<Workflow> deleted = workflowService.getAsset(workflow.getId(), Schema.Permission.READ);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -182,9 +185,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneWorkflow() throws Exception {
 
 		Workflow workflow = createWorkflow();
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
-		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
+		final Workflow cloned = workflowService.cloneAsset(workflow.getId(), Schema.Permission.WRITE);
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
@@ -231,11 +234,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void testItCanExportAndImportWorkflow() throws Exception {
 
 		Workflow workflow = createWorkflow();
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
-		final AssetExport<Workflow> exported = workflowService.exportAsset(workflow.getId());
+		final AssetExport<Workflow> exported = workflowService.exportAsset(workflow.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Workflow imported = workflowService.importAsset(exported);
+		final Workflow imported = workflowService.importAsset(exported, Schema.Permission.WRITE);
 
 		Assertions.assertNotEquals(workflow.getId(), imported.getId());
 		Assertions.assertEquals(workflow.getName(), imported.getName());
@@ -279,7 +282,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow().setNodes(List.of(a, b)).setEdges(List.of(e));
 		workflow.setPublicAsset(true);
 
-		workflow = workflowService.createAsset(workflow);
+		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
 		JsonNode raw = mapper.valueToTree(workflow);
 		raw.get("nodes").forEach(n -> {
@@ -289,7 +292,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			Assertions.assertTrue(n.has("somethingElse"));
 		});
 
-		final Workflow cloned = workflowService.cloneAsset(workflow.getId());
+		final Workflow cloned = workflowService.cloneAsset(workflow.getId(), Schema.Permission.WRITE);
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
@@ -321,7 +324,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			workflows.add(createWorkflow(String.valueOf(i)));
 		}
-		workflows = workflowService.createAssets(workflows);
+		workflows = workflowService.createAssets(workflows, Schema.Permission.WRITE);
 
 		final List<Workflow> results = workflowService.searchAssets(0, NUM, null);
 
@@ -376,7 +379,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			workflows.add(createWorkflow(String.valueOf(i)));
 		}
-		workflowService.createAssets(workflows);
+		workflowService.createAssets(workflows, Schema.Permission.WRITE);
 
 		final String currentIndex = workflowService.getCurrentAssetIndex();
 

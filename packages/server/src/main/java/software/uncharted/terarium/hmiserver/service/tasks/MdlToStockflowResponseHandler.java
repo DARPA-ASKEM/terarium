@@ -48,7 +48,7 @@ public class MdlToStockflowResponseHandler extends TaskResponseHandler {
 				}
 			});
 
-			model = modelService.createAsset(model);
+			model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

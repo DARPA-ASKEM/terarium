@@ -19,6 +19,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
+import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequiredArgsConstructor
 @Service
@@ -26,6 +28,8 @@ import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetReposit
 public class ProjectAssetService {
 
 	final ProjectAssetRepository projectAssetRepository;
+
+	final ReBACService reBACService;
 
 	/**
 	 * Find all active assets for a project. Active assets are defined as those that
@@ -37,14 +41,19 @@ public class ProjectAssetService {
 	 */
 	@Observed(name = "function_profile")
 	public List<ProjectAsset> findActiveAssetsForProject(
-			@NotNull final UUID projectId, final Collection<@NotNull AssetType> types) {
+			@NotNull final UUID projectId,
+			final Collection<@NotNull AssetType> types,
+			final Schema.Permission hasReadPermission) {
 		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
 				projectId, types);
 	}
 
 	@Observed(name = "function_profile")
 	public boolean deleteByAssetId(
-			@NotNull final UUID projectId, @NotNull final AssetType type, @NotNull final UUID originalAssetId) {
+			@NotNull final UUID projectId,
+			@NotNull final AssetType type,
+			@NotNull final UUID originalAssetId,
+			final Schema.Permission hasWritePermission) {
 		final ProjectAsset asset = projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId,
 				originalAssetId, type);
 		if (asset == null) {
@@ -57,7 +66,11 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> createProjectAsset(
-			final Project project, final AssetType assetType, final TerariumAsset asset) {
+			final Project project,
+			final AssetType assetType,
+			final TerariumAsset asset,
+			final Schema.Permission hasWritePermission) {
+
 		ProjectAsset projectAsset = new ProjectAsset();
 		projectAsset.setProject(project);
 		projectAsset.setAssetId(asset.getId());
@@ -76,7 +89,8 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> updateProjectAsset(final ProjectAsset projectAsset) {
+	public Optional<ProjectAsset> updateProjectAsset(
+			final ProjectAsset projectAsset, final Schema.Permission hasWritePermission) {
 		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
 		}
@@ -84,12 +98,12 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public void updateByAsset(final TerariumAsset asset) {
+	public void updateByAsset(final TerariumAsset asset, final Schema.Permission hasWritePermission) {
 		final List<ProjectAsset> projectAssets = projectAssetRepository.findByAssetId(asset.getId());
 		if (!projectAssets.isEmpty()) {
 			projectAssets.forEach(projectAsset -> {
 				projectAsset.setAssetName(asset.getName());
-				updateProjectAsset(projectAsset);
+				updateProjectAsset(projectAsset, hasWritePermission);
 			});
 		} else {
 			log.warn(
@@ -99,26 +113,26 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public boolean isPartOfExistingProject(final UUID assetId) {
-		final List<ProjectAsset> projects = projectAssetRepository.findByAssetId(assetId);
-		return !projects.isEmpty();
-	}
 
-	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> getProjectAssetByNameAndType(final String assetName, final AssetType assetType) {
+	public Optional<ProjectAsset> getProjectAssetByNameAndType(
+			final String assetName, final AssetType assetType, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(
 				projectAssetRepository.findByAssetNameAndAssetTypeAndDeletedOnIsNull(assetName, assetType));
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<ProjectAsset> getProjectAssetByNameAndTypeAndProjectId(
-			final UUID projectId, final String assetName, final AssetType assetType) {
+			final UUID projectId,
+			final String assetName,
+			final AssetType assetType,
+			final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
 				projectId, assetName, assetType));
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(final UUID id, final UUID assetId) {
+	public Optional<ProjectAsset> getProjectAssetByProjectIdAndAssetId(
+			final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
 }

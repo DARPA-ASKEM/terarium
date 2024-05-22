@@ -37,7 +37,9 @@
 					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
-							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+							<div
+								class="input-tolerance fadein animation-ease-in-out animation-duration-350"
+							>
 								<tera-input-number
 									class="w-2"
 									:min="0"
@@ -139,7 +141,12 @@
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</template>
 				<template v-else>
-					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<tera-funman-output
+						v-if="activeOutput"
+						:fun-model-id="activeOutput.value?.[0]"
+						:trajectoryState="node.state.trajectoryState"
+						@update:trajectoryState="updateTrajectorystate"
+					/>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
@@ -511,6 +518,12 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		}
 		return param;
 	});
+};
+
+const updateTrajectorystate = (s: string) => {
+	const state = _.cloneDeep(props.node.state);
+	state.trajectoryState = s;
+	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

@@ -67,7 +67,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/datasets")
 @RestController
@@ -81,6 +85,10 @@ public class DatasetController {
 	final ClimateDataProxy climateDataProxy;
 
 	final JsDelivrProxy githubProxy;
+
+	final ProjectService projectService;
+	final ProjectAssetService projectAssetService;
+	final CurrentUserService currentUserService;
 
 	private final List<String> SEARCH_FIELDS = List.of("name", "description");
 
@@ -134,7 +142,7 @@ public class DatasetController {
 			}
 
 			if (query == null) {
-				return ResponseEntity.ok(datasetService.getAssets(page, pageSize));
+				return ResponseEntity.ok(datasetService.getPublicNotTemporaryAssets(page, pageSize));
 			} else {
 				return ResponseEntity.ok(datasetService.searchAssets(page, pageSize, query));
 			}
@@ -153,10 +161,13 @@ public class DatasetController {
 			@ApiResponse(responseCode = "201", description = "Dataset created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))),
 			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 	})
-	public ResponseEntity<Dataset> createDataset(@RequestBody final Dataset dataset) {
+	public ResponseEntity<Dataset> createDataset(
+			@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset));
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
@@ -172,17 +183,13 @@ public class DatasetController {
 			@ApiResponse(responseCode = "404", description = "There was no dataset found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the dataset from the data store", content = @Content)
 	})
-	public ResponseEntity<Dataset> getDataset(@PathVariable("id") final UUID id) {
+	public ResponseEntity<Dataset> getDataset(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
+
 		try {
-			Optional<Dataset> dataset = datasetService.getAsset(id);
-			try {
-				dataset = extractColumnsAsNeededAndSave(dataset);
-			} catch (final IOException e) {
-				final String error = "Unable to extract columns from dataset";
-				log.error(error, e);
-				// This doesn't actually warrant a 500 since its just column metadata, so we'll
-				// let it pass.
-			}
+			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
 			return dataset.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -201,29 +208,25 @@ public class DatasetController {
 	 * @throws IOException if there is an issue saving the dataset after extracting
 	 *                     columns
 	 */
-	private Optional<Dataset> extractColumnsAsNeededAndSave(final Optional<Dataset> dataset) throws IOException {
-		if (dataset.isEmpty()) {
-			// that's weird. let someone else handle this.
-			return dataset;
-		}
-
-		if (dataset.get().getColumns() != null && !dataset.get().getColumns().isEmpty()) {
+	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, final Schema.Permission hasWritePermission)
+			throws IOException {
+		if (dataset.getColumns() != null && !dataset.getColumns().isEmpty()) {
 			// columns are set. No need to extract
 			return dataset;
 		}
-		if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
+		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
 			// no file names to extract columns from
 			return dataset;
 		}
 
-		for (final String filename : dataset.get().getFileNames()) {
+		for (final String filename : dataset.getFileNames()) {
 			if (!filename.endsWith(".nc")) {
 				try {
-					final List<List<String>> csv = getCSVFile(filename, dataset.get().getId(), 1);
+					final List<List<String>> csv = getCSVFile(filename, dataset.getId(), 1);
 					if (csv == null || csv.isEmpty()) {
 						continue;
 					}
-					updateHeaders(dataset.get(), csv.get(0));
+					updateHeaders(dataset, csv.get(0));
 				} catch (final IOException e) {
 					final String error = "Unable to get dataset CSV for file " + filename;
 					log.error(error, e);
@@ -234,7 +237,7 @@ public class DatasetController {
 			}
 		}
 
-		return datasetService.updateAsset(dataset.get());
+		return datasetService.updateAsset(dataset, hasWritePermission).get();
 	}
 
 	@DeleteMapping("/{id}")
@@ -246,10 +249,13 @@ public class DatasetController {
 			}),
 			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 	})
-	public ResponseEntity<ResponseDeleted> deleteDataset(@PathVariable("id") final UUID id) {
+	public ResponseEntity<ResponseDeleted> deleteDataset(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
-			datasetService.deleteAsset(id);
+			datasetService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete dataset";
@@ -266,11 +272,16 @@ public class DatasetController {
 			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 	})
-	ResponseEntity<Dataset> updateDataset(@PathVariable("id") final UUID id, @RequestBody final Dataset dataset) {
+	ResponseEntity<Dataset> updateDataset(
+			@PathVariable("id") final UUID id,
+			@RequestBody final Dataset dataset,
+			@RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			dataset.setId(id);
-			final Optional<Dataset> updated = datasetService.updateAsset(dataset);
+			final Optional<Dataset> updated = datasetService.updateAsset(dataset, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -374,10 +385,15 @@ public class DatasetController {
 			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
 	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
-			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
+			@PathVariable("id") final UUID id,
+			@RequestParam("filename") final String filename,
+			@RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
+
 		final Optional<Dataset> dataset;
 		try {
-			dataset = datasetService.getAsset(id);
+			dataset = datasetService.getAsset(id, permission);
 			if (dataset.isEmpty()) {
 				throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dataset not found");
 			}
@@ -434,7 +450,10 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("filename") final String filename) {
+			@RequestParam("filename") final String filename,
+			@RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
@@ -450,7 +469,7 @@ public class DatasetController {
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
 		final String[] csvRows = csvString.split("\\R");
 		final String[] headers = csvRows[0].split(",");
-		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
+		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
 	}
 
 	/**
@@ -471,7 +490,10 @@ public class DatasetController {
 	public ResponseEntity<ResponseStatus> uploadCsv(
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile input) {
+			@RequestPart("file") final MultipartFile input,
+			@RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			log.debug("Uploading CSV file to dataset {}", datasetId);
@@ -487,7 +509,7 @@ public class DatasetController {
 				// strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
-			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers);
+			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
@@ -505,7 +527,10 @@ public class DatasetController {
 	public ResponseEntity<Void> uploadData( // HttpServletRequest request,
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
-			@RequestPart("file") final MultipartFile input) {
+			@RequestPart("file") final MultipartFile input,
+			@RequestParam("project-id") final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
@@ -513,7 +538,7 @@ public class DatasetController {
 			final ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
-				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
+				Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, permission);
 				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
@@ -526,7 +551,16 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateAsset(updatedDataset.get());
+				try {
+					updatedDataset = Optional.of(extractColumnsAsNeededAndSave(updatedDataset.get(), permission));
+				} catch (final IOException e) {
+					final String error = "Unable to extract columns from dataset";
+					log.error(error, e);
+					// This doesn't actually warrant a 500 since its just column metadata, so we'll
+					// let it pass.
+				}
+
+				datasetService.updateAsset(updatedDataset.get(), permission);
 			}
 
 			return res;
@@ -572,9 +606,12 @@ public class DatasetController {
 	 * @return Response from the upload
 	 */
 	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(
-			final UUID datasetId, final String filename, final HttpEntity csvEntity, final String[] headers) {
-
-		try {
+			final UUID datasetId,
+			final String filename,
+			final HttpEntity csvEntity,
+			final String[] headers,
+			final Schema.Permission hasWritePermission) {
+		try (final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build()) {
 
 			// upload CSV to S3
 			final Integer status = datasetService.uploadFile(datasetId, filename, csvEntity);
@@ -583,7 +620,7 @@ public class DatasetController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, hasWritePermission);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
@@ -598,7 +635,7 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateAsset(updatedDataset.get());
+				datasetService.updateAsset(updatedDataset.get(), hasWritePermission);
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));

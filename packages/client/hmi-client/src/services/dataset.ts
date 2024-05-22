@@ -36,17 +36,21 @@ async function searchClimateDatasets(query: string): Promise<Dataset[] | null> {
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		logger.error(`Error: data-service was not able to retrieve the dataset ${datasetId} ${error}`);
+		logger.error(
+			`Error: data-service was not able to retrieve the dataset ${datasetId} ${error}`
+		);
 	});
 	return response?.data ?? null;
 }
 
 async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
-	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
-		logger.error(
-			`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`
-		);
-	});
+	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch(
+		(error) => {
+			logger.error(
+				`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`
+			);
+		}
+	);
 	return response?.data ?? null;
 }
 
@@ -81,7 +85,9 @@ async function getClimateSubsetId(
 	if (response.status === 200) {
 		return response.data;
 	}
-	logger.error(`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`);
+	logger.error(
+		`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`
+	);
 	return null;
 }
 
@@ -221,7 +227,6 @@ async function createNewDatasetFromGithubFile(
  * @param progress reference to display in ui
  * @param file an arbitrary or csv file
  * @param userName uploader of this dataset
- * @param projectId the project ID
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromFile(

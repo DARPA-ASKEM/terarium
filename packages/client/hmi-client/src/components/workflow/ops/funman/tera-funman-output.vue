@@ -1,7 +1,12 @@
 <template>
 	<div class="section-row">
 		<label>Trajectory State</label>
-		<Dropdown v-model="selectedTrajState" :options="modelStates"> </Dropdown>
+		<Dropdown
+			v-model="selectedTrajState"
+			:options="modelStates"
+			@update:model-value="emit('update:trajectoryState', $event)"
+		>
+		</Dropdown>
 	</div>
 	<div ref="trajRef"></div>
 
@@ -37,7 +42,14 @@
 	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
 			<header
-				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']"
+				v-for="(title, index) in [
+					'select',
+					'Parameter',
+					'Lower bound',
+					'Upper bound',
+					'',
+					''
+				]"
 				:key="index"
 			>
 				{{ title }}
@@ -85,7 +97,10 @@ import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
+	trajectoryState?: string;
 }>();
+
+const emit = defineEmits(['update:trajectoryState']);
 
 const parameterOptions = ref<string[]>([]);
 const selectedParam = ref<string>('');
@@ -133,7 +148,9 @@ const initalizeParameters = async () => {
 	processedData.value = processFunman(funmanResult);
 	parameterOptions.value = [];
 
-	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map((d) => d.expression);
+	const initialVars = funmanResult.model.petrinet.semantics?.ode.initials.map(
+		(d) => d.expression
+	);
 
 	funmanResult.model.petrinet.semantics.ode.parameters
 		.filter((ele: any) => !initialVars.includes(ele.id))
@@ -147,7 +164,8 @@ const initalizeParameters = async () => {
 	funmanResult.model.petrinet.model.states.forEach((element) => {
 		modelStates.value.push(element.id);
 	});
-	selectedTrajState.value = modelStates.value[0];
+
+	selectedTrajState.value = props.trajectoryState || modelStates.value[0];
 
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 

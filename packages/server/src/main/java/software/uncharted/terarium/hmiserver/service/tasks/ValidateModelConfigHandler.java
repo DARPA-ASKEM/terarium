@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
@@ -52,10 +51,11 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
-				simulationService.updateAsset(sim.get());
+				simulationService.updateAsset(sim.get(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
@@ -71,7 +71,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -92,7 +93,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(sim.get());
+			simulationService.updateAsset(sim.get(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

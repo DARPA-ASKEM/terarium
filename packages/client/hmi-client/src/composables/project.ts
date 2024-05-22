@@ -6,17 +6,16 @@
 	Using the resource store for project data is no longer needed.
 */
 
-import { computed, shallowRef } from 'vue';
+import { shallowRef } from 'vue';
 import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
+import { activeProject, activeProjectId } from '@/composables/activeProject';
 
 const TIMEOUT_MS = 100;
 
-const activeProject = shallowRef<Project | null>(null);
 const projectLoading = shallowRef<boolean>(false);
 const allProjects = shallowRef<Project[] | null>(null);
-const activeProjectId = computed<string>(() => activeProject.value?.id ?? '');
 
 export function useProjects() {
 	/**
@@ -215,7 +214,9 @@ export function useProjects() {
 		}
 	}
 
-	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
+	async function getPermissions(
+		projectId: Project['id']
+	): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
 
@@ -223,7 +224,11 @@ export function useProjects() {
 		return ProjectService.setPermissions(projectId, userId, relationship);
 	}
 
-	async function removePermissions(projectId: Project['id'], userId: string, relationship: string) {
+	async function removePermissions(
+		projectId: Project['id'],
+		userId: string,
+		relationship: string
+	) {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 

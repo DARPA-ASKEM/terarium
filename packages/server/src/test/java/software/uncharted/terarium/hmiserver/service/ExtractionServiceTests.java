@@ -66,10 +66,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 	}
 
@@ -85,16 +85,16 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource2 = new ClassPathResource("knowledge/extraction_amr.json");
 		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
 		Model model = objectMapper.readValue(content2, Model.class);
 
-		model = modelService.createAsset(model);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi")
+				.extractVariables(documentAsset.getId(), List.of(model.getId()), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 	}
 
@@ -107,19 +107,21 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				.setName("test-document-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
-		model = extractionService.alignAMR(documentAsset.getId(), model.getId()).get();
+		model = extractionService
+				.alignAMR(documentAsset.getId(), model.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
 	}
 
 	// // @Test
@@ -136,11 +138,13 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 				.setName("test-pdf-name")
 				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.uploadFile(
 				documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
-		documentAsset = extractionService.extractPDF(documentAsset.getId(), "epi").get();
+		documentAsset = extractionService
+				.extractPDF(documentAsset.getId(), "epi", ASSUME_WRITE_PERMISSION)
+				.get();
 	}
 }
