@@ -716,7 +716,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions?: OptimizedIntervention;
+    interventions?: OptimizedInterventions;
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -778,7 +778,7 @@ export interface OptimizeQoi {
     method: string;
 }
 
-export interface OptimizedIntervention {
+export interface OptimizedInterventions {
     selection: string;
     paramNames: string[];
     paramValues?: number[];

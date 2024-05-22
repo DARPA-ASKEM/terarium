@@ -336,7 +336,7 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	OptimizedIntervention
+	OptimizedInterventions
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
@@ -532,7 +532,7 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.upperBound]);
 	});
 
-	const optimizeInterventions: OptimizedIntervention = {
+	const optimizeInterventions: OptimizedInterventions = {
 		selection: knobs.value.interventionType,
 		paramNames,
 		startTime,
