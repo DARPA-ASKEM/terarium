@@ -41,6 +41,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -55,6 +56,7 @@ import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
@@ -95,6 +97,7 @@ public class ProjectController {
 			""";
 	final Messages messages;
 	final ArtifactService artifactService;
+	final ModelService modelService;
 	final CodeService codeService;
 	final CurrentUserService currentUserService;
 	final DatasetService datasetService;
@@ -669,7 +672,7 @@ public class ProjectController {
 
 			if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
 			if (project.get().getWorkflowAssets().contains(workflow.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.workflow-conflict"));
 			}
 
 			workflow.get().setProject(project.get());
@@ -691,7 +694,7 @@ public class ProjectController {
 
 			if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
 			if (project.get().getDatasetAssets().contains(dataset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.dataset-conflict"));
 			}
 
 			dataset.get().setProject(project.get());
@@ -713,7 +716,7 @@ public class ProjectController {
 
 			if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
 			if (project.get().getArtifactAssets().contains(artifact.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.artifact-conflict"));
 			}
 
 			artifact.get().setProject(project.get());
@@ -734,7 +737,7 @@ public class ProjectController {
 
 			if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
 			if (project.get().getDocumentAssets().contains(documentAsset.get())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.document-conflict"));
 			}
 
 			documentAsset.get().setProject(project.get());
@@ -745,6 +748,27 @@ public class ProjectController {
 				log.error("Error updating document asset", e);
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
+			}
+		} else if (assetType.equals(AssetType.MODEL)) {
+
+			final Optional<Model> model = modelService.getAsset(assetId);
+			if (model.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+			}
+
+			if (project.get().getModelAssets() == null) project.get().setModelAssets(new ArrayList<>());
+			if (project.get().getModelAssets().contains(model.get())) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.model-conflict"));
+			}
+
+			model.get().setProject(project.get());
+
+			try {
+				modelService.updateAsset(model.get());
+			} catch (final Exception e) {
+				log.error("Error updating model asset", e);
+				throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
 			}
 		}
 
@@ -906,6 +930,20 @@ public class ProjectController {
 			if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
 				throw new ResponseStatusException(
 						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-delete"));
+			}
+		} else if (assetType.equals(AssetType.MODEL)) {
+
+			final Optional<Model> deletedModel;
+			try {
+				deletedModel = modelService.deleteAsset(assetId);
+			} catch (final IOException e) {
+				throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
+
+			if (deletedModel.isEmpty() || deletedModel.get().getDeletedOn() == null) {
+				throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-delete"));
 			}
 		}
 

@@ -9,7 +9,7 @@ import java.util.Map;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 
 //TODO "Clonable" should be moved back to Terarium Asset and all other classes need to be changed to use that
-public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset implements Cloneable{
+public class TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset{
 
 	@TSIgnore
 	protected Map<String, JsonNode> additionalProperties = new HashMap<>();
