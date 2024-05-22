@@ -135,6 +135,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
