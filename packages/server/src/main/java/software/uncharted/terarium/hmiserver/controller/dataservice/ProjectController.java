@@ -1228,7 +1228,7 @@ public class ProjectController {
 	}
 
 	private static ResponseEntity<JsonNode> setProjectPermissions(
-		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
@@ -1238,7 +1238,7 @@ public class ProjectController {
 	}
 
 	private static ResponseEntity<JsonNode> updateProjectPermissions(
-		final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
+			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
 			throws Exception {
 		try {
 			what.removePermissionRelationships(who, oldRelationship);
@@ -1250,7 +1250,7 @@ public class ProjectController {
 	}
 
 	private static ResponseEntity<JsonNode> removeProjectPermissions(
-		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();

@@ -70,7 +70,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ModelDescription> getDescription(final UUID id, final Schema.Permission hasReadPermission) throws IOException {
+	public Optional<ModelDescription> getDescription(final UUID id, final Schema.Permission hasReadPermission)
+			throws IOException {
 
 		final Optional<Model> model = getAsset(id, hasReadPermission);
 		if (model.isPresent()) {

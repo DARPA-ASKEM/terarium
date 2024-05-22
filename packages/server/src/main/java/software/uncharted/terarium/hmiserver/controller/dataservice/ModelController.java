@@ -128,10 +128,11 @@ public class ModelController {
 						description = "There was an issue retrieving the description from the data store",
 						content = @Content)
 			})
-	ResponseEntity<ModelDescription> getDescription(@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+	ResponseEntity<ModelDescription> getDescription(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
 
 		Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id, permission);

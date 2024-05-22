@@ -70,7 +70,8 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelById() throws IOException {
 		final Model model = modelService.createAsset(createModel("0"), ASSUME_WRITE_PERMISSION);
-		final Model fetchedModel = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Model fetchedModel =
+				modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(model, fetchedModel);
 		Assertions.assertEquals(model.getId(), fetchedModel.getId());
@@ -86,7 +87,8 @@ public class ModelServiceTests extends TerariumApplicationTests {
 		final Model model = modelService.createAsset(createModel("A"), ASSUME_WRITE_PERMISSION);
 		model.setName("new name");
 
-		final Model updatedModel = modelService.updateAsset(model, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Model updatedModel =
+				modelService.updateAsset(model, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(model, updatedModel);
 		Assertions.assertNotNull(updatedModel.getUpdatedOn());
