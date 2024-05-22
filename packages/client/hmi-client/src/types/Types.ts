@@ -717,7 +717,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     policyInterventions?: OptimizedInterventions;
-    interventions?: Intervention[];
+    fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;

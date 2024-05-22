@@ -223,28 +223,28 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(@RequestBody final OptimizeRequestCiemss request) {
-		// // Get model config's interventions and append them to requests:
-		// try {
-		// 	final Optional<ModelConfiguration> modelConfiguration =
-		// 			modelConfigService.getAsset(request.getModelConfigId());
-		// 	if (modelConfiguration.isEmpty()) {
-		// 		return ResponseEntity.notFound().build();
-		// 	}
-		// 	final List<Intervention> modelInterventions =
-		// 			modelConfiguration.get().getInterventions();
-		// 	if (modelInterventions != null) {
-		// 		List<Intervention> allInterventions = request.getInterventions();
-		// 		if (allInterventions == null) {
-		// 			allInterventions = new ArrayList<Intervention>();
-		// 		}
-		// 		allInterventions.addAll(modelInterventions);
-		// 		request.setInterventions(allInterventions);
-		// 	}
-		// } catch (IOException e) {
-		// 	String error = "Unable to find model configuration";
-		// 	log.error(error, e);
-		// 	throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		// }
+		// Get model config's interventions and append them to requests:
+		try {
+			final Optional<ModelConfiguration> modelConfiguration =
+					modelConfigService.getAsset(request.getModelConfigId());
+			if (modelConfiguration.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			final List<Intervention> modelInterventions =
+					modelConfiguration.get().getInterventions();
+			if (modelInterventions != null) {
+				List<Intervention> allInterventions = request.getFixedStaticParameterInterventions();
+				if (allInterventions == null) {
+					allInterventions = new ArrayList<Intervention>();
+				}
+				allInterventions.addAll(modelInterventions);
+				request.setFixedStaticParameterInterventions(allInterventions);
+			}
+		} catch (IOException e) {
+			String error = "Unable to find model configuration";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
 		return ResponseEntity.ok(simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request))
 				.getBody());

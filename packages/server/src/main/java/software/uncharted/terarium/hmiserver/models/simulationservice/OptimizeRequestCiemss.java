@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.models.simulationservice;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
@@ -19,7 +21,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeRequestCiemss implements Serializable {
 	@JsonAlias("model_config_id")
-	private String modelConfigId;
+	private UUID modelConfigId;
 
 	private TimeSpan timespan;
 
@@ -28,7 +30,8 @@ public class OptimizeRequestCiemss implements Serializable {
 	private OptimizedInterventions policyInterventions;
 
 	@TSOptional
-	private List<Intervention> interventions;
+	// The interventions provided via the model config which are not being optimized
+	private List<Intervention> fixedStaticParameterInterventions;
 
 	@JsonAlias("step_size")
 	@TSOptional
