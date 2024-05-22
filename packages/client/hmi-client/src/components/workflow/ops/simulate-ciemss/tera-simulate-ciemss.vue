@@ -239,7 +239,6 @@ const makeForecastRequest = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
-		projectId: '',
 		modelConfigId,
 		timespan: {
 			start: state.currentTimespan.start,

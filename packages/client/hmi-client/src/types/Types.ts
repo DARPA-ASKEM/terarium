@@ -743,7 +743,6 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    projectId: string;
     interventions?: Intervention[];
 }
 

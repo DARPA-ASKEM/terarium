@@ -87,9 +87,9 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRun(@RequestBody final SimulationRequest request) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+	public ResponseEntity<Simulation> makeForecastRun(@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationServiceProxy
 				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
@@ -106,7 +106,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setStatus(ProgressState.QUEUED);
 
 		// FIXME: These fiels are arguable unnecessary
-		final Optional<Project> project = projectService.getProject(request.getProjectId());
+		final Optional<Project> project = projectService.getProject(projectId);
 		if (project.isPresent()) {
 			sim.setProjectId(project.get().getId());
 			sim.setUserId(project.get().getUserId());
@@ -128,9 +128,12 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
-	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), request.getProjectId());
+	public ResponseEntity<Simulation> makeForecastRunCiemss(@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		log.error("Tom the forecast request recieved, and permissions checked");
+		log.error(projectId.toString());
 
 		// Get model config's interventions and append them to requests:
 		try {
@@ -169,7 +172,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 
-		final Optional<Project> project = projectService.getProject(request.getProjectId());
+		final Optional<Project> project = projectService.getProject(projectId);
 		if (project.isPresent()) {
 			sim.setProjectId(project.get().getId());
 			sim.setUserId(project.get().getUserId());
@@ -200,11 +203,14 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(@RequestBody final CalibrationRequestCiemss request) {
+	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId());
+					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -230,11 +236,14 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(@RequestBody final OptimizeRequestCiemss request) {
+	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(@RequestBody final OptimizeRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId());
+					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
