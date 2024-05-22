@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescr
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
@@ -69,9 +70,9 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
+	public Optional<ModelDescription> getDescription(final UUID id, final Schema.Permission hasReadPermission) throws IOException {
 
-		final Optional<Model> model = getAsset(id);
+		final Optional<Model> model = getAsset(id, hasReadPermission);
 		if (model.isPresent()) {
 			final ModelDescription md = ModelDescription.fromModel(model.get());
 			return Optional.of(md);
@@ -121,7 +122,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset) throws IOException {
+	public Model createAsset(final Model asset, final Schema.Permission hasWritePermission) throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
@@ -136,6 +137,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				}
 			});
 		}
-		return super.createAsset(asset);
+		return super.createAsset(asset, hasWritePermission);
 	}
 }
