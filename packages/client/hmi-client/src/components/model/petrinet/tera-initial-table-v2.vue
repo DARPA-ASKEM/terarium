@@ -2,12 +2,7 @@
 	<!-- Stratified -->
 	<template v-if="isStratified">
 		<Accordion multiple>
-			<AccordionTab
-				v-for="[key, values] in getUnstratifiedInitials(
-					props.modelConfiguration.configuration
-				).entries()"
-				:key="key"
-			>
+			<AccordionTab v-for="[key, values] in collapseInitials(props.mmt).entries()" :key="key">
 				<template #header>
 					<span>{{ key }}</span>
 					<Button label="Open Matrix" text size="small" @click.stop="openMatrix(key)" />
@@ -66,11 +61,10 @@ import { ModelConfiguration } from '@/types/Types';
 import { getInitials } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
-import { isStratifiedModel } from '@/model-representation/mira/mira';
+import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { getUnstratifiedInitials } from '@/model-representation/petrinet/mira-petri';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
