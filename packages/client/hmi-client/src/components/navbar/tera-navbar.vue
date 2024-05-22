@@ -213,7 +213,7 @@ import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
-import { sortBy, orderBy } from 'lodash';
+import { sortBy, orderBy, remove } from 'lodash';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
@@ -479,16 +479,15 @@ watch(
 	() => {
 		const items: MenuItem[] = [];
 		const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+		useProjects().allProjects.value?.forEach((project) => items.push(getNavMenuItem(project)));
 
-		useProjects().allProjects.value?.forEach((project) => {
-			if (project?.name !== lastProjectUpdated.name) {
-				items.push(getNavMenuItem(project));
-			}
-		});
-		navMenuItems.value = [homeItem, explorerItem];
-		if (lastProjectUpdated && lastProjectUpdated.name) {
-			navMenuItems.value.push(...[getNavMenuItem(lastProjectUpdated), ...sortBy(items, 'label')]);
-		}
+		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated.name);
+		navMenuItems.value = [
+			homeItem,
+			explorerItem,
+			...removedUpdatedProject,
+			...sortBy(items, 'label')
+		];
 	},
 	{ immediate: true }
 );
