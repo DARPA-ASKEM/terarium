@@ -6,22 +6,15 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -114,8 +107,9 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> createArtifact(
-			@RequestBody final Artifact artifact, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestBody final Artifact artifact,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, permission));
@@ -147,8 +141,9 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> getArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
@@ -184,8 +179,8 @@ public class ArtifactController {
 	public ResponseEntity<Artifact> updateArtifact(
 			@PathVariable("id") final UUID artifactId,
 			@RequestBody final Artifact artifact,
-			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -220,8 +215,9 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -316,20 +312,13 @@ public class ArtifactController {
 	public ResponseEntity<String> downloadFileAsText(
 			@PathVariable("id") final UUID artifactId, @RequestParam("filename") final String filename) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		try {
 
-			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
-			if (url.isEmpty()) {
+			final Optional<String> textFileAsString = artifactService.fetchFileAsString(artifactId, filename);
+			if (textFileAsString.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			final String textFileAsString =
-					IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-			return ResponseEntity.ok(textFileAsString);
+			return ResponseEntity.ok(textFileAsString.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -357,22 +346,12 @@ public class ArtifactController {
 
 		log.debug("Downloading artifact {} from project", artifactId);
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
-			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
-			if (url.isEmpty()) {
+		try {
+			final Optional<byte[]> bytes = artifactService.fetchFileAsBytes(artifactId, filename);
+			if (bytes.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
-				final byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
-				return ResponseEntity.ok(fileAsBytes);
-			}
-			return ResponseEntity.status(response.getStatusLine().getStatusCode())
-					.build();
+			return ResponseEntity.ok(bytes.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
@@ -462,19 +441,14 @@ public class ArtifactController {
 	private ResponseEntity<Integer> uploadArtifactHelper(
 			final UUID artifactId, final String fileName, final HttpEntity artifactHttpEntity) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		try {
 
 			// upload file to S3
-			final PresignedURL presignedURL = artifactService.getUploadUrl(artifactId, fileName);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(artifactHttpEntity);
-			final HttpResponse response = httpclient.execute(put);
+			final Integer status = artifactService.uploadFile(artifactId, fileName, artifactHttpEntity);
+			return ResponseEntity.ok(status);
 
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
-
-		} catch (final Exception e) {
-			log.error("Unable to PUT artifact data", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload artifact data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to PUT artifact data");
 		}

@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,9 @@ import java.util.UUID;
 import javax.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -141,8 +138,9 @@ public class TDSCodeController {
 						description = "There was an issue creating the code resource",
 						content = @Content)
 			})
-	public ResponseEntity<Code> createCode(@RequestBody Code code, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+	public ResponseEntity<Code> createCode(
+			@RequestBody Code code, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -186,8 +184,9 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<Code> getCode(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -234,8 +233,8 @@ public class TDSCodeController {
 	public ResponseEntity<Code> updateCode(
 			@PathVariable("id") final UUID codeId,
 			@RequestBody final Code code,
-			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -279,8 +278,9 @@ public class TDSCodeController {
 						content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteCode(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -318,21 +318,12 @@ public class TDSCodeController {
 	public ResponseEntity<String> getCodeFileAsText(
 			@PathVariable("id") final UUID codeId, @RequestParam("filename") final String filename) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
-			final Optional<PresignedURL> url = codeService.getDownloadUrl(codeId, filename);
-			if (url.isEmpty()) {
+		try {
+			final Optional<String> results = codeService.fetchFileAsString(codeId, filename);
+			if (results.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			final String textFileAsString =
-					IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-			return ResponseEntity.ok(textFileAsString);
-
+			return ResponseEntity.ok(results.get());
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
@@ -441,9 +432,9 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId)
+			@RequestParam(name = "project-id", required = false) final UUID projectId)
 			throws IOException {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		log.debug("Uploading code {} to project", codeId);
@@ -474,9 +465,9 @@ public class TDSCodeController {
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// download file from GitHub
@@ -521,8 +512,8 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName,
-			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
@@ -557,15 +548,11 @@ public class TDSCodeController {
 			final UUID codeId,
 			final String fileName,
 			final HttpEntity codeHttpEntity,
-			Schema.Permission hasWritePermission) {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+			final Schema.Permission hasWritePermission) {
+		try {
 
 			// upload file to S3
-			final PresignedURL presignedURL = codeService.getUploadUrl(codeId, fileName);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(codeHttpEntity);
-			final HttpResponse response = httpclient.execute(put);
+			final Integer status = codeService.uploadFile(codeId, fileName, codeHttpEntity);
 
 			final Optional<Code> code = codeService.getAsset(codeId, hasWritePermission);
 			if (code.isEmpty()) {
@@ -584,10 +571,12 @@ public class TDSCodeController {
 			code.get().setFiles(fileMap);
 			codeService.updateAsset(code.get(), hasWritePermission);
 
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
+			code.get().getFileNames().add(fileName);
 
-		} catch (final Exception e) {
-			log.error("Unable to PUT artifact data", e);
+			return ResponseEntity.ok(status);
+
+		} catch (final IOException e) {
+			log.error("Unable to upload code data", e);
 			return ResponseEntity.internalServerError().build();
 		}
 	}

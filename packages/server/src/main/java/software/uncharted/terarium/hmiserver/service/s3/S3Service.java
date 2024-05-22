@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.entity.ContentType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -187,6 +188,25 @@ public class S3Service {
 		log.debug("Putting object {} in bucket {}", key, bucketName);
 		final PutObjectRequest request =
 				PutObjectRequest.builder().bucket(bucketName).key(key).build();
+		return client.putObject(request, RequestBody.fromBytes(data));
+	}
+
+	/**
+	 * Put an object in a bucket
+	 *
+	 * @param bucketName The name of the bucket
+	 * @param key The key of the object
+	 * @param data The data to put in the object as a byte array
+	 * @return The response from the put object request
+	 */
+	public PutObjectResponse putObject(
+			final String bucketName, final String key, final ContentType contentType, final byte[] data) {
+		log.debug("Putting object {} in bucket {}", key, bucketName);
+		final PutObjectRequest request = PutObjectRequest.builder()
+				.bucket(bucketName)
+				.key(key)
+				.contentType(contentType.toString())
+				.build();
 		return client.putObject(request, RequestBody.fromBytes(data));
 	}
 
