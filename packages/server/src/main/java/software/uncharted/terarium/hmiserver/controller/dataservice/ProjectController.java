@@ -797,7 +797,7 @@ public class ProjectController {
 
 				if (model.getProject() != null) {
 					throw new ResponseStatusException(
-						HttpStatus.CONFLICT, messages.get("projects.model-already-added"));
+							HttpStatus.CONFLICT, messages.get("projects.model-already-added"));
 				}
 
 				if (project.get().getModelAssets() == null) project.get().setModelAssets(new ArrayList<>());
@@ -813,7 +813,7 @@ public class ProjectController {
 			} catch (final IOException e) {
 				log.error("Error updating document asset", e);
 				throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
 			}
 		}
 
