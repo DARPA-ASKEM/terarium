@@ -157,7 +157,8 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody final DocumentAsset documentAsset, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody DocumentAsset documentAsset,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -194,7 +195,7 @@ public class DocumentController {
 	public ResponseEntity<DocumentAsset> updateDocument(
 			@PathVariable("id") final UUID id,
 			@RequestBody final DocumentAsset document,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -243,7 +244,8 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> getDocument(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -362,7 +364,8 @@ public class DocumentController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDocument(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -388,7 +391,7 @@ public class DocumentController {
 			final UUID documentId,
 			final String fileName,
 			final HttpEntity fileEntity,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -443,7 +446,7 @@ public class DocumentController {
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile file,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 
 		try {
 			final byte[] fileAsBytes = file.getBytes();
@@ -481,7 +484,7 @@ public class DocumentController {
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 
 		log.debug("Uploading Document file from github to dataset {}", documentId);
 

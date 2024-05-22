@@ -114,17 +114,16 @@
 							<template #header>
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
-							<tera-initial-table
+							<tera-initial-table-v2
 								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
-								:model="knobs.transientModelConfig.configuration"
+								:model-configuration="knobs.transientModelConfig"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
-								config-view
-								@update-value="updateConfigInitial"
-								@update-model="
-									(modelToUpdate: Model) => {
-										updateConfigFromModel(modelToUpdate);
-									}
+								@update-expression="
+									setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
+								"
+								@update-source="
+									setInitialSource(knobs.transientModelConfig, $event.id, $event.value)
 								"
 							/>
 						</AccordionTab>
@@ -315,7 +314,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { FatalError } from '@/api/api';
-import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraInitialTableV2 from '@/components/model/petrinet/tera-initial-table-v2.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
 	emptyMiraModel,
@@ -326,27 +325,22 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
 import {
-	cleanModel,
 	sanityCheck,
 	createModelConfiguration,
 	setIntervention,
-	removeIntervention
+	removeIntervention,
+	setInitialSource,
+	setInitialExpression
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type {
-	Initial,
-	Intervention,
-	Model,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { Intervention, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { getInitials, getParameters } from '@/model-representation/service';
+import { getParameters, cleanModel } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -652,16 +646,6 @@ const updateConfigParam = (params: ModelParameter[]) => {
 		const foundParam = params.find((p) => p.id === parameters[i].id);
 		if (foundParam) {
 			parameters[i] = foundParam;
-		}
-	}
-};
-
-const updateConfigInitial = (inits: Initial[]) => {
-	const initials = getInitials(knobs.value.transientModelConfig.configuration);
-	for (let i = 0; i < initials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === initials![i].target);
-		if (foundInitial) {
-			initials[i] = foundInitial;
 		}
 	}
 };
