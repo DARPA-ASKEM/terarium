@@ -476,7 +476,7 @@ public class ReBACService {
 	}
 
 	public boolean isServiceUser(String id) {
-		if (API_SERVICE_USER_ID.equals(id)) return true;
+		if (API_SERVICE_USER_ID != null && API_SERVICE_USER_ID.equals(id)) return true;
 		return false;
 	}
 }
