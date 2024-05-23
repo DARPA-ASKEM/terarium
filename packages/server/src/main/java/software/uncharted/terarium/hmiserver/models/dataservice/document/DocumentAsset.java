@@ -1,7 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -10,15 +20,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -48,7 +52,7 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, Object> metadata;
+	private Map<String, JsonNode> metadata;
 
 	@TSOptional
 	@Column(columnDefinition = "text")
@@ -103,7 +107,7 @@ public class DocumentAsset extends TerariumAsset {
 			clone.metadata = new HashMap<>();
 			for (final String key : this.metadata.keySet()) {
 				// I don't like that this is an "object" because it doesn't clone nicely...
-				clone.metadata.put(key, this.metadata.get(key));
+				clone.metadata.put(key, this.metadata.get(key).deepCopy());
 			}
 		}
 

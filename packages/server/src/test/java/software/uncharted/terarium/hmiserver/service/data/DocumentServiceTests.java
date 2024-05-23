@@ -1,19 +1,23 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
@@ -73,7 +77,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.getFileNames().add("science2.pdf");
 		documentAsset.setGrounding(createGrounding(key));
 		documentAsset.setMetadata(new HashMap<>());
-		documentAsset.getMetadata().put("hello", "world-" + key);
+		documentAsset.getMetadata().put("hello", JsonNodeFactory.instance.textNode("world-" + key));
 		documentAsset.setPublicAsset(true);
 		documentAsset.setAssets(new ArrayList<>());
 		documentAsset.getAssets().add(createDocExtraction());
@@ -173,8 +177,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		documentAssetService.deleteAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<DocumentAsset> deleted =
-				documentAssetService.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
+		final Optional<DocumentAsset> deleted = documentAssetService.getAsset(documentAsset.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -203,8 +207,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		DocumentAsset documentAsset = createDocument();
 		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		final AssetExport<DocumentAsset> exported =
-				documentAssetService.exportAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<DocumentAsset> exported = documentAssetService.exportAsset(documentAsset.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		final DocumentAsset imported = documentAssetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 
