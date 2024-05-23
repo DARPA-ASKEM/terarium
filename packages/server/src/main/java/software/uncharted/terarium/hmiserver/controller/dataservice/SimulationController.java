@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,6 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +45,7 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/simulations")
 @RestController
@@ -92,10 +87,14 @@ public class SimulationController {
 						description = "There was an issue creating the simulation",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> createSimulation(@RequestBody final Simulation simulation) {
-		try {
+	public ResponseEntity<Simulation> createSimulation(
+			@RequestBody final Simulation simulation,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-			final Simulation sim = simulationService.createAsset(simulation);
+		try {
+			final Simulation sim = simulationService.createAsset(simulation, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -128,9 +127,14 @@ public class SimulationController {
 						description = "There was an issue retrieving simulations from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Simulation> getSimulation(@PathVariable("id") final UUID id) {
+	public ResponseEntity<Simulation> getSimulation(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			Optional<Simulation> simulation = simulationService.getAsset(id);
+			Optional<Simulation> simulation = simulationService.getAsset(id, permission);
 
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
@@ -165,7 +169,7 @@ public class SimulationController {
 						sim.setStatusMessage("Failed running simulation " + sim.getId());
 					}
 
-					simulation = simulationService.updateAsset(sim);
+					simulation = simulationService.updateAsset(sim, permission);
 				}
 			}
 
@@ -199,10 +203,15 @@ public class SimulationController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> updateSimulation(
-			@PathVariable("id") final UUID id, @RequestBody final Simulation simulation) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Simulation simulation,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(simulation);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -226,9 +235,14 @@ public class SimulationController {
 						description = "There was an issue deleting the simulation",
 						content = @Content)
 			})
-	public String deleteSimulation(@PathVariable("id") final UUID id) {
+	public String deleteSimulation(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			simulationService.deleteAsset(id);
+			simulationService.deleteAsset(id, permission);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -259,19 +273,12 @@ public class SimulationController {
 	public ResponseEntity<String> getSimulationResults(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-			final Optional<PresignedURL> url = simulationService.getDownloadUrl(id, filename);
-			if (url.isEmpty()) {
+		try {
+			final Optional<String> results = simulationService.fetchFileAsString(id, filename);
+			if (results.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			final String data = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-			return ResponseEntity.ok(data);
+			return ResponseEntity.ok(results.get());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
@@ -311,15 +318,18 @@ public class SimulationController {
 			@PathVariable("project-id") final UUID projectId,
 			@RequestParam("dataset-name") final String datasetName) {
 
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id);
+			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
 			if (sim.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset());
+			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
 			dataset.setName(datasetName + " Result Dataset");
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
@@ -334,13 +344,13 @@ public class SimulationController {
 
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset);
+			datasetService.updateAsset(dataset, permission);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
 				final Optional<ProjectAsset> asset =
-						projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset);
+						projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
 				// underlying asset does not exist
 				return asset.map(projectAsset ->
 								ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))

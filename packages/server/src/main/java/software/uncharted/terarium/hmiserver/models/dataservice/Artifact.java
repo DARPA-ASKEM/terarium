@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
@@ -8,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -36,12 +33,6 @@ public class Artifact extends TerariumAsset {
 	@Column(length = 255)
 	private String userId;
 
-	/* The name of the file(s) in this artifact */
-	@JsonAlias("file_names")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<String> fileNames;
-
 	/* metadata for these files */
 	@TSOptional
 	@Type(JsonType.class)
@@ -59,11 +50,6 @@ public class Artifact extends TerariumAsset {
 		cloneSuperFields(clone);
 
 		clone.userId = this.userId;
-
-		if (this.fileNames != null) {
-			clone.fileNames = new ArrayList<>();
-			clone.fileNames.addAll(this.fileNames);
-		}
 
 		if (this.metadata != null) {
 			clone.metadata = this.metadata.deepCopy();

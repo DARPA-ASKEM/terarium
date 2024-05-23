@@ -63,6 +63,9 @@ public class ReBACService {
 	@Value("${spicedb.launchmode}")
 	String SPICEDB_LAUNCHMODE;
 
+	@Value("${terarium.keycloak.api-service-name}")
+	String API_SERVICE_USER_NAME = "api-service";
+
 	private BearerToken spiceDbBearerToken;
 	private ManagedChannel channel;
 
@@ -70,6 +73,8 @@ public class ReBACService {
 	public static String PUBLIC_GROUP_ID;
 	public static final String ASKEM_ADMIN_GROUP_NAME = "ASKEM Admins";
 	public static String ASKEM_ADMIN_GROUP_ID;
+
+	public static String API_SERVICE_USER_ID;
 
 	volatile String CURRENT_ZED_TOKEN;
 
@@ -173,6 +178,17 @@ public class ReBACService {
 				}
 			}
 		}
+		API_SERVICE_USER_ID = getUserId(API_SERVICE_USER_NAME);
+	}
+
+	private String getUserId(String name) {
+		List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
+		for (UserRepresentation user : users) {
+			if (user.getUsername().equals(API_SERVICE_USER_NAME)) {
+				return user.getId();
+			}
+		}
+		throw new RuntimeException("Api service user account does not exist");
 	}
 
 	private String getGroupId(String name) {
@@ -313,24 +329,26 @@ public class ReBACService {
 		return permissionGroup;
 	}
 
-	public boolean canRead(SchemaObject who, SchemaObject what) throws Exception {
+	/**
+	 * Determines if user `who` has `permission` on resource `what`
+	 *
+	 * @param who User requesting access
+	 * @param permission Granted permission
+	 * @param what Resource being questioned
+	 * @return true if resource grants permission for user, otherwise false
+	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is unavailable
+	 */
+	public boolean can(SchemaObject who, Schema.Permission permission, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.READ, what, getCurrentConsistency());
-	}
-
-	public boolean canWrite(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.WRITE, what, getCurrentConsistency());
+		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
+			return true;
+		}
+		return rebac.checkPermission(who, permission, what, getCurrentConsistency());
 	}
 
 	public boolean isMemberOf(SchemaObject who, SchemaObject what) throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
-	}
-
-	public boolean canAdministrate(SchemaObject who, SchemaObject what) throws Exception {
-		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		return rebac.checkPermission(who, Schema.Permission.ADMINISTRATE, what, getCurrentConsistency());
 	}
 
 	public boolean isCreator(SchemaObject who, SchemaObject what) throws Exception {
@@ -455,5 +473,10 @@ public class ReBACService {
 			throws Exception {
 		ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
+	}
+
+	public boolean isServiceUser(String id) {
+		if (API_SERVICE_USER_ID != null && API_SERVICE_USER_ID.equals(id)) return true;
+		return false;
 	}
 }

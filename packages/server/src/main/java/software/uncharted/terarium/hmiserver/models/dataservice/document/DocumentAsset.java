@@ -41,12 +41,6 @@ public class DocumentAsset extends TerariumAsset {
 	private String userId;
 
 	@TSOptional
-	@JsonAlias("file_names")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<String> fileNames;
-
-	@TSOptional
 	@JsonAlias("document_url")
 	@Column(length = 1024)
 	private String documentUrl;
@@ -102,11 +96,6 @@ public class DocumentAsset extends TerariumAsset {
 	public DocumentAsset clone() {
 		final DocumentAsset clone = new DocumentAsset();
 		super.cloneSuperFields(clone);
-
-		if (this.fileNames != null) {
-			clone.fileNames = new ArrayList<>(this.fileNames.size());
-			clone.fileNames.addAll(this.fileNames);
-		}
 
 		clone.documentUrl = this.documentUrl;
 

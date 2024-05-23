@@ -3,14 +3,11 @@ package software.uncharted.terarium.hmiserver.service.data;
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -21,21 +18,31 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class ModelService extends TerariumAssetService<Model> {
-
-	private final ObjectMapper objectMapper;
+public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
 	public ModelService(
-			final ElasticsearchConfiguration elasticConfig,
+			final ObjectMapper objectMapper,
 			final Config config,
+			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
-			final ObjectMapper objectMapper) {
-		super(elasticConfig, config, elasticService, projectAssetService, Model.class);
-		this.objectMapper = objectMapper;
+			final S3ClientService s3ClientService,
+			final ModelRepository repository) {
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				Model.class);
 	}
 
 	@Observed(name = "function_profile")
@@ -48,7 +55,7 @@ public class ModelService extends TerariumAssetService<Model> {
 				.build();
 
 		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getModelIndex())
+				.index(getAssetIndex())
 				.from(page)
 				.size(pageSize)
 				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
@@ -63,48 +70,16 @@ public class ModelService extends TerariumAssetService<Model> {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
-		final ModelDescription md = ModelDescription.fromModel(
-				elasticService.get(elasticConfig.getModelIndex(), id.toString(), Model.class));
-
-		return Optional.of(md);
-	}
-
-	@Observed(name = "function_profile")
-	public List<Model> searchModels(final Integer page, final Integer pageSize, final JsonNode queryJson)
+	public Optional<ModelDescription> getDescription(final UUID id, final Schema.Permission hasReadPermission)
 			throws IOException {
-		Query query = null;
-		if (queryJson != null) {
-			// if query is provided deserialize it, append the soft delete filter
-			final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
-			query = new Query.Builder()
-					.bool(b -> b.must(new Query.Builder()
-									.withJson(new ByteArrayInputStream(bytes))
-									.build())
-							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-					.build();
-		} else {
-			query = new Query.Builder()
-					.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-					.build();
+
+		final Optional<Model> model = getAsset(id, hasReadPermission);
+		if (model.isPresent()) {
+			final ModelDescription md = ModelDescription.fromModel(model.get());
+			return Optional.of(md);
 		}
 
-		final SourceConfig source = new SourceConfig.Builder()
-				.filter(new SourceFilter.Builder()
-						.excludes("model", "semantics")
-						.build())
-				.build();
-
-		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getModelIndex())
-				.from(page)
-				.size(pageSize)
-				.source(source)
-				.query(query)
-				.build();
-		return elasticService.search(req, Model.class);
+		return Optional.empty();
 	}
 
 	@Observed(name = "function_profile")
@@ -137,13 +112,18 @@ public class ModelService extends TerariumAssetService<Model> {
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<Model> getAssets(final Integer page, final Integer pageSize) throws IOException {
-		throw new UnsupportedOperationException("Not implemented. Use ModelService.searchModels instead");
+	protected String getAssetPath() {
+		throw new UnsupportedOperationException("Models are not stored in S3");
+	}
+
+	@Override
+	public String getAssetAlias() {
+		return elasticConfig.getModelAlias();
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset) throws IOException {
+	public Model createAsset(final Model asset, final Schema.Permission hasWritePermission) throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
@@ -158,6 +138,6 @@ public class ModelService extends TerariumAssetService<Model> {
 				}
 			});
 		}
-		return super.createAsset(asset);
+		return super.createAsset(asset, hasWritePermission);
 	}
 }

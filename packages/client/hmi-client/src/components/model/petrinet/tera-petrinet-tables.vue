@@ -136,7 +136,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
 import Button from 'primevue/button';
-import { cleanModel } from '@/services/model-configurations';
+import { cleanModel } from '@/model-representation/service';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{

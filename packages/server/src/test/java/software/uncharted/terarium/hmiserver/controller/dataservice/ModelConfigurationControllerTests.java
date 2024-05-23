@@ -49,14 +49,16 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setName("test-framework")
-						.setDescription("test-desc"));
+						.setDescription("test-desc"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -72,6 +74,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(modelConfiguration)))
@@ -82,14 +85,16 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setDescription("test-desc")
-						.setName("test-framework"));
+						.setName("test-framework"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(modelConfiguration)))
@@ -107,10 +112,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setName("test-framework");
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
+		Assertions.assertTrue(modelConfigurationService
+				.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 }
