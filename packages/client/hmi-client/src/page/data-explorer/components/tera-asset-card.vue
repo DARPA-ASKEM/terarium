@@ -63,7 +63,10 @@
 			/>
 			<div
 				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
+				v-if="
+					resourceType === ResourceType.MODEL &&
+					(asset as Model).semantics?.ode?.parameters
+				"
 			>
 				PARAMETERS:
 				{{ (asset as Model).semantics?.ode.parameters }}
@@ -71,7 +74,9 @@
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
 				FEATURES:
-				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
+				<span v-for="(feature, index) in formatFeatures()" :key="index">
+					{{ feature }},
+				</span>
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
@@ -95,7 +100,9 @@
 						:key="index"
 					/>
 					<a
-						v-else-if="extraction.properties.doi && extraction.properties.documentBibjson?.link"
+						v-else-if="
+							extraction.properties.doi && extraction.properties.documentBibjson?.link
+						"
 						:href="extraction.properties.documentBibjson.link[0].url"
 						@click.stop
 						rel="noreferrer noopener"
@@ -202,7 +209,8 @@ const urlExtractions = computed(() => {
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
 	if ((props.asset as Document).knownEntities.askemObjects) {
 		const allExtractions = [
-			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
+			...((props.asset as Document).knownEntities.askemObjects as UrlExtraction[] &
+				Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
@@ -245,21 +253,6 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
 		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
-
-//
-// in case we decided to display matching concepts associated with artifacts
-//  when performing a search using a keyword that represents a known concept
-//
-// const getConceptTags = (item: ResultType) => {
-// 	const tags = [] as string[];
-// 	if (props.rawConceptFacets) {
-// 		const itemConcepts = props.rawConceptFacets.results.filter(
-// 			(conceptResult) => conceptResult.id === item.id
-// 		);
-// 		tags.push(...itemConcepts.map((c) => c.name ?? c.curie));
-// 	}
-// 	return tags;
-// };
 
 // Return formatted author, year, journal
 // Return formatted author, year, journal

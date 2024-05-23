@@ -10,7 +10,6 @@ import {
 	ProgressState,
 	XDDFacetsItemResponse
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
@@ -79,7 +78,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -235,6 +233,7 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
 			name:
-				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+				lang &&
+				`${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));

@@ -3,16 +3,7 @@
  */
 
 import API from '@/api/api';
-import { ConceptFacets } from '@/types/Concept';
-import { ClauseValue } from '@/types/Filter';
-import type {
-	AssetType,
-	Curies,
-	DatasetColumn,
-	DKG,
-	EntitySimilarityResult,
-	State
-} from '@/types/Types';
+import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -25,30 +16,6 @@ interface Entity {
 interface EntityMap {
 	source: string;
 	target: string;
-}
-
-/**
- * Get concept facets
- * @types string - filter returned facets to a given type.
- *        Available values : datasets, features, intermediates, model_parameters, models, projects, publications, qualifiers, simulation_parameters, simulation_plans, simulation_runs
- * @return ConceptFacets|null - the concept facets, or null if none returned by API
- */
-async function getFacets(type: AssetType, curies?: ClauseValue[]): Promise<ConceptFacets | null> {
-	try {
-		let url = `/concepts/facets?types=${type}`;
-		if (curies) {
-			curies.forEach((curie) => {
-				url += `&curies=${curie}`;
-			});
-		}
-		const response = await API.get(url);
-		const { status, data } = response;
-		if (status !== 200) return null;
-		return data ?? null;
-	} catch (error) {
-		console.error(error);
-		return null;
-	}
 }
 
 /**
@@ -215,7 +182,10 @@ const autoEntityMapping = async (
 		// Match by string if no target is found
 		if (isEmpty(currentTargetId)) {
 			targetEntities.some((target) => {
-				if (target.id.startsWith(distinctSourceId) || distinctSourceId.startsWith(target.id)) {
+				if (
+					target.id.startsWith(distinctSourceId) ||
+					distinctSourceId.startsWith(target.id)
+				) {
 					currentTargetId = target.id;
 					return true; // stops the loop
 				}
@@ -267,7 +237,11 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 		targetEntities.push({ id: col.name, groundings });
 	});
 
-	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+	const entityResult = await autoEntityMapping(
+		sourceEntities,
+		targetEntities,
+		acceptableDistance
+	);
 
 	// rename result to CalibrateMap for users of this function
 	entityResult.forEach((entity) => {
@@ -302,7 +276,11 @@ const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State
 		targetEntities.push({ id: state.id, groundings });
 	});
 
-	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
+	const entityResult = await autoEntityMapping(
+		sourceEntities,
+		targetEntities,
+		acceptableDistance
+	);
 
 	// rename result to CalibrateMap for users of this function
 	entityResult.forEach((entity) => {
@@ -313,7 +291,6 @@ const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State
 
 export {
 	getCuriesEntities,
-	getFacets,
 	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
