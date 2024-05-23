@@ -23,7 +23,7 @@ async function scrollTo(id: string) {
 
 onMounted(async () => {
 	await nextTick();
-	// Find all the headers and assign them an id
+	// Find all the headers to navigate to and assign them an id
 	const headers = props.elementWithNavIds.querySelectorAll('.p-accordion-header > a');
 	headers.forEach((header) => {
 		const textNodes = Array.from(header.childNodes).filter(
