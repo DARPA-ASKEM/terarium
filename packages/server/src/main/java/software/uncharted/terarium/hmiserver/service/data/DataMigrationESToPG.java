@@ -158,7 +158,8 @@ public class DataMigrationESToPG {
 				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()),
 				new MigrationConfig<>(datasetService, elasticConfig.getDatasetIndex()),
 				new MigrationConfig<>(artifactService, elasticConfig.getArtifactIndex()),
-				new MigrationConfig<>(documentService, elasticConfig.getDatasetIndex()));
+				new MigrationConfig<>(documentService, elasticConfig.getDocumentIndex()));
+
 		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 
