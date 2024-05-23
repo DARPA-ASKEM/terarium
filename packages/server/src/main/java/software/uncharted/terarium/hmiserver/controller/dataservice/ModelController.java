@@ -170,8 +170,10 @@ public class ModelController {
 	ResponseEntity<Model> getModel(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectId != null ? Schema.Permission.NONE :
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectId != null
+				? Schema.Permission.NONE
+				: projectService.checkPermissionCanWrite(
+						currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -181,7 +183,9 @@ public class ModelController {
 				return ResponseEntity.noContent().build();
 			}
 			// GETs not associated to a projectId cannot read non public or temporary assets
-			if (permission.equals(Schema.Permission.NONE) && !model.get().getPublicAsset() && !model.get().getTemporary()) {
+			if (permission.equals(Schema.Permission.NONE)
+					&& !model.get().getPublicAsset()
+					&& !model.get().getTemporary()) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 			}
 
