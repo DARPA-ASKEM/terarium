@@ -63,6 +63,7 @@ public class Schema {
 	}
 
 	public enum Permission {
+		NONE("none"),
 		READ("read"),
 		WRITE("write"),
 		MEMBERSHIP("membership"),

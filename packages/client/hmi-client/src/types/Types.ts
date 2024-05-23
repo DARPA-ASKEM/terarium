@@ -152,22 +152,6 @@ export interface Dynamics {
     block: string[];
 }
 
-export interface ActiveConcept extends TerariumAsset {
-    curie: string;
-}
-
-export interface OntologyConcept {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    curie: string;
-    type: TaggableType;
-    objectId: string;
-    status: OntologicalField;
-    activeConcept: ActiveConcept;
-}
-
 export interface Dataset extends TerariumAsset {
     userId?: string;
     esgfId?: string;
@@ -1298,25 +1282,6 @@ export enum ProgrammingLanguage {
     R = "r",
     Julia = "julia",
     Zip = "zip",
-}
-
-export enum TaggableType {
-    Datasets = "DATASETS",
-    Features = "FEATURES",
-    Intermediates = "INTERMEDIATES",
-    ModelParameters = "MODEL_PARAMETERS",
-    Models = "MODELS",
-    Projects = "PROJECTS",
-    Publications = "PUBLICATIONS",
-    Qualifiers = "QUALIFIERS",
-    SimulationParameters = "SIMULATION_PARAMETERS",
-    SimulationPlans = "SIMULATION_PLANS",
-    SimulationRuns = "SIMULATION_RUNS",
-}
-
-export enum OntologicalField {
-    Object = "OBJECT",
-    Unit = "UNIT",
 }
 
 export enum ColumnType {

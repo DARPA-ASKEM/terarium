@@ -11,7 +11,6 @@ import {
 	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
@@ -80,7 +79,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
