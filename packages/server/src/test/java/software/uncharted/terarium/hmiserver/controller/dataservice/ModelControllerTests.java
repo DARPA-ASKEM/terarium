@@ -160,40 +160,61 @@ public class ModelControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetPublicModelWithoutProject() throws Exception {
+	public void testItCannotGetUnpriviligedModelWithoutProject() throws Exception {
 
-		Model model = new Model()
+		Model model_public_not_temp = (Model) new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
 						.setDescription("test-description")
-						.setSchemaName("petrinet"));
-		model.setPublicAsset(true);
+						.setSchemaName("petrinet"))
+			.setPublicAsset(true)
+			.setTemporary(false);
+		Model model_public_temp = (Model) new Model()
+			.setHeader(new ModelHeader()
+				.setName("test-name")
+				.setModelSchema("test-schema")
+				.setModelVersion("0.1.2")
+				.setDescription("test-description")
+				.setSchemaName("petrinet"))
+			.setPublicAsset(true)
+			.setTemporary(true);
+		Model model_not_public_temp = (Model) new Model()
+			.setHeader(new ModelHeader()
+				.setName("test-name")
+				.setModelSchema("test-schema")
+				.setModelVersion("0.1.2")
+				.setDescription("test-description")
+				.setSchemaName("petrinet"))
+			.setPublicAsset(false)
+			.setTemporary(true);
+		Model model_not_public_not_temp = (Model) new Model()
+			.setHeader(new ModelHeader()
+				.setName("test-name")
+				.setModelSchema("test-schema")
+				.setModelVersion("0.1.2")
+				.setDescription("test-description")
+				.setSchemaName("petrinet"))
+			.setPublicAsset(false)
+			.setTemporary(false);
 
-		Model createdModel = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
+		Model createdModel_not_public_not_temp = modelService.createAsset(model_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_public_not_temp = modelService.createAsset(model_public_not_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_public_temp = modelService.createAsset(model_public_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_not_public_temp = modelService.createAsset(model_not_public_temp, ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
-
-		Model model = new Model()
-				.setHeader(new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")
-						.setSchemaName("petrinet"));
-
-		Model createdModel = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_not_temp.getId())
 						.with(csrf()))
 				.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId())
+				.with(csrf()))
+			.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_not_temp.getId())
+				.with(csrf()))
+			.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_temp.getId())
+				.with(csrf()))
+			.andExpect(status().is5xxServerError());
 	}
 }

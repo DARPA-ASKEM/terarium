@@ -181,10 +181,9 @@ public class ModelController {
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			// GETs not associated to a projectId cannot read non public or temporary assets
+			// GETs not associated to a projectId cannot read private or temporary assets
 			if (permission.equals(Schema.Permission.NONE)
-					&& !model.get().getPublicAsset()
-					&& !model.get().getTemporary()) {
+				&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
