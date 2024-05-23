@@ -170,7 +170,7 @@ public class ModelController {
 	ResponseEntity<Model> getModel(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectId != null ? Schema.Permission.NONE :
+		final Schema.Permission permission = projectId == null ? Schema.Permission.NONE :
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
