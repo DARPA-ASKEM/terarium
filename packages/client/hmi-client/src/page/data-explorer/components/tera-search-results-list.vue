@@ -33,8 +33,7 @@
 
 	<!-- Loading animation -->
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<!-- <div><i class="pi pi-spin pi-spinner" /></div> -->
-		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200"></Vue3Lottie>
+		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200" />
 	</div>
 
 	<!-- Nothing found -->
@@ -63,7 +62,7 @@
 
 <script setup lang="ts">
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
 import { useProjects } from '@/composables/project';
 import {
 	AssetType,
