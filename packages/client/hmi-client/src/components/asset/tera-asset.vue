@@ -76,7 +76,7 @@
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav :element-with-nav-ids="assetElementRef" />
+			<tera-asset-nav v-if="showTableOfContents" :element-with-nav-ids="assetElementRef" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -120,6 +120,7 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	// Booleans default to false if not specified
+	showTableOfContents: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,

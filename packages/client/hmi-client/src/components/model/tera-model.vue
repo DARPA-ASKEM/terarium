@@ -5,6 +5,7 @@
 		:is-naming-asset="isNaming"
 		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<InputText
