@@ -88,7 +88,6 @@ div {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	width: 100%;
 	padding: var(--gap-xsmall) var(--gap-small);
 	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-alt);

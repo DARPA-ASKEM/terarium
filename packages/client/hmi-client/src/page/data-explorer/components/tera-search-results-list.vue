@@ -33,8 +33,7 @@
 
 	<!-- Loading animation -->
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<!-- <div><i class="pi pi-spin pi-spinner" /></div> -->
-		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200"></Vue3Lottie>
+		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200" />
 	</div>
 
 	<!-- Nothing found -->
@@ -63,7 +62,7 @@
 
 <script setup lang="ts">
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
 import { useProjects } from '@/composables/project';
 import {
 	AssetType,
@@ -88,7 +87,7 @@ import {
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
-import { isEmpty } from 'lodash';
+import { isEmpty, sortBy, orderBy, remove } from 'lodash';
 import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
 import { createDataset, getClimateDataset } from '@/services/dataset';
@@ -132,62 +131,69 @@ const props = defineProps({
 const selectedAsset: Ref<ResultType> = ref({} as ResultType);
 const isAdding = ref(false);
 
-const projectOptions = computed(() => [
-	{
-		label: 'Add to which project?',
-		items:
-			useProjects().allProjects.value?.map((project) => ({
-				label: project.name,
-				command: async () => {
-					let response: ProjectAsset['id'] | null = null;
-					let assetName: string = '';
-					isAdding.value = true;
+const projectOptions = computed(() => {
+	const items =
+		useProjects().allProjects.value?.map((project) => ({
+			label: project.name,
+			command: async () => {
+				let response: ProjectAsset['id'] | null = null;
+				let assetName: string = '';
+				isAdding.value = true;
 
-					if (isModel(selectedAsset.value)) {
-						const modelAsset: Model = selectedAsset.value as Model;
+				if (isModel(selectedAsset.value)) {
+					const modelAsset: Model = selectedAsset.value as Model;
 
-						const modelId = modelAsset.id;
-						response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
-						assetName = modelAsset.header.name;
-					} else if (isDataset(selectedAsset.value)) {
-						let datasetId = selectedAsset.value.id;
+					const modelId = modelAsset.id;
+					response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
+					assetName = modelAsset.header.name;
+				} else if (isDataset(selectedAsset.value)) {
+					let datasetId = selectedAsset.value.id;
 
-						if (!datasetId && selectedAsset.value.esgfId) {
-							// The selectedAsset is a light asset for front end and we need the whole thing.
-							const climateDataset: Dataset | null = await getClimateDataset(
-								selectedAsset.value.esgfId
-							);
-							if (climateDataset) {
-								const dataset: Dataset | null = await createDataset(climateDataset);
-								if (dataset) {
-									datasetId = dataset.id;
-								}
+					if (!datasetId && selectedAsset.value.esgfId) {
+						// The selectedAsset is a light asset for front end and we need the whole thing.
+						const climateDataset: Dataset | null = await getClimateDataset(
+							selectedAsset.value.esgfId
+						);
+						if (climateDataset) {
+							const dataset: Dataset | null = await createDataset(climateDataset);
+							if (dataset) {
+								datasetId = dataset.id;
 							}
 						}
-
-						// then, link and store in the project assets
-						if (datasetId) {
-							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
-							assetName = selectedAsset.value.name ?? '';
-						}
-					} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
-						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id as string);
-						assetName = selectedAsset.value.title;
-					} else if (props.source === DocumentSource.TERARIUM) {
-						const document = selectedAsset.value as DocumentAsset;
-						const assetType = AssetType.Document;
-						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = document.name ?? '';
 					}
 
-					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-
-					isAdding.value = false;
+					// then, link and store in the project assets
+					if (datasetId) {
+						response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
+						assetName = selectedAsset.value.name ?? '';
+					}
+				} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
+					const document = selectedAsset.value as Document;
+					await createDocumentFromXDD(document, project.id as string);
+					assetName = selectedAsset.value.title;
+				} else if (props.source === DocumentSource.TERARIUM) {
+					const document = selectedAsset.value as DocumentAsset;
+					const assetType = AssetType.Document;
+					response = await useProjects().addAsset(assetType, document.id, project.id);
+					assetName = document.name ?? '';
 				}
-			})) ?? []
-	}
-]);
+
+				if (response) logger.info(`Added ${assetName} to ${project.name}`);
+
+				isAdding.value = false;
+			}
+		})) ?? [];
+
+	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+	const lastUpdatedProjectItem = remove(items, (item) => item.label === lastProjectUpdated.name);
+
+	return [
+		{
+			label: 'Add to which project?',
+			items: [...lastUpdatedProjectItem, ...sortBy(items, 'label')]
+		}
+	];
+});
 
 const previewedAsset = ref<ResultType | null>(null);
 

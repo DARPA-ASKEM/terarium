@@ -1,5 +1,4 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
-import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import type { Model, Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
 import {
 	FACET_FIELDS as DATASET_FACET_FIELDS,
@@ -21,7 +20,7 @@ import { logger } from '@/utils/logger';
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
+export const getModelFacets = (models: Model[]) => {
 	// utility function for manually calculating facet aggregation from model results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -36,19 +35,6 @@ export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | n
 	};
 
 	const facets = {} as Facets;
-
-	// create facet for concepts
-	if (conceptFacets) {
-		// Note that creating facets for concepts should ensure align with the list of model results
-		// Unfortunately, concept facets are always returned from the backend without taking into consideration any applied filters
-		// As a result, we need to check and update the aggregates as necessary
-		facets[CONCEPT_FACETS_FIELD] = [];
-		const conceptKeys = Object.keys(conceptFacets.facets.concepts);
-		conceptKeys.forEach((conceptKey) => {
-			const concept = conceptFacets?.facets.concepts[conceptKey];
-			facets[CONCEPT_FACETS_FIELD].push({ key: concept.name ?? conceptKey, value: concept.count });
-		});
-	}
 
 	// create facets from specific model fields
 	MODEL_FACET_FIELDS.forEach((field) => {
@@ -66,7 +52,7 @@ export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | n
 
 // FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
+export const getDatasetFacets = (datasets: Dataset[]) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -81,19 +67,6 @@ export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFace
 	};
 
 	const facets = {} as Facets;
-
-	// create facet for concepts
-	if (conceptFacets) {
-		// Note that creating facets for concepts should ensure align with the list of dataset results
-		// Unfortunately, concept facets are always returned from the backend without taking into consideration any applied filters
-		// As a result, we need to check and update the aggregates as necessary
-		facets[CONCEPT_FACETS_FIELD] = [];
-		const conceptKeys = Object.keys(conceptFacets.facets.concepts);
-		conceptKeys.forEach((conceptKey) => {
-			const concept = conceptFacets?.facets.concepts[conceptKey];
-			facets[CONCEPT_FACETS_FIELD].push({ key: concept.name ?? conceptKey, value: concept.count });
-		});
-	}
 
 	// create facets from specific dataset fields
 	DATASET_FACET_FIELDS.forEach((field) => {
