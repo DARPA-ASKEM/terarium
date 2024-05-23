@@ -22,7 +22,6 @@ import java.util.zip.ZipInputStream;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
@@ -187,14 +186,13 @@ public class ExtractionService {
 				documentService.uploadFile(
 						documentId,
 						zipFileName,
-						new ByteArrayEntity(zipFileResp.getBody()),
-						ContentType.APPLICATION_OCTET_STREAM);
+						new ByteArrayEntity(zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM));
 
 				document.getFileNames().add(zipFileName);
 
 				// Open the zipfile and extract the contents
 				notificationInterface.sendMessage("Extracting COSMOS extraction results...");
-				final Map<String, HttpEntity> fileMap = new HashMap<>();
+				final Map<String, byte[]> fileMap = new HashMap<>();
 				try {
 					final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(zipFileResp.getBody());
 					final ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream);
@@ -203,7 +201,7 @@ public class ExtractionService {
 					while (entry != null) {
 						log.info("Adding {} to filemap", entry.getName());
 						final String filenameNoExt = removeFileExtension(entry.getName());
-						fileMap.put(filenameNoExt, zipEntryToHttpEntity(zipInputStream));
+						fileMap.put(filenameNoExt, zipEntryToBytes(zipInputStream));
 						entry = zipInputStream.getNextEntry();
 					}
 
@@ -244,11 +242,11 @@ public class ExtractionService {
 							if (!fileMap.containsKey(assetFilenameNoExt)) {
 								log.warn("Unable to find file {} in zipfile", assetFileName);
 							}
-							final HttpEntity file = fileMap.get(assetFilenameNoExt);
+							final byte[] file = fileMap.get(assetFilenameNoExt);
 							if (file == null) {
 								throw new RuntimeException("Unable to find file " + assetFileName + " in zipfile");
 							}
-							documentService.uploadFile(documentId, assetFileName, file, ContentType.IMAGE_JPEG);
+							documentService.uploadFile(documentId, assetFileName, ContentType.IMAGE_JPEG, file);
 							totalUploads++;
 
 						} else {
@@ -555,7 +553,7 @@ public class ExtractionService {
 		});
 	}
 
-	public static HttpEntity zipEntryToHttpEntity(final ZipInputStream zipInputStream) throws IOException {
+	public static byte[] zipEntryToBytes(final ZipInputStream zipInputStream) throws IOException {
 		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		final byte[] buffer = new byte[1024];
 		int len;
@@ -568,6 +566,6 @@ public class ExtractionService {
 			throw new IOException("Empty file found in zip");
 		}
 
-		return new ByteArrayEntity(bytes);
+		return bytes;
 	}
 }

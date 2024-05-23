@@ -105,7 +105,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
@@ -183,7 +183,7 @@ public class GoLLMController {
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
@@ -279,7 +279,7 @@ public class GoLLMController {
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam("project-id") final UUID projectId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
@@ -392,7 +392,7 @@ public class GoLLMController {
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {

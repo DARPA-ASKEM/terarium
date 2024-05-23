@@ -13,7 +13,7 @@
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3 pr-3 gap-0">
+			<tera-drilldown-section class="pl-3">
 				<template #header-controls>
 					<Button
 						size="small"
@@ -24,7 +24,7 @@
 					/>
 				</template>
 				<!-- Suggested configurations -->
-				<div class="box-container mt-3" v-if="model">
+				<div class="box-container mr-2" v-if="model">
 					<Accordion multiple :active-index="[0]">
 						<AccordionTab>
 							<template #header>
@@ -80,14 +80,9 @@
 									</template>
 								</Column>
 								<template #loading>
-									<div>
-										<Vue3Lottie
-											:animationData="LoadingWateringCan"
-											:height="200"
-											:width="200"
-										></Vue3Lottie>
-										<p>Fetching suggested configurations.</p>
-									</div>
+									<tera-progress-spinner :font-size="2" is-centered
+										>Fetching suggested configurations...</tera-progress-spinner
+									>
 								</template>
 								<template #empty>
 									<p class="empty-section m-3">No configurations found.</p>
@@ -119,17 +114,16 @@
 							<template #header>
 								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 							</template>
-							<tera-initial-table
+							<tera-initial-table-v2
 								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
-								:model="knobs.transientModelConfig.configuration"
+								:model-configuration="knobs.transientModelConfig"
 								:mmt="mmt"
 								:mmt-params="mmtParams"
-								config-view
-								@update-value="updateConfigInitial"
-								@update-model="
-									(modelToUpdate: Model) => {
-										updateConfigFromModel(modelToUpdate);
-									}
+								@update-expression="
+									setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
+								"
+								@update-source="
+									setInitialSource(knobs.transientModelConfig, $event.id, $event.value)
 								"
 							/>
 						</AccordionTab>
@@ -306,9 +300,8 @@ import Textarea from 'primevue/textarea';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { Vue3Lottie } from 'vue3-lottie';
 
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -321,7 +314,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { FatalError } from '@/api/api';
-import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraInitialTableV2 from '@/components/model/petrinet/tera-initial-table-v2.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
 	emptyMiraModel,
@@ -332,27 +325,22 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
 import {
-	cleanModel,
 	sanityCheck,
 	createModelConfiguration,
 	setIntervention,
-	removeIntervention
+	removeIntervention,
+	setInitialSource,
+	setInitialExpression
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type {
-	Initial,
-	Intervention,
-	Model,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { Intervention, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { getInitials, getParameters } from '@/model-representation/service';
+import { getParameters, cleanModel } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -666,16 +654,6 @@ const updateConfigParam = (params: ModelParameter[]) => {
 	}
 };
 
-const updateConfigInitial = (inits: Initial[]) => {
-	const initials = getInitials(knobs.value.transientModelConfig.configuration);
-	for (let i = 0; i < initials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === initials![i].target);
-		if (foundInitial) {
-			initials[i] = foundInitial;
-		}
-	}
-};
-
 const updateConfigFromModel = (inputModel: Model) => {
 	if (knobs.value.transientModelConfig) knobs.value.transientModelConfig.configuration = inputModel;
 };
@@ -935,6 +913,10 @@ onUnmounted(() => {
 	text-align: left;
 }
 
+:deep(.p-datatable-loading-overlay.p-component-overlay) {
+	background-color: var(--surface-section);
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;
@@ -973,12 +955,9 @@ onUnmounted(() => {
 	display: flex;
 	align-items: center;
 }
+
 .toolbar {
 	padding-left: var(--gap-medium);
-}
-
-:deep(.p-datatable-loading-overlay.p-component-overlay) {
-	background-color: #fff;
 }
 
 .use-button {

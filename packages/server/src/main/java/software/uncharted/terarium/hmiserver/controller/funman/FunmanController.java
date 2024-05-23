@@ -69,7 +69,8 @@ public class FunmanController {
 						content = @Content)
 			})
 	public ResponseEntity<Simulation> createValidationRequest(
-			@RequestBody final JsonNode input, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final JsonNode input,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
