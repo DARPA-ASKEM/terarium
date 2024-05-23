@@ -1,7 +1,7 @@
 <template>
 	<nav>
-		<a v-for="content in assetNavIdsInView" :key="content" @click="scrollTo(content)">
-			{{ content.replace('-', ' ') }}
+		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
+			{{ id.replace('-', ' ') }}
 		</a>
 	</nav>
 </template>
@@ -10,20 +10,21 @@
 import { ref, onMounted, nextTick } from 'vue';
 
 const props = defineProps<{
-	assetNavIds: string[];
+	navIds: string[];
+	elementWithNavIds: HTMLElement;
 }>();
 
-const assetNavIdsInView = ref<string[]>([]);
+const navIdsInView = ref<string[]>([]);
 
-async function scrollTo(elementId: string) {
-	const element = document.getElementById(elementId);
+async function scrollTo(id: string) {
+	const element = props.elementWithNavIds.querySelector(`#${id}`);
 	if (!element) return;
 	element.scrollIntoView({ behavior: 'smooth' });
 }
 
 onMounted(async () => {
 	await nextTick();
-	assetNavIdsInView.value = props.assetNavIds.filter((id) => document.getElementById(id));
+	navIdsInView.value = props.navIds.filter((id) => props.elementWithNavIds.querySelector(`#${id}`));
 });
 </script>
 
@@ -31,7 +32,7 @@ onMounted(async () => {
 nav {
 	display: flex;
 	flex-direction: column;
-	width: fit-content;
+	width: fit-id;
 	gap: 1rem;
 	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
 	/* Responsible for stickiness */

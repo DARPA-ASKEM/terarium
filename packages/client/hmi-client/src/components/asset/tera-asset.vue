@@ -71,12 +71,12 @@
 				</aside>
 			</header>
 		</template>
-		<section :class="overflowHiddenClass">
+		<section :class="overflowHiddenClass" ref="assetElementRef">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav :asset-nav-ids="assetNavIds" />
+			<tera-asset-nav :nav-ids="assetNavIds" :element-with-nav-ids="assetElementRef" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -140,6 +140,7 @@ const emit = defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
 const headerRef = ref();
+const assetElementRef = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
