@@ -258,7 +258,7 @@ public class DocumentController {
 		}
 		// GETs not associated to a projectId cannot read private or temporary assets
 		if (permission.equals(Schema.Permission.NONE)
-			&& (!document.get().getPublicAsset() || document.get().getTemporary())) {
+				&& (!document.get().getPublicAsset() || document.get().getTemporary())) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 

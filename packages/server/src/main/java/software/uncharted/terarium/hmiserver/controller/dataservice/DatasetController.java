@@ -234,7 +234,7 @@ public class DatasetController {
 			}
 			// GETs not associated to a projectId cannot read private or temporary assets
 			if (permission.equals(Schema.Permission.NONE)
-				&& (!dataset.get().getPublicAsset() || dataset.get().getTemporary())) {
+					&& (!dataset.get().getPublicAsset() || dataset.get().getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 

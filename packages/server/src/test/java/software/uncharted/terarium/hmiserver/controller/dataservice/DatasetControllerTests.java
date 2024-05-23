@@ -366,35 +366,47 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 
-		Dataset dataset_public_not_temp = (Dataset) new Dataset().setName("test-document-name").setDescription("my description")
-			.setPublicAsset(true)
-			.setTemporary(false);
-		Dataset dataset_not_public_temp = (Dataset) new Dataset().setName("test-document-name").setDescription("my description")
-			.setPublicAsset(false)
-			.setTemporary(true);
-		Dataset dataset_not_public_not_temp = (Dataset) new Dataset().setName("test-document-name").setDescription("my description")
-			.setPublicAsset(false)
-			.setTemporary(false);
-		Dataset dataset_public_temp = (Dataset) new Dataset().setName("test-document-name").setDescription("my description")
-			.setPublicAsset(true)
-			.setTemporary(true);
+		Dataset dataset_public_not_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(false);
+		Dataset dataset_not_public_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(true);
+		Dataset dataset_not_public_not_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(false);
+		Dataset dataset_public_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(true);
 
-		final Dataset createdDataset_not_public_not_temp = datasetService.createAsset(dataset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
-		final Dataset createdDataset_public_not_temp = datasetService.createAsset(dataset_public_not_temp, ASSUME_WRITE_PERMISSION);
-		final Dataset createdDataset_public_temp = datasetService.createAsset(dataset_public_temp, ASSUME_WRITE_PERMISSION);
-		final Dataset createdDataset_not_public_temp = datasetService.createAsset(dataset_not_public_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_not_public_not_temp =
+				datasetService.createAsset(dataset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_public_not_temp =
+				datasetService.createAsset(dataset_public_not_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_public_temp =
+				datasetService.createAsset(dataset_public_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_not_public_temp =
+				datasetService.createAsset(dataset_not_public_temp, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_temp.getId())
-				.with(csrf()))
-			.andExpect(status().is5xxServerError());
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_not_temp.getId())
-				.with(csrf()))
-			.andExpect(status().is5xxServerError());
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_temp.getId())
-				.with(csrf()))
-			.andExpect(status().is5xxServerError());
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 	}
 }

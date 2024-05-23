@@ -183,7 +183,7 @@ public class ModelController {
 			}
 			// GETs not associated to a projectId cannot read private or temporary assets
 			if (permission.equals(Schema.Permission.NONE)
-				&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
+					&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
