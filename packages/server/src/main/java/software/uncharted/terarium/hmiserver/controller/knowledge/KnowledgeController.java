@@ -59,16 +59,19 @@ import software.uncharted.terarium.hmiserver.models.extractionservice.Extraction
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -91,6 +94,9 @@ public class KnowledgeController {
 
 	final ExtractionService extractionService;
 
+	final ProjectService projectService;
+	final CurrentUserService currentUserService;
+
 	final Messages messages;
 
 	@Value("${mit-openai-api-key:}")
@@ -103,7 +109,12 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	public ResponseEntity<UUID> equationsToModel(@RequestBody final JsonNode req) {
+	public ResponseEntity<UUID> equationsToModel(
+			@RequestBody final JsonNode req,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		final Model responseAMR;
 
 		// Check if a model ID is supplied and try to extract it
@@ -140,7 +151,7 @@ public class KnowledgeController {
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR);
+				final Model model = modelService.createAsset(responseAMR, permission);
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("Unable to create a model", e);
@@ -152,7 +163,7 @@ public class KnowledgeController {
 		// If a model id is provided, update the existing model
 		final Optional<Model> model;
 		try {
-			model = modelService.getAsset(modelId);
+			model = modelService.getAsset(modelId, permission);
 			if (model.isEmpty()) {
 				final String errorMessage = String.format("The model id %s does not exist.", modelId);
 				log.error(errorMessage);
@@ -166,7 +177,7 @@ public class KnowledgeController {
 
 		responseAMR.setId(model.get().getId());
 		try {
-			modelService.updateAsset(responseAMR);
+			modelService.updateAsset(responseAMR, permission);
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error("Unable to update the model with id {}.", modelId, e);
@@ -217,12 +228,15 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	ResponseEntity<Model> postCodeToAMR(
 			@RequestParam("code-id") final UUID codeId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(name = "name", required = false, defaultValue = "") final String name,
 			@RequestParam(name = "description", required = false, defaultValue = "") final String description,
 			@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
 			@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		final Optional<Code> code = codeService.getAsset(codeId);
+		final Optional<Code> code = codeService.getAsset(codeId, permission);
 		if (code.isEmpty()) {
 			log.error("Unable to fetch the requested code asset with codeId: {}", codeId);
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
@@ -345,7 +359,7 @@ public class KnowledgeController {
 		}
 
 		try {
-			model = modelService.createAsset(model);
+			model = modelService.createAsset(model, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create model", e);
 			throw new ResponseStatusException(
@@ -359,7 +373,7 @@ public class KnowledgeController {
 		code.get().getMetadata().put("model_id", model.getId().toString());
 
 		try {
-			codeService.updateAsset(code.get());
+			codeService.updateAsset(code.get(), permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code", e);
 			throw new ResponseStatusException(
@@ -403,22 +417,27 @@ public class KnowledgeController {
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> codeBlocksToModel(
-			@RequestPart final Code code, @RequestPart("file") final MultipartFile input) throws IOException {
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestPart final Code code,
+			@RequestPart("file") final MultipartFile input)
+			throws IOException {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// 1. create code asset from code blocks
-			final Code createdCode = codeService.createAsset(code);
+			final Code createdCode = codeService.createAsset(code, permission);
 
 			// 2. upload file to code asset
 			final byte[] fileAsBytes = input.getBytes();
-			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
 			final String filename = input.getOriginalFilename();
 
 			if (filename == null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name is required");
 			}
 
-			codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+			codeService.uploadFile(code.getId(), filename, fileEntity);
 
 			// add the code file to the code asset
 			final CodeFile codeFile = new CodeFile();
@@ -428,10 +447,10 @@ public class KnowledgeController {
 				code.setFiles(new HashMap<>());
 			}
 			code.getFiles().put(filename, codeFile);
-			codeService.updateAsset(code);
+			codeService.updateAsset(code, permission);
 
 			// 3. create model from code asset
-			return postCodeToAMR(createdCode.getId(), "temp model", "temp model description", false, false);
+			return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
 		} catch (final IOException e) {
 			log.error("Unable to upload file", e);
 			throw new ResponseStatusException(
@@ -451,13 +470,16 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Model> postProfileModel(
 			@PathVariable("model-id") final UUID modelId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 
 			String documentText = "";
 			if (documentId != null) {
-				final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId);
+				final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
 				if (documentOptional.isPresent()) {
 					final int MAX_CHAR_LIMIT = 9000;
 
@@ -487,7 +509,7 @@ public class KnowledgeController {
 				}
 			}
 
-			final Model model = modelService.getAsset(modelId).orElseThrow();
+			final Model model = modelService.getAsset(modelId, permission).orElseThrow();
 
 			final StringMultipartFile textFile =
 					new StringMultipartFile(documentText, "document.txt", "application/text");
@@ -521,7 +543,7 @@ public class KnowledgeController {
 			model.getHeader().setDescription(card.getDescription());
 			model.getMetadata().setCard(card);
 
-			return ResponseEntity.ok(modelService.updateAsset(model).orElseThrow());
+			return ResponseEntity.ok(modelService.updateAsset(model, permission).orElseThrow());
 
 		} catch (final IOException e) {
 			log.error("Unable to get profile model", e);
@@ -542,7 +564,10 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Dataset> postProfileDataset(
 			@PathVariable("dataset-id") final UUID datasetId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(name = "document-id", required = false) final Optional<UUID> documentId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// Provenance call if a document id is provided
@@ -550,7 +575,7 @@ public class KnowledgeController {
 			if (documentId.isPresent()) {
 
 				final DocumentAsset document =
-						documentService.getAsset(documentId.get()).orElseThrow();
+						documentService.getAsset(documentId.get(), permission).orElseThrow();
 				documentFile =
 						new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
 
@@ -572,7 +597,8 @@ public class KnowledgeController {
 						"There is no documentation for this dataset", "document.txt", "application/text");
 			}
 
-			final Dataset dataset = datasetService.getAsset(datasetId).orElseThrow();
+			final Dataset dataset =
+					datasetService.getAsset(datasetId, permission).orElseThrow();
 
 			if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
@@ -644,7 +670,8 @@ public class KnowledgeController {
 			}
 			((ObjectNode) dataset.getMetadata()).set("dataCard", card);
 
-			return ResponseEntity.ok(datasetService.updateAsset(dataset).orElseThrow());
+			return ResponseEntity.ok(
+					datasetService.updateAsset(dataset, permission).orElseThrow());
 
 		} catch (final FeignException e) {
 			final String error = "Unable to get profile dataset";
@@ -676,11 +703,15 @@ public class KnowledgeController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> alignModel(
-			@RequestParam("document-id") final UUID documentId, @RequestParam("model-id") final UUID modelId) {
+			@RequestParam("document-id") final UUID documentId,
+			@RequestParam("model-id") final UUID modelId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			return ResponseEntity.ok(
-					extractionService.alignAMR(documentId, modelId).get());
+					extractionService.alignAMR(documentId, modelId, permission).get());
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
@@ -701,8 +732,12 @@ public class KnowledgeController {
 	public ResponseEntity<Void> variableExtractions(
 			@RequestParam("document-id") final UUID documentId,
 			@RequestParam(name = "model-ids", required = false) final List<UUID> modelIds,
-			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		extractionService.extractVariables(documentId, modelIds == null ? new ArrayList<>() : modelIds, domain);
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		extractionService.extractVariables(
+				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -722,8 +757,11 @@ public class KnowledgeController {
 			})
 	public ResponseEntity<Void> pdfExtractions(
 			@RequestParam("document-id") final UUID documentId,
-			@RequestParam(name = "domain", defaultValue = "epi") final String domain) {
-		extractionService.extractPDF(documentId, domain);
+			@RequestParam(name = "domain", defaultValue = "epi") final String domain,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		extractionService.extractPDF(documentId, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 
