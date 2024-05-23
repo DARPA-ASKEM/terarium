@@ -32,7 +32,7 @@ onMounted(async () => {
 nav {
 	display: flex;
 	flex-direction: column;
-	width: fit-id;
+	width: fit-content;
 	gap: 1rem;
 	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
 	/* Responsible for stickiness */
