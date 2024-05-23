@@ -76,7 +76,7 @@
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<slot name="nav" />
+			<tera-asset-nav :asset-nav-ids="assetNavIds" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -91,7 +91,8 @@ import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraAssetNav from '../widgets/tera-asset-nav.vue';
 
 const props = defineProps({
 	name: {
@@ -117,6 +118,10 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
+	},
+	assetNavIds: {
+		type: Array as PropType<string[]>,
+		default: () => []
 	},
 	// Booleans default to false if not specified
 	isNamingAsset: Boolean,

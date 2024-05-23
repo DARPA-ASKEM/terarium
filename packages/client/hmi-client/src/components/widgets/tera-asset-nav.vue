@@ -1,6 +1,6 @@
 <template>
 	<nav>
-		<a v-for="content in assetContentIdsInView" :key="content" @click="scrollTo(content)">
+		<a v-for="content in assetNavIdsInView" :key="content" @click="scrollTo(content)">
 			{{ content.replace('-', ' ') }}
 		</a>
 	</nav>
@@ -10,10 +10,10 @@
 import { ref, onMounted, nextTick } from 'vue';
 
 const props = defineProps<{
-	assetContentIds: string[];
+	assetNavIds: string[];
 }>();
 
-const assetContentIdsInView = ref<string[]>([]);
+const assetNavIdsInView = ref<string[]>([]);
 
 async function scrollTo(elementId: string) {
 	const element = document.getElementById(elementId);
@@ -23,7 +23,7 @@ async function scrollTo(elementId: string) {
 
 onMounted(async () => {
 	await nextTick();
-	assetContentIdsInView.value = props.assetContentIds.filter((id) => document.getElementById(id));
+	assetNavIdsInView.value = props.assetNavIds.filter((id) => document.getElementById(id));
 });
 </script>
 
