@@ -48,7 +48,7 @@
 						:context-language="'python3'"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="llmThoughts = []"
+						@question-asked="updateLlmQuery"
 					>
 						<template #toolbar-right-side>
 							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
@@ -116,6 +116,8 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
+import { createNotebookFromCode } from '@/services/notebook';
+
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -179,6 +181,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 
 const sampleAgentQuestions = [
@@ -186,6 +189,11 @@ const sampleAgentQuestions = [
 	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
 	'What is cartesian_control in stratify?'
 ];
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -200,6 +208,7 @@ const stratifyModel = () => {
 const processLLMOutput = (data: any) => {
 	codeText.value = data.content.code;
 	saveCodeToState(data.content.code, false);
+	createNotebookFromCode(codeText.value, 'python3', llmQuery.value, llmThoughts.value[0]);
 };
 
 const resetModel = () => {

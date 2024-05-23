@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
+import axios from 'axios';
 
 export interface NotebookHistory {
 	code: string;
@@ -24,4 +25,60 @@ export const saveCodeToState = (node: WorkflowNode<any>, code: string, hasCodeRu
 		state.notebookHistory.push({ code, timestamp });
 	}
 	return state;
+};
+
+/**
+ * Create a notebook from a code
+ * @param code code to be added to the notebook
+ * @param language language of the code
+ * @param llmQuery llm query used to generate the code if any
+ * @param thought llm thought generated from the query if any
+ * @returns
+ */
+export const createNotebookFromCode = async (
+	code: string,
+	language: string,
+	llmQuery?: string,
+	llmThought?: any
+) => {
+	const notebook = {
+		nbformat: 4,
+		nbformat_minor: 5,
+		cells: [] as any[],
+		metadata: {
+			kernelspec: {
+				display_name: 'Beaker Kernel',
+				name: 'beaker',
+				language: 'beaker'
+			},
+			language_info: {
+				name: language,
+				display_name: language
+			}
+		}
+	};
+	if (llmQuery) {
+		const beakerQueryCell = {
+			cell_type: 'query',
+			events: llmThought ? [{ type: 'thought', content: llmThought?.content }] : [],
+			metadata: {},
+			source: llmQuery,
+			status: 'idle'
+		};
+		notebook.cells.push(beakerQueryCell);
+	}
+	const beakerCodeCell = {
+		cell_type: 'code',
+		execution_count: 1,
+		metadata: {},
+		outputs: [],
+		source: code,
+		status: 'idle'
+	};
+	notebook.cells.push(beakerCodeCell);
+
+	const res = await axios.post('/beaker/summary', { notebook });
+	console.log(res);
+	console.log(JSON.stringify(notebook, null, 2));
+	return notebook;
 };
