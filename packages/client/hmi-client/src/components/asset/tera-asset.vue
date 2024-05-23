@@ -76,7 +76,7 @@
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav :nav-ids="assetNavIds" :element-with-nav-ids="assetElementRef" />
+			<tera-asset-nav :element-with-nav-ids="assetElementRef" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -118,10 +118,6 @@ const props = defineProps({
 	featureConfig: {
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
-	},
-	assetNavIds: {
-		type: Array as PropType<string[]>,
-		default: () => []
 	},
 	// Booleans default to false if not specified
 	isNamingAsset: Boolean,

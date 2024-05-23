@@ -1,7 +1,7 @@
 <template>
 	<nav>
-		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
-			{{ id.replace('-', ' ') }}
+		<a v-for="id in navIds" :key="id" @click="scrollTo(id)">
+			{{ id.replaceAll('-', ' ') }}
 		</a>
 	</nav>
 </template>
@@ -10,11 +10,10 @@
 import { ref, onMounted, nextTick } from 'vue';
 
 const props = defineProps<{
-	navIds: string[];
 	elementWithNavIds: HTMLElement;
 }>();
 
-const navIdsInView = ref<string[]>([]);
+const navIds = ref<string[]>([]);
 
 async function scrollTo(id: string) {
 	const element = props.elementWithNavIds.querySelector(`#${id}`);
@@ -24,7 +23,22 @@ async function scrollTo(id: string) {
 
 onMounted(async () => {
 	await nextTick();
-	navIdsInView.value = props.navIds.filter((id) => props.elementWithNavIds.querySelector(`#${id}`));
+	// Find all the headers and assign them an id
+	const headers = props.elementWithNavIds.querySelectorAll('.p-accordion-header > a');
+	headers.forEach((header) => {
+		const textNodes = Array.from(header.childNodes).filter(
+			(node) => node.nodeType === Node.TEXT_NODE
+		);
+		let text = textNodes.map((node) => node.textContent).join('');
+		if (!text) {
+			const span = header.querySelector('span');
+			if (span?.textContent) text = span.textContent.trim();
+		}
+		if (!text) return;
+		const id = `${text.replace(/\s+/g, '-')}`;
+		header.setAttribute('id', id);
+	});
+	navIds.value = Array.from(headers).map((header) => header.id);
 });
 </script>
 
@@ -32,7 +46,7 @@ onMounted(async () => {
 nav {
 	display: flex;
 	flex-direction: column;
-	width: fit-id;
+	width: fit-content;
 	gap: 1rem;
 	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
 	/* Responsible for stickiness */
