@@ -172,7 +172,7 @@ public class ModelController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission = projectId == null
 				? Schema.Permission.NONE
-				: projectService.checkPermissionCanWrite(
+				: projectService.checkPermissionCanRead(
 						currentUserService.get().getId(), projectId);
 
 		try {
