@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -164,19 +163,19 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 
 		Model model = new Model()
-			.setHeader(new ModelHeader()
-				.setName("test-name")
-				.setModelSchema("test-schema")
-				.setModelVersion("0.1.2")
-				.setDescription("test-description")
-				.setSchemaName("petrinet"));
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"));
 		model.setPublicAsset(true);
 
 		Model createdModel = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId()).with(csrf()))
-			.andExpect(status().isOk());
-
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId())
+						.with(csrf()))
+				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -184,17 +183,17 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
 
 		Model model = new Model()
-			.setHeader(new ModelHeader()
-				.setName("test-name")
-				.setModelSchema("test-schema")
-				.setModelVersion("0.1.2")
-				.setDescription("test-description")
-				.setSchemaName("petrinet"));
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"));
 
 		Model createdModel = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId()).with(csrf()))
-			.andExpect(status().is5xxServerError());
-
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 	}
 }
