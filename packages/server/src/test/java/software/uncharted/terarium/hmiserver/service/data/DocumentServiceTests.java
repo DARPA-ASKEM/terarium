@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -202,7 +203,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		DocumentAsset documentAsset = createDocument();
 		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = documentAssetService.exportAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<DocumentAsset> exported =
+				documentAssetService.exportAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
 
 		final DocumentAsset imported = documentAssetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 

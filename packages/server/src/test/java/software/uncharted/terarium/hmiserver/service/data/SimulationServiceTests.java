@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
@@ -168,7 +169,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 
 		simulation = simulationService.createAsset(simulation, ASSUME_WRITE_PERMISSION);
 
-		final byte[] exported = simulationService.exportAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
+		final AssetExport<Simulation> exported =
+				simulationService.exportAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Simulation imported = simulationService.importAsset(exported, ASSUME_WRITE_PERMISSION);
 
