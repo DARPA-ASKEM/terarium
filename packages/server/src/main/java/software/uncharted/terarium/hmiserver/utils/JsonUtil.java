@@ -1,11 +1,42 @@
 package software.uncharted.terarium.hmiserver.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class JsonUtil {
+
+	public static <T> void addList(final JsonNode jsonNode, final String key, final List<T> list) {
+		if (list != null) {
+			final ObjectMapper mapper = new ObjectMapper();
+			final ArrayNode arrayNode = mapper.createArrayNode();
+			for (final T t : list) {
+				final JsonNode e = mapper.valueToTree(t);
+				arrayNode.add(e);
+			}
+			((ObjectNode) jsonNode).set(key, arrayNode);
+		}
+	}
+
+	public static List<JsonNode> getList(final JsonNode jsonNode, final String key) {
+		if (jsonNode == null) {
+			return null;
+		}
+		if (jsonNode.has(key) && jsonNode.get(key).isArray()) {
+			final List<JsonNode> list = new ArrayList<>();
+			for (final JsonNode node : jsonNode.get(key)) {
+				list.add(node);
+			}
+			return list;
+		}
+		return null;
+	}
 
 	public static void setAll(final ObjectNode dest, final JsonNode src) {
 		src.fields().forEachRemaining(entry -> {

@@ -1,13 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import java.util.UUID;
+
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -54,9 +58,9 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 					.orElseThrow();
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (document.getMetadata() == null) {
-				document.setMetadata(new java.util.HashMap<>());
+				document.setMetadata(objectMapper.createObjectNode());
 			}
-			document.getMetadata().put("gollmCard", card.response);
+			((ObjectNode) document.getMetadata()).set("gollmCard", card.response);
 
 			documentAssetService.updateAsset(document, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
