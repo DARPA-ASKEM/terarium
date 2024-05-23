@@ -12,7 +12,7 @@ public class RebacProject extends RebacObject {
 	ReBACService reBACService;
 
 	public RebacProject(UUID id, ReBACService reBACService) {
-		super(id.toString());
+		super(id);
 		this.reBACService = reBACService;
 	}
 

@@ -8,7 +8,7 @@ import type {
 	ModelDistribution,
 	Initial
 } from '@/types/Types';
-import { getParameters } from '@/model-representation/service';
+import { pythonInstance } from '@/python/PyodideController';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -84,7 +84,7 @@ export function sanityCheck(config: ModelConfiguration): string[] {
 		return errors;
 	}
 
-	const parameters: ModelParameter[] = getParameters(modelToCheck);
+	const parameters: ModelParameter[] = getParameters(config);
 
 	parameters.forEach((p) => {
 		const val = p.value;
@@ -113,22 +113,6 @@ export function sanityCheck(config: ModelConfiguration): string[] {
 	return errors;
 }
 
-// cleans a model by removing distributions that are not needed
-export function cleanModel(model: Model): void {
-	const parameters: ModelParameter[] = getParameters(model);
-
-	parameters.forEach((p) => {
-		const max = parseFloat(p.distribution?.parameters.maximum);
-		const min = parseFloat(p.distribution?.parameters.minimum);
-
-		// we delete the distribution when there is partial/no distribution
-
-		if (Number.isNaN(max) || Number.isNaN(min)) {
-			delete p.distribution;
-		}
-	});
-}
-
 export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
 	return config.configuration.semantics?.ode.initials?.find(
 		(initial) => initial.target === initialId
@@ -136,7 +120,24 @@ export function getInitial(config: ModelConfiguration, initialId: string): Initi
 }
 
 export function getInitialSource(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].source ?? '';
+	return config.configuration.metadata?.initials?.[initialId]?.source ?? '';
+}
+
+export function getInitialName(config: ModelConfiguration, initialId: string): string {
+	return config.configuration.metadata?.initials?.[initialId]?.name ?? '';
+}
+
+export function getInitialUnit(config: ModelConfiguration, initialId: string): string {
+	return config.configuration.metadata?.initials?.[initialId]?.unit ?? '';
+}
+
+export function getInitialDescription(config: ModelConfiguration, initialId: string): string {
+	return config.configuration.metadata?.initials?.[initialId]?.description ?? '';
+}
+
+export function getInitialExpression(config: ModelConfiguration, initialId: string): string {
+	const initial = getInitial(config, initialId);
+	return initial?.expression ?? '';
 }
 
 export function setInitialSource(
@@ -147,6 +148,45 @@ export function setInitialSource(
 	const initial = config.configuration.metadata?.initials?.[initialId];
 	if (initial) {
 		initial.source = source;
+	}
+}
+
+export function setInitialExpression(
+	config: ModelConfiguration,
+	initialId: string,
+	expression: string
+): void {
+	const initial = getInitial(config, initialId);
+	if (!initial) return;
+
+	pythonInstance
+		.parseExpression(expression)
+		.then((result) => {
+			const mathml = result.mathml;
+			initial.expression = expression;
+			initial.expression_mathml = mathml;
+		})
+		.catch((error) => {
+			// Handle error appropriately
+			console.error('Error parsing expression:', error);
+		});
+}
+
+export function setInitialName(config: ModelConfiguration, initialId: string, name: string): void {
+	const initial = config.configuration.metadata?.initials?.[initialId];
+	if (initial) {
+		initial.name = name;
+	}
+}
+
+export function setInitialDescription(
+	config: ModelConfiguration,
+	initialId: string,
+	description: string
+): void {
+	const initial = config.configuration.metadata?.initials?.[initialId];
+	if (initial) {
+		initial.description = description;
 	}
 }
 
@@ -207,4 +247,12 @@ export function setParameterSource(
 	if (parameter) {
 		parameter.source = source;
 	}
+}
+
+export function getParameters(config: ModelConfiguration): ModelParameter[] {
+	return config.configuration.semantics?.ode.parameters ?? [];
+}
+
+export function getInitials(config: ModelConfiguration): Initial[] {
+	return config.configuration.semantics?.ode.initials ?? [];
 }

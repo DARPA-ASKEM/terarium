@@ -16,10 +16,9 @@ public class WorkflowNode extends SupportAdditionalProperties implements Seriali
 	private UUID workflowId;
 
 	public WorkflowNode clone(final UUID workflowId) {
-		final WorkflowNode clone = new WorkflowNode();
+		final WorkflowNode clone = (WorkflowNode) super.clone();
 		clone.setId(UUID.randomUUID());
 		clone.setWorkflowId(workflowId);
-		clone.setAdditionalProperties(this.getAdditionalProperties());
 		return clone;
 	}
 }

@@ -22,7 +22,7 @@ public class RebacGroup extends RebacObject {
 	}
 
 	public boolean canAdministrate(RebacObject rebacObject) throws Exception {
-		return reBACService.canAdministrate(getSchemaObject(), rebacObject.getSchemaObject());
+		return reBACService.can(getSchemaObject(), Schema.Permission.ADMINISTRATE, rebacObject.getSchemaObject());
 	}
 
 	public void createWriterRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {

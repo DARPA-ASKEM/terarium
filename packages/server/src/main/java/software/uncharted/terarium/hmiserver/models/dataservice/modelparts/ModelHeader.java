@@ -36,4 +36,17 @@ public class ModelHeader extends SupportAdditionalProperties implements Serializ
 	@TSOptional
 	@JsonProperty("extracted_from")
 	private String extractedFrom;
+
+	@Override
+	public ModelHeader clone() {
+		ModelHeader clone = (ModelHeader) super.clone();
+		clone.setName(this.getName());
+		clone.setModelSchema(this.getModelSchema());
+		clone.setSchemaName(this.getSchemaName());
+		clone.setDescription(this.getDescription());
+		clone.setExtractedFrom(this.getExtractedFrom());
+		clone.setModelVersion(this.getModelVersion());
+
+		return clone;
+	}
 }

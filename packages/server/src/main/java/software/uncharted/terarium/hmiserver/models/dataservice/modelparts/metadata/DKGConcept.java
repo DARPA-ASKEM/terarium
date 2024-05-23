@@ -21,4 +21,13 @@ public class DKGConcept extends SupportAdditionalProperties implements Serializa
 	private String name;
 
 	private Double score;
+
+	@Override
+	public DKGConcept clone() {
+		DKGConcept clone = (DKGConcept) super.clone();
+		clone.setId(id);
+		clone.setName(name);
+		clone.setScore(score);
+		return clone;
+	}
 }

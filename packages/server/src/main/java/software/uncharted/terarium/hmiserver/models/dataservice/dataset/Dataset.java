@@ -54,13 +54,6 @@ public class Dataset extends TerariumAsset {
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp dataSourceDate;
 
-	/** (Optional) list of file names associated with the dataset */
-	@TSOptional
-	@JsonAlias("file_names")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<String> fileNames;
-
 	@TSOptional
 	@ManyToOne
 	@JsonBackReference
@@ -108,10 +101,7 @@ public class Dataset extends TerariumAsset {
 		clone.userId = this.userId;
 		clone.esgfId = this.esgfId;
 		clone.dataSourceDate = this.dataSourceDate;
-		if (fileNames != null) {
-			clone.fileNames = new ArrayList<>();
-			clone.fileNames.addAll(fileNames);
-		}
+
 		clone.datasetUrl = this.datasetUrl;
 		if (datasetUrls != null) {
 			clone.datasetUrls = new ArrayList<>();

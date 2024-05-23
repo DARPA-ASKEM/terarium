@@ -18,12 +18,11 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 	private UUID target;
 
 	public WorkflowEdge clone(final UUID workflowId, final UUID source, final UUID target) {
-		final WorkflowEdge clone = new WorkflowEdge();
+		final WorkflowEdge clone = (WorkflowEdge) super.clone();
 		clone.setId(UUID.randomUUID());
 		clone.setWorkflowId(workflowId);
 		clone.setSource(source);
 		clone.setTarget(target);
-		clone.setAdditionalProperties(this.getAdditionalProperties());
 		return clone;
 	}
 }

@@ -3,6 +3,7 @@ import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import { Ref, ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -19,6 +20,13 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		if (activeProjectId.value) {
+			if (config.params) {
+				config.params['project-id'] = activeProjectId.value;
+			} else {
+				config.params = { 'project-id': activeProjectId.value };
+			}
+		}
 		return config;
 	},
 	(error) => {
