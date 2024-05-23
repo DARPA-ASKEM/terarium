@@ -183,7 +183,7 @@ export interface AddDocumentAssetFromXDDResponse {
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
-    metadata?: { [index: string]: any };
+    metadata?: any;
     source?: string;
     text?: string;
     grounding?: Grounding;
