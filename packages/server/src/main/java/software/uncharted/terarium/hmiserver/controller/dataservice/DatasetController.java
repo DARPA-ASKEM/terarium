@@ -87,7 +87,6 @@ public class DatasetController {
 	final CurrentUserService currentUserService;
 	final Messages messages;
 
-
 	private final List<String> SEARCH_FIELDS = List.of("name", "description");
 
 	@GetMapping
@@ -224,9 +223,9 @@ public class DatasetController {
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission = projectId == null
-			? Schema.Permission.NONE
-			: projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(), projectId);
+				? Schema.Permission.NONE
+				: projectService.checkPermissionCanWrite(
+						currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
@@ -236,8 +235,8 @@ public class DatasetController {
 			}
 			// GETs not associated to a projectId cannot read non public or temporary assets
 			if (permission.equals(Schema.Permission.NONE)
-				&& !dataset.get().getPublicAsset()
-				&& !dataset.get().getTemporary()) {
+					&& !dataset.get().getPublicAsset()
+					&& !dataset.get().getTemporary()) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 			}
 

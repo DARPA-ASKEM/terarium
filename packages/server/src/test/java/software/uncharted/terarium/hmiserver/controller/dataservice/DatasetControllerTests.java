@@ -29,8 +29,6 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 
 public class DatasetControllerTests extends TerariumApplicationTests {
@@ -371,12 +369,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		Dataset dataset = (Dataset) new Dataset().setName("test-document-name").setDescription("my description");
 		dataset.setPublicAsset(true);
 
-		final Dataset createdDataset = datasetService.createAsset(dataset,
-			ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset.getId())
-				.with(csrf()))
-			.andExpect(status().isOk());
+						.with(csrf()))
+				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -385,12 +382,10 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		Dataset dataset = (Dataset) new Dataset().setName("test-document-name").setDescription("my description");
 
-		final Dataset createdDataset = datasetService.createAsset(dataset,
-			ASSUME_WRITE_PERMISSION);
-
+		final Dataset createdDataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset.getId())
-				.with(csrf()))
-			.andExpect(status().is5xxServerError());
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 	}
 }
