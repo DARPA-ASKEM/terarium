@@ -26,18 +26,21 @@ onMounted(async () => {
 	// Find all the headers to navigate to and assign them an id
 	const headers = props.elementWithNavIds.querySelectorAll('.p-accordion-header > a');
 	headers.forEach((header) => {
+		// Extract header name
 		const textNodes = Array.from(header.childNodes).filter(
 			(node) => node.nodeType === Node.TEXT_NODE
 		);
 		let text = textNodes.map((node) => node.textContent).join('');
 		if (!text) {
 			const span = header.querySelector('span');
-			if (span?.textContent) text = span.textContent.trim();
+			if (span?.textContent) text = span.textContent;
 		}
 		if (!text) return;
-		const id = `${text.replace(/\s+/g, '-')}`;
+		// Inject id into header based on header name
+		const id = `${text.replace(/\s+/g, '-').trim()}`;
 		header.setAttribute('id', id);
 	});
+	// Assign navigation options
 	navIds.value = Array.from(headers).map((header) => header.id);
 });
 </script>
