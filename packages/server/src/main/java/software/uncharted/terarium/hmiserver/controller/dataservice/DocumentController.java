@@ -68,6 +68,7 @@ import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -79,6 +80,7 @@ public class DocumentController {
 
 	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
+	final Messages messages;
 
 	final ExtractionProxy extractionProxy;
 
@@ -246,12 +248,18 @@ public class DocumentController {
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectId == null
+				? Schema.Permission.NONE
+				: projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
 		if (document.isEmpty()) {
 			return ResponseEntity.notFound().build();
+		}
+		// GETs not associated to a projectId cannot read private or temporary assets
+		if (permission.equals(Schema.Permission.NONE)
+				&& (!document.get().getPublicAsset() || document.get().getTemporary())) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
 		// Test if the document as any assets
