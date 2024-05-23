@@ -550,7 +550,7 @@ const runOptimize = async () => {
 		},
 		policyInterventions: optimizeInterventions,
 		qoi: {
-			contexts: [knobs.value.targetVariables],
+			contexts: knobs.value.targetVariables,
 			method: knobs.value.qoiMethod
 		},
 		riskBound: knobs.value.threshold,
