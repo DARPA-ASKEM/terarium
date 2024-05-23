@@ -354,7 +354,7 @@ function mutateLoadingState(isLoading: boolean) {
 
 const menuItems = computed(() => [
 	{
-		label: 'Add subset to project dataset',
+		label: 'Add subset to project datasets',
 		icon: 'pi pi-pencil',
 		disabled: !subset.value,
 		command: () => {
