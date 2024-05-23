@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 
@@ -258,26 +257,30 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description");
+		DocumentAsset documentAsset = (DocumentAsset)
+				new DocumentAsset().setName("test-document-name").setDescription("my description");
 		documentAsset.setPublicAsset(true);
 
-		final DocumentAsset createdDocumentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset =
+				documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId())
-				.with(csrf()))
-			.andExpect(status().isOk());
+						.with(csrf()))
+				.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
 
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description");
+		DocumentAsset documentAsset = (DocumentAsset)
+				new DocumentAsset().setName("test-document-name").setDescription("my description");
 
-		final DocumentAsset createdDocumentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset =
+				documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId())
-				.with(csrf()))
-			.andExpect(status().isForbidden());
+						.with(csrf()))
+				.andExpect(status().isForbidden());
 	}
 }

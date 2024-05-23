@@ -249,9 +249,8 @@ public class DocumentController {
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission = projectId == null
-			? Schema.Permission.NONE
-			: projectService.checkPermissionCanRead(
-			currentUserService.get().getId(), projectId);
+				? Schema.Permission.NONE
+				: projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
 		if (document.isEmpty()) {
@@ -259,8 +258,8 @@ public class DocumentController {
 		}
 		// GETs not associated to a projectId cannot read non public or temporary assets
 		if (permission.equals(Schema.Permission.NONE)
-			&& !document.get().getPublicAsset()
-			&& !document.get().getTemporary()) {
+				&& !document.get().getPublicAsset()
+				&& !document.get().getTemporary()) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
