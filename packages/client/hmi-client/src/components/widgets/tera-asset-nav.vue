@@ -37,7 +37,7 @@ onMounted(async () => {
 		}
 		if (!text) return;
 		// Inject id into header based on header name
-		const id = `${text.replace(/\s+/g, '-').trim()}`;
+		const id = text.replaceAll(' ', '-').trim();
 		header.setAttribute('id', id);
 	});
 	// Assign navigation options
