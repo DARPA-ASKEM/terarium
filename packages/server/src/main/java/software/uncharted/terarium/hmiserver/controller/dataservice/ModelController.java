@@ -186,7 +186,7 @@ public class ModelController {
 			if (permission.equals(Schema.Permission.NONE)
 					&& !model.get().getPublicAsset()
 					&& !model.get().getTemporary()) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			// Find the Document Assets linked via provenance to the model

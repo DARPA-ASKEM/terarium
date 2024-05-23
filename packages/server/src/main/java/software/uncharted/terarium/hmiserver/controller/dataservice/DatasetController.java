@@ -237,7 +237,7 @@ public class DatasetController {
 			if (permission.equals(Schema.Permission.NONE)
 					&& !dataset.get().getPublicAsset()
 					&& !dataset.get().getTemporary()) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			return dataset.map(ResponseEntity::ok)
