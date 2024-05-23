@@ -1,7 +1,7 @@
 <template>
 	<nav>
 		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
-			{{ id.replace('-', ' ') }}
+			{{ id.replaceAll('-', ' ') }}
 		</a>
 	</nav>
 </template>
