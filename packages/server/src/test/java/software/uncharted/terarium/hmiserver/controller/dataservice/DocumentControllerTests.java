@@ -252,4 +252,69 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		Assertions.assertEquals(content, resultContent);
 	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetPublicModelWithoutProject() throws Exception {
+
+		DocumentAsset documentAsset = (DocumentAsset)
+				new DocumentAsset().setName("test-document-name").setDescription("my description");
+		documentAsset.setPublicAsset(true);
+
+		final DocumentAsset createdDocumentAsset =
+				documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId())
+						.with(csrf()))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
+
+		DocumentAsset documentAsset_public_not_temp = (DocumentAsset) new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(false);
+		DocumentAsset documentAsset_public_temp = (DocumentAsset) new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(true);
+		DocumentAsset documentAsset_not_public_temp = (DocumentAsset) new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(true);
+		DocumentAsset documentAsset_not_public_not_temp = (DocumentAsset) new DocumentAsset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(false);
+
+		final DocumentAsset createdDocumentAsset_public_temp =
+				documentAssetService.createAsset(documentAsset_public_temp, ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset_public_not_temp =
+				documentAssetService.createAsset(documentAsset_public_not_temp, ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset_not_public_temp =
+				documentAssetService.createAsset(documentAsset_not_public_temp, ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset_not_public_not_temp =
+				documentAssetService.createAsset(documentAsset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset_public_not_temp.getId())
+						.with(csrf()))
+				.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset_not_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(MockMvcRequestBuilders.get(
+								"/document-asset/" + createdDocumentAsset_not_public_not_temp.getId())
+						.with(csrf()))
+				.andExpect(status().isForbidden());
+	}
 }

@@ -51,6 +51,7 @@ public class DataMigrationESToPG {
 	private final DatasetService datasetService;
 	private final ArtifactService artifactService;
 	private final DocumentAssetService documentService;
+	private final ModelService modelService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -158,7 +159,8 @@ public class DataMigrationESToPG {
 				new MigrationConfig<>(codeService, elasticConfig.getCodeIndex()),
 				new MigrationConfig<>(datasetService, elasticConfig.getDatasetIndex()),
 				new MigrationConfig<>(artifactService, elasticConfig.getArtifactIndex()),
-				new MigrationConfig<>(documentService, elasticConfig.getDatasetIndex()));
+				new MigrationConfig<>(documentService, elasticConfig.getDocumentIndex()),
+				new MigrationConfig<>(modelService, elasticConfig.getModelIndex()));
 		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
 	}
 
