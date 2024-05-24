@@ -47,8 +47,9 @@ There are many ways/package managers to install these dependencies. We recommend
 ```bash
 brew tap homebrew/cask-versions
 brew install --cask temurin17 # OR brew install openjdk@17
-brew install gradle
-brew install yarn
+brew install gradle@7
+brew install node@20
+brew install yarn@4
 brew install ansible
 ```
 
