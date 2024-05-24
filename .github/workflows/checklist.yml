@@ -6,10 +6,9 @@ on:
   pull_request:
     branches:
       - main
+  issue_comment:
     types:
-      - opened
       - edited
-      - synchronize
 
 jobs:
   comment:
