@@ -10,13 +10,18 @@ on:
       - opened
       - edited
       - synchronize
+      - reopened
+      - ready_for_review
   issue_comment:
     types:
+      - created
       - edited
+      - deleted
 
 jobs:
   comment:
     name: Pull Request Checklist
+    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/github-script@v7
@@ -52,6 +57,8 @@ jobs:
               })
               return;
             }
+
+            console.log("Bot comment found. Checking if all checklist items are checked.");
 
             // Approve PR if all checklist items are checked
             if (!botComment.body.match(/- \[ \]/g)) {
