@@ -13,16 +13,16 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '👋 Thanks for reporting!'
-            })
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: '👋 Thanks for reporting!'
+#            })
             github.rest.pulls.createReview({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-              event: COMMENT,
+              event: "COMMENT",
               body: '👋 Thanks for reporting!'
             })
