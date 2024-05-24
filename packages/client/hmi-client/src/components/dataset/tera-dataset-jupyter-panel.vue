@@ -97,7 +97,6 @@
 					class="5"
 					:disabled="!kernelState"
 				/>
-
 				<Button
 					label="Save as"
 					icon="pi pi-save"
@@ -183,7 +182,7 @@ const emit = defineEmits(['new-dataset-saved', 'update-language']);
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const actionTarget = ref('df');
+const actionTarget = ref<string | null>(null);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -324,10 +323,16 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
-const updateKernelState = (newKernelState) => {
+const updateKernelState = (newKernelState: any) => {
 	kernelState.value = newKernelState;
+	// Default the dropdown to the first dataframe
+	if (!actionTarget.value) {
+		actionTarget.value = Object.keys(newKernelState)[0];
+	}
 };
 
+// TODO: Integrate tera-save-asset-modal.vue instead of doing this
+// For some reason saving the csv doesn't work unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
