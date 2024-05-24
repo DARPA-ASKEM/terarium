@@ -1,11 +1,7 @@
 <template>
 	<nav>
-<<<<<<< auto-retrieve-scroll-elements
-		<a v-for="id in navIds" :key="id" @click="scrollTo(id)">
-=======
-		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
->>>>>>> model-page-design-update
-			{{ id.replaceAll('-', ' ') }}
+		<a v-for="[id, navOption] in navIds" :key="id" @click="scrollTo(id)">
+			{{ navOption }}
 		</a>
 	</nav>
 </template>
@@ -17,7 +13,7 @@ const props = defineProps<{
 	elementWithNavIds: HTMLElement;
 }>();
 
-const navIds = ref<string[]>([]);
+const navIds = ref<Map<string, string>>(new Map());
 
 async function scrollTo(id: string) {
 	const element = props.elementWithNavIds.querySelector(`#${id}`);
@@ -41,11 +37,11 @@ onMounted(async () => {
 		}
 		if (!text) return;
 		// Inject id into header based on header name
-		const id = text.replaceAll(' ', '-').trim();
+		const id = `header-nav-${text.replaceAll(' ', '-').trim()}`;
 		header.setAttribute('id', id);
+		// Add to map (HTML id -> navigation option/header name)
+		navIds.value.set(id, text);
 	});
-	// Assign navigation options
-	navIds.value = Array.from(headers).map((header) => header.id);
 });
 </script>
 
