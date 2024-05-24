@@ -1,10 +1,7 @@
 <template>
 	<section>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
-			<AccordionTab>
-				<template #header>
-					<header id="Description">Description</header>
-				</template>
+			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
 					<SelectButton
 						v-model="descriptionType"
@@ -47,10 +44,7 @@
 					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					<header id="Diagram">Diagram</header>
-				</template>
+			<AccordionTab header="Diagram">
 				<tera-model-diagram
 					ref="teraModelDiagramRef"
 					:model="model"
@@ -59,10 +53,7 @@
 					@update-configuration="updateConfiguration"
 				/>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					<header id="Provenance">Provenance</header>
-				</template>
+			<AccordionTab header="Provenance">
 				<tera-related-documents
 					class="m-2"
 					:documents="documents"
@@ -71,20 +62,14 @@
 					@enriched="fetchAsset"
 				/>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					<header id="Model-eqautions">Model equations</header>
-				</template>
+			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
 					:is-editable="false"
 					@model-updated="emit('model-updated')"
 				/>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)">
-				<template #header>
-					<header id="Associated-resources">Associated resources</header>
-				</template>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models" />
 				</DataTable>

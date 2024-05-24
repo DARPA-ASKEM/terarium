@@ -1,6 +1,10 @@
 <template>
 	<nav>
+<<<<<<< auto-retrieve-scroll-elements
+		<a v-for="id in navIds" :key="id" @click="scrollTo(id)">
+=======
 		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
+>>>>>>> model-page-design-update
 			{{ id.replaceAll('-', ' ') }}
 		</a>
 	</nav>
@@ -10,11 +14,10 @@
 import { ref, onMounted, nextTick } from 'vue';
 
 const props = defineProps<{
-	navIds: string[];
 	elementWithNavIds: HTMLElement;
 }>();
 
-const navIdsInView = ref<string[]>([]);
+const navIds = ref<string[]>([]);
 
 async function scrollTo(id: string) {
 	const element = props.elementWithNavIds.querySelector(`#${id}`);
@@ -24,7 +27,25 @@ async function scrollTo(id: string) {
 
 onMounted(async () => {
 	await nextTick();
-	navIdsInView.value = props.navIds.filter((id) => props.elementWithNavIds.querySelector(`#${id}`));
+	// Find all the headers to navigate to and assign them an id
+	const headers = props.elementWithNavIds.querySelectorAll('.p-accordion-header > a');
+	headers.forEach((header) => {
+		// Extract header name
+		const textNodes = Array.from(header.childNodes).filter(
+			(node) => node.nodeType === Node.TEXT_NODE
+		);
+		let text = textNodes.map((node) => node.textContent).join('');
+		if (!text) {
+			const span = header.querySelector('span');
+			if (span?.textContent) text = span.textContent;
+		}
+		if (!text) return;
+		// Inject id into header based on header name
+		const id = text.replaceAll(' ', '-').trim();
+		header.setAttribute('id', id);
+	});
+	// Assign navigation options
+	navIds.value = Array.from(headers).map((header) => header.id);
 });
 </script>
 

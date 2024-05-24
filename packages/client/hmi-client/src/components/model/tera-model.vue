@@ -5,20 +5,7 @@
 		:is-naming-asset="isNaming"
 		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
-		:asset-nav-ids="[
-			'Description',
-			'Diagram',
-			'Provenance',
-			'Model-equations',
-			'Initial-variables',
-			'Parameters',
-			'Observables',
-			'Flows',
-			'Other concepts',
-			'Transitions',
-			'Time',
-			'Associated-resources'
-		]"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<InputText
