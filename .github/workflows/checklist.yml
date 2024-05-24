@@ -17,49 +17,49 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            // Checklist
-            const commentBody = "Please review the checklist below \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering";
-            const approvedBody = "All checklist items are checked. Approving the pull request.";
+            // Check if the bot has already approved the PR
+            const {data: reviews} = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.number,
+            });
+            if (reviews.find(review => review.user.id === 41898282 && review.state === 'APPROVED')) {
+              console.log('The PR has already been approved by the bot.');
+              return;
+            }
 
-            // Get the existing comments.
+            // Find any comment already made by the bot.
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.number,
             })
-            console.log(comments);
-
-            // Find any comment already made by the bot.
             const botComment = comments.find(comment => comment.user.id === 41898282)
 
-            if (botComment) {
-              const body = botComment.body;
-              const checklistRegex = /- \[ \]/g;
-              const uncheckedItems = body.match(checklistRegex);
-              console.log(body, uncheckedItems);
+            if (botComment && !botComment.body.match(/- \[ \]/g)) {
+              // Update the bot comment with the approved message.
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: botComment.body + "\n\nAll checklist items are checked. Approving the pull request.",
+              })
 
-              if (!uncheckedItems) {
-                // All checklist items are checked, approve the pull request
-                await github.rest.pulls.createReview({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: context.payload.number,
-                  event: 'APPROVE',
-                  body: 'All checklist items are checked',
-                });
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: botComment.id,
-                  body: botComment.body + "\n\n" + approvedBody,
-                })
-              }
+              // All checklist items are checked, approve the pull request
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.number,
+                event: 'APPROVE',
+                body: 'All checklist items are checked',
+              });
+
             } else {
-              // Create a new comment.
+              // Create a new comment with the checklist
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.number,
-                body: commentBody,
+                body: "*Please review the checklist* \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
               })
             }
