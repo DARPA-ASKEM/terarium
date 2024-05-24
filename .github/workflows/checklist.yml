@@ -50,6 +50,7 @@ jobs:
                 issue_number: context.payload.number,
                 body: "**Please review the checklist** \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
               })
+              return;
             }
 
             // Approve PR if all checklist items are checked
