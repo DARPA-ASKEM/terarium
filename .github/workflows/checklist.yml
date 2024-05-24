@@ -8,6 +8,7 @@ on:
       - created
       - edited
       - deleted
+
   pull_request:
     branches:
       - main
@@ -55,7 +56,7 @@ jobs:
               return;
             }
 
-            console.log("Bot comment found. Checking if all checklist items are checked.");
+            console.log("Bot comment found.");
 
             // Approve PR if all checklist items are checked
             if (!botComment.body.match(/- \[ \]/g)) {
@@ -77,4 +78,8 @@ jobs:
                 event: 'APPROVE',
                 body: 'All checklist items are checked',
               });
+
+              return;
             }
+
+            console.log("Not all checklist items are checked.");
