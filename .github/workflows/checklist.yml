@@ -19,11 +19,7 @@ jobs:
         with:
           script: |
             // Checklist
-            const commentBody = "Please review the checklist below \n\n
-                - [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n
-                - [ ] _documentation_  updated\n
-                - [ ] _breaking change_ notify #askem-engineering
-                "
+            const commentBody = "Please review the checklist below \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering";
 
             // Get the existing comments.
             const {data: comments} = await github.issues.listComments({
