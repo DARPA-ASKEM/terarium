@@ -155,18 +155,26 @@
 						<template #header>
 							Parameters<span class="artifact-amount">({{ numParameters }})</span>
 						</template>
-						<tera-parameter-table
+						<tera-parameter-table-v2
 							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
-							:model-configurations="suggestedConfigurationContext.tableData"
-							:model="knobs.transientModelConfig.configuration"
+							:model-configuration="knobs.transientModelConfig"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
-							config-view
-							@update-value="updateConfigParam"
-							@update-model="
-								(modelToUpdate: Model) => {
-									updateConfigFromModel(modelToUpdate);
-								}
+							@update-constant="
+								setParameterConstant(knobs.transientModelConfig, $event.id, $event.value)
+							"
+							@update-source="
+								setParameterSource(knobs.transientModelConfig, $event.id, $event.value)
+							"
+							@update-distribution="
+								setParameterDistributionParameters(
+									knobs.transientModelConfig,
+									$event.id,
+									$event.parameters
+								)
+							"
+							@select-distribution="
+								setParameterDistributionType(knobs.transientModelConfig, $event.id, $event.value)
 							"
 						/>
 						<section v-else>
@@ -315,7 +323,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { FatalError } from '@/api/api';
 import TeraInitialTableV2 from '@/components/model/petrinet/tera-initial-table-v2.vue';
-import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
+import TeraParameterTableV2 from '@/components/model/petrinet/tera-parameter-table-v2.vue';
 import {
 	emptyMiraModel,
 	generateModelDatasetConfigurationContext
@@ -330,17 +338,21 @@ import {
 	setIntervention,
 	removeIntervention,
 	setInitialSource,
-	setInitialExpression
+	setInitialExpression,
+	setParameterConstant,
+	setParameterSource,
+	setParameterDistributionType,
+	setParameterDistributionParameters
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { getParameters, cleanModel } from '@/model-representation/service';
+import { cleanModel } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -638,20 +650,6 @@ const addIntervention = () => {
 	} else {
 		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
 	}
-};
-
-const updateConfigParam = (params: ModelParameter[]) => {
-	const parameters = getParameters(knobs.value.transientModelConfig.configuration);
-	for (let i = 0; i < parameters.length; i++) {
-		const foundParam = params.find((p) => p.id === parameters[i].id);
-		if (foundParam) {
-			parameters[i] = foundParam;
-		}
-	}
-};
-
-const updateConfigFromModel = (inputModel: Model) => {
-	if (knobs.value.transientModelConfig) knobs.value.transientModelConfig.configuration = inputModel;
 };
 
 const downloadConfiguredModel = async () => {

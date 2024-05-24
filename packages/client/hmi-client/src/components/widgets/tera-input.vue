@@ -19,7 +19,7 @@ import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
 import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string;
+	modelValue: string | number;
 	label?: string;
 	errorMessage?: string;
 }>();
@@ -64,14 +64,14 @@ watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (isNistType) {
-			maskedValue.value = numberToNist(newValue);
+			maskedValue.value = numberToNist(newValue.toString());
 		}
 	}
 );
 
 onMounted(() => {
 	if (isNistType) {
-		maskedValue.value = numberToNist(props.modelValue);
+		maskedValue.value = numberToNist(props.modelValue.toString());
 	}
 });
 

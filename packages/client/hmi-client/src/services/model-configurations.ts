@@ -9,6 +9,7 @@ import type {
 	Initial
 } from '@/types/Types';
 import { pythonInstance } from '@/python/PyodideController';
+import { DistributionType } from '@/types/common';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -197,22 +198,37 @@ export function getParameter(
 	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
 }
 
-export function setDistribution(
-	config: ModelConfiguration,
-	parameterId: string,
-	distribution: ModelDistribution
-): void {
+export function getParameterName(config: ModelConfiguration, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
-	if (parameter) {
-		parameter.distribution = distribution;
-	}
+	return parameter?.name ?? '';
 }
 
-export function removeDistribution(config: ModelConfiguration, parameterId: string): void {
+export function getParameterDescription(config: ModelConfiguration, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
-	if (parameter?.distribution) {
-		delete parameter.distribution;
-	}
+	return parameter?.description ?? '';
+}
+
+export function getParameterUnit(config: ModelConfiguration, parameterId: string): string {
+	const parameter = getParameter(config, parameterId);
+	return parameter?.units?.expression ?? '';
+}
+
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string
+): ModelDistribution | undefined {
+	const parameter = getParameter(config, parameterId);
+	return parameter?.distribution;
+}
+
+export function getParameterDistributionType(
+	config: ModelConfiguration,
+	parameterId: string
+): DistributionType {
+	const parameter = getParameter(config, parameterId);
+	// for now just returning uniform distribution for all distributions
+	if (parameter?.distribution) return DistributionType.Uniform;
+	return DistributionType.Constant;
 }
 
 export function getInterventions(config: ModelConfiguration): Intervention[] {
@@ -246,6 +262,63 @@ export function setParameterSource(
 	const parameter = config.configuration.metadata?.parameters?.[parameterId];
 	if (parameter) {
 		parameter.source = source;
+	}
+}
+
+export function getParameterConstant(config: ModelConfiguration, parameterId: string): number {
+	const parameter = getParameter(config, parameterId);
+	return parameter?.value ?? NaN;
+}
+
+export function setParameterConstant(
+	config: ModelConfiguration,
+	parameterId: string,
+	value: string
+): void {
+	const parameter = getParameter(config, parameterId);
+	if (parameter) {
+		parameter.value = parseFloat(value);
+	}
+}
+
+// sets the parameter distribution type along with its default respective parameters
+export function setParameterDistributionType(
+	config: ModelConfiguration,
+	parameterId: string,
+	distributionType: DistributionType
+): void {
+	const parameter = getParameter(config, parameterId);
+	if (!parameter) return;
+	switch (distributionType) {
+		case DistributionType.Constant:
+			delete parameter.distribution;
+			break;
+		case DistributionType.Uniform:
+			parameter.distribution = {
+				type: DistributionType.Uniform,
+				parameters: {
+					minimum: 0,
+					maximum: 0
+				}
+			};
+			break;
+		default:
+			break;
+	}
+}
+
+// sets the parameter distribution parameters (i.e. minimum and maximum for uniform distribution)
+export function setParameterDistributionParameters(
+	config: ModelConfiguration,
+	parameterId: string,
+	parameters: { [index: string]: any }
+): void {
+	const parameter = getParameter(config, parameterId);
+	if (parameter && parameter.distribution) {
+		parameter.distribution.parameters = {
+			...parameter.distribution.parameters,
+			...parameters
+		};
 	}
 }
 
