@@ -1,6 +1,10 @@
 <template>
 	<nav>
+<<<<<<< auto-retrieve-scroll-elements
 		<a v-for="id in navIds" :key="id" @click="scrollTo(id)">
+=======
+		<a v-for="id in navIdsInView" :key="id" @click="scrollTo(id)">
+>>>>>>> model-page-design-update
 			{{ id.replaceAll('-', ' ') }}
 		</a>
 	</nav>
