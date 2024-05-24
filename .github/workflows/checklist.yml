@@ -42,8 +42,8 @@ jobs:
             const botComment = comments.find(comment => comment.user.id === 41898282)
 
             // Create a new comment if the bot hasn't commented yet
-            console.log("No bot comment found. Creating a new comment.");
             if (!botComment) {
+              console.log("No bot comment found. Creating a new comment.");
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -55,7 +55,7 @@ jobs:
             // Approve PR if all checklist items are checked
             if (!botComment.body.match(/- \[ \]/g)) {
               console.log("All checklist items are checked. Approving the pull request.");
-            
+
               // Update the bot comment with the approved message.
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
