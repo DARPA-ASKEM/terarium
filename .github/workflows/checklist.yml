@@ -4,11 +4,6 @@ name: Pull Request Checklist
 # yamllint disable-line rule:truthy
 on:
   issue_comment:
-    types:
-      - created
-      - edited
-      - deleted
-
   pull_request:
     branches:
       - main
