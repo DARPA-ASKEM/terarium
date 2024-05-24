@@ -41,7 +41,18 @@ jobs:
             })
             const botComment = comments.find(comment => comment.user.id === 41898282)
 
-            if (botComment && !botComment.body.match(/- \[ \]/g)) {
+            // Create a new comment with the checklist
+            if (!botComment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.number,
+                body: "**Please review the checklist** \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
+              })
+            }
+
+            // Approve PR if all checklist items are checked
+            if (!botComment.body.match(/- \[ \]/g)) {
               // Update the bot comment with the approved message.
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -58,13 +69,4 @@ jobs:
                 event: 'APPROVE',
                 body: 'All checklist items are checked',
               });
-
-            } else {
-              // Create a new comment with the checklist
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.number,
-                body: "**Please review the checklist** \n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
-              })
             }
