@@ -192,6 +192,7 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    documentAbstract?: any;
     assets?: DocumentExtraction[];
 }
 

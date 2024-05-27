@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -189,7 +191,7 @@ public class ExtractionService {
 						new ByteArrayEntity(zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM));
 
 				document.getFileNames().add(zipFileName);
-
+				JsonNode abstractJsonNode = null;
 				// Open the zipfile and extract the contents
 				notificationInterface.sendMessage("Extracting COSMOS extraction results...");
 				final Map<String, byte[]> fileMap = new HashMap<>();
@@ -201,7 +203,25 @@ public class ExtractionService {
 					while (entry != null) {
 						log.info("Adding {} to filemap", entry.getName());
 						final String filenameNoExt = removeFileExtension(entry.getName());
-						fileMap.put(filenameNoExt, zipEntryToBytes(zipInputStream));
+						final byte[] bytes = zipEntryToBytes(zipInputStream);
+
+						fileMap.put(filenameNoExt, bytes);
+						if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
+							ObjectMapper objectMapper = new ObjectMapper();
+
+							JsonNode rootNode = objectMapper.readTree(bytes);
+							if (rootNode.isArray()) {
+								ArrayNode arrayNode = (ArrayNode) rootNode;
+								String target = "Abstract";
+								String param = "detect_cls";
+								for (JsonNode record : arrayNode) {
+									if (record.has(param) && record.get(param).asText().equals(target)) {
+										abstractJsonNode = record;
+										break;
+									}
+								}
+							}
+						}
 						entry = zipInputStream.getNextEntry();
 					}
 
@@ -274,6 +294,10 @@ public class ExtractionService {
 					} else {
 						log.warn("No content found in record: {}", record);
 					}
+				}
+
+				if (abstractJsonNode != null) {
+					document.setDocumentAbstract(abstractJsonNode.get("content").asText());
 				}
 
 				// update the document

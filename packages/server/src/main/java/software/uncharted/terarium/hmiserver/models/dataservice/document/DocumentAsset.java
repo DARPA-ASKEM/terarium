@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -59,6 +60,10 @@ public class DocumentAsset extends TerariumAsset {
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
+
+	@TSOptional
+	@Column(columnDefinition = "text")
+	private String documentAbstract;
 
 	@TSOptional
 	@Type(JsonType.class)
