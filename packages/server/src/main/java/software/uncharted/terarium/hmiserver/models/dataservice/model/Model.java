@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +24,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
