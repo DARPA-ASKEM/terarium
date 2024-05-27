@@ -27,12 +27,7 @@
 								@click="resetModel"
 								class="mr-2"
 							/>
-							<Button
-								label="Stratify"
-								size="small"
-								icon="pi pi-play"
-								@click="stratifyModel"
-							/>
+							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
 						</section>
 					</header>
 					<tera-stratification-group-form
@@ -56,12 +51,7 @@
 						@question-asked="llmThoughts = []"
 					>
 						<template #toolbar-right-side>
-							<Button
-								label="Run"
-								size="small"
-								icon="pi pi-play"
-								@click="runCodeStratify"
-							/>
+							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
 						</template>
 					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
@@ -319,8 +309,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const semantics = amrModel.semantics;
 
 	if (
-		(modelFramework === AMRSchemaNames.PETRINET ||
-			modelFramework === AMRSchemaNames.STOCKFLOW) &&
+		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
 		semantics?.ode
 	) {
 		const { initials, parameters, observables } = semantics.ode;

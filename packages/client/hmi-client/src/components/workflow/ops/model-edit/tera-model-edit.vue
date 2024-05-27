@@ -35,12 +35,7 @@
 									size="small"
 									@click="resetModel"
 								/>
-								<Button
-									icon="pi pi-play"
-									label="Run"
-									size="small"
-									@click="runFromCodeWrapper"
-								/>
+								<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
@@ -381,8 +376,7 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			activeOutput.value =
-				props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
+			activeOutput.value = props.node.outputs.find((d) => d.id === selectedOutputId.value) ?? null;
 			await handleOutputChange();
 		}
 	},

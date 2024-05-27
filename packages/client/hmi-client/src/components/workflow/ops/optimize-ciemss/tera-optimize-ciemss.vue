@@ -9,12 +9,7 @@
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
-					<Button
-						:disabled="isRunDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="runOptimize"
-					/>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
@@ -22,20 +17,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<InputText
-								disabled
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								value="0"
-							/>
+							<InputText disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.endTime"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -83,19 +69,11 @@
 						</div>
 						<div class="label-and-input">
 							<label>Maxiter</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.maxiter"
-								inputId="integeronly"
-							/>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
 						</div>
 						<div class="label-and-input">
 							<label>Maxfeval</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.maxfeval"
-								inputId="integeronly"
-							/>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
 						</div>
 					</div>
 					<Button
@@ -216,16 +194,10 @@
 							rounded
 							size="small"
 							class="ml-auto p-button-text"
-							@click="
-								displayOptimizationResultMessage = !displayOptimizationResultMessage
-							"
+							@click="displayOptimizationResultMessage = !displayOptimizationResultMessage"
 						/>
 					</span>
-					<div
-						v-for="(value, key) in optimizationResult"
-						:key="key"
-						class="result-message-row"
-					>
+					<div v-for="(value, key) in optimizationResult" :key="key" class="result-message-row">
 						<div class="label">{{ key }}:</div>
 						<div class="value">{{ formatJsonValue(value) }}</div>
 					</div>
@@ -460,8 +432,7 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 });
 
 const showSpinner = computed<boolean>(
-	() =>
-		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
 );
 
 const showModelModal = ref(false);

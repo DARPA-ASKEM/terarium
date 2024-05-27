@@ -54,12 +54,7 @@
 						{{ modelCouplingResult }}
 					</div>
 					<div v-else class="empty-state-container">
-						<img
-							src="@assets/svg/plants.svg"
-							alt=""
-							draggable="false"
-							class="empty-state-image"
-						/>
+						<img src="@assets/svg/plants.svg" alt="" draggable="false" class="empty-state-image" />
 						<p>No model provided</p>
 					</div>
 				</div>

@@ -15,8 +15,8 @@
 					<!-- Model weights -->
 					<AccordionTab header="Model weights">
 						<p class="subheader">
-							How do you want to distribute weights of the attached models? You can
-							distribute them equally or set custom weights using the input boxes.
+							How do you want to distribute weights of the attached models? You can distribute them
+							equally or set custom weights using the input boxes.
 						</p>
 						<div class="model-weights">
 							<table class="p-datatable-table">
@@ -49,9 +49,7 @@
 
 					<!-- Mapping -->
 					<AccordionTab header="Mapping">
-						<p class="subheader">
-							Map the variables from the models to the ensemble variables.
-						</p>
+						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
 						<template v-if="ensembleConfigs.length > 0">
 							<table class="w-full mb-2">
 								<tr>
@@ -61,10 +59,7 @@
 									</th>
 								</tr>
 
-								<tr
-									v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)"
-									:key="key"
-								>
+								<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
 									<td>{{ key }}</td>
 									<td v-for="config in ensembleConfigs" :key="config.id">
 										<Dropdown

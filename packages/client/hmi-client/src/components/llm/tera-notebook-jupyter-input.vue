@@ -2,11 +2,7 @@
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
 		<div class="toolbar-left-side">
-			<Dropdown
-				:disabled="true"
-				:model-value="contextLanguage"
-				:options="contextLanguageOptions"
-			/>
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 			<div class="flex gap-1 mr-2">
 				<InputSwitch v-model="showAssistant" class="mr-1" />
 				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />

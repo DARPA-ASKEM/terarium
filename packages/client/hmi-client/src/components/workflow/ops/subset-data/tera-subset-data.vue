@@ -20,8 +20,8 @@
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
 				<p class="subheader">
-					Set your desired latitude and longitude to define the spatial boundaries. Apply
-					spatial skipping to retain every nth data point for a coarser subset.
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
+					skipping to retain every nth data point for a coarser subset.
 				</p>
 
 				<!-- Preview image -->
@@ -35,14 +35,7 @@
 				<span>
 					<label>Latitude</label>
 					<InputNumber v-model="latitudeStart" placeholder="Start" />
-					<Slider
-						v-model="latitudeRange"
-						range
-						class="w-full"
-						:min="-90"
-						:max="90"
-						:step="0.001"
-					/>
+					<Slider v-model="latitudeRange" range class="w-full" :min="-90" :max="90" :step="0.001" />
 					<InputNumber v-model="latitudeEnd" placeholder="End" />
 				</span>
 				<span>
@@ -59,9 +52,8 @@
 					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
-					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{
-						longitudeStart
-					}}', '{{ longitudeEnd }}'])
+					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
+					'{{ longitudeEnd }}'])
 				</code>
 				<div class="flex flex-row align-items-center">
 					<span>
@@ -70,9 +62,7 @@
 					</span>
 
 					<span class="ml-3">
-						<p :class="!isSpatialSkipping ? 'disabled' : ''">
-							Keep every nth datapoint
-						</p>
+						<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
 						<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
 					</span>
 				</div>
@@ -80,8 +70,8 @@
 				<!-- Temporal slice -->
 				<h5 class="mt-3">Select temporal slice</h5>
 				<p class="subheader">
-					Set your desired time range to define the temporal boundaries. Apply time
-					skipping to retain every nth time slice for a coarser subset.
+					Set your desired time range to define the temporal boundaries. Apply time skipping to
+					retain every nth time slice for a coarser subset.
 				</p>
 				<div class="flex flex-row">
 					<div class="col">
@@ -142,16 +132,10 @@
 								</tr>
 							</thead>
 							<tbody v-if="subset?.metadata?.dataStructure">
-								<tr
-									v-for="(value, key) in subset.metadata.dataStructure"
-									:key="key"
-								>
+								<tr v-for="(value, key) in subset.metadata.dataStructure" :key="key">
 									<td>{{ key }}</td>
 									<td>
-										<ul
-											v-for="(attrValue, attrKey) in value.attrs"
-											:key="attrKey"
-										>
+										<ul v-for="(attrValue, attrKey) in value.attrs" :key="attrKey">
 											<li>
 												<strong>{{ attrKey }}:</strong> {{ attrValue }}
 											</li>
@@ -159,10 +143,7 @@
 									</td>
 									<td>
 										<ul>
-											<li
-												v-for="(index, indexKey) in value.indexes"
-												:key="indexKey"
-											>
+											<li v-for="(index, indexKey) in value.indexes" :key="indexKey">
 												{{ index }}
 											</li>
 										</ul>
@@ -170,9 +151,7 @@
 									<td>
 										<ul>
 											<li
-												v-for="(
-													coordinate, coordinateKey
-												) in value.coordinates"
+												v-for="(coordinate, coordinateKey) in value.coordinates"
 												:key="coordinateKey"
 											>
 												{{ coordinate }}
@@ -478,9 +457,8 @@ watch(
 	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			const subsetId = props.node?.outputs?.find(
-				(output) => output.id === selectedOutputId.value
-			)?.value?.[0];
+			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
+				?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
 			}

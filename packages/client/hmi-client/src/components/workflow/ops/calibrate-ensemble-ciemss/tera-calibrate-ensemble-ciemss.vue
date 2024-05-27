@@ -9,12 +9,7 @@
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
 			<tera-drilldown-section class="ml-3 mr-2 pt-3">
 				<template #header-controls-right>
-					<Button
-						:disabled="isRunDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="runEnsemble"
-					/>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runEnsemble" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
@@ -73,9 +68,7 @@
 								<tr>
 									<div class="row-header">
 										<td
-											v-for="(element, i) in Object.keys(
-												knobs.ensembleConfigs[0].solutionMappings
-											)"
+											v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
 											:key="i"
 										>
 											{{ element }}
@@ -83,20 +76,12 @@
 									</div>
 									<td v-for="i in knobs.ensembleConfigs.length" :key="i">
 										<template
-											v-for="element in Object.keys(
-												knobs.ensembleConfigs[i - 1].solutionMappings
-											)"
+											v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
 											:key="element"
 										>
 											<Dropdown
-												v-model="
-													knobs.ensembleConfigs[i - 1].solutionMappings[
-														element
-													]
-												"
-												:options="
-													allModelOptions[i - 1]?.map((ele) => ele.id)
-												"
+												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
+												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
 												class="w-full mb-2 mt-2"
 											/>
 										</template>

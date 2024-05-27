@@ -13,9 +13,7 @@
 					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
 					<p v-if="authors"><label>Authors</label>{{ authors }}</p>
 					<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
-					<p v-if="uses?.OutOfScopeUse">
-						<label>Out of scope use</label>{{ uses.OutOfScopeUse }}
-					</p>
+					<p v-if="uses?.OutOfScopeUse"><label>Out of scope use</label>{{ uses.OutOfScopeUse }}</p>
 					<p v-if="biasAndRiskLimitations">
 						<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
 					</p>
@@ -23,9 +21,7 @@
 					<p v-if="technicalSpecifications">
 						<label>Technical Specifications</label>{{ technicalSpecifications }}
 					</p>
-					<p v-if="!isEmpty(glossary)">
-						<label>Glossary</label>{{ glossary.join(', ') }}
-					</p>
+					<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
 					<p v-if="!isEmpty(moreInformation)">
 						<label>More Information</label>
 						<a
@@ -39,17 +35,13 @@
 					</p>
 					<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
 					<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
-					<p v-if="!isEmpty(sourceDataset)">
-						<label>Source dataset</label>{{ sourceDataset }}
-					</p>
+					<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
 					<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
 					<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
 					<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
 				</section>
 				<section v-else>
-					<tera-progress-spinner is-centered
-						>Generating description...
-					</tera-progress-spinner>
+					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
 				</section>
 			</AccordionTab>
 			<AccordionTab header="Diagram">

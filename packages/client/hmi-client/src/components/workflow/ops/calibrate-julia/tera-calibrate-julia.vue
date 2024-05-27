@@ -158,10 +158,7 @@
 				<div class="form-section">
 					<h5>Variables</h5>
 					<div>
-						<section
-							v-if="selectedRunId && runResults[selectedRunId]"
-							ref="outputPanel"
-						>
+						<section v-if="selectedRunId && runResults[selectedRunId]" ref="outputPanel">
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
@@ -170,9 +167,7 @@
 								:mapping="mapping"
 								:run-type="RunType.Julia"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								@configuration-change="
-									chartProxy.configurationChange(index, $event)
-								"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 								show-remove-button
 								:size="chartSize"

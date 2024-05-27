@@ -12,8 +12,7 @@
 						<AccordionTab header="Overview">
 							<p v-if="llmAnswer">{{ llmAnswer }}</p>
 							<p v-else class="subdued">
-								Analyzing models metadata to generate a detailed comparison
-								analysis...
+								Analyzing models metadata to generate a detailed comparison analysis...
 							</p>
 						</AccordionTab>
 					</Accordion>
@@ -25,11 +24,7 @@
 						<thead class="p-datatable-thead">
 							<tr>
 								<th></th>
-								<th
-									v-for="model in modelsToCompare"
-									:key="model.id"
-									class="text-lg"
-								>
+								<th v-for="model in modelsToCompare" :key="model.id" class="text-lg">
 									{{ model.header.name }}
 								</th>
 							</tr>
@@ -51,9 +46,7 @@
 									<td class="field">{{ formatField(field) }}</td>
 									<td v-for="(card, index) in modelCardsToCompare" :key="index">
 										<template v-if="typeof card[field] === 'object'">
-											<template
-												v-for="(value, j) in Object.values(card[field])"
-											>
+											<template v-for="(value, j) in Object.values(card[field])">
 												<template v-if="Array.isArray(value)">
 													{{ value.join(', ') }}
 												</template>
@@ -118,20 +111,12 @@
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}</label>
-						<Image
-							id="img"
-							:src="image"
-							:alt="`Structural comparison ${index + 1}`"
-							preview
-						/>
+						<Image id="img" :src="image" :alt="`Structural comparison ${index + 1}`" preview />
 					</li>
 				</ul>
 
 				<!-- Legend -->
-				<template
-					#footer
-					v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)"
-				>
+				<template #footer v-if="isLoadingStructuralComparisons || !isEmpty(structuralComparisons)">
 					<div class="legend flex align-items-center gap-7">
 						<span class="flex gap-5">
 							<span class="flex align-items-center gap-2">
@@ -218,9 +203,7 @@ const modelCardsToCompare = computed(() =>
 const fields = computed(
 	() =>
 		[
-			...new Set(
-				modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), [])
-			)
+			...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))
 		] as string[]
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);

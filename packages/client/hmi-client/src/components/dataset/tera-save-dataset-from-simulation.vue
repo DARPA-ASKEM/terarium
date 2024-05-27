@@ -15,11 +15,7 @@
 		<template #footer>
 			<div class="p-dialog-footer p-0 mb-2">
 				<Button label="Cancel" outlined severity="secondary" @click="closedSaveInput" />
-				<Button
-					label="Save"
-					:disabled="!hasValidDatasetName"
-					@click="saveDatasetToProject"
-				/>
+				<Button label="Save" :disabled="!hasValidDatasetName" @click="saveDatasetToProject" />
 			</div>
 		</template>
 	</Dialog>

@@ -46,11 +46,7 @@
 					</span>
 					<div v-if="doi">
 						DOI:
-						<a
-							:href="`https://doi.org/${doi}`"
-							rel="noreferrer noopener"
-							v-html="doi"
-						/>
+						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
@@ -63,11 +59,7 @@
 						:active-index="selectedTabIndex"
 						@tab-change="(e) => emit('tab-change', e)"
 					>
-						<TabPanel
-							v-for="(tab, index) in tabs"
-							:key="index"
-							:header="tab.props?.tabName"
-						/>
+						<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 					</TabView>
 				</section>
 				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
