@@ -162,17 +162,12 @@ public class KnowledgeController {
 
 		// If a model id is provided, update the existing model
 		final Optional<Model> model;
-		try {
-			model = modelService.getAsset(modelId, permission);
-			if (model.isEmpty()) {
-				final String errorMessage = String.format("The model id %s does not exist.", modelId);
-				log.error(errorMessage);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
-			}
-		} catch (final IOException e) {
-			log.error("Unable to get the model with id {}.", modelId, e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+
+		model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			final String errorMessage = String.format("The model id %s does not exist.", modelId);
+			log.error(errorMessage);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
 		}
 
 		responseAMR.setId(model.get().getId());
@@ -326,8 +321,12 @@ public class KnowledgeController {
 			resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file) : skemaUnifiedProxy.codebaseToAMR(file);
 		}
 
-		if (!resp.getStatusCode().is2xxSuccessful()) {
-			throw new ResponseStatusException(resp.getStatusCode(), "Unable to get code to amr from SKEMA");
+		if (resp.getStatusCode().is4xxClientError()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.bad-code"));
+		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.service-unavailable"));
+		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.internal-error"));
 		}
 
 		Model model;
@@ -419,44 +418,62 @@ public class KnowledgeController {
 	public ResponseEntity<Model> codeBlocksToModel(
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestPart final Code code,
-			@RequestPart("file") final MultipartFile input)
-			throws IOException {
+			@RequestPart("file") final MultipartFile input) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
+		// 1. create code asset from code blocks
+		final Code createdCode;
 		try {
-			// 1. create code asset from code blocks
-			final Code createdCode = codeService.createAsset(code, permission);
-
-			// 2. upload file to code asset
-			final byte[] fileAsBytes = input.getBytes();
-			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
-			final String filename = input.getOriginalFilename();
-
-			if (filename == null) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name is required");
-			}
-
-			codeService.uploadFile(code.getId(), filename, fileEntity);
-
-			// add the code file to the code asset
-			final CodeFile codeFile = new CodeFile();
-			codeFile.setFileNameAndProgrammingLanguage(filename);
-
-			if (code.getFiles() == null) {
-				code.setFiles(new HashMap<>());
-			}
-			code.getFiles().put(filename, codeFile);
-			codeService.updateAsset(code, permission);
-
-			// 3. create model from code asset
-			return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
+			createdCode = codeService.createAsset(code, permission);
 		} catch (final IOException e) {
-			log.error("Unable to upload file", e);
+			log.error("Unable to create code asset", e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error creating running code to model: " + e.getMessage());
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
+
+		// 2. upload file to code asset
+		final byte[] fileAsBytes;
+		try {
+			fileAsBytes = input.getBytes();
+		} catch (final IOException e) {
+			log.error("Unable to read file", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+		}
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
+		final String filename = input.getOriginalFilename();
+
+		if (filename == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("code.filename-needed"));
+		}
+
+		try {
+			codeService.uploadFile(code.getId(), filename, fileEntity);
+		} catch (final IOException e) {
+			log.error("Unable to upload file to code asset", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		// add the code file to the code asset
+		final CodeFile codeFile = new CodeFile();
+		codeFile.setFileNameAndProgrammingLanguage(filename);
+
+		if (code.getFiles() == null) {
+			code.setFiles(new HashMap<>());
+		}
+		code.getFiles().put(filename, codeFile);
+
+		try {
+			codeService.updateAsset(code, permission);
+		} catch (final IOException e) {
+			log.error("Unable to update code asset", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		// 3. create model from code asset
+		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
 	}
 
 	/**
@@ -715,8 +732,7 @@ public class KnowledgeController {
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Error aligning model with document: " + e.getMessage());
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.error.align-model"));
 		}
 	}
 
@@ -765,7 +781,7 @@ public class KnowledgeController {
 		return ResponseEntity.accepted().build();
 	}
 
-	private void handleFeignException(FeignException e) {
+	private void handleFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
 			throw new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
