@@ -1,21 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -180,7 +177,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 		dataset.setName("new name");
 
-		final Dataset updatedDataset = datasetService.updateAsset(dataset, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Dataset updatedDataset =
+				datasetService.updateAsset(dataset, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(dataset, updatedDataset);
 		Assertions.assertNotNull(updatedDataset.getUpdatedOn());

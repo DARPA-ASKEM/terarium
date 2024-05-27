@@ -9,7 +9,7 @@ public class MatchUtil {
 	 * Counts the number of matches/occurences of a term in a string of text
 	 *
 	 * @param searchTerm the term to find
-	 * @param text       the text to search
+	 * @param text the text to search
 	 * @return number of times searchTerm occurs in text
 	 */
 	public static long matchCount(final String searchTerm, final String text) {

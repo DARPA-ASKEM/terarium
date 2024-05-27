@@ -1,12 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.UUID;
-
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
-
-import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
