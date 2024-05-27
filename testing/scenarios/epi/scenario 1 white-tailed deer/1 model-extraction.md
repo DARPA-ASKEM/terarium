@@ -21,6 +21,14 @@ Source for the scenario: [PDF](https://github.com/DARPA-ASKEM/program-milestones
 3. Open the project and verify that the three publications are present as _Documents_.
 
 ### 3. Capturing the set of equations describing the model in the workbench
+1. Open a new _Workflow_ and name it `Task 1 Model Extraction`.
+2. For each of the documents:
+    1. Open the document.
+    2. Select the equations from the text.
+    3. Connect the equations to a _Create model from equations_ node.
+    4. Edit the node, select the equations and creat the model.
+    5. Save the model.
+
 ### 4. Gathering definitions of all variables and parameters, with units
 ### 5. Gathering default values for parameters, initial values for variables, and everything needed to initiate/run the model
 ### 6. Ensuring the model is executable in the workbench
