@@ -52,7 +52,6 @@ export function useNotificationManager() {
 
 	function clearFinishedItems() {
 		items.value
-
 			.filter(isFinished)
 			.forEach((item) => acknowledgeNotification(item.notificationGroupId));
 		items.value = items.value.filter((item) => !isFinished(item));
