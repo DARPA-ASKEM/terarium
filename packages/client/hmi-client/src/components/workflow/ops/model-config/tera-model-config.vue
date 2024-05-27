@@ -541,7 +541,9 @@ const extractConfigurationsFromInputs = async () => {
 						fetchConfigurations(model.value.id);
 					}
 				}
-			}
+			},
+			props.node.workflowId,
+			props.node.id
 		);
 	}
 	if (datasetIds.value) {
@@ -576,7 +578,9 @@ const extractConfigurationsFromInputs = async () => {
 						fetchConfigurations(model.value.id);
 					}
 				}
-			}
+			},
+			props.node.workflowId,
+			props.node.id
 		);
 	}
 	console.groupEnd();

@@ -275,9 +275,10 @@ export const updateWorkflow = async (workflow: Workflow) => {
 	return response?.data ?? null;
 };
 
-// Get
-export const getWorkflow = async (id: string) => {
-	const response = await API.get(`/workflows/${id}`);
+// Get workflow
+// Note that projectId is optional as projectId is assigned by the axios API interceptor if value is available from activeProjectId. If the method is call from place where activeProjectId is not available, projectId should be passed as an argument as all endpoints requires projectId as a parameter.
+export const getWorkflow = async (id: string, projectId?: string) => {
+	const response = await API.get(`/workflows/${id}`, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 

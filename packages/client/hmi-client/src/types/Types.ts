@@ -24,6 +24,14 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface StatusUpdate<T> {
+    progress: number;
+    state: ProgressState;
+    message: string;
+    error: string;
+    data: T;
+}
+
 export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
@@ -513,13 +521,6 @@ export interface ExtractionResponseResult {
     started_at: Date;
     job_error: string;
     job_result: any;
-}
-
-export interface ExtractionStatusUpdate {
-    documentId: string;
-    t: number;
-    message: string;
-    error: string;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -1237,9 +1238,20 @@ export enum ClientEventType {
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+}
+
+export enum ProgressState {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Failed = "FAILED",
+    Queued = "QUEUED",
+    Retrieving = "RETRIEVING",
+    Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum FileType {
@@ -1323,17 +1335,6 @@ export enum SimulationType {
     Calibration = "CALIBRATION",
     Optimization = "OPTIMIZATION",
     Validation = "VALIDATION",
-}
-
-export enum ProgressState {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Failed = "FAILED",
-    Queued = "QUEUED",
-    Retrieving = "RETRIEVING",
-    Running = "RUNNING",
-    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {
