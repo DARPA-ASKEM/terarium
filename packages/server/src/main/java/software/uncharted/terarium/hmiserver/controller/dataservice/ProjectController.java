@@ -550,6 +550,8 @@ public class ProjectController {
 				// dependencies
 				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId);
 			} else {
+				// TODO: we should probably check asset dependencies and make sure they are part
+				// of the project, and if not clone them
 				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
 				if (asset.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
