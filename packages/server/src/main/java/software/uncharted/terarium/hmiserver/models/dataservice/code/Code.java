@@ -55,11 +55,6 @@ public class Code extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private Map<String, String> metadata;
 
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
 	@Override
 	public Code clone() {
 		final Code clone = new Code();

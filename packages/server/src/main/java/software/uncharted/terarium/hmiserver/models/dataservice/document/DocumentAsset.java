@@ -68,11 +68,6 @@ public class DocumentAsset extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
 
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
 	/**
 	 * Get the DOI of a document
 	 *

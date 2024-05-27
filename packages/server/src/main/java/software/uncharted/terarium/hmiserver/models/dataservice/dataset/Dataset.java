@@ -55,11 +55,6 @@ public class Dataset extends TerariumAsset {
 	private Timestamp dataSourceDate;
 
 	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
-	@TSOptional
 	@JsonAlias("dataset_url")
 	@Column(length = 1024)
 	private String datasetUrl;

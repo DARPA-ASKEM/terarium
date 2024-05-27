@@ -40,11 +40,6 @@ public class Workflow extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
 	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();

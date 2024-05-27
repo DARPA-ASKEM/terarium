@@ -39,11 +39,6 @@ public class Artifact extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private JsonNode metadata;
 
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
 	@Override
 	public Artifact clone() {
 		final Artifact clone = new Artifact();

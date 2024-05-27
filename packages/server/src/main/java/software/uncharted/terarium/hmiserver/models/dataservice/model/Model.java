@@ -65,11 +65,6 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
-
 	@Override
 	public Model clone() {
 		final Model clone = new Model();
