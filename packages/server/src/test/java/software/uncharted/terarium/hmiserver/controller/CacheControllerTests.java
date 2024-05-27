@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Objects;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,10 +13,11 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.models.CacheName;
 import software.uncharted.terarium.hmiserver.service.CacheableTestService;
-import software.uncharted.terarium.hmiserver.util.MatchUtil;
+import software.uncharted.terarium.hmiserver.utils.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheControllerTests extends TerariumApplicationTests {
@@ -48,8 +50,8 @@ public class CacheControllerTests extends TerariumApplicationTests {
 	public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
 		testService.cachedMethod();
 		mockMvc.perform(MockMvcRequestBuilders.delete("/cache")
-						.param("name", CacheName.EXAMPLE)
-						.with(csrf()))
+				.param("name", CacheName.EXAMPLE)
+				.with(csrf()))
 				.andExpect(status().isOk());
 		testService.cachedMethod();
 

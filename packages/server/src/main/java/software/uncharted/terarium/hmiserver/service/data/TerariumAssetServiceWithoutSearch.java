@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -12,10 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
 import javax.ws.rs.NotFoundException;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
@@ -25,6 +22,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -39,7 +43,8 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets without syncing to Elasticsearch.
+ * Base class for services that manage TerariumAssets without syncing to
+ * Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
@@ -48,8 +53,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Data
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetServiceWithoutSearch<
-				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		implements ITerariumAssetService<T> {
 
 	protected final ObjectMapper objectMapper;
@@ -97,7 +101,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a list of assets, this includes all assets, not just searchable ones.
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 */
@@ -168,9 +172,10 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
-	 * @throws NotFoundException If the original asset does not exist
+	 * @throws IOException              If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to
+	 *                                  temporary
+	 * @throws NotFoundException        If the original asset does not exist
 	 */
 	@Override
 	@Observed(name = "function_profile")
@@ -196,50 +201,17 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		return Optional.of(updated);
 	}
 
-	/** Clone asset and return it, does not persist it. */
-	@Override
-	@Observed(name = "function_profile")
-	@SuppressWarnings("unchecked")
-	public T cloneAsset(final UUID id, final Schema.Permission hasReadPermission)
-			throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id, hasReadPermission);
-		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
-		}
-		return (T) targetAsset.get().clone();
-	}
-
-	/** Clone asset, write it to the db under a new id, and return it. */
-	@Observed(name = "function_profile")
-	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-		final T clonedAsset = cloneAsset(id, hasWritePermission);
-
-		final String bucket = config.getFileStorageS3BucketName();
-
-		final List<String> validFileNames = new ArrayList<>();
-		for (final String fileName : clonedAsset.getFileNames()) {
-			final String srcKey = getPath(id, fileName);
-			final String dstKey = getPath(clonedAsset.getId(), fileName);
-			try {
-				s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
-				validFileNames.add(fileName);
-			} catch (final NoSuchKeyException e) {
-				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-				continue;
-			}
-		}
-
-		clonedAsset.setFileNames(validFileNames);
-		return createAsset(clonedAsset, hasWritePermission);
-	}
-
 	/** Returns the asset as an AssetExport payload */
 	@Observed(name = "function_profile")
 	public AssetExport<T> exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
 		try {
 
-			final T cloned = cloneAsset(id, hasReadPermission);
+			final Optional<T> targetAsset = getAsset(id, hasReadPermission);
+			if (targetAsset.isEmpty()) {
+				throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
+			}
+
+			final T cloned =  (T) targetAsset.get().clone();
 
 			final AssetExport<T> export = new AssetExport<>();
 			export.setAsset(cloned);
@@ -253,8 +225,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 
 				try {
 
-					final ResponseInputStream<GetObjectResponse> stream =
-							s3ClientService.getS3Service().getObject(bucket, key);
+					final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service()
+							.getObject(bucket, key);
 					final byte[] bytes = stream.readAllBytes();
 
 					final String contentType = stream.response().contentType();
@@ -279,32 +251,6 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		}
 	}
 
-	/** Imports the asset from a AssetExport payload. */
-	@Observed(name = "function_profile")
-	public T importAsset(final AssetExport<T> payload, final Schema.Permission hasWritePermission) {
-		try {
-			if (payload.getAsset() == null) {
-				throw new RuntimeException("AssetExport is empty");
-			}
-			T asset = payload.getAsset();
-			if (assetExists(asset.getId())) {
-				throw new RuntimeException("Asset already exists for id:" + asset.getId());
-			}
-
-			asset = createAsset(asset, hasWritePermission);
-
-			for (final Map.Entry<String, FileExport> entry : payload.getFiles().entrySet()) {
-				final String fileName = entry.getKey();
-				final FileExport fileExport = entry.getValue();
-				uploadFile(asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
-			}
-
-			return asset;
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to export asset", e);
-		}
-	}
-
 	/**
 	 * Get the path to the asset in S3
 	 *
@@ -315,7 +261,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for uploading a file to S3
 	 *
-	 * @param id The ID of the asset to upload to
+	 * @param id       The ID of the asset to upload to
 	 * @param filename The name of the file to upload
 	 * @return The presigned URL
 	 */
@@ -333,7 +279,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/**
 	 * Get a presigned URL for downloading a file from S3
 	 *
-	 * @param id The ID of the asset to download from
+	 * @param id       The ID of the asset to download from
 	 * @param filename The name of the file to download
 	 * @return The presigned URL
 	 */
@@ -378,8 +324,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final String key = getPath(uuid, filename);
 
 		try {
-			final ResponseInputStream<GetObjectResponse> stream =
-					s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
@@ -392,8 +337,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final String key = getPath(uuid, filename);
 
 		try {
-			final ResponseInputStream<GetObjectResponse> stream =
-					s3ClientService.getS3Service().getObject(bucket, key);
+			final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service().getObject(bucket, key);
 			return Optional.of(stream.readAllBytes());
 		} catch (final NoSuchKeyException e) {
 			return Optional.empty();
@@ -417,6 +361,53 @@ public abstract class TerariumAssetServiceWithoutSearch<
 				filename,
 				ContentType.parse(fileEntity.getContentType().getValue()),
 				EntityUtils.toByteArray(fileEntity));
+	}
+
+	@Observed(name = "function_profile")
+	public void copyAssetFiles(final T newAsset, final T oldAsset) throws IOException {
+		final String bucket = config.getFileStorageS3BucketName();
+		final List<String> validFileNames = new ArrayList<>();
+		for (final String fileName : oldAsset.getFileNames()) {
+			final String srcKey = getPath(oldAsset.getId(), fileName);
+			final String dstKey = getPath(newAsset.getId(), fileName);
+			try {
+				s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
+				validFileNames.add(fileName);
+			} catch (final NoSuchKeyException e) {
+				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+				continue;
+			}
+		}
+		newAsset.setFileNames(validFileNames);
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId) throws IOException {
+		final T asset = getAsset(assetId, Schema.Permission.WRITE).orElseThrow();
+		final String bucket = config.getFileStorageS3BucketName();
+
+		final Map<String, FileExport> files = new HashMap<>();
+		for (final String fileName : asset.getFileNames()) {
+			final String key = getPath(assetId, fileName);
+
+			try {
+				final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service()
+						.getObject(bucket, key);
+				final byte[] bytes = stream.readAllBytes();
+
+				final String contentType = stream.response().contentType();
+
+				final FileExport fileExport = new FileExport();
+				fileExport.setBytes(bytes);
+				fileExport.setContentType(ContentType.parse(contentType));
+
+				files.put(fileName, fileExport);
+			} catch (final NoSuchKeyException e) {
+				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+				continue;
+			}
+		}
+		return files;
 	}
 
 	private String getPath(final UUID id, final String filename) {

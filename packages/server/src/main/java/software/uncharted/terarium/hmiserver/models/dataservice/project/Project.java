@@ -1,6 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import java.io.Serial;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Where;
+
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -8,16 +19,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
-import java.io.Serial;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -117,7 +121,10 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
-	/** Information for the front-end to enable/disable features based on user permissions (Read/Write). */
+	/**
+	 * Information for the front-end to enable/disable features based on user
+	 * permissions (Read/Write).
+	 */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -135,5 +142,17 @@ public class Project extends TerariumAsset {
 			existingProject.setOverviewContent(project.getOverviewContent());
 		}
 		return existingProject;
+	}
+
+	public Project clone() {
+		final Project cloned = new Project();
+		cloned.userId = userId;
+		cloned.userName = userName;
+		cloned.authors = new ArrayList<>(authors);
+		cloned.overviewContent = overviewContent;
+		cloned.metadata = new HashMap<>(metadata);
+		cloned.publicProject = publicProject;
+		cloned.userPermission = userPermission;
+		return cloned;
 	}
 }

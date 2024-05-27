@@ -64,6 +64,65 @@ public class AssetDependencyUtil {
 		return dependencies;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T swapAssetDependencies(
+			final T asset,
+			final Map<UUID, UUID> assetIdMapping,
+			final AssetDependencyMap dependencies) {
+
+		final ObjectMapper mapper = new ObjectMapper();
+
+		final ObjectNode dest = (ObjectNode) mapper.valueToTree(asset);
+
+		// replace key ids
+		for (final Pair<UUID, List<String>> keyId : dependencies.getKeyIds()) {
+
+			final UUID id = keyId.getFirst();
+			if (!assetIdMapping.containsKey(id)) {
+				throw new RuntimeException("No id mapping for id: " + keyId.getSecond());
+			}
+			final UUID newId = assetIdMapping.get(id);
+
+			final List<String> path = keyId.getSecond();
+			final JsonNode node = traversePathAndGetNode(dest, path);
+
+			// do the final swap
+			final JsonNode value = node.get(id.toString());
+			((ObjectNode) node).remove(id.toString());
+			((ObjectNode) node).set(newId.toString(), value);
+		}
+
+		// replace value ids
+		for (final Pair<UUID, List<String>> valueId : dependencies.getValueIds()) {
+			final UUID id = valueId.getFirst();
+			if (!assetIdMapping.containsKey(id)) {
+				throw new RuntimeException("No id mapping for id: " + valueId.getSecond());
+			}
+			final UUID newId = assetIdMapping.get(id);
+
+			final List<String> path = valueId.getSecond();
+			final Pair<JsonNode, String> parentAndKey = traversePathAndGetParent(dest, path);
+
+			final JsonNode parent = parentAndKey.getFirst();
+
+			final String key = parentAndKey.getSecond();
+
+			// replace the text value
+			if (parent.isArray()) {
+				final int index = Integer.parseInt(key);
+				((ArrayNode) parent).set(index, new TextNode(newId.toString()));
+			} else {
+				((ObjectNode) parent).set(key, new TextNode(newId.toString()));
+			}
+		}
+
+		try {
+			return mapper.treeToValue(dest, (Class<T>) asset.getClass());
+		} catch (final Exception e) {
+			throw new RuntimeException("Unable to write asset back into its original type", e);
+		}
+	}
+
 	private static JsonNode traversePathAndGetNode(JsonNode node, final List<String> path) {
 		for (final String key : path) {
 			if (node.isArray()) {
@@ -91,58 +150,6 @@ public class AssetDependencyUtil {
 			}
 		}
 		return Pair.of(node, path.get(path.size() - 1));
-	}
-
-	public static JsonNode swapAssetDependencies(
-			final JsonNode asset,
-			final Map<UUID, UUID> assetIdMapping,
-			final AssetDependencyMap dependencies) {
-
-		final ObjectNode res = (ObjectNode) asset.deepCopy();
-
-		// replace key ids
-		for (final Pair<UUID, List<String>> keyId : dependencies.getKeyIds()) {
-
-			final UUID id = keyId.getFirst();
-			if (!assetIdMapping.containsKey(id)) {
-				throw new RuntimeException("No id mapping for id: " + keyId.getSecond());
-			}
-			final UUID newId = assetIdMapping.get(id);
-
-			final List<String> path = keyId.getSecond();
-			final JsonNode node = traversePathAndGetNode(res, path);
-
-			// do the final swap
-			final JsonNode value = node.get(id.toString());
-			((ObjectNode) node).remove(id.toString());
-			((ObjectNode) node).set(newId.toString(), value);
-		}
-
-		// replace value ids
-		for (final Pair<UUID, List<String>> valueId : dependencies.getValueIds()) {
-			final UUID id = valueId.getFirst();
-			if (!assetIdMapping.containsKey(id)) {
-				throw new RuntimeException("No id mapping for id: " + valueId.getSecond());
-			}
-			final UUID newId = assetIdMapping.get(id);
-
-			final List<String> path = valueId.getSecond();
-			final Pair<JsonNode, String> parentAndKey = traversePathAndGetParent(res, path);
-
-			final JsonNode parent = parentAndKey.getFirst();
-
-			final String key = parentAndKey.getSecond();
-
-			// replace the text value
-			if (parent.isArray()) {
-				final int index = Integer.parseInt(key);
-				((ArrayNode) parent).set(index, new TextNode(newId.toString()));
-			} else {
-				((ObjectNode) parent).set(key, new TextNode(newId.toString()));
-			}
-		}
-
-		return res;
 	}
 
 	private static UUID uuidOrNull(final String str) {

@@ -1,20 +1,25 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
+import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -29,6 +34,7 @@ public class ProjectService {
 	final ProjectRepository projectRepository;
 	final UserRepository userRepository;
 	final ReBACService reBACService;
+	final TerariumAssetCloneService cloneService;
 	final Messages messages;
 
 	@Observed(name = "function_profile")
@@ -67,8 +73,7 @@ public class ProjectService {
 			return Optional.empty();
 		}
 
-		final Project existingProject =
-				projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
+		final Project existingProject = projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
 
 		// merge the existing project with values from the new project
 		final Project mergedProject = Project.mergeProjectFields(existingProject, project);
@@ -79,13 +84,15 @@ public class ProjectService {
 	@Observed(name = "function_profile")
 	public boolean delete(final UUID id) {
 		final Optional<Project> project = getProject(id);
-		if (project.isEmpty()) return false;
+		if (project.isEmpty())
+			return false;
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
 		return true;
 	}
 
-	public Schema.Permission checkPermissionCanRead(String userId, UUID projectId) throws ResponseStatusException {
+	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
+			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -94,13 +101,14 @@ public class ProjectService {
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
 
-	public Schema.Permission checkPermissionCanWrite(String userId, UUID projectId) throws ResponseStatusException {
+	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
+			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
@@ -109,13 +117,13 @@ public class ProjectService {
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
 
-	public Schema.Permission checkPermissionCanAdministrate(String userId, UUID projectId)
+	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
 			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
@@ -125,9 +133,34 @@ public class ProjectService {
 			}
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
+
+	@Observed(name = "function_profile")
+	public void cloneAndPersistAsset(final String userId, final UUID projectId, final UUID assetId,
+			final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
+
+		checkPermissionCanWrite(userId, projectId);
+
+		cloneService.cloneAndPersistAsset(projectId, assetId);
+	}
+
+	@Observed(name = "function_profile")
+	public ProjectExport exportProject(final String userId, final UUID projectId) throws IOException {
+
+		checkPermissionCanRead(userId, projectId);
+
+		return cloneService.exportProject(projectId);
+	}
+
+	@Observed(name = "function_profile")
+	public Project importAsset(final ProjectExport projectExport) throws IOException {
+
+		return cloneService.importProject(projectExport);
+	}
+
 }

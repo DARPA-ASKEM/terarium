@@ -1,4 +1,4 @@
-package utils;
+package software.uncharted.terarium.hmiserver.utils;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import software.uncharted.terarium.hmiserver.utils.AssetDependencyUtil;
 import software.uncharted.terarium.hmiserver.utils.AssetDependencyUtil.AssetDependencyMap;
 
 public class AssetDependencyUtilTests {
