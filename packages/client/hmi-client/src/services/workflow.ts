@@ -131,8 +131,9 @@ export const addEdge = (
 			d.targetPortId === targetPortId
 	);
 	if (existingEdge) return;
+
 	// Check if type is compatible
-	if (sourceOutputPort.value === null) return;
+	// if (sourceOutputPort.value === null) return;
 
 	const allowedTypes = targetInputPort.type.split('|');
 	if (
