@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,21 +13,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-
-import org.springframework.data.util.Pair;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 import lombok.Data;
+import org.springframework.data.util.Pair;
 
 public class AssetDependencyUtil {
 
 	@Data
-	static public class AssetDependencyMap {
+	public static class AssetDependencyMap {
 
 		void addKeyId(final List<String> path, final UUID id) {
 			keyIds.add(Pair.of(id, path));
@@ -47,7 +44,9 @@ public class AssetDependencyUtil {
 
 		final AssetDependencyMap dependencies = new AssetDependencyMap();
 
-		executeOnEveryKeyAndText(new ArrayList<>(), assetJson,
+		executeOnEveryKeyAndText(
+				new ArrayList<>(),
+				assetJson,
 				(final List<String> path, final String key) -> {
 					final UUID uuid = uuidOrNull(key);
 					if (uuid != null && assetIds.contains(uuid)) {
@@ -66,9 +65,7 @@ public class AssetDependencyUtil {
 
 	@SuppressWarnings("unchecked")
 	public static <T> T swapAssetDependencies(
-			final T asset,
-			final Map<UUID, UUID> assetIdMapping,
-			final AssetDependencyMap dependencies) {
+			final T asset, final Map<UUID, UUID> assetIdMapping, final AssetDependencyMap dependencies) {
 
 		final ObjectMapper mapper = new ObjectMapper();
 
@@ -194,6 +191,5 @@ public class AssetDependencyUtil {
 		} else if (node.isTextual()) {
 			valueFunc.accept(path, node.asText());
 		}
-
 	}
 }

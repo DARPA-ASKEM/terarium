@@ -1,19 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
@@ -108,7 +105,8 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 		final Artifact artifact = artifactService.createAsset(createArtifact("A"), ASSUME_WRITE_PERMISSION);
 		artifact.setName("new name");
 
-		final Artifact updatedArtifact = artifactService.updateAsset(artifact, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Artifact updatedArtifact =
+				artifactService.updateAsset(artifact, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(artifact, updatedArtifact);
 		Assertions.assertNotNull(updatedArtifact.getUpdatedOn());
@@ -144,5 +142,4 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(
 				artifact.getFileNames().get(0), cloned.getFileNames().get(0));
 	}
-
 }

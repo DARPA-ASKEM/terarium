@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -44,8 +43,8 @@ public class ProjectExport {
 			final TerariumAsset currentAsset = assetExport.getAsset();
 
 			// determine any dependencies each asset has
-			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds,
-					currentAsset);
+			final AssetDependencyMap dependencies =
+					AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
 
 			// clone the asset
 			final TerariumAsset clonedAsset = currentAsset.clone();
@@ -65,12 +64,12 @@ public class ProjectExport {
 
 		// update all uuids with the cloned uuids
 		for (final AssetExport assetExport : clonedAssetExports) {
-			final AssetDependencyMap dependencies = assetDependencies.get(assetExport.getAsset().getId());
+			final AssetDependencyMap dependencies =
+					assetDependencies.get(assetExport.getAsset().getId());
 
 			// update any referenced dependencies
-			final TerariumAsset finalClonedAsset = AssetDependencyUtil.swapAssetDependencies(assetExport.getAsset(),
-					oldToNewIds,
-					dependencies);
+			final TerariumAsset finalClonedAsset =
+					AssetDependencyUtil.swapAssetDependencies(assetExport.getAsset(), oldToNewIds, dependencies);
 
 			assetExport.setAsset(finalClonedAsset);
 		}

@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
-
-import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
@@ -33,8 +31,8 @@ public class NotebookSessionService extends TerariumAssetService<NotebookSession
 	}
 
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(final NotebookSession newAsset, final NotebookSession oldAsset,
-			final Schema.Permission hasWritePermission)
+	public void copyAssetFiles(
+			final NotebookSession newAsset, final NotebookSession oldAsset, final Schema.Permission hasWritePermission)
 			throws IOException {
 
 		throw new UnsupportedOperationException("Unimplemented");

@@ -1,17 +1,14 @@
 package software.uncharted.terarium.hmiserver.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.utils.AssetDependencyUtil.AssetDependencyMap;
 
 public class AssetDependencyUtilTests {
@@ -31,7 +28,8 @@ public class AssetDependencyUtilTests {
 		assetIds.add(b);
 		assetIds.add(c);
 
-		final JsonNode node = objectMapper.readTree("""
+		final JsonNode node = objectMapper.readTree(
+				"""
 					{
 						"values": {
 							"a": "%s",
@@ -48,7 +46,8 @@ public class AssetDependencyUtilTests {
 							"%s",
 							"%s"
 						]
-				}""".formatted(a, b, c, a, b, c, a, b, c));
+				}"""
+						.formatted(a, b, c, a, b, c, a, b, c));
 
 		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
 
@@ -66,7 +65,8 @@ public class AssetDependencyUtilTests {
 	@Test
 	public void testAssetSwapAssetIdsSimple() throws Exception {
 
-		final String format = """
+		final String format =
+				"""
 					{
 						"values": {
 							"a": "%s",
@@ -132,7 +132,8 @@ public class AssetDependencyUtilTests {
 	@Test
 	public void testAssetSwapAssetIdsComplicated() throws Exception {
 
-		final String format = """
+		final String format =
+				"""
 					{
 						"values": {
 							"nested": [
