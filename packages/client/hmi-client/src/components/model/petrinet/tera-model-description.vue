@@ -1,51 +1,44 @@
 <template>
-	<main>
+	<section>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<span class="flex flex-row align-items-center gap-2 mb-1">
-						Model card
-						<SelectButton
-							v-model="descriptionType"
-							class="p-button-xsm"
-							:options="descriptionOptions"
-						/>
-					</span>
-					<div class="model-card">
-						<tera-show-more-text :text="description" :lines="5" />
-						<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
-						<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
-						<p v-if="authors"><label>Authors</label>{{ authors }}</p>
-						<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
-						<p v-if="uses?.OutOfScopeUse">
-							<label>Out of scope use</label>{{ uses.OutOfScopeUse }}
-						</p>
-						<p v-if="biasAndRiskLimitations">
-							<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
-						</p>
-						<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
-						<p v-if="technicalSpecifications">
-							<label>Technical Specifications</label>{{ technicalSpecifications }}
-						</p>
-						<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
-						<p v-if="!isEmpty(moreInformation)">
-							<label>More Information</label>
-							<a
-								v-for="(link, index) in moreInformation"
-								:key="index"
-								:href="link"
-								rel="noopener noreferrer"
-							>
-								{{ link }}
-							</a>
-						</p>
-						<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
-						<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
-						<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
-						<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
-						<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
-						<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
-					</div>
+					<SelectButton
+						v-model="descriptionType"
+						class="p-button-xsm"
+						:options="descriptionOptions"
+					/>
+					<tera-show-more-text :text="description" :lines="5" />
+					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
+					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
+					<p v-if="authors"><label>Authors</label>{{ authors }}</p>
+					<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
+					<p v-if="uses?.OutOfScopeUse"><label>Out of scope use</label>{{ uses.OutOfScopeUse }}</p>
+					<p v-if="biasAndRiskLimitations">
+						<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
+					</p>
+					<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
+					<p v-if="technicalSpecifications">
+						<label>Technical Specifications</label>{{ technicalSpecifications }}
+					</p>
+					<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
+					<p v-if="!isEmpty(moreInformation)">
+						<label>More Information</label>
+						<a
+							v-for="(link, index) in moreInformation"
+							:key="index"
+							:href="link"
+							rel="noopener noreferrer"
+						>
+							{{ link }}
+						</a>
+					</p>
+					<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
+					<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
+					<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
+					<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
+					<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
+					<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
 				</section>
 				<section v-else>
 					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
@@ -95,7 +88,7 @@
 			class="mt-0"
 			:readonly="featureConfig?.isPreview"
 		/>
-	</main>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -220,31 +213,18 @@ function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 
 <style scoped>
 .description {
-	display: grid;
-	gap: var(--gap-small) var(--gap);
+	display: flex;
+	gap: var(--gap-small);
+	flex-direction: column;
 	grid-template-columns: max-content 1fr;
 
-	& > * {
-		grid-column: 1/3;
-	}
+	& label {
+		font-weight: bold;
+		margin-right: var(--gap-small);
 
-	p {
-		display: grid;
-		grid-template-columns: subgrid;
-
-		label {
-			color: var(--text-color-secondary);
-			grid-column: 1/2;
+		&:after {
+			content: '.';
 		}
 	}
-}
-
-.model-card {
-	padding: var(--gap);
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-small);
 }
 </style>
