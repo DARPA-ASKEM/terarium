@@ -167,7 +167,7 @@
 								setParameterSource(knobs.transientModelConfig, $event.id, $event.value)
 							"
 							@update-distribution="
-								setParameterDistributionParameters(
+								updateParameterDistributionParameters(
 									knobs.transientModelConfig,
 									$event.id,
 									$event.parameters
@@ -342,7 +342,7 @@ import {
 	setParameterConstant,
 	setParameterSource,
 	setParameterDistributionType,
-	setParameterDistributionParameters
+	updateParameterDistributionParameters
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfiguration } from '@/types/Types';

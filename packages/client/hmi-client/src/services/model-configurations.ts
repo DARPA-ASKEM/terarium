@@ -307,19 +307,22 @@ export function setParameterDistributionType(
 	}
 }
 
-// sets the parameter distribution parameters (i.e. minimum and maximum for uniform distribution)
-export function setParameterDistributionParameters(
+// updates the parameter distribution parameters if they exist (i.e. minimum and maximum for uniform distribution)
+export function updateParameterDistributionParameters(
 	config: ModelConfiguration,
 	parameterId: string,
 	parameters: { [index: string]: any }
 ): void {
 	const parameter = getParameter(config, parameterId);
-	if (parameter?.distribution) {
-		parameter.distribution.parameters = {
-			...parameter.distribution.parameters,
-			...parameters
-		};
-	}
+
+	if (parameter?.distribution) return;
+
+	Object.keys(parameters).forEach((key) => {
+		if (!parameter?.distribution) return;
+		if (key in parameter.distribution.parameters) {
+			parameter.distribution.parameters[key] = parameters[key];
+		}
+	});
 }
 
 export function getParameters(config: ModelConfiguration): ModelParameter[] {
