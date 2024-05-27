@@ -29,7 +29,7 @@ public class OptimizeRequestCiemss implements Serializable {
 	private OptimizedInterventions policyInterventions;
 
 	@TSOptional
-	// The interventions provided via the model config which are not being optimized
+	// The interventions provided via the model config which are not being optimized on
 	private List<Intervention> fixedStaticParameterInterventions;
 
 	@JsonAlias("step_size")
