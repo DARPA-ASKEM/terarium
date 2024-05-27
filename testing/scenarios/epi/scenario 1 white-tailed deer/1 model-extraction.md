@@ -13,7 +13,7 @@ Source for the scenario: [PDF](https://github.com/DARPA-ASKEM/program-milestones
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A Epi S1 [YYMMDD]`
+2. Create, or open, project named `QA Epi S1 [YYMMDD]`
 
 ### 2. Ingesting the model from source paper or code, into the workbench
 1. Upload the three PDF documents to the project: [Model A](https://drive.google.com/file/d/1118EP5XH7xysXJueCPhtza03Z-WHkTYe/view?usp=drive_link), [Model B](https://drive.google.com/file/d/13lpv-ddAzg5Sjz43hX12TJ58GrN8cJwL/view?usp=drive_link), and [Model C](https://drive.google.com/file/d/1Ij0KxffUovIxRBjMFDP5PQQfVWLWbg3J/view?usp=drive_link)

@@ -8,7 +8,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Setup workflow
 1. Make sure you have a model in your project.
