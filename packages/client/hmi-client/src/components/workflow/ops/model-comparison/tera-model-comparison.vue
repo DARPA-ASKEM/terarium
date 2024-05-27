@@ -308,8 +308,8 @@ function appendCode(data: any) {
 	else logger.error('No code to append');
 }
 
-function processCompareModels(modelIds) {
-	compareModels(modelIds).then((response) => {
+function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
+	compareModels(modelIds, workflowId, nodeId).then((response) => {
 		llmAnswer.value = response.response;
 	});
 }
@@ -358,7 +358,7 @@ onMounted(async () => {
 	const modelIds = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
-	processCompareModels(modelIds);
+	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
 onUnmounted(() => {
