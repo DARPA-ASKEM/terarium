@@ -778,7 +778,7 @@ public class KnowledgeController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-		extractionService.extractPDF(documentId, domain, permission);
+		extractionService.extractPDF(documentId, domain, projectId, permission);
 		return ResponseEntity.accepted().build();
 	}
 

@@ -24,6 +24,14 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface StatusUpdate<T> {
+    progress: number;
+    state: ProgressState;
+    message: string;
+    error: string;
+    data: T;
+}
+
 export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
@@ -78,7 +86,6 @@ export interface GithubRepo {
 export interface Artifact extends TerariumAsset {
     userId: string;
     metadata?: any;
-    project?: Project;
 }
 
 export interface CsvAsset {
@@ -129,7 +136,6 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
-    project?: Project;
 }
 
 export interface CodeFile extends TerariumEntity {
@@ -154,7 +160,6 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
-    project?: Project;
 }
 
 export interface DatasetColumn extends TerariumEntity {
@@ -188,7 +193,6 @@ export interface DocumentAsset extends TerariumAsset {
     text?: string;
     grounding?: Grounding;
     assets?: DocumentExtraction[];
-    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -203,7 +207,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
-    project?: Project;
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
@@ -390,9 +393,6 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
-    /**
-     * @deprecated
-     */
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -521,13 +521,6 @@ export interface ExtractionResponseResult {
     started_at: Date;
     job_error: string;
     job_result: any;
-}
-
-export interface ExtractionStatusUpdate {
-    documentId: string;
-    t: number;
-    message: string;
-    error: string;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -1245,9 +1238,20 @@ export enum ClientEventType {
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+}
+
+export enum ProgressState {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Failed = "FAILED",
+    Queued = "QUEUED",
+    Retrieving = "RETRIEVING",
+    Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum FileType {
@@ -1331,17 +1335,6 @@ export enum SimulationType {
     Calibration = "CALIBRATION",
     Optimization = "OPTIMIZATION",
     Validation = "VALIDATION",
-}
-
-export enum ProgressState {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Failed = "FAILED",
-    Queued = "QUEUED",
-    Retrieving = "RETRIEVING",
-    Running = "RUNNING",
-    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {

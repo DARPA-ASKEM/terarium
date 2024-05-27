@@ -8,6 +8,7 @@ import {
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
+	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import { DatasetSearchParams } from './Dataset';
@@ -199,11 +200,15 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface NotificationItem extends NotificationItemStatus {
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
+
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
-	assetId: string;
-	assetName: string;
+	sourceName: string;
+	context: string;
+	projectId?: string;
+	nodeId?: string;
 	lastUpdated: number;
 	acknowledged: boolean;
 	supportCancel: boolean;
