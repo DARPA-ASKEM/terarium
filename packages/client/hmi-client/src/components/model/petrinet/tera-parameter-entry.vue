@@ -8,8 +8,13 @@
 	<main>
 		<span class="flex gap-2">
 			<Dropdown
-				:model-value="getParameterDistributionType(modelConfiguration, parameterId)"
-				@change="emit('select-distribution', { id: parameterId, value: $event.value })"
+				:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
+				@change="
+					emit('update-parameter', {
+						id: parameterId,
+						distribution: formatPayloadFromTypeChange($event.value)
+					})
+				"
 				option-label="name"
 				option-value="value"
 				:options="distributionTypeOptions()"
@@ -18,18 +23,24 @@
 			<!-- Constant -->
 			<tera-input
 				v-if="
-					getParameterDistributionType(modelConfiguration, parameterId) ===
+					getParameterDistribution(modelConfiguration, parameterId).type ===
 					DistributionType.Constant
 				"
 				label="Constant"
 				type="nist"
-				:model-value="getParameterConstant(modelConfiguration, parameterId)"
-				@update:model-value="emit('update-constant', { id: parameterId, value: $event })"
+				:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+				@update:model-value="
+					emit('update-parameter', {
+						id: parameterId,
+						distribution: formatPayloadFromParameterChange({ value: $event })
+					})
+				"
 			/>
 			<!-- Uniform Distribution -->
 			<template
 				v-if="
-					getParameterDistributionType(modelConfiguration, parameterId) === DistributionType.Uniform
+					getParameterDistribution(modelConfiguration, parameterId).type ===
+					DistributionType.Uniform
 				"
 			>
 				<tera-input
@@ -39,7 +50,10 @@
 						getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum
 					"
 					@update:model-value="
-						emit('update-distribution', { id: parameterId, parameters: { minimum: $event } })
+						emit('update-parameter', {
+							id: parameterId,
+							distribution: formatPayloadFromParameterChange({ minimum: $event })
+						})
 					"
 				/>
 				<tera-input
@@ -49,7 +63,10 @@
 						getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum
 					"
 					@update:model-value="
-						emit('update-distribution', { id: parameterId, parameters: { maximum: $event } })
+						emit('update-parameter', {
+							id: parameterId,
+							distribution: formatPayloadFromParameterChange({ maximum: $event })
+						})
 					"
 				/>
 			</template>
@@ -77,8 +94,6 @@ import {
 	getParameterDescription,
 	getParameterUnit,
 	getParameterSource,
-	getParameterConstant,
-	getParameterDistributionType,
 	getParameterDistribution
 } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
@@ -86,18 +101,14 @@ import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
 	parameterId: string;
 }>();
 
-const emit = defineEmits([
-	'update-constant',
-	'update-distribution',
-	'update-source',
-	'select-distribution'
-]);
+const emit = defineEmits(['update-parameter', 'update-source']);
 
 const name = getParameterName(props.modelConfiguration, props.parameterId);
 const unit = getParameterUnit(props.modelConfiguration, props.parameterId);
@@ -109,6 +120,29 @@ function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
 	if (!getParameterSource(props.modelConfiguration, initialId)) return 'Add source';
 	return 'Show source';
+}
+
+function formatPayloadFromParameterChange(parameters) {
+	const distribution = cloneDeep(
+		getParameterDistribution(props.modelConfiguration, props.parameterId)
+	);
+	Object.keys(parameters).forEach((key) => {
+		if (!distribution) return;
+		if (key in distribution.parameters) {
+			distribution.parameters[key] = parameters[key];
+		}
+	});
+
+	return distribution;
+}
+
+function formatPayloadFromTypeChange(type: DistributionType) {
+	const distribution = cloneDeep(
+		getParameterDistribution(props.modelConfiguration, props.parameterId)
+	);
+	distribution.type = type;
+	distribution.parameters = {};
+	return distribution;
 }
 </script>
 

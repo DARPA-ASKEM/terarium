@@ -160,21 +160,11 @@
 							:model-configuration="knobs.transientModelConfig"
 							:mmt="mmt"
 							:mmt-params="mmtParams"
-							@update-constant="
-								setParameterConstant(knobs.transientModelConfig, $event.id, $event.value)
+							@update-parameter="
+								setParameterDistribution(knobs.transientModelConfig, $event.id, $event.distribution)
 							"
 							@update-source="
 								setParameterSource(knobs.transientModelConfig, $event.id, $event.value)
-							"
-							@update-distribution="
-								updateParameterDistributionParameters(
-									knobs.transientModelConfig,
-									$event.id,
-									$event.parameters
-								)
-							"
-							@select-distribution="
-								setParameterDistributionType(knobs.transientModelConfig, $event.id, $event.value)
 							"
 						/>
 						<section v-else>
@@ -339,10 +329,8 @@ import {
 	removeIntervention,
 	setInitialSource,
 	setInitialExpression,
-	setParameterConstant,
 	setParameterSource,
-	setParameterDistributionType,
-	updateParameterDistributionParameters
+	setParameterDistribution
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfiguration } from '@/types/Types';

@@ -16,10 +16,8 @@
 						<tera-parameter-entry
 							:model-configuration="props.modelConfiguration"
 							:parameter-id="parameter"
-							@update-constant="emit('update-constant', $event)"
-							@update-distribution="emit('update-distribution', $event)"
+							@update-parameter="emit('update-parameter', $event)"
 							@update-source="emit('update-source', $event)"
-							@select-distribution="emit('select-distribution', $event)"
 						/>
 						<Divider type="solid" />
 					</li>
@@ -34,10 +32,8 @@
 			<tera-parameter-entry
 				:model-configuration="modelConfiguration"
 				:parameter-id="id"
-				@update-constant="emit('update-constant', $event)"
-				@update-distribution="emit('update-distribution', $event)"
+				@update-parameter="emit('update-parameter', $event)"
 				@update-source="emit('update-source', $event)"
-				@select-distribution="emit('select-distribution', $event)"
 			/>
 			<Divider type="solid" />
 		</li>
@@ -53,7 +49,10 @@
 			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
 			@update-cell-value="
-				emit('update-constant', { id: $event.variableName, value: $event.newValue })
+				emit('update-parameter', {
+					id: $event.variableName,
+					distribution: { type: DistributionType.Constant, parameters: { value: $event.newValue } }
+				})
 			"
 		/>
 	</Teleport>
@@ -70,6 +69,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
+import { DistributionType } from '@/services/distribution';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 
@@ -79,13 +79,7 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 }>();
 
-const emit = defineEmits([
-	'update-constant',
-	'update-distribution',
-	'update-source',
-	'delete-distribution',
-	'select-distribution'
-]);
+const emit = defineEmits(['update-parameter', 'update-source', 'delete-distribution']);
 
 const isStratified = isStratifiedModel(props.mmt);
 

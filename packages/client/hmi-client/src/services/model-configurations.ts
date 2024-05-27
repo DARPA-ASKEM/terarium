@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import API from '@/api/api';
 import type {
 	ModelConfiguration,
@@ -216,19 +216,22 @@ export function getParameterUnit(config: ModelConfiguration, parameterId: string
 export function getParameterDistribution(
 	config: ModelConfiguration,
 	parameterId: string
-): ModelDistribution | undefined {
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
-	return parameter?.distribution;
-}
 
-export function getParameterDistributionType(
-	config: ModelConfiguration,
-	parameterId: string
-): DistributionType {
-	const parameter = getParameter(config, parameterId);
-	// for now just returning uniform distribution for all distributions
-	if (parameter?.distribution) return DistributionType.Uniform;
-	return DistributionType.Constant;
+	if (!parameter?.distribution) {
+		return {
+			type: DistributionType.Constant,
+			parameters: {
+				value: parameter?.value
+			}
+		};
+	}
+
+	if (parameter.distribution.type === 'Uniform1')
+		parameter.distribution.type = DistributionType.Uniform;
+
+	return parameter.distribution;
 }
 
 export function getInterventions(config: ModelConfiguration): Intervention[] {
@@ -265,64 +268,34 @@ export function setParameterSource(
 	}
 }
 
-export function getParameterConstant(config: ModelConfiguration, parameterId: string): number {
-	const parameter = getParameter(config, parameterId);
-	return parameter?.value ?? NaN;
-}
-
-export function setParameterConstant(
+export function setParameterDistribution(
 	config: ModelConfiguration,
 	parameterId: string,
-	value: string
-): void {
-	const parameter = getParameter(config, parameterId);
-	if (parameter) {
-		parameter.value = parseFloat(value);
-	}
-}
-
-// sets the parameter distribution type along with its default respective parameters
-export function setParameterDistributionType(
-	config: ModelConfiguration,
-	parameterId: string,
-	distributionType: DistributionType
+	distribution: ModelDistribution
 ): void {
 	const parameter = getParameter(config, parameterId);
 	if (!parameter) return;
-	switch (distributionType) {
-		case DistributionType.Constant:
-			delete parameter.distribution;
-			break;
-		case DistributionType.Uniform:
-			parameter.distribution = {
-				type: DistributionType.Uniform,
-				parameters: {
-					minimum: 0,
-					maximum: 0
-				}
-			};
-			break;
-		default:
-			break;
+
+	const type = distribution.type;
+	if (type === DistributionType.Constant) {
+		delete parameter.distribution;
+		parameter.value = distribution.parameters?.value ?? 0;
+	} else if (type === DistributionType.Uniform) {
+		parameter.distribution = convertToUniformDistribution(distribution);
 	}
 }
 
-// updates the parameter distribution parameters if they exist (i.e. minimum and maximum for uniform distribution)
-export function updateParameterDistributionParameters(
-	config: ModelConfiguration,
-	parameterId: string,
-	parameters: { [index: string]: any }
-): void {
-	const parameter = getParameter(config, parameterId);
+function convertToUniformDistribution(distribution: ModelDistribution): ModelDistribution {
+	// if no parameters, initialize
+	if (isEmpty(distribution.parameters)) distribution.parameters = { minimum: 0, maximum: 0 };
 
-	if (parameter?.distribution) return;
-
-	Object.keys(parameters).forEach((key) => {
-		if (!parameter?.distribution) return;
-		if (key in parameter.distribution.parameters) {
-			parameter.distribution.parameters[key] = parameters[key];
+	return {
+		type: DistributionType.Uniform,
+		parameters: {
+			minimum: distribution.parameters.minimum,
+			maximum: distribution.parameters.maximum
 		}
-	});
+	};
 }
 
 export function getParameters(config: ModelConfiguration): ModelParameter[] {
