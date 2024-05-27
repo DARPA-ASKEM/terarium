@@ -46,9 +46,10 @@ There are many ways/package managers to install these dependencies. We recommend
 
 ```bash
 brew tap homebrew/cask-versions
-brew install --cask temurin17 # OR brew install openjdk@17
+brew install openjdk@17
 brew install gradle
-brew install yarn
+brew install node
+brew install yarnb
 brew install ansible
 ```
 
@@ -168,6 +169,8 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ```shell
 ./hmiServerDev.sh start local run
 ```
+
+> Note: to run everything local you need to update your `/etc/hosts` with the following `127.0.0.1 minio`.
 
 If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
 ```shell
