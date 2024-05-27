@@ -9,7 +9,7 @@ import type {
 	Initial
 } from '@/types/Types';
 import { pythonInstance } from '@/python/PyodideController';
-import { DistributionType } from '@/types/common';
+import { DistributionType } from '@/services/distribution';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -314,7 +314,7 @@ export function setParameterDistributionParameters(
 	parameters: { [index: string]: any }
 ): void {
 	const parameter = getParameter(config, parameterId);
-	if (parameter && parameter.distribution) {
+	if (parameter?.distribution) {
 		parameter.distribution.parameters = {
 			...parameter.distribution.parameters,
 			...parameters

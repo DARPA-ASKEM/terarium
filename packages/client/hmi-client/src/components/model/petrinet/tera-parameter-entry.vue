@@ -58,10 +58,10 @@
 			:label="getSourceLabel(parameterId)"
 			text
 			size="small"
-			@click="sourceOpen = !sourceOpen"
+			@click="isSourceOpen = !isSourceOpen"
 		/>
 	</main>
-	<footer v-if="sourceOpen">
+	<footer v-if="isSourceOpen">
 		<tera-input
 			label="Source / notes / etc"
 			:model-value="getParameterSource(modelConfiguration, parameterId)"
@@ -85,7 +85,7 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { DistributionType, distributionTypeOptions } from '@/types/common';
+import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -103,10 +103,10 @@ const name = getParameterName(props.modelConfiguration, props.parameterId);
 const unit = getParameterUnit(props.modelConfiguration, props.parameterId);
 const description = getParameterDescription(props.modelConfiguration, props.parameterId);
 
-const sourceOpen = ref(false);
+const isSourceOpen = ref(false);
 
 function getSourceLabel(initialId) {
-	if (sourceOpen.value) return 'Hide source';
+	if (isSourceOpen.value) return 'Hide source';
 	if (!getParameterSource(props.modelConfiguration, initialId)) return 'Add source';
 	return 'Show source';
 }
