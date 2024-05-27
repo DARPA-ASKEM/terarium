@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.notebooksession;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serial;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,4 +20,10 @@ public class NotebookSession extends TerariumAsset {
 	private static final long serialVersionUID = 9176019416379347233L;
 
 	private JsonNode data;
+
+	public NotebookSession clone() {
+		NotebookSession session = new NotebookSession();
+		session.setData(data.deepCopy());
+		return session;
+	}
 }

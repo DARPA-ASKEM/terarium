@@ -47,10 +47,11 @@ public class ProjectExport {
 			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds,
 					currentAsset);
 
-			assetDependencies.put(currentAsset.getId(), dependencies);
-
 			// clone the asset
 			final TerariumAsset clonedAsset = currentAsset.clone();
+
+			// store the dependencies
+			assetDependencies.put(clonedAsset.getId(), dependencies);
 
 			final AssetExport clonedExport = new AssetExport();
 			clonedExport.setType(assetExport.getType());

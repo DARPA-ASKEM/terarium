@@ -1,19 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
@@ -151,7 +153,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 
 		simulation = simulationService.createAsset(simulation, ASSUME_WRITE_PERMISSION);
 
-		final Simulation cloned = simulationService.cloneAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
+		final Simulation cloned = simulation.clone();
 
 		Assertions.assertNotEquals(simulation.getId(), cloned.getId());
 		Assertions.assertEquals(simulation.getName(), cloned.getName());
@@ -159,28 +161,6 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 				simulation.getResultFiles().size(), cloned.getResultFiles().size());
 		Assertions.assertEquals(simulation.getExecutionPayload(), cloned.getExecutionPayload());
 		Assertions.assertEquals(simulation.getType(), cloned.getType());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportSimulation() throws Exception {
-
-		Simulation simulation = createSimulation("A");
-
-		simulation = simulationService.createAsset(simulation, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Simulation> exported =
-				simulationService.exportAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Simulation imported = simulationService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(simulation.getId(), imported.getId());
-		Assertions.assertEquals(simulation.getName(), imported.getName());
-		Assertions.assertEquals(simulation.getDescription(), imported.getDescription());
-		Assertions.assertEquals(
-				simulation.getResultFiles().size(), imported.getResultFiles().size());
-		Assertions.assertEquals(simulation.getExecutionPayload(), imported.getExecutionPayload());
-		Assertions.assertEquals(simulation.getType(), imported.getType());
 	}
 
 	@Test

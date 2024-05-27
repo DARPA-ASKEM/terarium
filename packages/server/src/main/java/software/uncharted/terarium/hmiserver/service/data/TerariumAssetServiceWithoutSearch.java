@@ -313,7 +313,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	}
 
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(final T newAsset, final T oldAsset) throws IOException {
+	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
+			throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final List<String> validFileNames = new ArrayList<>();
 		for (final String fileName : oldAsset.getFileNames()) {
@@ -331,7 +332,8 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 	}
 
 	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID assetId) throws IOException {
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission)
+			throws IOException {
 		final T asset = getAsset(assetId, Schema.Permission.WRITE).orElseThrow();
 		final String bucket = config.getFileStorageS3BucketName();
 

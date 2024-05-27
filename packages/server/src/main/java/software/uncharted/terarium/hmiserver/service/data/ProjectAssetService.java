@@ -147,4 +147,17 @@ public class ProjectAssetService {
 		return projectAssetRepository.findAllByProjectId(projectId);
 	}
 
+	@Observed(name = "function_profile")
+	public UUID getProjectIdForAsset(final UUID assetId,
+			final Schema.Permission hasReadPermission) {
+		final List<ProjectAsset> assets = projectAssetRepository.findByAssetId(assetId);
+
+		for (final ProjectAsset asset : assets) {
+			if (asset.getProject() != null) {
+				return asset.getProject().getId();
+			}
+		}
+		return null;
+	}
+
 }

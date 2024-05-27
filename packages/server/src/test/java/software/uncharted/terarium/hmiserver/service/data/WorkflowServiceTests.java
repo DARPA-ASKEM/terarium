@@ -1,22 +1,24 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
@@ -158,8 +160,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		final Workflow workflow = workflowService.createAsset(createWorkflow(), ASSUME_WRITE_PERMISSION);
 		workflow.setName("new name");
 
-		final Workflow updatedWorkflow =
-				workflowService.updateAsset(workflow, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Workflow updatedWorkflow = workflowService.updateAsset(workflow, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(workflow, updatedWorkflow);
 		Assertions.assertNotNull(updatedWorkflow.getUpdatedOn());
@@ -185,7 +186,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Workflow workflow = createWorkflow();
 		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
 
-		final Workflow cloned = workflowService.cloneAsset(workflow.getId(), Schema.Permission.WRITE);
+		final Workflow cloned = workflow.clone();
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
@@ -229,43 +230,10 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportWorkflow() throws Exception {
-
-		Workflow workflow = createWorkflow();
-		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Workflow> exported = workflowService.exportAsset(workflow.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Workflow imported = workflowService.importAsset(exported, Schema.Permission.WRITE);
-
-		Assertions.assertNotEquals(workflow.getId(), imported.getId());
-		Assertions.assertEquals(workflow.getName(), imported.getName());
-		Assertions.assertEquals(workflow.getDescription(), imported.getDescription());
-		Assertions.assertEquals(workflow.getTransform(), imported.getTransform());
-		Assertions.assertEquals(workflow.getNodes().size(), imported.getNodes().size());
-		Assertions.assertNotEquals(
-				workflow.getNodes().get(0).getId(), imported.getNodes().get(0).getId());
-		Assertions.assertNotEquals(
-				workflow.getNodes().get(1).getId(), imported.getNodes().get(1).getId());
-		Assertions.assertNotEquals(
-				workflow.getNodes().get(2).getId(), imported.getNodes().get(2).getId());
-		Assertions.assertNotEquals(
-				workflow.getNodes().get(3).getId(), imported.getNodes().get(3).getId());
-		Assertions.assertEquals(workflow.getEdges().size(), imported.getEdges().size());
-		Assertions.assertNotEquals(
-				workflow.getEdges().get(0).getId(), imported.getEdges().get(0).getId());
-		Assertions.assertNotEquals(
-				workflow.getEdges().get(1).getId(), imported.getEdges().get(1).getId());
-		Assertions.assertNotEquals(
-				workflow.getEdges().get(2).getId(), imported.getEdges().get(2).getId());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testWorkflowsAreOpaque() throws Exception {
 
-		final WorkflowNode a =
-				mapper.readValue("{\"id\":\"" + UUID.randomUUID() + "\", \"otherField\": 123 }", WorkflowNode.class);
+		final WorkflowNode a = mapper.readValue("{\"id\":\"" + UUID.randomUUID() + "\", \"otherField\": 123 }",
+				WorkflowNode.class);
 
 		final WorkflowNode b = mapper.readValue(
 				"{\"id\":\"" + UUID.randomUUID() + "\", \"anotherField\": \"text value\" }", WorkflowNode.class);
@@ -290,7 +258,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			Assertions.assertTrue(n.has("somethingElse"));
 		});
 
-		final Workflow cloned = workflowService.cloneAsset(workflow.getId(), Schema.Permission.WRITE);
+		final Workflow cloned = workflow.clone();
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());

@@ -96,11 +96,16 @@ public class Project extends TerariumAsset {
 
 	public Project clone() {
 		final Project cloned = new Project();
+		cloneSuperFields(cloned);
 		cloned.userId = userId;
 		cloned.userName = userName;
-		cloned.authors = new ArrayList<>(authors);
+		if (authors != null) {
+			cloned.authors = new ArrayList<>(authors);
+		}
 		cloned.overviewContent = overviewContent;
-		cloned.metadata = new HashMap<>(metadata);
+		if (metadata != null) {
+			cloned.metadata = new HashMap<>(metadata);
+		}
 		cloned.publicProject = publicProject;
 		cloned.userPermission = userPermission;
 		return cloned;

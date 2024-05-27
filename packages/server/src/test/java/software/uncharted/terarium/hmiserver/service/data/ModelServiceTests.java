@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 public class ModelServiceTests extends TerariumApplicationTests {
@@ -72,8 +73,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelById() throws IOException {
 		final Model model = modelService.createAsset(createModel("0"), ASSUME_WRITE_PERMISSION);
-		final Model fetchedModel =
-				modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Model fetchedModel = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(model, fetchedModel);
 		Assertions.assertEquals(model.getId(), fetchedModel.getId());
@@ -89,8 +89,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 		final Model model = modelService.createAsset(createModel("A"), ASSUME_WRITE_PERMISSION);
 		model.setName("new name");
 
-		final Model updatedModel =
-				modelService.updateAsset(model, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Model updatedModel = modelService.updateAsset(model, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(model, updatedModel);
 		Assertions.assertNotNull(updatedModel.getUpdatedOn());
@@ -117,26 +116,9 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
-		final Model cloned = modelService.cloneAsset(model.getId(), ASSUME_WRITE_PERMISSION);
+		final Model cloned = model.clone();
 
 		Assertions.assertNotEquals(model.getId(), cloned.getId());
 		Assertions.assertEquals(model.getName(), cloned.getName());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportModel() throws Exception {
-
-		Model model = createModel("A");
-
-		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Model> exported = modelService.exportAsset(model.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Model imported = modelService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(model.getId(), imported.getId());
-		Assertions.assertEquals(model.getName(), imported.getName());
-		Assertions.assertEquals(model.getDescription(), imported.getDescription());
 	}
 }

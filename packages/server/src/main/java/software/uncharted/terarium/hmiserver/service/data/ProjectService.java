@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -16,10 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
-import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -34,7 +31,6 @@ public class ProjectService {
 	final ProjectRepository projectRepository;
 	final UserRepository userRepository;
 	final ReBACService reBACService;
-	final TerariumAssetCloneService cloneService;
 	final Messages messages;
 
 	@Observed(name = "function_profile")
@@ -138,29 +134,4 @@ public class ProjectService {
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
 	}
-
-	@Observed(name = "function_profile")
-	public void cloneAndPersistAsset(final String userId, final UUID projectId, final UUID assetId,
-			final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-
-		checkPermissionCanWrite(userId, projectId);
-
-		cloneService.cloneAndPersistAsset(projectId, assetId);
-	}
-
-	@Observed(name = "function_profile")
-	public ProjectExport exportProject(final String userId, final UUID projectId) throws IOException {
-
-		checkPermissionCanRead(userId, projectId);
-
-		return cloneService.exportProject(projectId);
-	}
-
-	@Observed(name = "function_profile")
-	public Project importAsset(final ProjectExport projectExport) throws IOException {
-
-		return cloneService.importProject(projectExport);
-	}
-
 }

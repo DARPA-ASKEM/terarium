@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.http.entity.ContentType;
+
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -27,5 +29,9 @@ public interface ITerariumAssetService<T extends TerariumAsset> {
 	void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
 			throws IOException;
 
-	Map<String, FileExport> exportAssetFiles(final UUID assetId) throws IOException;
+	Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission)
+			throws IOException;
+
+	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
+			throws IOException;
 }

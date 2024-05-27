@@ -1,20 +1,24 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -72,9 +76,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/**
 	 * Get a list of assets
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
-	 * @param query The query to filter the assets
+	 * @param query    The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -95,7 +99,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	/**
 	 * Get a list of assets
 	 *
-	 * @param page The page number
+	 * @param page     The page number
 	 * @param pageSize The number of assets per page
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
@@ -175,8 +179,9 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
+	 * @throws IOException              If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to
+	 *                                  temporary
 	 */
 	@Override
 	@Observed(name = "function_profile")
@@ -202,15 +207,17 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 		return Optional.of(asset);
 	}
 
-	/** Clone asset on ES, retrieve and save document with a different id */
-	@Override
 	@Observed(name = "function_profile")
-	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
-		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id);
-		}
-		return createAsset(targetAsset.get(), hasWritePermission);
+	public void copyAssetFiles(final T newAsset, final T oldAsset,
+			final Schema.Permission hasWritePermission)
+			throws IOException {
+
+		throw new UnsupportedOperationException("Unimplemented");
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
+
+		throw new UnsupportedOperationException("Unimplemented");
 	}
 }
