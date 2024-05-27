@@ -140,8 +140,7 @@ public class KnowledgeController {
 			final String error = "Skema Unified Service did not return a valid AMR based on the provided Equations";
 			log.error(error, e);
 
-			handleSkemaFeignException(e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
+			throw handleSkemaFeignException(e);
 		} catch (final Exception e) {
 			final String error = "An unhandled error occurred while processing the AMR from equations.";
 			log.error(error, e);
@@ -190,8 +189,7 @@ public class KnowledgeController {
 			final String error = "Error with Skema Unified Service while converting base64 equations to AMR";
 			log.error(error, e);
 
-			handleSkemaFeignException(e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
+			throw handleSkemaFeignException(e);
 		}
 	}
 
@@ -205,8 +203,7 @@ public class KnowledgeController {
 			final String error = "Error with Skema Unified Service while converting base64 equations to Latex";
 			log.error(error, e);
 
-			handleSkemaFeignException(e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
+			throw handleSkemaFeignException(e);
 		}
 	}
 
@@ -536,19 +533,15 @@ public class KnowledgeController {
 			final String error = "Unable to get model card";
 			log.error(error, e);
 
-			final HttpStatus statusCode = HttpStatus.resolve(e.status());
-			if (statusCode != null && statusCode.is4xxClientError()) {
-				throw new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
-			} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-				throw new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
-			} else if (statusCode != null && statusCode.is5xxServerError()) {
-				throw new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
-			}
-			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+			throw handleMitFeignException(e);
 		}
 
-		if (!resp.getStatusCode().is2xxSuccessful()) {
-			throw new ResponseStatusException(resp.getStatusCode(), "Unable to get model card");
+		if (resp.getStatusCode().is4xxClientError()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
+		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
+		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
 		final Card card;
@@ -602,124 +595,116 @@ public class KnowledgeController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		try {
-			// Provenance call if a document id is provided
-			StringMultipartFile documentFile = null;
-			if (documentId.isPresent()) {
+		// Provenance call if a document id is provided
+		StringMultipartFile documentFile = null;
+		if (documentId.isPresent()) {
 
-				final DocumentAsset document =
-						documentService.getAsset(documentId.get(), permission).orElseThrow();
-				documentFile =
-						new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
+			final DocumentAsset document =
+					documentService.getAsset(documentId.get(), permission).orElseThrow();
+			documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
 
-				try {
-					final Provenance provenancePayload = new Provenance(
-							ProvenanceRelationType.EXTRACTED_FROM,
-							datasetId,
-							ProvenanceType.DATASET,
-							documentId.get(),
-							ProvenanceType.DOCUMENT);
-					provenanceService.createProvenance(provenancePayload);
+			try {
+				final Provenance provenancePayload = new Provenance(
+						ProvenanceRelationType.EXTRACTED_FROM,
+						datasetId,
+						ProvenanceType.DATASET,
+						documentId.get(),
+						ProvenanceType.DOCUMENT);
+				provenanceService.createProvenance(provenancePayload);
 
-				} catch (final Exception e) {
-					final String error = "Unable to create provenance for profile-dataset";
-					log.error(error, e);
-				}
-			} else {
-				documentFile = new StringMultipartFile(
-						"There is no documentation for this dataset", "document.txt", "application/text");
+			} catch (final Exception e) {
+				final String error = "Unable to create provenance for profile-dataset";
+				log.error(error, e);
 			}
-
-			final Dataset dataset =
-					datasetService.getAsset(datasetId, permission).orElseThrow();
-
-			if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No files found on dataset");
-			}
-			final String filename = dataset.getFileNames().get(0);
-
-			final String csvContents =
-					datasetService.fetchFileAsString(datasetId, filename).orElseThrow();
-
-			final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
-
-			final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
-			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(resp.getStatusCode(), "Unable to get data card");
-			}
-
-			final JsonNode card = resp.getBody();
-			final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
-
-			final List<DatasetColumn> columns = new ArrayList<>();
-			for (final DatasetColumn col : dataset.getColumns()) {
-
-				final JsonNode annotation = profilingResult.get(col.getName());
-				if (annotation == null) {
-					log.warn("No annotations for column: {}", col.getName());
-					continue;
-				}
-
-				final JsonNode dkgGroundings = annotation.get("dkg_groundings");
-				if (dkgGroundings == null) {
-					log.warn("No dkg_groundings for column: {}", col.getName());
-					continue;
-				}
-
-				final Grounding groundings = new Grounding();
-				for (final JsonNode g : annotation.get("dkg_groundings")) {
-					if (g.size() < 2) {
-						log.warn("Invalid dkg_grounding: {}", g);
-						continue;
-					}
-					if (groundings.getIdentifiers() == null) {
-						groundings.setIdentifiers(new ArrayList<>());
-					}
-					groundings
-							.getIdentifiers()
-							.add(new Identifier(g.get(0).asText(), g.get(1).asText()));
-				}
-
-				// remove groundings from annotation object
-				((ObjectNode) annotation).remove("dkg_groundings");
-
-				final DatasetColumn newCol = new DatasetColumn();
-				newCol.setName(col.getName());
-				newCol.setDataType(col.getDataType());
-				newCol.setFormatStr(col.getFormatStr());
-				newCol.setGrounding(groundings);
-				newCol.setAnnotations(col.getAnnotations());
-				newCol.setDescription(annotation.get("description").asText());
-				newCol.setMetadata(col.getMetadata());
-				newCol.updateMetadata(annotation);
-				columns.add(newCol);
-			}
-
-			dataset.setColumns(columns);
-
-			// add card to metadata
-			if (dataset.getMetadata() == null) {
-				dataset.setMetadata(mapper.createObjectNode());
-			}
-			((ObjectNode) dataset.getMetadata()).set("dataCard", card);
-
-			return ResponseEntity.ok(
-					datasetService.updateAsset(dataset, permission).orElseThrow());
-
-		} catch (final FeignException e) {
-			final String error = "Unable to get profile dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					e.status() < 100
-							? org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
-							: HttpStatus.valueOf(e.status()),
-					error + ": " + e.getMessage());
-		} catch (final Exception e) {
-			final String error = "Unable to get profile dataset";
-			log.error(error, e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error + ": " + e.getMessage());
+		} else {
+			documentFile = new StringMultipartFile(
+					"There is no documentation for this dataset", "document.txt", "application/text");
 		}
+
+		final Dataset dataset = datasetService.getAsset(datasetId, permission).orElseThrow();
+
+		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("dataset.files.not-found"));
+		}
+		final String filename = dataset.getFileNames().get(0);
+
+		final String csvContents;
+		try {
+			csvContents = datasetService.fetchFileAsString(datasetId, filename).orElseThrow();
+		} catch (final IOException e) {
+			log.error("Unable to fetch file as string", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
+
+		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
+
+		if (resp.getStatusCode().is4xxClientError()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
+		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
+		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
+		}
+
+		final JsonNode card = resp.getBody();
+		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
+
+		final List<DatasetColumn> columns = new ArrayList<>();
+		for (final DatasetColumn col : dataset.getColumns()) {
+
+			final JsonNode annotation = profilingResult.get(col.getName());
+			if (annotation == null) {
+				log.warn("No annotations for column: {}", col.getName());
+				continue;
+			}
+
+			final JsonNode dkgGroundings = annotation.get("dkg_groundings");
+			if (dkgGroundings == null) {
+				log.warn("No dkg_groundings for column: {}", col.getName());
+				continue;
+			}
+
+			final Grounding groundings = new Grounding();
+			for (final JsonNode g : annotation.get("dkg_groundings")) {
+				if (g.size() < 2) {
+					log.warn("Invalid dkg_grounding: {}", g);
+					continue;
+				}
+				if (groundings.getIdentifiers() == null) {
+					groundings.setIdentifiers(new ArrayList<>());
+				}
+				groundings
+						.getIdentifiers()
+						.add(new Identifier(g.get(0).asText(), g.get(1).asText()));
+			}
+
+			// remove groundings from annotation object
+			((ObjectNode) annotation).remove("dkg_groundings");
+
+			final DatasetColumn newCol = new DatasetColumn();
+			newCol.setName(col.getName());
+			newCol.setDataType(col.getDataType());
+			newCol.setFormatStr(col.getFormatStr());
+			newCol.setGrounding(groundings);
+			newCol.setAnnotations(col.getAnnotations());
+			newCol.setDescription(annotation.get("description").asText());
+			newCol.setMetadata(col.getMetadata());
+			newCol.updateMetadata(annotation);
+			columns.add(newCol);
+		}
+
+		dataset.setColumns(columns);
+
+		// add card to metadata
+		if (dataset.getMetadata() == null) {
+			dataset.setMetadata(mapper.createObjectNode());
+		}
+		((ObjectNode) dataset.getMetadata()).set("dataCard", card);
+
+		return ResponseEntity.ok(datasetService.updateAsset(dataset, permission).orElseThrow());
 	}
 
 	@PostMapping("/align-model")
@@ -797,15 +782,27 @@ public class KnowledgeController {
 		return ResponseEntity.accepted().build();
 	}
 
-	private void handleSkemaFeignException(final FeignException e) {
+	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
-			throw new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
+			return new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			throw new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
+			return new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			throw new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
+			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
-		throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+	}
+
+	private ResponseStatusException handleMitFeignException(final FeignException e) {
+		final HttpStatus statusCode = HttpStatus.resolve(e.status());
+		if (statusCode != null && statusCode.is4xxClientError()) {
+			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
+		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
+		} else if (statusCode != null && statusCode.is5xxServerError()) {
+			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
+		}
+		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }
