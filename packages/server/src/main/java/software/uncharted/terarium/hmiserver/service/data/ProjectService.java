@@ -85,6 +85,21 @@ public class ProjectService {
 		return true;
 	}
 
+	public Schema.Permission checkPermissionCanReadOrNone(String userId, UUID projectId) throws ResponseStatusException {
+		try {
+			final RebacUser rebacUser = new RebacUser(userId, reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
+				return Schema.Permission.READ;
+			}
+			return Schema.Permission.NONE;
+		} catch (final Exception e) {
+			log.error("Error updating project", e);
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
 	public Schema.Permission checkPermissionCanRead(String userId, UUID projectId) throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
