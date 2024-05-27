@@ -448,7 +448,6 @@ onUnmounted(() => {
 .preview-container {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem;
 }
 
 :deep(.diagram-container) {
