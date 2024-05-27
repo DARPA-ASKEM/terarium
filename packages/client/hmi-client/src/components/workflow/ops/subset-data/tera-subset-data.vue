@@ -1,17 +1,27 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						class="mr-auto mb-2"
+						@click="run"
+						:label="isSubsetLoading ? 'Processing' : 'Run'"
+						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
+						:disabled="isSubsetLoading"
+					/>
+				</template>
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
 				<p class="subheader">
-					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
-					skipping to retain every nth data point for a coarser subset.
+					Set your desired latitude and longitude to define the spatial boundaries. Apply
+					spatial skipping to retain every nth data point for a coarser subset.
 				</p>
 
 				<!-- Preview image -->
@@ -25,7 +35,14 @@
 				<span>
 					<label>Latitude</label>
 					<InputNumber v-model="latitudeStart" placeholder="Start" />
-					<Slider v-model="latitudeRange" range class="w-full" :min="-90" :max="90" :step="0.001" />
+					<Slider
+						v-model="latitudeRange"
+						range
+						class="w-full"
+						:min="-90"
+						:max="90"
+						:step="0.001"
+					/>
 					<InputNumber v-model="latitudeEnd" placeholder="End" />
 				</span>
 				<span>
@@ -42,8 +59,9 @@
 					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
-					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
-					'{{ longitudeEnd }}'])
+					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{
+						longitudeStart
+					}}', '{{ longitudeEnd }}'])
 				</code>
 				<div class="flex flex-row align-items-center">
 					<span>
@@ -52,7 +70,9 @@
 					</span>
 
 					<span class="ml-3">
-						<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
+						<p :class="!isSpatialSkipping ? 'disabled' : ''">
+							Keep every nth datapoint
+						</p>
 						<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
 					</span>
 				</div>
@@ -60,8 +80,8 @@
 				<!-- Temporal slice -->
 				<h5 class="mt-3">Select temporal slice</h5>
 				<p class="subheader">
-					Set your desired time range to define the temporal boundaries. Apply time skipping to
-					retain every nth time slice for a coarser subset.
+					Set your desired time range to define the temporal boundaries. Apply time
+					skipping to retain every nth time slice for a coarser subset.
 				</p>
 				<div class="flex flex-row">
 					<div class="col">
@@ -83,20 +103,6 @@
 						<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
 					</span>
 				</div>
-				<template #footer>
-					<!--FIXME: A lot of these drilldowns have this margin auto for the left footer's button.
-						We should make it so the left footer is aligned left and the right
-						footer is aligned right-->
-					<Button
-						class="mr-auto mb-2"
-						@click="run"
-						:label="isSubsetLoading ? 'Processing' : 'Run'"
-						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
-						:disabled="isSubsetLoading"
-						outlined
-						severity="secondary"
-					/>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="SubsetDataTabs.Notebook"></div>
@@ -107,7 +113,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-2"
 			>
 				<tera-progress-spinner v-if="isSubsetLoading" is-inline>
 					Please wait for the subset to generate. This usually takes a few minutes...
@@ -137,10 +142,16 @@
 								</tr>
 							</thead>
 							<tbody v-if="subset?.metadata?.dataStructure">
-								<tr v-for="(value, key) in subset.metadata.dataStructure" :key="key">
+								<tr
+									v-for="(value, key) in subset.metadata.dataStructure"
+									:key="key"
+								>
 									<td>{{ key }}</td>
 									<td>
-										<ul v-for="(attrValue, attrKey) in value.attrs" :key="attrKey">
+										<ul
+											v-for="(attrValue, attrKey) in value.attrs"
+											:key="attrKey"
+										>
 											<li>
 												<strong>{{ attrKey }}:</strong> {{ attrValue }}
 											</li>
@@ -148,7 +159,10 @@
 									</td>
 									<td>
 										<ul>
-											<li v-for="(index, indexKey) in value.indexes" :key="indexKey">
+											<li
+												v-for="(index, indexKey) in value.indexes"
+												:key="indexKey"
+											>
 												{{ index }}
 											</li>
 										</ul>
@@ -156,7 +170,9 @@
 									<td>
 										<ul>
 											<li
-												v-for="(coordinate, coordinateKey) in value.coordinates"
+												v-for="(
+													coordinate, coordinateKey
+												) in value.coordinates"
 												:key="coordinateKey"
 											>
 												{{ coordinate }}
@@ -168,16 +184,6 @@
 						</table>
 					</TabPanel>
 				</TabView>
-				<template #footer>
-					<Button
-						@click="addSubsetToProject"
-						label="Add subset to project datasets"
-						:disabled="!subset"
-						outlined
-						severity="secondary"
-					/>
-					<Button label="Close" @click="emit('close')" />
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -367,6 +373,17 @@ function mutateLoadingState(isLoading: boolean) {
 	emit('update-state', state);
 }
 
+const menuItems = computed(() => [
+	{
+		label: 'Add subset to project datasets',
+		icon: 'pi pi-pencil',
+		disabled: !subset.value,
+		command: () => {
+			addSubsetToProject();
+		}
+	}
+]);
+
 function updateState() {
 	const state = cloneDeep(props.node.state);
 	state.datasetId = dataset.value?.id ?? null;
@@ -461,8 +478,9 @@ watch(
 	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
-				?.value?.[0];
+			const subsetId = props.node?.outputs?.find(
+				(output) => output.id === selectedOutputId.value
+			)?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
 			}

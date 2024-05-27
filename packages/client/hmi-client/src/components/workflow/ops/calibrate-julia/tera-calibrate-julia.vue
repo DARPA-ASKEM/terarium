@@ -7,6 +7,15 @@
 	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:style="{ marginRight: 'auto' }"
+						label="Run"
+						icon="pi pi-play"
+						@click="runCalibrate"
+						:disabled="disableRunButton"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
@@ -120,7 +129,6 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<div class="form-section">
 					<h5>Calibrated parameters</h5>
@@ -150,7 +158,10 @@
 				<div class="form-section">
 					<h5>Variables</h5>
 					<div>
-						<section v-if="selectedRunId && runResults[selectedRunId]" ref="outputPanel">
+						<section
+							v-if="selectedRunId && runResults[selectedRunId]"
+							ref="outputPanel"
+						>
 							<tera-simulate-chart
 								v-for="(cfg, index) of node.state.chartConfigs"
 								:key="index"
@@ -159,7 +170,9 @@
 								:mapping="mapping"
 								:run-type="RunType.Julia"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@configuration-change="
+									chartProxy.configurationChange(index, $event)
+								"
 								@remove="chartProxy.removeChart(index)"
 								show-remove-button
 								:size="chartSize"
@@ -174,17 +187,6 @@
 					</div>
 				</div>
 			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runCalibrate"
-				:disabled="disableRunButton"
-			/>
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>

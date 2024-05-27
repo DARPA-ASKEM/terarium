@@ -7,6 +7,15 @@
 	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+					<Button
+						label="Run"
+						icon="pi pi-play"
+						@click="runCalibrate"
+						:disabled="disableRunButton"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
@@ -91,7 +100,11 @@
 						</div>
 						<div class="label-and-input">
 							<label for="num-samples">End time for forecast</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
+							<InputNumber
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								v-model="knobs.endTime"
+							/>
 						</div>
 					</div>
 				</div>
@@ -107,7 +120,6 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
@@ -155,21 +167,6 @@
 					v-bind="node.state.errorMessage"
 				/>
 			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<Button
-				outlined
-				label="Run"
-				icon="pi pi-play"
-				@click="runCalibrate"
-				:disabled="disableRunButton"
-			/>
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -280,7 +277,8 @@ const ciemssMethodOptions = ref(['dopri5', 'euler']);
 */
 
 const disableRunButton = computed(
-	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
+	() =>
+		!currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const selectedOutputId = ref<string>();
@@ -463,12 +461,12 @@ watch(
 
 <style scoped>
 .mapping-table:deep(td) {
-	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	padding: 0 0.25rem 0.5rem 0 !important;
 	border: none !important;
 }
 
 .mapping-table:deep(th) {
-	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
+	padding: 0 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }

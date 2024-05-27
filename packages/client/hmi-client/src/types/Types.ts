@@ -78,7 +78,6 @@ export interface GithubRepo {
 export interface Artifact extends TerariumAsset {
     userId: string;
     metadata?: any;
-    project?: Project;
 }
 
 export interface CsvAsset {
@@ -129,7 +128,6 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
-    project?: Project;
 }
 
 export interface CodeFile extends TerariumEntity {
@@ -154,7 +152,6 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
-    project?: Project;
 }
 
 export interface DatasetColumn extends TerariumEntity {
@@ -188,7 +185,6 @@ export interface DocumentAsset extends TerariumAsset {
     text?: string;
     grounding?: Grounding;
     assets?: DocumentExtraction[];
-    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -203,7 +199,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
-    project?: Project;
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
@@ -390,9 +385,6 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
-    /**
-     * @deprecated
-     */
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;

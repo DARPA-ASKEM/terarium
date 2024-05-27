@@ -35,7 +35,6 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
@@ -199,56 +198,6 @@ public abstract class TerariumAssetServiceWithoutSearch<T extends TerariumAsset,
 		projectAssetService.updateByAsset(updated, hasWritePermission);
 
 		return Optional.of(updated);
-	}
-
-	/** Returns the asset as an AssetExport payload */
-	@Observed(name = "function_profile")
-	public AssetExport<T> exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
-		try {
-
-			final Optional<T> targetAsset = getAsset(id, hasReadPermission);
-			if (targetAsset.isEmpty()) {
-				throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
-			}
-
-			final T cloned =  (T) targetAsset.get().clone();
-
-			final AssetExport<T> export = new AssetExport<>();
-			export.setAsset(cloned);
-
-			final String bucket = config.getFileStorageS3BucketName();
-
-			final Map<String, FileExport> files = new HashMap<>();
-			final List<String> validFileNames = new ArrayList<>();
-			for (final String fileName : cloned.getFileNames()) {
-				final String key = getPath(id, fileName);
-
-				try {
-
-					final ResponseInputStream<GetObjectResponse> stream = s3ClientService.getS3Service()
-							.getObject(bucket, key);
-					final byte[] bytes = stream.readAllBytes();
-
-					final String contentType = stream.response().contentType();
-
-					final FileExport fileExport = new FileExport();
-					fileExport.setBytes(bytes);
-					fileExport.setContentType(ContentType.parse(contentType));
-
-					files.put(fileName, fileExport);
-					validFileNames.add(fileName);
-				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-					continue;
-				}
-			}
-			cloned.setFileNames(validFileNames); // override only valid files
-			export.setFiles(files);
-
-			return export;
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to export asset", e);
-		}
 	}
 
 	/**

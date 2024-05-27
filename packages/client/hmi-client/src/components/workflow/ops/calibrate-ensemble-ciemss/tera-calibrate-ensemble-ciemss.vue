@@ -1,12 +1,22 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="CalibrateEnsembleTabs.Wizard">
-			<tera-drilldown-section class="ml-3 mr-2 pt-2">
+			<tera-drilldown-section class="ml-3 mr-2 pt-3">
+				<template #header-controls-right>
+					<Button
+						:disabled="isRunDisabled"
+						label="Run"
+						icon="pi pi-play"
+						@click="runEnsemble"
+					/>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab header="Model weights">
 						<div class="model-weights">
@@ -63,7 +73,9 @@
 								<tr>
 									<div class="row-header">
 										<td
-											v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
+											v-for="(element, i) in Object.keys(
+												knobs.ensembleConfigs[0].solutionMappings
+											)"
 											:key="i"
 										>
 											{{ element }}
@@ -71,12 +83,20 @@
 									</div>
 									<td v-for="i in knobs.ensembleConfigs.length" :key="i">
 										<template
-											v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
+											v-for="element in Object.keys(
+												knobs.ensembleConfigs[i - 1].solutionMappings
+											)"
 											:key="element"
 										>
 											<Dropdown
-												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
+												v-model="
+													knobs.ensembleConfigs[i - 1].solutionMappings[
+														element
+													]
+												"
+												:options="
+													allModelOptions[i - 1]?.map((ele) => ele.id)
+												"
 												class="w-full mb-2 mt-2"
 											/>
 										</template>
@@ -138,7 +158,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mt-3 mr-4 mb-3"
 			>
 				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
 					<tera-simulate-chart
@@ -171,23 +190,12 @@
 				/>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer>
-			<Button
-				:disabled="isRunDisabled"
-				outlined
-				label="Run"
-				icon="pi pi-play"
-				@click="runEnsemble"
-			/>
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
-			<Button label="Close" @click="emit('close')" />
-		</template>
 	</tera-drilldown>
+	<tera-save-dataset-from-simulation
+		:simulation-run-id="knobs.forecastRunId"
+		:showDialog="showSaveDataDialog"
+		@dialog-hide="showSaveDataDialog = false"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -204,6 +212,7 @@ import Accordion from 'primevue/accordion';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
+import { useProjects } from '@/composables/project';
 import { setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -222,6 +231,7 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
+import { isSaveDataSetDisabled } from '@/components/dataset/utils';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -230,6 +240,7 @@ import {
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
 }>();
+const showSaveDataDialog = ref<boolean>(false);
 const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum CalibrateEnsembleTabs {
@@ -243,6 +254,21 @@ interface BasicKnobs {
 	forecastRunId: string;
 	timestampColName: string;
 }
+
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+);
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
 
 const knobs = ref<BasicKnobs>({
 	ensembleConfigs: props.node.state.ensembleConfigs ?? [],

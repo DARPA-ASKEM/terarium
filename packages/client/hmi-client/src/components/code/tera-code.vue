@@ -1,7 +1,11 @@
 <template>
 	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
-			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
+			<tera-directory
+				v-if="fileNames.length > 1"
+				:files="fileNames"
+				@fileClicked="onFileSelect"
+			/>
 			<div class="code-asset-editor">
 				<header class="code-asset-editor-header">
 					<div class="left-side w-full flex align-items-center gap-2">
@@ -98,7 +102,9 @@
 		</div>
 		<div v-else>
 			<!-- TODO: show entire file tree for github -->
-			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{ repoUrl }}</a>
+			<a v-if="repoUrl" :href="repoUrl" target="_blank" rel="noreferrer noopener">{{
+				repoUrl
+			}}</a>
 		</div>
 		<Teleport to="body">
 			<tera-modal
@@ -109,15 +115,17 @@
 				<template #header>
 					<h4>Save this code block</h4>
 					<p>
-						Enter a name for the code block you are saving. Choose a name that reflects its purpose
-						or functionality within the model.
+						Enter a name for the code block you are saving. Choose a name that reflects
+						its purpose or functionality within the model.
 					</p>
 				</template>
 				<template #default>
 					<form @submit.prevent>
 						<label class="text-sm mb-1" for="model-name">Name</label>
 						<InputText id="model-name" type="text" v-model="newDynamicsName" />
-						<label class="text-sm mb-1" for="model-description">Description (optional)</label>
+						<label class="text-sm mb-1" for="model-description"
+							>Description (optional)</label
+						>
 						<Textarea v-model="newDynamicsDescription" />
 					</form>
 				</template>
@@ -288,7 +296,9 @@ function removeMarkers() {
 	if (editor.value) {
 		const markers = editor.value.session.getMarkers();
 		if (markers) {
-			Object.keys(markers).forEach((item) => editor.value?.session.removeMarker(markers[item].id));
+			Object.keys(markers).forEach((item) =>
+				editor.value?.session.removeMarker(markers[item].id)
+			);
 		}
 	}
 }
@@ -410,7 +420,10 @@ function onFileTypeChange() {
 	if (codeAssetCopy.value?.files) {
 		const oldCodefile = codeAssetCopy.value.files[codeSelectedFile.value];
 		delete codeAssetCopy.value.files[codeSelectedFile.value];
-		codeSelectedFile.value = setFileExtension(codeSelectedFile.value, programmingLanguage.value);
+		codeSelectedFile.value = setFileExtension(
+			codeSelectedFile.value,
+			programmingLanguage.value
+		);
 		codeAssetCopy.value.files[codeSelectedFile.value] = { ...oldCodefile };
 	}
 
@@ -523,13 +536,8 @@ header > section {
 	flex-direction: row;
 }
 
-main {
-	height: 100%;
-}
-
 .code-asset-content {
 	display: flex;
-	height: 100%;
 }
 
 .p-dropdown {
