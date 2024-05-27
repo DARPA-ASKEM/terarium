@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
-import axios from 'axios';
 
 export interface NotebookHistory {
 	code: string;
@@ -30,16 +29,18 @@ export const saveCodeToState = (node: WorkflowNode<any>, code: string, hasCodeRu
 /**
  * Create a notebook from a code
  * @param code code to be added to the notebook
+ * @param executeResult output of the code execution if any
  * @param language language of the code
  * @param llmQuery llm query used to generate the code if any
  * @param thought llm thought generated from the query if any
  * @returns
  */
-export const createNotebookFromCode = async (
+export const createNotebookFromCode = (
 	code: string,
 	language: string,
+	executionResult?: any,
 	llmQuery?: string,
-	llmThought?: any
+	llmThoughts: any[] = []
 ) => {
 	const notebook = {
 		nbformat: 4,
@@ -60,7 +61,7 @@ export const createNotebookFromCode = async (
 	if (llmQuery) {
 		const beakerQueryCell = {
 			cell_type: 'query',
-			events: llmThought ? [{ type: 'thought', content: llmThought?.content }] : [],
+			events: llmThoughts.map((thought) => ({ type: 'thought', content: thought.content })),
 			metadata: {},
 			source: llmQuery,
 			status: 'idle'
@@ -71,14 +72,24 @@ export const createNotebookFromCode = async (
 		cell_type: 'code',
 		execution_count: 1,
 		metadata: {},
-		outputs: [],
+		outputs: [] as any[],
 		source: code,
 		status: 'idle'
 	};
+	if (executionResult) {
+		// Make a shallow copy of the execution result
+		const data = { ...executionResult };
+		// Make sure the values of the data is stringified as the beaker summary endpoint seem to have issue with object json value
+		Object.keys(data).forEach((type) => {
+			if (typeof data[type] !== 'string') {
+				data[type] = JSON.stringify(data[type]);
+			}
+		});
+		beakerCodeCell.outputs.push({
+			output_type: 'execute_result',
+			data
+		});
+	}
 	notebook.cells.push(beakerCodeCell);
-
-	const res = await axios.post('/beaker/summary', { notebook });
-	console.log(res);
-	console.log(JSON.stringify(notebook, null, 2));
 	return notebook;
 };
