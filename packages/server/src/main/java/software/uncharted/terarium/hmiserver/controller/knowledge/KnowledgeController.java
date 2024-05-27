@@ -140,7 +140,7 @@ public class KnowledgeController {
 			final String error = "Skema Unified Service did not return a valid AMR based on the provided Equations";
 			log.error(error, e);
 
-			handleFeignException(e);
+			handleSkemaFeignException(e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
 		} catch (final Exception e) {
 			final String error = "An unhandled error occurred while processing the AMR from equations.";
@@ -167,7 +167,7 @@ public class KnowledgeController {
 		if (model.isEmpty()) {
 			final String errorMessage = String.format("The model id %s does not exist.", modelId);
 			log.error(errorMessage);
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errorMessage);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
 		responseAMR.setId(model.get().getId());
@@ -190,7 +190,7 @@ public class KnowledgeController {
 			final String error = "Error with Skema Unified Service while converting base64 equations to AMR";
 			log.error(error, e);
 
-			handleFeignException(e);
+			handleSkemaFeignException(e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
 		}
 	}
@@ -205,7 +205,7 @@ public class KnowledgeController {
 			final String error = "Error with Skema Unified Service while converting base64 equations to Latex";
 			log.error(error, e);
 
-			handleFeignException(e);
+			handleSkemaFeignException(e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
 		}
 	}
@@ -489,85 +489,101 @@ public class KnowledgeController {
 			@PathVariable("model-id") final UUID modelId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestParam(value = "document-id", required = false) final UUID documentId) {
+
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		try {
+		String documentText = "";
+		if (documentId != null) {
+			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
+			if (documentOptional.isPresent()) {
+				final int MAX_CHAR_LIMIT = 9000;
 
-			String documentText = "";
-			if (documentId != null) {
-				final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
-				if (documentOptional.isPresent()) {
-					final int MAX_CHAR_LIMIT = 9000;
+				final DocumentAsset document = documentOptional.get();
 
-					final DocumentAsset document = documentOptional.get();
+				if (document.getText() != null) {
+					documentText = document.getText()
+							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
+				} else {
+					throw new ResponseStatusException(
+							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
+				}
 
-					if (document.getText() != null) {
-						documentText = document.getText()
-								.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
-					} else {
-						throw new ResponseStatusException(
-								HttpStatus.BAD_REQUEST,
-								"Supplied document is still in the extraction process. Please try again later...");
-					}
-
-					try {
-						final Provenance provenancePayload = new Provenance(
-								ProvenanceRelationType.EXTRACTED_FROM,
-								modelId,
-								ProvenanceType.MODEL,
-								documentId,
-								ProvenanceType.DOCUMENT);
-						provenanceService.createProvenance(provenancePayload);
-					} catch (final Exception e) {
-						final String error = "Unable to create provenance for profile-model";
-						log.error(error, e);
-					}
+				try {
+					final Provenance provenancePayload = new Provenance(
+							ProvenanceRelationType.EXTRACTED_FROM,
+							modelId,
+							ProvenanceType.MODEL,
+							documentId,
+							ProvenanceType.DOCUMENT);
+					provenanceService.createProvenance(provenancePayload);
+				} catch (final Exception e) {
+					final String error = "Unable to create provenance for profile-model";
+					log.error(error, e);
 				}
 			}
-
-			final Model model = modelService.getAsset(modelId, permission).orElseThrow();
-
-			final StringMultipartFile textFile =
-					new StringMultipartFile(documentText, "document.txt", "application/text");
-			final StringMultipartFile codeFile = new StringMultipartFile("", "code.txt", "application/text");
-
-			final ResponseEntity<JsonNode> resp;
-			try {
-				resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
-			} catch (final FeignException e) {
-				final String error = "Unable to get model card";
-				log.error(error, e);
-				throw new ResponseStatusException(
-						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-						error + ": " + e.getMessage());
-			}
-
-			if (!resp.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(resp.getStatusCode(), "Unable to get model card");
-			}
-
-			final Card card = mapper.treeToValue(resp.getBody(), Card.class);
-
-			if (model.getHeader() == null) {
-				model.setHeader(new ModelHeader());
-			}
-
-			if (model.getMetadata() == null) {
-				model.setMetadata(new ModelMetadata());
-			}
-
-			model.getHeader().setDescription(card.getDescription());
-			model.getMetadata().setCard(card);
-
-			return ResponseEntity.ok(modelService.updateAsset(model, permission).orElseThrow());
-
-		} catch (final IOException e) {
-			log.error("Unable to get profile model", e);
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to get profile model: " + e.getMessage());
 		}
+
+		final Model model = modelService.getAsset(modelId, permission).orElseThrow();
+
+		final StringMultipartFile textFile = new StringMultipartFile(documentText, "document.txt", "application/text");
+		final StringMultipartFile codeFile = new StringMultipartFile("", "code.txt", "application/text");
+
+		final ResponseEntity<JsonNode> resp;
+		try {
+			resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
+		} catch (final FeignException e) {
+			final String error = "Unable to get model card";
+			log.error(error, e);
+
+			final HttpStatus statusCode = HttpStatus.resolve(e.status());
+			if (statusCode != null && statusCode.is4xxClientError()) {
+				throw new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
+			} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+				throw new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
+			} else if (statusCode != null && statusCode.is5xxServerError()) {
+				throw new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
+			}
+			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
+		}
+
+		if (!resp.getStatusCode().is2xxSuccessful()) {
+			throw new ResponseStatusException(resp.getStatusCode(), "Unable to get model card");
+		}
+
+		final Card card;
+		try {
+			card = mapper.treeToValue(resp.getBody(), Card.class);
+		} catch (final IOException e) {
+			log.error("Unable to convert response to card", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+		}
+
+		if (model.getHeader() == null) {
+			model.setHeader(new ModelHeader());
+		}
+
+		if (model.getMetadata() == null) {
+			model.setMetadata(new ModelMetadata());
+		}
+
+		model.getHeader().setDescription(card.getDescription());
+		model.getMetadata().setCard(card);
+
+		final Optional<Model> updatedModel;
+		try {
+			updatedModel = modelService.updateAsset(model, permission);
+		} catch (final IOException e) {
+			log.error("Unable to update model", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		if (updatedModel.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
+		}
+
+		return ResponseEntity.ok(updatedModel.get());
 	}
 
 	/**
@@ -781,7 +797,7 @@ public class KnowledgeController {
 		return ResponseEntity.accepted().build();
 	}
 
-	private void handleFeignException(final FeignException e) {
+	private void handleSkemaFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
 			throw new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
