@@ -89,8 +89,9 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRun(
-			@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestBody final SimulationRequest request,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationServiceProxy
@@ -131,12 +132,10 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
-			@RequestBody final SimulationRequest request, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestBody final SimulationRequest request,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
-		log.error("Tom the forecast request recieved, and permissions checked");
-		log.error(projectId.toString());
 
 		// Get model config's interventions and append them to requests:
 		try {

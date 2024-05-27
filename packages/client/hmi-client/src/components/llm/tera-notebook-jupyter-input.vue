@@ -105,7 +105,6 @@ const submitQuestion = () => {
 	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
-	padding-top: var(--gap);
 }
 
 .toolbar-left-side,

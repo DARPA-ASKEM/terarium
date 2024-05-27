@@ -1,14 +1,21 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
-				<div class="form-section">
+				<template #header-controls-left>
 					<h5>Set simulation parameters</h5>
+				</template>
+				<template #header-controls-right>
+					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<div class="form-section">
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -70,7 +77,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-4 mt-3 mb-3"
 			>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
@@ -120,14 +126,11 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button outlined label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
+			<tera-save-dataset-from-simulation
+				:simulation-run-id="selectedRunId"
+				:showDialog="showSaveDataDialog"
+				@hide-dialog="showSaveDataDialog = false"
 			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -157,6 +160,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { useProjects } from '@/composables/project';
+import { isSaveDataSetDisabled } from '@/components/dataset/utils';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -183,10 +188,26 @@ enum OutputView {
 	Data = 'Data'
 }
 
+const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
+]);
+
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDataSetDisabled(selectedRunId.value, !useProjects().activeProject.value?.id)
+);
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled.value,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
 ]);
 
 const showSpinner = ref(false);
