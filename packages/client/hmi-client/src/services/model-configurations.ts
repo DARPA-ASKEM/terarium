@@ -1,4 +1,4 @@
-import _, { isEmpty } from 'lodash';
+import _, { cloneDeep, isEmpty } from 'lodash';
 import API from '@/api/api';
 import type {
 	ModelConfiguration,
@@ -217,7 +217,7 @@ export function getParameterDistribution(
 	config: ModelConfiguration,
 	parameterId: string
 ): ModelDistribution {
-	const parameter = getParameter(config, parameterId);
+	const parameter = cloneDeep(getParameter(config, parameterId));
 
 	if (!parameter?.distribution) {
 		return {
