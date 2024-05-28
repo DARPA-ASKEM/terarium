@@ -300,7 +300,8 @@ public class ExtractionService {
 				}
 
 				if (abstractJsonNode != null) {
-					document.setDocumentAbstract(abstractJsonNode.get(NODE_CONTENT).asText());
+					document.setDocumentAbstract(
+							abstractJsonNode.get(NODE_CONTENT).asText());
 				}
 
 				// update the document
