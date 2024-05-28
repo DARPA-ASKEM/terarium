@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { cloneDeep, isEmpty } from 'lodash';
 import API from '@/api/api';
 import type {
 	ModelConfiguration,
@@ -9,6 +9,7 @@ import type {
 	Initial
 } from '@/types/Types';
 import { pythonInstance } from '@/python/PyodideController';
+import { DistributionType } from '@/services/distribution';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
@@ -197,22 +198,40 @@ export function getParameter(
 	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
 }
 
-export function setDistribution(
-	config: ModelConfiguration,
-	parameterId: string,
-	distribution: ModelDistribution
-): void {
+export function getParameterName(config: ModelConfiguration, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
-	if (parameter) {
-		parameter.distribution = distribution;
-	}
+	return parameter?.name ?? '';
 }
 
-export function removeDistribution(config: ModelConfiguration, parameterId: string): void {
+export function getParameterDescription(config: ModelConfiguration, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
-	if (parameter?.distribution) {
-		delete parameter.distribution;
+	return parameter?.description ?? '';
+}
+
+export function getParameterUnit(config: ModelConfiguration, parameterId: string): string {
+	const parameter = getParameter(config, parameterId);
+	return parameter?.units?.expression ?? '';
+}
+
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string
+): ModelDistribution {
+	const parameter = cloneDeep(getParameter(config, parameterId));
+
+	if (!parameter?.distribution) {
+		return {
+			type: DistributionType.Constant,
+			parameters: {
+				value: parameter?.value
+			}
+		};
 	}
+
+	if (parameter.distribution.type === 'Uniform1')
+		parameter.distribution.type = DistributionType.Uniform;
+
+	return parameter.distribution;
 }
 
 export function getInterventions(config: ModelConfiguration): Intervention[] {
@@ -247,6 +266,36 @@ export function setParameterSource(
 	if (parameter) {
 		parameter.source = source;
 	}
+}
+
+export function setParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	distribution: ModelDistribution
+): void {
+	const parameter = getParameter(config, parameterId);
+	if (!parameter) return;
+
+	const type = distribution.type;
+	if (type === DistributionType.Constant) {
+		delete parameter.distribution;
+		parameter.value = distribution.parameters?.value ?? 0;
+	} else if (type === DistributionType.Uniform) {
+		parameter.distribution = convertToUniformDistribution(distribution);
+	}
+}
+
+function convertToUniformDistribution(distribution: ModelDistribution): ModelDistribution {
+	// if no parameters, initialize
+	if (isEmpty(distribution.parameters)) distribution.parameters = { minimum: 0, maximum: 0 };
+
+	return {
+		type: DistributionType.Uniform,
+		parameters: {
+			minimum: distribution.parameters.minimum,
+			maximum: distribution.parameters.maximum
+		}
+	};
 }
 
 export function getParameters(config: ModelConfiguration): ModelParameter[] {
