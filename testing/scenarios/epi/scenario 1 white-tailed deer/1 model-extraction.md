@@ -15,10 +15,14 @@ Source for the scenario: [PDF](https://github.com/DARPA-ASKEM/program-milestones
     ```
 2. Create, or open, project named `Q&A Epi S1 [YYMMDD]`
 
-### 2. Upload publication to project
-1. Upload the three PDF documents to the project: [Model A](https://drive.google.com/file/d/1118EP5XH7xysXJueCPhtza03Z-WHkTYe/view?usp=drive_link), [Model B](https://drive.google.com/file/d/13lpv-ddAzg5Sjz43hX12TJ58GrN8cJwL/view?usp=drive_link), and [Model C](https://drive.google.com/file/d/1Ij0KxffUovIxRBjMFDP5PQQfVWLWbg3J/view?usp=drive_link)
-2. Wait for the notification that the publications have been added to the project.
-3. Open the project and verify that the three publications are present as _Documents_.
+### 2. Search and add model publication to project
+1. Open the _data explorer_
+2. Search and add to the project the following three model publications:
+   - Model A: https://doi.org/10.1155/2024/7589509
+   - Model B: https://doi.org/10.48550/arXiv.2401.10057
+   - Model C: https://doi.org/10.1101/2023.08.30.555493
+3. Wait for the notification that the publications have been added to the project.
+4. Open the project and verify that the three publications are present as _Documents_.
 
 ### 3. [Another task name]
 1. If a task might have multiple outcomes, please split them in two tasks.
