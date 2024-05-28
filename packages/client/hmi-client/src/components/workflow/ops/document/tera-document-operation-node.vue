@@ -124,50 +124,6 @@ watch(
 					]
 				});
 			}
-
-			/*
-			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
-				const selected = equations.filter((e) => e.includeInProcess);
-				emit('append-output-port', {
-					type: 'equations',
-					label: `equations (${selected.length}/${equations.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							equations
-						}
-					]
-				});
-			}
-
-			if (!props.node.outputs.find((port) => port.type === 'figures') && !isEmpty(figures)) {
-				const selected = figures.filter((f) => f.includeInProcess);
-				emit('append-output-port', {
-					type: 'figures',
-					label: `figures (${selected.length}/${figures.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							figures
-						}
-					]
-				});
-			}
-
-			if (!props.node.outputs.find((port) => port.type === 'tables') && !isEmpty(tables)) {
-				const selected = tables.filter((t) => t.includeInProcess);
-				emit('append-output-port', {
-					type: 'tables',
-					label: `tables (${selected.length}/${tables.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							tables
-						}
-					]
-				});
-			}
-			*/
 		}
 	},
 	{ immediate: true }
