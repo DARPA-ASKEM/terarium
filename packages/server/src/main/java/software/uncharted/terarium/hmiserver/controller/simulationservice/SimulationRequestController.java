@@ -141,9 +141,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
@@ -209,14 +206,10 @@ public class SimulationRequestController implements SnakeCaseController {
 			@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
@@ -248,9 +241,6 @@ public class SimulationRequestController implements SnakeCaseController {
 		try {
 			final Optional<ModelConfiguration> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
