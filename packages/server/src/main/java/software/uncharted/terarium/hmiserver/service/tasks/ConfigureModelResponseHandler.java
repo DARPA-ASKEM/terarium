@@ -57,6 +57,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		UUID documentId;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override

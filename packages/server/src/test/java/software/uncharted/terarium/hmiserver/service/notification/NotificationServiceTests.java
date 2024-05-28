@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,8 +14,8 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.StatusUpdate;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
-import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -33,9 +32,10 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private CurrentUserService currentUserService;
 
-	ClientEvent<ExtractionStatusUpdate> produceClientEvent(final Double t, final String message, final String error) {
-		final ExtractionStatusUpdate update = new ExtractionStatusUpdate(UUID.randomUUID(), t, message, error);
-		return ClientEvent.<ExtractionStatusUpdate>builder()
+	ClientEvent<StatusUpdate<Object>> produceClientEvent(final Double t, final String message, final String error) {
+		final StatusUpdate<Object> update =
+				StatusUpdate.builder().progress(t).message(message).error(error).build();
+		return ClientEvent.<StatusUpdate<Object>>builder()
 				.type(ClientEventType.HEARTBEAT)
 				.data(update)
 				.build();
