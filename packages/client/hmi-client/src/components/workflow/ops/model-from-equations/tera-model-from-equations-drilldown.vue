@@ -239,46 +239,48 @@ const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 const showSaveModelModal = ref(false);
 const savingAsset = ref(false);
 const isGeneratingCard = ref(false);
+
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
 		onSelection(selectedOutputId.value);
 	}
+	const input = props.node.inputs?.[0]?.value?.[0];
+	if (!input) return;
 
-	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] =
-		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
+	const documentId = input?.documentId;
 	assetLoading.value = true;
 	if (documentId) {
-		document.value = await getDocumentAsset(documentId);
+		const equations: AssetBlock<DocumentExtraction>[] =
+			input?.equations?.filter((e) => e.includeInProcess) ?? [];
+		console.log('equations', equations);
 
+		document.value = await getDocumentAsset(documentId);
 		const state = cloneDeep(props.node.state);
 
-		// we want to add any new equation from images to the current state without running the image -> equations for the ones that already ran
-		const nonRunEquations = equations?.filter((e) => {
-			const foundEquation = state.equations.find(
-				(eq) => instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
-			);
-			return !foundEquation;
-		});
+		// We want to add any new equation from images to the current state
+		// without running the image -> equations for the ones that already ran
+		const nonRunEquations = equations.filter(
+			(e) =>
+				!state.equations.find(
+					(eq) =>
+						instanceOfEquationFromImageBlock(eq.asset) && eq.asset.fileName === e.asset.fileName
+				)
+		);
+
 		const promises =
-			nonRunEquations?.map(async (e) => {
-				const equationText = await getEquationFromImageUrl(documentId, e.asset.fileName);
-				const equationBlock: EquationFromImageBlock = {
-					...e.asset,
-					text: equationText ?? '',
-					extractionError: !equationText
+			nonRunEquations.map(async (equation) => {
+				const equationText = await getEquationFromImageUrl(documentId, equation.asset.fileName);
+				return {
+					name: equation.name,
+					includeInProcess: equation.includeInProcess,
+					asset: {
+						...equation.asset,
+						text: equationText ?? '',
+						extractionError: !equationText
+					}
 				};
-
-				const assetBlock: AssetBlock<EquationFromImageBlock> = {
-					name: e.name,
-					includeInProcess: e.includeInProcess,
-					asset: equationBlock
-				};
-
-				return assetBlock;
 			}) ?? [];
-
 		const newEquations = await Promise.all(promises);
 
 		let extractedEquations = state.equations.filter((e) =>

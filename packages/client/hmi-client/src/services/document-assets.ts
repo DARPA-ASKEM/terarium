@@ -177,15 +177,9 @@ async function getEquationFromImageUrl(
 	filename: string
 ): Promise<string | null> {
 	const response = await API.get(
-		`/document-asset/${documentId}/image-to-equation?filename=${filename}`,
-		{}
+		`/document-asset/${documentId}/image-to-equation?filename=${filename}`
 	);
-
-	if (!response) {
-		return null;
-	}
-
-	return response.data;
+	return response?.data ?? null;
 }
 
 async function getBulkDocumentAssets(docIDs: string[]) {
