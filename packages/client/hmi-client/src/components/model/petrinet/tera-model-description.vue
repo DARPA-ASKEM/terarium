@@ -87,7 +87,6 @@
 			class="mt-0"
 			:readonly="featureConfig?.isPreview"
 		/>
-		<tera-initial-variables :model="model" />
 	</section>
 </template>
 
