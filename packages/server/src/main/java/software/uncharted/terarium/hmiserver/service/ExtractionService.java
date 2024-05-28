@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -215,7 +214,8 @@ public class ExtractionService {
 								String target = "Abstract";
 								String param = "detect_cls";
 								for (JsonNode record : arrayNode) {
-									if (record.has(param) && record.get(param).asText().equals(target)) {
+									if (record.has(param)
+											&& record.get(param).asText().equals(target)) {
 										abstractJsonNode = record;
 										break;
 									}
