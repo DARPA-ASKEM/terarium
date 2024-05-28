@@ -20,22 +20,32 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
-import Keycloak from 'keycloak-js';
+import { createOidc, Oidc } from 'oidc-spa';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
 
 // Extend the window object to include the Keycloak object
 declare global {
 	interface Window {
-		keycloak_init: Promise<boolean>;
-		keycloak: Keycloak;
+		oidc: Oidc;
 	}
 }
 
-// if keycloak has not been initialized, reload the page
-const initialized = await window.keycloak_init;
-if (!initialized) {
-	logger.error('Authentication Failed, reloading a the page');
-	window.location.assign('/');
+const oidcSettings = await fetch('/api/configuration/keycloak').then((r) => r.json());
+window.oidc = await createOidc({
+	issuerUri: `${oidcSettings['auth-server-url']}/realms/${oidcSettings.realm}`,
+	clientId: oidcSettings.resource,
+	publicUrl: '/'
+});
+
+if (!window.oidc.isUserLoggedIn) {
+	window.oidc.login({
+		doesCurrentHrefRequiresAuth: false
+	});
+} else {
+	const { decodedIdToken } = window.oidc.getTokens();
+
+	console.log(`Decoded Id Token: ${JSON.stringify(decodedIdToken)}`);
+	console.log(`Hello ${decodedIdToken.preferred_username}`);
 }
 
 // Create the Vue application
@@ -45,16 +55,16 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-authStore.setKeycloak(window.keycloak);
+authStore.setOidc(window.oidc);
 
 // Initialize user
 await authStore.init();
 logger.info('Authenticated');
 await clientEventServiceInit();
 // Token Refresh
-setInterval(async () => {
-	await window.keycloak.updateToken(70);
-}, 6000);
+// setInterval(async () => {
+// 	await window.keycloak.updateToken(70);
+// }, 6000);
 
 // Set the hash value of the window.location to null
 // This is to prevent the Keycloak from redirecting to the hash value

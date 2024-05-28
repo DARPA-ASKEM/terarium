@@ -1,23 +1,42 @@
 import { defineStore } from 'pinia';
 import type { User } from '@/types/Types';
-import Keycloak from 'keycloak-js';
 import axios, { AxiosHeaders } from 'axios';
 import { computed, ref } from 'vue';
+import { Oidc } from 'oidc-spa';
 
 /**
  * Main store used for authentication
  */
 const useAuthStore = defineStore('auth', () => {
-	// keycloak
-	const keycloak = ref<Keycloak | null>(null);
-	const setKeycloak = (newKeycloak: Keycloak) => {
-		keycloak.value = newKeycloak;
+	const oidc = ref<Oidc | null>(null);
+	const setOidc = (newOidc: Oidc) => {
+		oidc.value = newOidc;
 	};
-	const logout = async (options?: Keycloak.KeycloakLogoutOptions) => {
-		await keycloak.value?.logout(options);
+	const login = async (redirectUri: string) => {
+		if (!oidc.value?.isUserLoggedIn) {
+			oidc.value?.login({
+				doesCurrentHrefRequiresAuth: false,
+				extraQueryParams: {
+					redirectUri
+				}
+			});
+		}
+	};
+	const logout = async () => {
+		if (oidc.value?.isUserLoggedIn) {
+			oidc.value?.logout({ redirectTo: 'specific url', url: `${window.location.origin}/` });
+		} else {
+			// already logged out
+		}
 	};
 
-	const token = computed(() => keycloak.value?.token);
+	const token = computed(() => {
+		if (oidc.value?.isUserLoggedIn) {
+			return oidc.value?.getTokens().accessToken;
+		}
+		// no token available
+		return null;
+	});
 
 	// user
 	const user = ref<User | null>(null);
@@ -43,8 +62,8 @@ const useAuthStore = defineStore('auth', () => {
 	};
 
 	return {
-		keycloak,
-		setKeycloak,
+		login,
+		setOidc,
 		logout,
 		token,
 		user,
