@@ -1,10 +1,5 @@
 package software.uncharted.terarium.hmiserver.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,8 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import lombok.Data;
+
 import org.springframework.data.util.Pair;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import lombok.Data;
 
 public class AssetDependencyUtil {
 
@@ -36,6 +39,19 @@ public class AssetDependencyUtil {
 		Set<UUID> ids = new HashSet<>();
 	}
 
+	/**
+	 * Traverse the JSON of the serialized asset searching for an keys or values
+	 * that are uuids. If the uuid is in the assetIds set, it is added to the
+	 * AssetDependencyMap.
+	 *
+	 * The intended usage of this method is to pass a set of all asset ids of a
+	 * project and an asset to determine if that asset references any other asset.
+	 *
+	 * @param <T>
+	 * @param assetIds
+	 * @param asset
+	 * @return
+	 */
 	public static <T> AssetDependencyMap getAssetDependencies(final Set<UUID> assetIds, final T asset) {
 
 		final ObjectMapper mapper = new ObjectMapper();
@@ -63,6 +79,20 @@ public class AssetDependencyUtil {
 		return dependencies;
 	}
 
+	/**
+	 * This method takes the output of `getAssetDependencies` along with a mapping
+	 * from old to new uuids.will traverse the provided asset and replace any
+	 * instances of the old uuids with the new uuids.
+	 *
+	 * The intended usage of this method is to replace any uuids of existing assets
+	 * with newly cloned asset ids.
+	 *
+	 * @param <T>
+	 * @param asset
+	 * @param assetIdMapping
+	 * @param dependencies
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T swapAssetDependencies(
 			final T asset, final Map<UUID, UUID> assetIdMapping, final AssetDependencyMap dependencies) {
