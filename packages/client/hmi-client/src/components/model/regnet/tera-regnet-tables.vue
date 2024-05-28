@@ -63,25 +63,13 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<template #header>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
-				>
-			</template>
-			<tera-parameter-table
-				:model="transientModel"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-value="updateParam"
-				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
-				:readonly="readonly"
-			/>
+			<tera-parameters-metadata :model="transientModel" />
 		</AccordionTab>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { DKG, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -96,17 +84,17 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
-import Button from 'primevue/button';
+import TeraParametersMetadata from '../tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
 	readonly?: boolean;
 }>();
+
+const emit = defineEmits(['update-model']);
 
 const transientModel = ref(cloneDeep(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
@@ -116,18 +104,6 @@ const edges = computed(() => props.model.model?.edges ?? []);
 const nameOfCurieCache = ref(new Map<string, string>());
 const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref('');
-
-const emit = defineEmits(['update-model']);
-
-const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = transientModel.value.model?.parameters ?? [];
-	for (let i = 0; i < modelParameters.length; i++) {
-		const foundParam = params.find((p) => p.id === modelParameters![i].id);
-		if (foundParam) {
-			modelParameters[i] = foundParam;
-		}
-	}
-};
 
 function updateVertex(id: string, key: string, value: any) {
 	const model = cloneDeep(props.model);

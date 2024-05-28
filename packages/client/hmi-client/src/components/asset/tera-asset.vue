@@ -345,13 +345,6 @@ main:deep(.artifact-amount) {
 	margin-left: 0.25rem;
 }
 
-/* These styles should probably be moved to the general theme in some form */
-main:deep(input) {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: 0.75rem;
-}
-
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;

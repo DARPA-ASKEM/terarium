@@ -199,6 +199,22 @@ export function getInitialMetadata(model: Model, parameterId: string) {
 	return model.metadata?.initials?.[parameterId];
 }
 
+export function getInitialName(model: Model, initialId: string): string {
+	return model.metadata?.initials?.[initialId]?.name ?? '';
+}
+
+export function getInitialDescription(model: Model, initialId: string): string {
+	return model.metadata?.initials?.[initialId]?.description ?? '';
+}
+
+export function getInitialUnit(model: Model, initialId: string): string {
+	return model.metadata?.initials?.[initialId]?.unit ?? '';
+}
+
+export function getInitialConcept(model: Model, initialId: string): string {
+	return model.metadata?.initials?.[initialId]?.concept?.grounding ?? '';
+}
+
 /**
  * Retrieves the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.

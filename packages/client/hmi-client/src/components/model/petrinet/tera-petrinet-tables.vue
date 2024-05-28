@@ -3,30 +3,14 @@
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
-				<Button v-if="!readonly" @click.stop="cleanAndEmit" class="ml-auto">Save Changes</Button>
 			</template>
-			<tera-initial-table
-				:model="transientModel"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-value="updateInitial"
-				@update-model="(updateModel: Model) => (transientModel = updateModel)"
-				:readonly="readonly"
-			/>
+			<tera-initials-metadata :model="transientModel" />
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-				<Button v-if="!readonly" @click.stop="cleanAndEmit" class="ml-auto">Save Changes</Button>
 			</template>
-			<tera-parameter-table
-				:model="transientModel"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-value="updateParam"
-				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
-				:readonly="readonly"
-			/>
+			<tera-parameters-metadata :model="transientModel" />
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -122,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -130,22 +114,17 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
-import Button from 'primevue/button';
-import { cleanModel } from '@/model-representation/service';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
+import TeraInitialsMetadata from '../tera-initials-metadata.vue';
+import TeraParametersMetadata from '../tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
 	readonly?: boolean;
 }>();
-
-const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
@@ -204,37 +183,11 @@ const otherConcepts = computed(() => {
 	return unalignedExtractions ?? [];
 });
 
-const updateInitial = (inits: Initial[]) => {
-	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
-	for (let i = 0; i < modelInitials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === modelInitials![i].target);
-		if (foundInitial) {
-			modelInitials[i] = foundInitial;
-		}
-	}
-};
-
-const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = transientModel.value.semantics?.ode.parameters ?? [];
-	for (let i = 0; i < modelParameters.length; i++) {
-		const foundParam = params.find((p) => p.id === modelParameters![i].id);
-		if (foundParam) {
-			modelParameters[i] = foundParam;
-		}
-	}
-};
-
 function updateMMT() {
 	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	});
-}
-
-function cleanAndEmit() {
-	const modelToClean = cloneDeep(transientModel.value);
-	cleanModel(modelToClean);
-	emit('update-model', modelToClean);
 }
 
 watch(
