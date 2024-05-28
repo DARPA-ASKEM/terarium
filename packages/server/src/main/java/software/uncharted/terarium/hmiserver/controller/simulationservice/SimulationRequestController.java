@@ -155,9 +155,8 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error(e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e);
 		}
 
 		final JobResponse res = simulationCiemssServiceProxy
@@ -227,9 +226,8 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error(e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e);
 		}
 		return ResponseEntity.ok(simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request))
@@ -261,9 +259,8 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setFixedStaticParameterInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error(e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, e);
 		}
 		return ResponseEntity.ok(simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request))
