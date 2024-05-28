@@ -83,7 +83,7 @@ export const addNode = (
 			isOptional: port.isOptional ?? false,
 			acceptMultiple: port.acceptMultiple
 		})),
-		// outputs: [],
+
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
@@ -133,8 +133,6 @@ export const addEdge = (
 	if (existingEdge) return;
 
 	// Check if type is compatible
-	// if (sourceOutputPort.value === null) return;
-
 	const allowedTypes = targetInputPort.type.split('|');
 	if (
 		!allowedTypes.includes(sourceOutputPort.type) ||
