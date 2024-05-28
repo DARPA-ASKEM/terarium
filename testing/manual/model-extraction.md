@@ -13,7 +13,7 @@ Estimated time to completion: [X] minutes
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
 ### 2. Upload a PDF
-1. Upload _the Document_ [SIR.pdf](data/SIR.pdf)
+1. Upload _the Document_ [SIR.pdf](../data/SIR.pdf)
 2. Wait for final notification of document extraction
 3. Open _the Document_ and check that extractions are visible
 
