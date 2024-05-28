@@ -1,19 +1,14 @@
 <template>
-	<component
-		:is="tables"
-		:model="model"
-		:readonly="readonly"
-		@update-model="$emit('update-model', $event)"
-	/>
+	<component :is="tables" :model="transientModel" :readonly="readonly" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { cloneDeep } from 'lodash';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
-// import { cleanModel } from '@/model-representation/service';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
 
@@ -22,7 +17,9 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-defineEmits(['update-model']);
+const emit = defineEmits(['update-model']);
+
+const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
@@ -38,12 +35,6 @@ const tables = computed(() => {
 			return TeraPetrinetTables;
 	}
 });
-
-// function cleanAndEmit() {
-// 	const modelToClean = cloneDeep(transientModel.value);
-// 	cleanModel(modelToClean);
-// 	emit('update-model', modelToClean);
-// }
 
 // const updateInitial = (inits: Initial[]) => {
 // 	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
@@ -72,6 +63,18 @@ const tables = computed(() => {
 // 		}
 // 	}
 // };
+
+// Apply changes to the model when the component unmounts or the user navigates away
+function applyChanges() {
+	emit('update-model', transientModel.value);
+}
+
+onMounted(() => window.addEventListener('beforeunload', applyChanges));
+
+onUnmounted(() => {
+	applyChanges();
+	window.removeEventListener('beforeunload', applyChanges);
+});
 </script>
 
 <style scoped>
