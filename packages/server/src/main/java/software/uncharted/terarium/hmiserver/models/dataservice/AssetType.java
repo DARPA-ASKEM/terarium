@@ -37,11 +37,7 @@ public enum AssetType {
 	ARTIFACT,
 
 	@JsonProperty("publication")
-	PUBLICATION,
-
-	@JsonProperty("notebook-session")
-	NOTEBOOK_SESSION,
-	;
+	PUBLICATION;
 
 	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
 			throws ResponseStatusException {

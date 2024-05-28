@@ -1,35 +1,27 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
-import java.io.IOException;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.repository.data.NotebookSessionRepository;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
-public class NotebookSessionService extends TerariumAssetService<NotebookSession> {
+public class NotebookSessionService
+		extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
 
 	public NotebookSessionService(
-			final ElasticsearchConfiguration elasticConfig,
+			final ObjectMapper objectMapper,
 			final Config config,
-			final ElasticsearchService elasticService,
-			final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, NotebookSession.class);
+			final ProjectAssetService projectAssetService,
+			final NotebookSessionRepository repository,
+			final S3ClientService s3ClientService) {
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, NotebookSession.class);
 	}
 
 	@Override
-	@Observed(name = "function_profile")
-	protected String getAssetIndex() {
-		return elasticConfig.getNotebookSessionIndex();
-	}
-
-	@Override
-	public NotebookSession cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
-			throws IOException {
-		throw new UnsupportedOperationException("Unimplemented");
+	protected String getAssetPath() {
+		throw new UnsupportedOperationException("Notebook Sessions are not stored in S3");
 	}
 }
