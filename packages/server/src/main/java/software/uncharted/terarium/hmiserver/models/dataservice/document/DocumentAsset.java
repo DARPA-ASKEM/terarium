@@ -61,6 +61,10 @@ public class DocumentAsset extends TerariumAsset {
 	private Grounding grounding;
 
 	@TSOptional
+	@Column(columnDefinition = "text")
+	private String documentAbstract;
+
+	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
