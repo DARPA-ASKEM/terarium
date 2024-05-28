@@ -12,7 +12,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 
 ### 2. Workflow
 1. Create a new workflow named `Validate Model Configuration`
-2. Upload _the Model_ [Configured SIR.json](data/Configured SIR.json)
+2. Upload _the Model_ [Configured SIR.json](../data/Configured SIR.json)
 3. Drag and drop _the Model_ onto the workflow
 4. Link and open a _Configure Model_ operator
 5. Verify that the model is configured correctly \
