@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,4 +21,13 @@ public class DataColumn extends SupportAdditionalProperties implements Serializa
 	private String name;
 
 	private MetadataDataset dataset;
+
+	@Override
+	public DataColumn clone() {
+		DataColumn clone = (DataColumn) super.clone();
+		clone.id = id;
+		clone.name = name;
+		if (dataset != null) clone.dataset = dataset.clone();
+		return clone;
+	}
 }

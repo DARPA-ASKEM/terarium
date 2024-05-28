@@ -3,9 +3,16 @@ import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import { Ref, ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
+
+function getProjectIdFromUrl(): string | null {
+	const url = new URL(window.location.href);
+	const match = url.pathname.match(/\/projects\/([a-z,0-9,-]+)\//);
+	return match ? match[1] : null;
+}
 
 const API = axios.create({
 	baseURL: '/api',
@@ -19,6 +26,15 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
+		const projectId = activeProjectId.value || getProjectIdFromUrl();
+		if (projectId) {
+			if (config.params) {
+				config.params['project-id'] = projectId;
+			} else {
+				config.params = { 'project-id': projectId };
+			}
+		}
 		return config;
 	},
 	(error) => {
@@ -80,6 +96,7 @@ export interface PollResponse<T> {
 	error: any;
 	progress?: any;
 	data: T | null;
+	cancelled?: boolean;
 }
 
 type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
@@ -128,11 +145,12 @@ export class Poller<T> {
 		return this;
 	}
 
-	// Start polling, there are 4 foreseeable exit conditions
+	// Start polling, there are 5 foreseeable exit conditions
 	// 1. Done, we have the result
 	// 2. Failed, request returned with 4xx or 5xx status
 	// 3. Failed, any unexpected errors
 	// 4. ExceedThreshold, took longer than allotted time
+	// 5. Cancelled, the user has cancelled this
 	async start(): Promise<PollerResult<T>> {
 		this.keepGoing = true;
 		this.numPolls = 0;
@@ -153,11 +171,18 @@ export class Poller<T> {
 			try {
 				// eslint-disable-next-line no-await-in-loop
 				response = (await this.poll()) as PollResponse<T>;
-				const { error, progress, data } = response;
+				const { error, progress, data, cancelled } = response;
 
 				if (error) {
 					return {
 						state: PollerState.Failed,
+						data: null
+					};
+				}
+
+				if (cancelled) {
+					return {
+						state: PollerState.Cancelled,
 						data: null
 					};
 				}
@@ -271,10 +296,15 @@ export class TaskHandler {
 				retry: 3000
 			});
 			this.eventSource.onmessage = (message: MessageEvent) => {
-				const data = message?.data;
-				const parsedData = JSON.parse(data);
-				const closeConnection = this.closeConnection.bind(this);
-				this.handlers.ondata(parsedData, closeConnection);
+				try {
+					const data = message?.data;
+					const parsedData = JSON.parse(data);
+					const closeConnection = this.closeConnection.bind(this);
+					this.handlers.ondata(parsedData, closeConnection);
+				} catch (error) {
+					logger.error(error, { showToast: false });
+					this.closeConnection();
+				}
 			};
 			this.eventSource.onerror = (error: any) => {
 				if (this.handlers.onerror) this.handlers.onerror(error);
@@ -288,8 +318,8 @@ export class TaskHandler {
 				if (handlers.onopen) handlers.onopen(response);
 			};
 		} catch (error: unknown) {
-			this.isRunning.value = false;
-			logger.error(error);
+			logger.error(error, { showToast: false });
+			this.closeConnection();
 		}
 	}
 }

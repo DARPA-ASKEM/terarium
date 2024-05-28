@@ -29,16 +29,12 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 				return true;
 			}
 
-
 			long startTime = System.nanoTime();
 			request.setAttribute("startTime", startTime);
 
 			String methodName = getMethodName((HandlerMethod) handler).toString();
-			String requestMsg = PRE_REQUEST_PREFIX +
-				PROPERTY_SEPARATOR +
-				methodName +
-				PROPERTY_SEPARATOR +
-				getRequestInfo(request);
+			String requestMsg =
+					PRE_REQUEST_PREFIX + PROPERTY_SEPARATOR + methodName + PROPERTY_SEPARATOR + getRequestInfo(request);
 
 			MDC.put("method", methodName);
 			logger.info(requestMsg);
@@ -46,7 +42,7 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 			return true;
 		} else if (handler instanceof ResourceHttpRequestHandler resourceHandler) {
 			// Find the resource path of this handler and print it to the log
-			//logger.info(resourceHandler.toString());
+			// logger.info(resourceHandler.toString());
 			return true;
 		}
 
@@ -54,8 +50,8 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 	}
 
 	@Override
-	public void postHandle(HttpServletRequest request, HttpServletResponse response,
-												 Object handler, ModelAndView modelAndView) {
+	public void postHandle(
+			HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
 		if (handler instanceof HandlerMethod) {
 			if (skipLogging((HandlerMethod) handler)) {
 				return;
@@ -64,14 +60,13 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 			long elapsedTime = System.nanoTime() - startTime;
 			long millis = elapsedTime / 1000000;
 
-			String requestMsg = POST_REQUEST_PREFIX +
-				PROPERTY_SEPARATOR +
-				getMethodName((HandlerMethod) handler) +
-				PROPERTY_SEPARATOR +
-				millis +
-				" ms" +
-				PROPERTY_SEPARATOR +
-				getRequestInfo(request);
+			String requestMsg = POST_REQUEST_PREFIX + PROPERTY_SEPARATOR
+					+ getMethodName((HandlerMethod) handler)
+					+ PROPERTY_SEPARATOR
+					+ millis
+					+ " ms"
+					+ PROPERTY_SEPARATOR
+					+ getRequestInfo(request);
 
 			MDC.put("response_time_ms", Long.toString(millis));
 			logger.info(requestMsg);
@@ -87,10 +82,7 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 
 		String controllerName = handlerMethod.getBeanType().getSimpleName();
 		String methodName = handlerMethod.getMethod().getName();
-		methodNameBuilder
-			.append(controllerName)
-			.append('.')
-			.append(methodName);
+		methodNameBuilder.append(controllerName).append('.').append(methodName);
 		return methodNameBuilder;
 	}
 

@@ -1,7 +1,6 @@
 <template>
 	<Editor
 		v-model="editorContent"
-		class="h-full"
 		:class="{ readonly: !hasEditPermission }"
 		:readonly="!hasEditPermission"
 	/>
@@ -78,6 +77,16 @@ onUnmounted(() => {
 /* Editor toolbar formatting */
 .readonly :deep(.p-editor-toolbar) {
 	display: none;
+}
+
+.p-editor-container {
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+:deep(.p-editor-content) {
+	flex-grow: 1;
 }
 
 :deep(.p-editor-container .p-editor-toolbar) {

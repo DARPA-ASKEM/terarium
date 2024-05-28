@@ -2,15 +2,15 @@
 	<!-- Toolbar -->
 	<div class="notebook-toolbar">
 		<div class="toolbar-left-side">
+			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 			<div class="flex gap-1 mr-2">
 				<InputSwitch v-model="showAssistant" class="mr-1" />
 				<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 				<span>AI assistant</span>
 			</div>
-			<Dropdown :disabled="true" :model-value="contextLanguage" :options="contextLanguageOptions" />
 		</div>
 		<div class="toolbar-right-side">
-			<!-- empty for now, the Run & Reset buttons from the operator could go here -->
+			<slot name="toolbar-right-side" />
 		</div>
 	</div>
 
@@ -58,12 +58,12 @@ const props = defineProps<{
 	contextLanguage: string;
 }>();
 
-const emit = defineEmits(['llm-output']);
+const emit = defineEmits(['question-asked', 'llm-output', 'llm-thought-output']);
 
 const questionString = ref('');
 const kernelStatus = ref<string>('');
-
 const showAssistant = ref(true);
+const thoughts = ref();
 
 // FIXME: If the language is changed here it should mutate the beaker instance in the parent component
 
@@ -73,12 +73,21 @@ const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
 	});
+	emit('question-asked');
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
 	message.register('status', (data) => {
 		kernelStatus.value = data.content.execution_state;
 	});
 	message.register('code_cell', (data) => {
 		emit('llm-output', data);
+	});
+	message.register('llm_thought', (data) => {
+		thoughts.value = data;
+		emit('llm-thought-output', data);
+	});
+	message.register('llm_response', (data) => {
+		thoughts.value = data;
+		emit('llm-thought-output', data);
 	});
 };
 </script>
@@ -93,9 +102,9 @@ const submitQuestion = () => {
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
+	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
-	padding-top: var(--gap);
 }
 
 .toolbar-left-side,

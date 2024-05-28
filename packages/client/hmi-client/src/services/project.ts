@@ -3,39 +3,27 @@
  */
 
 import API from '@/api/api';
-import { logger } from '@/utils/logger';
-import { b64EncodeUnicode } from '@/utils/binary';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
-import { Component } from 'vue';
 import * as EventService from '@/services/event';
-import {
-	AssetType,
-	EventType,
-	PermissionRelationships,
-	Project,
-	ProjectAsset
-} from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
+import { b64EncodeUnicode } from '@/utils/binary';
+import { logger } from '@/utils/logger';
+import { Component } from 'vue';
 
 /**
  * Create a project
  * @param name Project['name']
  * @param [description] Project['description']
- * @param [userId] Project['userId']
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
-	name: Project['name'],
-	description: Project['description'] = '',
-	userId: Project['userId'] = ''
+	name: Project['name'] = 'Unnamed Project',
+	description: Project['description'] = ''
 ): Promise<Project | null> {
 	try {
-		const project: Project = {
-			name,
-			description,
-			userId,
-			projectAssets: [] as ProjectAsset[]
-		};
-		const response = await API.post(`/projects`, project);
+		const response = await API.post(
+			`/projects?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`
+		);
 		const { status, data } = response;
 		if (status !== 201) return null;
 		return data ?? null;
@@ -259,17 +247,17 @@ function getAssetIcon(type: AssetType | string | null): string | Component {
 }
 
 export {
-	create,
-	update,
-	get,
-	remove,
-	getAll,
 	addAsset,
+	create,
 	deleteAsset,
+	get,
+	getAll,
 	getAssetIcon,
-	setAccessibility,
 	getPermissions,
-	setPermissions,
+	remove,
 	removePermissions,
+	setAccessibility,
+	setPermissions,
+	update,
 	updatePermissions
 };

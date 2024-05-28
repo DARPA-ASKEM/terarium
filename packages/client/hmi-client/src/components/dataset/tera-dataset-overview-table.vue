@@ -120,16 +120,25 @@ function onCellEditComplete() {
 }
 
 function formatData(data: DatasetColumn[]) {
-	return data.map((col) => ({
-		id: col.name,
-		name: formatName(col.name),
-		description: col.description,
-		concept: col.metadata?.groundings?.identifiers,
-		unit: col.metadata?.unit,
-		dataType: col.dataType,
-		stats: col.metadata?.column_stats,
-		column: col
-	}));
+	return data.map((col) => {
+		let concept: object | undefined;
+		if (col.metadata?.groundings?.identifiers) {
+			concept = col.metadata.groundings.identifiers;
+		} else if (col.grounding?.identifiers[0]) {
+			concept = parseCurie(String(col.grounding.identifiers[0].curie));
+		}
+
+		return {
+			id: col.name,
+			name: formatName(col.name),
+			description: col.description,
+			concept,
+			unit: col.metadata?.unit,
+			dataType: col.metadata?.column_stats?.type,
+			stats: col.metadata?.column_stats,
+			column: col
+		};
+	});
 }
 </script>
 

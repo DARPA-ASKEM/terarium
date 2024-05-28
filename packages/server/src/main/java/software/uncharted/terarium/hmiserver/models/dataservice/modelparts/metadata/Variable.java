@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -34,4 +33,45 @@ public class Variable extends SupportAdditionalProperties implements Serializabl
 	private Paper paper;
 
 	private List<EquationVariable> equations;
+
+	@Override
+	public Variable clone() {
+		final Variable clone = (Variable) super.clone();
+		clone.id = this.id;
+		clone.name = this.name;
+
+		if (this.metadata != null) {
+			clone.metadata = new ArrayList<>();
+			for (final VariableMetadata metadata : this.metadata) {
+				clone.metadata.add(metadata.clone());
+			}
+		}
+
+		if (this.dkgGroundings != null) {
+			clone.dkgGroundings = new ArrayList<>();
+			for (final DKGConcept dkg : this.dkgGroundings) {
+				clone.dkgGroundings.add(dkg.clone());
+			}
+		}
+
+		if (this.column != null) {
+			clone.column = new ArrayList<>();
+			for (final DataColumn column : this.column) {
+				clone.column.add(column.clone());
+			}
+		}
+
+		if (this.paper != null) {
+			clone.paper = this.paper.clone();
+		}
+
+		if (this.equations != null) {
+			clone.equations = new ArrayList<>();
+			for (final EquationVariable equation : this.equations) {
+				clone.equations.add(equation.clone());
+			}
+		}
+
+		return clone;
+	}
 }

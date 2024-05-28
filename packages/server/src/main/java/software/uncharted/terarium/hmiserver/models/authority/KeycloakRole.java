@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.authority;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public enum KeycloakRole {
@@ -14,7 +13,7 @@ public enum KeycloakRole {
 	TEST,
 	SERVICE;
 
-  public static KeycloakRole get(final String role) {
+	public static KeycloakRole get(final String role) {
 		try {
 			return valueOf(role.toUpperCase());
 		} catch (final IllegalArgumentException e) {
@@ -24,9 +23,6 @@ public enum KeycloakRole {
 	}
 
 	public static List<KeycloakRole> get(final List<String> roles) {
-		return roles.stream()
-			.map(KeycloakRole::get)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+		return roles.stream().map(KeycloakRole::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 }

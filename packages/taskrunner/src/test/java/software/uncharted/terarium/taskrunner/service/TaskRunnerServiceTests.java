@@ -47,6 +47,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 	private final long TIMEOUT_SECONDS = 30;
 	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS = "{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
@@ -134,7 +135,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		final String reqStr = mapper.writeValueAsString(req);
@@ -142,9 +143,14 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		final List<TaskResponse> responses = consumeAllResponses();
 
-		Assertions.assertTrue(responses.size() == 2);
+		Assertions.assertTrue(responses.size() == 7);
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(2).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(3).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(4).getStatus());
+		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(5).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(6).getStatus());
 	}
 
 	@Test
@@ -172,7 +178,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		final String reqStr = mapper.writeValueAsString(req);
@@ -207,7 +213,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
 		req.setTimeoutMinutes(1);
 
 		// we have to create this queue before sending the cancellation to know that

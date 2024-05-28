@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -27,4 +25,15 @@ public class StatementValue extends SupportAdditionalProperties implements Seria
 	@TSOptional
 	@JsonProperty("dkg_grounding")
 	private DKGConcept dkgGrounding;
+
+	@Override
+	public StatementValue clone() {
+		StatementValue clone = (StatementValue) super.clone();
+		clone.value = value;
+		clone.type = type;
+		if (dkgGrounding != null) {
+			clone.dkgGrounding = dkgGrounding.clone();
+		}
+		return clone;
+	}
 }

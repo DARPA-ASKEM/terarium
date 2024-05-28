@@ -12,10 +12,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 public class S3Object {
 	private String key;
+
 	@TSOptional
 	private long lastModifiedMillis;
+
 	@TSOptional
 	private String eTag;
+
 	@TSOptional
 	private long sizeInBytes;
 }

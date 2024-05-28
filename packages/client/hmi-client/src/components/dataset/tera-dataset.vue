@@ -16,7 +16,12 @@
 				v-model.lazy="newDatasetName"
 				placeholder="Dataset name"
 				@keyup.enter="updateDatasetName"
+				@keyup.esc="updateDatasetName"
+				v-focus
 			/>
+			<div v-if="isRenamingDataset" class="flex flex-nowrap ml-1 mr-3">
+				<Button icon="pi pi-check" rounded text @click="updateDatasetName" />
+			</div>
 		</template>
 		<template #edit-buttons>
 			<template v-if="!featureConfig.isPreview">
@@ -269,27 +274,24 @@ watch(
 	{ immediate: true }
 );
 
-// Whenever we change Tab, we need to fetch the rawContent if not setup
+// Whenever we change the dataset, we need to fetch the rawContent
 watch(
-	() => selectedTabIndex.value,
+	() => dataset.value,
 	async () => {
-		if (selectedTabIndex.value === 1 && dataset.value && isEmpty(rawContent.value)) {
-			// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
-			if (dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') {
-				return;
-			}
+		// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
+		if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf')
+			return;
 
-			// We are assuming here there is only a single csv file.
-			if (
-				dataset.value.fileNames &&
-				dataset.value.fileNames.length > 0 &&
-				!isEmpty(dataset.value.fileNames[0]) &&
-				dataset.value.fileNames[0].endsWith('.csv')
-			) {
-				downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
-					rawContent.value = res;
-				});
-			}
+		// We are assuming here there is only a single csv file.
+		if (
+			dataset.value.fileNames &&
+			dataset.value.fileNames.length > 0 &&
+			!isEmpty(dataset.value.fileNames[0]) &&
+			dataset.value.fileNames[0].endsWith('.csv')
+		) {
+			downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
+				rawContent.value = res;
+			});
 		}
 	}
 );

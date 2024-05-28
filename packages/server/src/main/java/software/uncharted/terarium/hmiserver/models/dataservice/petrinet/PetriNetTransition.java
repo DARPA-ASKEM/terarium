@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;

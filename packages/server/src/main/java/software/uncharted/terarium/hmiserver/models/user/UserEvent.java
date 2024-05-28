@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.EventType;
 
-import java.util.UUID;
-
-//@RegisterForReflection
+// @RegisterForReflection
 @TSModel
 @Data
 public class UserEvent {

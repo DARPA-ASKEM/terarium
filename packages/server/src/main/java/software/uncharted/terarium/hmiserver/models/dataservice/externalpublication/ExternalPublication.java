@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.externalpublication;
 
-import java.io.Serial;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serial;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,5 +23,4 @@ public class ExternalPublication extends TerariumAsset {
 
 	@Schema(defaultValue = "Article title")
 	private String title;
-
 }

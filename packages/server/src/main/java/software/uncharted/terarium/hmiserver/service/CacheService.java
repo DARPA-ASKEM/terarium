@@ -36,9 +36,7 @@ public class CacheService {
 		}
 	}
 
-	/**
-	 * Clears all caches
-	 */
+	/** Clears all caches */
 	public void clear() {
 		CacheName.getAll().forEach(this::clear);
 	}

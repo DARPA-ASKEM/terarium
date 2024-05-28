@@ -1,12 +1,10 @@
 package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 
 @FeignClient(name = "skema-rust", url = "${skema-rs.url}")
 public interface SkemaRustProxy {
@@ -36,7 +34,6 @@ public interface SkemaRustProxy {
 	 */
 	@GetMapping("/models/{modelId}/named_opos")
 	ResponseEntity<String> getModelNamedOpos(@PathVariable("modelId") String modelId);
-
 
 	@PutMapping("/mathml/acset")
 	ResponseEntity<JsonNode> convertMathML2ACSet(@RequestBody List<String> mathML);

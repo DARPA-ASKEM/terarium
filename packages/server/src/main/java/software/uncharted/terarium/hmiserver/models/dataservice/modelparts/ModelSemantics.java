@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -29,4 +28,26 @@ public class ModelSemantics extends SupportAdditionalProperties implements Seria
 
 	@TSOptional
 	private JsonNode typing;
+
+	@Override
+	public ModelSemantics clone() {
+		ModelSemantics clone = (ModelSemantics) super.clone();
+
+		if (this.ode != null) {
+			clone.ode = this.ode.clone();
+		}
+
+		if (this.span != null) {
+			clone.span = new ArrayList<>();
+			for (JsonNode s : this.span) {
+				clone.span.add(s.deepCopy());
+			}
+		}
+
+		if (this.typing != null) {
+			clone.typing = this.typing.deepCopy();
+		}
+
+		return clone;
+	}
 }

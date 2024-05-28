@@ -7,9 +7,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class RelatedDocument {
 
-	/**
-	 * The related document
-	 **/
+	/** The related document */
 	private Document bibjson;
 
 	private Number score;
@@ -17,5 +15,4 @@ public class RelatedDocument {
 	public Document getDocument() {
 		return this.bibjson;
 	}
-
 }

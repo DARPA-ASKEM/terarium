@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Id;
 import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import java.io.Serial;
+import java.util.Collection;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,26 +15,26 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.authority.Role;
 
-import java.io.Serial;
-import java.util.Collection;
-
 @Data
 @Entity
 @Accessors(chain = true)
 @Table(
-	name = "users"      // "user" is a reserved word in many db engines
-)
+		name = "users" // "user" is a reserved word in many db engines
+		)
 @TSModel
 public class User implements UserDetails {
 	@Serial
 	private static final long serialVersionUID = 2359680472757828388L;
+
 	@Id
 	private String id;
 
 	private Long createdAtMs;
 	private Long lastLoginAtMs;
 
-	@ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
+	@ManyToMany(
+			fetch = FetchType.EAGER,
+			cascade = {CascadeType.ALL})
 	private Collection<Role> roles;
 
 	private String username;
@@ -69,12 +71,12 @@ public class User implements UserDetails {
 
 	public static User fromJwt(final Jwt jwt) {
 		return new User()
-			.setId(jwt.getClaimAsString(StandardClaimNames.SUB))
-			.setUsername(jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME))
-			.setEmail(jwt.getClaimAsString(StandardClaimNames.EMAIL))
-			.setGivenName(jwt.getClaimAsString(StandardClaimNames.GIVEN_NAME))
-			.setFamilyName(jwt.getClaimAsString(StandardClaimNames.FAMILY_NAME))
-			.setName(jwt.getClaimAsString(StandardClaimNames.NAME));
+				.setId(jwt.getClaimAsString(StandardClaimNames.SUB))
+				.setUsername(jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME))
+				.setEmail(jwt.getClaimAsString(StandardClaimNames.EMAIL))
+				.setGivenName(jwt.getClaimAsString(StandardClaimNames.GIVEN_NAME))
+				.setFamilyName(jwt.getClaimAsString(StandardClaimNames.FAMILY_NAME))
+				.setName(jwt.getClaimAsString(StandardClaimNames.NAME));
 	}
 
 	/**
@@ -99,7 +101,15 @@ public class User implements UserDetails {
 	 * @return
 	 */
 	private static int hash(final User user) {
-		return (user.id + user.username + user.email + user.givenName + user.familyName + user.name + user.enabled + user.roles).hashCode();
+		return (user.id
+						+ user.username
+						+ user.email
+						+ user.givenName
+						+ user.familyName
+						+ user.name
+						+ user.enabled
+						+ user.roles)
+				.hashCode();
 	}
 
 	public User merge(final User other) {

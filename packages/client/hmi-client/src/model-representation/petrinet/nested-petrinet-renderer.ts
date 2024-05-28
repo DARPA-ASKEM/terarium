@@ -2,8 +2,11 @@ import { select } from 'd3';
 import { D3SelectionINode, Options } from '@graph-scaffolder/types';
 import { useNodeTypeColorPalette, useNestedTypeColorPalette } from '@/utils/petrinet-color-palette';
 
-import { NodeType, PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { NodeData } from '@/model-representation/petrinet/petrinet-service';
+import {
+	NodeType,
+	PetrinetRenderer,
+	NodeData
+} from '@/model-representation/petrinet/petrinet-renderer';
 
 // packing data sourced from https://hydra.nat.uni-magdeburg.de/packing/cci for up to n=200
 import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
@@ -54,19 +57,14 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === NodeType.State);
-		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
-
 		const strataTypes: string[] = [];
 		selection.each((d) => {
 			const strataType = d.data.strataType;
 			if (strataType && !strataTypes.includes(strataType)) {
 				strataTypes.push(strataType as string);
 			}
-		});
 
-		// Calculate aspect ratio for each node based on the transition matrix
-		selection.each((d) => {
+			// Calculate aspect ratio for each node based on the transition matrix
 			const BASE_SIZE = 50;
 
 			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
@@ -75,6 +73,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 			d.matrixRows = matrixRowLen;
 			d.matrixCols = matrixColLen;
+
+			// FIXME: Consider rendering 1x1 matrices as a regular transition instead
+			d.data.isStratified = true;
 
 			// Initialize aspectRatio to 1 in case the matrix is square or empty
 			d.aspectRatio = 1;
@@ -96,6 +97,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				d.height = BASE_SIZE;
 			}
 		});
+
+		const species = selection.filter((d) => d.data.type === NodeType.State);
+		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 
 		// transitions
 		transitions
@@ -235,7 +239,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.style('font-family', 'STIX Two Text, serif')
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
@@ -258,7 +262,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		species
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
-			.style('font-family', 'STIX Two Text, serif')
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')

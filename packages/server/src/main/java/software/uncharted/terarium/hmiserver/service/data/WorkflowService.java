@@ -1,10 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
-
 import org.springframework.stereotype.Service;
-
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -12,31 +12,47 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
-		super(config, elasticConfig, elasticService, projectAssetService, repository, Workflow.class);
+		super(
+				objectMapper,
+				config,
+				elasticConfig,
+				elasticService,
+				projectAssetService,
+				s3ClientService,
+				repository,
+				Workflow.class);
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	protected String getAssetIndex() {
 		return elasticConfig.getWorkflowIndex();
 	}
 
 	@Override
+	@Observed(name = "function_profile")
 	public String getAssetAlias() {
 		return elasticConfig.getWorkflowAlias();
 	}
 
 	@Override
-	public Workflow createAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+	@Observed(name = "function_profile")
+	public Workflow createAsset(final Workflow asset, Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -48,11 +64,13 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.createAsset(asset);
+		return super.createAsset(asset, hasWritePermission);
 	}
 
 	@Override
-	public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+	@Observed(name = "function_profile")
+	public Optional<Workflow> updateAsset(final Workflow asset, Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -64,6 +82,11 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.updateAsset(asset);
+		return super.updateAsset(asset, hasWritePermission);
+	}
+
+	@Override
+	protected String getAssetPath() {
+		throw new UnsupportedOperationException("Workflows are not stored in S3");
 	}
 }

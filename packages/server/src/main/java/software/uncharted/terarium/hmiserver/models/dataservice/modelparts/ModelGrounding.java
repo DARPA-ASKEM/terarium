@@ -2,8 +2,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -26,4 +26,19 @@ public class ModelGrounding extends SupportAdditionalProperties implements Seria
 
 	@TSOptional
 	private Object modifiers;
+
+	@Override
+	public ModelGrounding clone() {
+		ModelGrounding clone = (ModelGrounding) super.clone();
+
+		// I'm unsure how all of these "Objects" can be cloned?
+
+		if (this.identifiers != null) clone.identifiers = new HashMap<>(this.identifiers);
+
+		if (this.context != null) clone.context = new HashMap<>(this.context);
+
+		clone.modifiers = this.modifiers;
+
+		return clone;
+	}
 }

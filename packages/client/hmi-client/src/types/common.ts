@@ -1,13 +1,16 @@
 import {
 	AssetType,
+	ClientEventType,
 	Dataset,
 	Document,
 	DocumentAsset,
 	Model,
 	ModelGrounding,
+	ProgrammingLanguage,
+	ProgressState,
+	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
@@ -36,7 +39,6 @@ export interface ModelConfigTableData {
 	source: string;
 	visibility: boolean;
 	tableFormattedMatrix?: ModelConfigTableData[];
-	timeseries?: string;
 }
 
 // TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
@@ -77,7 +79,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -198,3 +199,45 @@ export enum ModelServiceType {
 export interface CompareModelsResponseType {
 	response: string;
 }
+
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
+
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
+	notificationGroupId: string;
+	type: ClientEventType;
+	sourceName: string;
+	context: string;
+	projectId?: string;
+	nodeId?: string;
+	lastUpdated: number;
+	acknowledged: boolean;
+	supportCancel: boolean;
+}
+export interface NotificationItemStatus {
+	status: ProgressState;
+	msg: string;
+	error: string;
+	progress?: number;
+}
+
+export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
+	[ProgrammingLanguage.Python]: 'python3',
+	[ProgrammingLanguage.R]: 'ir',
+	[ProgrammingLanguage.Julia]: 'julia-1.10',
+	[ProgrammingLanguage.Zip]: 'zip'
+};
+
+/**
+ * Returns an array of options for programming languages.
+ * Each option is an object with a `name` property that is a `ProgrammingLanguage` and a `value` property that is the corresponding version string.
+ * The `Zip` programming language is excluded from the options.
+ * @returns {Array} An array of options for programming languages.
+ */
+export const programmingLanguageOptions = (): { name: string; value: string }[] =>
+	Object.values(ProgrammingLanguage)
+		.filter((lang) => lang !== ProgrammingLanguage.Zip)
+		.map((lang) => ({
+			name:
+				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			value: ProgrammingLanguageVersion[lang]
+		}));

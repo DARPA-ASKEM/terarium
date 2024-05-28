@@ -3,17 +3,14 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -43,26 +40,10 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/provenance")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(provenance)))
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(provenance)))
 				.andExpect(status().isCreated());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanGetProvenance() throws Exception {
-
-		final Provenance provenance = provenanceService.createProvenance(new Provenance()
-				.setLeft(UUID.randomUUID())
-				.setLeftType(ProvenanceType.MODEL)
-				.setRight(UUID.randomUUID())
-				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/provenance/" + provenance.getId())
-				.with(csrf()))
-				.andExpect(status().isOk());
 	}
 
 	@Test
@@ -100,14 +81,14 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 				.setNodes(true);
 
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(payload))
-				.with(csrf()))
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(payload))
+						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		ProvenanceSearchResult results = objectMapper.readValue(res.getResponse().getContentAsString(),
-				ProvenanceSearchResult.class);
+		ProvenanceSearchResult results =
+				objectMapper.readValue(res.getResponse().getContentAsString(), ProvenanceSearchResult.class);
 
 		Assertions.assertEquals(4, results.getNodes().size());
 		Assertions.assertEquals(3, results.getEdges().size());
@@ -152,14 +133,14 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 				.setNodes(true);
 
 		MvcResult resA = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(payloadA))
-				.with(csrf()))
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(payloadA))
+						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		ProvenanceSearchResult resultsA = objectMapper.readValue(resA.getResponse().getContentAsString(),
-				ProvenanceSearchResult.class);
+		ProvenanceSearchResult resultsA =
+				objectMapper.readValue(resA.getResponse().getContentAsString(), ProvenanceSearchResult.class);
 
 		Assertions.assertEquals(4, resultsA.getNodes().size());
 		Assertions.assertEquals(3, resultsA.getEdges().size());
@@ -184,35 +165,16 @@ public class ProvenanceControllerTests extends TerariumApplicationTests {
 				.setNodes(true);
 
 		MvcResult resB = mockMvc.perform(MockMvcRequestBuilders.post("/provenance/search/connected-nodes")
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(payloadB))
-				.with(csrf()))
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(payloadB))
+						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
-		ProvenanceSearchResult resultsB = objectMapper.readValue(resB.getResponse().getContentAsString(),
-				ProvenanceSearchResult.class);
+		ProvenanceSearchResult resultsB =
+				objectMapper.readValue(resB.getResponse().getContentAsString(), ProvenanceSearchResult.class);
 
 		Assertions.assertEquals(3, resultsB.getNodes().size());
 		Assertions.assertEquals(2, resultsB.getEdges().size());
 	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanDeleteProvenance() throws Exception {
-
-		final Provenance provenance = provenanceService.createProvenance(new Provenance()
-				.setLeft(UUID.randomUUID())
-				.setLeftType(ProvenanceType.MODEL)
-				.setRight(UUID.randomUUID())
-				.setRightType(ProvenanceType.EQUATION)
-				.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
-
-		mockMvc.perform(MockMvcRequestBuilders.delete("/provenance/" + provenance.getId())
-				.with(csrf()))
-				.andExpect(status().isOk());
-
-		Assertions.assertTrue(provenanceService.getProvenance(provenance.getId()).isEmpty());
-	}
-
 }

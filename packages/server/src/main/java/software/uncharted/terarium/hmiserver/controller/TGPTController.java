@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import software.uncharted.terarium.hmiserver.security.Roles;
 
-
 @RequestMapping("/tgpt")
 @RestController
 @Slf4j
@@ -35,12 +34,10 @@ public class TGPTController {
 	@GetMapping("/configuration")
 	@Secured(Roles.USER)
 	public ResponseEntity<ObjectNode> getConfiguration() {
-		return ResponseEntity.ok(
-			mapper.createObjectNode()
+		return ResponseEntity.ok(mapper.createObjectNode()
 				.put("baseUrl", baseUrl)
 				.put("appUrl", appUrl)
 				.put("wsUrl", wsUrl)
-				.put("token", token)
-		);
+				.put("token", token));
 	}
 }

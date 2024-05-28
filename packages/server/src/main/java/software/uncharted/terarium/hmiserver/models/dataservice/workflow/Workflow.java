@@ -1,31 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
 
-/**
- * The workflow data structure is not very well defined. It is also meant to
- * carry operations each with their own unique
- * representations. As such this is just a pass-thru class for the proxy. The UI
- * has it's own typinging definition that is
- * not generated.
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -35,27 +24,30 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
-	@Schema(defaultValue = "My New Workflow")
-	private String name;
-
-	private String description;
-
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Transform transform;
 
-	@Convert(converter = JsonConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = JsonConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
+	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
-		clone.setId(UUID.randomUUID());
-		clone.setName(this.getName());
-		clone.setDescription(this.getDescription());
-		clone.setTransform(this.getTransform());
+
+		cloneSuperFields(clone);
+
+		if (this.transform != null) {
+			clone.transform = new Transform()
+					.setX(this.transform.getX())
+					.setY(this.transform.getY())
+					.setK(this.transform.getK());
+		}
 
 		final Map<UUID, UUID> oldToNew = new HashMap<>();
 
@@ -75,5 +67,4 @@ public class Workflow extends TerariumAsset {
 		}
 		return clone;
 	}
-
 }

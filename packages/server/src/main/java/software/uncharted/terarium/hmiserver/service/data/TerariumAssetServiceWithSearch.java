@@ -1,47 +1,52 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets with syncing to
- * Elasticsearch.
+ * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages
  */
 @Service
 @Slf4j
-public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+public abstract class TerariumAssetServiceWithSearch<
+				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		extends TerariumAssetServiceWithoutSearch<T, R> {
 
 	public TerariumAssetServiceWithSearch(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
 			final R repository,
 			final Class<T> assetClass) {
 
-		super(config, projectAssetService, repository, assetClass);
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, assetClass);
 
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
@@ -68,17 +73,19 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	public abstract String getAssetAlias();
 
 	/**
-	 * Setup the index and alias for the asset this service manages and ensure it is
-	 * empty
+	 * Setup the index and alias for the asset this service manages and ensure it is empty
 	 *
 	 * @throws IOException If there is an error setting up the index and alias
 	 */
 	public void setupIndexAndAliasAndEnsureEmpty() throws IOException {
 		log.info("Setting up index {} and alias {}", getAssetIndex(), getAssetAlias());
-		String index = getAssetIndex();
+		final String index = getAssetIndex();
 		try {
-			index = getCurrentAssetIndex();
-			log.info("Found latest index version {}", index);
+			final String currentIndex = getCurrentAssetIndex();
+			// if another index exists, delete it.
+			if (!currentIndex.equals(index)) {
+				elasticService.deleteIndex(currentIndex);
+			}
 		} catch (final Exception e) {
 		}
 		elasticService.createOrEnsureIndexIsEmpty(index);
@@ -97,23 +104,41 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	}
 
 	/**
-	 * Get a list of assets based on a search query. Only searchable assets wil be
-	 * returned.
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
-	 * @param query    The query to filter the assets
+	 * @param query The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
+	@Observed(name = "function_profile")
 	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
-		final SearchRequest.Builder builder = new SearchRequest.Builder()
-				.index(getAssetAlias())
-				.from(page)
-				.size(pageSize);
+		return searchAssets(page, pageSize, query, null);
+	}
+
+	/**
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
+	 *
+	 * @param page The page number
+	 * @param pageSize The number of assets per page
+	 * @param query The query to filter the assets
+	 * @return The list of assets
+	 * @throws IOException If there is an error retrieving the assets
+	 */
+	@Observed(name = "function_profile")
+	public List<T> searchAssets(
+			final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
+			throws IOException {
+		final SearchRequest.Builder builder =
+				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
+		}
+
+		if (source != null) {
+			builder.source(source);
 		}
 
 		final SearchRequest req = builder.build();
@@ -126,11 +151,14 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 * @param id The ID of the asset to delete
 	 * @throws IOException If there is an error deleting the asset
 	 */
-	public Optional<T> deleteAsset(final UUID id) throws IOException {
+	@Override
+	@Observed(name = "function_profile")
+	public Optional<T> deleteAsset(final UUID id, Schema.Permission hasWritePermission) throws IOException {
 
-		final Optional<T> deleted = super.deleteAsset(id);
+		final Optional<T> deleted = super.deleteAsset(id, hasWritePermission);
 
-		if (deleted.isPresent() && !deleted.get().getTemporary() || deleted.get().getPublicAsset()) {
+		if (deleted.isPresent() && !deleted.get().getTemporary()
+				|| deleted.get().getPublicAsset()) {
 			elasticService.delete(getAssetAlias(), id.toString());
 		}
 
@@ -144,8 +172,10 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
-	public T createAsset(final T asset) throws IOException {
-		final T created = super.createAsset(asset);
+	@Override
+	@Observed(name = "function_profile")
+	public T createAsset(final T asset, Schema.Permission hasWritePermission) throws IOException {
+		final T created = super.createAsset(asset, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
 			elasticService.index(getAssetAlias(), created.getId().toString(), created);
@@ -161,9 +191,11 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 * @return The created asset
 	 * @throws IOException If there is an error creating the asset
 	 */
+	@Override
+	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public List<T> createAssets(final List<T> assets) throws IOException {
-		final List<T> created = super.createAssets(assets);
+	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
+		final List<T> created = super.createAssets(assets, hasWritePermission);
 
 		if (created.size() > 0) {
 			elasticService.bulkIndex(getAssetAlias(), (List<TerariumAsset>) created);
@@ -178,13 +210,15 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	@Override
+	@Observed(name = "function_profile")
+	public Optional<T> updateAsset(final T asset, Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
-		final Optional<T> updated = super.updateAsset(asset);
+		final Optional<T> updated = super.updateAsset(asset, hasWritePermission);
 
 		if (updated.isEmpty()) {
 			return Optional.empty();
@@ -197,7 +231,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		return updated;
 	}
 
-	private String getVersionFromIndex(final String index) {
+	private static String getVersionFromIndex(final String index) {
 		final String[] split = index.split("_");
 		if (split.length < 2) {
 			throw new RuntimeException("Unable to parse version from index name: " + index);
@@ -206,7 +240,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		return split[split.length - 1];
 	}
 
-	private String getIndexNameWithoutVersion(final String index) {
+	private static String getIndexNameWithoutVersion(final String index) {
 		final String[] split = index.split("_");
 		if (split.length < 2) {
 			throw new RuntimeException("Unable to parse index name: " + index);
@@ -214,7 +248,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		return String.join("_", Arrays.asList(split).subList(0, split.length - 1));
 	}
 
-	private String incrementVersion(final String version) {
+	private static String incrementVersion(final String version) {
 		final String[] parts = version.split("\\.");
 		if (parts.length != 2) {
 			throw new IllegalArgumentException("Invalid version format: " + version);
@@ -224,7 +258,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		return parts[0] + "." + secondPart;
 	}
 
-	private String generateNextIndexName(final String previousIndex) {
+	private static String generateNextIndexName(final String previousIndex) {
 		return getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex));
 	}
 
@@ -311,5 +345,4 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 		// refresh the index
 		elasticService.refreshIndex(getAssetAlias());
 	}
-
 }

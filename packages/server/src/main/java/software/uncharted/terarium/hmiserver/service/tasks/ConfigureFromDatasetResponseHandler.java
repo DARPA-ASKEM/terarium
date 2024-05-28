@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -30,12 +27,12 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
-	final public static String NAME = "gollm:dataset_configure";
+	public static final String NAME = "gollm_task:dataset_configure";
 
-	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
-	final private ModelConfigurationService modelConfigurationService;
-	final private ProvenanceService provenanceService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
+	private final ModelConfigurationService modelConfigurationService;
+	private final ProvenanceService provenanceService;
 
 	@Override
 	public String getName() {
@@ -63,18 +60,22 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		List<UUID> datasetIds;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId())
+			final Model model = modelService
+					.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
 					.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// Map the parameters values to the model
-			final Model modelCopy = new Model(model);
+			final Model modelCopy = (Model) model.clone();
+			modelCopy.setId(model.getId());
 			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
@@ -93,7 +94,8 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
-					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
+							configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 					// add provenance
 					provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())

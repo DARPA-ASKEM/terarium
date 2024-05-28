@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,4 +23,13 @@ public class Initial extends SupportAdditionalProperties implements Serializable
 
 	@JsonProperty("expression_mathml")
 	private String expressionMathml;
+
+	@Override
+	public Initial clone() {
+		Initial clone = (Initial) super.clone();
+		clone.setTarget(target);
+		clone.setExpression(expression);
+		clone.setExpressionMathml(expressionMathml);
+		return clone;
+	}
 }

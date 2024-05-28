@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @RequiredArgsConstructor
@@ -52,8 +50,7 @@ public enum AssetType {
 		} catch (final IllegalArgumentException iae) {
 			log.error("Error converting the string assetTypeName into a valid AssetType", iae);
 			throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
-					"Failed to convert an AssetTypeName into an AssetType");
+					HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
 		}
 	}
 }

@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serial;
 import java.io.Serializable;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -71,4 +69,23 @@ public class Card extends SupportAdditionalProperties implements Serializable {
 	@JsonAlias("STRENGTHS")
 	@TSOptional
 	private String strengths;
+
+	@Override
+	public Card clone() {
+		final Card clone = (Card) super.clone();
+		clone.description = this.description;
+		clone.authorInst = this.authorInst;
+		clone.authorAuthor = this.authorAuthor;
+		clone.authorEmail = this.authorEmail;
+		clone.date = this.date;
+		clone.schema = this.schema;
+		clone.provenance = this.provenance;
+		clone.dataset = this.dataset;
+		clone.complexity = this.complexity;
+		clone.usage = this.usage;
+		clone.license = this.license;
+		clone.assumptions = this.assumptions;
+		clone.strengths = this.strengths;
+		return clone;
+	}
 }

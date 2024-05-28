@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,4 +21,13 @@ public class EquationVariable extends SupportAdditionalProperties implements Ser
 	private String text;
 
 	private String image;
+
+	@Override
+	public EquationVariable clone() {
+		EquationVariable clone = (EquationVariable) super.clone();
+		clone.id = this.id;
+		clone.text = this.text;
+		clone.image = this.image;
+		return clone;
+	}
 }

@@ -19,7 +19,7 @@ public class CacheController {
 	/**
 	 * Clear caches
 	 *
-	 * @param cacheName if present, the name of the cache to clear.  if absent, clear all
+	 * @param cacheName if present, the name of the cache to clear. if absent, clear all
 	 */
 	@DeleteMapping
 	@Secured(Roles.TEST)

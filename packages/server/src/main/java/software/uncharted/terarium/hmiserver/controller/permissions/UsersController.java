@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.permissions;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -13,8 +14,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -24,18 +23,15 @@ public class UsersController {
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionUser>> getUsers(
-		@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
-		@RequestParam(name = "page", defaultValue = "0") final Integer page
-	) {
+			@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
+			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 		return ResponseEntity.ok(reBACService.getUsers());
 	}
 
 	@DeleteMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> deleteRoleFromUser(
-		@PathVariable("userId") final String userId,
-		@PathVariable("roleName") final String roleName
-	) {
+			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}
@@ -62,9 +58,7 @@ public class UsersController {
 	@PostMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> addRoleToUser(
-		@PathVariable("userId") final String userId,
-		@PathVariable("roleName") final String roleName
-	) {
+			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}
@@ -87,5 +81,4 @@ public class UsersController {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
-
 }

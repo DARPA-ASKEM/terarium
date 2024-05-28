@@ -228,7 +228,7 @@ const title = computed(() => {
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
-		value = (props.asset as Dataset).name;
+		value = (props.asset as Dataset).name ?? '';
 	}
 	return highlightSearchTerms(value);
 });
@@ -245,21 +245,6 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
 		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
-
-//
-// in case we decided to display matching concepts associated with artifacts
-//  when performing a search using a keyword that represents a known concept
-//
-// const getConceptTags = (item: ResultType) => {
-// 	const tags = [] as string[];
-// 	if (props.rawConceptFacets) {
-// 		const itemConcepts = props.rawConceptFacets.results.filter(
-// 			(conceptResult) => conceptResult.id === item.id
-// 		);
-// 		tags.push(...itemConcepts.map((c) => c.name ?? c.curie));
-// 	}
-// 	return tags;
-// };
 
 // Return formatted author, year, journal
 // Return formatted author, year, journal

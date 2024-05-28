@@ -29,7 +29,9 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 					assetId: asset.assetId.toString(),
 					assetName:
 						asset.assetName ??
-						`${asset.assetId.substring(0, 3)} - ${formatShort(asset?.updatedOn)}`,
+						`${asset.assetId.substring(0, 3)} - ${formatShort(
+							asset?.updatedOn ?? asset?.createdOn
+						)}`,
 					pageType: asset.assetType
 				}) as AssetItem
 		)

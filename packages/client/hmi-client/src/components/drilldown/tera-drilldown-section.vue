@@ -1,5 +1,13 @@
 <template>
 	<section>
+		<header>
+			<div>
+				<slot name="header-controls-left" />
+			</div>
+			<div>
+				<slot name="header-controls-right" />
+			</div>
+		</header>
 		<main>
 			<slot v-if="!isLoading" />
 			<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -26,6 +34,18 @@ footer {
 	display: flex;
 	justify-content: flex-end;
 	gap: 0.5rem;
+}
+
+header {
+	display: inline-flex;
+	justify-content: space-between;
+	margin-top: 1em;
+	gap: 0.75rem;
+}
+
+header > div {
+	display: inline-flex;
+	gap: var(--gap-small);
 }
 
 section {

@@ -1,8 +1,9 @@
-import { EventSource } from 'extended-eventsource';
-import type { ClientEvent, ExtractionStatusUpdate } from '@/types/Types';
-import { ClientEventType } from '@/types/Types';
-import useAuthStore from '@/stores/auth';
 import getConfiguration from '@/services/ConfigService';
+import useAuthStore from '@/stores/auth';
+import type { ClientEvent } from '@/types/Types';
+import type { ExtractionStatusUpdate } from '@/types/common';
+import { ClientEventType } from '@/types/Types';
+import { EventSource } from 'extended-eventsource';
 
 /**
  * A map of event types to message handlers
@@ -25,6 +26,8 @@ let backoffMs = 1000;
  */
 let reconnecting = false;
 
+let eventSource: EventSource | null = null;
+
 /**
  * An error that can be retried
  */
@@ -36,7 +39,11 @@ class RetriableError extends Error {}
 export async function init(): Promise<void> {
 	const authStore = useAuthStore();
 
-	const eventSource = new EventSource('/api/client-event', {
+	if (eventSource !== null) {
+		eventSource.close();
+	}
+
+	eventSource = new EventSource('/api/client-event', {
 		headers: {
 			Authorization: `Bearer ${authStore.token}`
 		},
@@ -83,13 +90,13 @@ export async function init(): Promise<void> {
  */
 setInterval(async () => {
 	if (!reconnecting) {
+		reconnecting = true;
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
 		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
-			reconnecting = true;
 			await init();
-			reconnecting = false;
 		}
+		reconnecting = false;
 	}
 }, 1000);
 
@@ -132,13 +139,13 @@ export async function unsubscribe(
 export const extractionStatusUpdateHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	const { data } = event;
 	if (data.error) {
-		console.error(`[${data.t}]: ${data.error}`);
+		console.error(`[${data.progress}]: ${data.error}`);
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 		return;
 	}
 
-	console.debug(`[${data.t}]: ${data.message}`);
-	if (data.t >= 1.0) {
+	console.debug(`[${data.progress}]: ${data.message}`);
+	if (data.progress >= 1.0) {
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 	}
 };

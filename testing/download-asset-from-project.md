@@ -1,0 +1,26 @@
+## Download asset in a project
+Please go through __every__ step of the test scenario.\
+When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+
+Estimated time to completion: [X] minutes
+
+### 1. Begin test
+1. Login to https://app.staging.terarium.ai using the test account
+    ```
+    email: qa@test.io
+    password: askem-quality-assurance
+    ```
+2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+
+### 2. Upload a PDF
+1. Upload _the Document_ [SIR.pdf](data/SIR.pdf) using `Upload Resources` button in the bottom left.
+2. Wait for final notification of document extraction
+3. Open _the Document_ and check that extractions are visible
+
+### 3. Download the PDF
+1. Click _the Document_ and select PDF.
+2. In the far right `...` menu select `Download this File`
+3. The file should download successfully.
+
+### 4. End test
+1. logout of the application

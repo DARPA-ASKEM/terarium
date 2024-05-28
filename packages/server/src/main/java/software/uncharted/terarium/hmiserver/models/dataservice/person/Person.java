@@ -1,14 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.person;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.io.Serializable;
+import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

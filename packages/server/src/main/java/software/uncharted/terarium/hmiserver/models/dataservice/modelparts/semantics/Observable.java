@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -35,4 +33,19 @@ public class Observable extends SupportAdditionalProperties implements Serializa
 	@TSOptional
 	@JsonProperty("expression_mathml")
 	private String expressionMathml;
+
+	@Override
+	public Observable clone() {
+		Observable clone = (Observable) super.clone();
+
+		clone.setId(this.getId());
+		clone.setName(this.getName());
+		if (this.states != null) {
+			clone.setStates(this.getStates());
+		}
+		clone.setExpression(this.getExpression());
+		clone.setExpressionMathml(this.getExpressionMathml());
+
+		return clone;
+	}
 }

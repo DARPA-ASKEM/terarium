@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -20,4 +19,12 @@ public class VariableMetadata extends SupportAdditionalProperties implements Ser
 	private String type;
 
 	private String value;
+
+	@Override
+	public VariableMetadata clone() {
+		final VariableMetadata clone = (VariableMetadata) super.clone();
+		clone.value = this.value;
+		clone.type = this.type;
+		return clone;
+	}
 }

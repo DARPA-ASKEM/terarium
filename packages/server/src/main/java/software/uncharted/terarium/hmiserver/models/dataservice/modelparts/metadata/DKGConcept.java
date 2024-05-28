@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,4 +21,13 @@ public class DKGConcept extends SupportAdditionalProperties implements Serializa
 	private String name;
 
 	private Double score;
+
+	@Override
+	public DKGConcept clone() {
+		DKGConcept clone = (DKGConcept) super.clone();
+		clone.setId(id);
+		clone.setName(name);
+		clone.setScore(score);
+		return clone;
+	}
 }

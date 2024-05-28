@@ -1,10 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -25,4 +23,13 @@ public class Paper extends SupportAdditionalProperties implements Serializable {
 	private String fileDirectory;
 
 	private String doi;
+
+	@Override
+	public Paper clone() {
+		final Paper clone = (Paper) super.clone();
+		clone.id = id;
+		clone.fileDirectory = fileDirectory;
+		clone.doi = doi;
+		return clone;
+	}
 }

@@ -59,6 +59,7 @@ export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
 	displayName: string; // Human-readable name for each node.
+	documentationUrl?: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -77,6 +78,7 @@ export interface Operation {
 export interface WorkflowPort {
 	id: string;
 	type: string;
+	originalType?: string;
 	status: WorkflowPortStatus;
 	label?: string;
 	value?: any[] | null;
@@ -105,6 +107,7 @@ export interface WorkflowNode<S> {
 	displayName: string;
 	workflowId: string;
 	operationType: WorkflowOperationTypes;
+	documentationUrl?: string;
 
 	// Position on canvas
 	x: number;
@@ -154,6 +157,11 @@ export enum WorkflowDirection {
 	FROM_OUTPUT
 }
 
+export interface Transform {
+	x: number;
+	y: number;
+	k: number;
+}
 export interface Workflow {
 	id: string;
 	name: string;
@@ -162,11 +170,7 @@ export interface Workflow {
 	annotations?: WorkflowAnnotation[];
 
 	// zoom x-y translate and zoom
-	transform: {
-		x: number;
-		y: number;
-		k: number;
-	};
+	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 }
@@ -174,6 +178,13 @@ export interface Workflow {
 export interface Size {
 	width: number;
 	height: number;
+}
+
+export interface WorkflowTransformations {
+	workflows: Transformations;
+}
+export interface Transformations {
+	[key: string]: Transform;
 }
 
 export enum ProgressState {

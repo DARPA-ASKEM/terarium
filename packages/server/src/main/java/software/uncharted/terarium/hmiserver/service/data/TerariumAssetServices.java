@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
@@ -25,6 +25,7 @@ public class TerariumAssetServices {
 	 * @param type The type of asset to get the service for
 	 * @return The service for the given asset type
 	 */
+	@Observed(name = "function_profile")
 	public ITerariumAssetService<? extends TerariumAsset> getServiceByType(final AssetType type) {
 		return switch (type) {
 			case ARTIFACT -> artifactService;
@@ -38,5 +39,4 @@ public class TerariumAssetServices {
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};
 	}
-
 }

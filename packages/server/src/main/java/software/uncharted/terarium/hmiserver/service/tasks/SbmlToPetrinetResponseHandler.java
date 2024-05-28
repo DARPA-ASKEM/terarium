@@ -13,10 +13,10 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @RequiredArgsConstructor
 @Slf4j
 public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
-	final static public String NAME = "mira_task:sbml_to_petrinet";
+	public static final String NAME = "mira_task:sbml_to_petrinet";
 
-	final private ObjectMapper objectMapper;
-	final private ModelService modelService;
+	private final ObjectMapper objectMapper;
+	private final ModelService modelService;
 
 	@Override
 	public String getName() {
@@ -40,7 +40,7 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 				}
 			});
 
-			model = modelService.createAsset(modelResp.getResponse());
+			model = modelService.createAsset(modelResp.getResponse(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

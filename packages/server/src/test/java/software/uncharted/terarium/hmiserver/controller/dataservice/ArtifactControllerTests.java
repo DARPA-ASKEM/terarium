@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +21,6 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-
-import java.io.IOException;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ArtifactControllerTests extends TerariumApplicationTests {
 
@@ -51,14 +50,14 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateArtifact() throws Exception {
 
-		final Artifact artifact = new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description");
+		final Artifact artifact =
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/artifacts")
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(artifact)))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(artifact)))
 				.andExpect(status().isCreated());
 	}
 
@@ -66,12 +65,13 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -79,18 +79,17 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifacts() throws Exception {
 
-		artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
-		artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
-		artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts")
-				.with(csrf()))
+		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 	}
@@ -99,24 +98,27 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(artifactService.getAsset(artifact.getId()).isEmpty());
+		Assertions.assertTrue(artifactService
+				.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -124,11 +126,10 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				"file content".getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
+		mockMvc.perform(MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -144,12 +145,11 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadArtifactFromGithub() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(
-				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
+		mockMvc.perform(MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 						.with(csrf())
 						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
@@ -162,9 +162,9 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 
@@ -174,11 +174,10 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				content.getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
+		mockMvc.perform(MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -189,10 +188,10 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		final MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId() + "/download-file")
-						.queryParam("filename", "filename.txt")
-						.with(csrf()))
+		final MvcResult res = mockMvc.perform(
+						MockMvcRequestBuilders.get("/artifacts/" + artifact.getId() + "/download-file")
+								.queryParam("filename", "filename.txt")
+								.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 
@@ -205,9 +204,9 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadArtifactAsText() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(new Artifact()
-				.setName("test-artifact-name")
-				.setDescription("my description"));
+		final Artifact artifact = artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 
@@ -217,11 +216,10 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 				"filename.txt", // original filename
 				"text/plain", // content type
 				content.getBytes() // content of the file
-		);
+				);
 
 		// Perform the multipart file upload request
-		mockMvc.perform(
-				MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
+		mockMvc.perform(MockMvcRequestBuilders.multipart("/artifacts/" + artifact.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
 						.with(csrf())
@@ -232,11 +230,10 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		final MvcResult res = mockMvc
-				.perform(MockMvcRequestBuilders
-						.get("/artifacts/" + artifact.getId() + "/download-file-as-text")
-						.queryParam("filename", "filename.txt")
-						.with(csrf()))
+		final MvcResult res = mockMvc.perform(
+						MockMvcRequestBuilders.get("/artifacts/" + artifact.getId() + "/download-file-as-text")
+								.queryParam("filename", "filename.txt")
+								.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
 

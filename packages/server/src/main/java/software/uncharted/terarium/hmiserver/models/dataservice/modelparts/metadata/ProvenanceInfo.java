@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import java.io.Serial;
 import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -20,4 +19,12 @@ public class ProvenanceInfo extends SupportAdditionalProperties implements Seria
 	private String method;
 
 	private String description;
+
+	@Override
+	public ProvenanceInfo clone() {
+		ProvenanceInfo clone = (ProvenanceInfo) super.clone();
+		clone.method = this.method;
+		clone.description = this.description;
+		return clone;
+	}
 }

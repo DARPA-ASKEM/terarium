@@ -40,6 +40,8 @@
 		<template v-if="active">
 			<a target="_blank" rel="noopener noreferrer" @click="isAboutModalVisible = true">About</a>
 			<a target="_blank" rel="noopener noreferrer" :href="documentation">Documentation</a>
+			<tera-notification-panel />
+
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
@@ -206,10 +208,12 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import SplitButton from 'primevue/splitbutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import TeraNotificationPanel from '@/components/navbar/tera-notification-panel.vue';
 import Textarea from 'primevue/textarea';
 import * as EventService from '@/services/event';
 import { EvaluationScenarioStatus, EventType } from '@/types/Types';
 import API from '@/api/api';
+import { sortBy, orderBy, remove } from 'lodash';
 import { useProjects } from '@/composables/project';
 import { ProjectPages } from '@/types/Project';
 import { EvalScenario, Question, Scenario } from '@/types/EvalScenario';
@@ -457,22 +461,32 @@ function closeLogoutDialog() {
 	isLogoutDialog.value = false;
 }
 
+function getNavMenuItem(project) {
+	return {
+		label: project.name,
+		icon: 'pi pi-folder',
+		command: () =>
+			router.push({
+				name: RouteName.Project,
+				params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
+			})
+	};
+}
+
 watch(
 	() => useProjects().allProjects.value,
 	() => {
 		const items: MenuItem[] = [];
-		useProjects().allProjects.value?.forEach((project) => {
-			items.push({
-				label: project.name,
-				icon: 'pi pi-folder',
-				command: () =>
-					router.push({
-						name: RouteName.Project,
-						params: { projectId: project.id, pageType: ProjectPages.OVERVIEW }
-					})
-			});
-		});
-		navMenuItems.value = [homeItem, explorerItem, ...items];
+		const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+		useProjects().allProjects.value?.forEach((project) => items.push(getNavMenuItem(project)));
+
+		const removedUpdatedProject = remove(items, (item) => item.label === lastProjectUpdated?.name);
+		navMenuItems.value = [
+			homeItem,
+			explorerItem,
+			...removedUpdatedProject,
+			...sortBy(items, 'label')
+		];
 	},
 	{ immediate: true }
 );

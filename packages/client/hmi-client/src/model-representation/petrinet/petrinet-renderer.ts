@@ -8,6 +8,7 @@ export interface NodeData {
 	type: string;
 	expression?: string;
 	strataType?: string;
+	isStratified?: boolean;
 }
 
 export interface EdgeData {
@@ -115,7 +116,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
-			.style('font-family', 'STIX Two Text, serif')
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
@@ -128,7 +129,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		transitions
 			.append('text')
 			.attr('y', (d) => -d.height / 2 - 8)
-			.style('font-family', 'STIX Two Text, serif')
+			.classed('latex-fontt', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
 			.style('text-anchor', 'middle')
@@ -160,7 +161,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
-			.style('font-family', 'STIX Two Text, serif')
+			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
@@ -205,7 +206,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.classed('multi-edge-label', true)
 				.attr('x', point.x)
 				.attr('y', point.y + 6)
-				.style('font-family', 'STIX Two Text, serif')
+				.classed('latex-font', true)
 				.style('font-style', 'italic')
 				.style('font-size', FONT_SIZE_REGULAR)
 				.style('paint-order', 'stroke')
