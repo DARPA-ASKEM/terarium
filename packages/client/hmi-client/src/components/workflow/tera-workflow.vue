@@ -385,6 +385,9 @@ function appendOutput(
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
+	// Filter out temporary outputs where value is null
+	node.outputs = node.outputs.filter((d) => d.value);
+
 	selectOutput(node, uuid);
 
 	workflowDirty = true;

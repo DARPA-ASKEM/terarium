@@ -13,7 +13,7 @@ Estimated time to completion: [X] minutes
 2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
 
 ### 2. Upload a Dataset
-1. Upload _the Dataset_ [EpiMatrix.csv](data/EpiMatrix.csv) using `Upload Resources` button in the bottom left.
+1. Upload _the Dataset_ [EpiMatrix.csv](../data/EpiMatrix.csv) using `Upload Resources` button in the bottom left.
 2. Check that _the Dataset_ appears in the left menu.
 3. Open _the Dataset_ and check that it has been added correctly.
 
