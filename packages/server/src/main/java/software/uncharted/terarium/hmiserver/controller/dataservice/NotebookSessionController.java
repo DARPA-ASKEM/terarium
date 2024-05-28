@@ -88,7 +88,7 @@ public class NotebookSessionController {
 	/**
 	 * Create session and return its ID
 	 *
-	 * @param request session to create and projectId
+	 * @param session session to create and projectId
 	 * @return new ID for session
 	 */
 	@PostMapping
@@ -113,7 +113,7 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> createNotebookSession(
 			@RequestBody final NotebookSession session,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -155,7 +155,7 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> getNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -173,7 +173,7 @@ public class NotebookSessionController {
 	 * Update an session
 	 *
 	 * @param id id of session to update
-	 * @param request session to update with and projectId
+	 * @param session session to update with and projectId
 	 * @return ID of updated session
 	 */
 	@PutMapping("/{id}")
@@ -203,7 +203,7 @@ public class NotebookSessionController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final NotebookSession session,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -240,7 +240,7 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> cloneNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			final NotebookSession clone = sessionService.cloneAsset(id, permission);
@@ -278,7 +278,7 @@ public class NotebookSessionController {
 	ResponseEntity<ResponseDeleted> deleteNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
