@@ -71,6 +71,11 @@ public class ExtractionService {
 	private final ProvenanceService provenanceService;
 	private final CurrentUserService currentUserService;
 
+	// Used to get the Abstract text from PDF
+	private static final String NODE_TARGET = "Abstract";
+	private static final String NODE_PARAM = "detect_cls";
+	private static final String NODE_CONTENT = "content";
+
 	// time the progress takes to reach each subsequent half
 	final Double HALFTIME_SECONDS = 2.0;
 
@@ -209,13 +214,11 @@ public class ExtractionService {
 							ObjectMapper objectMapper = new ObjectMapper();
 
 							JsonNode rootNode = objectMapper.readTree(bytes);
-							if (rootNode.isArray()) {
+							if (rootNode instanceof ArrayNode) {
 								ArrayNode arrayNode = (ArrayNode) rootNode;
-								String target = "Abstract";
-								String param = "detect_cls";
 								for (JsonNode record : arrayNode) {
-									if (record.has(param)
-											&& record.get(param).asText().equals(target)) {
+									if (record.has(NODE_PARAM)
+											&& record.get(NODE_PARAM).asText().equals(NODE_TARGET)) {
 										abstractJsonNode = record;
 										break;
 									}
@@ -288,8 +291,8 @@ public class ExtractionService {
 
 				String responseText = "";
 				for (final JsonNode record : textResp.getBody()) {
-					if (record.has("content")) {
-						responseText += record.get("content").asText() + "\n";
+					if (record.has(NODE_CONTENT)) {
+						responseText += record.get(NODE_CONTENT).asText() + "\n";
 						document.setText(responseText);
 					} else {
 						log.warn("No content found in record: {}", record);
@@ -297,7 +300,7 @@ public class ExtractionService {
 				}
 
 				if (abstractJsonNode != null) {
-					document.setDocumentAbstract(abstractJsonNode.get("content").asText());
+					document.setDocumentAbstract(abstractJsonNode.get(NODE_CONTENT).asText());
 				}
 
 				// update the document
