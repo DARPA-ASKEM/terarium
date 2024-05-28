@@ -11,7 +11,7 @@ export const CodeAssetOperation: Operation = {
 	displayName: 'Code',
 	isRunnable: true,
 	inputs: [],
-	outputs: [{ type: 'codeAssetId' }],
+	outputs: [{ type: 'codeAssetId', label: 'Code asset' }],
 	action: () => {},
 
 	initState: () => {
