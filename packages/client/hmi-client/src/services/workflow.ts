@@ -83,16 +83,17 @@ export const addNode = (
 			isOptional: port.isOptional ?? false,
 			acceptMultiple: port.acceptMultiple
 		})),
-		outputs: [],
-		/*
+
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			isOptional: false,
+			acceptMultiple: false,
+			state: {}
 		})),
-	  */
 		status: OperatorStatus.DEFAULT,
 
 		width: nodeSize.width,
@@ -130,9 +131,8 @@ export const addEdge = (
 			d.targetPortId === targetPortId
 	);
 	if (existingEdge) return;
-	// Check if type is compatible
-	if (sourceOutputPort.value === null) return;
 
+	// Check if type is compatible
 	const allowedTypes = targetInputPort.type.split('|');
 	if (
 		!allowedTypes.includes(sourceOutputPort.type) ||

@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
@@ -58,7 +58,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'append-output', 'open-drilldown']);
-const models = useProjects().getActiveProjectAssets(AssetType.Model);
+const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 enum ModelNodeView {
 	Diagram = 'Diagram',
@@ -92,8 +92,7 @@ onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
 		model.value = await getModel(state.modelId);
-
-		if (props.node.outputs.length === 0 && model.value) {
+		if (model.value) {
 			emit('append-output', {
 				type: 'modelId',
 				label: model.value.header.name,
