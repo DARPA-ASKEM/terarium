@@ -21,6 +21,10 @@ import lombok.Data;
 
 public class AssetDependencyUtil {
 
+	/**
+	 * Store any project asset ids found in an asset, and the path to
+	 * where those ids are stored.
+	 */
 	@Data
 	public static class AssetDependencyMap {
 
@@ -40,7 +44,7 @@ public class AssetDependencyUtil {
 	}
 
 	/**
-	 * Traverse the JSON of the serialized asset searching for an keys or values
+	 * Traverse the JSON of the serialized asset searching for any keys or values
 	 * that are uuids. If the uuid is in the assetIds set, it is added to the
 	 * AssetDependencyMap.
 	 *
