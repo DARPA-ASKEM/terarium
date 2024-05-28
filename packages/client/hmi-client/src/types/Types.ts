@@ -687,7 +687,7 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    policyInterventions?: OptimizedInterventions;
+    policyInterventions?: PolicyInterventions;
     fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
@@ -749,8 +749,8 @@ export interface OptimizeQoi {
     method: string;
 }
 
-export interface OptimizedInterventions {
-    selection: string;
+export interface PolicyInterventions {
+    interventionType: string;
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
