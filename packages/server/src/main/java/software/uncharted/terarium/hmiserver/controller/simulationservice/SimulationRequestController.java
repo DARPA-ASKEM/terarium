@@ -155,7 +155,7 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
+			String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -227,7 +227,7 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
+			String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -261,7 +261,7 @@ public class SimulationRequestController implements SnakeCaseController {
 				request.setFixedStaticParameterInterventions(allInterventions);
 			}
 		} catch (IOException e) {
-			String error = "Unable to find model configuration";
+			String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
