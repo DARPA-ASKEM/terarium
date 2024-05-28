@@ -35,7 +35,7 @@ export const ModelFromEquationsOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	isRunnable: true,
 	inputs: [{ type: 'documentId', label: 'Document' }],
-	outputs: [],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: () => {},
 
 	initState: () => {
