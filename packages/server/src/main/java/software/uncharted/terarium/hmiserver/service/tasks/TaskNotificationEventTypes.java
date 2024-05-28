@@ -7,12 +7,10 @@ public class TaskNotificationEventTypes {
 
 	private static Map<String, ClientEventType> clientEventTypes = Map.of(
 			ModelCardResponseHandler.NAME, ClientEventType.TASK_GOLLM_MODEL_CARD,
-			ValidateModelConfigHandler.NAME, ClientEventType.TASK_FUNMAN_VALIDATION
-			// ConfigureModelResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_MODEL,
-			// ConfigureFromDatasetResponseHandler.NAME, ClientEventType.TASK_GOLLM_DATASET_CONFIGURE,
-			// CompareModelsResponseHandler.NAME, ClientEventType.TASK_GOLLM_COMPARE_MODEL
-			// Add more task names and their corresponding event types here
-			);
+			ConfigureModelResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_MODEL,
+			ConfigureFromDatasetResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_FROM_DATASET,
+			CompareModelsResponseHandler.NAME, ClientEventType.TASK_GOLLM_COMPARE_MODEL,
+			ValidateModelConfigHandler.NAME, ClientEventType.TASK_FUNMAN_VALIDATION);
 
 	public static ClientEventType getTypeFor(String taskName) {
 		final ClientEventType eventType = clientEventTypes.get(taskName);

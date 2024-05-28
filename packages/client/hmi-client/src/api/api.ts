@@ -8,6 +8,12 @@ import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
 
+function getProjectIdFromUrl(): string | null {
+	const url = new URL(window.location.href);
+	const match = url.pathname.match(/\/projects\/([a-z,0-9,-]+)\//);
+	return match ? match[1] : null;
+}
+
 const API = axios.create({
 	baseURL: '/api',
 	headers: new AxiosHeaders()
@@ -20,11 +26,13 @@ API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.token}`);
-		if (activeProjectId.value) {
+		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
+		const projectId = activeProjectId.value || getProjectIdFromUrl();
+		if (projectId) {
 			if (config.params) {
-				config.params['project-id'] = activeProjectId.value;
+				config.params['project-id'] = projectId;
 			} else {
-				config.params = { 'project-id': activeProjectId.value };
+				config.params = { 'project-id': projectId };
 			}
 		}
 		return config;

@@ -13,7 +13,7 @@ Estimated time to completion: [X] minutes
 2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Upload a Model
-1. Upload _the Model_ [Configured SIR.json](data/Configured SIR.json) using `Upload Resources` button in the bottom left.
+1. Upload _the Model_ [Configured SIR.json](../data/Configured SIR.json) using `Upload Resources` button in the bottom left.
 2. Check that _the Model_ appears in the left menu.
 3. Open _the Model_ and check that it has been added correctly.
 

@@ -1,6 +1,7 @@
 import getConfiguration from '@/services/ConfigService';
 import useAuthStore from '@/stores/auth';
-import type { ClientEvent, ExtractionStatusUpdate } from '@/types/Types';
+import type { ClientEvent } from '@/types/Types';
+import type { ExtractionStatusUpdate } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
 import { EventSource } from 'extended-eventsource';
 
@@ -138,13 +139,13 @@ export async function unsubscribe(
 export const extractionStatusUpdateHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	const { data } = event;
 	if (data.error) {
-		console.error(`[${data.t}]: ${data.error}`);
+		console.error(`[${data.progress}]: ${data.error}`);
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 		return;
 	}
 
-	console.debug(`[${data.t}]: ${data.message}`);
-	if (data.t >= 1.0) {
+	console.debug(`[${data.progress}]: ${data.message}`);
+	if (data.progress >= 1.0) {
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 	}
 };

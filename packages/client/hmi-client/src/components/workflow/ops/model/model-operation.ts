@@ -11,7 +11,7 @@ export const ModelOperation: Operation = {
 	description: 'Select a model and configure its initial and parameter values.',
 	isRunnable: true,
 	inputs: [],
-	outputs: [{ type: 'modelId' }],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: async () => ({}),
 
 	initState: () => {

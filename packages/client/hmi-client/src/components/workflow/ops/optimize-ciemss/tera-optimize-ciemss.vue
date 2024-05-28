@@ -122,7 +122,7 @@
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable</label>
-							<Dropdown
+							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
@@ -296,6 +296,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -323,7 +324,7 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	OptimizedIntervention
+	PolicyInterventions
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
@@ -545,8 +546,8 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.upperBound]);
 	});
 
-	const optimizeInterventions: OptimizedIntervention = {
-		selection: knobs.value.interventionType,
+	const optimizeInterventions: PolicyInterventions = {
+		interventionType: knobs.value.interventionType,
 		paramNames,
 		startTime,
 		paramValues
@@ -560,7 +561,7 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		interventions: optimizeInterventions,
+		policyInterventions: optimizeInterventions,
 		qoi: {
 			contexts: knobs.value.targetVariables,
 			method: knobs.value.qoiMethod
@@ -581,7 +582,6 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

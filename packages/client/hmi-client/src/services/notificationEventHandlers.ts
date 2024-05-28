@@ -1,17 +1,21 @@
 import {
+	AssetType,
 	ClientEvent,
 	ClientEventType,
-	ExtractionStatusUpdate,
 	ProgressState,
+	StatusUpdate,
 	TaskResponse,
 	TaskStatus
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Ref } from 'vue';
-import { NotificationItem, NotificationItemStatus } from '@/types/common';
+import { ExtractionStatusUpdate, NotificationItem, NotificationItemStatus } from '@/types/common';
 import { snakeToCapitalSentence } from '@/utils/text';
+import { ProjectPages } from '@/types/Project';
 import { getDocumentAsset } from './document-assets';
+import { getWorkflow } from './workflow';
 
+type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
 /**
  * We use ProgressState to represent the status of the notification for a task/job.
  * Since the task status from the task runners response (TaskResponse) is represented by TaskStatus, we need to map TaskStatus to ProgressState.
@@ -25,12 +29,6 @@ const taskStatusToProgressState = {
 	[TaskStatus.Cancelling]: ProgressState.Cancelling
 };
 const getStatusFromTaskResponse = (data: TaskResponse) => taskStatusToProgressState[data.status];
-
-export const getStatusFromProgress = (data: { error: string; t: number }) => {
-	if (data.error) return ProgressState.Failed;
-	if (data.t >= 1.0) return ProgressState.Complete;
-	return ProgressState.Running;
-};
 
 const isTaskResponse = (data: any): data is TaskResponse =>
 	data.id !== undefined && data.script !== undefined && data.status;
@@ -82,19 +80,16 @@ const updateStatusFromTaskResponse = (event: ClientEvent<TaskResponse>): Notific
 	return { status, msg, error };
 };
 
-const buildNotificationItemStatus = <T>(
-	event: ClientEvent<T | TaskResponse>
+const buildNotificationItemStatus = <T extends NotificationEventData>(
+	event: ClientEvent<T>
 ): NotificationItemStatus => {
 	if (isTaskResponse(event.data))
 		return updateStatusFromTaskResponse(event as ClientEvent<TaskResponse>);
-	// Currently only ExtractionPdf events are supported. Assume all other events are ExtractionPdf events for now.
-	// TODO: Replace ExtractionStatusUpdate with more generic type (e.g NotificationEventStatus<T>) that represent a notification event data type for other events.
-	const eventData: ExtractionStatusUpdate = event.data as ExtractionStatusUpdate;
 	return {
-		status: getStatusFromProgress(eventData),
-		msg: eventData.message,
-		progress: eventData.t,
-		error: eventData.error
+		status: event.data.state,
+		msg: event.data.message,
+		progress: event.data.progress,
+		error: event.data.error
 	};
 };
 
@@ -102,7 +97,7 @@ const buildNotificationItemStatus = <T>(
 export const createNotificationEventHandlers = (notificationItems: Ref<NotificationItem[]>) => {
 	const handlers = {} as Record<ClientEventType, (event: ClientEvent<any>) => void>;
 
-	const registerHandler = <T>(
+	const registerHandler = <T extends NotificationEventData>(
 		eventType: ClientEventType,
 		onCreateNewNotificationItem: (
 			event: ClientEvent<T>,
@@ -118,12 +113,15 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			if (!existingItem) {
 				const newItem: NotificationItem = {
 					notificationGroupId: event.notificationGroupId ?? '',
+					projectId: event.projectId,
 					type: event.type,
 					lastUpdated,
 					acknowledged: false,
 					supportCancel: false,
+					context: '',
+					sourceName: '',
 					assetId: '',
-					assetName: '',
+					pageType: ProjectPages.OVERVIEW, // Default to overview page
 					...buildNotificationItemStatus(event)
 				};
 				notificationItems.value.push(newItem);
@@ -141,17 +139,48 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	// Register handlers for each client event type
 
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
-		created.assetId = event.data.documentId;
-		getDocumentAsset(event.data.documentId).then((document) =>
-			Object.assign(created, { assetName: document?.name || '' })
+		created.assetId = event.data.data.documentId;
+		created.pageType = AssetType.Document;
+		getDocumentAsset(created.assetId, created.projectId).then((document) =>
+			Object.assign(created, { sourceName: document?.name || '' })
 		);
 	});
-
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
 		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.documentId;
-		getDocumentAsset(created.assetId).then((document) =>
-			Object.assign(created, { assetName: document?.name || '' })
+		created.assetId = event.data.additionalProperties.documentId as string;
+		created.pageType = AssetType.Document;
+		getDocumentAsset(created.assetId, created.projectId).then((document) =>
+			Object.assign(created, { sourceName: document?.name || '' })
+		);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModel, (event, created) => {
+		created.supportCancel = true;
+		created.sourceName = 'Configure model';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
+		);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureFromDataset, (event, created) => {
+		created.supportCancel = true;
+		created.sourceName = 'Configure model';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
+		);
+	});
+	registerHandler<TaskResponse>(ClientEventType.TaskGollmCompareModel, (event, created) => {
+		created.supportCancel = true;
+		created.sourceName = 'Compare models';
+		created.assetId = event.data.additionalProperties.workflowId as string;
+		created.pageType = AssetType.Workflow;
+		created.nodeId = event.data.additionalProperties.nodeId as string;
+		getWorkflow(created.assetId, created.projectId).then((workflow) =>
+			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
 
@@ -171,7 +200,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 export const createNotificationEventLogger = (
 	visibleNotificationItems: Ref<NotificationItem[]>
 ) => {
-	const handleLogging = <T>(event: ClientEvent<T>) => {
+	const handleLogging = <T extends NotificationEventData>(event: ClientEvent<T>) => {
 		if (!event.notificationGroupId) return;
 		const notificationItem = visibleNotificationItems.value.find(
 			(item) => item.notificationGroupId === event.notificationGroupId

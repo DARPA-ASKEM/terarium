@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.code;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
@@ -9,7 +8,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import java.io.Serial;
@@ -22,7 +20,6 @@ import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -54,11 +51,6 @@ public class Code extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private Map<String, String> metadata;
-
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
 
 	@Override
 	public Code clone() {

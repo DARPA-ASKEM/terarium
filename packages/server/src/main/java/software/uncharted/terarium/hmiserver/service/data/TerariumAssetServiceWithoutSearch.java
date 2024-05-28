@@ -210,6 +210,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	}
 
 	/** Clone asset, write it to the db under a new id, and return it. */
+	@Override
 	@Observed(name = "function_profile")
 	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {

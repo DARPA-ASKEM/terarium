@@ -60,6 +60,8 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		List<UUID> datasetIds;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override

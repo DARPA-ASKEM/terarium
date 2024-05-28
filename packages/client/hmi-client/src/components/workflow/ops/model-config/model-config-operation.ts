@@ -25,7 +25,7 @@ export const ModelConfigOperation: Operation = {
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'modelConfigId' }],
+	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	action: async () => ({}),
 
 	initState: () => {

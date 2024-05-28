@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ByteArrayEntity;
@@ -28,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
@@ -37,7 +37,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
@@ -87,35 +86,9 @@ public class ExtractionService {
 		executor = Executors.newFixedThreadPool(POOL_SIZE);
 	}
 
-	private static class ExtractionGroupInstance extends NotificationGroupInstance<ExtractionStatusUpdate> {
-
+	@Data
+	private static class Properties {
 		private final UUID documentId;
-		private final ClientEventType clientEventType;
-
-		ExtractionGroupInstance(
-				final ExtractionService extractionService,
-				final UUID documentId,
-				final Double halfTimeSeconds,
-				final ClientEventType clientEventType) {
-			super(
-					extractionService.clientEventService,
-					extractionService.notificationService,
-					clientEventType.name(),
-					halfTimeSeconds);
-			this.documentId = documentId;
-			this.clientEventType = clientEventType;
-		}
-
-		@Override
-		public ClientEvent<ExtractionStatusUpdate> produceClientEvent(
-				final Double t, final String message, final String error) {
-			final ExtractionStatusUpdate update = new ExtractionStatusUpdate(documentId, t, message, error);
-			return ClientEvent.<ExtractionStatusUpdate>builder()
-					.type(this.clientEventType)
-					.notificationGroupId(this.getNotificationGroupId())
-					.data(update)
-					.build();
-		}
 	}
 
 	public static String removeFileExtension(final String filename) {
@@ -127,10 +100,18 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractPDF(
-			final UUID documentId, final String domain, final Schema.Permission hasWritePermission) {
+			final UUID documentId,
+			final String domain,
+			final UUID projectId,
+			final Schema.Permission hasWritePermission) {
 
-		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION_PDF);
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION_PDF,
+				projectId,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 
 		final String userId = currentUserService.get().getId();
 
@@ -329,6 +310,7 @@ public class ExtractionService {
 						req.setScript(ModelCardResponseHandler.NAME);
 						req.setInput(objectMapper.writeValueAsBytes(input));
 						req.setUserId(userId);
+						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 						props.setDocumentId(documentId);
@@ -367,7 +349,7 @@ public class ExtractionService {
 	}
 
 	private DocumentAsset runVariableExtraction(
-			final ExtractionGroupInstance notificationInterface,
+			final NotificationGroupInstance<Properties> notificationInterface,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -463,8 +445,13 @@ public class ExtractionService {
 			final String domain,
 			final Schema.Permission hasWritePermission) {
 		// Set up the client interface
-		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION,
+				null,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
@@ -478,8 +465,13 @@ public class ExtractionService {
 	public Future<Model> alignAMR(
 			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
 
-		final ExtractionGroupInstance notificationInterface =
-				new ExtractionGroupInstance(this, documentId, HALFTIME_SECONDS, ClientEventType.EXTRACTION);
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+				clientEventService,
+				notificationService,
+				ClientEventType.EXTRACTION,
+				null,
+				new Properties(documentId),
+				HALFTIME_SECONDS);
 
 		return executor.submit(() -> {
 			try {

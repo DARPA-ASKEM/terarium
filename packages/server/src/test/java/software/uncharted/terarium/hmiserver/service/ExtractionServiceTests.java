@@ -140,7 +140,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
 		documentAsset = extractionService
-				.extractPDF(documentAsset.getId(), "epi", ASSUME_WRITE_PERMISSION)
+				.extractPDF(documentAsset.getId(), "epi", null, ASSUME_WRITE_PERMISSION)
 				.get();
 	}
 }
