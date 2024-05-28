@@ -72,8 +72,6 @@ public class ExtractionService {
 	private final CurrentUserService currentUserService;
 
 	// Used to get the Abstract text from PDF
-	private static final String NODE_TARGET = "Abstract";
-	private static final String NODE_PARAM = "detect_cls";
 	private static final String NODE_CONTENT = "content";
 
 	// time the progress takes to reach each subsequent half
@@ -217,8 +215,8 @@ public class ExtractionService {
 							if (rootNode instanceof ArrayNode) {
 								ArrayNode arrayNode = (ArrayNode) rootNode;
 								for (JsonNode record : arrayNode) {
-									if (record.has(NODE_PARAM)
-											&& record.get(NODE_PARAM).asText().equals(NODE_TARGET)) {
+									if (record.has("detect_cls")
+											&& record.get("detect_cls").asText().equals("Abstract")) {
 										abstractJsonNode = record;
 										break;
 									}
