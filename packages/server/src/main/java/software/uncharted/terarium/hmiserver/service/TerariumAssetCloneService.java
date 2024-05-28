@@ -140,8 +140,7 @@ public class TerariumAssetCloneService {
 
 	/**
 	 * Given a project, clone all assets and download all related files. Return
-	 * everything as a singular
-	 * ProjectExport object.
+	 * everything as a singular ProjectExport object.
 	 *
 	 * @param projectId
 	 * @return
