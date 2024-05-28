@@ -20,29 +20,22 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
-import { createOidc, Oidc } from 'oidc-spa';
+import { createOidc } from 'oidc-spa';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
 
-// Extend the window object to include the Keycloak object
-declare global {
-	interface Window {
-		oidc: Oidc;
-	}
-}
-
 const oidcSettings = await fetch('/api/configuration/keycloak').then((r) => r.json());
-window.oidc = await createOidc({
+const oidc = await createOidc({
 	issuerUri: `${oidcSettings['auth-server-url']}/realms/${oidcSettings.realm}`,
 	clientId: oidcSettings.resource,
 	publicUrl: '/'
 });
 
-if (!window.oidc.isUserLoggedIn) {
-	window.oidc.login({
+if (!oidc.isUserLoggedIn) {
+	oidc.login({
 		doesCurrentHrefRequiresAuth: false
 	});
 } else {
-	const { decodedIdToken } = window.oidc.getTokens();
+	const { decodedIdToken } = oidc.getTokens();
 
 	console.log(`Decoded Id Token: ${JSON.stringify(decodedIdToken)}`);
 	console.log(`Hello ${decodedIdToken.preferred_username}`);
@@ -55,7 +48,7 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-authStore.setOidc(window.oidc);
+authStore.setOidc(oidc);
 
 // Initialize user
 await authStore.init();
