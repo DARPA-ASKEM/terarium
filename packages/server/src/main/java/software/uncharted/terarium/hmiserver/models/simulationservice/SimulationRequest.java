@@ -27,8 +27,6 @@ public class SimulationRequest implements Serializable {
 
 	private String engine;
 
-	private UUID projectId;
-
 	@TSOptional
 	private List<Intervention> interventions;
 
@@ -44,7 +42,6 @@ public class SimulationRequest implements Serializable {
 						: null);
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);
-		clone.setProjectId(this.projectId);
 		clone.setInterventions(new ArrayList<>());
 		for (final Intervention intervention : this.interventions) {
 			clone.getInterventions()

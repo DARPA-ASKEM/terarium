@@ -22,10 +22,16 @@ async function getAll(): Promise<DocumentAsset[] | null> {
 
 /**
  * Get DocumentAsset from the data service
+ * Note that projectId is optional as projectId is assigned by the axios API interceptor if value is available from activeProjectId. If the method is call from place where activeProjectId is not available, projectId should be passed as an argument as all endpoints requires projectId as a parameter.
  * @return DocumentAsset|null - the dataset, or null if none returned by API
  */
-async function getDocumentAsset(documentId: string): Promise<DocumentAsset | null> {
-	const response = await API.get(`/document-asset/${documentId}`).catch((error) => {
+async function getDocumentAsset(
+	documentId: string,
+	projectId?: string
+): Promise<DocumentAsset | null> {
+	const response = await API.get(`/document-asset/${documentId}`, {
+		params: { 'project-id': projectId }
+	}).catch((error) => {
 		logger.error(
 			`Error: data-service was not able to retreive the document asset ${documentId} ${error}`
 		);
