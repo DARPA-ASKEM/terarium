@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,23 +13,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-
-import org.springframework.data.util.Pair;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
 import lombok.Data;
+import org.springframework.data.util.Pair;
 
 public class AssetDependencyUtil {
 
-	/**
-	 * Store any project asset ids found in an asset, and the path to
-	 * where those ids are stored.
-	 */
+	/** Store any project asset ids found in an asset, and the path to where those ids are stored. */
 	@Data
 	public static class AssetDependencyMap {
 
@@ -44,13 +38,10 @@ public class AssetDependencyUtil {
 	}
 
 	/**
-	 * Traverse the JSON of the serialized asset searching for any keys or values
-	 * that are uuids. If the uuid is in the assetIds set, it is added to the
-	 * AssetDependencyMap.
+	 * Traverse the JSON of the serialized asset searching for any keys or values that are uuids. If the uuid is in the
+	 * assetIds set, it is added to the AssetDependencyMap.
 	 *
-	 * <p>
-	 * The intended usage of this method is to pass a set of all asset ids of a
-	 * project and an asset to determine if
+	 * <p>The intended usage of this method is to pass a set of all asset ids of a project and an asset to determine if
 	 * that asset references any other asset.
 	 *
 	 * @param <T>
@@ -86,14 +77,10 @@ public class AssetDependencyUtil {
 	}
 
 	/**
-	 * This method takes the output of `getAssetDependencies` along with a mapping
-	 * from old to new uuids.will traverse
-	 * the provided asset and replace any instances of the old uuids with the new
-	 * uuids.
+	 * This method takes the output of `getAssetDependencies` along with a mapping from old to new uuids.will traverse
+	 * the provided asset and replace any instances of the old uuids with the new uuids.
 	 *
-	 * <p>
-	 * The intended usage of this method is to replace any uuids of existing assets
-	 * with newly cloned asset ids.
+	 * <p>The intended usage of this method is to replace any uuids of existing assets with newly cloned asset ids.
 	 *
 	 * @param <T>
 	 * @param asset
