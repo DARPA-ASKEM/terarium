@@ -248,9 +248,8 @@ public class DocumentController {
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectId == null
-				? Schema.Permission.NONE
-				: projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
 		if (document.isEmpty()) {
