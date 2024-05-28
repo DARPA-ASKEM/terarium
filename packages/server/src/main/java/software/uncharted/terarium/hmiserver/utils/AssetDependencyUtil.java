@@ -48,8 +48,10 @@ public class AssetDependencyUtil {
 	 * that are uuids. If the uuid is in the assetIds set, it is added to the
 	 * AssetDependencyMap.
 	 *
+	 * <p>
 	 * The intended usage of this method is to pass a set of all asset ids of a
-	 * project and an asset to determine if that asset references any other asset.
+	 * project and an asset to determine if
+	 * that asset references any other asset.
 	 *
 	 * @param <T>
 	 * @param assetIds
@@ -85,9 +87,11 @@ public class AssetDependencyUtil {
 
 	/**
 	 * This method takes the output of `getAssetDependencies` along with a mapping
-	 * from old to new uuids.will traverse the provided asset and replace any
-	 * instances of the old uuids with the new uuids.
+	 * from old to new uuids.will traverse
+	 * the provided asset and replace any instances of the old uuids with the new
+	 * uuids.
 	 *
+	 * <p>
 	 * The intended usage of this method is to replace any uuids of existing assets
 	 * with newly cloned asset ids.
 	 *
