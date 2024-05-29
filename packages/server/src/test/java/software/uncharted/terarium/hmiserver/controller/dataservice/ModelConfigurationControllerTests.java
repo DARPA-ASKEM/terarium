@@ -18,7 +18,7 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
@@ -27,7 +27,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	private ModelConfigurationService modelConfigurationService;
+	private ModelConfigurationLegacyService modelConfigurationService;
 
 	@Autowired
 	private ElasticsearchService elasticService;

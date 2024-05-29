@@ -34,7 +34,7 @@ import software.uncharted.terarium.hmiserver.proxies.simulationservice.Simulatio
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
@@ -58,7 +58,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final SimulationService simulationService;
 
 	private final ModelService modelService;
-	private final ModelConfigurationService modelConfigService;
+	private final ModelConfigurationLegacyService modelConfigService;
 
 	private final ObjectMapper objectMapper;
 

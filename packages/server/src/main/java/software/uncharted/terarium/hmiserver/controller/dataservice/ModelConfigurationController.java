@@ -29,7 +29,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -39,7 +39,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 public class ModelConfigurationController {
 
-	final ModelConfigurationService modelConfigurationService;
+	final ModelConfigurationLegacyService modelConfigurationService;
 	final ObjectMapper objectMapper;
 
 	final ProjectService projectService;

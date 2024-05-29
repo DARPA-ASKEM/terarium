@@ -18,7 +18,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
@@ -31,7 +31,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
-	private final ModelConfigurationService modelConfigurationService;
+	private final ModelConfigurationLegacyService modelConfigurationService;
 	private final ProvenanceService provenanceService;
 
 	@Override

@@ -11,9 +11,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfi
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
-public class ModelConfigurationService extends TerariumAssetService<ModelConfigurationLegacy> {
+public class ModelConfigurationLegacyService extends TerariumAssetService<ModelConfigurationLegacy> {
 
-	public ModelConfigurationService(
+	public ModelConfigurationLegacyService(
 			final ElasticsearchConfiguration elasticConfig,
 			final Config config,
 			final ElasticsearchService elasticService,
