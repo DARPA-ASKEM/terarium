@@ -10,10 +10,10 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Prepare the model and workflow
-1. Upload _the model_ [Configured SIR.json](data/Configured SIR.json).
+1. Upload _the model_ [Configured SIR.json](../data/Configured SIR.json).
 2. Create and open a new workflow.
 3. Drag and drop _the model_ into the workflow.
 4. Add an Edit model operator and link it to _the model_ operator.

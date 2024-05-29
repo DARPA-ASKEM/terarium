@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Load some models to compare
 1. Switch to the Explorer 
@@ -22,7 +22,7 @@ Estimated time to completion: [X] minutes
    - Bertozzi2020 - SIR model of scenarios of COVID-19 spread in CA and NY
 
 ### 3. Create a new workflow to compare them
-1. Switch back to your project `Q&A [Your Name] [YYMMDD]`
+1. Switch back to your project `QA [Your Name] [YYMMDD]`
 2. Create a new workflow and rename it to **Compare models test**
 3. Drag the Wan2020 and Bertozzi2020 models onto the canvas.
 4. Right-click or use the `Add components` dropdown and select **Work with model > Compare models**
