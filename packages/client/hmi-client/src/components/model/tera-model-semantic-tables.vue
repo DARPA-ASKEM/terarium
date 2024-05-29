@@ -3,6 +3,7 @@
 		:is="tables"
 		:model="transientModel"
 		:readonly="readonly"
+		@update-model="$emit('update-model', $event)"
 		@update-initial-metadata="
 			($event: any) => {
 				if ($event) {
