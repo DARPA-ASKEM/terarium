@@ -94,21 +94,3 @@ export const createNotebookFromCode = (
 	notebook.cells.push(beakerCodeCell);
 	return notebook;
 };
-
-export const addExecutionResultToCodeCellNotebook = (notebook: any, executionResult: any) => {
-	const beakerCodeCell = (notebook.cells || []).find((cell: any) => cell.cell_type === 'code');
-	if (!beakerCodeCell) return notebook;
-	// Make a shallow copy of the execution result
-	const data = { ...executionResult };
-	// Make sure the values of the data is stringified as the beaker summary endpoint seem to have issue with object json value
-	Object.keys(data).forEach((type) => {
-		if (typeof data[type] !== 'string') {
-			data[type] = JSON.stringify(data[type]);
-		}
-	});
-	beakerCodeCell.outputs.push({
-		output_type: 'execute_result',
-		data
-	});
-	return notebook;
-};
