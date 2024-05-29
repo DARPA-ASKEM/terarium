@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
+import jakarta.persistence.Entity;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
@@ -12,8 +13,9 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Data
 @TSModel
 @Accessors
+@Entity
 public class ModelConfiguration extends TerariumAsset {
-	private boolean calibrated;
+	private UUID calibrationRunId;
 	private UUID modelId;
 	private Map<String, Semantic> values;
 }

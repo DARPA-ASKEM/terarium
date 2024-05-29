@@ -236,7 +236,7 @@ export interface InitialSemantic extends Semantic {
 }
 
 export interface ModelConfiguration extends TerariumAsset {
-    calibrated: boolean;
+    calibrationRunId: string;
     modelId: string;
     values: { [index: string]: Semantic };
 }
