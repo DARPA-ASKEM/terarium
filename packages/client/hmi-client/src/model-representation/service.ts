@@ -296,13 +296,13 @@ export function getInitial(model: Model, target: string): Initial | undefined {
  * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
  * @param {string} parameterId - The ID of the parameter.
- * @param {string} metadataKey - The key of the metadata to update.
+ * @param {string} key - The key of the metadata to update.
  * @param {any} value - The new value for the metadata.
  */
 export function updateParameterMetadata(
 	model: Model,
 	parameterId: string,
-	metadataKey: string,
+	key: string,
 	value: any
 ) {
 	if (!model.metadata?.parameters?.[parameterId]) {
@@ -310,20 +310,20 @@ export function updateParameterMetadata(
 		model.metadata.parameters ??= {};
 		model.metadata.parameters[parameterId] ??= {};
 	}
-	model.metadata.parameters[parameterId][metadataKey] = value;
+	model.metadata.parameters[parameterId][key] = value;
 }
 
 /**
  * Updates the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
  * @param {string} target - The target of the initial.
- * @param {string} metadataKey - The key of the metadata to update.
+ * @param {string} key - The key of the metadata to update.
  * @param {any} value - The new value for the metadata.
  */
 export function updateInitialMetadata(
 	model: Model,
 	target: string,
-	metadataKey: string | string[],
+	key: string | string[],
 	value: any
 ) {
 	if (!model.metadata?.initials?.[target]) {
@@ -331,16 +331,15 @@ export function updateInitialMetadata(
 		model.metadata.initials ??= {};
 		model.metadata.initials[target] ??= {};
 	}
-	if (typeof metadataKey === 'string') {
-		model.metadata.initials[target][metadataKey] = value;
+	if (typeof key === 'string') {
+		model.metadata.initials[target][key] = value;
 	} else {
 		let initialMetadataObj = model.metadata.initials[target];
-		for (let i = 0; i < metadataKey.length - 1; i++) {
-			const key = metadataKey[i];
-			initialMetadataObj[key] ??= {};
-			initialMetadataObj = initialMetadataObj[key];
+		for (let i = 0; i < key.length - 1; i++) {
+			initialMetadataObj[key[i]] ??= {};
+			initialMetadataObj = initialMetadataObj[key[i]];
 		}
-		initialMetadataObj[metadataKey[metadataKey.length - 1]] = value;
+		initialMetadataObj[key[key.length - 1]] = value;
 	}
 }
 

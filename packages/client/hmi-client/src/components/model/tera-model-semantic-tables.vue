@@ -7,8 +7,8 @@
 		@update-initial-metadata="
 			($event: any) => {
 				if ($event) {
-					const { target, metadataKey, value } = $event;
-					updateInitialMetadata(transientModel, target, metadataKey, value);
+					const { target, key, value } = $event;
+					updateInitialMetadata(transientModel, target, key, value);
 				}
 			}
 		"

@@ -7,9 +7,7 @@
 					<tera-input
 						label="Name"
 						:model-value="getInitialName(model, target)"
-						@update:model-value="
-							$emit('update-initial-metadata', { metadataKey: 'name', value: $event })
-						"
+						@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
 				/></span>
 			</span>
 			<span class="stretch-input">
@@ -18,7 +16,7 @@
 					:model-value="getInitialDescription(model, target)"
 					@update:model-value="
 						$emit('update-initial-metadata', {
-							metadataKey: 'description',
+							key: 'description',
 							value: $event
 						})
 					"
@@ -29,16 +27,14 @@
 			<tera-input
 				label="Unit"
 				:model-value="getInitialUnit(model, target)"
-				@update:model-value="
-					$emit('update-initial-metadata', { metadataKey: 'unit', value: $event })
-				"
+				@update:model-value="$emit('update-initial-metadata', { key: 'unit', value: $event })"
 			/>
 			<tera-input
 				label="Concept"
 				:model-value="getInitialConcept(model, target)"
 				@update:model-value="
 					$emit('update-initial-metadata', {
-						metadataKey: ['concept', 'grounding'],
+						key: ['concept', 'grounding'],
 						value: $event
 					})
 				"
