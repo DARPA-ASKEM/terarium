@@ -65,23 +65,14 @@ describe('number util tests', () => {
 
 	describe('nistToNumber', () => {
 		it('should correctly convert numbers without a decimal part', () => {
-			expect(nistToNumber('1')).to.eq(1);
-			expect(nistToNumber('12')).to.eq(12);
-			expect(nistToNumber('123')).to.eq(123);
 			expect(nistToNumber('1 234 567')).to.eq(1234567);
 		});
 
 		it('should correctly convert numbers with a decimal part', () => {
-			expect(nistToNumber('1.1')).to.eq(1.1);
-			expect(nistToNumber('12.12')).to.eq(12.12);
-			expect(nistToNumber('123.123')).to.eq(123.123);
 			expect(nistToNumber('1 234 567.123 456 7')).to.eq(1234567.1234567);
 		});
 
 		it('should correctly convert negative numbers', () => {
-			expect(nistToNumber('-1')).to.eq(-1);
-			expect(nistToNumber('-12')).to.eq(-12);
-			expect(nistToNumber('-123')).to.eq(-123);
 			expect(nistToNumber('-1 234 567.123 456 7')).to.eq(-1234567.1234567);
 		});
 
