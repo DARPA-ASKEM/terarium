@@ -217,8 +217,6 @@ const syncWithMiraModel = (data: any) => {
 
 // Reset model, then execute the code
 const runFromCodeWrapper = () => {
-	console.log(amr.value);
-
 	// Reset model
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		runFromCode(editor?.getValue() as string);
