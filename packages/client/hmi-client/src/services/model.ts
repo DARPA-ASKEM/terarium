@@ -78,7 +78,7 @@ export async function updateModel(model: Model) {
 export async function getModelConfigurations(
 	modelId: Model['id']
 ): Promise<ModelConfigurationLegacy[]> {
-	const response = await API.get(`/models/${modelId}/model-configurations`);
+	const response = await API.get(`/models/${modelId}/model-configurations-legacy`);
 	return response?.data ?? ([] as ModelConfigurationLegacy[]);
 }
 

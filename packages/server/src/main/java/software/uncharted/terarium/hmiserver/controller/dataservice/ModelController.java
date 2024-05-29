@@ -414,7 +414,7 @@ public class ModelController {
 		}
 	}
 
-	@GetMapping("/{id}/model-configurations")
+	@GetMapping("/{id}/model-configurations-legacy")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(

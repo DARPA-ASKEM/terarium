@@ -12,12 +12,12 @@ import { pythonInstance } from '@/python/PyodideController';
 import { DistributionType } from '@/services/distribution';
 
 export const getAllModelConfigurations = async () => {
-	const response = await API.get(`/model-configurations`);
+	const response = await API.get(`/model-configurations-legacy`);
 	return (response?.data as ModelConfigurationLegacy[]) ?? null;
 };
 
 export const getModelConfigurationById = async (id: string) => {
-	const response = await API.get(`/model-configurations/${id}`);
+	const response = await API.get(`/model-configurations-legacy/${id}`);
 	return (response?.data as ModelConfigurationLegacy) ?? null;
 };
 
@@ -39,7 +39,7 @@ export const createModelConfiguration = async (
 	}
 	const temporary = isTemporary ?? false;
 	const interventions = givenInterventions ?? [];
-	const response = await API.post(`/model-configurations`, {
+	const response = await API.post(`/model-configurations-legacy`, {
 		model_id,
 		temporary,
 		name,
@@ -73,7 +73,7 @@ export const updateModelConfiguration = async (config: ModelConfigurationLegacy)
 		API.put(`/models/${config.configuration.id}`, config.configuration);
 	}
 
-	const response = await API.put(`/model-configurations/${config.id}`, config);
+	const response = await API.put(`/model-configurations-legacy/${config.id}`, config);
 	return response?.data ?? null;
 };
 

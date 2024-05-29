@@ -33,11 +33,11 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLega
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
-@RequestMapping("/model-configurations")
+@RequestMapping("/model-configurations-legacy")
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class ModelConfigurationController {
+public class ModelConfigurationLegacyController {
 
 	final ModelConfigurationLegacyService modelConfigurationService;
 	final ObjectMapper objectMapper;
@@ -59,7 +59,8 @@ public class ModelConfigurationController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfigurationLegacy.class)))),
+																		implementation =
+																				ModelConfigurationLegacy.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configuration from the data store",
@@ -143,7 +144,8 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<ModelConfigurationLegacy> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfigurationLegacy> modelConfiguration =
+					modelConfigurationService.getAsset(id, permission);
 			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
 					.build());
 		} catch (final IOException e) {
@@ -185,7 +187,8 @@ public class ModelConfigurationController {
 
 		try {
 			config.setId(id);
-			final Optional<ModelConfigurationLegacy> updated = modelConfigurationService.updateAsset(config, permission);
+			final Optional<ModelConfigurationLegacy> updated =
+					modelConfigurationService.updateAsset(config, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {

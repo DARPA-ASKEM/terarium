@@ -57,7 +57,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setDescription("test-desc"),
 				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations-legacy/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
@@ -73,7 +73,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setDescription("test-desc")
 				.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
+		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations-legacy")
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
@@ -93,7 +93,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setName("test-framework"),
 				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations-legacy/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
@@ -111,7 +111,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setDescription("test-desc")
 				.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations-legacy/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
