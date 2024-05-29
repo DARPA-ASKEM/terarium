@@ -132,7 +132,7 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-initial-metadata', 'update-parameter']);
+const emit = defineEmits(['update-model', 'update-initial-metadata', 'update-parameter']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});

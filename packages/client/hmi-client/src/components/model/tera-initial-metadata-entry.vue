@@ -32,9 +32,10 @@
 			<tera-input
 				label="Concept"
 				:model-value="getInitialConcept(model, target)"
+				disabled
 				@update:model-value="
 					$emit('update-initial-metadata', {
-						key: ['concept', 'grounding'],
+						key: 'concept',
 						value: $event
 					})
 				"

@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
@@ -6,7 +5,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import type { Initial, Model, ModelParameter } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { getCurieFromGroudingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -205,21 +204,27 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 }
 
 export function updateParameter(model: Model, parameterId: string, key: string, value: any) {
+	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+		if (key === 'units') {
+			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
+			obj.units.expression = value;
+		} else if (key === 'concept') {
+			obj.grounding = { identifiers: { value } };
+		} else {
+			obj[key] = value;
+		}
+	}
+
 	const parameters = getParameters(model);
 	const parameter = parameters.find((p: ModelParameter) => p.id === parameterId);
 	if (!parameter) return;
-	if (key === 'units') {
-		if (!parameter.units) parameter.units = { expression: '', expression_mathml: '' };
-		parameter.units.expression = value;
-	} else {
-		parameter[key] = value;
-	}
+	updateProperty(parameter);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
 	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
 	if (!auxiliary) return;
-	auxiliary[key] = value;
+	updateProperty(auxiliary);
 }
 
 /**
@@ -249,7 +254,7 @@ export function getInitialConcept(model: Model, target: string): string {
 	if (!identifiers) return '';
 	return getNameOfCurieCached(
 		new Map<string, string>(),
-		getCurieFromGroudingIdentifier(identifiers)
+		getCurieFromGroundingIdentifier(identifiers)
 	);
 }
 
@@ -326,12 +331,7 @@ export function updateParameterMetadata(
  * @param {string} key - The key of the metadata to update.
  * @param {any} value - The new value for the metadata.
  */
-export function updateInitialMetadata(
-	model: Model,
-	target: string,
-	key: string | string[],
-	value: any
-) {
+export function updateInitialMetadata(model: Model, target: string, key: string, value: any) {
 	if (!model.metadata?.initials?.[target]) {
 		model.metadata ??= {};
 		model.metadata.initials ??= {};
@@ -343,16 +343,11 @@ export function updateInitialMetadata(
 		if (key === 'units') {
 			if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
 			initialMetadata.units.expression = value;
+		} else if (key === 'concept') {
+			initialMetadata.concept = { grounding: { identifiers: { value } } };
 		} else {
 			initialMetadata[key] = value;
 		}
-	} else {
-		let initialMetadataObj = initialMetadata;
-		for (let i = 0; i < key.length - 1; i++) {
-			initialMetadataObj[key[i]] ??= {};
-			initialMetadataObj = initialMetadataObj[key[i]];
-		}
-		initialMetadataObj[key[key.length - 1]] = value;
 	}
 }
 

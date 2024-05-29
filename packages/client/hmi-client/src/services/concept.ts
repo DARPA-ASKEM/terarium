@@ -90,7 +90,7 @@ const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string
 	return cache.get(curie) ?? '';
 };
 
-function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+function getCurieFromGroundingIdentifier(identifier: Object | undefined): string {
 	if (!!identifier && !isEmpty(identifier)) {
 		const [key, value] = Object.entries(identifier)[0];
 		return `${key}:${value}`;
@@ -283,7 +283,7 @@ export {
 	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	parseCurie,
 	autoModelMapping,

@@ -18,14 +18,14 @@
 							{{
 								getNameOfCurieCached(
 									nameOfCurieCache,
-									getCurieFromGroudingIdentifier(data.grounding.identifiers)
+									getCurieFromGroundingIdentifier(data.grounding.identifiers)
 								)
 							}}
 
 							<a
 								target="_blank"
 								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroudingIdentifier(data.grounding.identifiers))"
+								:href="getCurieUrl(getCurieFromGroundingIdentifier(data.grounding.identifiers))"
 								@click.stop
 								aria-label="Open Concept"
 							>
@@ -83,7 +83,7 @@ import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import {
 	searchCuriesEntities,
 	getNameOfCurieCached,
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';

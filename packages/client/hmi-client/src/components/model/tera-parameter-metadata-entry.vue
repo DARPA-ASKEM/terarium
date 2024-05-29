@@ -27,7 +27,15 @@
 			/>
 			<tera-input
 				label="Concept"
-				:model-value="grounding?.identifiers[0] ?? ''"
+				disabled
+				:model-value="
+					grounding?.identifiers
+						? getNameOfCurieCached(
+								new Map<string, string>(),
+								getCurieFromGroundingIdentifier(grounding.identifiers)
+							)
+						: ''
+				"
 				@update:model-value="$emit('update-parameter', { key: 'grounding', value: $event })"
 			/>
 		</div>
@@ -37,6 +45,7 @@
 <script setup lang="ts">
 import type { ModelParameter } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
 const props = defineProps<{
 	parameter: ModelParameter;
