@@ -59,7 +59,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
@@ -77,7 +78,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
-const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
+const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
 
 /* Hide the CSV preview for now as it is taking too much memory in the hmi-server */
@@ -98,15 +99,18 @@ async function getDatasetById(id: string) {
 
 	if (dataset.value && dataset.value?.id) {
 		// Once a dataset is selected the output is assigned here,
-		emit('update-state', {
-			datasetId: dataset.value.id
-		});
+		const outputs = props.node.outputs;
+		if (isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+			emit('update-state', {
+				datasetId: dataset.value.id
+			});
 
-		emit('append-output', {
-			type: 'datasetId',
-			label: dataset.value.name,
-			value: [dataset.value.id]
-		});
+			emit('append-output', {
+				type: 'datasetId',
+				label: dataset.value.name,
+				value: [dataset.value.id]
+			});
+		}
 
 		// Fetch the CSV file from the dataset for preview purposes
 		/*

@@ -70,6 +70,7 @@ async function onDocumentChange(chosenProjectDocument: ProjectAsset) {
 	if (chosenProjectDocument?.assetId) {
 		fetchingDocument.value = true;
 		document.value = await getDocumentAsset(chosenProjectDocument.assetId);
+		documentName.value = document.value?.name;
 		fetchingDocument.value = false;
 	}
 }
@@ -110,7 +111,10 @@ watch(
 			if (isEmpty(state.tables)) state.tables = tables;
 			emit('update-state', state);
 
-			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
+			const outputs = props.node.outputs;
+			const documentPort = outputs.find((port) => port.type === 'documentId');
+
+			if (!documentPort || !documentPort.value) {
 				emit('append-output', {
 					type: 'documentId',
 					label: documentName.value,
