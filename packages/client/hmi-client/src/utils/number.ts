@@ -49,8 +49,7 @@ export function numberToNist(num: string) {
 export function nistToNumber(numStr: string): number {
 	// Remove any spaces from the formatted number
 	numStr = numStr.replace(/\s/g, '');
-	const num = parseFloat(numStr);
-	return num;
+	return parseFloat(numStr);
 }
 
 /**
