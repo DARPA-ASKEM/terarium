@@ -1,11 +1,11 @@
 import axios, { AxiosHeaders } from 'axios';
 
-const BeakerAPi = axios.create({
+const BeakerAPI = axios.create({
 	baseURL: '/beaker',
 	headers: new AxiosHeaders()
 });
 
 export const summarizeNotebook = async (notebook: any) => {
-	const { data } = await BeakerAPi.post('/summary', { notebook });
+	const { data } = await BeakerAPI.post('/summary', { notebook });
 	return data;
 };

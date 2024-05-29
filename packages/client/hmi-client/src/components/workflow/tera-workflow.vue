@@ -366,7 +366,6 @@ function appendOutput(
 		value: any;
 		state?: any;
 		isSelected?: boolean;
-		notebook?: any;
 	}
 ) {
 	if (!node) return;
