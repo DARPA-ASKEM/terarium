@@ -4,13 +4,19 @@
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
-			<tera-initials-metadata :model="model" />
+			<tera-initials-metadata
+				:model="model"
+				@update-initial-metadata="emit('update-initial-metadata', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
-			<tera-parameters-metadata :model="model" />
+			<tera-parameters-metadata
+				:model="model"
+				@update-parameter="emit('update-parameter', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -125,6 +131,8 @@ const props = defineProps<{
 	model: Model;
 	readonly?: boolean;
 }>();
+
+const emit = defineEmits(['update-initial-metadata', 'update-parameter']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});

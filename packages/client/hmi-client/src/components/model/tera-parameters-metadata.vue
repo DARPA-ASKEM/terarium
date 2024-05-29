@@ -1,21 +1,15 @@
 <template>
 	<ul>
-		<li v-for="{ id, name, description, grounding, units } in parameters" :key="id">
-			<div>
-				<span>
-					<h6>{{ id }}</h6>
-					<span class="stretch-input">
-						<tera-input label="Name" :model-value="name ?? ''" />
-					</span>
-				</span>
-				<span class="stretch-input">
-					<tera-input label="Description" :model-value="description ?? ''" />
-				</span>
-			</div>
-			<div>
-				<tera-input label="Unit" :model-value="units?.expression ?? ''" />
-				<tera-input label="Concept" :model-value="grounding?.identifiers[0]" />
-			</div>
+		<li v-for="parameter in parameters" :key="parameter.id">
+			<tera-parameter-metadata-entry
+				:parameter="parameter"
+				@update-parameter="
+					emit('update-parameter', {
+						parameterId: parameter.id,
+						...$event
+					})
+				"
+			/>
 			<Divider type="solid" />
 		</li>
 	</ul>
@@ -24,14 +18,14 @@
 <script setup lang="ts">
 import { Model } from '@/types/Types';
 import { getParameters } from '@/model-representation/service';
-import TeraInput from '@/components/widgets/tera-input.vue';
+import TeraParameterMetadataEntry from '@/components/model/tera-parameter-metadata-entry.vue';
 import Divider from 'primevue/divider';
 
 const props = defineProps<{
 	model: Model;
 }>();
 
-// const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-parameter']);
 
 const parameters = getParameters(props.model);
 </script>
@@ -39,22 +33,6 @@ const parameters = getParameters(props.model);
 <style scoped>
 ul > li {
 	list-style: none;
-
-	& > div {
-		display: flex;
-		gap: var(--gap-small);
-
-		& > :first-child {
-			display: flex;
-			align-items: center;
-			gap: var(--gap-small);
-			width: 20%;
-		}
-	}
-}
-
-.stretch-input {
-	flex-grow: 1;
 }
 
 :deep(.p-divider) {

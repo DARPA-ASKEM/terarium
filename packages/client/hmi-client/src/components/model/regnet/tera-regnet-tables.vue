@@ -63,7 +63,10 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<tera-parameters-metadata :model="transientModel" />
+			<tera-parameters-metadata
+				:model="model"
+				@update-parameter="emit('update-parameter', $event)"
+			/>
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -73,7 +76,7 @@ import type { DKG, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
@@ -94,9 +97,8 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-model', 'update-parameter']);
 
-const transientModel = ref(cloneDeep(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const vertices = computed(() => props.model?.model?.vertices ?? []);
@@ -129,14 +131,6 @@ function updateMMT() {
 		mmtParams.value = response.template_params;
 	});
 }
-
-watch(
-	() => props.model,
-	(model) => {
-		transientModel.value = cloneDeep(model);
-		updateMMT();
-	}
-);
 
 onMounted(() => updateMMT());
 </script>

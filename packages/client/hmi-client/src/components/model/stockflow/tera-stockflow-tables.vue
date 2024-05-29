@@ -4,13 +4,19 @@
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
-			<tera-initials-metadata :model="transientModel" />
+			<tera-initials-metadata
+				:model="model"
+				@update-initial-metadata="emit('update-initial-metadata', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 			</template>
-			<tera-parameters-metadata :model="transientModel" />
+			<tera-parameters-metadata
+				:model="model"
+				@update-parameter="emit('update-parameter', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -125,10 +131,10 @@
 
 <script setup lang="ts">
 import type { Model } from '@/types/Types';
-import { cloneDeep, groupBy, isEmpty } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
@@ -144,10 +150,11 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
+const emit = defineEmits(['update-initial-metadata', 'update-parameter']);
+
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const transientModel = ref(cloneDeep(props.model));
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parametersLength = computed(
 	() =>
@@ -188,14 +195,6 @@ function updateMMT() {
 		mmtParams.value = response.template_params;
 	});
 }
-
-watch(
-	() => props.model,
-	(model) => {
-		transientModel.value = cloneDeep(model);
-		updateMMT();
-	}
-);
 
 onMounted(() => updateMMT());
 </script>

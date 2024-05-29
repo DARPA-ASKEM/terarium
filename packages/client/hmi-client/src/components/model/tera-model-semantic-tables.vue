@@ -1,5 +1,25 @@
 <template>
-	<component :is="tables" :model="transientModel" :readonly="readonly" />
+	<component
+		:is="tables"
+		:model="transientModel"
+		:readonly="readonly"
+		@update-initial-metadata="
+			($event: any) => {
+				if ($event) {
+					const { target, metadataKey, value } = $event;
+					updateInitialMetadata(transientModel, target, metadataKey, value);
+				}
+			}
+		"
+		@update-parameter="
+			($event: any) => {
+				if ($event) {
+					const { parameterId, key, value } = $event;
+					updateParameter(transientModel, parameterId, key, value);
+				}
+			}
+		"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -11,6 +31,7 @@ import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
+import { updateInitialMetadata, updateParameter } from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
@@ -36,44 +57,16 @@ const tables = computed(() => {
 	}
 });
 
-// const updateInitial = (inits: Initial[]) => {
-// 	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
-// 	for (let i = 0; i < modelInitials.length; i++) {
-// 		const foundInitial = inits.find((init) => init.target === modelInitials![i].target);
-// 		if (foundInitial) {
-// 			modelInitials[i] = foundInitial;
-// 		}
-// 	}
-// };
-
-// const updateParam = (params: ModelParameter[]) => {
-// 	const modelParameters = transientModel.value.semantics?.ode?.parameters ?? [];
-// 	for (let i = 0; i < modelParameters.length; i++) {
-// 		const foundParam = params.find((p) => p.id === modelParameters![i].id);
-// 		if (foundParam) {
-// 			modelParameters[i] = foundParam;
-// 		}
-// 	}
-// 	// FIXME: Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
-// 	const modelAuxiliaries = transientModel.value.model?.auxiliaries ?? [];
-// 	for (let i = 0; i < modelAuxiliaries.length; i++) {
-// 		const foundParam = params.find((p) => p.id === modelAuxiliaries![i].id);
-// 		if (foundParam) {
-// 			modelAuxiliaries[i] = foundParam;
-// 		}
-// 	}
-// };
-
 // Apply changes to the model when the component unmounts or the user navigates away
-function applyChanges() {
+function saveChanges() {
 	emit('update-model', transientModel.value);
 }
 
-onMounted(() => window.addEventListener('beforeunload', applyChanges));
+onMounted(() => window.addEventListener('beforeunload', saveChanges));
 
 onUnmounted(() => {
-	applyChanges();
-	window.removeEventListener('beforeunload', applyChanges);
+	saveChanges();
+	window.removeEventListener('beforeunload', saveChanges);
 });
 </script>
 
