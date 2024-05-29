@@ -72,7 +72,7 @@ export interface Operation {
 	inputs: OperationData[];
 	outputs: OperationData[];
 
-	createNotebook?: (node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) => Promise<any>;
+	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }
 
 // Defines the data-exchange between WorkflowNode

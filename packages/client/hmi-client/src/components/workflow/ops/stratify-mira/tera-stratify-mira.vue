@@ -426,21 +426,19 @@ const runCodeStratify = () => {
 	});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service. Migrate it to use saveCodeToState from @/services/notebook
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
-	// TODO: Save llm query and thought as well
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
-
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
 	const timestamp = Date.now();
+	const llm = { llmQuery: llmQuery.value, llmThoughts: llmThoughts.value };
 	if (codeHistoryLength > 0) {
-		state.strataCodeHistory[0] = { code, timestamp };
+		state.strataCodeHistory[0] = { code, timestamp, ...llm };
 	} else {
-		state.strataCodeHistory.push({ code, timestamp });
+		state.strataCodeHistory.push({ code, timestamp, ...llm });
 	}
-
 	emit('update-state', state);
 };
 

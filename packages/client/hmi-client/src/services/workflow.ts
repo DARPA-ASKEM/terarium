@@ -449,14 +449,12 @@ const summaryGenerationRequestIds = new Set<string>();
 export async function generateSummary(
 	node: WorkflowNode<any>,
 	outputPort: WorkflowOutput<any>,
-	createNotebookFn:
-		| ((node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) => Promise<any>)
-		| null
+	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
 ) {
 	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
 	try {
 		summaryGenerationRequestIds.add(outputPort.id);
-		const notebook = await createNotebookFn(node, outputPort);
+		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
 		const result = await summarizeNotebook(notebook);
 		return result;
 	} catch {
