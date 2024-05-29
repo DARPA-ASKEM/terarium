@@ -115,7 +115,6 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
-import { createNotebookFromCode } from '@/services/notebook';
 
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -289,13 +288,6 @@ const handleModelPreview = async (data: any) => {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
 			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
 		},
-		notebook: createNotebookFromCode(
-			codeText.value,
-			'python3',
-			data.content,
-			llmQuery.value,
-			llmThoughts.value
-		),
 		value: [modelData.id]
 	});
 };
