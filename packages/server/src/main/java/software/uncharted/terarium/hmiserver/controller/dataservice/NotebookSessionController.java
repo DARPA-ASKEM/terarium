@@ -113,7 +113,7 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> createNotebookSession(
 			@RequestBody final NotebookSession session,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -155,7 +155,7 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> getNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -203,7 +203,7 @@ public class NotebookSessionController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final NotebookSession session,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -240,11 +240,14 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> cloneNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			final NotebookSession clone = sessionService.cloneAsset(id, permission);
-			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			if (session.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
 		} catch (final IOException e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
@@ -278,7 +281,7 @@ public class NotebookSessionController {
 	ResponseEntity<ResponseDeleted> deleteNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {

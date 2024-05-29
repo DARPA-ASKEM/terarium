@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 3. Upload model `input_model.json`
 4. Upload or reuse document `41591_2020_Article_883.pdf`, if extraction are not working use `sidarthe_test.txt`
 5. Upload or resuse dataset `sirdata.csv`

@@ -18,4 +18,10 @@ public class NotebookSession extends TerariumAsset {
 	private static final long serialVersionUID = 9176019416379347233L;
 
 	private JsonNode data;
+
+	public NotebookSession clone() {
+		NotebookSession session = new NotebookSession();
+		session.setData(data.deepCopy());
+		return session;
+	}
 }

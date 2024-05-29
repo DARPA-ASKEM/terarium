@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Making Project Public
 1. Return to the home page by clicking on the Terarium Logo in the top left.
