@@ -64,14 +64,14 @@ watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (isNistType) {
-			maskedValue.value = numberToNist(newValue.toString());
+			maskedValue.value = numberToNist(newValue?.toString() ?? '');
 		}
 	}
 );
 
 onMounted(() => {
 	if (isNistType) {
-		maskedValue.value = numberToNist(props.modelValue.toString());
+		maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
 	}
 });
 
