@@ -1,13 +1,19 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
+import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors
 @TSModel
-public abstract class Semantic {
+@Entity
+public abstract class Semantic extends TerariumEntity {
+
 	private String name;
 	private String description;
 	private String source;
