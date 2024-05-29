@@ -94,7 +94,7 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="stratifiedAmr"
-		:asset="amr"
+		:asset="stratifiedAmr"
 		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
