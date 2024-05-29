@@ -1,4 +1,6 @@
-import type { Operation, BaseState } from '@/types/workflow';
+import { getModel } from '@/services/model';
+import { createNotebookFromCode } from '@/services/notebook';
+import type { Operation, BaseState, WorkflowOutput, WorkflowNode } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 
 const DOCUMENTATION_URL =
@@ -70,5 +72,16 @@ export const StratifyMiraOperation: Operation = {
 			hasCodeBeenRun: false
 		};
 		return init;
+	},
+	createNotebook: async (
+		_node: WorkflowNode<StratifyOperationStateMira>,
+		outputPort: WorkflowOutput<StratifyOperationStateMira>
+	) => {
+		const modelIdToLoad = outputPort.value?.[0];
+		const outputModel = await getModel(modelIdToLoad);
+		const code = outputPort.state?.strataCodeHistory?.[0].code ?? '';
+		// TODO: Add llm query and thought to the notebook
+		const notebook = createNotebookFromCode(code, 'python3', { 'application/json': outputModel });
+		return notebook;
 	}
 };

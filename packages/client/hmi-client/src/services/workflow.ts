@@ -446,12 +446,18 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 // Keep track of the summary generation requests to prevent multiple requests for the same workflow output
 const summaryGenerationRequestIds = new Set<string>();
 
-export async function generateSummary(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	if (!outputPort?.notebook || !node || summaryGenerationRequestIds.has(outputPort.id)) return null;
+export async function generateSummary(
+	node: WorkflowNode<any>,
+	outputPort: WorkflowOutput<any>,
+	createNotebookFn:
+		| ((node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) => Promise<any>)
+		| null
+) {
+	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
 	try {
 		summaryGenerationRequestIds.add(outputPort.id);
-		// TODO: generate notebook here for corresponding outputPort
-		const result = await summarizeNotebook(outputPort.notebook);
+		const notebook = await createNotebookFn(node, outputPort);
+		const result = await summarizeNotebook(notebook);
 		return result;
 	} catch {
 		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };

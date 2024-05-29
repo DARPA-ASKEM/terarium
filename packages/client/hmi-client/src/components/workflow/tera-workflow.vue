@@ -385,8 +385,7 @@ function appendOutput(
 		state: port.state,
 		isSelected: true,
 		timestamp: new Date(),
-		operatorStatus: node.status,
-		notebook: port.notebook
+		operatorStatus: node.status
 	};
 
 	// Append and set active
@@ -403,7 +402,11 @@ function appendOutput(
 
 async function generateSummary(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
 	outputPort.summary = ''; // Indicating that the summary generation is initiated
-	const result = await workflowService.generateSummary(node, outputPort);
+	const result = await workflowService.generateSummary(
+		node,
+		outputPort,
+		registry.getOperation(node.operationType)?.createNotebook ?? null
+	);
 	if (!result) return;
 	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
 	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);

@@ -42,6 +42,7 @@ export const createNotebookFromCode = (
 	llmQuery?: string,
 	llmThoughts: any[] = []
 ) => {
+	// TODO: Consider using jataware/beaker-kernel library to generate notebook (https://github.com/jataware/beaker-kernel/blob/886b2b3913ca1460f0301a5cd97cbcf15de609bc/beaker-ts/src/notebook.ts#L414)
 	const notebook = {
 		nbformat: 4,
 		nbformat_minor: 5,

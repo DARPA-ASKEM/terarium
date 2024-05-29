@@ -40,7 +40,7 @@
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
-					<!-- TODO: Make this as a component -->
+					<!-- TODO: Make this as a summary component -->
 					<div v-else>
 						{{ activeOutputSummary === '' ? 'Generating AI summary...' : activeOutputSummary }}
 					</div>
