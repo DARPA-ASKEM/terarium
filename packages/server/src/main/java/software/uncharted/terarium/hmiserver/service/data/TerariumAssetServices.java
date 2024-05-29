@@ -34,7 +34,6 @@ public class TerariumAssetServices {
 			case DOCUMENT -> documentAssetService;
 			case MODEL_CONFIGURATION -> modelConfigurationService;
 			case MODEL -> modelService;
-			case NOTEBOOK_SESSION -> notebookSessionService;
 			case WORKFLOW -> workflowService;
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};

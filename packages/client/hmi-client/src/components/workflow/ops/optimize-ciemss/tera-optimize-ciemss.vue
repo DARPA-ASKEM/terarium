@@ -221,7 +221,10 @@
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="simulationRunResults[knobs.forecastRunId]"
-							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
+							:chartConfig="{
+								selectedRun: knobs.forecastRunId,
+								selectedVariable: cfg
+							}"
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"

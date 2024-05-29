@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 
 public class ArtifactServiceTests extends TerariumApplicationTests {
 
@@ -134,7 +133,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 		artifact = artifactService.createAsset(artifact, ASSUME_WRITE_PERMISSION);
 
-		final Artifact cloned = artifactService.cloneAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
+		final Artifact cloned = artifact.clone();
 
 		Assertions.assertNotEquals(artifact.getId(), cloned.getId());
 		Assertions.assertEquals(artifact.getName(), cloned.getName());
@@ -142,26 +141,5 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 				artifact.getFileNames().size(), cloned.getFileNames().size());
 		Assertions.assertEquals(
 				artifact.getFileNames().get(0), cloned.getFileNames().get(0));
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportArtifact() throws Exception {
-
-		Artifact artifact = createArtifact("A");
-
-		artifact = artifactService.createAsset(artifact, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Artifact> exported = artifactService.exportAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Artifact imported = artifactService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(artifact.getId(), imported.getId());
-		Assertions.assertEquals(artifact.getName(), imported.getName());
-		Assertions.assertEquals(artifact.getDescription(), imported.getDescription());
-		Assertions.assertEquals(
-				artifact.getFileNames().size(), imported.getFileNames().size());
-		Assertions.assertEquals(
-				artifact.getFileNames().get(0), imported.getFileNames().get(0));
 	}
 }

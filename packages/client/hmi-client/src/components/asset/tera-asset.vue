@@ -45,7 +45,8 @@
 						<span v-html="authors" />
 					</span>
 					<div v-if="doi">
-						DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+						DOI:
+						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
