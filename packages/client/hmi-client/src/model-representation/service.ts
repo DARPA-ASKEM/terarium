@@ -6,6 +6,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import type { Initial, Model, ModelParameter } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
+import { getCurieFromGroudingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -227,24 +228,29 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
  * @param {string} target - The target of the initial.
  * @returns {any} - The metadata for the specified initial or undefined if not found.
  */
-export function getInitialMetadata(model: Model, parameterId: string) {
-	return model.metadata?.initials?.[parameterId];
+export function getInitialMetadata(model: Model, target: string) {
+	return model.metadata?.initials?.[target];
 }
 
 export function getInitialName(model: Model, target: string): string {
-	return model.metadata?.initials?.[target]?.name ?? '';
+	return getInitialMetadata(model, target)?.name ?? '';
 }
 
 export function getInitialDescription(model: Model, target: string): string {
-	return model.metadata?.initials?.[target]?.description ?? '';
+	return getInitialMetadata(model, target)?.description ?? '';
 }
 
 export function getInitialUnits(model: Model, target: string): string {
-	return model.metadata?.initials?.[target]?.units?.expression ?? '';
+	return getInitialMetadata(model, target)?.units?.expression ?? '';
 }
 
 export function getInitialConcept(model: Model, target: string): string {
-	return model.metadata?.initials?.[target]?.concept?.grounding ?? '';
+	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
+	if (!identifiers) return '';
+	return getNameOfCurieCached(
+		new Map<string, string>(),
+		getCurieFromGroudingIdentifier(identifiers)
+	);
 }
 
 /**
