@@ -46,7 +46,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.number,
-                body: "**Please review the checklist** \n\n- [ ] server error messages use `messages.properties`\n\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
+                body: "**Please review the checklist**\n- [ ] server error messages use `messages.properties`\n- [ ] _manual test_ and/or _scenario test_ updated, if not sure ask #askem-testing\n- [ ] _documentation_ updated\n- [ ] _breaking change_ notify #askem-engineering",
               })
               return;
             }
