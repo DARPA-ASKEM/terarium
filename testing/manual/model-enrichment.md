@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Test Model enrichment without a document
 1. Upload _the model_ [SIR_Model](https://drive.google.com/file/d/1OwKCQTKSflTW4oAbdCQ8xGXeUYmbCryG/view?usp=drive_link)

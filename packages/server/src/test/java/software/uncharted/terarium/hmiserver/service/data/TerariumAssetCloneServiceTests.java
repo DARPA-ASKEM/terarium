@@ -85,7 +85,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		documentAsset.getFileNames().add("science2.pdf");
 		documentAsset.setGrounding(createGrounding(key));
 		documentAsset.setMetadata(new HashMap<>());
-		documentAsset.getMetadata().put("hello", "world-" + key);
+		documentAsset.getMetadata().put("hello", objectMapper.readTree("{\"hello\": \"world-" + key + "\"}"));
 		documentAsset.setPublicAsset(true);
 		documentAsset.setAssets(new ArrayList<>());
 		documentAsset.getAssets().add(createDocExtraction());
