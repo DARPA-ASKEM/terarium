@@ -36,7 +36,6 @@
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-annotation
-						v-if="node.state"
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
