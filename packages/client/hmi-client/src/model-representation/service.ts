@@ -209,7 +209,7 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 		} else if (key === 'concept') {
-			obj.grounding = { identifiers: { value } };
+			obj.grounding = { identifiers: { value } }; // FIXME: Revisit this, can concepts actually be edited, how so?
 		} else {
 			obj[key] = value;
 		}
@@ -344,7 +344,7 @@ export function updateInitialMetadata(model: Model, target: string, key: string,
 			if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
 			initialMetadata.units.expression = value;
 		} else if (key === 'concept') {
-			initialMetadata.concept = { grounding: { identifiers: { value } } };
+			initialMetadata.concept = { grounding: { identifiers: { value } } }; // FIXME: Revisit this, can concepts actually be edited, how so?
 		} else {
 			initialMetadata[key] = value;
 		}
