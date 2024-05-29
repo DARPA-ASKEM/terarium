@@ -90,6 +90,9 @@ export interface WorkflowPort {
 export interface WorkflowOutput<S> extends WorkflowPort {
 	isSelected?: boolean;
 	operatorStatus?: OperatorStatus;
+	notebook?: any;
+	summary?: string;
+	summaryHasBeenEdited?: boolean;
 	state?: Partial<S>;
 	timestamp?: Date;
 }

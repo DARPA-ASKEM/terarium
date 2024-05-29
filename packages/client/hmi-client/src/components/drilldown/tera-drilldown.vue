@@ -36,9 +36,14 @@
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-annotation
+						v-if="activeOutputSummary === undefined"
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
+					<!-- TODO: Make this as a component -->
+					<div v-else>
+						{{ activeOutputSummary === '' ? 'Generating AI summary...' : activeOutputSummary }}
+					</div>
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -75,6 +80,7 @@ import { isEmpty } from 'lodash';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
+import { getActiveOutputSummary } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -126,6 +132,7 @@ const outputOptions = computed(() => {
 	}
 	return [];
 });
+const activeOutputSummary = computed(() => getActiveOutputSummary(props.node));
 
 const toggle = (event) => {
 	menu.value.toggle(event);

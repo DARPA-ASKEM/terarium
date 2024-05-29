@@ -128,7 +128,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { summarizeNotebook } from '@/services/beaker';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -282,7 +281,6 @@ const handleModelPreview = async (data: any) => {
 	const modelData = await createModel(stratifiedAmr.value);
 	if (!modelData) return;
 
-	produceSummary(data);
 	emit('append-output', {
 		id: uuidv4(),
 		label: `Output ${Date.now()}`,
@@ -291,6 +289,13 @@ const handleModelPreview = async (data: any) => {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
 			strataCodeHistory: _.cloneDeep(props.node.state.strataCodeHistory)
 		},
+		notebook: createNotebookFromCode(
+			codeText.value,
+			'python3',
+			data.content,
+			llmQuery.value,
+			llmThoughts.value
+		),
 		value: [modelData.id]
 	});
 };
@@ -308,19 +313,6 @@ const buildJupyterContext = () => {
 			id: amr.value.id
 		}
 	};
-};
-
-const produceSummary = async (output: any) => {
-	// Indicate in the UI it's producing summary
-	const notebook = createNotebookFromCode(
-		codeText.value,
-		'python3',
-		output.content,
-		llmQuery.value,
-		llmThoughts.value
-	);
-	const summary = await summarizeNotebook(notebook);
-	console.log(JSON.stringify(summary, null, 2));
 };
 
 const getStatesAndParameters = (amrModel: Model) => {
