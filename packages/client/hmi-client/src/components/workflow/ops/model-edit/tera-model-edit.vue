@@ -224,8 +224,6 @@ const runFromCodeWrapper = () => {
 };
 
 const runFromCode = (code: string) => {
-	console.log(amr.value);
-
 	const messageContent = {
 		silent: false,
 		store_history: false,
