@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
@@ -158,7 +157,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
 
-		final Code cloned = codeService.cloneAsset(code.getId(), ASSUME_WRITE_PERMISSION);
+		final Code cloned = code.clone();
 
 		Assertions.assertNotEquals(code.getId(), cloned.getId());
 		Assertions.assertEquals(code.getName(), cloned.getName());
@@ -167,27 +166,5 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(
 				code.getMetadata().keySet().size(),
 				cloned.getMetadata().keySet().size());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportCode() throws Exception {
-
-		Code code = createCode("A");
-
-		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Code> exported = codeService.exportAsset(code.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Code imported = codeService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(code.getId(), imported.getId());
-		Assertions.assertEquals(code.getName(), imported.getName());
-		Assertions.assertEquals(code.getDescription(), imported.getDescription());
-		Assertions.assertEquals(code.getRepoUrl(), imported.getRepoUrl());
-		Assertions.assertEquals(code.getFiles().size(), imported.getFiles().size());
-		Assertions.assertEquals(
-				code.getMetadata().keySet().size(),
-				imported.getMetadata().keySet().size());
 	}
 }

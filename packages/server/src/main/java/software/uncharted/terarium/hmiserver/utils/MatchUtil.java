@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.util;
+package software.uncharted.terarium.hmiserver.utils;
 
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;

@@ -39,11 +39,13 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
@@ -100,6 +102,7 @@ public class ProjectController {
 	final ProjectService projectService;
 	final ReBACService reBACService;
 	final TerariumAssetServices terariumAssetServices;
+	final TerariumAssetCloneService cloneService;
 	final UserService userService;
 	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
@@ -523,6 +526,74 @@ public class ProjectController {
 		return ResponseEntity.ok(updatedProject.get());
 	}
 
+	@Operation(summary = "Export a project")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "The project export",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ProjectExport.class))
+						}),
+				@ApiResponse(
+						responseCode = "403",
+						description = "The current user does not have read privileges to this project",
+						content = @Content),
+				@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "An error occurred when trying to communicate with either the postgres or spicedb"
+								+ " databases",
+						content = @Content)
+			})
+	@GetMapping("/export/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<ProjectExport> exportProject(@PathVariable("id") final UUID id) {
+		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+		try {
+			return ResponseEntity.ok(cloneService.exportProject(id));
+		} catch (final Exception e) {
+			log.error("Error exporting project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	@Operation(summary = "Import a project")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "The project export",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ProjectExport.class))
+						}),
+				@ApiResponse(
+						responseCode = "503",
+						description = "An error occurred when trying to communicate with either the postgres or spicedb"
+								+ " databases",
+						content = @Content)
+			})
+	@PostMapping("/import")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> importProject(@RequestBody final ProjectExport projectExport) {
+		try {
+			return ResponseEntity.ok(cloneService.importProject(projectExport));
+		} catch (final Exception e) {
+			log.error("Error importing project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	// Project Assets
 	// --------------------------------------------------------------------------
@@ -581,34 +652,47 @@ public class ProjectController {
 		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
 				terariumAssetServices.getServiceByType(assetType);
 
-		// check if the asset is associated with a project, if it is, we should clone it
-		// and create a new asset
-		final boolean alreadyPartOfAProject = projectAssetService.isPartOfExistingProject(assetId);
-		final Optional<? extends TerariumAsset> asset;
+		// check if the asset is already associated with a project, if it is, we should
+		// clone it and create a new asset
+
+		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId, permission);
+		final List<TerariumAsset> assets;
 
 		try {
-			if (alreadyPartOfAProject) {
-				asset = Optional.ofNullable(terariumAssetService.cloneAndPersistAsset(assetId, permission));
+			if (owningProjectId != null) {
+				// if the asset is already under another project, we need to clone it and its
+				// dependencies
+				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId);
 			} else {
-				asset = terariumAssetService.getAsset(assetId, permission);
+				// TODO: we should probably check asset dependencies and make sure they are part
+				// of the project, and if not clone them
+				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
+				if (asset.isEmpty()) {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
+				}
+				assets = List.of(asset.get());
 			}
 		} catch (final IOException e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		if (asset.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
+		final List<ProjectAsset> projectAssets = new ArrayList<>();
+		for (final TerariumAsset asset : assets) {
+			final Optional<ProjectAsset> projectAsset =
+					projectAssetService.createProjectAsset(project.get(), assetType, asset, permission);
+
+			if (projectAsset.isEmpty()) {
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+			}
+
+			projectAssets.add(projectAsset.get());
 		}
 
-		final Optional<ProjectAsset> projectAsset =
-				projectAssetService.createProjectAsset(project.get(), assetType, asset.get(), permission);
-
-		if (projectAsset.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-		}
-
-		return ResponseEntity.ok(projectAsset.get());
+		// return the first project asset, it is always the original asset that we
+		// wanted to add
+		return ResponseEntity.ok(projectAssets.get(0));
 	}
 
 	@Operation(summary = "Deletes an asset inside of a given project")
