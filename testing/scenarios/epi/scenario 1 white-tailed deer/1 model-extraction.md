@@ -30,8 +30,18 @@ Source for the scenario: [PDF](https://github.com/DARPA-ASKEM/program-milestones
     5. Save the model.
 
 ### 4. Gathering definitions of all variables and parameters, with units
-### 5. Gathering default values for parameters, initial values for variables, and everything needed to initiate/run the model
-### 6. Ensuring the model is executable in the workbench
+1. Add a _Configure model_ node and link the _Model A_.
+2. Link the _Document_ used to create the model. 
+3. Open the _Configure model_ node and apply the default configuration.
+4. Verify that the variables are extracted and have the correct units.
+5. Verify that default values for parameters, initial values are present.
+6. Repeat the process for _Model B_ and _Model C_.
 
-### 7. End test
+### 5. Ensuring the model is executable in the workbench
+1. Add a _Simulate with PyCIEMSS_ node and link the _Model A_.
+2. Open the _Simulate with PyCIEMSS_ node and `Run` the simulation.
+3. Verify that the simulation runs without errors.
+4. Repeat the process for _Model B_ and _Model C_.
+
+### 6. End test
 1. logout of the application 

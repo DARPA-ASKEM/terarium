@@ -308,7 +308,7 @@ watch(
 	{ immediate: true }
 );
 
-const formattedAbstract = computed<string>(() => document.value?.description ?? '');
+const formattedAbstract = computed<string>(() => document.value?.documentAbstract ?? '');
 
 onUpdated(() => {
 	if (document.value) {
