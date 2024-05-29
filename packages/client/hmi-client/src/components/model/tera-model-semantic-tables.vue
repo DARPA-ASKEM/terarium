@@ -4,22 +4,8 @@
 		:model="transientModel"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
-		@update-initial-metadata="
-			($event: any) => {
-				if ($event) {
-					const { target, key, value } = $event;
-					updateInitialMetadata(transientModel, target, key, value);
-				}
-			}
-		"
-		@update-parameter="
-			($event: any) => {
-				if ($event) {
-					const { parameterId, key, value } = $event;
-					updateParameter(transientModel, parameterId, key, value);
-				}
-			}
-		"
+		@update-initial-metadata="onUpdateInitialMetadata"
+		@update-parameter="onUpdateParameter"
 	/>
 </template>
 
@@ -57,6 +43,16 @@ const tables = computed(() => {
 			return TeraPetrinetTables;
 	}
 });
+
+function onUpdateInitialMetadata(event: any) {
+	const { target, key, value } = event;
+	updateInitialMetadata(transientModel.value, target, key, value);
+}
+
+function onUpdateParameter(event: any) {
+	const { parameterId, key, value } = event;
+	updateParameter(transientModel.value, parameterId, key, value);
+}
 
 // Apply changes to the model when the component unmounts or the user navigates away
 function saveChanges() {
