@@ -2,16 +2,14 @@ import { defineStore } from 'pinia';
 import type { User } from '@/types/Types';
 import axios, { AxiosHeaders } from 'axios';
 import { computed, ref } from 'vue';
-import { Oidc } from 'oidc-spa';
+import { createOidc, Oidc } from 'oidc-spa';
 
 /**
  * Main store used for authentication
  */
 const useAuthStore = defineStore('auth', () => {
 	const oidc = ref<Oidc | null>(null);
-	const setOidc = (newOidc: Oidc) => {
-		oidc.value = newOidc;
-	};
+
 	const login = async (redirectUri: string) => {
 		if (!oidc.value?.isUserLoggedIn) {
 			oidc.value?.login({
@@ -58,12 +56,24 @@ const useAuthStore = defineStore('auth', () => {
 	);
 
 	const init = async () => {
+		const oidcSettings = await fetch('/api/configuration/keycloak').then((r) => r.json());
+		const newOidc = await createOidc({
+			issuerUri: `${oidcSettings['auth-server-url']}/realms/${oidcSettings.realm}`,
+			clientId: oidcSettings.resource,
+			publicUrl: '/'
+		});
+
+		if (!newOidc.isUserLoggedIn) {
+			newOidc.login({
+				doesCurrentHrefRequiresAuth: false
+			});
+		}
+		oidc.value = newOidc;
 		await loadUserModel();
 	};
 
 	return {
 		login,
-		setOidc,
 		logout,
 		token,
 		user,

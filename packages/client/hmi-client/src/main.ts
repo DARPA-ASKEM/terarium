@@ -1,4 +1,3 @@
-import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
 import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
@@ -20,21 +19,8 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
-import { createOidc } from 'oidc-spa';
+// import { createOidc } from 'oidc-spa';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
-
-const oidcSettings = await fetch('/api/configuration/keycloak').then((r) => r.json());
-const oidc = await createOidc({
-	issuerUri: `${oidcSettings['auth-server-url']}/realms/${oidcSettings.realm}`,
-	clientId: oidcSettings.resource,
-	publicUrl: '/'
-});
-
-if (!oidc.isUserLoggedIn) {
-	oidc.login({
-		doesCurrentHrefRequiresAuth: false
-	});
-}
 
 // Create the Vue application
 const app = createApp(App);
@@ -43,16 +29,10 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-authStore.setOidc(oidc);
+await authStore.init();
 
 // Initialize user
-await authStore.init();
-logger.info('Authenticated');
 await clientEventServiceInit();
-// Token Refresh
-// setInterval(async () => {
-// 	await window.keycloak.updateToken(70);
-// }, 6000);
 
 // Set the hash value of the window.location to null
 // This is to prevent the Keycloak from redirecting to the hash value
