@@ -26,8 +26,8 @@
 		<div>
 			<tera-input
 				label="Unit"
-				:model-value="getInitialUnit(model, target)"
-				@update:model-value="$emit('update-initial-metadata', { key: 'unit', value: $event })"
+				:model-value="getInitialUnits(model, target)"
+				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
 			/>
 			<tera-input
 				label="Concept"
@@ -48,7 +48,7 @@ import { Model } from '@/types/Types';
 import {
 	getInitialName,
 	getInitialDescription,
-	getInitialUnit,
+	getInitialUnits,
 	getInitialConcept
 } from '@/model-representation/service';
 import TeraInput from '@/components/widgets/tera-input.vue';

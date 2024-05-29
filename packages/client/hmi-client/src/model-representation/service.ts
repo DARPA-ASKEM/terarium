@@ -239,8 +239,8 @@ export function getInitialDescription(model: Model, target: string): string {
 	return model.metadata?.initials?.[target]?.description ?? '';
 }
 
-export function getInitialUnit(model: Model, target: string): string {
-	return model.metadata?.initials?.[target]?.unit ?? '';
+export function getInitialUnits(model: Model, target: string): string {
+	return model.metadata?.initials?.[target]?.units?.expression ?? '';
 }
 
 export function getInitialConcept(model: Model, target: string): string {
@@ -331,10 +331,17 @@ export function updateInitialMetadata(
 		model.metadata.initials ??= {};
 		model.metadata.initials[target] ??= {};
 	}
+	const initialMetadata = model.metadata.initials[target];
+
 	if (typeof key === 'string') {
-		model.metadata.initials[target][key] = value;
+		if (key === 'units') {
+			if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
+			initialMetadata.units.expression = value;
+		} else {
+			initialMetadata[key] = value;
+		}
 	} else {
-		let initialMetadataObj = model.metadata.initials[target];
+		let initialMetadataObj = initialMetadata;
 		for (let i = 0; i < key.length - 1; i++) {
 			initialMetadataObj[key[i]] ??= {};
 			initialMetadataObj = initialMetadataObj[key[i]];
