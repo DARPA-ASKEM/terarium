@@ -11,7 +11,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. Workflow
 1. Create a new workflow named `Ensemble Calibrate`

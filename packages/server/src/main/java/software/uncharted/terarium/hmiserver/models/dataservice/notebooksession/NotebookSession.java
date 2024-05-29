@@ -28,4 +28,10 @@ public class NotebookSession extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private JsonNode data;
+
+	public NotebookSession clone() {
+		NotebookSession session = new NotebookSession();
+		session.setData(data.deepCopy());
+		return session;
+	}
 }

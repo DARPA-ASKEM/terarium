@@ -242,9 +242,12 @@ public class NotebookSessionController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			final NotebookSession clone = sessionService.cloneAsset(id, permission);
-			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
-		} catch (final IOException e) {
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			if (session.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);

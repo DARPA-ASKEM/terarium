@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name] [YYMMDD]`
 
 ### 2. [Task name]
 1. Describe what the user is to be done to complete a task.
