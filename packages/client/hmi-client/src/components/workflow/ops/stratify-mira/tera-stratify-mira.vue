@@ -94,7 +94,8 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="stratifiedAmr"
-		:model="stratifiedAmr"
+		:asset="amr"
+		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -124,6 +125,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
