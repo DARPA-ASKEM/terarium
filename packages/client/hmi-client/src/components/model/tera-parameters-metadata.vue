@@ -10,7 +10,6 @@
 					})
 				"
 			/>
-			<Divider type="solid" />
 		</li>
 	</ul>
 </template>
@@ -19,7 +18,6 @@
 import { Model } from '@/types/Types';
 import { getParameters } from '@/model-representation/service';
 import TeraParameterMetadataEntry from '@/components/model/tera-parameter-metadata-entry.vue';
-import Divider from 'primevue/divider';
 
 const props = defineProps<{
 	model: Model;
@@ -31,19 +29,8 @@ const parameters = getParameters(props.model);
 </script>
 
 <style scoped>
-ul > li {
-	list-style: none;
-}
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: 0;
-		margin-bottom: var(--gap);
-		color: var(--gray-300);
-	}
-	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
-	}
+li {
+	padding-top: var(--gap-small);
+	border-bottom: 1px solid var(--surface-border);
 }
 </style>

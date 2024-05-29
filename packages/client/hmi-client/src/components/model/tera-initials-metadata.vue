@@ -6,7 +6,6 @@
 				:target="target"
 				@update-initial-metadata="$emit('update-initial-metadata', { target, ...$event })"
 			/>
-			<Divider type="solid" />
 		</li>
 	</ul>
 </template>
@@ -15,7 +14,6 @@
 import { Model } from '@/types/Types';
 import { getInitials } from '@/model-representation/service';
 import TeraInitialMetadataEntry from '@/components/model/tera-initial-metadata-entry.vue';
-import Divider from 'primevue/divider';
 
 const props = defineProps<{
 	model: Model;
@@ -27,19 +25,8 @@ const initials = getInitials(props.model);
 </script>
 
 <style scoped>
-ul > li {
-	list-style: none;
-}
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: 0;
-		margin-bottom: var(--gap);
-		color: var(--gray-300);
-	}
-	&.p-divider-vertical {
-		margin-left: var(--gap-small);
-		margin-right: var(--gap);
-	}
+li {
+	padding-top: var(--gap-small);
+	border-bottom: 1px solid var(--surface-border);
 }
 </style>
