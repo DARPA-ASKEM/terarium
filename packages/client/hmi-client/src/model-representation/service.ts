@@ -207,7 +207,12 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 	const parameters = getParameters(model);
 	const parameter = parameters.find((p: ModelParameter) => p.id === parameterId);
 	if (!parameter) return;
-	parameter[key] = value;
+	if (key === 'units') {
+		if (!parameter.units) parameter.units = { expression: '', expression_mathml: '' };
+		parameter.units.expression = value;
+	} else {
+		parameter[key] = value;
+	}
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
