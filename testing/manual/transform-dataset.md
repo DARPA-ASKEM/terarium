@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A Five Grant 240502`
+2. Create, or open, project named `QA Five Grant 240502`
 
 ### 2. Join datasets
 1. Upload [`sample.csv`](https://drive.google.com/file/d/1ZmDgj4EPcO0I9SQR5LwPl4pvPln5iq-0/view?usp=drive_link).
