@@ -29,9 +29,12 @@ public class NotebookSession extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private JsonNode data;
 
+	@Override
 	public NotebookSession clone() {
-		NotebookSession session = new NotebookSession();
+		final NotebookSession session = new NotebookSession();
+		super.cloneSuperFields(session);
 		session.setData(data.deepCopy());
+		session.workflowId = workflowId;
 		return session;
 	}
 }
