@@ -83,16 +83,17 @@ export const addNode = (
 			isOptional: port.isOptional ?? false,
 			acceptMultiple: port.acceptMultiple
 		})),
-		outputs: [],
-		/*
+
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			isOptional: false,
+			acceptMultiple: false,
+			state: {}
 		})),
-	  */
 		status: OperatorStatus.DEFAULT,
 
 		width: nodeSize.width,
@@ -130,9 +131,8 @@ export const addEdge = (
 			d.targetPortId === targetPortId
 	);
 	if (existingEdge) return;
-	// Check if type is compatible
-	if (sourceOutputPort.value === null) return;
 
+	// Check if type is compatible
 	const allowedTypes = targetInputPort.type.split('|');
 	if (
 		!allowedTypes.includes(sourceOutputPort.type) ||
@@ -275,9 +275,10 @@ export const updateWorkflow = async (workflow: Workflow) => {
 	return response?.data ?? null;
 };
 
-// Get
-export const getWorkflow = async (id: string) => {
-	const response = await API.get(`/workflows/${id}`);
+// Get workflow
+// Note that projectId is optional as projectId is assigned by the axios API interceptor if value is available from activeProjectId. If the method is call from place where activeProjectId is not available, projectId should be passed as an argument as all endpoints requires projectId as a parameter.
+export const getWorkflow = async (id: string, projectId?: string) => {
+	const response = await API.get(`/workflows/${id}`, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 

@@ -137,6 +137,7 @@ public class GoLLMController {
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 			props.setDocumentId(documentId);
@@ -180,6 +181,8 @@ public class GoLLMController {
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
@@ -217,10 +220,13 @@ public class GoLLMController {
 			req.setScript(ConfigureModelResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
 			props.setDocumentId(documentId);
 			props.setModelId(modelId);
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
 
 			// send the request
@@ -271,6 +277,8 @@ public class GoLLMController {
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
 		Schema.Permission permission =
@@ -334,11 +342,14 @@ public class GoLLMController {
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureFromDatasetResponseHandler.Properties props =
 					new ConfigureFromDatasetResponseHandler.Properties();
 			props.setDatasetIds(datasetIds);
 			props.setModelId(modelId);
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
 
 			// send the request
@@ -379,6 +390,8 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -411,6 +424,12 @@ public class GoLLMController {
 			req.setScript(CompareModelsResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
+
+			final CompareModelsResponseHandler.Properties props = new CompareModelsResponseHandler.Properties();
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
+			req.setAdditionalProperties(props);
 
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));

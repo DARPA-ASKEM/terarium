@@ -7,7 +7,7 @@
 		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-4 pt-3">
+			<tera-drilldown-section class="pl-4">
 				<div class="form-section">
 					<header class="inline-flex justify-content-between">
 						<section>
@@ -73,7 +73,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error

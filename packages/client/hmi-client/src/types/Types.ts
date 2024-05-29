@@ -24,6 +24,14 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface StatusUpdate<T> {
+    progress: number;
+    state: ProgressState;
+    message: string;
+    error: string;
+    data: T;
+}
+
 export interface TerariumAsset extends TerariumEntity {
     name?: string;
     description?: string;
@@ -78,7 +86,6 @@ export interface GithubRepo {
 export interface Artifact extends TerariumAsset {
     userId: string;
     metadata?: any;
-    project?: Project;
 }
 
 export interface CsvAsset {
@@ -129,7 +136,6 @@ export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
     metadata?: { [index: string]: string };
-    project?: Project;
 }
 
 export interface CodeFile extends TerariumEntity {
@@ -144,22 +150,6 @@ export interface Dynamics {
     block: string[];
 }
 
-export interface ActiveConcept extends TerariumAsset {
-    curie: string;
-}
-
-export interface OntologyConcept {
-    id?: string;
-    createdOn?: Date;
-    updatedOn?: Date;
-    deletedOn?: Date;
-    curie: string;
-    type: TaggableType;
-    objectId: string;
-    status: OntologicalField;
-    activeConcept: ActiveConcept;
-}
-
 export interface Dataset extends TerariumAsset {
     userId?: string;
     esgfId?: string;
@@ -170,7 +160,6 @@ export interface Dataset extends TerariumAsset {
     metadata?: any;
     source?: string;
     grounding?: Grounding;
-    project?: Project;
 }
 
 export interface DatasetColumn extends TerariumEntity {
@@ -203,8 +192,8 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    documentAbstract?: string;
     assets?: DocumentExtraction[];
-    project?: Project;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -219,7 +208,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     properties?: any;
     semantics?: ModelSemantics;
     metadata?: ModelMetadata;
-    project?: Project;
 }
 
 export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
@@ -406,9 +394,6 @@ export interface Project extends TerariumAsset {
     userName?: string;
     authors?: string[];
     overviewContent?: any;
-    /**
-     * @deprecated
-     */
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
     publicProject?: boolean;
@@ -539,13 +524,6 @@ export interface ExtractionResponseResult {
     job_result: any;
 }
 
-export interface ExtractionStatusUpdate {
-    documentId: string;
-    t: number;
-    message: string;
-    error: string;
-}
-
 export interface FunmanPostQueriesRequest {
     model: Model;
     request: FunmanWorkRequest;
@@ -674,6 +652,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
+    interventions?: Intervention[];
     dataset: DatasetLocation;
     engine: string;
 }
@@ -710,7 +689,8 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions?: OptimizedIntervention;
+    policyInterventions?: PolicyInterventions;
+    fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -735,7 +715,6 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    projectId: string;
     interventions?: Intervention[];
 }
 
@@ -772,8 +751,8 @@ export interface OptimizeQoi {
     method: string;
 }
 
-export interface OptimizedIntervention {
-    selection: string;
+export interface PolicyInterventions {
+    interventionType: string;
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
@@ -1233,7 +1212,6 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     Publication = "publication",
-    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1261,9 +1239,20 @@ export enum ClientEventType {
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
-    TaskGollmDatasetConfigure = "TASK_GOLLM_DATASET_CONFIGURE",
+    TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
+}
+
+export enum ProgressState {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Failed = "FAILED",
+    Queued = "QUEUED",
+    Retrieving = "RETRIEVING",
+    Running = "RUNNING",
+    Cancelling = "CANCELLING",
 }
 
 export enum FileType {
@@ -1286,25 +1275,6 @@ export enum ProgrammingLanguage {
     R = "r",
     Julia = "julia",
     Zip = "zip",
-}
-
-export enum TaggableType {
-    Datasets = "DATASETS",
-    Features = "FEATURES",
-    Intermediates = "INTERMEDIATES",
-    ModelParameters = "MODEL_PARAMETERS",
-    Models = "MODELS",
-    Projects = "PROJECTS",
-    Publications = "PUBLICATIONS",
-    Qualifiers = "QUALIFIERS",
-    SimulationParameters = "SIMULATION_PARAMETERS",
-    SimulationPlans = "SIMULATION_PLANS",
-    SimulationRuns = "SIMULATION_RUNS",
-}
-
-export enum OntologicalField {
-    Object = "OBJECT",
-    Unit = "UNIT",
 }
 
 export enum ColumnType {
@@ -1366,17 +1336,6 @@ export enum SimulationType {
     Calibration = "CALIBRATION",
     Optimization = "OPTIMIZATION",
     Validation = "VALIDATION",
-}
-
-export enum ProgressState {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Failed = "FAILED",
-    Queued = "QUEUED",
-    Retrieving = "RETRIEVING",
-    Running = "RUNNING",
-    Cancelling = "CANCELLING",
 }
 
 export enum SimulationEngine {

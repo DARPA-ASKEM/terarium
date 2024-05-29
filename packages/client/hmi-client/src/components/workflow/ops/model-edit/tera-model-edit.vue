@@ -344,7 +344,7 @@ const handleOutputChange = async () => {
 	// Switch to model from output
 	activeModelId = activeOutput.value?.value?.[0];
 	if (!activeModelId) return;
-	codeText.value = props.node.state.notebookHistory[0]?.code ?? defaultCodeText;
+	codeText.value = props.node.state.notebookHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -442,7 +442,6 @@ onUnmounted(() => {
 .preview-container {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem;
 }
 
 :deep(.diagram-container) {

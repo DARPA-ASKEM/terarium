@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/models")
@@ -74,6 +75,8 @@ public class ModelController {
 	final CurrentUserService currentUserService;
 
 	final ProjectAssetService projectAssetService;
+
+	final Messages messages;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
@@ -167,8 +170,8 @@ public class ModelController {
 	ResponseEntity<Model> getModel(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		try {
 
@@ -176,6 +179,11 @@ public class ModelController {
 			final Optional<Model> model = modelService.getAsset(id, permission);
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
+			}
+			// GETs not associated to a projectId cannot read private or temporary assets
+			if (permission.equals(Schema.Permission.NONE)
+					&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			// Find the Document Assets linked via provenance to the model

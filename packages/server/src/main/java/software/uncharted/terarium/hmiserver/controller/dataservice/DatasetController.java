@@ -66,6 +66,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/datasets")
@@ -84,6 +85,7 @@ public class DatasetController {
 	final ProjectService projectService;
 	final ProjectAssetService projectAssetService;
 	final CurrentUserService currentUserService;
+	final Messages messages;
 
 	private final List<String> SEARCH_FIELDS = List.of("name", "description");
 
@@ -220,11 +222,21 @@ public class DatasetController {
 	public ResponseEntity<Dataset> getDataset(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+
+			if (dataset.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			// GETs not associated to a projectId cannot read private or temporary assets
+			if (permission.equals(Schema.Permission.NONE)
+					&& (!dataset.get().getPublicAsset() || dataset.get().getTemporary())) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
+			}
+
 			return dataset.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {

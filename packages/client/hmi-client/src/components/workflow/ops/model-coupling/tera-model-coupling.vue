@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -11,29 +12,25 @@
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>
-				<div class="notebook-toolbar">
-					<div class="toolbar-left-side">
-						<Dropdown
-							v-model="selectedLanguage"
-							optionLabel="name"
-							:options="languages"
-							outlined
-							placeholder="Language"
-							disabled
-						></Dropdown>
-					</div>
-					<div class="toolbar-right-side">
-						<Button
-							class="mr-auto"
-							icon="pi pi-play"
-							label="Run"
-							outlined
-							severity="secondary"
-							size="small"
-							@click="runCodeModelCoupling"
-						/>
-					</div>
-				</div>
+				<template #header-controls-left>
+					<Dropdown
+						v-model="selectedLanguage"
+						optionLabel="name"
+						:options="languages"
+						outlined
+						placeholder="Language"
+						disabled
+					></Dropdown>
+				</template>
+				<template #header-controls-right>
+					<Button icon="pi pi-play" label="Run" @click="runCodeModelCoupling" />
+					<InputText
+						v-model="newModelName"
+						placeholder="model name"
+						type="text"
+						class="input-small white-space-nowrap"
+					/>
+				</template>
 
 				<v-ace-editor
 					v-model:value="codeText"
@@ -51,7 +48,7 @@
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
-			<tera-drilldown-preview class="mt-3 ml-2 mr-4 mb-2">
+			<tera-drilldown-preview>
 				<div>
 					<div v-if="modelCouplingResult">
 						{{ modelCouplingResult }}
@@ -61,40 +58,13 @@
 						<p>No model provided</p>
 					</div>
 				</div>
-				<template #footer>
-					<div class="footer">
-						<InputText
-							v-model="newModelName"
-							placeholder="model name"
-							type="text"
-							class="input-small white-space-nowrap"
-						/>
-						<div class="w-full flex gap-2 justify-content-end">
-							<Button
-								:disabled="!modelCouplingResult"
-								outlined
-								class="white-space-nowrap"
-								size="large"
-								label="Save as new model"
-								@click="
-									() =>
-										saveNewModel(newModelName, {
-											addToProject: true,
-											appendOutputPort: true
-										})
-								"
-							/>
-							<Button label="Close" size="large" @click="emit('close')" />
-						</div>
-					</div>
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { AssetType } from '@/types/Types';
@@ -120,6 +90,20 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'close']);
 const modelCouplingResult = ref<any>(null);
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		disabled: !modelCouplingResult.value,
+		command: () => {
+			saveNewModel(newModelName.value, {
+				addToProject: true,
+				appendOutputPort: true
+			});
+		}
+	}
+]);
 
 enum ModelCouplingTabgs {
 	Wizard = 'Wizard',
@@ -297,7 +281,7 @@ const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 
 .input-small {
 	padding: 0.5rem;
-	width: 100%;
+	width: 65%;
 }
 
 .empty-state-container {
@@ -311,15 +295,6 @@ const languages = ref([{ name: 'Julia' }, { name: 'Python' }]);
 
 .empty-state-image {
 	height: 10rem;
-}
-
-.notebook-toolbar {
-	display: flex;
-	flex-direction: row;
-	gap: 1rem;
-	padding: var(--gap);
-	padding-bottom: 0;
-	justify-content: space-between;
 }
 
 .footer {

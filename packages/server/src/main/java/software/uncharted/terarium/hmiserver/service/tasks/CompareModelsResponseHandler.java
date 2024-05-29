@@ -27,6 +27,8 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Properties {
 		List<UUID> modelIds;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Data

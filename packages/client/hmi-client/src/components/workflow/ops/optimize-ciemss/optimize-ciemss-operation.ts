@@ -107,14 +107,16 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	const interventions = simulation?.executionPayload?.interventions;
-	const interventionType = interventions.selection ?? '';
-	const paramNames: string[] = interventions.param_names ?? [];
-	const paramValue: number[] = interventions.param_values ?? [];
-	const startTime: number[] = interventions.start_time ?? [];
+	const simulationIntervetions: SimulationIntervention[] =
+		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
+	const policyInterventions = simulation?.executionPayload?.policy_interventions;
+	const interventionType = policyInterventions.selection ?? '';
+	const paramNames: string[] = policyInterventions.param_names ?? [];
+	const paramValue: number[] = policyInterventions.param_values ?? [];
+	const startTime: number[] = policyInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-	const simulationIntervetions: SimulationIntervention[] = [];
+
 	if (interventionType === InterventionTypes.paramValue && startTime.length !== 0) {
 		// intervention type == parameter value
 		for (let i = 0; i < paramNames.length; i++) {
