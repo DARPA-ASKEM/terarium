@@ -170,6 +170,8 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ./hmiServerDev.sh start local run
 ```
 
+> Note: to run everything local you need to update your `/etc/hosts` with the following `127.0.0.1 minio`.
+
 If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
 ```shell
 ./hmiServerDev.sh start local

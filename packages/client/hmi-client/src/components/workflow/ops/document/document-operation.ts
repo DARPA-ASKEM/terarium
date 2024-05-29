@@ -14,7 +14,7 @@ export const DocumentOperation: Operation = {
 	displayName: 'Document',
 	description: 'Document',
 	inputs: [],
-	outputs: [{ type: 'documentId' }],
+	outputs: [{ type: 'documentId', label: 'Document' }],
 	isRunnable: true,
 	action: () => {},
 	initState: () => {

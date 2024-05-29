@@ -1,6 +1,5 @@
 <template>
 	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<slot name="nav" />
 		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="flex align-items-center">
@@ -13,7 +12,7 @@
 				/>
 			</aside>
 		</header>
-		<template v-if="!hideIntro">
+		<template v-if="!hideIntro && name">
 			<header
 				id="asset-top"
 				:class="{
@@ -46,7 +45,8 @@
 						<span v-html="authors" />
 					</span>
 					<div v-if="doi">
-						DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+						DOI:
+						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
@@ -72,11 +72,12 @@
 				</aside>
 			</header>
 		</template>
-		<section :class="overflowHiddenClass" :style="stretchContentStyle">
+		<section :class="overflowHiddenClass" ref="assetElementRef">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
+			<tera-asset-nav v-if="showTableOfContents" :element-with-nav-ids="assetElementRef" />
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -91,7 +92,8 @@ import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import teraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraAssetNav from '../widgets/tera-asset-nav.vue';
 
 const props = defineProps({
 	name: {
@@ -119,6 +121,7 @@ const props = defineProps({
 		default: { isPreview: false } as FeatureConfig
 	},
 	// Booleans default to false if not specified
+	showTableOfContents: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	showStickyHeader: Boolean,
@@ -135,6 +138,7 @@ const emit = defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
 const headerRef = ref();
+const assetElementRef = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
@@ -148,11 +152,8 @@ const shrinkHeader = computed(() => {
 
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
-// Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
-const stretchContentStyle = computed(() =>
-	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
-);
+// Scroll padding for anchors are adjusted depending on the header (inserted in css)
+const scrollPaddingTop = computed(() => (shrinkHeader.value ? '3.5rem' : '1rem'));
 
 const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
@@ -183,27 +184,30 @@ watch(
 
 <style scoped>
 main {
-	display: grid;
-	/* minmax prevents grid blowout caused by datatable */
-	grid-template-columns: auto minmax(0, 1fr);
-	grid-template-rows: auto 1fr;
-	height: 100%;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
 	background-color: var(--surface-section);
-	/* accounts for sticky header height */
-	scroll-margin-top: v-bind('scrollMarginTopStyle');
 	overflow-y: auto;
 	overflow-x: hidden;
 }
 
 main > section {
-	grid-column-start: 2;
+	display: flex;
+	flex: 1;
+	& > :deep(*:not(nav)) {
+		flex: 1;
+	}
+
+	& > :deep(nav) {
+		padding-top: v-bind(scrollPaddingTop);
+	}
 }
 
 header {
 	display: flex;
 	flex-direction: row;
 	height: fit-content;
-	grid-column-start: 2;
 	color: var(--text-color-subdued);
 	padding: var(--gap-small) var(--gap-medium);
 	display: flex;
@@ -313,16 +317,11 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: v-bind('scrollMarginTopStyle');
+	scroll-padding-top: v-bind('scrollPaddingTop');
 }
 
 main:deep(.p-accordion-content) {
 	padding-bottom: var(--gap-small);
-}
-
-main:deep(.p-accordion-content > p),
-main:deep(.p-accordion-content > ul),
-main:deep(.data-row) {
 }
 
 main:deep(.p-accordion-content ul) {

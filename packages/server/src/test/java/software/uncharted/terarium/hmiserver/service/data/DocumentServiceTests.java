@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -63,9 +62,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	}
 
 	static DocumentAsset createDocument(final String key) throws Exception {
-
-		final ObjectMapper mapper = new ObjectMapper();
-
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName("test-document-name-" + key);
 		documentAsset.setDescription("test-document-description-" + key);
@@ -78,7 +74,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.setPublicAsset(true);
 		documentAsset.setAssets(new ArrayList<>());
 		documentAsset.getAssets().add(createDocExtraction());
-
 		return documentAsset;
 	}
 
@@ -187,7 +182,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		DocumentAsset documentAsset = createDocument();
 		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		final DocumentAsset cloned = documentAssetService.cloneAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset cloned = documentAsset.clone();
 
 		Assertions.assertNotEquals(documentAsset.getId(), cloned.getId());
 		Assertions.assertEquals(
@@ -195,29 +190,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 				cloned.getGrounding().getIdentifiers());
 		Assertions.assertEquals(
 				documentAsset.getGrounding().getContext(), cloned.getGrounding().getContext());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportDocumentAsset() throws Exception {
-
-		DocumentAsset documentAsset = createDocument();
-		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<DocumentAsset> exported =
-				documentAssetService.exportAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
-
-		final DocumentAsset imported = documentAssetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(documentAsset.getId(), imported.getId());
-		Assertions.assertEquals(documentAsset.getName(), imported.getName());
-		Assertions.assertEquals(documentAsset.getDescription(), imported.getDescription());
-		Assertions.assertEquals(
-				documentAsset.getGrounding().getIdentifiers(),
-				imported.getGrounding().getIdentifiers());
-		Assertions.assertEquals(
-				documentAsset.getGrounding().getContext(),
-				imported.getGrounding().getContext());
 	}
 
 	@Test

@@ -9,7 +9,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 @EqualsAndHashCode(callSuper = true)
@@ -65,14 +63,13 @@ public class DocumentAsset extends TerariumAsset {
 	private Grounding grounding;
 
 	@TSOptional
+	@Column(columnDefinition = "text")
+	private String documentAbstract;
+
+	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
-
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
 
 	/**
 	 * Get the DOI of a document

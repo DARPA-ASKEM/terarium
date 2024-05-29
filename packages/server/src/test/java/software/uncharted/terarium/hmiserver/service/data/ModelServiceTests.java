@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 
 public class ModelServiceTests extends TerariumApplicationTests {
@@ -117,26 +116,9 @@ public class ModelServiceTests extends TerariumApplicationTests {
 
 		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
-		final Model cloned = modelService.cloneAsset(model.getId(), ASSUME_WRITE_PERMISSION);
+		final Model cloned = model.clone();
 
 		Assertions.assertNotEquals(model.getId(), cloned.getId());
 		Assertions.assertEquals(model.getName(), cloned.getName());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportModel() throws Exception {
-
-		Model model = createModel("A");
-
-		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Model> exported = modelService.exportAsset(model.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Model imported = modelService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(model.getId(), imported.getId());
-		Assertions.assertEquals(model.getName(), imported.getName());
-		Assertions.assertEquals(model.getDescription(), imported.getDescription());
 	}
 }

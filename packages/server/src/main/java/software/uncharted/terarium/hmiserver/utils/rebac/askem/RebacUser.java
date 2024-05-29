@@ -26,6 +26,7 @@ public class RebacUser extends RebacObject {
 
 	public boolean can(RebacObject rebacObject, Schema.Permission permission) throws Exception {
 		if (serviceUser) return true;
+		if (rebacObject.getId().isEmpty()) return false;
 		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
 	}
 

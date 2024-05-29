@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.models.CacheName;
 import software.uncharted.terarium.hmiserver.service.CacheableTestService;
-import software.uncharted.terarium.hmiserver.util.MatchUtil;
+import software.uncharted.terarium.hmiserver.utils.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheControllerTests extends TerariumApplicationTests {
