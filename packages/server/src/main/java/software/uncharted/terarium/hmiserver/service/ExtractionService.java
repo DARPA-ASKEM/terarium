@@ -425,7 +425,7 @@ public class ExtractionService {
 			}
 
 			notificationInterface.sendMessage("Organizing and saving the extractions.");
-			final List<JsonNode> attributes = new ArrayList<>();
+			final ArrayNode attributes = objectMapper.createArrayNode();
 			for (final JsonNode attribute : collection.get("attributes")) {
 				attributes.add(attribute);
 			}

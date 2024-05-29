@@ -775,7 +775,7 @@ public class DatasetController {
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
 					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else {
+				} else if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 

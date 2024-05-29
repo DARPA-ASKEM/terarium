@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Upload a PDF
 1. Upload _the Document_ [SIR.pdf](../data/SIR.pdf) using `Upload Resources` button in the bottom left.
