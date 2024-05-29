@@ -34,11 +34,6 @@ if (!oidc.isUserLoggedIn) {
 	oidc.login({
 		doesCurrentHrefRequiresAuth: false
 	});
-} else {
-	const { decodedIdToken } = oidc.getTokens();
-
-	console.log(`Decoded Id Token: ${JSON.stringify(decodedIdToken)}`);
-	console.log(`Hello ${decodedIdToken.preferred_username}`);
 }
 
 // Create the Vue application
