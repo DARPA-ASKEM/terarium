@@ -8,7 +8,7 @@
 			<Dropdown
 				class="w-full p-dropdown-sm"
 				:options="codeAssets"
-				option-label="name"
+				option-label="assetName"
 				v-model="code"
 				placeholder="Select a code asset"
 			/>
@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref, watch, computed } from 'vue';
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { getCodeAsset } from '@/services/code';
-import { onMounted, ref, watch } from 'vue';
 import { AssetType } from '@/types/Types';
 import type { Code } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -38,7 +38,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'append-output', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
-const codeAssets = useProjects().getActiveProjectAssets(AssetType.Code);
+const codeAssets = computed(() => useProjects().getActiveProjectAssets(AssetType.Code));
 
 onMounted(async () => {
 	if (props.node.state.codeAssetId) {
