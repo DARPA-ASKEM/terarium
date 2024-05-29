@@ -185,7 +185,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import type {
 	FunmanPostQueriesRequest,
 	Model,
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	ModelParameter
 } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
@@ -294,7 +294,7 @@ const requestConstraints = computed(() =>
 
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfigurationLegacy>();
 
 const modelStates = ref<string[]>([]); // Used for form's multiselect.
 const modelParameters = ref<string[]>([]);

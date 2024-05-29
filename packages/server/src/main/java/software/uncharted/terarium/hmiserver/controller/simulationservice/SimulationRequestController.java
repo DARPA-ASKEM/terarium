@@ -16,7 +16,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -70,7 +70,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<Simulation> getSimulation(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -139,7 +139,7 @@ public class SimulationRequestController implements SnakeCaseController {
 
 		// Get model config's interventions and append them to requests:
 		try {
-			final Optional<ModelConfiguration> modelConfiguration =
+			final Optional<ModelConfigurationLegacy> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -149,13 +149,13 @@ public class SimulationRequestController implements SnakeCaseController {
 			if (modelInterventions != null) {
 				List<Intervention> allInterventions = request.getInterventions();
 				if (allInterventions == null) {
-					allInterventions = new ArrayList<Intervention>();
+					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
 				request.setInterventions(allInterventions);
 			}
-		} catch (IOException e) {
-			String error = "Server error has occured while fetching the model configuration";
+		} catch (final IOException e) {
+			final String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -207,11 +207,11 @@ public class SimulationRequestController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 			@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		// Get model config's interventions and append them to requests:
 		try {
-			final Optional<ModelConfiguration> modelConfiguration =
+			final Optional<ModelConfigurationLegacy> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -221,13 +221,13 @@ public class SimulationRequestController implements SnakeCaseController {
 			if (modelInterventions != null) {
 				List<Intervention> allInterventions = request.getInterventions();
 				if (allInterventions == null) {
-					allInterventions = new ArrayList<Intervention>();
+					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
 				request.setInterventions(allInterventions);
 			}
-		} catch (IOException e) {
-			String error = "Server error has occured while fetching the model configuration";
+		} catch (final IOException e) {
+			final String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -240,12 +240,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
 			@RequestBody final OptimizeRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// Get model config's interventions and append them to requests:
 		try {
-			final Optional<ModelConfiguration> modelConfiguration =
+			final Optional<ModelConfigurationLegacy> modelConfiguration =
 					modelConfigService.getAsset(request.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -255,13 +255,13 @@ public class SimulationRequestController implements SnakeCaseController {
 			if (modelInterventions != null) {
 				List<Intervention> allInterventions = request.getFixedStaticParameterInterventions();
 				if (allInterventions == null) {
-					allInterventions = new ArrayList<Intervention>();
+					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
 				request.setFixedStaticParameterInterventions(allInterventions);
 			}
-		} catch (IOException e) {
-			String error = "Server error has occured while fetching the model configuration";
+		} catch (final IOException e) {
+			final String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}

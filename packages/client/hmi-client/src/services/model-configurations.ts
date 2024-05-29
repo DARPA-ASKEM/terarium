@@ -1,7 +1,7 @@
 import _, { cloneDeep, isEmpty } from 'lodash';
 import API from '@/api/api';
 import type {
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	Model,
 	Intervention,
 	ModelParameter,
@@ -13,12 +13,12 @@ import { DistributionType } from '@/services/distribution';
 
 export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model-configurations`);
-	return (response?.data as ModelConfiguration[]) ?? null;
+	return (response?.data as ModelConfigurationLegacy[]) ?? null;
 };
 
 export const getModelConfigurationById = async (id: string) => {
 	const response = await API.get(`/model-configurations/${id}`);
-	return (response?.data as ModelConfiguration) ?? null;
+	return (response?.data as ModelConfigurationLegacy) ?? null;
 };
 
 export const getModelIdFromModelConfigurationId = async (id: string) => {
@@ -54,7 +54,7 @@ export const addDefaultConfiguration = async (model: Model): Promise<void> => {
 	await createModelConfiguration(model.id, 'Default config', 'Default config', model);
 };
 
-export const updateModelConfiguration = async (config: ModelConfiguration) => {
+export const updateModelConfiguration = async (config: ModelConfigurationLegacy) => {
 	// Do a sanity pass to ensure type-safety
 	const model: Model = config.configuration as Model;
 	const parameters = model.semantics?.ode.parameters;
@@ -77,7 +77,7 @@ export const updateModelConfiguration = async (config: ModelConfiguration) => {
 	return response?.data ?? null;
 };
 
-export function sanityCheck(config: ModelConfiguration): string[] {
+export function sanityCheck(config: ModelConfigurationLegacy): string[] {
 	const errors: string[] = [];
 	const modelToCheck = config.configuration;
 	if (!modelToCheck) {
@@ -114,35 +114,38 @@ export function sanityCheck(config: ModelConfiguration): string[] {
 	return errors;
 }
 
-export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
+export function getInitial(
+	config: ModelConfigurationLegacy,
+	initialId: string
+): Initial | undefined {
 	return config.configuration.semantics?.ode.initials?.find(
 		(initial) => initial.target === initialId
 	);
 }
 
-export function getInitialSource(config: ModelConfiguration, initialId: string): string {
+export function getInitialSource(config: ModelConfigurationLegacy, initialId: string): string {
 	return config.configuration.metadata?.initials?.[initialId]?.source ?? '';
 }
 
-export function getInitialName(config: ModelConfiguration, initialId: string): string {
+export function getInitialName(config: ModelConfigurationLegacy, initialId: string): string {
 	return config.configuration.metadata?.initials?.[initialId]?.name ?? '';
 }
 
-export function getInitialUnit(config: ModelConfiguration, initialId: string): string {
+export function getInitialUnit(config: ModelConfigurationLegacy, initialId: string): string {
 	return config.configuration.metadata?.initials?.[initialId]?.unit ?? '';
 }
 
-export function getInitialDescription(config: ModelConfiguration, initialId: string): string {
+export function getInitialDescription(config: ModelConfigurationLegacy, initialId: string): string {
 	return config.configuration.metadata?.initials?.[initialId]?.description ?? '';
 }
 
-export function getInitialExpression(config: ModelConfiguration, initialId: string): string {
+export function getInitialExpression(config: ModelConfigurationLegacy, initialId: string): string {
 	const initial = getInitial(config, initialId);
 	return initial?.expression ?? '';
 }
 
 export function setInitialSource(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	initialId: string,
 	source: string
 ): void {
@@ -153,7 +156,7 @@ export function setInitialSource(
 }
 
 export function setInitialExpression(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	initialId: string,
 	expression: string
 ): void {
@@ -173,7 +176,11 @@ export function setInitialExpression(
 		});
 }
 
-export function setInitialName(config: ModelConfiguration, initialId: string, name: string): void {
+export function setInitialName(
+	config: ModelConfigurationLegacy,
+	initialId: string,
+	name: string
+): void {
 	const initial = config.configuration.metadata?.initials?.[initialId];
 	if (initial) {
 		initial.name = name;
@@ -181,7 +188,7 @@ export function setInitialName(config: ModelConfiguration, initialId: string, na
 }
 
 export function setInitialDescription(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	initialId: string,
 	description: string
 ): void {
@@ -192,29 +199,32 @@ export function setInitialDescription(
 }
 
 export function getParameter(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	parameterId: string
 ): ModelParameter | undefined {
 	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
 }
 
-export function getParameterName(config: ModelConfiguration, parameterId: string): string {
+export function getParameterName(config: ModelConfigurationLegacy, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
 	return parameter?.name ?? '';
 }
 
-export function getParameterDescription(config: ModelConfiguration, parameterId: string): string {
+export function getParameterDescription(
+	config: ModelConfigurationLegacy,
+	parameterId: string
+): string {
 	const parameter = getParameter(config, parameterId);
 	return parameter?.description ?? '';
 }
 
-export function getParameterUnit(config: ModelConfiguration, parameterId: string): string {
+export function getParameterUnit(config: ModelConfigurationLegacy, parameterId: string): string {
 	const parameter = getParameter(config, parameterId);
 	return parameter?.units?.expression ?? '';
 }
 
 export function getParameterDistribution(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	parameterId: string
 ): ModelDistribution {
 	const parameter = cloneDeep(getParameter(config, parameterId));
@@ -234,13 +244,13 @@ export function getParameterDistribution(
 	return parameter.distribution;
 }
 
-export function getInterventions(config: ModelConfiguration): Intervention[] {
+export function getInterventions(config: ModelConfigurationLegacy): Intervention[] {
 	return config.interventions ?? [];
 }
 
 // FIXME: for set and remove interventions, we should not be using the index.  This should be addressed when we move to the new model config data structure.
 export function setIntervention(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	index: number,
 	intervention: Intervention
 ): void {
@@ -248,17 +258,17 @@ export function setIntervention(
 	interventions[index] = intervention;
 }
 
-export function removeIntervention(config: ModelConfiguration, index: number): void {
+export function removeIntervention(config: ModelConfigurationLegacy, index: number): void {
 	const interventions = getInterventions(config);
 	interventions.splice(index, 1);
 }
 
-export function getParameterSource(config: ModelConfiguration, parameterId: string): string {
+export function getParameterSource(config: ModelConfigurationLegacy, parameterId: string): string {
 	return config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
 }
 
 export function setParameterSource(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	parameterId: string,
 	source: string
 ): void {
@@ -269,7 +279,7 @@ export function setParameterSource(
 }
 
 export function setParameterDistribution(
-	config: ModelConfiguration,
+	config: ModelConfigurationLegacy,
 	parameterId: string,
 	distribution: ModelDistribution
 ): void {
@@ -298,10 +308,10 @@ function convertToUniformDistribution(distribution: ModelDistribution): ModelDis
 	};
 }
 
-export function getParameters(config: ModelConfiguration): ModelParameter[] {
+export function getParameters(config: ModelConfigurationLegacy): ModelParameter[] {
 	return config.configuration.semantics?.ode.parameters ?? [];
 }
 
-export function getInitials(config: ModelConfiguration): Initial[] {
+export function getInitials(config: ModelConfigurationLegacy): Initial[] {
 	return config.configuration.semantics?.ode.initials ?? [];
 }

@@ -38,7 +38,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
@@ -134,7 +134,7 @@ public class ModelController {
 	ResponseEntity<ModelDescription> getDescription(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
 
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -325,7 +325,7 @@ public class ModelController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Model model,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -363,7 +363,7 @@ public class ModelController {
 	ResponseEntity<ResponseDeleted> deleteModel(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -397,7 +397,7 @@ public class ModelController {
 			})
 	ResponseEntity<Model> createModel(
 			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -428,22 +428,22 @@ public class ModelController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfiguration.class)))),
+																		implementation = ModelConfigurationLegacy.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configurations from the data store",
 						content = @Content)
 			})
-	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
+	ResponseEntity<List<ModelConfigurationLegacy>> getModelConfigurationsForModelId(
 			@PathVariable("id") final UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final List<ModelConfiguration> modelConfigurations =
+			final List<ModelConfigurationLegacy> modelConfigurations =
 					modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
 			modelConfigurations.forEach(config -> {

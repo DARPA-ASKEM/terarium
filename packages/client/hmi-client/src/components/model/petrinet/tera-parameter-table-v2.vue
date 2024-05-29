@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfigurationLegacy } from '@/types/Types';
 import { getParameters } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { ref } from 'vue';
@@ -74,7 +74,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 import TeraParameterEntry from './tera-parameter-entry.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	modelConfiguration: ModelConfigurationLegacy;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 }>();

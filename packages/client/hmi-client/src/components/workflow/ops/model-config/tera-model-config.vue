@@ -333,7 +333,7 @@ import {
 	setParameterDistribution
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
@@ -375,7 +375,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 interface BasicKnobs {
 	tempConfigId: string;
-	transientModelConfig: ModelConfiguration;
+	transientModelConfig: ModelConfigurationLegacy;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -596,8 +596,8 @@ const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
-	tableData: ModelConfiguration[];
-	modelConfiguration: ModelConfiguration | null;
+	tableData: ModelConfigurationLegacy[];
+	modelConfiguration: ModelConfigurationLegacy | null;
 }>({
 	isOpen: false,
 	tableData: [],
@@ -772,7 +772,7 @@ const initialize = async () => {
 	}
 };
 
-const applyConfigValues = (config: ModelConfiguration) => {
+const applyConfigValues = (config: ModelConfigurationLegacy) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
 
@@ -804,7 +804,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
+const onOpenSuggestedConfiguration = (config: ModelConfigurationLegacy) => {
 	suggestedConfigurationContext.value.modelConfiguration = config;
 	suggestedConfigurationContext.value.isOpen = true;
 };

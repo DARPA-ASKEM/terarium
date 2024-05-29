@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfigurationLegacy } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
@@ -20,7 +20,7 @@ import { getModelType } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
+	modelConfigurations?: ModelConfigurationLegacy[];
 	readonly?: boolean;
 }>();
 

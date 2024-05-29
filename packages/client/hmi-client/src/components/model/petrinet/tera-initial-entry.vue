@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfigurationLegacy } from '@/types/Types';
 import {
 	getInitialName,
 	getInitialDescription,
@@ -43,7 +43,7 @@ import { ref } from 'vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	modelConfiguration: ModelConfigurationLegacy;
 	initialId: string;
 }>();
 

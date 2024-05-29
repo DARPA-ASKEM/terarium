@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -59,13 +59,13 @@ public class ModelConfigurationController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfiguration.class)))),
+																		implementation = ModelConfigurationLegacy.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configuration from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<List<ModelConfiguration>> getModelConfigurations(
+	public ResponseEntity<List<ModelConfigurationLegacy>> getModelConfigurations(
 			@RequestParam(name = "page-size", defaultValue = "500") final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 
@@ -91,16 +91,16 @@ public class ModelConfigurationController {
 										mediaType = "application/json",
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ModelConfiguration.class))),
+														implementation = ModelConfigurationLegacy.class))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue creating the configuration",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> createModelConfiguration(
-			@RequestBody final ModelConfiguration config,
+	public ResponseEntity<ModelConfigurationLegacy> createModelConfiguration(
+			@RequestBody final ModelConfigurationLegacy config,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -126,7 +126,7 @@ public class ModelConfigurationController {
 										mediaType = "application/json",
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ModelConfiguration.class))),
+														implementation = ModelConfigurationLegacy.class))),
 				@ApiResponse(
 						responseCode = "404",
 						description = "There was no configuration found",
@@ -136,14 +136,14 @@ public class ModelConfigurationController {
 						description = "There was an issue retrieving the configuration from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> getModelConfiguration(
+	public ResponseEntity<ModelConfigurationLegacy> getModelConfiguration(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfigurationLegacy> modelConfiguration = modelConfigurationService.getAsset(id, permission);
 			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
 					.build());
 		} catch (final IOException e) {
@@ -166,7 +166,7 @@ public class ModelConfigurationController {
 										mediaType = "application/json",
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ModelConfiguration.class))),
+														implementation = ModelConfigurationLegacy.class))),
 				@ApiResponse(
 						responseCode = "404",
 						description = "Model configuration could not be found",
@@ -176,16 +176,16 @@ public class ModelConfigurationController {
 						description = "There was an issue updating the configuration",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
+	public ResponseEntity<ModelConfigurationLegacy> updateModelConfiguration(
 			@PathVariable("id") final UUID id,
-			@RequestBody final ModelConfiguration config,
+			@RequestBody final ModelConfigurationLegacy config,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, permission);
+			final Optional<ModelConfigurationLegacy> updated = modelConfigurationService.updateAsset(config, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -215,7 +215,7 @@ public class ModelConfigurationController {
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {

@@ -322,7 +322,7 @@ import {
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
@@ -473,7 +473,7 @@ const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfigurationLegacy>();
 
 const showAdditionalOptions = ref(true);
 

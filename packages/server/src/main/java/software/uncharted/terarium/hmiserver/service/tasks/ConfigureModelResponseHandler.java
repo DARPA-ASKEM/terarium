@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -107,14 +107,14 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
-				final ModelConfiguration configuration = new ModelConfiguration();
+				final ModelConfigurationLegacy configuration = new ModelConfigurationLegacy();
 				configuration.setModelId(model.getId());
 				configuration.setName(condition.get("name").asText());
 				configuration.setDescription(condition.get("description").asText());
 
 				configuration.setConfiguration(modelCopy);
 
-				final ModelConfiguration newConfig =
+				final ModelConfigurationLegacy newConfig =
 						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()

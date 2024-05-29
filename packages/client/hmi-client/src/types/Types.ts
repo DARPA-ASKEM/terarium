@@ -210,7 +210,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
+export interface ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
     configuration: Model;
     interventions?: Intervention[];
     model_id: string;

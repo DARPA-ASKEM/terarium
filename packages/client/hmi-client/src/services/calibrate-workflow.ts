@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import type { ModelConfiguration, Dataset, CsvAsset, State } from '@/types/Types';
+import type { ModelConfigurationLegacy, Dataset, CsvAsset, State } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
@@ -13,7 +13,8 @@ export interface CalibrateMap {
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
+		const modelConfiguration: ModelConfigurationLegacy =
+			await getModelConfigurationById(modelConfigId);
 		const modelOptions: State[] = modelConfiguration.configuration.model.states;
 
 		// add observables

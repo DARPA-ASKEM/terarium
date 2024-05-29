@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { DKG, Model, ModelConfigurationLegacy, ModelParameter } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -104,7 +104,7 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
+	modelConfigurations?: ModelConfigurationLegacy[];
 	readonly?: boolean;
 }>();
 

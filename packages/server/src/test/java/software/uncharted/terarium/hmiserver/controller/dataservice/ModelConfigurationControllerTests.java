@@ -17,7 +17,7 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
@@ -49,8 +49,8 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
-				(ModelConfiguration) new ModelConfiguration()
+		final ModelConfigurationLegacy modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfigurationLegacy) new ModelConfigurationLegacy()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setName("test-framework")
@@ -67,7 +67,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
+		final ModelConfigurationLegacy modelConfiguration = (ModelConfigurationLegacy) new ModelConfigurationLegacy()
 				.setModelId(UUID.randomUUID())
 				.setConfiguration(new Model())
 				.setDescription("test-desc")
@@ -85,8 +85,8 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
-				(ModelConfiguration) new ModelConfiguration()
+		final ModelConfigurationLegacy modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfigurationLegacy) new ModelConfigurationLegacy()
 						.setModelId(UUID.randomUUID())
 						.setConfiguration(new Model())
 						.setDescription("test-desc")
@@ -105,7 +105,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
+		final ModelConfigurationLegacy modelConfiguration = (ModelConfigurationLegacy) new ModelConfigurationLegacy()
 				.setModelId(UUID.randomUUID())
 				.setConfiguration(new Model())
 				.setDescription("test-desc")

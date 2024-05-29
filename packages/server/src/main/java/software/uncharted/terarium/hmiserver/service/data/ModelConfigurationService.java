@@ -7,18 +7,18 @@ import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Service
-public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration> {
+public class ModelConfigurationService extends TerariumAssetService<ModelConfigurationLegacy> {
 
 	public ModelConfigurationService(
 			final ElasticsearchConfiguration elasticConfig,
 			final Config config,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService) {
-		super(elasticConfig, config, elasticService, projectAssetService, ModelConfiguration.class);
+		super(elasticConfig, config, elasticService, projectAssetService, ModelConfigurationLegacy.class);
 	}
 
 	@Override
@@ -27,6 +27,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		return elasticConfig.getModelConfigurationIndex();
 	}
 
+	@Override
 	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
 			throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");

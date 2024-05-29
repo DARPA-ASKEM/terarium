@@ -99,7 +99,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
-import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
+import type { Dataset, Model, ModelConfigurationLegacy, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import SelectButton from 'primevue/selectbutton';
 import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
@@ -113,7 +113,7 @@ import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tabl
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
+	modelConfigurations?: ModelConfigurationLegacy[];
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
@@ -206,7 +206,7 @@ function fetchAsset() {
 	emit('fetch-model');
 }
 
-function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+function updateConfiguration(updatedConfiguration: ModelConfigurationLegacy) {
 	emit('update-configuration', updatedConfiguration);
 }
 </script>

@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfigurationLegacy } from '@/types/Types';
 import {
 	getParameterName,
 	getParameterDescription,
@@ -103,7 +103,7 @@ import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	modelConfiguration: ModelConfigurationLegacy;
 	parameterId: string;
 }>();
 
