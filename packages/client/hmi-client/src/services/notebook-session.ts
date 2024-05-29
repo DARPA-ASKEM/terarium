@@ -14,7 +14,7 @@ export const getNotebookSessionById = async (notebook_id: string) => {
 export const createNotebookSession = async (notebookSession: NotebookSession) => {
 	const response = await API.post(`/sessions`, {
 		id: notebookSession.id,
-		name: notebookSession.name,
+		workflowId: notebookSession.workflowId,
 		description: notebookSession.description,
 		data: notebookSession.data
 	} as NotebookSession);
@@ -24,7 +24,7 @@ export const createNotebookSession = async (notebookSession: NotebookSession) =>
 export const updateNotebookSession = async (notebookSession: NotebookSession) => {
 	const response = await API.put(`/sessions/${notebookSession.id}`, {
 		id: notebookSession.id,
-		name: notebookSession.name,
+		workflowId: notebookSession.workflowId,
 		description: notebookSession.description,
 		data: notebookSession.data
 	});

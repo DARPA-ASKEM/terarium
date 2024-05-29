@@ -5,6 +5,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,8 +23,7 @@ public class NotebookSession extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = 9176019416379347233L;
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3719
-	// private UUID workflowId;
+	private UUID workflowId;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

@@ -404,7 +404,7 @@ watch(
 		if (props.notebookSession) {
 			await updateNotebookSession({
 				id: props.notebookSession.id,
-				name: props.notebookSession.name,
+				workflowId: props.notebookSession.workflowId,
 				description: props.notebookSession.description,
 				data: { history: notebookItems.value }
 			});

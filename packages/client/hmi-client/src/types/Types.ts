@@ -381,6 +381,7 @@ export interface DecapodesTerm {
 }
 
 export interface NotebookSession extends TerariumAsset {
+    workflowId: string;
     data: any;
 }
 
