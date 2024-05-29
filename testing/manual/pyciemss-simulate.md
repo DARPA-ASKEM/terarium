@@ -15,7 +15,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Model setup
 1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
