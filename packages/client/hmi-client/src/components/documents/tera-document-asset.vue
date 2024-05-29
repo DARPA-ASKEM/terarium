@@ -158,10 +158,10 @@ import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig } from '@/types/common';
+import { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import type { ClientEvent, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
+import type { ClientEvent, DocumentAsset } from '@/types/Types';
 import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
 import {
 	downloadDocumentAsset,
@@ -177,7 +177,6 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import { getStatusFromProgress } from '@/services/notificationEventHandlers';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -309,7 +308,7 @@ watch(
 	{ immediate: true }
 );
 
-const formattedAbstract = computed<string>(() => document.value?.description ?? '');
+const formattedAbstract = computed<string>(() => document.value?.documentAbstract ?? '');
 
 onUpdated(() => {
 	if (document.value) {
@@ -323,9 +322,9 @@ onMounted(async () => {
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
 	console.log(event.data.message);
-	if (!event.data || event.data.documentId !== props.assetId) return;
+	if (!event.data || event.data.data.documentId !== props.assetId) return;
 
-	const status = getStatusFromProgress(event.data);
+	const status = event.data.state;
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
 	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);
