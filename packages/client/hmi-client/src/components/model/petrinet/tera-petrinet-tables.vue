@@ -123,9 +123,9 @@ import Column from 'primevue/column';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
+import TeraInitialsMetadata from '@/components/model/tera-initials-metadata.vue';
+import TeraParametersMetadata from '@/components/model//tera-parameters-metadata.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
-import TeraInitialsMetadata from '../tera-initials-metadata.vue';
-import TeraParametersMetadata from '../tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;

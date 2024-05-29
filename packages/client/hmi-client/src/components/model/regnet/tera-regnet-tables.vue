@@ -90,7 +90,7 @@ import {
 import { getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
-import TeraParametersMetadata from '../tera-parameters-metadata.vue';
+import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
