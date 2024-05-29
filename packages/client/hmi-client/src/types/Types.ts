@@ -229,6 +229,40 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
     semantics: string;
 }
 
+export interface InitialSemantic extends Semantic {
+    target: string;
+    expression: string;
+    unit: string;
+}
+
+export interface ModelConfiguration extends TerariumAsset {
+    calibrated: boolean;
+    modelId: string;
+    values: { [index: string]: Semantic };
+}
+
+export interface ObservableSemantic extends Semantic {
+    id: string;
+    states: State[];
+    expression: string;
+}
+
+export interface ParameterSemantic extends Semantic {
+    id: string;
+    value: number;
+    distribution: ModelDistribution;
+    interventions: Intervention[];
+    modelUnit: ModelUnit;
+    default: boolean;
+}
+
+export interface Semantic {
+    name: string;
+    description: string;
+    source: string;
+    type: SemanticType;
+}
+
 export interface State {
     id: string;
     name?: string;
@@ -882,15 +916,20 @@ export interface ModelMetadata {
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
-    modifiers?: any;
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
 }
 
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+    modifiers?: any;
 }
 
 export interface Properties {
@@ -924,11 +963,6 @@ export interface ProvenanceEdge {
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
@@ -1290,6 +1324,12 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum SemanticType {
+    Initial = "initial",
+    Parameter = "parameter",
+    Observable = "observable",
 }
 
 export enum ProvenanceRelationType {
