@@ -54,14 +54,12 @@ watch(
 			state.codeAssetId = code.value.id;
 			emit('update-state', state);
 
-			if (_.isEmpty(props.node.outputs)) {
-				const blocks = await getCodeBlocks(code.value);
-				emit('append-output', {
-					type: 'codeAssetId',
-					label: `${code.value.name} code blocks (${blocks.length})`,
-					value: [code.value.id]
-				});
-			}
+			const blocks = await getCodeBlocks(code.value);
+			emit('append-output', {
+				type: 'codeAssetId',
+				label: `${code.value.name} code blocks (${blocks.length})`,
+				value: [code.value.id]
+			});
 		}
 	}
 );

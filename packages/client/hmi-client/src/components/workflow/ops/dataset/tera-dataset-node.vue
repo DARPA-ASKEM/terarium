@@ -60,7 +60,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
@@ -99,18 +98,15 @@ async function getDatasetById(id: string) {
 
 	if (dataset.value && dataset.value?.id) {
 		// Once a dataset is selected the output is assigned here,
-		// if there is already an output do not reassign
-		if (isEmpty(props.node.outputs)) {
-			emit('update-state', {
-				datasetId: dataset.value.id
-			});
+		emit('update-state', {
+			datasetId: dataset.value.id
+		});
 
-			emit('append-output', {
-				type: 'datasetId',
-				label: dataset.value.name,
-				value: [dataset.value.id]
-			});
-		}
+		emit('append-output', {
+			type: 'datasetId',
+			label: dataset.value.name,
+			value: [dataset.value.id]
+		});
 
 		// Fetch the CSV file from the dataset for preview purposes
 		/*
