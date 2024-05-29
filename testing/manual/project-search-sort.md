@@ -10,13 +10,13 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create project named `(2) Q&A [Your Name] [YYMMDD]`
+2. Create project named `(2) QA [Your Name] [YYMMDD]`
    - The Description should be `Bees`
    - return to home page by clicking on logo in the top left
-3. Create project named `(3) Q&A [Your Name] [YYMMDD]`
+3. Create project named `(3) QA [Your Name] [YYMMDD]`
    - The Description should be `Wings`
    - return to home page by clicking on logo in the top left
-4. Create project named `(1) Q&A [Your Name] [YYMMDD]`
+4. Create project named `(1) QA [Your Name] [YYMMDD]`
    - The Description should be `Cars`
    - return to home page by clicking on logo in the top left
 
