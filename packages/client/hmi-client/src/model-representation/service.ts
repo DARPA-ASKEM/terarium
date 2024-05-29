@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
