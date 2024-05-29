@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. [Create simple stratified model]
 1. Add the [SIR model](https://drive.google.com/file/d/1vtIwevIXR4DkEROcR7KdKrCrEHGfo7s0/view?usp=sharing) to the project.
