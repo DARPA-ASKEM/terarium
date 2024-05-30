@@ -44,12 +44,12 @@ jobs:
       - name: Commit all changed files
         run: |
           git diff --exit-code || {
-            echo "Files have changed. Committing changes..."
+            echo "Files have changed. Ammending changes to last commit."
             git config --global user.email "${{ github.actor }}@users.noreply.github.com"
             git config --global user.name "${{ github.actor }}"
             git fetch --depth=1;
             git checkout  ${{ github.head_ref }} --
             git add .
-            git commit -m "chore: lint and format client codebase"
-            git push --set-upstream origin ${{ github.head_ref }}
+            git commit --amend --no-edit
+            git push --force-with-lease --set-upstream origin ${{ github.head_ref }}
           }
