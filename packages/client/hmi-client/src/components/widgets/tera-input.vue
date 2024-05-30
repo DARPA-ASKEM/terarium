@@ -1,5 +1,5 @@
 <template>
-	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput" :label="label">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input
 			v-bind="attrs"

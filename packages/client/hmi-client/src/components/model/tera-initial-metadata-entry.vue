@@ -1,15 +1,11 @@
 <template>
 	<section>
-		<div class="name">
-			<h6>{{ target }}</h6>
-			<span>
-				<tera-input
-					label="Name"
-					:model-value="getInitialName(model, target)"
-					@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
-				/>
-			</span>
-		</div>
+		<h6>{{ target }}</h6>
+		<tera-input
+			label="Name"
+			:model-value="getInitialName(model, target)"
+			@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
+		/>
 		<tera-input
 			label="Description"
 			:model-value="getInitialDescription(model, target)"
@@ -58,21 +54,30 @@ defineProps<{
 <style scoped>
 section {
 	display: grid;
-	grid-template-columns: 30% 1fr;
+	grid-template-areas:
+		'symbol name description description'
+		'unit		unit concept .';
+	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
+}
 
-	& > .name {
-		display: flex;
-		align-items: center;
-		gap: var(--gap-small);
+h6 {
+	grid-area: symbol;
+}
 
-		& > span {
-			flex-grow: 1;
-		}
-	}
+:deep([label='Name']) {
+	grid-area: name;
+}
 
-	& > :last-child {
-		width: 45%;
-	}
+:deep([label='Description']) {
+	grid-area: description;
+}
+
+:deep([label='Unit']) {
+	grid-area: unit;
+}
+
+:deep([label='Concept']) {
+	grid-area: concept;
 }
 </style>
