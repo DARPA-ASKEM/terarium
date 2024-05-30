@@ -1,46 +1,41 @@
 <template>
 	<section>
-		<div>
+		<div class="name">
+			<h6>{{ target }}</h6>
 			<span>
-				<h6>{{ target }}</h6>
-				<span class="stretch-input">
-					<tera-input
-						label="Name"
-						:model-value="getInitialName(model, target)"
-						@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
-				/></span>
-			</span>
-			<span class="stretch-input">
 				<tera-input
-					label="Description"
-					:model-value="getInitialDescription(model, target)"
-					@update:model-value="
-						$emit('update-initial-metadata', {
-							key: 'description',
-							value: $event
-						})
-					"
+					label="Name"
+					:model-value="getInitialName(model, target)"
+					@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
 				/>
 			</span>
 		</div>
-		<div>
-			<tera-input
-				label="Unit"
-				:model-value="getInitialUnits(model, target)"
-				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
-			/>
-			<tera-input
-				label="Concept"
-				:model-value="getInitialConcept(model, target)"
-				disabled
-				@update:model-value="
-					$emit('update-initial-metadata', {
-						key: 'concept',
-						value: $event
-					})
-				"
-			/>
-		</div>
+		<tera-input
+			label="Description"
+			:model-value="getInitialDescription(model, target)"
+			@update:model-value="
+				$emit('update-initial-metadata', {
+					key: 'description',
+					value: $event
+				})
+			"
+		/>
+		<tera-input
+			label="Unit"
+			:model-value="getInitialUnits(model, target)"
+			@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
+		/>
+		<tera-input
+			label="Concept"
+			:model-value="getInitialConcept(model, target)"
+			disabled
+			@update:model-value="
+				$emit('update-initial-metadata', {
+					key: 'concept',
+					value: $event
+				})
+			"
+		/>
 	</section>
 </template>
 
@@ -61,19 +56,23 @@ defineProps<{
 </script>
 
 <style scoped>
-div {
-	display: flex;
+section {
+	display: grid;
+	grid-template-columns: 30% 1fr;
 	gap: var(--gap-small);
 
-	& > :first-child {
+	& > .name {
 		display: flex;
 		align-items: center;
 		gap: var(--gap-small);
-		width: 20%;
-	}
-}
 
-.stretch-input {
-	flex-grow: 1;
+		& > span {
+			flex-grow: 1;
+		}
+	}
+
+	& > :last-child {
+		width: 45%;
+	}
 }
 </style>

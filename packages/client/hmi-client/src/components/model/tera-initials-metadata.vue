@@ -26,7 +26,7 @@ const initials = getInitials(props.model);
 
 <style scoped>
 li {
-	padding-top: var(--gap-small);
+	padding: var(--gap-small) 0;
 	border-bottom: 1px solid var(--surface-border);
 }
 </style>
