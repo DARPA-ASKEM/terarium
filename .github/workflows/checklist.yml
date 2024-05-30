@@ -20,17 +20,6 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            // Check if the bot has already approved the PR
-            const {data: reviews} = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.number,
-            });
-            if (reviews.find(review => review.user.id === 41898282 && review.state === 'APPROVED')) {
-              console.log('The PR has already been approved by the bot.');
-              return;
-            }
-
             // Find any comment already made by the bot.
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -53,26 +42,17 @@ jobs:
 
             console.log("Bot comment found.");
 
-            // Approve PR if all checklist items are checked
+            // If all checklist items are checked
             if (!botComment.body.match(/- \[ \]/g)) {
-              console.log("All checklist items are checked. Approving the pull request.");
+              console.log("All checklist items are checked.");
 
               // Update the bot comment with the approved message.
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body: botComment.body + "\n\nAll checklist items are checked. Approving the pull request.",
+                body: botComment.body + "\n\nAll checklist items are checked.",
               })
-
-              // All checklist items are checked, approve the pull request
-              await github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.number,
-                event: 'APPROVE',
-                body: 'All checklist items are checked',
-              });
 
               return;
             }
