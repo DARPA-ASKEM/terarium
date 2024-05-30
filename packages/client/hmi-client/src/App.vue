@@ -1,9 +1,13 @@
 <template>
 	<!-- Sets the Toast notification groups and their respective levels-->
-	<Toast position="top-center" group="error" />
-	<Toast position="top-center" group="warn" />
-	<Toast position="top-center" group="info" />
-	<Toast position="top-center" group="success" />
+	<Toast position="top-center" 
+		group="error" />
+	<Toast position="top-center" 
+		group="warn" />
+	<Toast position="top-center" 
+		group="info" />
+	<Toast position="top-center" 
+		group="success" />
 	<header>
 		<tera-navbar :active="displayNavBar" />
 	</header>
