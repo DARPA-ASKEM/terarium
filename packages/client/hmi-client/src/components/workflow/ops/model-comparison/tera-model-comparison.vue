@@ -70,17 +70,6 @@
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar-right-side">
-					<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						size="small"
-						@click="runCode"
-					/>
-				</div>
 				<div class="toolbar">
 					<tera-notebook-jupyter-input
 						:kernelManager="kernelManager"
@@ -89,7 +78,18 @@
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
 						@question-asked="llmThoughts = []"
 						:context-language="contextLanguage"
-					/>
+					>
+						<template #toolbar-right-side>
+							<Button
+								label="Reset"
+								outlined
+								severity="secondary"
+								size="small"
+								@click="resetNotebook"
+							/>
+							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
+						</template>
+					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
@@ -173,7 +173,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -291,8 +291,8 @@ function appendCode(data: any) {
 	else logger.error('No code to append');
 }
 
-function processCompareModels(modelIds) {
-	compareModels(modelIds).then((response) => {
+function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
+	compareModels(modelIds, workflowId, nodeId).then((response) => {
 		llmAnswer.value = response.response;
 	});
 }
@@ -341,7 +341,7 @@ onMounted(async () => {
 	const modelIds = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
-	processCompareModels(modelIds);
+	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
 onUnmounted(() => {

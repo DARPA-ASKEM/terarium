@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
@@ -58,7 +58,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'append-output', 'open-drilldown']);
-const models = useProjects().getActiveProjectAssets(AssetType.Model);
+const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 enum ModelNodeView {
 	Diagram = 'Diagram',
@@ -73,14 +73,17 @@ async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
 
 	if (model.value && model.value.id) {
-		const state = _.cloneDeep(props.node.state);
-		state.modelId = model.value?.id;
-		emit('update-state', state);
-		emit('append-output', {
-			type: 'modelId',
-			label: model.value.header.name,
-			value: [model.value.id]
-		});
+		const outputs = props.node.outputs;
+		if (_.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+			const state = _.cloneDeep(props.node.state);
+			state.modelId = model.value?.id;
+			emit('update-state', state);
+			emit('append-output', {
+				type: 'modelId',
+				label: model.value.header.name,
+				value: [model.value.id]
+			});
+		}
 	}
 }
 
@@ -91,15 +94,7 @@ async function onModelChange(chosenProjectModel: ProjectAsset) {
 onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
-		model.value = await getModel(state.modelId);
-
-		if (props.node.outputs.length === 0 && model.value) {
-			emit('append-output', {
-				type: 'modelId',
-				label: model.value.header.name,
-				value: [model.value.id]
-			});
-		}
+		await getModelById(state.modelId);
 	}
 });
 </script>

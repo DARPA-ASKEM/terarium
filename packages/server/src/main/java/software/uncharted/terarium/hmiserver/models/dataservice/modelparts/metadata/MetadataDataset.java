@@ -21,4 +21,13 @@ public class MetadataDataset extends SupportAdditionalProperties implements Seri
 	private String name;
 
 	private String metadata;
+
+	@Override
+	public MetadataDataset clone() {
+		MetadataDataset clone = (MetadataDataset) super.clone();
+		clone.id = this.id;
+		clone.name = this.name;
+		clone.metadata = this.metadata;
+		return clone;
+	}
 }

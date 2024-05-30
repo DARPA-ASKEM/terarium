@@ -39,12 +39,14 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/gollm")
 @RestController
@@ -57,6 +59,7 @@ public class GoLLMController {
 	private final DocumentAssetService documentAssetService;
 	private final DatasetService datasetService;
 	private final ModelService modelService;
+	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
@@ -101,11 +104,14 @@ public class GoLLMController {
 			})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			// Grab the document
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 			if (document.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
 			}
@@ -131,6 +137,7 @@ public class GoLLMController {
 			req.setScript(ModelCardResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 			props.setDocumentId(documentId);
@@ -173,12 +180,17 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 
 			// Grab the document
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 			if (document.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
 			}
@@ -190,7 +202,7 @@ public class GoLLMController {
 			}
 
 			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId);
+			final Optional<Model> model = modelService.getAsset(modelId, permission);
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 			}
@@ -208,10 +220,13 @@ public class GoLLMController {
 			req.setScript(ConfigureModelResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
 			props.setDocumentId(documentId);
 			props.setModelId(modelId);
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
 
 			// send the request
@@ -262,13 +277,18 @@ public class GoLLMController {
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			// Grab the datasets
 			final List<String> datasets = new ArrayList<>();
 			for (final UUID datasetId : datasetIds) {
-				final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
+				final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
 				if (dataset.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset not found");
 				}
@@ -299,7 +319,7 @@ public class GoLLMController {
 			}
 
 			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId);
+			final Optional<Model> model = modelService.getAsset(modelId, permission);
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 			}
@@ -322,11 +342,14 @@ public class GoLLMController {
 			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
 
 			final ConfigureFromDatasetResponseHandler.Properties props =
 					new ConfigureFromDatasetResponseHandler.Properties();
 			props.setDatasetIds(datasetIds);
 			props.setModelId(modelId);
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
 			req.setAdditionalProperties(props);
 
 			// send the request
@@ -366,12 +389,17 @@ public class GoLLMController {
 			})
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode) {
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+			@RequestParam(name = "node-id", required = false) final UUID nodeId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			final List<String> modelCards = new ArrayList<>();
 			for (final UUID modelId : modelIds) {
 				// Grab the model
-				final Optional<Model> model = modelService.getAsset(modelId);
+				final Optional<Model> model = modelService.getAsset(modelId, permission);
 				if (model.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
 				}
@@ -396,6 +424,12 @@ public class GoLLMController {
 			req.setScript(CompareModelsResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 			req.setInput(objectMapper.writeValueAsBytes(input));
+			req.setProjectId(projectId);
+
+			final CompareModelsResponseHandler.Properties props = new CompareModelsResponseHandler.Properties();
+			props.setWorkflowId(workflowId);
+			props.setNodeId(nodeId);
+			req.setAdditionalProperties(props);
 
 			// send the request
 			return ResponseEntity.ok().body(taskService.runTask(mode, req));

@@ -299,3 +299,19 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 			break;
 	}
 }
+
+// cleans a model by removing distributions that are not needed
+export function cleanModel(model: Model): void {
+	const parameters: ModelParameter[] = getParameters(model);
+
+	parameters.forEach((p) => {
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+
+		// we delete the distribution when there is partial/no distribution
+
+		if (Number.isNaN(max) || Number.isNaN(min)) {
+			delete p.distribution;
+		}
+	});
+}

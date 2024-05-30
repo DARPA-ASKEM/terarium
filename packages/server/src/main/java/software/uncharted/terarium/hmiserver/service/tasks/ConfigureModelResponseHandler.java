@@ -57,18 +57,23 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		UUID documentId;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Model model = modelService
+					.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+					.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
 			for (final JsonNode condition : configurations.response.get("conditions")) {
-				final Model modelCopy = new Model(model);
+				final Model modelCopy = model.clone();
+				modelCopy.setId(model.getId());
 
 				// Map the parameters values to the model
 				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
@@ -109,7 +114,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 				configuration.setConfiguration(modelCopy);
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+				final ModelConfiguration newConfig =
+						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()
 						.setLeft(newConfig.getId())

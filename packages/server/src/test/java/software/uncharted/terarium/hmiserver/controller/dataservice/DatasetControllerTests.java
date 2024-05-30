@@ -58,6 +58,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/datasets")
 						.with(csrf())
+						.param("project-id", PROJECT_ID.toString())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(dataset)))
 				.andExpect(status().isCreated());
@@ -68,9 +69,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -80,13 +83,16 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDatasets() throws Exception {
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf()))
 				.andExpect(status().isOk())
@@ -98,13 +104,17 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(datasetService.getAsset(dataset.getId()).isEmpty());
+		Assertions.assertTrue(datasetService
+				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 
 	@Test
@@ -112,7 +122,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetCSV() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -128,6 +139,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 						.file(file)
 						.queryParam("filename", "filename.csv")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -142,10 +154,12 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetFromGithub() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
 						.with(csrf())
+						.param("project-id", PROJECT_ID.toString())
 						.param("repo-owner-and-name", "unchartedsoftware/torflow")
 						.param("path", "README.md")
 						.param("filename", "torflow-readme.md")
@@ -158,7 +172,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDatasetCSV() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -174,6 +189,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 						.file(file)
 						.queryParam("filename", "filename.csv")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -199,7 +215,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "This is my small test dataset\n";
 
@@ -215,6 +232,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-file")
 						.file(file)
 						.queryParam("filename", "filename.txt")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -229,7 +247,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDataset() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 
@@ -245,6 +264,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc.perform(MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 						.file(file)
 						.queryParam("filename", "filename.csv")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType(MediaType.MULTIPART_FORM_DATA)
 						.with(request -> {
@@ -256,6 +276,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		final MvcResult res = mockMvc.perform(
 						MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")
 								.queryParam("filename", "filename.csv")
+								.param("project-id", PROJECT_ID.toString())
 								.with(csrf()))
 				.andExpect(request().asyncStarted())
 				.andDo(MvcResult::getAsyncResult)
@@ -269,7 +290,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetUploadUrl() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		// Perform the multipart file upload request
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
@@ -300,7 +322,8 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDownloadUrl() throws Exception {
 
 		final Dataset dataset = datasetService.createAsset(
-				(Dataset) new Dataset().setName("test-document-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-document-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		// Perform the multipart file upload request
 		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/upload-url")
@@ -327,6 +350,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		res = mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-url")
 						.queryParam("filename", "filename.txt")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk())
 				.andReturn();
@@ -336,5 +360,53 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		final HttpGet get = new HttpGet(url.getUrl());
 		response = httpclient.execute(get);
 		Assertions.assertEquals(response.getStatusLine().getStatusCode(), 200);
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanGetPublicModelWithoutProject() throws Exception {
+
+		Dataset dataset_public_not_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(false);
+		Dataset dataset_not_public_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(true);
+		Dataset dataset_not_public_not_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(false)
+				.setTemporary(false);
+		Dataset dataset_public_temp = (Dataset) new Dataset()
+				.setName("test-document-name")
+				.setDescription("my description")
+				.setPublicAsset(true)
+				.setTemporary(true);
+
+		final Dataset createdDataset_not_public_not_temp =
+				datasetService.createAsset(dataset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_public_not_temp =
+				datasetService.createAsset(dataset_public_not_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_public_temp =
+				datasetService.createAsset(dataset_public_temp, ASSUME_WRITE_PERMISSION);
+		final Dataset createdDataset_not_public_temp =
+				datasetService.createAsset(dataset_not_public_temp, ASSUME_WRITE_PERMISSION);
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId())
+						.with(csrf()))
+				.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_not_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 	}
 }

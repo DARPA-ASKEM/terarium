@@ -76,7 +76,8 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
-		:model="amr"
+		:asset="amr"
+		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -91,6 +92,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { getModel, createModel, updateModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -344,7 +346,7 @@ const handleOutputChange = async () => {
 	// Switch to model from output
 	activeModelId = activeOutput.value?.value?.[0];
 	if (!activeModelId) return;
-	codeText.value = props.node.state.notebookHistory[0]?.code ?? defaultCodeText;
+	codeText.value = props.node.state.notebookHistory?.[0]?.code ?? defaultCodeText;
 
 	// Create a new session and context based on model
 	try {
@@ -442,7 +444,6 @@ onUnmounted(() => {
 .preview-container {
 	display: flex;
 	flex-direction: column;
-	padding: 1rem;
 }
 
 :deep(.diagram-container) {

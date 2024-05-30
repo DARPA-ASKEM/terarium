@@ -23,7 +23,7 @@ export const ModelFromCodeOperation: Operation = {
 		{ type: 'codeAssetId', label: 'Code' },
 		{ type: 'documentId', label: 'Document' }
 	],
-	outputs: [],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: () => {},
 
 	initState: () => {

@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,9 +62,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	}
 
 	static DocumentAsset createDocument(final String key) throws Exception {
-
-		final ObjectMapper mapper = new ObjectMapper();
-
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName("test-document-name-" + key);
 		documentAsset.setDescription("test-document-description-" + key);
@@ -72,11 +70,10 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.getFileNames().add("science2.pdf");
 		documentAsset.setGrounding(createGrounding(key));
 		documentAsset.setMetadata(new HashMap<>());
-		documentAsset.getMetadata().put("hello", "world-" + key);
+		documentAsset.getMetadata().put("hello", JsonNodeFactory.instance.textNode("world-" + key));
 		documentAsset.setPublicAsset(true);
 		documentAsset.setAssets(new ArrayList<>());
 		documentAsset.getAssets().add(createDocExtraction());
-
 		return documentAsset;
 	}
 
@@ -85,7 +82,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateDocument() throws Exception {
 
 		final DocumentAsset before = (DocumentAsset) createDocument().setId(UUID.randomUUID());
-		final DocumentAsset after = documentAssetService.createAsset(before);
+		final DocumentAsset after = documentAssetService.createAsset(before, ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
@@ -108,10 +105,10 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = (DocumentAsset) createDocument().setId(UUID.randomUUID());
 
-		documentAssetService.createAsset(documentAsset);
+		documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		try {
-			documentAssetService.createAsset(documentAsset);
+			documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 		} catch (final IllegalArgumentException e) {
 			Assertions.assertTrue(e.getMessage().contains("already exists"));
@@ -122,11 +119,11 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDocumentAssets() throws Exception {
 
-		documentAssetService.createAsset(createDocument("0"));
-		documentAssetService.createAsset(createDocument("1"));
-		documentAssetService.createAsset(createDocument("2"));
+		documentAssetService.createAsset(createDocument("0"), ASSUME_WRITE_PERMISSION);
+		documentAssetService.createAsset(createDocument("1"), ASSUME_WRITE_PERMISSION);
+		documentAssetService.createAsset(createDocument("2"), ASSUME_WRITE_PERMISSION);
 
-		final List<DocumentAsset> documentAssets = documentAssetService.getAssets(0, 3);
+		final List<DocumentAsset> documentAssets = documentAssetService.getPublicNotTemporaryAssets(0, 3);
 
 		Assertions.assertEquals(3, documentAssets.size());
 	}
@@ -135,10 +132,11 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument());
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), ASSUME_WRITE_PERMISSION);
 
-		final DocumentAsset fetchedDocumentAsset =
-				documentAssetService.getAsset(documentAsset.getId()).get();
+		final DocumentAsset fetchedDocumentAsset = documentAssetService
+				.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
 
 		Assertions.assertEquals(documentAsset, fetchedDocumentAsset);
 		Assertions.assertEquals(documentAsset.getId(), fetchedDocumentAsset.getId());
@@ -152,11 +150,12 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument());
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), ASSUME_WRITE_PERMISSION);
 		documentAsset.setName("new name");
 
-		final DocumentAsset updatedDocumentAsset =
-				documentAssetService.updateAsset(documentAsset).orElseThrow();
+		final DocumentAsset updatedDocumentAsset = documentAssetService
+				.updateAsset(documentAsset, ASSUME_WRITE_PERMISSION)
+				.orElseThrow();
 
 		Assertions.assertEquals(documentAsset, updatedDocumentAsset);
 		Assertions.assertNotNull(updatedDocumentAsset.getUpdatedOn());
@@ -166,11 +165,12 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument());
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), ASSUME_WRITE_PERMISSION);
 
-		documentAssetService.deleteAsset(documentAsset.getId());
+		documentAssetService.deleteAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<DocumentAsset> deleted = documentAssetService.getAsset(documentAsset.getId());
+		final Optional<DocumentAsset> deleted =
+				documentAssetService.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -180,9 +180,9 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneDocumentAsset() throws Exception {
 
 		DocumentAsset documentAsset = createDocument();
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		final DocumentAsset cloned = documentAssetService.cloneAsset(documentAsset.getId());
+		final DocumentAsset cloned = documentAsset.clone();
 
 		Assertions.assertNotEquals(documentAsset.getId(), cloned.getId());
 		Assertions.assertEquals(
@@ -190,28 +190,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 				cloned.getGrounding().getIdentifiers());
 		Assertions.assertEquals(
 				documentAsset.getGrounding().getContext(), cloned.getGrounding().getContext());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportDocumentAsset() throws Exception {
-
-		DocumentAsset documentAsset = createDocument();
-		documentAsset = documentAssetService.createAsset(documentAsset);
-
-		final byte[] exported = documentAssetService.exportAsset(documentAsset.getId());
-
-		final DocumentAsset imported = documentAssetService.importAsset(exported);
-
-		Assertions.assertNotEquals(documentAsset.getId(), imported.getId());
-		Assertions.assertEquals(documentAsset.getName(), imported.getName());
-		Assertions.assertEquals(documentAsset.getDescription(), imported.getDescription());
-		Assertions.assertEquals(
-				documentAsset.getGrounding().getIdentifiers(),
-				imported.getGrounding().getIdentifiers());
-		Assertions.assertEquals(
-				documentAsset.getGrounding().getContext(),
-				imported.getGrounding().getContext());
 	}
 
 	@Test
@@ -224,7 +202,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			documentAssets.add(createDocument(String.valueOf(i)));
 		}
-		documentAssets = documentAssetService.createAssets(documentAssets);
+		documentAssets = documentAssetService.createAssets(documentAssets, ASSUME_WRITE_PERMISSION);
 
 		final List<DocumentAsset> results = documentAssetService.searchAssets(0, NUM, null);
 
@@ -262,7 +240,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			documentAssets.add(createDocument(String.valueOf(i)));
 		}
-		documentAssetService.createAssets(documentAssets);
+		documentAssetService.createAssets(documentAssets, ASSUME_WRITE_PERMISSION);
 
 		final String currentIndex = documentAssetService.getCurrentAssetIndex();
 

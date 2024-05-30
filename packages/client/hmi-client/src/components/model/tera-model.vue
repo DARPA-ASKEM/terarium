@@ -5,6 +5,7 @@
 		:is-naming-asset="isNaming"
 		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<InputText
@@ -42,7 +43,6 @@
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@fetch-model="fetchModel"
-			class="pl-1 pr-1"
 		/>
 	</tera-asset>
 </template>
