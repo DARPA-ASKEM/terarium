@@ -12,7 +12,6 @@ on:
     paths:
       - 'packages/client/**'
     branches:
-      - 'main'
       - 'yohannparis/improve-formatters'
 
 jobs:
@@ -45,8 +44,8 @@ jobs:
         run: |
           git diff --exit-code || {
             echo "Files have changed. Committing changes..."
-            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-            git config --global user.name "${{ github.actor }}"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --global user.name "github-actions[bot]"
             git fetch --depth=1;
             git checkout  ${{ github.head_ref }} --
             git add .
