@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Upload code
 1. Upload the [code file](https://drive.google.com/file/d/1k3tmV4Az5blrso2BXqYN1rqL3S-knmSm/view?usp=drive_link) to the project.

@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 3. Upload model `input_model.json` to project
 
 ### 2. Configure a model
