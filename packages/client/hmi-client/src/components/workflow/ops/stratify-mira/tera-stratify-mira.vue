@@ -7,7 +7,7 @@
 		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-4 pt-3">
+			<tera-drilldown-section class="pl-4">
 				<div class="form-section">
 					<header class="inline-flex justify-content-between">
 						<section>
@@ -73,7 +73,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error
@@ -95,7 +94,8 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="stratifiedAmr"
-		:model="stratifiedAmr"
+		:asset="stratifiedAmr"
+		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -125,6 +125,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 

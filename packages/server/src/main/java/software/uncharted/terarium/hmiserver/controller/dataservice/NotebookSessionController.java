@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,7 +40,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
-	final ObjectMapper objectMapper;
+
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 
@@ -74,11 +73,11 @@ public class NotebookSessionController {
 			})
 	ResponseEntity<List<NotebookSession>> getNotebookSessions(
 			@RequestParam(name = "page-size", defaultValue = "100") final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
+			@RequestParam(name = "page", defaultValue = "1") final Integer page) {
 
 		try {
 			return ResponseEntity.ok(sessionService.getPublicNotTemporaryAssets(pageSize, page));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get sessions";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -88,7 +87,7 @@ public class NotebookSessionController {
 	/**
 	 * Create session and return its ID
 	 *
-	 * @param request session to create and projectId
+	 * @param session session to create and projectId
 	 * @return new ID for session
 	 */
 	@PostMapping
@@ -111,8 +110,9 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> createNotebookSession(
-			@RequestBody final NotebookSession session, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestBody final NotebookSession session,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -152,15 +152,16 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> getNotebookSession(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
 			return session.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -171,7 +172,7 @@ public class NotebookSessionController {
 	 * Update an session
 	 *
 	 * @param id id of session to update
-	 * @param request session to update with and projectId
+	 * @param session session to update with and projectId
 	 * @return ID of updated session
 	 */
 	@PutMapping("/{id}")
@@ -200,8 +201,8 @@ public class NotebookSessionController {
 	ResponseEntity<NotebookSession> updateNotebookSession(
 			@PathVariable("id") final UUID id,
 			@RequestBody final NotebookSession session,
-			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -236,13 +237,17 @@ public class NotebookSessionController {
 						content = @Content)
 			})
 	ResponseEntity<NotebookSession> cloneNotebookSession(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			final NotebookSession clone = sessionService.cloneAsset(id, permission);
-			return ResponseEntity.status(HttpStatus.CREATED).body(clone);
-		} catch (final IOException e) {
+			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			if (session.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -273,8 +278,9 @@ public class NotebookSessionController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	ResponseEntity<ResponseDeleted> deleteNotebookSession(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {

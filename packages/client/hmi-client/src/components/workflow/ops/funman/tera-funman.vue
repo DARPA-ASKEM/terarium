@@ -1,12 +1,23 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:loading="showSpinner"
+						class="run-button"
+						label="Run"
+						icon="pi pi-play"
+						@click="runMakeQuery"
+						size="large"
+					/>
+				</template>
 				<main>
 					<h5>
 						Set validation parameters
@@ -133,7 +144,7 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
-				class="pt-3 pb-3 pl-2 pr-4"
+				class="pb-3 pl-2 pr-4"
 			>
 				<template v-if="showSpinner">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
@@ -150,20 +161,6 @@
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</template>
-
-		<template #footer>
-			<Button
-				outlined
-				:loading="showSpinner"
-				class="run-button"
-				label="Run"
-				icon="pi pi-play"
-				@click="runMakeQuery"
-				size="large"
-			/>
-			<Button outlined label="Save as a new model" size="large" />
-			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -321,6 +318,15 @@ const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model configurations',
+		icon: 'pi pi-pencil',
+		disabled: true,
+		command: () => {}
+	}
+]);
+
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {
 	variablesOfInterest.value = vals;
@@ -447,7 +453,8 @@ const setModelOptions = async () => {
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[renameReserved(d.id)] = d.value;
+		// FIXME: may need to sample distributions if value is not available
+		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(

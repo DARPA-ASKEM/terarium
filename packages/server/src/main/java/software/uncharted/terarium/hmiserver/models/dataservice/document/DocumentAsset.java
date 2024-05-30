@@ -1,14 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 @EqualsAndHashCode(callSuper = true)
@@ -48,7 +46,7 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, Object> metadata;
+	private Map<String, JsonNode> metadata;
 
 	@TSOptional
 	@Column(columnDefinition = "text")
@@ -64,14 +62,13 @@ public class DocumentAsset extends TerariumAsset {
 	private Grounding grounding;
 
 	@TSOptional
+	@Column(columnDefinition = "text")
+	private String documentAbstract;
+
+	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
-
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
 
 	/**
 	 * Get the DOI of a document
@@ -103,7 +100,7 @@ public class DocumentAsset extends TerariumAsset {
 			clone.metadata = new HashMap<>();
 			for (final String key : this.metadata.keySet()) {
 				// I don't like that this is an "object" because it doesn't clone nicely...
-				clone.metadata.put(key, this.metadata.get(key));
+				clone.metadata.put(key, this.metadata.get(key).deepCopy());
 			}
 		}
 

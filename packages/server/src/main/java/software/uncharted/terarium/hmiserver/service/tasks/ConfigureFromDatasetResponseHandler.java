@@ -60,6 +60,8 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		List<UUID> datasetIds;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override
@@ -72,7 +74,8 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// Map the parameters values to the model
-			final Model modelCopy = new Model(model);
+			final Model modelCopy = (Model) model.clone();
+			modelCopy.setId(model.getId());
 			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);

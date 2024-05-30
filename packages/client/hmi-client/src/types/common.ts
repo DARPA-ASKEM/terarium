@@ -8,9 +8,9 @@ import {
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
+	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
@@ -79,7 +79,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -201,11 +200,15 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface NotificationItem extends NotificationItemStatus {
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
+
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
-	assetId: string;
-	assetName: string;
+	sourceName: string;
+	context: string;
+	projectId?: string;
+	nodeId?: string;
 	lastUpdated: number;
 	acknowledged: boolean;
 	supportCancel: boolean;

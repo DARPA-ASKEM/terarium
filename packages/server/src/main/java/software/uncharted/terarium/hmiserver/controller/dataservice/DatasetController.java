@@ -66,6 +66,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/datasets")
@@ -84,6 +85,7 @@ public class DatasetController {
 	final ProjectService projectService;
 	final ProjectAssetService projectAssetService;
 	final CurrentUserService currentUserService;
+	final Messages messages;
 
 	private final List<String> SEARCH_FIELDS = List.of("name", "description");
 
@@ -183,7 +185,8 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> createDataset(
-			@RequestBody final Dataset dataset, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final Dataset dataset,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -217,12 +220,23 @@ public class DatasetController {
 						content = @Content)
 			})
 	public ResponseEntity<Dataset> getDataset(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+
+			if (dataset.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			// GETs not associated to a projectId cannot read private or temporary assets
+			if (permission.equals(Schema.Permission.NONE)
+					&& (!dataset.get().getPublicAsset() || dataset.get().getTemporary())) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
+			}
+
 			return dataset.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -289,7 +303,8 @@ public class DatasetController {
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
 	public ResponseEntity<ResponseDeleted> deleteDataset(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -326,7 +341,7 @@ public class DatasetController {
 	ResponseEntity<Dataset> updateDataset(
 			@PathVariable("id") final UUID id,
 			@RequestBody final Dataset dataset,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -473,7 +488,7 @@ public class DatasetController {
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -546,7 +561,7 @@ public class DatasetController {
 			@RequestParam("path") final String path,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("filename") final String filename,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -598,7 +613,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -647,7 +662,7 @@ public class DatasetController {
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
-			@RequestParam("project-id") final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -760,7 +775,7 @@ public class DatasetController {
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
 					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else {
+				} else if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 

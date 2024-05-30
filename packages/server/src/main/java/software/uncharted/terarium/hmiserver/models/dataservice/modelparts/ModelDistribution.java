@@ -20,4 +20,12 @@ public class ModelDistribution extends SupportAdditionalProperties implements Se
 	private String type;
 
 	private Map<String, Object> parameters;
+
+	@Override
+	public ModelDistribution clone() {
+		ModelDistribution clone = (ModelDistribution) super.clone();
+		clone.setParameters(this.getParameters());
+		clone.setType(this.getType());
+		return clone;
+	}
 }

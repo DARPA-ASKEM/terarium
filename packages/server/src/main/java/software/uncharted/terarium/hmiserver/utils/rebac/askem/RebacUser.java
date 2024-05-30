@@ -11,9 +11,13 @@ import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 public class RebacUser extends RebacObject {
 	private ReBACService reBACService;
 
+	private boolean serviceUser;
+
 	public RebacUser(String id, ReBACService reBACService) {
 		super(id);
 		this.reBACService = reBACService;
+
+		serviceUser = reBACService.isServiceUser(id);
 	}
 
 	public SchemaObject getSchemaObject() {
@@ -21,6 +25,8 @@ public class RebacUser extends RebacObject {
 	}
 
 	public boolean can(RebacObject rebacObject, Schema.Permission permission) throws Exception {
+		if (serviceUser) return true;
+		if (rebacObject.getId().isEmpty()) return false;
 		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
 	}
 

@@ -35,26 +35,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
@@ -95,6 +93,7 @@ public class ProjectController {
 			""";
 	final Messages messages;
 	final ArtifactService artifactService;
+	final ModelService modelService;
 	final CodeService codeService;
 	final CurrentUserService currentUserService;
 	final DatasetService datasetService;
@@ -103,6 +102,7 @@ public class ProjectController {
 	final ProjectService projectService;
 	final ReBACService reBACService;
 	final TerariumAssetServices terariumAssetServices;
+	final TerariumAssetCloneService cloneService;
 	final UserService userService;
 	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
@@ -526,6 +526,74 @@ public class ProjectController {
 		return ResponseEntity.ok(updatedProject.get());
 	}
 
+	@Operation(summary = "Export a project")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "The project export",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ProjectExport.class))
+						}),
+				@ApiResponse(
+						responseCode = "403",
+						description = "The current user does not have read privileges to this project",
+						content = @Content),
+				@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "An error occurred when trying to communicate with either the postgres or spicedb"
+								+ " databases",
+						content = @Content)
+			})
+	@GetMapping("/export/{id}")
+	@Secured(Roles.USER)
+	public ResponseEntity<ProjectExport> exportProject(@PathVariable("id") final UUID id) {
+		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
+		try {
+			return ResponseEntity.ok(cloneService.exportProject(id));
+		} catch (final Exception e) {
+			log.error("Error exporting project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	@Operation(summary = "Import a project")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "The project export",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema =
+											@io.swagger.v3.oas.annotations.media.Schema(
+													implementation = ProjectExport.class))
+						}),
+				@ApiResponse(
+						responseCode = "503",
+						description = "An error occurred when trying to communicate with either the postgres or spicedb"
+								+ " databases",
+						content = @Content)
+			})
+	@PostMapping("/import")
+	@Secured(Roles.USER)
+	public ResponseEntity<Project> importProject(@RequestBody final ProjectExport projectExport) {
+		try {
+			return ResponseEntity.ok(cloneService.importProject(projectExport));
+		} catch (final Exception e) {
+			log.error("Error importing project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	// Project Assets
 	// --------------------------------------------------------------------------
@@ -581,228 +649,50 @@ public class ProjectController {
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		/*
-		 * TODO: At the end of the Postgres migration we will be getting rid of
-		 * ProjectAsset and instead
-		 * projects will directly hold a reference to the assets associated with them.
-		 * During this
-		 * transition we need to properly create the relationships when users add assets
-		 * to their
-		 * projects. However the exact API may not look like this in the end, and in
-		 * fact may be
-		 * directly in the controllers for these assets and not in this
-		 * ProjectController.
-		 *
-		 * Once all TerariumAssets have been migrated we can move this all to be a lot
-		 * more generic
-		 * and not need to have this ugly if/else statement
-		 */
-
-		// check if the asset is associated with a project, if it is, we should clone it
-		// and create a new asset
-		final boolean alreadyPartOfAProject = projectAssetService.isPartOfExistingProject(assetId);
-
-		UUID addedAssetId = assetId;
-
-		if (assetType.equals(AssetType.CODE)) {
-
-			try {
-				Code code = null;
-				if (alreadyPartOfAProject) {
-					code = codeService.cloneAndPersistAsset(assetId, permission);
-				} else {
-					final Optional<Code> codeOptional = codeService.getAsset(assetId, permission);
-					if (codeOptional.isEmpty()) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
-					}
-					code = codeOptional.get();
-				}
-
-				if (code.getProject() != null) {
-					throw new ResponseStatusException(
-							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
-				}
-
-				if (project.get().getCodeAssets() == null) project.get().setCodeAssets(new ArrayList<>());
-				if (project.get().getCodeAssets().contains(code)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-				}
-
-				code.setProject(project.get());
-
-				codeService.updateAsset(code, permission);
-
-				addedAssetId = code.getId();
-
-			} catch (final IOException e) {
-				log.error("Error updating code asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.unable-to-update"));
-			}
-		} else if (assetType.equals(AssetType.WORKFLOW)) {
-
-			try {
-				Workflow workflow = null;
-				if (alreadyPartOfAProject) {
-					workflow = workflowService.cloneAndPersistAsset(assetId, permission);
-				} else {
-					final Optional<Workflow> workflowOptional = workflowService.getAsset(assetId, permission);
-					if (workflowOptional.isEmpty()) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("workflow.not-found"));
-					}
-					workflow = workflowOptional.get();
-				}
-
-				if (workflow.getProject() != null) {
-					throw new ResponseStatusException(
-							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
-				}
-
-				if (project.get().getWorkflowAssets() == null) project.get().setWorkflowAssets(new ArrayList<>());
-				if (project.get().getWorkflowAssets().contains(workflow)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-				}
-
-				workflow.setProject(project.get());
-
-				workflowService.updateAsset(workflow, permission);
-
-				addedAssetId = workflow.getId();
-
-			} catch (final IOException e) {
-				log.error("Error updating workflow asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("workflow.unable-to-update"));
-			}
-
-		} else if (assetType.equals(AssetType.DATASET)) {
-
-			try {
-				Dataset dataset = null;
-				if (alreadyPartOfAProject) {
-					dataset = datasetService.cloneAndPersistAsset(assetId, permission);
-				} else {
-					final Optional<Dataset> datasetOptional = datasetService.getAsset(assetId, permission);
-					if (datasetOptional.isEmpty()) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-					}
-					dataset = datasetOptional.get();
-				}
-
-				if (dataset.getProject() != null) {
-					throw new ResponseStatusException(
-							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
-				}
-
-				if (project.get().getDatasetAssets() == null) project.get().setDatasetAssets(new ArrayList<>());
-				if (project.get().getDatasetAssets().contains(dataset)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-				}
-
-				dataset.setProject(project.get());
-
-				datasetService.updateAsset(dataset, permission);
-
-				addedAssetId = dataset.getId();
-			} catch (final IOException e) {
-				log.error("Error updating dataset asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
-			}
-
-		} else if (assetType.equals(AssetType.ARTIFACT)) {
-
-			try {
-				Artifact artifact = null;
-				if (alreadyPartOfAProject) {
-					artifact = artifactService.cloneAndPersistAsset(assetId, permission);
-				} else {
-					final Optional<Artifact> artifactOptional = artifactService.getAsset(assetId, permission);
-					if (artifactOptional.isEmpty()) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
-					}
-					artifact = artifactOptional.get();
-				}
-
-				if (artifact.getProject() != null) {
-					throw new ResponseStatusException(
-							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
-				}
-
-				if (project.get().getArtifactAssets() == null) project.get().setArtifactAssets(new ArrayList<>());
-				if (project.get().getArtifactAssets().contains(artifact)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-				}
-
-				artifact.setProject(project.get());
-
-				artifactService.updateAsset(artifact, permission);
-
-				addedAssetId = artifact.getId();
-			} catch (final IOException e) {
-				log.error("Error updating artifact asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-update"));
-			}
-		} else if (assetType.equals(AssetType.DOCUMENT)) {
-
-			try {
-				DocumentAsset documentAsset = null;
-				if (alreadyPartOfAProject) {
-					documentAsset = documentAssetService.cloneAndPersistAsset(assetId, permission);
-				} else {
-					final Optional<DocumentAsset> documentOptional = documentAssetService.getAsset(assetId, permission);
-					if (documentOptional.isEmpty()) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-					}
-					documentAsset = documentOptional.get();
-				}
-
-				if (documentAsset.getProject() != null) {
-					throw new ResponseStatusException(
-							HttpStatus.CONFLICT, messages.get("projects.asset-already-added"));
-				}
-
-				if (project.get().getDocumentAssets() == null) project.get().setDocumentAssets(new ArrayList<>());
-				if (project.get().getDocumentAssets().contains(documentAsset)) {
-					throw new ResponseStatusException(HttpStatus.CONFLICT, messages.get("projects.asset-conflict"));
-				}
-
-				documentAsset.setProject(project.get());
-
-				documentAssetService.updateAsset(documentAsset, permission);
-
-				addedAssetId = documentAsset.getId();
-			} catch (final IOException e) {
-				log.error("Error updating document asset", e);
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-update"));
-			}
-		}
-
 		final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
 				terariumAssetServices.getServiceByType(assetType);
 
-		final Optional<? extends TerariumAsset> asset;
+		// check if the asset is already associated with a project, if it is, we should
+		// clone it and create a new asset
+
+		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId, permission);
+		final List<TerariumAsset> assets;
+
 		try {
-			asset = terariumAssetService.getAsset(addedAssetId, permission);
+			if (owningProjectId != null) {
+				// if the asset is already under another project, we need to clone it and its
+				// dependencies
+				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId);
+			} else {
+				// TODO: we should probably check asset dependencies and make sure they are part
+				// of the project, and if not clone them
+				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
+				if (asset.isEmpty()) {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
+				}
+				assets = List.of(asset.get());
+			}
 		} catch (final IOException e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		if (!asset.isPresent()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
+		final List<ProjectAsset> projectAssets = new ArrayList<>();
+		for (final TerariumAsset asset : assets) {
+			final Optional<ProjectAsset> projectAsset =
+					projectAssetService.createProjectAsset(project.get(), assetType, asset, permission);
+
+			if (projectAsset.isEmpty()) {
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
+			}
+
+			projectAssets.add(projectAsset.get());
 		}
 
-		final Optional<ProjectAsset> projectAsset =
-				projectAssetService.createProjectAsset(project.get(), assetType, asset.get(), permission);
-
-		if (!projectAsset.isPresent()) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("asset.unable-to-create"));
-		}
-
-		return ResponseEntity.ok(projectAsset.get());
+		// return the first project asset, it is always the original asset that we
+		// wanted to add
+		return ResponseEntity.ok(projectAssets.get(0));
 	}
 
 	@Operation(summary = "Deletes an asset inside of a given project")
@@ -842,90 +732,6 @@ public class ProjectController {
 
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
-		/*
-		 * TODO: At the end of the Postgres migration we will be getting rid of
-		 * ProjectAsset and instead
-		 * projects will directly hold a reference to the assets associated with them.
-		 * During this
-		 * transition we need to properly create the relationships when users add assets
-		 * to their
-		 * projects. However the exact API may not look like this in the end, and in
-		 * fact may be
-		 * directly in the controllers for these assets and not in this
-		 * ProjectController
-		 */
-		if (assetType.equals(AssetType.CODE)) {
-
-			final Optional<Code> deletedCode;
-			try {
-				deletedCode = codeService.deleteAsset(assetId, permission);
-			} catch (final IOException e) {
-				throw new ResponseStatusException(
-						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (deletedCode.isEmpty() || deletedCode.get().getDeletedOn() == null) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("code.unable-to-delete"));
-			}
-		} else if (assetType.equals(AssetType.WORKFLOW)) {
-
-			final Optional<Workflow> deletedWorkflow;
-			try {
-				deletedWorkflow = workflowService.deleteAsset(assetId, permission);
-			} catch (final IOException e) {
-				throw new ResponseStatusException(
-						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (deletedWorkflow.isEmpty() || deletedWorkflow.get().getDeletedOn() == null) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("workflow.unable-to-delete"));
-			}
-		} else if (assetType.equals(AssetType.DATASET)) {
-
-			final Optional<Dataset> deletedDataset;
-			try {
-				deletedDataset = datasetService.deleteAsset(assetId, permission);
-			} catch (final IOException e) {
-				throw new ResponseStatusException(
-						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (deletedDataset.isEmpty() || deletedDataset.get().getDeletedOn() == null) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-delete"));
-			}
-		} else if (assetType.equals(AssetType.ARTIFACT)) {
-
-			final Optional<Artifact> deletedArtifact;
-			try {
-				deletedArtifact = artifactService.deleteAsset(assetId, permission);
-			} catch (final IOException e) {
-				throw new ResponseStatusException(
-						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (deletedArtifact.isEmpty() || deletedArtifact.get().getDeletedOn() == null) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.unable-to-delete"));
-			}
-		} else if (assetType.equals(AssetType.DOCUMENT)) {
-
-			final Optional<DocumentAsset> deletedDocumentAsset;
-			try {
-				deletedDocumentAsset = documentAssetService.deleteAsset(assetId, permission);
-			} catch (final IOException e) {
-				throw new ResponseStatusException(
-						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (deletedDocumentAsset.isEmpty() || deletedDocumentAsset.get().getDeletedOn() == null) {
-				throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.unable-to-delete"));
-			}
-		}
 
 		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);
 		if (deleted) {
@@ -1272,7 +1078,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> setProjectPermissions(
+	private static ResponseEntity<JsonNode> setProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
@@ -1282,7 +1088,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> updateProjectPermissions(
+	private static ResponseEntity<JsonNode> updateProjectPermissions(
 			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
 			throws Exception {
 		try {
@@ -1294,7 +1100,7 @@ public class ProjectController {
 		}
 	}
 
-	private ResponseEntity<JsonNode> removeProjectPermissions(
+	private static ResponseEntity<JsonNode> removeProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
