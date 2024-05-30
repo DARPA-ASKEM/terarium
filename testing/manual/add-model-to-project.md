@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Upload a Model
 1. Upload _the Model_ [Configured SIR.json](../data/Configured SIR.json) using `Upload Resources` button in the bottom left.

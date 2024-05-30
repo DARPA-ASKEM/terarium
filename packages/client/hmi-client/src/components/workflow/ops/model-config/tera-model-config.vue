@@ -23,6 +23,9 @@
 						@click="createConfiguration(false)"
 					/>
 				</template>
+				<template #header-controls-right>
+					<Button class="mr-3" label="Save" @click="() => createConfiguration(false)" />
+				</template>
 				<!-- Suggested configurations -->
 				<div class="box-container mr-2" v-if="model">
 					<Accordion multiple :active-index="[0]">
@@ -354,13 +357,6 @@ const props = defineProps<{
 }>();
 
 const menuItems = computed(() => [
-	{
-		label: 'Save as new configuration',
-		icon: 'pi pi-pencil',
-		command: () => {
-			createConfiguration(false);
-		}
-	},
 	{
 		label: 'Download',
 		icon: 'pi pi-download',
