@@ -5,7 +5,9 @@
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
 			<tera-initials-metadata
+				v-if="!isEmpty(mmt.initials)"
 				:model="model"
+				:mmt="mmt"
 				@update-initial-metadata="emit('update-initial-metadata', $event)"
 			/>
 		</AccordionTab>

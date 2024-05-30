@@ -16,22 +16,24 @@
 				})
 			"
 		/>
-		<tera-input
-			label="Unit"
-			:model-value="getInitialUnits(model, target)"
-			@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
-		/>
-		<tera-input
-			label="Concept"
-			:model-value="getInitialConcept(model, target)"
-			disabled
-			@update:model-value="
-				$emit('update-initial-metadata', {
-					key: 'concept',
-					value: $event
-				})
-			"
-		/>
+		<template v-if="!isStratified">
+			<tera-input
+				label="Unit"
+				:model-value="getInitialUnits(model, target)"
+				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
+			/>
+			<tera-input
+				label="Concept"
+				:model-value="getInitialConcept(model, target)"
+				disabled
+				@update:model-value="
+					$emit('update-initial-metadata', {
+						key: 'concept',
+						value: $event
+					})
+				"
+			/>
+		</template>
 	</section>
 </template>
 
@@ -48,6 +50,7 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 defineProps<{
 	model: Model;
 	target: string;
+	isStratified?: boolean;
 }>();
 </script>
 
