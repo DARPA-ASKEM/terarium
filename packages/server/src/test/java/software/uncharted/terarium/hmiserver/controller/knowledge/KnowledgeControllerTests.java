@@ -328,7 +328,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
 
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -401,7 +401,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		model = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
-		Assertions.assertTrue(model.getMetadata().getCard() != null);
+		Assertions.assertNotNull(model.getMetadata().getCard());
 	}
 
 	// @Test
@@ -472,7 +472,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
-		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
+		Assertions.assertNotNull(dataset.getMetadata().get("dataCard"));
 	}
 
 	// @Test
@@ -505,7 +505,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -539,7 +539,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -573,6 +573,6 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 }

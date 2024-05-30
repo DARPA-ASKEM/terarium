@@ -704,7 +704,21 @@ public class KnowledgeController {
 		}
 		((ObjectNode) dataset.getMetadata()).set("dataCard", card);
 
-		return ResponseEntity.ok(datasetService.updateAsset(dataset, permission).orElseThrow());
+		final Optional<Dataset> updatedDataset;
+		try {
+			updatedDataset = datasetService.updateAsset(dataset, permission);
+		} catch (final IOException e) {
+			log.error("Unable to update dataset", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		if (updatedDataset.isEmpty()) {
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
+		}
+
+		return ResponseEntity.ok(updatedDataset.get());
 	}
 
 	@PostMapping("/align-model")
