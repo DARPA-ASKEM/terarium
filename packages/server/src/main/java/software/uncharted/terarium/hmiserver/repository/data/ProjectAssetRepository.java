@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import jakarta.validation.constraints.NotNull;
@@ -31,8 +30,5 @@ public interface ProjectAssetRepository extends PSCrudRepository<ProjectAsset, U
 			@NotNull UUID projectId, @NotNull String assetName, @NotNull AssetType type);
 
 	List<ProjectAsset> findByAssetId(UUID assetId);
-
-	@Query("SELECT p FROM ProjectAsset p WHERE p.assetId IN (SELECT p2.assetId FROM ProjectAsset p2 WHERE p2.deletedOn IS NULL GROUP BY p2.assetId HAVING COUNT(p2.assetId) > 1)")
-	List<ProjectAsset> findNonUniqueAssetId();
 
 }
