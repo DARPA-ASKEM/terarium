@@ -1,21 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -140,22 +137,21 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 				.setName("Title")
 				.setDataType(DatasetColumn.ColumnType.STRING)
 				.setDescription("hello world")
-				.setMetadata(
-						mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
+				.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
 				.setGrounding(createGrounding("test"));
 		final DatasetColumn column2 = new DatasetColumn()
 				.setName("Value")
 				.setDataType(DatasetColumn.ColumnType.FLOAT)
 				.setDescription("3.1415926")
-				.setMetadata(
-						mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
+				.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
 				.setGrounding(createGrounding("another"));
 
 		after.setColumns(new ArrayList<>());
 		after.getColumns().add(column1);
 		after.getColumns().add(column2);
 
-		final Dataset updated = datasetService.updateAsset(after, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Dataset updated =
+				datasetService.updateAsset(after, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(updated.getColumns().size(), 2);
 		for (final DatasetColumn col : updated.getColumns()) {
@@ -227,7 +223,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Dataset dataset = datasetService.createAsset(createDataset(), ASSUME_WRITE_PERMISSION);
 		dataset.setName("new name");
 
-		final Dataset updatedDataset = datasetService.updateAsset(dataset, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Dataset updatedDataset =
+				datasetService.updateAsset(dataset, ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(dataset, updatedDataset);
 		Assertions.assertNotNull(updatedDataset.getUpdatedOn());
