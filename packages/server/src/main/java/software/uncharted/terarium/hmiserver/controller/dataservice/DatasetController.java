@@ -222,9 +222,8 @@ public class DatasetController {
 	public ResponseEntity<Dataset> getDataset(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectId == null
-				? Schema.Permission.NONE
-				: projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
@@ -776,7 +775,7 @@ public class DatasetController {
 				// add the filename to existing file names
 				if (updatedDataset.get().getFileNames() == null) {
 					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else {
+				} else if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 

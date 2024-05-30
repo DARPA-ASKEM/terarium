@@ -35,10 +35,7 @@ export enum OperatorStatus {
 	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
 	INVALID = 'invalid',
-	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
-	FAILED = 'failed',
-	ERROR = 'error',
-	DISABLED = 'disabled'
+	ERROR = 'error'
 }
 
 export enum WorkflowPortStatus {

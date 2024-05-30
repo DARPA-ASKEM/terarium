@@ -23,7 +23,7 @@ export const ModelEditOperation: Operation = {
 	inputs: [
 		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }
 	],
-	outputs: [{ type: 'modelId' }],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: async () => ({}),
 	initState: () => {
 		const init: ModelEditOperationState = {

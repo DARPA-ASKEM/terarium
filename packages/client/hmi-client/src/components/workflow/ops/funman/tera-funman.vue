@@ -453,7 +453,8 @@ const setModelOptions = async () => {
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[renameReserved(d.id)] = d.value;
+		// FIXME: may need to sample distributions if value is not available
+		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(

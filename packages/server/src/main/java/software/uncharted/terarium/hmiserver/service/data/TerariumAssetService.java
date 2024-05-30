@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -202,15 +204,16 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 		return Optional.of(asset);
 	}
 
-	/** Clone asset on ES, retrieve and save document with a different id */
-	@Override
 	@Observed(name = "function_profile")
-	public T cloneAsset(final UUID id, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id, hasWritePermission);
-		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id);
-		}
-		return createAsset(targetAsset.get(), hasWritePermission);
+	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
+			throws IOException {
+
+		throw new UnsupportedOperationException("Unimplemented");
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
+
+		throw new UnsupportedOperationException("Unimplemented");
 	}
 }

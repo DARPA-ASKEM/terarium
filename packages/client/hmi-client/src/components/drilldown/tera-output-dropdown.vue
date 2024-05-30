@@ -55,12 +55,13 @@ const getOptionById = (id: string) => items.value.find((option) => option.id ===
 
 const getCreateTimeById = (id: string) => {
 	const option = getOptionById(id);
+	if (!option?.timestamp) return '';
 	return getElapsedTimeText(option.timestamp);
 };
 
 const getLabelById = (id: string) => {
 	const option = getOptionById(id);
-	return option.label;
+	return option?.label;
 };
 </script>
 

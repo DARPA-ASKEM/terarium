@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -159,7 +160,7 @@ public class DocumentController {
 						content = @Content)
 			})
 	public ResponseEntity<DocumentAsset> createDocument(
-			@RequestBody DocumentAsset documentAsset,
+			@RequestBody final DocumentAsset documentAsset,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -248,9 +249,8 @@ public class DocumentController {
 	public ResponseEntity<DocumentAsset> getDocument(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectId == null
-				? Schema.Permission.NONE
-				: projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
 		if (document.isEmpty()) {
@@ -818,7 +818,9 @@ public class DocumentController {
 
 		if (document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()) {
 			documentAsset.setMetadata(new HashMap<>());
-			documentAsset.getMetadata().put("github_urls", document.getGithubUrls());
+			final ArrayNode githubUrls = objectMapper.createArrayNode();
+			document.getGithubUrls().forEach(githubUrls::add);
+			documentAsset.getMetadata().put("github_urls", githubUrls);
 		}
 
 		return documentAssetService.createAsset(documentAsset, permission);

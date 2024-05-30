@@ -111,7 +111,6 @@ const pollResult = async (runId: string) => {
 
 const startForecast = async (simulationIntervetions) => {
 	const simulationPayload: SimulationRequest = {
-		projectId: '',
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
 			start: 0,

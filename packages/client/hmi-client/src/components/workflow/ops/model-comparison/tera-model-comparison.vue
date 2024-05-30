@@ -173,7 +173,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',

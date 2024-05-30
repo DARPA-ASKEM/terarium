@@ -46,11 +46,10 @@ export function numberToNist(num: string) {
  * @param {string} num - The number string in NIST form to convert.
  * @returns {string} The number in normal form.
  */
-export function nistToNumber(num: string): string {
+export function nistToNumber(numStr: string): number {
 	// Remove any spaces from the formatted number
-	let numStr = num.replace(/\s/g, '');
-	numStr = parseFloat(numStr).toString();
-	return numStr;
+	numStr = numStr.replace(/\s/g, '');
+	return parseFloat(numStr);
 }
 
 /**
