@@ -33,7 +33,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Run Linter
-        run: yarn lint:ci
+        run: yarn lint
 
       - name: Run Formatter
         run: yarn prettier
@@ -42,14 +42,6 @@ jobs:
         run: yarn typecheck
 
       - name: Commit all changed files
-        run: |
-          git diff --exit-code || {
-            echo "Files have changed. Committing changes..."
-            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-            git config --global user.name "${{ github.actor }}"
-            git fetch --depth=1;
-            git checkout -B  ${{ github.head_ref }} --;
-            git add .
-            git commit -m "chore: lint and format client codebase"
-            git push
-          }
+        uses: stefanzweifel/git-auto-commit-action@7d0ca8f849305c56d36f992cfb1519b1af5b33f8
+        with:
+          commit_message: "chore: lint and format client codebase"
