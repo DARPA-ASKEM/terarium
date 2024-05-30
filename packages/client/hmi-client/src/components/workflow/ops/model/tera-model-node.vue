@@ -73,14 +73,17 @@ async function getModelById(modelId: string) {
 	model.value = await getModel(modelId);
 
 	if (model.value && model.value.id) {
-		const state = _.cloneDeep(props.node.state);
-		state.modelId = model.value?.id;
-		emit('update-state', state);
-		emit('append-output', {
-			type: 'modelId',
-			label: model.value.header.name,
-			value: [model.value.id]
-		});
+		const outputs = props.node.outputs;
+		if (_.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+			const state = _.cloneDeep(props.node.state);
+			state.modelId = model.value?.id;
+			emit('update-state', state);
+			emit('append-output', {
+				type: 'modelId',
+				label: model.value.header.name,
+				value: [model.value.id]
+			});
+		}
 	}
 }
 
@@ -91,14 +94,7 @@ async function onModelChange(chosenProjectModel: ProjectAsset) {
 onMounted(async () => {
 	const state = props.node.state;
 	if (state.modelId) {
-		model.value = await getModel(state.modelId);
-		if (model.value) {
-			emit('append-output', {
-				type: 'modelId',
-				label: model.value.header.name,
-				value: [model.value.id]
-			});
-		}
+		await getModelById(state.modelId);
 	}
 });
 </script>
