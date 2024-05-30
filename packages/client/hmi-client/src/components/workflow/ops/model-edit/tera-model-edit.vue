@@ -5,6 +5,7 @@
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		v-bind="$attrs"
 	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
