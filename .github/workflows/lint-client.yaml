@@ -11,21 +11,23 @@ on:
   push:
     paths:
       - 'packages/client/**'
-    branches: ['main']
+    branches:
+      - 'main'
+      - 'yohannparis/improve-formatters'
   pull_request:
     paths:
       - 'packages/client/**'
-    branches: ['main']
+    branches:
+      - 'main'
+      - 'yohannparis/improve-formatters'
 
 jobs:
   lintClient:
     name: Lint & Format Client
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-
-      # Debugging purposes to verify branch being worked on
-      - run: git branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Use Node.js 20.10.0 LTS
         uses: actions/setup-node@v3
@@ -44,3 +46,19 @@ jobs:
 
       - name: Run Typechecks
         run: yarn typecheck
+
+      - name: Commit all changed files
+        run: |
+          git diff --exit-code || {
+            echo "Files have changed. Committing changes..."
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git config --global user.name "${{ github.actor }}"
+            git add .
+            git commit -m "chore: lint and format client codebase"
+            git push
+          }
+
+#      - name: Commit all changed files
+#        uses: stefanzweifel/git-auto-commit-action@7d0ca8f849305c56d36f992cfb1519b1af5b33f8
+#        with:
+#          commit_message: "chore: lint and format client codebase"
