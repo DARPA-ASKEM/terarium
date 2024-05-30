@@ -8,8 +8,8 @@
 			<Dropdown
 				class="w-full p-dropdown-sm"
 				:options="codeAssets"
-				option-label="name"
-				v-model="code"
+				option-label="assetName"
+				@update:model-value="onCodeChange"
 				placeholder="Select a code asset"
 			/>
 			<tera-operator-placeholder :operation-type="node.operationType" />
@@ -18,12 +18,12 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref, computed } from 'vue';
 import _ from 'lodash';
 import { WorkflowNode } from '@/types/workflow';
 import { getCodeAsset } from '@/services/code';
-import { onMounted, ref, watch } from 'vue';
 import { AssetType } from '@/types/Types';
-import type { Code } from '@/types/Types';
+import type { Code, ProjectAsset } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -38,33 +38,38 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'append-output', 'open-drilldown']);
 
 const code = ref<Code | null>(null);
-const codeAssets = useProjects().getActiveProjectAssets(AssetType.Code);
+const codeAssets = computed(() => useProjects().getActiveProjectAssets(AssetType.Code));
 
-onMounted(async () => {
-	if (props.node.state.codeAssetId) {
-		code.value = await getCodeAsset(props.node.state.codeAssetId);
-	}
-});
+async function getCodeById(codeAssetId: string) {
+	code.value = await getCodeAsset(codeAssetId);
 
-watch(
-	() => code.value,
-	async () => {
-		if (code.value?.id) {
-			const state = _.cloneDeep(props.node.state);
-			state.codeAssetId = code.value.id;
-			emit('update-state', state);
+	if (code.value?.id) {
+		const state = _.cloneDeep(props.node.state);
+		state.codeAssetId = code.value.id;
+		emit('update-state', state);
 
-			if (_.isEmpty(props.node.outputs)) {
-				const blocks = await getCodeBlocks(code.value);
-				emit('append-output', {
-					type: 'codeAssetId',
-					label: `${code.value.name} code blocks (${blocks.length})`,
-					value: [code.value.id]
-				});
-			}
+		const outputs = props.node.outputs;
+		if (_.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+			const blocks = await getCodeBlocks(code.value);
+			emit('append-output', {
+				type: 'codeAssetId',
+				label: `${code.value.name} code blocks (${blocks.length})`,
+				value: [code.value.id]
+			});
 		}
 	}
-);
+}
+
+async function onCodeChange(chosenCode: ProjectAsset) {
+	await getCodeById(chosenCode.assetId);
+}
+
+onMounted(async () => {
+	const state = props.node.state;
+	if (state.codeAssetId) {
+		await getCodeById(state.codeAssetId);
+	}
+});
 </script>
 
 <style scoped></style>
