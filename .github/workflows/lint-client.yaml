@@ -8,12 +8,6 @@ name: Lint & Format Client
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  push:
-    paths:
-      - 'packages/client/**'
-    branches:
-      - 'main'
-      - 'yohannparis/improve-formatters'
   pull_request:
     paths:
       - 'packages/client/**'
@@ -53,12 +47,8 @@ jobs:
             echo "Files have changed. Committing changes..."
             git config --global user.email "${{ github.actor }}@users.noreply.github.com"
             git config --global user.name "${{ github.actor }}"
+            git checkout -B  ${{ github.head_ref }} --;
             git add .
             git commit -m "chore: lint and format client codebase"
             git push
           }
-
-#      - name: Commit all changed files
-#        uses: stefanzweifel/git-auto-commit-action@7d0ca8f849305c56d36f992cfb1519b1af5b33f8
-#        with:
-#          commit_message: "chore: lint and format client codebase"
