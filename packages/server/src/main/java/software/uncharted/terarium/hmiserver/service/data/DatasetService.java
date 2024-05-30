@@ -1,14 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -95,9 +92,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	@Override
 	@Observed(name = "function_profile")
