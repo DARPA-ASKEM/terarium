@@ -93,6 +93,6 @@ export default defineConfig({
 			junit: './tests/unit/reports/junit-report.xml'
 		},
 		environment: 'jsdom'
-	},
-	define: process.env.VITEST ? {} : { global: 'window' }
+	}
+	// define: process.env.VITEST ? {} : { global: 'window' }
 });
