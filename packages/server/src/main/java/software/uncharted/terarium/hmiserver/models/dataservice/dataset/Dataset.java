@@ -1,8 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
+import java.io.Serial;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.annotations.Type;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,14 +19,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import java.io.Serial;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -40,7 +43,9 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 255)
 	private String userId;
 
-	/** ESGF id of the dataset. This will be null for datasets that are not from ESGF */
+	/**
+	 * ESGF id of the dataset. This will be null for datasets that are not from ESGF
+	 */
 	@TSOptional
 	@Column(length = 255)
 	private String esgfId;
@@ -56,7 +61,10 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 1024)
 	private String datasetUrl;
 
-	/** (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets */
+	/**
+	 * (Optional) List of urls from which the dataset can be downloaded/fetched.
+	 * Used for ESGF datasets
+	 */
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
@@ -79,7 +87,10 @@ public class Dataset extends TerariumAsset {
 	@Column(columnDefinition = "text")
 	private String source;
 
-	/** (Optional) Grounding of ontological concepts related to the dataset as a whole */
+	/**
+	 * (Optional) Grounding of ontological concepts related to the dataset as a
+	 * whole
+	 */
 	@TSOptional
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "grounding_id")

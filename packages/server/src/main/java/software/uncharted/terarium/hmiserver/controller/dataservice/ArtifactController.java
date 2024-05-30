@@ -1,16 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -31,6 +25,16 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -45,6 +49,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ArtifactController {
 
 	final ArtifactService artifactService;
@@ -59,22 +64,10 @@ public class ArtifactController {
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a list of artifacts")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Artifacts retrieved.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Artifact.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the artifacts",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifacts retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifacts", content = @Content)
+	})
 	public ResponseEntity<List<Artifact>> getArtifacts(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
@@ -90,27 +83,15 @@ public class ArtifactController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a new artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Artifact created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Artifact.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the artifact",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Artifact created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the artifact", content = @Content)
+	})
 	public ResponseEntity<Artifact> createArtifact(
 			@RequestBody final Artifact artifact,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, permission));
 		} catch (final Exception e) {
@@ -123,28 +104,16 @@ public class ArtifactController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets an artifact by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Artifact retrieved.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Artifact.class))),
-				@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the artifact",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact retrieved.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
+	})
 	public ResponseEntity<Artifact> getArtifact(
 			@PathVariable("id") final UUID artifactId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
 			return artifact.map(ResponseEntity::ok)
@@ -159,29 +128,17 @@ public class ArtifactController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates an artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Artifact updated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Artifact.class))),
-				@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the artifact",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact updated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class))),
+			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
+	})
 	public ResponseEntity<Artifact> updateArtifact(
 			@PathVariable("id") final UUID artifactId,
 			@RequestBody final Artifact artifact,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			artifact.setId(artifactId);
@@ -198,27 +155,15 @@ public class ArtifactController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Artifact deleted.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ResponseDeleted.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue deleting the artifact",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Artifact deleted.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteArtifact(
 			@PathVariable("id") final UUID artifactId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			artifactService.deleteAsset(artifactId, permission);
@@ -233,22 +178,10 @@ public class ArtifactController {
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to upload the document")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -264,23 +197,11 @@ public class ArtifactController {
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the document")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(responseCode = "404", description = "Presigned url not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "Presigned url not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -298,17 +219,10 @@ public class ArtifactController {
 	@GetMapping("/{id}/download-file-as-text")
 	@Secured(Roles.USER)
 	@Operation(summary = "Downloads a file from the artifact as a string")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File downloaded.",
-						content = @Content(mediaType = "text/plain")),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue downloading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "text/plain")),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
+	})
 	public ResponseEntity<String> downloadFileAsText(
 			@PathVariable("id") final UUID artifactId, @RequestParam("filename") final String filename) {
 
@@ -330,17 +244,10 @@ public class ArtifactController {
 	@GetMapping("/{id}/download-file")
 	@Secured(Roles.USER)
 	@Operation(summary = "Downloads a file from the artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File downloaded.",
-						content = @Content(mediaType = "application/octet-stream")),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue downloading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File downloaded.", content = @Content(mediaType = "application/octet-stream")),
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
+	})
 	public ResponseEntity<byte[]> downloadFile(
 			@PathVariable("id") final UUID artifactId, @RequestParam("filename") final String filename) {
 
@@ -363,22 +270,10 @@ public class ArtifactController {
 	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File uploaded.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Integer.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue uploading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID artifactId,
 			@RequestParam("filename") final String filename,
@@ -392,27 +287,18 @@ public class ArtifactController {
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 	}
 
-	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
+	 */
 	@PutMapping("/{id}/upload-artifact-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub to the artifact")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File uploaded.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Integer.class))),
-				@ApiResponse(responseCode = "404", description = "File not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue uploading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "404", description = "File not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadArtifactFromGithub(
 			@PathVariable("id") final UUID artifactId,
 			@RequestParam("path") final String path,
@@ -421,8 +307,7 @@ public class ArtifactController {
 		log.debug("Uploading artifact file from github to dataset {}", artifactId);
 
 		// download file from GitHub
-		final String fileString =
-				gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 		if (fileString == null) {
 			return ResponseEntity.notFound().build();
 		}
@@ -433,8 +318,8 @@ public class ArtifactController {
 	/**
 	 * Uploads an artifact inside the entity to TDS via a presigned URL
 	 *
-	 * @param artifactId The ID of the artifact to upload to
-	 * @param fileName The name of the file to upload
+	 * @param artifactId         The ID of the artifact to upload to
+	 * @param fileName           The name of the file to upload
 	 * @param artifactHttpEntity The entity containing the artifact to upload
 	 * @return A response containing the status of the upload
 	 */
