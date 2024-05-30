@@ -91,6 +91,8 @@ export default defineConfig({
 		reporters: ['junit', 'default'],
 		outputFile: {
 			junit: './tests/unit/reports/junit-report.xml'
-		}
-	}
+		},
+		environment: 'jsdom'
+	},
+	define: process.env.VITEST ? {} : { global: 'window' }
 });
