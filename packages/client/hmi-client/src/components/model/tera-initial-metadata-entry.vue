@@ -59,6 +59,7 @@ section {
 		'unit		unit concept .';
 	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
+	align-items: center;
 }
 
 h6 {
