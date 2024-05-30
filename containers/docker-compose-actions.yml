@@ -1,0 +1,4 @@
+---
+include:
+  - scripts/docker-compose-common.yml
+  - scripts/docker-compose-keycloak.yml

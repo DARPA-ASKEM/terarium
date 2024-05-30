@@ -1,0 +1,37 @@
+# EditorConfig helps developers define and maintain consistent
+# coding styles between different editors and IDEs
+# https://editorconfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = tab
+indent_size = 2
+insert_final_newline = true
+max_line_length = off
+trim_trailing_whitespace = true
+
+[*.java]
+# Java import order, | indicates a blank line between groups
+ij_java_imports_layout = *,|,javax.**,java.**,|,$*
+
+# Avoid using wildcard imports
+ij_java_class_count_to_use_import_on_demand = 999
+ij_java_names_count_to_use_import_on_demand = 999
+
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+
+[*.{yml,yaml,properties,json,conf,sh}]
+indent_style = space
+
+[*.{cmd,bat}]
+end_of_line = crlf
+
+[*.gradle]
+indent_size = 4
+indent_style = space

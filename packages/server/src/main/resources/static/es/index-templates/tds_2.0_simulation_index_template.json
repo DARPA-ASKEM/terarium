@@ -1,0 +1,77 @@
+{
+    "version": 1,
+    "priority": 501,
+    "composed_of": [
+        "tds_2.0_terarium_asset_component",
+        "tds_2.0_name_description_component"
+    ],
+    "index_patterns": [
+        "tds_simulation_tera_2.*",
+        "tds_test_simulation_tera_2.*"
+    ],
+    "_meta": {
+        "description": "This index template is the standard template for all Terarium SIMULATION indices"
+    },
+    "template": {
+        "settings": {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1,
+                "refresh_interval": "1s"
+            }
+        },
+        "mappings": {
+            "properties": {
+                "transform": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "resultFiles": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "type": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "status": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "startTime": {
+                    "type": "date",
+                    "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                },
+                "completedTime": {
+                    "type": "date",
+                    "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                },
+                "engine": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "workflowId": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "userId": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "projectId": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "executionPayload": {
+                    "type": "object",
+                    "enabled": false
+                }
+            }
+        }
+    }
+}

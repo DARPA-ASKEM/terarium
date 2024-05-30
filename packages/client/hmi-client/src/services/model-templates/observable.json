@@ -1,0 +1,43 @@
+{
+    "header": {
+        "name": "Observable",
+        "schema": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.6/petrinet/petrinet_schema.json",
+        "schema_name": "petrinet",
+        "description": "ObservableTemplateModel",
+        "model_version": "0.1"
+    },
+    "properties": {},
+    "model": {
+        "states": [],
+        "transitions": []
+    },
+    "semantics": {
+        "ode": {
+            "rates": [],
+            "initials": [],
+            "parameters": [],
+            "observables": [
+                {
+                    "id": "O",
+                    "name": "O",
+                    "expression": "0",
+                    "expression_mathml": "<cn>0</cn>"
+                }
+            ],
+            "time": {
+                "id": "t"
+            }
+        }
+    },
+    "metadata": {
+        "annotations": {
+            "authors": [],
+            "references": [],
+            "locations": [],
+            "pathogens": [],
+            "diseases": [],
+            "hosts": [],
+            "model_types": []
+        }
+    }
+}

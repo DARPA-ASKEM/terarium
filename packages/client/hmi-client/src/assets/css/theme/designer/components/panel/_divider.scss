@@ -1,0 +1,23 @@
+.p-divider {
+    .p-divider-content {
+        background-color: $panelContentBg;
+    }
+
+    &.p-divider-horizontal {
+        margin: $dividerHorizontalMargin;
+        padding: $dividerHorizontalPadding;
+
+        .p-divider-content {
+            padding: 0 $inlineSpacing;
+        }
+    }
+
+    &.p-divider-vertical {
+        margin: $dividerVerticalMargin;
+        padding: $dividerVerticalPadding;
+
+        .p-divider-content {
+            padding: $inlineSpacing 0;
+        }
+    }
+}

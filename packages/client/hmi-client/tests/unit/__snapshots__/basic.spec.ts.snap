@@ -1,0 +1,7 @@
+// Vitest Snapshot v1
+
+exports[`basic tests to make sure it all works > should generate and match snapshot 1`] = `
+{
+  "foo": "bar",
+}
+`;

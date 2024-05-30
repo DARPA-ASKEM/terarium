@@ -1,0 +1,62 @@
+{
+    "version": 1,
+    "priority": 501,
+    "composed_of": [
+        "tds_2.0_terarium_asset_component"
+    ],
+    "index_patterns": [
+        "tds_equation_tera_2.*",
+        "tds_test_equation_tera_2.*"
+    ],
+    "_meta": {
+        "description": "This index template is the standard template for all Terarium EQUATION indices"
+    },
+    "template": {
+        "settings": {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1,
+                "refresh_interval": "1s"
+            }
+        },
+        "mappings": {
+            "properties": {
+                "name": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "equationType": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "content": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "metadata": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "source": {
+                    "type": "object",
+                    "enabled": false
+                }
+            }
+        }
+    }
+}

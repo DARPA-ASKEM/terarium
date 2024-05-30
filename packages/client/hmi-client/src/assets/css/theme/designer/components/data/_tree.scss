@@ -1,0 +1,92 @@
+.p-tree {
+    border: none;
+    background: $panelContentBg;
+    color: $panelContentTextColor;
+    padding: none;
+    border-radius: $borderRadius;
+
+    .p-tree-container {
+        .p-treenode {
+            padding: $treeNodePadding;
+
+            .p-treenode-content {
+                transition: $listItemTransition;
+                padding: $treeNodeContentPadding;
+                cursor: pointer;
+
+                .p-tree-toggler {
+                   margin-right: $inlineSpacing;
+                    // @include action-icon();
+                }
+
+                .p-treenode-icon {
+                    // margin-right: $inlineSpacing;
+                    color: $treeNodeIconColor;
+                }
+
+                .p-treenode-label {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+
+                .p-checkbox {
+                    margin-right: $inlineSpacing;
+
+                    .p-indeterminate {
+                        .p-checkbox-icon {
+                            color: $textColor;
+                        }
+                    }
+                }
+
+                &:focus {
+                    @include focused-listitem();
+                }
+
+                &.p-highlight {
+                    background: var(--surface-highlight);
+                    border-left: solid 2px $primaryColor;
+                    //color: $highlightTextColor;
+
+                    .p-tree-toggler,
+                    .p-treenode-icon {
+                        color: $highlightTextColor;
+
+                        &:hover {
+                            color: $highlightTextColor;
+                        }
+                    }
+                }
+
+                &.p-treenode-selectable:not(.p-highlight):hover {
+                    background-color: $inputListItemHoverBg;
+                    color: $inputListItemTextHoverColor;
+                }
+            }
+        }
+    }
+
+    .p-tree-filter-container {
+        margin-bottom: $inlineSpacing;
+        padding: 0.5rem;
+
+        .p-tree-filter {
+            width: 100%;
+            padding-right: nth($inputPadding, 2) + $primeIconFontSize;
+        }
+
+        .p-tree-filter-icon {
+            right: nth($inputPadding, 2);
+            color: $inputIconColor;
+        }
+    }
+
+    .p-treenode-children {
+        padding: $treeNodeChildrenPadding;
+    }
+
+    .p-tree-loading-icon {
+        font-size: $loadingIconFontSize;
+    }
+}

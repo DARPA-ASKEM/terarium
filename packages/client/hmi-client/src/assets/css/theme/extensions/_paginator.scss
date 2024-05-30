@@ -1,0 +1,11 @@
+.p-paginator {
+    .p-paginator-element {
+        &:focus {
+            background: $emphasis-lower;
+
+            &.p-highlight {
+                background: rgba($primaryColor, .24);
+            }
+        }
+    }
+}

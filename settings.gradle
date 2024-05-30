@@ -1,0 +1,12 @@
+pluginManagement {
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+		mavenLocal()
+	}
+}
+
+rootProject.name = "terarium"
+
+include ":packages:server"
+include ":packages:taskrunner"

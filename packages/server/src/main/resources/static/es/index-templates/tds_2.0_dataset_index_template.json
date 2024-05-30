@@ -1,0 +1,147 @@
+{
+    "version": 1,
+    "priority": 501,
+    "composed_of": [
+        "tds_2.0_terarium_asset_component",
+        "tds_2.0_name_description_component"
+    ],
+    "index_patterns": [
+        "tds_dataset_tera_2.*",
+        "tds_test_dataset_tera_2.*"
+    ],
+    "_meta": {
+        "description": "This index template is the standard template for all Terarium DATASET indices"
+    },
+    "template": {
+        "settings": {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1,
+                "refresh_interval": "1s"
+            }
+        },
+        "mappings": {
+            "properties": {
+                "userId": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                },
+                "dataSourceDate": {
+                    "type": "date",
+                    "format": "strict_date_optional_time||strict_date_hour_minute_second||epoch_millis"
+                },
+                "fileNames": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "datasetUrl": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "columns": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "description": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "dataType": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "formatStr": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "annotations": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 512
+                                }
+                            }
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "enabled": false
+                        },
+                        "grounding": {
+                            "type": "nested",
+                            "properties": {
+                                "identifiers": {
+                                    "type": "object",
+                                    "enabled": false
+                                },
+                                "context": {
+                                    "type": "object",
+                                    "enabled": false
+                                }
+                            }
+                        }
+                    }
+                },
+                "metadata": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "source": {
+                    "type": "text",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword",
+                            "ignore_above": 512
+                        }
+                    }
+                },
+                "grounding": {
+                    "type": "nested",
+                    "properties": {
+                        "identifiers": {
+                            "type": "object",
+                            "enabled": false
+                        },
+                        "context": {
+                            "type": "object",
+                            "enabled": false
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "version": 1,
+    "priority": 501,
+    "composed_of": [
+        "tds_2.0_terarium_asset_component",
+        "tds_2.0_name_description_component"
+    ],
+    "index_patterns": [
+        "tds_modelconfiguration_tera_2.*",
+        "tds_test_modelconfiguration_tera_2.*"
+    ],
+    "_meta": {
+        "description": "This index template is the standard template for all Terarium MODEL CONFIGURATION indices"
+    },
+    "template": {
+        "settings": {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1,
+                "refresh_interval": "1s"
+            }
+        },
+        "mappings": {
+            "properties": {
+                "configuration": {
+                    "type": "object",
+                    "enabled": false
+                },
+                "model_id": {
+                    "type": "keyword",
+                    "ignore_above": 512
+                }
+            }
+        }
+    }
+}

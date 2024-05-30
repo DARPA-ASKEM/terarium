@@ -1,0 +1,159 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'cz.habarta.typescript-generator', name: 'typescript-generator-gradle-plugin', version: '3.2.1263'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'org.springframework.boot' version '3.1.5'
+    id 'org.hibernate.orm' version '6.2.7.Final'
+    id 'org.graalvm.buildtools.native' version '0.9.28'
+    id 'com.diffplug.spotless' version '6.25.0'
+}
+
+ext {
+  set('springCloudVersion', "2022.0.5")
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+  }
+}
+
+
+apply plugin: 'cz.habarta.typescript-generator'
+apply plugin: 'idea'
+apply plugin: 'com.diffplug.spotless'
+
+group = 'software.uncharted'
+version = '1.0.0-SNAPSHOT'
+sourceCompatibility = '17'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://artifacts.unidata.ucar.edu/repository/unidata-all/"
+    }
+}
+
+dependencies {
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api:3.1.0"
+
+    compileOnly 'org.projectlombok:lombok'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    implementation 'co.elastic.clients:elasticsearch-java:8.8.1'
+    implementation 'com.authzed.api:authzed:0.5.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    implementation 'io.grpc:grpc-all:1.52.1'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.5'
+    implementation 'javax.inject:javax.inject:1'
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+    implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
+    implementation 'org.apache.commons:commons-text:1.10.0'
+    implementation 'org.eclipse.microprofile.jwt:microprofile-jwt-auth-api:2.1'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.21'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.jsoup:jsoup:1.7.2'
+    implementation 'org.keycloak:keycloak-admin-client:20.0.5'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.23.4'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    implementation(platform("software.amazon.awssdk:bom:2.21.26"))
+    implementation("software.amazon.awssdk:s3")
+
+    implementation "edu.ucar:cdm-core:5.5.3"
+
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    testCompileOnly 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.amqp:spring-rabbit-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.mockito:mockito-core:5.3.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+generateTypeScript {
+    jsonLibrary = 'jackson2'
+    classesWithAnnotations = [
+        'software.uncharted.terarium.hmiserver.annotations.TSModel'
+    ]
+    excludeClasses = [
+        'java.io.Serializable',
+        'software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties'
+    ]
+    excludeClassPatterns = [
+        'org.springframework.**',
+        'jakarta.**',
+        'org.hibernate.**'
+    ]
+    excludePropertyAnnotations = [
+        'software.uncharted.terarium.hmiserver.annotations.TSIgnore'
+    ]
+    enumMemberCasing = 'PascalCase'
+    mapEnum = 'asEnum'
+    nonConstEnums = 'true'
+    noFileComment = 'true'
+    outputFile = '../client/hmi-client/src/types/Types.ts'
+    outputKind = 'module'
+    outputFileType = 'implementationFile'
+    optionalAnnotations = [
+        'software.uncharted.terarium.hmiserver.annotations.TSOptional'
+    ]
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+spotless {
+    java {
+        target 'src/**/*.java'
+        importOrder('*,|,javax.**,java.**,|,$*')
+        palantirJavaFormat('2.43.0').formatJavadoc(true)
+        indentWithTabs()
+        formatAnnotations()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

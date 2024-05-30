@@ -1,0 +1,30 @@
+# This file defines the codeowners of certain pieces of the code.
+# These owners will automatically be requested as reviewers when
+# a pull request is made that matches the filter.
+
+# Each line is a file pattern followed by one or more owners.
+# Order is important; the last matching pattern takes the most
+# precedence.
+
+# Global Owners. Unless a later match takes precedence
+* @dgauldie @mwdchang @YohannParis
+
+# Client code owners
+/packages/client/ @YohannParis @mwdchang
+
+# Backend services owners
+/packages/server/ @dgauldie @dvince2 @YohannParis
+/packages/taskrunner/ @kbirk @YohannParis
+
+# Documentation owners
+docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2
+
+# CODEOWNERS prevent renovate automerge since it will automatically ask for review
+# See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners
+# NOTE: leave at the bottom for precedence matching
+# May need to be updated as required
+# Solution: make files used by renovate owned by everyone
+**/package.json
+**/yarn.lock
+**/Dockerfile*
+**/gradle.properties

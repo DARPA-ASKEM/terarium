@@ -1,0 +1,43 @@
+{
+	"name": "terarium",
+	"packageManager": "yarn@4.0.2",
+	"private": true,
+	"workspaces": [
+		"packages/client/*",
+		"packages/server"
+	],
+	"scripts": {
+		"build": "yarn workspaces foreach --all --parallel --interlaced --verbose --topological run build",
+		"dev": "yarn workspace hmi-client run dev",
+		"local": "yarn workspace hmi-client run local",
+		"generateTypes": "yarn workspace @uncharted/server-type-generator run generateTypes",
+		"serve": "yarn workspace hmi-client run build",
+		"lint": "eslint . --ext .ts,.vue --fix --cache",
+		"lint:ci": "eslint . --ext .ts,.vue",
+		"lint:clear-cache": "rm .eslintcache",
+		"typecheck": "yarn workspaces foreach --all --parallel --interlaced --verbose --topological run typecheck",
+		"test": "yarn workspaces foreach --all --parallel --verbose run test:ci",
+		"test:e2e": "yarn workspaces foreach --all --parallel --verbose run test:e2e",
+		"test:ct": "yarn workspaces foreach --all --parallel --verbose run test:ct",
+		"prettier": "prettier --ignore-path .prettierignore --write './**/*.{vue,ts}'",
+		"prettier:ci": "prettier --ignore-path .prettierignore --check '**/*.{vue,ts}'",
+		"format": "yarn lint && yarn prettier",
+		"postinstall": "husky install"
+	},
+	"lint-staged": {
+		"!(Types.ts).{ts,vue}": [
+			"eslint --fix",
+			"prettier --write"
+		]
+	},
+	"devDependencies": {
+		"@vue/eslint-config-airbnb-with-typescript": "7.0.1",
+		"eslint": "8.57.0",
+		"eslint-config-prettier": "8.10.0",
+		"eslint-plugin-vue": "9.26.0",
+		"husky": "8.0.3",
+		"lint-staged": "13.3.0",
+		"prettier": "3.2.5",
+		"typescript": "5.3.3"
+	}
+}
