@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.getFileNames().add("science2.pdf");
 		documentAsset.setGrounding(createGrounding(key));
 		documentAsset.setMetadata(new HashMap<>());
-		documentAsset.getMetadata().put("hello", "world-" + key);
+		documentAsset.getMetadata().put("hello", JsonNodeFactory.instance.textNode("world-" + key));
 		documentAsset.setPublicAsset(true);
 		documentAsset.setAssets(new ArrayList<>());
 		documentAsset.getAssets().add(createDocExtraction());
