@@ -42,7 +42,7 @@ jobs:
         run: yarn lint:ci
 
       - name: Run Formatter
-        run: yarn prettier:ci
+        run: yarn prettier
 
       - name: Run Typechecks
         run: yarn typecheck
