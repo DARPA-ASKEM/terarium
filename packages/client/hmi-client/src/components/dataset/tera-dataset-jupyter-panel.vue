@@ -332,7 +332,7 @@ const updateKernelState = (newKernelState: any) => {
 };
 
 // TODO: Integrate tera-save-asset-modal.vue instead of doing this
-// For some reason saving the csv doesn't work unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
+// There is no clear way to save a csv dataset unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
