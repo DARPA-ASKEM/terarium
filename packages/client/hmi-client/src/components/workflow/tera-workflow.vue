@@ -1,63 +1,4 @@
 <template>
-	<header>
-		<div class="button-group w-full">
-			<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
-				<InputText
-					class="p-inputtext w-full"
-					v-model.lazy="newWorkflowName"
-					placeholder="Workflow name"
-					@keyup.enter="updateWorkflowName"
-					@keyup.esc="updateWorkflowName"
-					v-focus
-				/>
-				<div class="flex flex-nowrap ml-1 mr-3">
-					<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
-				</div>
-			</div>
-			<h4 v-else>{{ wf.name }}</h4>
-			<Button
-				v-if="!isRenamingWorkflow"
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="toggleOptionsMenu"
-			/>
-		</div>
-		<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
-		<div class="button-group">
-			<Button
-				label="Show everything"
-				severity="secondary"
-				outlined
-				@click="resetZoom"
-				size="small"
-				disabled
-				class="white-space-nowrap"
-			/>
-			<Button
-				label="Clean up layout"
-				severity="secondary"
-				outlined
-				@click="cleanUpLayout"
-				size="small"
-				disabled
-				class="white-space-nowrap"
-			/>
-			<Button
-				id="add-component-btn"
-				icon="pi pi-plus"
-				label="Add component"
-				@click="showAddComponentMenu"
-				size="small"
-				class="white-space-nowrap"
-			/>
-			<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
-			<ContextMenu
-				ref="addComponentMenu"
-				:model="contextMenuItems"
-				style="white-space: nowrap; width: auto"
-			/>
-		</div>
-	</header>
 	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
 		v-if="!isWorkflowLoading"
@@ -73,6 +14,68 @@
 		@dragenter.prevent
 		:lastTransform="canvasTransform"
 	>
+		<!-- toolbar -->
+		<template #foreground>
+			<div class="toolbar glass">
+				<div class="button-group w-full">
+					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
+						<InputText
+							class="p-inputtext w-full"
+							v-model.lazy="newWorkflowName"
+							placeholder="Workflow name"
+							@keyup.enter="updateWorkflowName"
+							@keyup.esc="updateWorkflowName"
+							v-focus
+						/>
+						<div class="flex flex-nowrap ml-1 mr-3">
+							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
+						</div>
+					</div>
+					<h4 v-else>{{ wf.name }}</h4>
+					<Button
+						v-if="!isRenamingWorkflow"
+						icon="pi pi-ellipsis-v"
+						class="p-button-icon-only p-button-text p-button-rounded"
+						@click="toggleOptionsMenu"
+					/>
+				</div>
+				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<div class="button-group">
+					<Button
+						label="Show everything"
+						severity="secondary"
+						outlined
+						@click="resetZoom"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
+					<Button
+						label="Clean up layout"
+						severity="secondary"
+						outlined
+						@click="cleanUpLayout"
+						size="small"
+						disabled
+						class="white-space-nowrap"
+					/>
+					<Button
+						id="add-component-btn"
+						icon="pi pi-plus"
+						label="Add component"
+						@click="showAddComponentMenu"
+						size="small"
+						class="white-space-nowrap"
+					/>
+					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
+					<ContextMenu
+						ref="addComponentMenu"
+						:model="contextMenuItems"
+						style="white-space: nowrap; width: auto"
+					/>
+				</div>
+			</div>
+		</template>
 		<!-- data -->
 		<template #data>
 			<ContextMenu
@@ -979,7 +982,7 @@ function resetZoom() {
 </script>
 
 <style scoped>
-header {
+.toolbar {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -988,6 +991,9 @@ header {
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
 	background-color: var(--surface-transparent);
+}
+
+.glass {
 	backdrop-filter: blur(10px);
 }
 

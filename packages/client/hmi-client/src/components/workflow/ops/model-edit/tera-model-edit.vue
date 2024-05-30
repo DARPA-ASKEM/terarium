@@ -13,6 +13,7 @@
 				:kernel-manager="kernelManager"
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 				@sync-with-mira-model="syncWithMiraModel"
+				@save-new-model-output="createOutput"
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
@@ -93,7 +94,7 @@ import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { getModel, createModel, updateModel } from '@/services/model';
+import { getModel, createModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -114,13 +115,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -300,19 +295,7 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 // Saves the output model in the backend
 // Not called after every little model edit to avoid too many requests
 // Called when the selected output is changed, component unmounts or before the window is closed
-function updateOutputModel() {
-	if (readyToSaveOutputModel.value && amr.value) {
-		// Save notebook code to output state
-		if (activeOutput.value) {
-			const updatedOutputPort = cloneDeep(activeOutput.value);
-			updatedOutputPort.state = cloneDeep(props.node.state);
-			emit('update-output-port', updatedOutputPort);
-		}
-		// Save model in backend
-		updateModel(amr.value);
-		readyToSaveOutputModel.value = false;
-	}
-}
+// Put are you sure modal here
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
@@ -367,7 +350,7 @@ const handleOutputChange = async () => {
 };
 
 const onSelection = (id: string) => {
-	updateOutputModel(); // Save the model before switching to the new one
+	// Modal popup for saving a draft?
 	emit('select-output', id);
 };
 
@@ -407,11 +390,9 @@ onMounted(async () => {
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
 	}
-	window.addEventListener('beforeunload', updateOutputModel);
 });
 
 onUnmounted(() => {
-	updateOutputModel();
 	kernelManager.shutdown();
 });
 </script>

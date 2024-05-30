@@ -50,7 +50,7 @@
 					/>
 					<span class="btn-group">
 						<Button label="Reset" outlined severity="secondary" />
-						<Button label="Save" />
+						<Button label="Save" @click="$emit('save-new-model-output')" />
 					</span>
 				</section>
 				<tera-progress-spinner
@@ -166,7 +166,7 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model', 'save-new-model-output']);
 
 function outputCode(data: any) {
 	emit('output-code', data);
