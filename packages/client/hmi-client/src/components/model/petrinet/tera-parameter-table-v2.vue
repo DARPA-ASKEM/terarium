@@ -166,30 +166,30 @@ const onSelect = (paramId: string) => {
 };
 
 const onUpdateDistributions = () => {
-	const distributions: { id: string; distribution: ModelDistribution }[] = [];
+	const distributionParameterMappings: { id: string; distribution: ModelDistribution }[] = [];
 	if (uncertaintyType.value === DistributionType.Uniform) {
 		selectedParameters.value.forEach((paramId) => {
-			const parameter = getParameterDistribution(props.modelConfiguration, paramId);
-			if (parameter.type !== DistributionType.Constant) return;
-			const distribution = {
+			const distribution = getParameterDistribution(props.modelConfiguration, paramId);
+			if (distribution.type !== DistributionType.Constant) return;
+
+			const v = distribution.parameters.value;
+			const delta = (distribution.parameters.value * uncertaintyPercentage.value) / 100;
+
+			const distributionParameterMapping = {
 				id: paramId,
 				distribution: {
 					type: uncertaintyType.value,
 					parameters: {
-						minimum:
-							parameter.parameters.value -
-							(parameter.parameters.value * uncertaintyPercentage.value) / 100,
-						maximum:
-							parameter.parameters.value +
-							(parameter.parameters.value * uncertaintyPercentage.value) / 100
+						minimum: v - delta,
+						maximum: v + delta
 					}
 				}
 			};
-			distributions.push(distribution);
+			distributionParameterMappings.push(distributionParameterMapping);
 		});
 	}
 
-	emit('update-parameters', distributions);
+	emit('update-parameters', distributionParameterMappings);
 	isAddingUncertainty.value = false;
 };
 </script>

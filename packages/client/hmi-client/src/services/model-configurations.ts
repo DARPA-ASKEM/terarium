@@ -308,9 +308,9 @@ export function getInitials(config: ModelConfiguration): Initial[] {
 
 export function setParameterDistributions(
 	config: ModelConfiguration,
-	parameters: { id: string; distribution: ModelDistribution }[]
+	distributionParameterMappings: { parameterId: string; distribution: ModelDistribution }[]
 ): void {
-	parameters.forEach((param) => {
-		setParameterDistribution(config, param.id, param.distribution);
+	distributionParameterMappings.forEach((mapping) => {
+		setParameterDistribution(config, mapping.parameterId, mapping.distribution);
 	});
 }
