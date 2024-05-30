@@ -50,5 +50,5 @@ jobs:
             git checkout -B  ${{ github.head_ref }} --;
             git add .
             git commit -m "chore: lint and format client codebase"
-            git push --set-upstream origin ${{ github.head_ref }}
+            git push --set-upstream origin "HEAD:${{ github.head_ref }}" --atomic
           }
