@@ -31,7 +31,7 @@ app.use(createPinia());
 const authStore = useAuthStore();
 await authStore.init();
 
-// Initialize user
+// Initialize Client Events
 await clientEventServiceInit();
 
 // Set the hash value of the window.location to null

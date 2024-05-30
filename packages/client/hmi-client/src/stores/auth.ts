@@ -56,7 +56,7 @@ const useAuthStore = defineStore('auth', () => {
 	);
 
 	const init = async () => {
-		const oidcSettings = await fetch('/api/configuration/keycloak').then((r) => r.json());
+		const oidcSettings = await axios.get('/api/configuration/keycloak').then((r) => r.data);
 		const newOidc = await createOidc({
 			issuerUri: `${oidcSettings['auth-server-url']}/realms/${oidcSettings.realm}`,
 			clientId: oidcSettings.resource,
