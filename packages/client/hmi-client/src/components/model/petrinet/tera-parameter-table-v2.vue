@@ -44,17 +44,21 @@
 					<div class="flex">
 						<Divider layout="vertical" type="solid" />
 						<ul>
-							<li v-for="parameter in values" :key="parameter">
+							<li v-for="parameterId in values" :key="parameterId">
 								<div class="flex gap-4">
 									<Checkbox
-										v-if="isAddingUncertainty"
+										v-if="
+											isAddingUncertainty &&
+											getParameterDistribution(modelConfiguration, parameterId).type ===
+												DistributionType.Constant
+										"
 										binary
-										:model-value="selectedParameters.includes(parameter)"
-										@change="onSelect(parameter)"
+										:model-value="selectedParameters.includes(parameterId)"
+										@change="onSelect(parameterId)"
 									/>
 									<tera-parameter-entry
 										:model-configuration="props.modelConfiguration"
-										:parameter-id="parameter"
+										:parameter-id="parameterId"
 										@update-parameter="emit('update-parameters', [$event])"
 										@update-source="emit('update-source', $event)"
 									/>
@@ -71,7 +75,10 @@
 				<li v-for="{ id } in getParameters(modelConfiguration)" :key="id">
 					<div class="flex gap-4">
 						<Checkbox
-							v-if="isAddingUncertainty"
+							v-if="
+								isAddingUncertainty &&
+								getParameterDistribution(modelConfiguration, id).type === DistributionType.Constant
+							"
 							binary
 							:model-value="selectedParameters.includes(id)"
 							@change="onSelect(id)"
@@ -151,13 +158,15 @@ const numParameters = computed(() => Object.keys(props.mmt.parameters).length);
 const matrixModalId = ref('');
 
 const onAddUncertainty = () => {
-	const selected = Object.keys(props.mmt.parameters);
+	const selected = Object.keys(props.mmt.parameters).filter(
+		(paramId) =>
+			getParameterDistribution(props.modelConfiguration, paramId).type === DistributionType.Constant
+	);
 	selectedParameters.value = selected;
 	isAddingUncertainty.value = true;
 };
 
 const onSelect = (paramId: string) => {
-	console.log(paramId);
 	if (selectedParameters.value.includes(paramId)) {
 		selectedParameters.value.splice(selectedParameters.value.indexOf(paramId), 1);
 	} else {
