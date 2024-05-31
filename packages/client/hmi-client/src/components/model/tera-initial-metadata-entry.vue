@@ -21,17 +21,8 @@
 			:model-value="getInitialUnits(model, target)"
 			@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
 		/>
-		<tera-input
-			label="Concept"
-			:model-value="getInitialConcept(model, target)"
-			disabled
-			@update:model-value="
-				$emit('update-initial-metadata', {
-					key: 'concept',
-					value: $event
-				})
-			"
-		/>
+		<!--TODO: Add support for editing concepts--->
+		<tera-input label="Concept" :model-value="getInitialConcept(model, target)" disabled />
 	</section>
 </template>
 

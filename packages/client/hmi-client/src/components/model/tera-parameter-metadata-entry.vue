@@ -16,6 +16,7 @@
 			:model-value="units?.expression ?? ''"
 			@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
 		/>
+		<!--TODO: Add support for editing concepts--->
 		<tera-input
 			label="Concept"
 			disabled
@@ -27,7 +28,6 @@
 						)
 					: ''
 			"
-			@update:model-value="$emit('update-parameter', { key: 'grounding', value: $event })"
 		/>
 	</section>
 </template>
