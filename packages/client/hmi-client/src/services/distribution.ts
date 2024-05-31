@@ -8,7 +8,13 @@ export const DistributionTypeLabel: { [key in DistributionType]: string } = {
 	[DistributionType.Uniform]: 'Uniform'
 };
 
-export const distributionTypeOptions = (): { name: string; value: string }[] =>
+export const DistributionTypeDescription: { [key in DistributionType]: string } = {
+	[DistributionType.Constant]: 'value is the constant value.',
+	[DistributionType.Uniform]:
+		'low is the lower range (inclusive), high is the upper range (exclusive).'
+};
+
+export const distributionTypeOptions = (): { name: string; value: DistributionType }[] =>
 	Object.values(DistributionType).map((dist) => ({
 		name: DistributionTypeLabel[dist],
 		value: dist

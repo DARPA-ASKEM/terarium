@@ -8,27 +8,36 @@
 	<main>
 		<span class="flex gap-2">
 			<Dropdown
-				:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
+				:model-value="parameterDistribution.type"
 				@change="
 					emit('update-parameter', {
 						id: parameterId,
 						distribution: formatPayloadFromTypeChange($event.value)
 					})
 				"
+				filter
 				option-label="name"
 				option-value="value"
 				:options="distributionTypeOptions()"
-			/>
+			>
+				<template #value="{ value }">
+					<span class="flex flex-1" v-tooltip.top="getTooltipContent(value)">{{
+						DistributionTypeLabel[value]
+					}}</span>
+				</template>
+				<template #option="{ option }">
+					<span class="flex flex-1" v-tooltip="getTooltipContent(option.value)">{{
+						option.name
+					}}</span>
+				</template>
+			</Dropdown>
 
 			<!-- Constant -->
 			<tera-input
-				v-if="
-					getParameterDistribution(modelConfiguration, parameterId).type ===
-					DistributionType.Constant
-				"
-				label="Constant"
+				v-if="parameterDistribution.type === DistributionType.Constant"
+				label="value"
 				type="nist"
-				:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+				:model-value="parameterDistribution?.parameters.value"
 				@update:model-value="
 					emit('update-parameter', {
 						id: parameterId,
@@ -37,18 +46,11 @@
 				"
 			/>
 			<!-- Uniform Distribution -->
-			<template
-				v-if="
-					getParameterDistribution(modelConfiguration, parameterId).type ===
-					DistributionType.Uniform
-				"
-			>
+			<template v-if="parameterDistribution.type === DistributionType.Uniform">
 				<tera-input
-					label="Min"
+					label="low"
 					type="nist"
-					:model-value="
-						getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum
-					"
+					:model-value="parameterDistribution?.parameters.minimum"
 					@update:model-value="
 						emit('update-parameter', {
 							id: parameterId,
@@ -57,11 +59,9 @@
 					"
 				/>
 				<tera-input
-					label="Max"
+					label="high"
 					type="nist"
-					:model-value="
-						getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum
-					"
+					:model-value="parameterDistribution.parameters.maximum"
 					@update:model-value="
 						emit('update-parameter', {
 							id: parameterId,
@@ -97,10 +97,15 @@ import {
 	getParameterDistribution
 } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import {
+	DistributionType,
+	DistributionTypeDescription,
+	DistributionTypeLabel,
+	distributionTypeOptions
+} from '@/services/distribution';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -114,6 +119,10 @@ const unit = getParameterUnit(props.modelConfiguration, props.parameterId);
 const description = getParameterDescription(props.modelConfiguration, props.parameterId);
 
 const isSourceOpen = ref(false);
+
+const parameterDistribution = computed(() =>
+	getParameterDistribution(props.modelConfiguration, props.parameterId)
+);
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
@@ -139,6 +148,24 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	distribution.type = type;
 	distribution.parameters = {};
 	return distribution;
+}
+
+function getTooltipContent(distributionType: DistributionType) {
+	return {
+		value: `${DistributionTypeLabel[distributionType]}: ${DistributionTypeDescription[distributionType]}`,
+		pt: {
+			text: {
+				style: {
+					backgroundColor: 'var(--surface-overlay)',
+					color: 'var(--text-primary)',
+					border: '1px solid var(--surface-border-alt)',
+					borderRadius: 'var(--border-radius-small)'
+				}
+			}
+		},
+		showDelay: 300,
+		hideDelay: 300
+	};
 }
 </script>
 
