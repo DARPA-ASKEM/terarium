@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.utils.rebac.askem;
 
+import java.util.List;
+import java.util.UUID;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
-
-import java.util.List;
-import java.util.UUID;
 
 public class RebacUser extends RebacObject {
 	private final ReBACService reBACService;
