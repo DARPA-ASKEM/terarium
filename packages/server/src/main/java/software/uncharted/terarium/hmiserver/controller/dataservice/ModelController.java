@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ModelController {
 
 	final ModelService modelService;
@@ -134,7 +136,7 @@ public class ModelController {
 	ResponseEntity<ModelDescription> getDescription(
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
 
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -325,7 +327,7 @@ public class ModelController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Model model,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -363,7 +365,7 @@ public class ModelController {
 	ResponseEntity<ResponseDeleted> deleteModel(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -397,7 +399,7 @@ public class ModelController {
 			})
 	ResponseEntity<Model> createModel(
 			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
@@ -439,7 +441,7 @@ public class ModelController {
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {

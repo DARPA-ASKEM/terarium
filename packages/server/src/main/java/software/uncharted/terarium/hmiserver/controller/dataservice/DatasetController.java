@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -33,8 +34,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +72,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class DatasetController {
 
 	private static final int DEFAULT_CSV_LIMIT = 100;
@@ -754,8 +754,7 @@ public class DatasetController {
 			final HttpEntity csvEntity,
 			final String[] headers,
 			final Schema.Permission hasWritePermission) {
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		try {
 
 			// upload CSV to S3
 			final Integer status = datasetService.uploadFile(datasetId, filename, csvEntity);
