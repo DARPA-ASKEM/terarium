@@ -10,8 +10,7 @@ export const DistributionTypeLabel: { [key in DistributionType]: string } = {
 
 export const DistributionTypeDescription: { [key in DistributionType]: string } = {
 	[DistributionType.Constant]: 'value is the constant value.',
-	[DistributionType.Uniform]:
-		'low is the lower range (inclusive), high is the upper range (exclusive).'
+	[DistributionType.Uniform]: 'low is the lower range, high is the upper range.'
 };
 
 export const distributionTypeOptions = (): { name: string; value: DistributionType }[] =>
