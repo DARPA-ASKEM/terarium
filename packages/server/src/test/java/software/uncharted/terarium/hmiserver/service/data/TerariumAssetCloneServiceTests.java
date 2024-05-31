@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -211,21 +214,21 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 		projectAssetService.createProjectAsset(project, AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
 
-		final List<ProjectAsset> exportedAssets =
-				projectAssetService.getProjectAssets(project.getId(), ASSUME_WRITE_PERMISSION);
+		final List<ProjectAsset> exportedAssets = projectAssetService.getProjectAssets(project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		final ProjectExport projectExport = cloneService.exportProject(project.getId());
 
 		Assertions.assertEquals(1 + NUM_DOCUMENTS, projectExport.getAssets().size());
 
-		final Project importedProject = cloneService.importProject(projectExport);
+		final Project importedProject = cloneService.importProject("test_user_id", projectExport);
 
 		Assertions.assertNotEquals(project.getId(), importedProject.getId());
 		Assertions.assertEquals(project.getName(), importedProject.getName());
 		Assertions.assertEquals(project.getDescription(), importedProject.getDescription());
 
-		final List<ProjectAsset> importedAssets =
-				projectAssetService.getProjectAssets(importedProject.getId(), ASSUME_WRITE_PERMISSION);
+		final List<ProjectAsset> importedAssets = projectAssetService.getProjectAssets(importedProject.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(exportedAssets.size(), importedAssets.size());
 

@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,7 +22,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -483,15 +486,26 @@ public class ProjectController {
 			@ApiResponse(responseCode = "503", description = "An error occurred when trying to communicate with either the postgres or spicedb"
 					+ " databases", content = @Content)
 	})
-	@PostMapping("/import")
+	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<Project> importProject(@RequestBody final ProjectExport projectExport) {
+	public ResponseEntity<Project> importProject(
+			@RequestPart("file") final MultipartFile input) {
+
+		ProjectExport projectExport;
+		try {
+			projectExport = objectMapper.readValue(input.getInputStream(), ProjectExport.class);
+		} catch (final Exception e) {
+			log.error("Error parsing project export", e);
+			throw new ResponseStatusException(
+					HttpStatus.BAD_REQUEST, messages.get("projects.import-parse-failure"));
+		}
 
 		final String userId = currentUserService.get().getId();
+		final String userName = userService.getById(userId).getName();
 
 		Project project;
 		try {
-			project = cloneService.importProject(userId, projectExport);
+			project = cloneService.importProject(userId, userName, projectExport);
 		} catch (final Exception e) {
 			log.error("Error importing project", e);
 			throw new ResponseStatusException(

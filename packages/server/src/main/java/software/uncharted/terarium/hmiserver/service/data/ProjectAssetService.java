@@ -1,16 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
-import jakarta.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import io.micrometer.observation.annotation.Observed;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -30,10 +32,11 @@ public class ProjectAssetService {
 	final ReBACService reBACService;
 
 	/**
-	 * Find all active assets for a project. Active assets are defined as those that are not deleted and not temporary.
+	 * Find all active assets for a project. Active assets are defined as those that
+	 * are not deleted and not temporary.
 	 *
 	 * @param projectId The project ID
-	 * @param types The types of assets to find
+	 * @param types     The types of assets to find
 	 * @return The list of active assets for the project
 	 */
 	@Observed(name = "function_profile")
@@ -51,8 +54,8 @@ public class ProjectAssetService {
 			@NotNull final AssetType type,
 			@NotNull final UUID originalAssetId,
 			final Schema.Permission hasWritePermission) {
-		final ProjectAsset asset =
-				projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId, originalAssetId, type);
+		final ProjectAsset asset = projectAssetRepository.findByProjectIdAndAssetIdAndAssetType(projectId,
+				originalAssetId, type);
 		if (asset == null) {
 			return false;
 		}
@@ -140,7 +143,7 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public List<ProjectAsset> getProjectAssets(final UUID projectId, final Schema.Permission hasReadPermission) {
-		return projectAssetRepository.findAllByProjectId(projectId);
+		return projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
 	}
 
 	@Observed(name = "function_profile")

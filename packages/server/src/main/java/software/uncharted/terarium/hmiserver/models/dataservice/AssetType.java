@@ -1,12 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @RequiredArgsConstructor
 @TSModel
@@ -47,6 +57,31 @@ public enum AssetType {
 			log.error("Error converting the string assetTypeName into a valid AssetType", iae);
 			throw new ResponseStatusException(
 					HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
+		}
+	}
+
+	public Class<? extends TerariumAsset> getAssetClass() {
+		switch (this) {
+			case ARTIFACT:
+				return Artifact.class;
+			case CODE:
+				return Code.class;
+			case DATASET:
+				return Dataset.class;
+			case DOCUMENT:
+				return DocumentAsset.class;
+			case MODEL:
+				return Model.class;
+			case MODEL_CONFIGURATION:
+				return ModelConfiguration.class;
+			case PUBLICATION:
+				throw new IllegalArgumentException("Publication assets are not supported");
+			case SIMULATION:
+				return Simulation.class;
+			case WORKFLOW:
+				return Workflow.class;
+			default:
+				throw new IllegalArgumentException("Unrecognized asset type: " + this);
 		}
 	}
 }

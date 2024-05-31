@@ -179,6 +179,7 @@ public class TerariumAssetCloneService {
 		final ProjectExport projectExport = new ProjectExport();
 		projectExport.setProject(project.clone());
 		projectExport.getProject().setUserId(null); // clear the user id
+		projectExport.getProject().setUserName(null); // clear the user name
 		projectExport.setAssets(exportedAssets);
 		return projectExport.clone();
 	}
@@ -191,12 +192,14 @@ public class TerariumAssetCloneService {
 	 * @throws IOException
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Project importProject(final String userId, final ProjectExport export) throws IOException {
+	public Project importProject(final String userId, final String userName, final ProjectExport export)
+			throws IOException {
 
 		final ProjectExport projectExport = export.clone(); // clone in case it has been imported already
 
 		// set the current user id
 		projectExport.getProject().setUserId(userId);
+		projectExport.getProject().setUserName(userName);
 
 		// create the project
 		final Project project = projectService.createProject(projectExport.getProject());
