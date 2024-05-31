@@ -206,11 +206,11 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 
 export function updateParameter(model: Model, parameterId: string, key: string, value: any) {
 	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+		// TODO: Add support for editing concept/grounding
 		if (key === 'units') {
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
-		} else if (key === 'concept') {
-			obj.grounding = { identifiers: { value } }; // FIXME: Revisit this, can concepts actually be edited, how so?
+			obj.units.expression_mathml = `<ci>${value}</ci>`;
 		} else {
 			obj[key] = value;
 		}
@@ -340,15 +340,13 @@ export function updateInitialMetadata(model: Model, target: string, key: string,
 	}
 	const initialMetadata = model.metadata.initials[target];
 
-	if (typeof key === 'string') {
-		if (key === 'units') {
-			if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
-			initialMetadata.units.expression = value;
-		} else if (key === 'concept') {
-			initialMetadata.concept = { grounding: { identifiers: { value } } }; // FIXME: Revisit this, can concepts actually be edited, how so?
-		} else {
-			initialMetadata[key] = value;
-		}
+	// TODO: Add support for editing concept metadata
+	if (key === 'units') {
+		if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
+		initialMetadata.units.expression = value;
+		initialMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		initialMetadata[key] = value;
 	}
 }
 

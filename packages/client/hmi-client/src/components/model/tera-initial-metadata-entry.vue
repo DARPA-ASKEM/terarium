@@ -22,17 +22,7 @@
 				:model-value="getInitialUnits(model, target)"
 				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
 			/>
-			<tera-input
-				label="Concept"
-				:model-value="getInitialConcept(model, target)"
-				disabled
-				@update:model-value="
-					$emit('update-initial-metadata', {
-						key: 'concept',
-						value: $event
-					})
-				"
-			/>
+			<tera-input label="Concept" :model-value="getInitialConcept(model, target)" disabled />
 		</template>
 	</section>
 </template>
