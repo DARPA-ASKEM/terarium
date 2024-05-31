@@ -40,7 +40,6 @@ public class DatasetColumn extends TerariumEntity {
 
 	@TSOptional
 	@ManyToOne
-	@JoinColumn(name = "dataset_id")
 	@JsonBackReference
 	private Dataset dataset;
 

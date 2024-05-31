@@ -485,7 +485,7 @@ watch(
 			homeItem,
 			explorerItem,
 			...removedUpdatedProject,
-			...sortBy(items, 'label')
+			...sortBy(items, (item) => item.label?.toString().toLowerCase())
 		];
 	},
 	{ immediate: true }
