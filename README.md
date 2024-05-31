@@ -114,7 +114,7 @@ To generate the typescript models as a single command:
 yarn workspace @uncharted/server-type-generator run generateTypes
 ```
 
-The client, when running with the command `yarn dev`, connects to the server in the staging environment, enabling client-side development without the need to spin up the server locally.
+The client, when running with the command `yarn dev`, connects to the server in the dev environment, enabling client-side development without the need to spin up the server locally.
 
 To run the client while connecting to the server running locally, use the following command:
 
