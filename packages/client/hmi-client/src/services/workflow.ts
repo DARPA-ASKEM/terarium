@@ -95,7 +95,8 @@ export const addNode = (
 			acceptMultiple: false,
 			state: {}
 		})),
-		status: OperatorStatus.DEFAULT,
+
+		status: OperatorStatus.INVALID,
 
 		width: nodeSize.width,
 		height: nodeSize.height

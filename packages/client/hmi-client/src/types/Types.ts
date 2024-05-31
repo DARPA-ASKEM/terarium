@@ -192,6 +192,7 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    documentAbstract?: string;
     assets?: DocumentExtraction[];
 }
 
@@ -1211,7 +1212,6 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     Publication = "publication",
-    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
