@@ -7,30 +7,33 @@
 	</header>
 	<main>
 		<span class="flex gap-2">
-			<Dropdown
-				:model-value="parameterDistribution.type"
-				@change="
-					emit('update-parameter', {
-						id: parameterId,
-						distribution: formatPayloadFromTypeChange($event.value)
-					})
-				"
-				filter
-				option-label="name"
-				option-value="value"
-				:options="distributionTypeOptions()"
-			>
-				<template #value="{ value }">
-					<span class="flex flex-1" v-tooltip.top="getTooltipContent(value)">{{
-						DistributionTypeLabel[value]
-					}}</span>
+			<tera-tooltip position="top" :has-arrow="false">
+				<Dropdown
+					:model-value="parameterDistribution.type"
+					@change="
+						emit('update-parameter', {
+							id: parameterId,
+							distribution: formatPayloadFromTypeChange($event.value)
+						})
+					"
+					filter
+					option-label="name"
+					option-value="value"
+					:options="distributionTypeOptions()"
+				>
+					<template #option="{ option }">
+						<span class="flex flex-1" v-tooltip="getTooltipContent(option.value)">{{
+							option.name
+						}}</span>
+					</template>
+				</Dropdown>
+				<template #tooltip-content>
+					<h1 class="pb-1">{{ DistributionTypeLabel[parameterDistribution.type] }}</h1>
+					<p class="distribution-description">
+						{{ DistributionTypeDescription[parameterDistribution.type] }}
+					</p>
 				</template>
-				<template #option="{ option }">
-					<span class="flex flex-1" v-tooltip="getTooltipContent(option.value)">{{
-						option.name
-					}}</span>
-				</template>
-			</Dropdown>
+			</tera-tooltip>
 
 			<!-- Constant -->
 			<tera-input
@@ -106,6 +109,7 @@ import {
 	DistributionTypeLabel,
 	distributionTypeOptions
 } from '@/services/distribution';
+import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
@@ -185,5 +189,9 @@ main {
 
 :deep(.p-dropdown-label) {
 	min-width: 10rem;
+}
+
+.distribution-description {
+	width: 12rem;
 }
 </style>
