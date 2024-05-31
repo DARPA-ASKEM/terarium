@@ -147,6 +147,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 							return request;
 						}))
 				.andExpect(status().isOk());
+
+		Dataset updated = datasetService
+				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
+				.get();
+		Assertions.assertEquals(4, updated.getColumns().size());
 	}
 
 	@Test
