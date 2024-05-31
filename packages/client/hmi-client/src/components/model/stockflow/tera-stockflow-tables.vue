@@ -6,6 +6,7 @@
 			</template>
 			<tera-initials-metadata
 				:model="model"
+				:mmt="mmt"
 				@update-initial-metadata="emit('update-initial-metadata', $event)"
 			/>
 		</AccordionTab>
