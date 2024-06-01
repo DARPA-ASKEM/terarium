@@ -304,6 +304,7 @@ export function getInitial(model: Model, target: string): Initial | undefined {
 	}
 }
 
+// TODO: These updateMetadata functions and even the updateParameter function share similar logic and can be refactored
 /**
  * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
@@ -322,7 +323,17 @@ export function updateParameterMetadata(
 		model.metadata.parameters ??= {};
 		model.metadata.parameters[parameterId] ??= {};
 	}
-	model.metadata.parameters[parameterId][key] = value;
+	const parameterMetadata = model.metadata.parameters[parameterId];
+
+	// TODO: Add support for editing concept metadata
+	if (key === 'units') {
+		if (!parameterMetadata.units)
+			parameterMetadata.units = { expression: '', expression_mathml: '' };
+		parameterMetadata.units.expression = value;
+		parameterMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		parameterMetadata[key] = value;
+	}
 }
 
 /**

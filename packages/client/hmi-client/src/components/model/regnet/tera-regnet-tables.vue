@@ -64,6 +64,7 @@
 		</AccordionTab>
 		<AccordionTab header="Parameters">
 			<tera-parameters-metadata
+				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"

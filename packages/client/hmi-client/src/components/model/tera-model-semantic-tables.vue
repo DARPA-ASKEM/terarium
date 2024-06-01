@@ -18,7 +18,11 @@ import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
-import { updateInitialMetadata, updateParameter } from '@/model-representation/service';
+import {
+	updateInitialMetadata,
+	updateParameter,
+	updateParameterMetadata
+} from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
@@ -50,8 +54,12 @@ function onUpdateInitialMetadata(event: any) {
 }
 
 function onUpdateParameter(event: any) {
-	const { parameterId, key, value } = event;
-	updateParameter(transientModel.value, parameterId, key, value);
+	const { parameterId, key, value, isMetadata } = event;
+	if (isMetadata) {
+		updateParameterMetadata(transientModel.value, parameterId, key, value);
+	} else {
+		updateParameter(transientModel.value, parameterId, key, value);
+	}
 }
 
 // Apply changes to the model when the component unmounts or the user navigates away

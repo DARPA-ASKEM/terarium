@@ -4,22 +4,29 @@
 			v-for="([baseParameterId, values], index) in collapsedParameters.entries()"
 			:key="baseParameterId"
 		>
+			<template v-if="values.length > 1">
+				<tera-parameter-metadata-entry
+					:parameter="{ id: baseParameterId }"
+					is-toggleable
+					:show-stratified-variables="toggleStates[index]"
+					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
+					@update-parameter="updateBaseParameter(baseParameterId, $event)"
+				/>
+				<ul v-if="toggleStates[index]" class="stratified">
+					<li v-for="id in values" :key="id">
+						<tera-parameter-metadata-entry
+							:parameter="parameters.find((p) => p.id === id) ?? parameters[0]"
+							is-stratified
+							@update-parameter="$emit('update-parameter', { parameterId: id, ...$event })"
+						/>
+					</li>
+				</ul>
+			</template>
 			<tera-parameter-metadata-entry
-				:parameter="{ id: baseParameterId }"
-				is-toggleable
-				:show-stratified-variables="toggleStates[index]"
-				@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-				@update-parameter-metadata="updateBaseParameter(baseParameterId, $event)"
+				v-else
+				:parameter="parameters.find((p) => p.id === values[0]) ?? parameters[0]"
+				@update-parameter="$emit('update-parameter', { parameterId: values[0], ...$event })"
 			/>
-			<ul v-if="toggleStates[index]" class="stratified">
-				<li v-for="id in values" :key="id">
-					<tera-parameter-metadata-entry
-						:parameter="parameters.find((p) => p.id === id) ?? parameters[0]"
-						is-stratified
-						@update-parameter-metadata="$emit('update-parameter', { parameterId: id, ...$event })"
-					/>
-				</li>
-			</ul>
 		</li>
 	</ul>
 	<ul v-else>
@@ -60,7 +67,8 @@ const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
 const toggleStates = ref(Array.from({ length: collapsedParameters.size }, () => false));
 
 function updateBaseParameter(baseParameter: string, event: any) {
-	emit('update-parameter', { target: baseParameter, ...event }); // Write metadata func for storing base parameter stuff
+	// Modify parameter metadata for base parameter since it doesn't exist otherwise
+	emit('update-parameter', { target: baseParameter, isMetadata: true, ...event });
 	// Update stratified parameters if the event is a unit change
 	const ids = collapsedParameters.get(baseParameter);
 	if (ids && event.key === 'units') {

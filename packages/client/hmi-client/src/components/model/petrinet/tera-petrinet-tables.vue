@@ -16,6 +16,7 @@
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
 			<tera-parameters-metadata
+				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"

@@ -5,6 +5,7 @@
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
 			<tera-initials-metadata
+				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
 				@update-initial-metadata="emit('update-initial-metadata', $event)"
@@ -15,6 +16,7 @@
 				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 			</template>
 			<tera-parameters-metadata
+				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
