@@ -17,11 +17,19 @@
 			"
 		/>
 		<template v-if="!isStratified">
+			<Button
+				v-if="isToggleable"
+				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+				text
+				rounded
+				@click="$emit('toggle-stratified-variables')"
+			/>
 			<tera-input
 				label="Unit"
 				:model-value="getInitialUnits(model, target)"
 				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
 			/>
+			<!--TODO: Add support for editing concepts-->
 			<tera-input label="Concept" :model-value="getInitialConcept(model, target)" disabled />
 		</template>
 	</section>
@@ -36,12 +44,17 @@ import {
 	getInitialConcept
 } from '@/model-representation/service';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import Button from 'primevue/button';
 
 defineProps<{
 	model: Model;
 	target: string;
+	isToggleable?: boolean;
 	isStratified?: boolean;
+	showStratifiedVariables?: boolean;
 }>();
+
+defineEmits(['update-initial-metadata', 'toggle-stratified-variables']);
 </script>
 
 <style scoped>
@@ -49,7 +62,7 @@ section {
 	display: grid;
 	grid-template-areas:
 		'symbol name description description'
-		'unit		unit concept .';
+		'toggle		unit concept .';
 	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
 	align-items: center;
@@ -57,6 +70,11 @@ section {
 
 h6 {
 	grid-area: symbol;
+	justify-self: center;
+}
+
+button {
+	grid-area: toggle;
 }
 
 :deep([label='Name']) {

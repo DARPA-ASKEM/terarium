@@ -16,6 +16,8 @@
 			</template>
 			<tera-parameters-metadata
 				:model="model"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>

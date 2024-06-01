@@ -45,7 +45,6 @@ const tables = computed(() => {
 });
 
 function onUpdateInitialMetadata(event: any) {
-	console.log(event);
 	const { target, key, value } = event;
 	updateInitialMetadata(transientModel.value, target, key, value);
 }
