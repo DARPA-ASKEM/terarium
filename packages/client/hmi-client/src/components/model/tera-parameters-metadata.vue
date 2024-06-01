@@ -6,7 +6,7 @@
 		>
 			<template v-if="values.length > 1">
 				<tera-parameter-metadata-entry
-					:parameter="{ id: baseParameterId }"
+					:parameter="model.metadata?.parameters?.[baseParameterId] ?? { id: baseParameterId }"
 					is-toggleable
 					:show-stratified-variables="toggleStates[index]"
 					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
@@ -68,7 +68,7 @@ const toggleStates = ref(Array.from({ length: collapsedParameters.size }, () => 
 
 function updateBaseParameter(baseParameter: string, event: any) {
 	// Modify parameter metadata for base parameter since it doesn't exist otherwise
-	emit('update-parameter', { target: baseParameter, isMetadata: true, ...event });
+	emit('update-parameter', { parameterId: baseParameter, isMetadata: true, ...event });
 	// Update stratified parameters if the event is a unit change
 	const ids = collapsedParameters.get(baseParameter);
 	if (ids && event.key === 'units') {

@@ -322,6 +322,7 @@ export function updateParameterMetadata(
 		model.metadata ??= {};
 		model.metadata.parameters ??= {};
 		model.metadata.parameters[parameterId] ??= {};
+		model.metadata.parameters[parameterId].id = parameterId;
 	}
 	const parameterMetadata = model.metadata.parameters[parameterId];
 
