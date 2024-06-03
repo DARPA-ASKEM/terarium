@@ -89,6 +89,7 @@ public class TerariumAssetCloneService {
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
+				oldToNewIds.put(currentAssetId, currentAssetId); // map to the same id to prevent an exception later
 				continue;
 			}
 
