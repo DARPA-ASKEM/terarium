@@ -1,26 +1,40 @@
 <template>
-	<ul v-if="isStratified">
-		<li v-for="([baseTarget, values], index) in collapsedInitials.entries()" :key="baseTarget">
-			<tera-initial-metadata-entry
-				:model="model"
-				:target="baseTarget"
-				is-toggleable
-				:show-stratified-variables="toggleStates[index]"
-				@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-				@update-initial-metadata="updateBaseInitial(baseTarget, $event)"
+	<template v-if="isStratified">
+		<ul>
+			<li v-for="([baseTarget, values], index) in collapsedInitials.entries()" :key="baseTarget">
+				<tera-initial-metadata-entry
+					:model="model"
+					:target="baseTarget"
+					is-base
+					:show-stratified-variables="toggleStates[index]"
+					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
+					@update-initial-metadata="updateBaseInitial(baseTarget, $event)"
+					@open-matrix="matrixModalId = baseTarget"
+				/>
+				<ul v-if="toggleStates[index]" class="stratified">
+					<li v-for="target in values" :key="target">
+						<tera-initial-metadata-entry
+							:model="model"
+							:target="target"
+							is-stratified
+							@update-initial-metadata="$emit('update-initial-metadata', { target, ...$event })"
+						/>
+					</li>
+				</ul>
+			</li>
+		</ul>
+		<teleport to="body">
+			<tera-stratified-matrix-modal
+				v-if="matrixModalId"
+				:id="matrixModalId"
+				:mmt="props.mmt"
+				:mmt-params="props.mmtParams"
+				:stratified-matrix-type="StratifiedMatrix.Initials"
+				:open-value-config="!!matrixModalId"
+				@close-modal="matrixModalId = ''"
 			/>
-			<ul v-if="toggleStates[index]" class="stratified">
-				<li v-for="target in values" :key="target">
-					<tera-initial-metadata-entry
-						:model="model"
-						:target="target"
-						is-stratified
-						@update-initial-metadata="$emit('update-initial-metadata', { target, ...$event })"
-					/>
-				</li>
-			</ul>
-		</li>
-	</ul>
+		</teleport>
+	</template>
 	<ul v-else>
 		<li v-for="{ target } in initials" :key="target">
 			<tera-initial-metadata-entry
@@ -35,14 +49,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Model } from '@/types/Types';
-import { MiraModel } from '@/model-representation/mira/mira-common';
+import { StratifiedMatrix } from '@/types/Model';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getInitials } from '@/model-representation/service';
 import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
 import TeraInitialMetadataEntry from '@/components/model/tera-initial-metadata-entry.vue';
+import TeraStratifiedMatrixModal from './petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 }>();
 
 const emit = defineEmits(['update-initial-metadata']);
@@ -52,6 +69,7 @@ const isStratified = isStratifiedModel(props.mmt);
 const collapsedInitials = collapseInitials(props.mmt);
 
 const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
+const matrixModalId = ref('');
 
 function updateBaseInitial(baseTarget: string, event: any) {
 	emit('update-initial-metadata', { target: baseTarget, ...event });

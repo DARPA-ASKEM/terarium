@@ -13,15 +13,17 @@
 		/>
 		<template v-if="!isStratified">
 			<Button
-				v-if="isToggleable"
+				v-if="isBase"
 				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
 				text
 				rounded
-				@click="$emit('toggle-stratified-variables')" />
+				@click="$emit('toggle-stratified-variables')"
+			/>
 			<tera-input
 				label="Unit"
 				:model-value="units?.expression ?? ''"
-				@update:model-value="$emit('update-parameter', { key: 'units', value: $event })" />
+				@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
+			/>
 			<!--TODO: Add support for editing concepts-->
 			<tera-input
 				label="Concept"
@@ -34,7 +36,9 @@
 							)
 						: ''
 				"
-		/></template>
+			/>
+			<Button v-if="isBase" label="Open matrix" text @click="$emit('open-matrix')" />
+		</template>
 	</section>
 </template>
 
@@ -46,12 +50,12 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	parameter: ModelParameter;
-	isToggleable?: boolean;
+	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-parameter', 'toggle-stratified-variables']);
+defineEmits(['update-parameter', 'toggle-stratified-variables', 'open-matrix']);
 
 const { id, name, description, grounding, units } = props.parameter;
 </script>
@@ -61,7 +65,7 @@ section {
 	display: grid;
 	grid-template-areas:
 		'symbol name description description'
-		'toggle		unit concept .';
+		'toggle	unit concept matrix-button';
 	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
 	align-items: center;
@@ -73,7 +77,11 @@ h6 {
 }
 
 button {
-	grid-area: toggle;
+	/* grid-area: toggle; */
+}
+
+[label='Open Matrix'] {
+	grid-area: matrix-button;
 }
 
 :deep([label='Name']) {
