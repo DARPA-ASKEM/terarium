@@ -740,12 +740,37 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
+
+	// Build a traversal map before we do actual removal
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.value.nodes.map((node) => [node.id, node])
+	);
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	wf.value.edges.forEach((edge) => {
+		if (!edge.source || !edge.target) return;
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+	});
+	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
+
+	// Remove edge
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id);
 		});
 		workflowDirty = true;
-	} else logger.error(`Edges with port id:${portId} not found.`);
+	} else {
+		logger.error(`Edges with port id:${portId} not found.`);
+		return;
+	}
+
+	// cascade invalid status to downstream operators
+	if (startingNodeId !== '') {
+		workflowService.cascadeInvalidateDownstream(
+			nodeMap.get(startingNodeId) as WorkflowNode<any>,
+			nodeCache
+		);
+	}
 }
 
 function onCanvasClick() {

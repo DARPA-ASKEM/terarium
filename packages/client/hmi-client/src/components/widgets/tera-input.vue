@@ -1,5 +1,5 @@
 <template>
-	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput" :label="label">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input
 			v-bind="attrs"
@@ -64,14 +64,14 @@ watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (isNistType) {
-			maskedValue.value = numberToNist(newValue.toString());
+			maskedValue.value = numberToNist(newValue?.toString() ?? '');
 		}
 	}
 );
 
 onMounted(() => {
 	if (isNistType) {
-		maskedValue.value = numberToNist(props.modelValue.toString());
+		maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
 	}
 });
 

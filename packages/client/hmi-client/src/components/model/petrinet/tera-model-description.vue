@@ -83,8 +83,7 @@
 		</Accordion>
 		<tera-model-semantic-tables
 			:model="model"
-			:model-configurations="modelConfigurations"
-			@update-model="(modelClone) => emit('update-model', modelClone)"
+			@update-model="(updatedModel: Model) => emit('update-model', updatedModel)"
 			class="mt-0"
 			:readonly="featureConfig?.isPreview"
 		/>
