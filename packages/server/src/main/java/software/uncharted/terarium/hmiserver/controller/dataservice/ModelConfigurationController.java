@@ -15,14 +15,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -138,6 +141,13 @@ public class ModelConfigurationController {
 		}
 	}
 
+	/**
+	 * Creates a new model config and saves it to the DB
+	 *
+	 * @param modelConfiguration new model config to create
+	 * @param projectId owning project ID, used for permissions
+	 * @return newly created model config with id set.
+	 */
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
@@ -172,7 +182,15 @@ public class ModelConfigurationController {
 		}
 	}
 
-	@PostMapping
+	/**
+	 * Updates an existing model config
+	 *
+	 * @param id UUID of the model to update
+	 * @param config New model config to update with
+	 * @param projectId owning project ID, used for permissions
+	 * @return updated project ID with UUID set
+	 */
+	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
 	@ApiResponses(
@@ -206,6 +224,45 @@ public class ModelConfigurationController {
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update model configuration in postgres db", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	/**
+	 * Deletes a model config by id
+	 *
+	 * @param id id of the model config to delete
+	 * @param projectId ID of the owning project, for permissions
+	 * @return ResponseDeleted
+	 */
+	@DeleteMapping("/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Deletes a model configuration")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Deleted configuration",
+						content = {
+							@Content(
+									mediaType = "application/json",
+									schema = @Schema(implementation = ResponseDeleted.class))
+						}),
+				@ApiResponse(responseCode = "503", description = "An error occurred while deleting", content = @Content)
+			})
+	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		try {
+			modelConfigurationService.deleteAsset(id, permission);
+			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
+		} catch (final IOException e) {
+			log.error("Unable to delete model configuration", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 					messages.get("postgres.service-unavailable"));
