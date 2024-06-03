@@ -92,6 +92,9 @@ class Child {
 };
 ```
 
+**Note:** When storing the relationships, BOTH SIDES NEED TO BE SET!
+
+
 ### Defining Uni-directional Relationships
 
 Uni-directional relationships are where only one side of the reference is defined in the code, inside the "owning" entity. For these relationships the `mappedBy` argument is omitted and the relationship is stored depends on the `@JoinColumn` annotation. By default if `@JoinColumn` is not defined, an additional table is created to define the relationship.
