@@ -23,10 +23,23 @@
 					:options="
 						distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)
 					"
+				>
+					<template #value>
+						{{ DistributionTypeLabel[uncertaintyType].toLowerCase() }}
+					</template>
+					<template #option="{ option }">
+						{{ option.name.toLowerCase() }}
+					</template>
+				</Dropdown>
+				uncertainty with ±
+				<InputNumber
+					class="uncertainty-percentage"
+					v-model="uncertaintyPercentage"
+					suffix="%"
+					:min="0"
+					:max="100"
 				/>
-				uncertainty +/-
-				<InputNumber v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
-				to the selected constant values
+				bounds on the value of the selected constant parameters.
 				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
 				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
 			</span>
@@ -131,7 +144,11 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import {
+	DistributionType,
+	DistributionTypeLabel,
+	distributionTypeOptions
+} from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
@@ -227,5 +244,8 @@ ul {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
+}
+:deep(.uncertainty-percentage) > input {
+	width: 4rem;
 }
 </style>
