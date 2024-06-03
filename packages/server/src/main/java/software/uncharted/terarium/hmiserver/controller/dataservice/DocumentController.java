@@ -556,7 +556,9 @@ public class DocumentController {
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(
 					document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
 			if (filename != null) {
-				documentAsset.getFileNames().add(filename);
+				if (!documentAsset.getFileNames().contains(filename)) {
+					documentAsset.getFileNames().add(filename);
+				}
 				documentAsset = documentAssetService
 						.updateAsset(documentAsset, permission)
 						.orElseThrow();
@@ -809,7 +811,6 @@ public class DocumentController {
 							.getMetadata()
 							.put("description", extraction.getProperties().getCaption());
 					documentAsset.getAssets().add(documentExtraction);
-					documentAsset.getFileNames().add(documentExtraction.getFileName());
 				}
 			}
 		}
