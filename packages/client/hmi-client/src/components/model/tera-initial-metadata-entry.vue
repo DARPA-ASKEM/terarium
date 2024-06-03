@@ -1,5 +1,5 @@
 <template>
-	<section>
+	<section :class="{ 'has-toggle': isBase }">
 		<h6>{{ target }}</h6>
 		<tera-input
 			label="Name"
@@ -62,15 +62,25 @@ section {
 	display: grid;
 	grid-template-areas:
 		'symbol name description description'
-		'toggle	unit concept matrix-button';
+		'unit	unit concept .';
 	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
 	align-items: center;
 }
 
+section.has-toggle {
+	grid-template-areas:
+		'symbol name description description'
+		'toggle	unit concept .';
+}
+
 h6 {
 	grid-area: symbol;
 	justify-self: center;
+}
+
+button {
+	grid-area: toggle;
 }
 
 :deep([label='Name']) {

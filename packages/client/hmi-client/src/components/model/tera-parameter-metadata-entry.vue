@@ -1,5 +1,5 @@
 <template>
-	<section>
+	<section :class="{ 'has-toggle': isBase }">
 		<h6>{{ id }}</h6>
 		<tera-input
 			label="Name"
@@ -13,6 +13,7 @@
 		/>
 		<template v-if="!isStratified">
 			<Button
+				class="toggle"
 				v-if="isBase"
 				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
 				text
@@ -65,10 +66,17 @@ section {
 	display: grid;
 	grid-template-areas:
 		'symbol name description description'
-		'toggle	unit concept matrix-button';
+		'unit	unit concept .';
 	grid-template-columns: max-content 30% 30% auto;
 	gap: var(--gap-small);
 	align-items: center;
+}
+
+section.has-toggle {
+	grid-template-areas:
+		'symbol name description description'
+		'toggle	unit concept open-matrix';
+	grid-template-columns: max-content 30% auto 8rem;
 }
 
 h6 {
@@ -76,12 +84,13 @@ h6 {
 	justify-self: center;
 }
 
-button {
-	/* grid-area: toggle; */
+.toggle {
+	grid-area: toggle;
+	margin-left: auto;
 }
 
 [label='Open Matrix'] {
-	grid-area: matrix-button;
+	grid-area: open-matrix;
 }
 
 :deep([label='Name']) {
