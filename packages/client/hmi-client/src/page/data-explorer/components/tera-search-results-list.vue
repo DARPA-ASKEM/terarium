@@ -190,7 +190,10 @@ const projectOptions = computed(() => {
 	return [
 		{
 			label: 'Add to which project?',
-			items: [...lastUpdatedProjectItem, ...sortBy(items, 'label')]
+			items: [
+				...lastUpdatedProjectItem,
+				...sortBy(items, (item) => item.label?.toString().toLowerCase())
+			]
 		}
 	];
 });
