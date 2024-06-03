@@ -35,6 +35,48 @@ const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const ready = ref(false);
 
+/**
+ * Given a matrix-like CSV (with row and column labels), update the model with specified values.
+ *
+ * For example, with:
+ * ,A,B
+ * C,1,2
+ * D,3,4
+ *
+ * Will yield (A, C, 1), (A, D, 3), (B, C, 2) and (B, D, 4) update tuples
+ *
+ **/
+const updateByMatrixCSV = async (
+	model: Model,
+	paramLocationMap: Map<string, TemplateSummary[]>,
+	matrixType: string,
+	text: string
+) => {
+	// Parse
+	const rows = text.split('\n');
+	const columns = rows[0].split(',');
+
+	for (let i = 1; i < rows.length; i++) {
+		const data = rows[i].split(',');
+		for (let j = 1; j < data.length; j++) {
+			const rowLabel = data[0];
+			const colLabel = columns[j];
+
+			paramLocationMap.forEach((v, k) => {
+				if (matrixType === 'subjectControllers') {
+					if (rowLabel === v[0].subject && colLabel === v[0].controllers.join('-')) {
+						updateParameter(model, k, 'value', +data[j]);
+					}
+				} else if (matrixType === 'subjectOutcome') {
+					// TODO
+				} else if (matrixType === 'outcomeControllers') {
+					// TODO
+				}
+			});
+		}
+	}
+};
+
 const csvStringProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
 	if (item.type !== 'text/plain') return;
@@ -57,23 +99,7 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 
 	// Presume this is a full matrix, with row/column labels
 	item.getAsString(async (text) => {
-		// Parse
-		const rows = text.split('\n');
-		const columns = rows[0].split(',');
-
-		for (let i = 1; i < rows.length; i++) {
-			const data = rows[i].split(',');
-			for (let j = 1; j < data.length; j++) {
-				const rowLabel = data[0];
-				const colLabel = columns[j];
-
-				paramLocationMap.forEach((v, k) => {
-					if (rowLabel === v[0].subject && colLabel === v[0].controllers.join('-')) {
-						updateParameter(model.value as Model, k, 'value', +data[j]);
-					}
-				});
-			}
-		}
+		updateByMatrixCSV(model.value as Model, paramLocationMap, 'subjectControllers', text);
 
 		// Update
 		const response = await getMMT(model.value as Model);
