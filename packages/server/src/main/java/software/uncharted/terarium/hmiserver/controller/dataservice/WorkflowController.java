@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +39,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class WorkflowController {
 
 	final WorkflowService workflowService;
@@ -107,7 +109,7 @@ public class WorkflowController {
 	public ResponseEntity<Workflow> getWorkflow(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
@@ -137,7 +139,7 @@ public class WorkflowController {
 	public ResponseEntity<Workflow> createWorkflow(
 			@RequestBody final Workflow item,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, permission));
@@ -172,7 +174,7 @@ public class WorkflowController {
 			@PathVariable("id") final UUID id,
 			@RequestBody final Workflow workflow,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			workflow.setId(id);
@@ -213,7 +215,7 @@ public class WorkflowController {
 	public ResponseEntity<ResponseDeleted> deleteWorkflow(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {

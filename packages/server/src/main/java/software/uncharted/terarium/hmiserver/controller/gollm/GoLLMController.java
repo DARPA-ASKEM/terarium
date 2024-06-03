@@ -106,7 +106,7 @@ public class GoLLMController {
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -184,7 +184,7 @@ public class GoLLMController {
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -281,7 +281,7 @@ public class GoLLMController {
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
@@ -393,7 +393,7 @@ public class GoLLMController {
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			final List<String> modelCards = new ArrayList<>();

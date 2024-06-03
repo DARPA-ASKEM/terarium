@@ -1,5 +1,5 @@
 <template>
-	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput" :label="label">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input
 			v-bind="attrs"
@@ -93,7 +93,6 @@ div {
 	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius-small);
 	cursor: text;
-	margin-bottom: var(--gap-small);
 	transition: border-color 0.3s ease-in-out;
 	font-family: var(--font-family);
 

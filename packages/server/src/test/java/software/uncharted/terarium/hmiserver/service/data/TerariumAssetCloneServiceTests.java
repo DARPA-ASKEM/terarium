@@ -218,7 +218,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 		Assertions.assertEquals(1 + NUM_DOCUMENTS, projectExport.getAssets().size());
 
-		final Project importedProject = cloneService.importProject(projectExport);
+		final Project importedProject = cloneService.importProject("test_user_id", "test_user_name", projectExport);
 
 		Assertions.assertNotEquals(project.getId(), importedProject.getId());
 		Assertions.assertEquals(project.getName(), importedProject.getName());

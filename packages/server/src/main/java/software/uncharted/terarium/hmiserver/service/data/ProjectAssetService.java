@@ -140,7 +140,7 @@ public class ProjectAssetService {
 
 	@Observed(name = "function_profile")
 	public List<ProjectAsset> getProjectAssets(final UUID projectId, final Schema.Permission hasReadPermission) {
-		return projectAssetRepository.findAllByProjectId(projectId);
+		return projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
 	}
 
 	@Observed(name = "function_profile")
