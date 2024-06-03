@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ModelController {
 
 	final ModelService modelService;

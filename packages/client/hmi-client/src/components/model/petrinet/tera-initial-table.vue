@@ -50,14 +50,14 @@
 					{{
 						getNameOfCurieCached(
 							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.identifiers)
+							getCurieFromGroundingIdentifier(data.concept.identifiers)
 						)
 					}}
 
 					<a
 						target="_blank"
 						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
+						:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept.identifiers))"
 						@click.stop
 						aria-label="Open Concept"
 					>
@@ -241,7 +241,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import { ModelConfigTableData, ParamType } from '@/types/common';
 import { pythonInstance } from '@/python/PyodideController';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached,
 	searchCuriesEntities,

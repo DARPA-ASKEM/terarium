@@ -1,30 +1,33 @@
 <template>
 	<component
 		:is="tables"
-		:model="model"
-		:modelConfigurations="modelConfigurations"
+		:model="transientModel"
 		:readonly="readonly"
-		@update-model="(updatedModel: Model) => emit('update-model', updatedModel)"
+		@update-model="$emit('update-model', $event)"
+		@update-initial-metadata="onUpdateInitialMetadata"
+		@update-parameter="onUpdateParameter"
 	/>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Model, ModelConfigurationLegacy } from '@/types/Types';
+import { cloneDeep } from 'lodash';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
-
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
+import { updateInitialMetadata, updateParameter } from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfigurationLegacy[];
 	readonly?: boolean;
 }>();
 
 const emit = defineEmits(['update-model']);
+
+const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
@@ -39,6 +42,28 @@ const tables = computed(() => {
 		default:
 			return TeraPetrinetTables;
 	}
+});
+
+function onUpdateInitialMetadata(event: any) {
+	const { target, key, value } = event;
+	updateInitialMetadata(transientModel.value, target, key, value);
+}
+
+function onUpdateParameter(event: any) {
+	const { parameterId, key, value } = event;
+	updateParameter(transientModel.value, parameterId, key, value);
+}
+
+// Apply changes to the model when the component unmounts or the user navigates away
+function saveChanges() {
+	emit('update-model', transientModel.value);
+}
+
+onMounted(() => window.addEventListener('beforeunload', saveChanges));
+
+onUnmounted(() => {
+	saveChanges();
+	window.removeEventListener('beforeunload', saveChanges);
 });
 </script>
 
