@@ -19,7 +19,6 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
-// import { createOidc } from 'oidc-spa';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
 
 // Create the Vue application

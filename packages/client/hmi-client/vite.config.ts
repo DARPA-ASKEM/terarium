@@ -94,5 +94,4 @@ export default defineConfig({
 		},
 		environment: 'jsdom'
 	}
-	// define: process.env.VITEST ? {} : { global: 'window' }
 });
