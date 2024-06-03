@@ -9,6 +9,7 @@
 			:id="'beta'"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			:should-eval="false"
+			:matrix-type="'subjectControllers'"
 		/>
 	</main>
 </template>
@@ -19,12 +20,17 @@ import { getMMT } from '@/services/model';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type {
+	MiraModel,
+	MiraTemplateParams,
+	TemplateSummary
+} from '@/model-representation/mira/mira-common';
 import { StratifiedMatrix } from '@/types/Model';
+import { updateParameter } from '@/model-representation/service';
 
 import * as sirJSON from '@/examples/strata-example.json';
 
-const model = ref<Model | null>(null);
+const model = ref<Model>();
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 const ready = ref(false);
@@ -33,12 +39,25 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
 	if (item.type !== 'text/plain') return;
 
-	const buffer: any[] = [];
+	const paramLocationMap = new Map<string, TemplateSummary[]>();
+	const templateParams = Object.values(mmtParams.value);
+	templateParams.forEach((templateParam) => {
+		const params = templateParam.params;
+		params.forEach((paramName) => {
+			if (!paramLocationMap.has(paramName)) paramLocationMap.set(paramName, []);
+
+			paramLocationMap.get(paramName)?.push({
+				name: templateParam.name,
+				subject: templateParam.subject,
+				outcome: templateParam.outcome,
+				controllers: templateParam.controllers
+			});
+		});
+	});
 
 	// Presume this is a full matrix, with row/column labels
-	item.getAsString((text) => {
+	item.getAsString(async (text) => {
 		// Parse
-
 		const rows = text.split('\n');
 		const columns = rows[0].split(',');
 
@@ -47,31 +66,32 @@ const csvStringProcessor = async (item: DataTransferItem) => {
 			for (let j = 1; j < data.length; j++) {
 				const rowLabel = data[0];
 				const colLabel = columns[j];
-				console.log('...', colLabel, rows[0], j);
-				buffer.push({
-					row: rowLabel,
-					col: colLabel,
-					value: data[j]
+
+				paramLocationMap.forEach((v, k) => {
+					if (rowLabel === v[0].subject && colLabel === v[0].controllers.join('-')) {
+						updateParameter(model.value as Model, k, 'value', +data[j]);
+					}
 				});
 			}
 		}
-		console.log('buffer', buffer);
-	});
 
-	return buffer;
+		// Update
+		const response = await getMMT(model.value as Model);
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	});
 };
 
 const processPasteEvent = async (event: ClipboardEvent) => {
 	const clipboardData = event.clipboardData;
 	if (!clipboardData) return;
 	const item = clipboardData.items[0];
-
-	csvStringProcessor(item);
+	await csvStringProcessor(item);
 };
 
 onMounted(async () => {
-	model.value = sirJSON as any;
-	const response: any = await getMMT(sirJSON as any);
+	model.value = sirJSON as Model;
+	const response = await getMMT(model.value);
 	mmt.value = response.mmt;
 	mmtParams.value = response.template_params;
 	ready.value = true;
