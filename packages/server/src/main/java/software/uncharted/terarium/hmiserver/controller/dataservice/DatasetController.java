@@ -259,7 +259,7 @@ public class DatasetController {
 			// columns are set. No need to extract
 			return dataset;
 		}
-		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+		if (dataset.getFileNames() != null || dataset.getFileNames().isEmpty()) {
 			// no file names to extract columns from
 			return dataset;
 		}
@@ -679,9 +679,7 @@ public class DatasetController {
 					throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 				}
 
-				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else {
+				if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
@@ -772,9 +770,7 @@ public class DatasetController {
 				updateHeaders(updatedDataset.get(), Arrays.asList(headers));
 
 				// add the filename to existing file names
-				if (updatedDataset.get().getFileNames() == null) {
-					updatedDataset.get().setFileNames(new ArrayList<>(List.of(filename)));
-				} else if (!updatedDataset.get().getFileNames().contains(filename)) {
+				if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
