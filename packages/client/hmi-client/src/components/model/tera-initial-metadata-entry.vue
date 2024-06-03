@@ -31,7 +31,6 @@
 			/>
 			<!--TODO: Add support for editing concepts-->
 			<tera-input label="Concept" :model-value="getInitialConcept(model, target)" disabled />
-			<Button v-if="isBase" label="Open matrix" text @click="$emit('open-matrix')" />
 		</template>
 	</section>
 </template>
@@ -72,10 +71,6 @@ section {
 h6 {
 	grid-area: symbol;
 	justify-self: center;
-}
-
-button {
-	/* grid-area: toggle; */
 }
 
 :deep([label='Name']) {
