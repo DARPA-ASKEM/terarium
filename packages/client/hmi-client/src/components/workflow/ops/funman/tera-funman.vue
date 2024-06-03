@@ -190,7 +190,7 @@ import type {
 } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations-legacy';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';

@@ -334,7 +334,7 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistribution
-} from '@/services/model-configurations';
+} from '@/services/model-configurations-legacy';
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';

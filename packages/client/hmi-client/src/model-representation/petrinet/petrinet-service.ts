@@ -1,4 +1,4 @@
-import { updateModelConfiguration } from '@/services/model-configurations';
+import { updateModelConfiguration } from '@/services/model-configurations-legacy';
 import { Model, ModelConfigurationLegacy } from '@/types/Types';
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>

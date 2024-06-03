@@ -55,7 +55,10 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import { addDefaultConfiguration, updateModelConfiguration } from '@/services/model-configurations';
+import {
+	addDefaultConfiguration,
+	updateModelConfiguration
+} from '@/services/model-configurations-legacy';
 import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model, type ModelConfigurationLegacy } from '@/types/Types';

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 
 import type { ModelConfigurationLegacy, Dataset, CsvAsset, State } from '@/types/Types';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations-legacy';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
 export interface CalibrateMap {

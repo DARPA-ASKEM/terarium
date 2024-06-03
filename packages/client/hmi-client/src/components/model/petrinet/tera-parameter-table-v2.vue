@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 import { ModelConfigurationLegacy } from '@/types/Types';
-import { getParameters } from '@/services/model-configurations';
+import { getParameters } from '@/services/model-configurations-legacy';
 import { StratifiedMatrix } from '@/types/Model';
 import { ref } from 'vue';
 import { collapseParameters, isStratifiedModel } from '@/model-representation/mira/mira';

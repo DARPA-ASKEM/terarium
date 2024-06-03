@@ -127,7 +127,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations-legacy';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';

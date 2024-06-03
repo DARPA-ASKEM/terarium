@@ -106,7 +106,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations-legacy';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { ModelEditOperationState } from './model-edit-operation';

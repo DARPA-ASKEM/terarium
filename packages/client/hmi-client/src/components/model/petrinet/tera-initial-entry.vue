@@ -37,7 +37,7 @@ import {
 	getInitialUnit,
 	getInitialExpression,
 	getInitialSource
-} from '@/services/model-configurations';
+} from '@/services/model-configurations-legacy';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';

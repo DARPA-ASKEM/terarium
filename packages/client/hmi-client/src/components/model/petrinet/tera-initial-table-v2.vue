@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ModelConfigurationLegacy } from '@/types/Types';
-import { getInitials } from '@/services/model-configurations';
+import { getInitials } from '@/services/model-configurations-legacy';
 import { StratifiedMatrix } from '@/types/Model';
 import { ref } from 'vue';
 import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';

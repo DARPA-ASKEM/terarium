@@ -313,7 +313,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import {
 	getModelConfigurationById,
 	createModelConfiguration
-} from '@/services/model-configurations';
+} from '@/services/model-configurations-legacy';
 import {
 	makeOptimizeJobCiemss,
 	getRunResultCiemss,
