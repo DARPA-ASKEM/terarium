@@ -8,6 +8,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
+				:mmt-params="mmtParams"
 				@update-initial-metadata="emit('update-initial-metadata', $event)"
 			/>
 		</AccordionTab>
