@@ -1,11 +1,33 @@
 <template>
-	<main>
+	<main style="width: 90%; height: 90%; overflow: scroll">
 		<h4>clipboard test</h4>
+
+		<tera-stratified-matrix
+			v-if="ready"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
+			:id="'beta'"
+			:stratified-matrix-type="StratifiedMatrix.Parameters"
+			:should-eval="false"
+		/>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { getMMT } from '@/services/model';
+import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
+import type { Model } from '@/types/Types';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { StratifiedMatrix } from '@/types/Model';
+
+import * as sirJSON from '@/examples/strata-example.json';
+
+const model = ref<Model | null>(null);
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
+const ready = ref(false);
 
 const csvStringProcessor = async (item: DataTransferItem) => {
 	if (item.kind !== 'string') return;
@@ -47,7 +69,13 @@ const processPasteEvent = async (event: ClipboardEvent) => {
 	csvStringProcessor(item);
 };
 
-onMounted(() => {
+onMounted(async () => {
+	model.value = sirJSON as any;
+	const response: any = await getMMT(sirJSON as any);
+	mmt.value = response.mmt;
+	mmtParams.value = response.template_params;
+	ready.value = true;
+
 	document.onpaste = processPasteEvent;
 });
 
