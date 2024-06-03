@@ -305,3 +305,12 @@ export function getParameters(config: ModelConfiguration): ModelParameter[] {
 export function getInitials(config: ModelConfiguration): Initial[] {
 	return config.configuration.semantics?.ode.initials ?? [];
 }
+
+export function setParameterDistributions(
+	config: ModelConfiguration,
+	distributionParameterMappings: { id: string; distribution: ModelDistribution }[]
+): void {
+	distributionParameterMappings.forEach((mapping) => {
+		setParameterDistribution(config, mapping.id, mapping.distribution);
+	});
+}
