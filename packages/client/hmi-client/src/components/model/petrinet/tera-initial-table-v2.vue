@@ -43,7 +43,6 @@
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
-			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
 			@update-cell-value="
 				emit('update-expression', { id: $event.variableName, value: $event.newValue })

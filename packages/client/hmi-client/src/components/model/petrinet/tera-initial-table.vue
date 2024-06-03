@@ -219,7 +219,6 @@
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
-			:open-value-config="matrixModalContext.isOpen"
 			@close-modal="matrixModalContext.isOpen = false"
 			@update-cell-value="(configToUpdate: any) => updateCellValue(configToUpdate)"
 		/>

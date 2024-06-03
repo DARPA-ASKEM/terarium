@@ -37,27 +37,23 @@
 							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
-							<template v-if="cell.content.id">
-								<section class="flex flex-column">
-									<InputText
-										v-if="editableCellStates[rowIdx][colIdx]"
-										class="cell-input"
-										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
-									/>
+							<section v-if="cell.content.id" class="flex flex-column">
+								<InputText
+									v-if="editableCellStates[rowIdx][colIdx]"
+									class="cell-input"
+									:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
+								/>
+								<div class="w-full" :class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }">
 									<div
-										class="w-full"
-										:class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }"
+										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
-										<div
-											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
-											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
-										>
-											{{ cell?.content.id }}
-											<!--
+										{{ cell?.content.id }}
+										<!--
 											<span
 												v-if="cell?.content?.controllers"
 												class="pi pi-info-circle"
@@ -67,16 +63,14 @@
 												}"
 											/>
 											-->
-										</div>
-										<div>
-											<div
-												class="mathml-container"
-												v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
-											/>
-										</div>
 									</div>
-								</section>
-							</template>
+									<div
+										v-if="!isReadOnly"
+										class="mathml-container"
+										v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
+									/>
+								</div>
+							</section>
 							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
@@ -108,6 +102,7 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
+	isReadOnly?: boolean;
 	shouldEval: boolean;
 }>();
 
@@ -144,7 +139,7 @@ const vFocus = {
 };
 
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	if (!variableName) return;
+	if (!variableName || props.isReadOnly) return;
 	valueToEdit.value = getVariable(props.mmt, variableName).value;
 	editableCellStates.value[rowIdx][colIdx] = true;
 }

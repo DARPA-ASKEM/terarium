@@ -38,7 +38,7 @@
 				:mmt="props.mmt"
 				:mmt-params="props.mmtParams"
 				:stratified-matrix-type="StratifiedMatrix.Parameters"
-				:open-value-config="!!matrixModalId"
+				is-read-only
 				@close-modal="matrixModalId = ''"
 			/>
 		</teleport>

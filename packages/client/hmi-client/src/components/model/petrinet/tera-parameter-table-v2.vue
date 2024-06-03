@@ -46,7 +46,6 @@
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
-			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
 			@update-cell-value="
 				emit('update-parameter', {

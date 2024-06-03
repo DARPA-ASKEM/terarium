@@ -88,7 +88,6 @@
 					:mmt="mmt"
 					:mmt-params="mmtParams"
 					:stratified-matrix-type="StratifiedMatrix.Rates"
-					:open-value-config="openValueConfig"
 					@close-modal="openValueConfig = false"
 					@update-configuration="
 						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
