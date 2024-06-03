@@ -8,11 +8,6 @@ name: Lint & Format Client
 # yamllint disable-line rule:truthy
 on:
   workflow_call:
-  pull_request:
-    paths:
-      - 'packages/client/**'
-    branches:
-      - 'yohannparis/improve-formatters'
 
 jobs:
   lintClient:
