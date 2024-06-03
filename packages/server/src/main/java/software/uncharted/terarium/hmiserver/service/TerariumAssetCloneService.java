@@ -10,10 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -38,8 +36,7 @@ public class TerariumAssetCloneService {
 	private final TerariumAssetServices terariumAssetServices;
 
 	/**
-	 * Given a project and a target asset, discover any assets that the target asset
-	 * depends on, clone them, replace any
+	 * Given a project and a target asset, discover any assets that the target asset depends on, clone them, replace any
 	 * ids with the newly cloned ids and persist them.
 	 *
 	 * @param projectId
@@ -47,11 +44,11 @@ public class TerariumAssetCloneService {
 	 * @return
 	 * @throws IOException
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public List<TerariumAsset> cloneAndPersistAsset(final UUID projectId, final UUID assetId) throws IOException {
 
-		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(projectId,
-				Schema.Permission.READ);
+		final List<ProjectAsset> projectAssets =
+				projectAssetService.getProjectAssets(projectId, Schema.Permission.READ);
 		final Map<UUID, ProjectAsset> projectAssetsById = new HashMap<>();
 		final Set<UUID> projectAssetIds = new HashSet<>();
 
@@ -81,11 +78,11 @@ public class TerariumAssetCloneService {
 
 			final ProjectAsset currentProjectAsset = projectAssetsById.get(currentAssetId);
 
-			final ITerariumAssetService terariumAssetService = terariumAssetServices
-					.getServiceByType(currentProjectAsset.getAssetType());
+			final ITerariumAssetService terariumAssetService =
+					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final Optional<TerariumAsset> currentAssetOptional = terariumAssetService
-					.getAsset(currentAssetId, Schema.Permission.READ);
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentAssetId, Schema.Permission.READ);
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
@@ -95,8 +92,8 @@ public class TerariumAssetCloneService {
 
 			final TerariumAsset currentAsset = currentAssetOptional.get();
 
-			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds,
-					currentAsset);
+			final AssetDependencyMap dependencies =
+					AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
 
 			for (final UUID dependencyId : dependencies.getIds()) {
 				assetsToClone.push(dependencyId);
@@ -128,16 +125,16 @@ public class TerariumAssetCloneService {
 			final AssetDependencyMap dependencies = assetDependencies.get(clonedAsset.getId());
 
 			// update any referenced dependencies
-			final TerariumAsset resolved = AssetDependencyUtil.swapAssetDependencies(clonedAsset, oldToNewIds,
-					dependencies);
+			final TerariumAsset resolved =
+					AssetDependencyUtil.swapAssetDependencies(clonedAsset, oldToNewIds, dependencies);
 
 			final AssetType assetType = assetTypes.get(clonedAsset.getId());
 
 			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
 			// persist the clone
-			final TerariumAsset created = (TerariumAsset) terariumAssetService.createAsset(resolved,
-					Schema.Permission.WRITE);
+			final TerariumAsset created =
+					(TerariumAsset) terariumAssetService.createAsset(resolved, Schema.Permission.WRITE);
 
 			res.add(created);
 		}
@@ -146,31 +143,30 @@ public class TerariumAssetCloneService {
 	}
 
 	/**
-	 * Given a project, clone all assets and download all related files. Return
-	 * everything as a singular ProjectExport
+	 * Given a project, clone all assets and download all related files. Return everything as a singular ProjectExport
 	 * object.
 	 *
 	 * @param projectId
 	 * @return
 	 * @throws IOException
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public ProjectExport exportProject(final UUID projectId) throws IOException {
 
 		final Project project = projectService.getProject(projectId).orElseThrow();
 
-		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(projectId,
-				Schema.Permission.READ);
+		final List<ProjectAsset> projectAssets =
+				projectAssetService.getProjectAssets(projectId, Schema.Permission.READ);
 
 		final List<AssetExport> exportedAssets = new ArrayList<>();
 
 		for (final ProjectAsset currentProjectAsset : projectAssets) {
 
-			final ITerariumAssetService terariumAssetService = terariumAssetServices
-					.getServiceByType(currentProjectAsset.getAssetType());
+			final ITerariumAssetService terariumAssetService =
+					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final Optional<TerariumAsset> currentAssetOptional = terariumAssetService
-					.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ);
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ);
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
@@ -179,8 +175,8 @@ public class TerariumAssetCloneService {
 
 			final TerariumAsset currentAsset = currentAssetOptional.get();
 
-			final Map<String, FileExport> files = terariumAssetService
-					.exportAssetFiles(currentProjectAsset.getAssetId(), Schema.Permission.READ);
+			final Map<String, FileExport> files =
+					terariumAssetService.exportAssetFiles(currentProjectAsset.getAssetId(), Schema.Permission.READ);
 
 			final AssetExport exportedAsset = new AssetExport();
 			exportedAsset.setType(currentProjectAsset.getAssetType());
@@ -204,7 +200,7 @@ public class TerariumAssetCloneService {
 	 * @return
 	 * @throws IOException
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	public Project importProject(final String userId, final String userName, final ProjectExport export)
 			throws IOException {
 
@@ -224,11 +220,12 @@ public class TerariumAssetCloneService {
 			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
 			// create the asset
-			final TerariumAsset asset = (TerariumAsset) terariumAssetService.createAsset(assetExport.getAsset(),
-					Schema.Permission.WRITE);
+			final TerariumAsset asset =
+					(TerariumAsset) terariumAssetService.createAsset(assetExport.getAsset(), Schema.Permission.WRITE);
 
 			// upload the files
-			for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
+			for (final Map.Entry<String, FileExport> entry :
+					assetExport.getFiles().entrySet()) {
 				final String fileName = entry.getKey();
 				final FileExport fileExport = entry.getValue();
 				terariumAssetService.uploadFile(
@@ -236,8 +233,8 @@ public class TerariumAssetCloneService {
 			}
 
 			// add the asset to the project
-			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(project, assetType,
-					asset, Schema.Permission.WRITE);
+			final Optional<ProjectAsset> projectAsset =
+					projectAssetService.createProjectAsset(project, assetType, asset, Schema.Permission.WRITE);
 			if (projectAsset.isEmpty()) {
 				throw new RuntimeException("Failed to create project asset");
 			}
