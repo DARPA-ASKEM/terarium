@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -150,9 +149,7 @@ public class ModelConfigurationController {
 						content =
 								@Content(
 										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ModelConfigurationLegacy.class))),
+										schema = @Schema(implementation = ModelConfiguration.class))),
 				@ApiResponse(
 						responseCode = "503",
 						description = "There was an issue creating the configuration",
@@ -170,8 +167,48 @@ public class ModelConfigurationController {
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable"));
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	@PostMapping
+	@Secured(Roles.USER)
+	@Operation(summary = "Create a new model configuration")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model configuration updated.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema = @Schema(implementation = ModelConfiguration.class))),
+				@ApiResponse(
+						responseCode = "404",
+						description = "There was no model configuration found by this ID",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "There was an issue updating the configuration",
+						content = @Content)
+			})
+	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
+			@PathVariable("id") final UUID id,
+			@RequestBody final ModelConfiguration config,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		try {
+			config.setId(id);
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, permission);
+			return updated.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
+		} catch (final IOException e) {
+			log.error("Unable to update model configuration in postgres db", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
 		}
 	}
 }
