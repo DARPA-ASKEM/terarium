@@ -95,14 +95,14 @@
 							{{
 								getNameOfCurieCached(
 									nameOfCurieCache,
-									getCurieFromGroudingIdentifier(data.currentValue.identifiers)
+									getCurieFromGroundingIdentifier(data.currentValue.identifiers)
 								)
 							}}
 							<a
 								v-if="data.currentValue"
 								target="_blank"
 								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroudingIdentifier(data.currentValue.identifiers))"
+								:href="getCurieUrl(getCurieFromGroundingIdentifier(data.currentValue.identifiers))"
 								aria-label="Open Concept"
 							>
 								<i class="pi pi-external-link" />
@@ -136,7 +136,7 @@ import { Dictionary } from 'vue-gtag';
 import {
 	getCurieUrl,
 	parseCurie,
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getNameOfCurieCached
 } from '@/services/concept';
 import Button from 'primevue/button';
