@@ -15,6 +15,7 @@ import type {
 	WorkflowOutput
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { summarizeNotebook } from './beaker';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -432,10 +433,36 @@ export function selectOutput(
 	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
+export function getActiveOutputSummary(node: WorkflowNode<any>) {
+	const output = node.outputs.find((o) => o.id === node.active);
+	return output?.summary;
+}
+
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
+}
+
+// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
+const summaryGenerationRequestIds = new Set<string>();
+
+export async function generateSummary(
+	node: WorkflowNode<any>,
+	outputPort: WorkflowOutput<any>,
+	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
+) {
+	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
+	try {
+		summaryGenerationRequestIds.add(outputPort.id);
+		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
+		const result = await summarizeNotebook(notebook);
+		return result;
+	} catch {
+		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
+	} finally {
+		summaryGenerationRequestIds.delete(outputPort.id);
+	}
 }
 
 // Check if the current-state matches that of the output-state.

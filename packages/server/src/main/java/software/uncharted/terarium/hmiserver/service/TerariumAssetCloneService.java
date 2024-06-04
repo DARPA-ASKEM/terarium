@@ -81,9 +81,16 @@ public class TerariumAssetCloneService {
 			final ITerariumAssetService terariumAssetService =
 					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final TerariumAsset currentAsset = (TerariumAsset) terariumAssetService
-					.getAsset(currentAssetId, Schema.Permission.READ)
-					.orElseThrow();
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentAssetId, Schema.Permission.READ);
+
+			if (currentAssetOptional.isEmpty()) {
+				// asset is missing or deleted, skip
+				oldToNewIds.put(currentAssetId, currentAssetId); // map to the same id to prevent an exception later
+				continue;
+			}
+
+			final TerariumAsset currentAsset = currentAssetOptional.get();
 
 			final AssetDependencyMap dependencies =
 					AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
@@ -158,9 +165,15 @@ public class TerariumAssetCloneService {
 			final ITerariumAssetService terariumAssetService =
 					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final TerariumAsset currentAsset = (TerariumAsset) terariumAssetService
-					.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ)
-					.orElseThrow();
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ);
+
+			if (currentAssetOptional.isEmpty()) {
+				// asset is missing or deleted, skip
+				continue;
+			}
+
+			final TerariumAsset currentAsset = currentAssetOptional.get();
 
 			final Map<String, FileExport> files =
 					terariumAssetService.exportAssetFiles(currentProjectAsset.getAssetId(), Schema.Permission.READ);
@@ -174,6 +187,8 @@ public class TerariumAssetCloneService {
 
 		final ProjectExport projectExport = new ProjectExport();
 		projectExport.setProject(project.clone());
+		projectExport.getProject().setUserId(null); // clear the user id
+		projectExport.getProject().setUserName(null); // clear the user name
 		projectExport.setAssets(exportedAssets);
 		return projectExport.clone();
 	}
@@ -186,9 +201,14 @@ public class TerariumAssetCloneService {
 	 * @throws IOException
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public Project importProject(final ProjectExport export) throws IOException {
+	public Project importProject(final String userId, final String userName, final ProjectExport export)
+			throws IOException {
 
 		final ProjectExport projectExport = export.clone(); // clone in case it has been imported already
+
+		// set the current user id
+		projectExport.getProject().setUserId(userId);
+		projectExport.getProject().setUserName(userName);
 
 		// create the project
 		final Project project = projectService.createProject(projectExport.getProject());

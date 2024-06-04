@@ -94,7 +94,7 @@
 						</AccordionTab>
 					</Accordion>
 				</div>
-				<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]" class="pb-6">
+				<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
 						<InputText
@@ -154,26 +154,16 @@
 							</DataTable>
 						</AccordionTab>
 					</template>
-					<AccordionTab>
-						<template #header>
-							Parameters<span class="artifact-amount">({{ numParameters }})</span>
-						</template>
-						<tera-parameter-table-v2
-							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
-							:model-configuration="knobs.transientModelConfig"
-							:mmt="mmt"
-							:mmt-params="mmtParams"
-							@update-parameter="
-								setParameterDistribution(knobs.transientModelConfig, $event.id, $event.distribution)
-							"
-							@update-source="
-								setParameterSource(knobs.transientModelConfig, $event.id, $event.value)
-							"
-						/>
-						<section v-else>
-							<p class="empty-section">No parameters found.</p>
-						</section>
-					</AccordionTab>
+				</Accordion>
+				<tera-parameter-table-v2
+					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
+					:model-configuration="knobs.transientModelConfig"
+					:mmt="mmt"
+					:mmt-params="mmtParams"
+					@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
+					@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
+				/>
+				<Accordion multiple :active-index="[0]" class="pb-6">
 					<AccordionTab>
 						<template #header> Interventions </template>
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
@@ -333,7 +323,7 @@ import {
 	setInitialSource,
 	setInitialExpression,
 	setParameterSource,
-	setParameterDistribution
+	setParameterDistributions
 } from '@/services/model-configurations-legacy';
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
@@ -612,11 +602,6 @@ const isLoading = computed(
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-
-const numParameters = computed(() => {
-	if (!mmt.value) return 0;
-	return Object.keys(mmt.value.parameters).length;
-});
 
 const numInitials = computed(() => {
 	if (!mmt.value) return 0;
