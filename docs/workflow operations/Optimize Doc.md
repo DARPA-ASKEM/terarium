@@ -57,15 +57,13 @@ For example:
         intervention type when you know what value a parameter should take but not when; 
         so, you'll want to find the optimal start time for an intervention.
             Example: 
-            I want to turn on "masking" (beta set to small number, ~0.1) 
-            but I want to know how late I can do it while making the number of infected I never exceed a
-            specified number (The threshold)
+            I want to turn on some masking intervention such that the parameter that impacts infected growth `beta` is set to the relatively smaller value of 0.1.
+            I want to know how late I can start this masking while making the number of infected never exceed a specified number.
     `Parameter Value` Intervention Type:
         intervention type when you know when an intervention should take place but 
         you want to find the optimal value for this intervention.
             Example:
-            I want to turn on "quarantine" in day 30.
-            How strong/effective will this quarantine need to be in order to keep the number ofinfected lower than a specified number (The threshold)
+            I want to turn on a quarantine intervention in day 30 for 90 days. What will the value for the parameter that impacts infected growth `beta` need to be in order to keep the number of infected lower than a (specified threshold) number?
 
 `Qoi Method` (Constraint)
     The QoI method specifies how the Quality of Interest is defined with respect to the selected variable.
@@ -85,8 +83,8 @@ For example:
 `Risk tolerance`:
     Acceptible risk on on the threshold. This is a percent and should be between 0 and 100.
     This means if we were to ask: 
-    I want to turn on "quarantine" in day 30. How strong/effective (high beta needs to be) will this quarantine need to be in order to keep the number of infected lower than a (specified threshold) number? with a risk of 5.
-    Our resulting policy would keep our infected lower than the (specified threshold) 95% of simulations.
+    I want to turn on a quarantine intervention in day 30 for 90 days. What will the value for the parameter that impacts infected growth `beta` need to be in order to keep the number of infected lower than a (specified threshold) number?
+    If I set my risk to 5 then our resulting policy would keep our infected lower than the (specified threshold) 95% of simulations.
 
 
 ## Output Files:
