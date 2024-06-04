@@ -44,17 +44,17 @@ export default defineConfig({
 		},
 		proxy: {
 			'^/api': {
-				target: 'https://server.staging.terarium.ai',
+				target: 'https://server.dev.terarium.ai',
 				rewrite: (path_str) => path_str.replace(/^\/api/, ''),
 				changeOrigin: true
 			},
 			'^/beaker': {
-				target: 'https://beaker.staging.terarium.ai',
+				target: 'https://beaker.dev.terarium.ai',
 				changeOrigin: true,
 				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
 			},
 			'^/beaker_ws': {
-				target: 'ws://beaker.staging.terarium.ai',
+				target: 'ws://beaker.dev.terarium.ai',
 				ws: true,
 				changeOrigin: true,
 				rewrite: (path_str) => path_str.replace(/^\/beaker/, '')
@@ -91,6 +91,7 @@ export default defineConfig({
 		reporters: ['junit', 'default'],
 		outputFile: {
 			junit: './tests/unit/reports/junit-report.xml'
-		}
+		},
+		environment: 'jsdom'
 	}
 });

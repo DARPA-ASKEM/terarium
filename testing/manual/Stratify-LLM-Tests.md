@@ -30,7 +30,9 @@ model = stratify(
     structure= [],
     directed=False,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+	  params_to_stratify= None #If none given, will stratify all parameters.
 )
 
 Q) Stratify my model by the ages young and old where young can transition to old
@@ -42,7 +44,9 @@ model = stratify(
     structure= [['young', 'old']],
     directed=True,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+	  params_to_stratify= None #If none given, will stratify all parameters.
 )
 
 Q) Stratify my model by the ages young and old where young and old can become old, but old cannot become young
@@ -66,19 +70,23 @@ model = stratify(
     structure= [],
     directed=False,
     cartesian_control=False,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+	  params_to_stratify= None #If none given, will stratify all parameters.
 )
 
-Q) Stratify my model by the locations Toronto and Montreal where Toronto and Montreal can interact
+Q) Stratify my model by the locations Toronto and Montreal where any population can travel between Toronto and Montreal
 A) 
 model = stratify(
     template_model=model,
     key= "Location",
     strata=['Toronto', 'Montreal'],
     structure= [['Toronto', 'Montreal'], ['Montreal', 'Toronto']],
-    directed=False,
+    directed=True,
     cartesian_control=True,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+	  params_to_stratify= None #If none given, will stratify all parameters.
 )
 
 OR
@@ -86,10 +94,12 @@ model = stratify(
     template_model=model,
     key= "Location",
     strata=['Toronto', 'Montreal'],
-    structure= [['Toronto', 'Montreal']],
-    directed=True,
+    structure= [['Toronto', 'Montreal'], ['Montreal', 'Toronto']],
+    directed=false,
     cartesian_control=True,
-    modify_names=True
+    modify_names=True,
+    concepts_to_stratify=None, #If none given, will stratify all concepts.
+	  params_to_stratify= None #If none given, will stratify all parameters.
 )
 
 Q) What is cartesian_control in stratify?
