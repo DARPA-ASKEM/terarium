@@ -10,6 +10,7 @@
 		"build": "yarn workspaces foreach --all --parallel --interlaced --verbose --topological run build",
 		"dev": "yarn workspace hmi-client run dev",
 		"local": "yarn workspace hmi-client run local",
+		"staging": "yarn workspace hmi-client run staging",
 		"generateTypes": "yarn workspace @uncharted/server-type-generator run generateTypes",
 		"serve": "yarn workspace hmi-client run build",
 		"lint": "eslint . --ext .ts,.vue --fix --cache",
