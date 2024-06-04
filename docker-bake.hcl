@@ -29,10 +29,6 @@ group "prod" {
   targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
 }
 
-group "staging" {
-  targets = ["hmi-client", "hmi-server", "gollm-taskrunner", "mira-taskrunner", "funman-taskrunner"]
-}
-
 group "default" {
   targets = ["hmi-client-base", "hmi-server-base", "gollm-taskrunner-base", "mira-taskrunner-base", "funman-taskrunner-base"]
 }
