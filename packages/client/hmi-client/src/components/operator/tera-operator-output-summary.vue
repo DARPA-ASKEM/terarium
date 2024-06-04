@@ -17,7 +17,7 @@
 				<Button icon="pi pi-check" rounded text @click="updateSummary" />
 			</div>
 		</template>
-		<div v-else-if="!isNil(summary)" class="summary">
+		<div v-else-if="!isNil(activeOutput?.summary)" class="summary">
 			<img v-if="isGenerating || isGenerated" src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 			<p v-if="isGenerating">Generating AI summary...</p>
 			<p v-else-if="!isRemoved" @click="isEditing = true">
