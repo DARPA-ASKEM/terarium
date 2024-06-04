@@ -81,9 +81,16 @@ public class TerariumAssetCloneService {
 			final ITerariumAssetService terariumAssetService =
 					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final TerariumAsset currentAsset = (TerariumAsset) terariumAssetService
-					.getAsset(currentAssetId, Schema.Permission.READ)
-					.orElseThrow();
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentAssetId, Schema.Permission.READ);
+
+			if (currentAssetOptional.isEmpty()) {
+				// asset is missing or deleted, skip
+				oldToNewIds.put(currentAssetId, currentAssetId); // map to the same id to prevent an exception later
+				continue;
+			}
+
+			final TerariumAsset currentAsset = currentAssetOptional.get();
 
 			final AssetDependencyMap dependencies =
 					AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
@@ -158,9 +165,15 @@ public class TerariumAssetCloneService {
 			final ITerariumAssetService terariumAssetService =
 					terariumAssetServices.getServiceByType(currentProjectAsset.getAssetType());
 
-			final TerariumAsset currentAsset = (TerariumAsset) terariumAssetService
-					.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ)
-					.orElseThrow();
+			final Optional<TerariumAsset> currentAssetOptional =
+					terariumAssetService.getAsset(currentProjectAsset.getAssetId(), Schema.Permission.READ);
+
+			if (currentAssetOptional.isEmpty()) {
+				// asset is missing or deleted, skip
+				continue;
+			}
+
+			final TerariumAsset currentAsset = currentAssetOptional.get();
 
 			final Map<String, FileExport> files =
 					terariumAssetService.exportAssetFiles(currentProjectAsset.getAssetId(), Schema.Permission.READ);
