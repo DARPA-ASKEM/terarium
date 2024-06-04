@@ -42,12 +42,12 @@ For example:
 `Step Size` (Not exposed):
     This is not currently exposed through the API.
     The step size for each iteration is 30% of the longest euclidean distance between the lower and upper bounds of a given parameter.
-    For example if we provide beta is [0.5, 1.5] then our step/hop size is a uniform random float between 0.0 and 0.3.
+    For example if we provide some parameter `beta` is [0.5, 1.5] then our step/hop size is a uniform random float between 0.0 and 0.3.
 
 `Minimized` (Settings)
     This is a boolean that is being used to determine if we are looking for a minima or a maxima.
-    :minimized = true, when I went to smallest values for beta that satisfy my constraint(s)
-    :minimized = false, when I want the largest values for beta satisfy my constraint(s)
+    :minimized = true, when I went to smallest values for some parameter that satisfy my constraint(s)
+    :minimized = false, when I want the largest values for some parameter that satisfy my constraint(s)
 
 `Intervention type`
     How you want to intervene on the parameter(s) you have selected.
