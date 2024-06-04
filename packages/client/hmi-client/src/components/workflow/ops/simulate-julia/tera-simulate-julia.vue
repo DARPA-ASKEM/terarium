@@ -200,7 +200,7 @@ const run = async () => {
 const showSaveDataDialog = ref<boolean>(false);
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(selectedRunId.value, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
