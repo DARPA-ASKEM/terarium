@@ -19,7 +19,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @Accessors
 @Entity
 public class ObservableSemantic extends Semantic {
-	private String id;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
