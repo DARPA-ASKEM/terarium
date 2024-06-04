@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +21,8 @@ import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfigur
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
  * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
@@ -33,14 +37,16 @@ public abstract class TerariumAssetServiceWithSearch<
 		extends TerariumAssetServiceWithoutSearch<T, R> {
 
 	public TerariumAssetServiceWithSearch(
+			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
 			final ProjectAssetService projectAssetService,
+			final S3ClientService s3ClientService,
 			final R repository,
 			final Class<T> assetClass) {
 
-		super(config, projectAssetService, repository, assetClass);
+		super(objectMapper, config, projectAssetService, repository, s3ClientService, assetClass);
 
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
@@ -108,11 +114,31 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Observed(name = "function_profile")
 	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
+		return searchAssets(page, pageSize, query, null);
+	}
+
+	/**
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
+	 *
+	 * @param page The page number
+	 * @param pageSize The number of assets per page
+	 * @param query The query to filter the assets
+	 * @return The list of assets
+	 * @throws IOException If there is an error retrieving the assets
+	 */
+	@Observed(name = "function_profile")
+	public List<T> searchAssets(
+			final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
+			throws IOException {
 		final SearchRequest.Builder builder =
 				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
+		}
+
+		if (source != null) {
+			builder.source(source);
 		}
 
 		final SearchRequest req = builder.build();
@@ -127,9 +153,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id) throws IOException {
+	public Optional<T> deleteAsset(final UUID id, Schema.Permission hasWritePermission) throws IOException {
 
-		final Optional<T> deleted = super.deleteAsset(id);
+		final Optional<T> deleted = super.deleteAsset(id, hasWritePermission);
 
 		if (deleted.isPresent() && !deleted.get().getTemporary()
 				|| deleted.get().getPublicAsset()) {
@@ -148,8 +174,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset) throws IOException {
-		final T created = super.createAsset(asset);
+	public T createAsset(final T asset, Schema.Permission hasWritePermission) throws IOException {
+		final T created = super.createAsset(asset, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
 			elasticService.index(getAssetAlias(), created.getId().toString(), created);
@@ -168,8 +194,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public List<T> createAssets(final List<T> assets) throws IOException {
-		final List<T> created = super.createAssets(assets);
+	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
+		final List<T> created = super.createAssets(assets, hasWritePermission);
 
 		if (created.size() > 0) {
 			elasticService.bulkIndex(getAssetAlias(), (List<TerariumAsset>) created);
@@ -189,9 +215,10 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
-		final Optional<T> updated = super.updateAsset(asset);
+		final Optional<T> updated = super.updateAsset(asset, hasWritePermission);
 
 		if (updated.isEmpty()) {
 			return Optional.empty();

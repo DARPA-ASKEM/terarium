@@ -35,10 +35,7 @@ export enum OperatorStatus {
 	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
 	INVALID = 'invalid',
-	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
-	FAILED = 'failed',
-	ERROR = 'error',
-	DISABLED = 'disabled'
+	ERROR = 'error'
 }
 
 export enum WorkflowPortStatus {
@@ -59,6 +56,7 @@ export interface Operation {
 	name: WorkflowOperationTypes;
 	description: string;
 	displayName: string; // Human-readable name for each node.
+	documentationUrl?: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
 	isRunnable: boolean;
@@ -70,6 +68,8 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
+
+	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -77,6 +77,7 @@ export interface Operation {
 export interface WorkflowPort {
 	id: string;
 	type: string;
+	originalType?: string;
 	status: WorkflowPortStatus;
 	label?: string;
 	value?: any[] | null;
@@ -88,6 +89,8 @@ export interface WorkflowPort {
 export interface WorkflowOutput<S> extends WorkflowPort {
 	isSelected?: boolean;
 	operatorStatus?: OperatorStatus;
+	summary?: string;
+	summaryHasBeenEdited?: boolean;
 	state?: Partial<S>;
 	timestamp?: Date;
 }
@@ -105,6 +108,7 @@ export interface WorkflowNode<S> {
 	displayName: string;
 	workflowId: string;
 	operationType: WorkflowOperationTypes;
+	documentationUrl?: string;
 
 	// Position on canvas
 	x: number;

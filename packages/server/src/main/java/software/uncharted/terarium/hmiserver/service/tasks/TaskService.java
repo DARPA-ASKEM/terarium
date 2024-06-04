@@ -39,12 +39,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.ClientEvent;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
 @Service
@@ -71,7 +74,7 @@ public class TaskService {
 
 	// This private subclass is to prevent people from setting the task id
 	// themselves since it may be overridden if the task is already in the cache.
-	// This will prevent siutations where someone creates an id, does something with
+	// This will prevent situations where someone creates an id, does something with
 	// it, and then sends the request expected the response to match it.
 	@NoArgsConstructor
 	@Data
@@ -85,6 +88,7 @@ public class TaskService {
 			script = req.getScript();
 			input = req.getInput();
 			userId = req.getUserId();
+			projectId = req.getProjectId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
@@ -94,6 +98,7 @@ public class TaskService {
 					.setId(id)
 					.setStatus(status)
 					.setUserId(userId)
+					.setProjectId(projectId)
 					.setScript(getScript())
 					.setAdditionalProperties(getAdditionalProperties());
 		}
@@ -153,6 +158,7 @@ public class TaskService {
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
+	private final ClientEventService clientEventService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
@@ -162,6 +168,8 @@ public class TaskService {
 	// NOTE: We require a distributed lock to keep the following three caches in
 	// sync across instances. Anytime these caches are written or read from, the
 	// lock must be acquired.
+	// DO NOT TOUCH THESE CACHES, UNLESS YOU KNOW WHAT YOU ARE DOING.
+	// There be dragons.
 	// vvvvvvvvvvvvvvvvvvv
 	private RLock rLock;
 	private RMapCache<String, UUID> taskIdCache;
@@ -172,15 +180,6 @@ public class TaskService {
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
-
-	// The exchange name that the taskrunner will publish responses to.
-	@Value("${terarium.taskrunner.response-exchange}")
-	private String TASK_RUNNER_RESPONSE_EXCHANGE;
-
-	// The _shared_ response exchange that each hmi-server instance will consume on.
-	// NOTE: messages will round robin between hmi-server instances.
-	@Value("${terarium.taskrunner.response-queue}")
-	private String TASK_RUNNER_RESPONSE_QUEUE;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
@@ -216,6 +215,7 @@ public class TaskService {
 		if (isRunningLocalProfile()) {
 			// sanity check for local development to clear the caches
 			rLock.lock();
+
 			responseCache.clear();
 			taskIdCache.clear();
 			rLock.unlock();
@@ -437,9 +437,30 @@ public class TaskService {
 				// create the notification event
 				final NotificationEvent event = new NotificationEvent();
 				event.setData(resp);
+
+				log.info("Creating notification event under group id: {}", resp.getId());
+
 				notificationService.createNotificationEvent(resp.getId(), event);
+
 			} catch (final Exception e) {
 				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
+			}
+
+			try {
+				// send the client event
+				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
+				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+
+				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
+						.notificationGroupId(resp.getId())
+						.projectId(resp.getProjectId())
+						.type(clientEventType)
+						.data(resp)
+						.build();
+				clientEventService.sendToUser(clientEvent, resp.getUserId());
+
+			} catch (final Exception e) {
+				log.error("Failed to send client event for for task {}", resp.getId(), e);
 			}
 
 			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
@@ -547,12 +568,22 @@ public class TaskService {
 						TimeUnit.SECONDS);
 			}
 
-			// create the notification group for the task
-			final NotificationGroup group = new NotificationGroup();
-			group.setId(req.getId()); // use the task id
-			group.setType(req.getType().toString());
-			group.setUserId(req.getUserId());
-			notificationService.createNotificationGroup(group);
+			try {
+				log.info("Creating notification group under id: {}", req.getId());
+
+				// create the notification group for the task
+				final NotificationGroup group = new NotificationGroup();
+				group.setId(req.getId()); // use the task id
+				group.setType(
+						TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+				group.setUserId(req.getUserId());
+				group.setProjectId(req.getProjectId());
+
+				notificationService.createNotificationGroup(group);
+
+			} catch (final Exception e) {
+				log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+			}
 
 			// now send request
 			final String requestQueue = String.format(
@@ -608,7 +639,7 @@ public class TaskService {
 		}
 	}
 
-	public TaskResponse runTaskSync(final TaskRequest req, final long timeoutSeconds)
+	public TaskResponse runTaskSync(final TaskRequest req)
 			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 
 		// send the request
@@ -617,7 +648,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(timeoutSeconds, TimeUnit.SECONDS);
+			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -640,16 +671,17 @@ public class TaskService {
 			} finally {
 				rLock.unlock();
 			}
-			throw new TimeoutException(
-					"Task " + future.getId().toString() + " did not complete within " + timeoutSeconds + " seconds");
+
+			try {
+				// if the task is still running, or hasn't started yet, lets cancel it
+				cancelTask(future.getId());
+			} catch (final Exception ee) {
+				log.warn("Failed to cancel task: {}", future.getId(), ee);
+			}
+
+			throw new TimeoutException("Task " + future.getId().toString() + " did not complete within "
+					+ req.getTimeoutMinutes() + " minutes");
 		}
-	}
-
-	public TaskResponse runTaskSync(final TaskRequest req)
-			throws JsonProcessingException, TimeoutException, ExecutionException, InterruptedException {
-
-		final int DEFAULT_TIMEOUT_SECONDS = 60 * 5; // 5 minutes
-		return runTaskSync(req, DEFAULT_TIMEOUT_SECONDS);
 	}
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)

@@ -13,12 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
@@ -27,20 +25,14 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ModelService modelService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
-
 	@BeforeEach
 	public void setup() throws IOException {
-		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelIndex());
+		modelService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		elasticService.deleteIndex(elasticConfig.getModelIndex());
+		modelService.teardownIndexAndAlias();
 	}
 
 	@Test
@@ -52,9 +44,11 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description"));
+						.setDescription("test-description")
+						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(model)))
@@ -65,14 +59,19 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModel() throws Exception {
 
-		final Model model = modelService.createAsset(new Model()
-				.setHeader(new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+		final Model model = modelService.createAsset(
+				new Model()
+						.setHeader(new ModelHeader()
+								.setName("test-name")
+								.setModelSchema("test-schema")
+								.setModelVersion("0.1.2")
+								.setDescription("test-description")
+								.setSchemaName("petrinet")),
+				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId()).with(csrf()))
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -80,14 +79,18 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModel() throws Exception {
 
-		final Model model = modelService.createAsset(new Model()
-				.setHeader(new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+		final Model model = modelService.createAsset(
+				new Model()
+						.setHeader(new ModelHeader()
+								.setName("test-name")
+								.setModelSchema("test-schema")
+								.setModelVersion("0.1.2")
+								.setDescription("test-description")
+								.setSchemaName("petrinet")),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(model)))
@@ -98,32 +101,41 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModel() throws Exception {
 
-		final Model model = modelService.createAsset(new Model()
-				.setHeader(new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+		final Model model = modelService.createAsset(
+				new Model()
+						.setHeader(new ModelHeader()
+								.setName("test-name")
+								.setModelSchema("test-schema")
+								.setModelVersion("0.1.2")
+								.setDescription("test-description")
+								.setSchemaName("petrinet")),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
+		Assertions.assertTrue(
+				modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelDescription() throws Exception {
 
-		final Model model = modelService.createAsset(new Model()
-				.setHeader(new ModelHeader()
-						.setName("test-name")
-						.setModelSchema("test-schema")
-						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+		final Model model = modelService.createAsset(
+				new Model()
+						.setHeader(new ModelHeader()
+								.setName("test-name")
+								.setModelSchema("test-schema")
+								.setModelVersion("0.1.2")
+								.setDescription("test-description")
+								.setSchemaName("petrinet")),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -132,14 +144,78 @@ public class ModelControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelDescriptions() throws Exception {
 
-		modelService.createAsset(new Model()
+		modelService.createAsset(
+				new Model()
+						.setHeader(new ModelHeader()
+								.setName("test-name")
+								.setModelSchema("test-schema")
+								.setModelVersion("0.1.2")
+								.setDescription("test-description")
+								.setSchemaName("petrinet")),
+				ASSUME_WRITE_PERMISSION);
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCannotGetUnpriviligedModelWithoutProject() throws Exception {
+
+		Model model_public_not_temp = (Model) new Model()
 				.setHeader(new ModelHeader()
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")));
+						.setDescription("test-description")
+						.setSchemaName("petrinet"))
+				.setPublicAsset(true)
+				.setTemporary(false);
+		Model model_public_temp = (Model) new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"))
+				.setPublicAsset(true)
+				.setTemporary(true);
+		Model model_not_public_temp = (Model) new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"))
+				.setPublicAsset(false)
+				.setTemporary(true);
+		Model model_not_public_not_temp = (Model) new Model()
+				.setHeader(new ModelHeader()
+						.setName("test-name")
+						.setModelSchema("test-schema")
+						.setModelVersion("0.1.2")
+						.setDescription("test-description")
+						.setSchemaName("petrinet"))
+				.setPublicAsset(false)
+				.setTemporary(false);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
+		Model createdModel_not_public_not_temp =
+				modelService.createAsset(model_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_public_not_temp = modelService.createAsset(model_public_not_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_public_temp = modelService.createAsset(model_public_temp, ASSUME_WRITE_PERMISSION);
+		Model createdModel_not_public_temp = modelService.createAsset(model_not_public_temp, ASSUME_WRITE_PERMISSION);
+
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_not_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_not_temp.getId())
+						.with(csrf()))
 				.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_temp.getId())
+						.with(csrf()))
+				.andExpect(status().is5xxServerError());
 	}
 }

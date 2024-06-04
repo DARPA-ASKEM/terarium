@@ -70,23 +70,28 @@
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar-right-side">
-					<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						size="small"
-						@click="runCode"
-					/>
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernelManager="kernelManager"
+						:defaultOptions="sampleAgentQuestions"
+						@llm-output="appendCode"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="llmThoughts = []"
+						:context-language="contextLanguage"
+					>
+						<template #toolbar-right-side>
+							<Button
+								label="Reset"
+								outlined
+								severity="secondary"
+								size="small"
+								@click="resetNotebook"
+							/>
+							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
+						</template>
+					</tera-notebook-jupyter-input>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
-				<tera-notebook-jupyter-input
-					:kernelManager="kernelManager"
-					:defaultOptions="sampleAgentQuestions"
-					@llm-output="appendCode"
-					:context-language="contextLanguage"
-				/>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -158,6 +163,8 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
 import { ModelComparisonOperationState } from './model-comparison-operation';
@@ -166,7 +173,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -185,6 +192,7 @@ const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
 const llmAnswer = ref('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
+const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
@@ -283,8 +291,8 @@ function appendCode(data: any) {
 	else logger.error('No code to append');
 }
 
-function processCompareModels(modelIds) {
-	compareModels(modelIds).then((response) => {
+function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
+	compareModels(modelIds, workflowId, nodeId).then((response) => {
 		llmAnswer.value = response.response;
 	});
 }
@@ -333,7 +341,7 @@ onMounted(async () => {
 	const modelIds = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
-	processCompareModels(modelIds);
+	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
 onUnmounted(() => {
@@ -402,6 +410,9 @@ ul {
 .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+}
+.toolbar {
+	padding-left: var(--gap-medium);
 }
 
 .toolbar-right-side {

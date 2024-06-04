@@ -59,10 +59,10 @@ services:
     #      GITHUB_URL: https://api.github.com
     #      JSDELIVR_URL: https://cdn.jsdelivr.net
     #      MIRA-API_URL: http://34.230.33.149:8771
-    #      MIT-PROXY_URL: https://mit-proxy.staging.terarium.ai
-    #      SKEMA-PY_URL: https://skema-py.staging.terarium.ai
-    #      SKEMA-RS_URL: https://skema-rs.staging.terarium.ai
-    #      SKEMA-UNIFIED_URL: https://skema-unified.staging.terarium.ai
+    #      MIT-PROXY_URL: https://mit-proxy.dev.terarium.ai
+    #      SKEMA-PY_URL: https://skema-py.dev.terarium.ai
+    #      SKEMA-RS_URL: https://skema-rs.dev.terarium.ai
+    #      SKEMA-UNIFIED_URL: https://skema-unified.dev.terarium.ai
     #      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
     #      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
     depends_on:
@@ -81,7 +81,7 @@ services:
       redis:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   hmi-client:
     image: ghcr.io/darpa-askem/hmi-client:latest
@@ -100,7 +100,7 @@ services:
       hmi-server:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   terarium-docs:
     image: ghcr.io/darpa-askem/terarium-docs:latest
@@ -116,4 +116,4 @@ services:
       timeout: "3s"
       retries: 30
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"

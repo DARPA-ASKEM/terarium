@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
  * Base class for services that manage TerariumAssets
@@ -57,7 +60,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> getAsset(final UUID id) throws IOException {
+	public Optional<T> getAsset(final UUID id, final Schema.Permission hasReadPermission) throws IOException {
 		final T asset = elasticService.get(getAssetIndex(), id.toString(), assetClass);
 		if (asset != null && asset.getDeletedOn() == null) {
 			// TODO: This is a hack to fix the fact that the id was not added during the
@@ -101,7 +104,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> getAssets(final Integer page, final Integer pageSize) throws IOException {
+	public List<T> getPublicNotTemporaryAssets(final Integer page, final Integer pageSize) throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 				.index(getAssetIndex())
 				.from(page)
@@ -121,13 +124,13 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id) throws IOException {
-		final Optional<T> asset = getAsset(id);
+	public Optional<T> deleteAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException {
+		final Optional<T> asset = getAsset(id, hasWritePermission);
 		if (asset.isEmpty()) {
 			return Optional.empty();
 		}
 		asset.get().setDeletedOn(Timestamp.from(Instant.now()));
-		updateAsset(asset.get());
+		updateAsset(asset.get(), hasWritePermission);
 		return asset;
 	}
 
@@ -140,7 +143,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset) throws IOException {
+	public T createAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException {
 		if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
 			throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
 		}
@@ -158,7 +161,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> createAssets(final List<T> assets) throws IOException {
+	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
 		for (final T asset : assets) {
 			if (elasticService.documentExists(getAssetIndex(), asset.getId().toString())) {
 				throw new IllegalArgumentException("Asset already exists with ID: " + asset.getId());
@@ -179,9 +182,10 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
 
-		final Optional<T> oldAsset = getAsset(asset.getId());
+		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
 
 		if (oldAsset.isEmpty()) {
 			return Optional.empty();
@@ -195,19 +199,21 @@ public abstract class TerariumAssetService<T extends TerariumAsset> implements I
 		elasticService.index(getAssetIndex(), asset.getId().toString(), asset);
 
 		// Update the related ProjectAsset
-		projectAssetService.updateByAsset(asset);
+		projectAssetService.updateByAsset(asset, hasWritePermission);
 
 		return Optional.of(asset);
 	}
 
-	/** Clone asset on ES, retrieve and save document with a different id */
-	@Override
 	@Observed(name = "function_profile")
-	public T cloneAsset(final UUID id) throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id);
-		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id);
-		}
-		return createAsset(targetAsset.get());
+	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
+			throws IOException {
+
+		throw new UnsupportedOperationException("Unimplemented");
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
+
+		throw new UnsupportedOperationException("Unimplemented");
 	}
 }

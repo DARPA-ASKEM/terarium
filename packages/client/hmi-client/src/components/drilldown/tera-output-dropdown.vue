@@ -6,18 +6,26 @@
 		:model-value="output"
 		:options="options"
 		option-value="id"
-		option-label="label"
 		option-group-children="items"
 		option-group-label="label"
 		@update:model-value="emit('update:selection', $event)"
 		:loading="isLoading"
 	>
+		<template #value="slotProps">
+			{{ getLabelById(slotProps.value) }}
+			<span class="ml-2 dropdown-option-group">
+				{{ getCreateTimeById(slotProps.value) }}
+			</span>
+		</template>
 		<template #optiongroup="slotProps">
 			<span class="dropdown-option-group">{{ slotProps.option?.label }}</span>
 		</template>
 		<template #option="slotProps">
 			<div class="dropdown-option">
 				<span>{{ slotProps.option?.label }}</span>
+				<span class="dropdown-option-group">
+					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
+				</span>
 				<span
 					v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
 					class="connection-indicator"
@@ -29,16 +37,32 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { WorkflowOutput, WorkflowPortStatus } from '@/types/workflow';
 import Dropdown from 'primevue/dropdown';
+import { getElapsedTimeText } from '@/utils/date';
 
-defineProps<{
+const props = defineProps<{
 	options: WorkflowOutput<any>[] | { label: string; items: WorkflowOutput<any>[] }[];
 	output: WorkflowOutput<any>['id'];
 	isLoading?: boolean;
 }>();
 
 const emit = defineEmits(['update:selection']);
+const items = computed(() => props.options.flatMap((option) => option.items));
+
+const getOptionById = (id: string) => items.value.find((option) => option.id === id);
+
+const getCreateTimeById = (id: string) => {
+	const option = getOptionById(id);
+	if (!option?.timestamp) return '';
+	return getElapsedTimeText(option.timestamp);
+};
+
+const getLabelById = (id: string) => {
+	const option = getOptionById(id);
+	return option?.label;
+};
 </script>
 
 <style scoped>
@@ -68,6 +92,9 @@ const emit = defineEmits(['update:selection']);
 }
 
 .dropdown-option-group {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	font-size: var(--font-caption);
 	color: var(--gray-600);
 }
@@ -75,7 +102,7 @@ const emit = defineEmits(['update:selection']);
 	font-size: var(--font-caption);
 	color: var(--primary-color);
 	display: flex;
-	gap: 0.2rem;
+	gap: var(--gap-small);
 	align-items: center;
 	margin-left: auto;
 }

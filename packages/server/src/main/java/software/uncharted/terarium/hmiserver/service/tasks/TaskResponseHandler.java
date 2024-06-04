@@ -1,23 +1,30 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
+	/**
+	 * Without tracking "on behalf of" user and corresponding project to check for permissions, assume the user had
+	 * permissions at the time of the Task's creation
+	 */
+	protected final Schema.Permission ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER = Schema.Permission.WRITE;
+
 	public abstract String getName();
 
-	public static TaskResponse onQueued(final TaskResponse response) {
+	public TaskResponse onQueued(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onRunning(final TaskResponse response) {
+	public TaskResponse onRunning(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onCancelling(final TaskResponse response) {
+	public TaskResponse onCancelling(final TaskResponse response) {
 		return response;
 	}
 
-	public static TaskResponse onCancelled(final TaskResponse response) {
+	public TaskResponse onCancelled(final TaskResponse response) {
 		return response;
 	}
 
@@ -25,7 +32,7 @@ public abstract class TaskResponseHandler {
 		return response;
 	}
 
-	public static TaskResponse onFailure(final TaskResponse response) {
+	public TaskResponse onFailure(final TaskResponse response) {
 		return response;
 	}
 

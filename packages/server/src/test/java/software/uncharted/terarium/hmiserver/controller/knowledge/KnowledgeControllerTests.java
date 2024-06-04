@@ -256,12 +256,12 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -275,18 +275,18 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void variableExtractionWithModelTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/variable-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -301,22 +301,22 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void linkAmrTests() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setText("x = 0. y = 1. I = Infected population.")
 				.setName("test-document-name")
-				.setDescription("my description")
-				.setText("x = 0. y = 1. I = Infected population.");
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi")
+				.extractVariables(documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/align-model")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -328,7 +328,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
 
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -340,15 +340,14 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
-		DocumentAsset documentAsset = new DocumentAsset()
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
+				.setFileNames(List.of("paper.pdf"))
 				.setName("test-pdf-name")
-				.setDescription("my description")
-				.setFileNames(List.of("paper.pdf"));
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
-		documentAssetService.uploadFile(
-				documentAsset.getId(), "paper.pdf", pdfFileEntity, ContentType.create("application/pdf"));
+		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/pdf-extractions")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -361,9 +360,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void profileModel() throws Exception {
 
-		DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-pdf-name")
-				.setDescription("my description")
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setText(
 						"""
 								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
@@ -384,15 +381,17 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 								the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
 								19 can be under control in all communities considered, if proper restrictions and strong policies are
 								implemented to control the infection rates early from the spread of the disease.
-								""");
+								""")
+				.setName("test-pdf-name")
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model);
+		model = modelService.createAsset(model, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-model/" + model.getId())
 						.contentType(MediaType.APPLICATION_JSON)
@@ -400,9 +399,9 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		model = modelService.getAsset(model.getId()).orElseThrow();
+		model = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
-		Assertions.assertTrue(model.getMetadata().getCard() != null);
+		Assertions.assertNotNull(model.getMetadata().getCard());
 	}
 
 	// @Test
@@ -413,7 +412,8 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
 		Dataset dataset = datasetService.createAsset(
-				new Dataset().setName("test-dataset-name").setDescription("my description"));
+				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -435,9 +435,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		DocumentAsset documentAsset = new DocumentAsset()
-				.setName("test-pdf-name")
-				.setDescription("my description")
+		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 				.setText(
 						"""
 								In this paper, we study the effectiveness of the modelling approach on the pandemic due to the spreading
@@ -458,9 +456,11 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 								the recorded data with the data from our modelling approaches, we deduce that the spread of COVID-
 								19 can be under control in all communities considered, if proper restrictions and strong policies are
 								implemented to control the infection rates early from the spread of the disease.
-								""");
+								""")
+				.setName("test-pdf-name")
+				.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset);
+		documentAsset = documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/profile-dataset/" + dataset.getId())
 						.contentType(MediaType.APPLICATION_JSON)
@@ -468,9 +468,11 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		dataset = datasetService.getAsset(dataset.getId()).orElseThrow();
+		dataset = datasetService
+				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
+				.orElseThrow();
 
-		Assertions.assertTrue(dataset.getMetadata().get("dataCard") != null);
+		Assertions.assertNotNull(dataset.getMetadata().get("dataCard"));
 	}
 
 	// @Test
@@ -483,18 +485,17 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final String filename = "code.py";
 
 		final CodeFile codeFile = new CodeFile();
-		codeFile.setProgrammingLanguageFromFileName(filename);
+		codeFile.setFileNameAndProgrammingLanguage(filename);
 
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -504,7 +505,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -517,18 +518,17 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final String filename = "code.py";
 
 		final CodeFile codeFile = new CodeFile();
-		codeFile.setProgrammingLanguageFromFileName(filename);
+		codeFile.setFileNameAndProgrammingLanguage(filename);
 
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -539,7 +539,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 
 	// @Test
@@ -552,18 +552,17 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final String filename = "code.py";
 
 		final CodeFile codeFile = new CodeFile();
-		codeFile.setProgrammingLanguageFromFileName(filename);
+		codeFile.setFileNameAndProgrammingLanguage(filename);
 
 		final Map<String, CodeFile> files = new HashMap<>();
 		files.put(filename, codeFile);
 
-		final Code code = codeService.createAsset(new Code()
-				.setName("test-code-name")
-				.setDescription("my description")
-				.setFiles(files));
+		final Code code = codeService.createAsset(
+				(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.APPLICATION_OCTET_STREAM);
-		codeService.uploadFile(code.getId(), filename, fileEntity, ContentType.TEXT_PLAIN);
+		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
+		codeService.uploadFile(code.getId(), filename, fileEntity);
 
 		final MvcResult res = mockMvc.perform(MockMvcRequestBuilders.post("/knowledge/code-to-amr")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -574,6 +573,6 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 				.andReturn();
 
 		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertTrue(model != null);
+		Assertions.assertNotNull(model);
 	}
 }

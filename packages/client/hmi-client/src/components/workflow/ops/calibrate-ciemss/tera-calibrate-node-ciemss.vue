@@ -125,7 +125,6 @@ watch(
 			console.log('dill URL is', dillURL);
 
 			const forecastResponse = await makeForecastJobCiemss({
-				projectId: '',
 				modelConfigId: modelConfigId.value as string,
 				timespan: {
 					start: 0,

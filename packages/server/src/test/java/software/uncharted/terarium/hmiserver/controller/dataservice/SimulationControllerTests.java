@@ -47,10 +47,12 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateSimulation() throws Exception {
 
-		final Simulation simulationAsset =
-				new Simulation().setName("test-simulation-name").setDescription("my description");
+		final Simulation simulationAsset = new Simulation();
+		simulationAsset.setName("test-simulation-name");
+		simulationAsset.setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/simulations")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(simulationAsset)))
@@ -60,11 +62,13 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulation() throws Exception {
-
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -73,14 +77,19 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteSimulation() throws Exception {
 
-		final Simulation simulationAsset = simulationAssetService.createSimulation(
-				new Simulation().setName("test-simulation-name").setDescription("my description"));
+		final Simulation tempSim = new Simulation();
+		tempSim.setName("test-simulation-name");
+		tempSim.setDescription("my description");
+
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-				simulationAssetService.getSimulation(simulationAsset.getId()).isEmpty());
+		Assertions.assertTrue(simulationAssetService
+				.getAsset(simulationAsset.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 }

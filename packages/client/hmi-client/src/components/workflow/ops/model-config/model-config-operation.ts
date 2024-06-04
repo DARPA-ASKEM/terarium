@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import type { ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
@@ -25,7 +25,7 @@ export const ModelConfigOperation: Operation = {
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'modelConfigId' }],
+	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	action: async () => ({}),
 
 	initState: () => {
@@ -37,7 +37,7 @@ export const ModelConfigOperation: Operation = {
 				name: '',
 				description: '',
 				model_id: '',
-				configuration: {}
+				configuration: {} as Model
 			}
 		};
 		return init;

@@ -5,23 +5,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,12 +37,16 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/artifacts")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ArtifactController {
 
 	final ArtifactService artifactService;
@@ -56,6 +54,9 @@ public class ArtifactController {
 	final JsDelivrProxy gitHubProxy;
 
 	final ObjectMapper objectMapper;
+
+	private final ProjectService projectService;
+	private final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -80,7 +81,7 @@ public class ArtifactController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 		try {
-			return ResponseEntity.ok(artifactService.getAssets(page, pageSize));
+			return ResponseEntity.ok(artifactService.getPublicNotTemporaryAssets(page, pageSize));
 		} catch (final Exception e) {
 			final String error = "An error occurred while retrieving artifacts";
 			log.error(error, e);
@@ -107,9 +108,13 @@ public class ArtifactController {
 						description = "There was an issue creating the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> createArtifact(@RequestBody final Artifact artifact) {
+	public ResponseEntity<Artifact> createArtifact(
+			@RequestBody final Artifact artifact,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact));
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, permission));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
@@ -137,9 +142,13 @@ public class ArtifactController {
 						description = "There was an issue retrieving the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<Artifact> getArtifact(@PathVariable("id") final UUID artifactId) {
+	public ResponseEntity<Artifact> getArtifact(
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
+			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
 			return artifact.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -170,11 +179,15 @@ public class ArtifactController {
 						content = @Content)
 			})
 	public ResponseEntity<Artifact> updateArtifact(
-			@PathVariable("id") final UUID artifactId, @RequestBody final Artifact artifact) {
+			@PathVariable("id") final UUID artifactId,
+			@RequestBody final Artifact artifact,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			artifact.setId(artifactId);
-			final Optional<Artifact> updated = artifactService.updateAsset(artifact);
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -203,10 +216,14 @@ public class ArtifactController {
 						description = "There was an issue deleting the artifact",
 						content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteArtifact(@PathVariable("id") final UUID artifactId) {
+	public ResponseEntity<ResponseDeleted> deleteArtifact(
+			@PathVariable("id") final UUID artifactId,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			artifactService.deleteAsset(artifactId);
+			artifactService.deleteAsset(artifactId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
 		} catch (final Exception e) {
 			final String error = "Unable to delete artifact";
@@ -297,20 +314,13 @@ public class ArtifactController {
 	public ResponseEntity<String> downloadFileAsText(
 			@PathVariable("id") final UUID artifactId, @RequestParam("filename") final String filename) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		try {
 
-			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
-			if (url.isEmpty()) {
+			final Optional<String> textFileAsString = artifactService.fetchFileAsString(artifactId, filename);
+			if (textFileAsString.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			final String textFileAsString =
-					IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
-
-			return ResponseEntity.ok(textFileAsString);
+			return ResponseEntity.ok(textFileAsString.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -338,22 +348,12 @@ public class ArtifactController {
 
 		log.debug("Downloading artifact {} from project", artifactId);
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
-			final Optional<PresignedURL> url = artifactService.getDownloadUrl(artifactId, filename);
-			if (url.isEmpty()) {
+		try {
+			final Optional<byte[]> bytes = artifactService.fetchFileAsBytes(artifactId, filename);
+			if (bytes.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			final PresignedURL presignedURL = url.get();
-			final HttpGet get = new HttpGet(presignedURL.getUrl());
-			final HttpResponse response = httpclient.execute(get);
-			if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
-				final byte[] fileAsBytes = response.getEntity().getContent().readAllBytes();
-				return ResponseEntity.ok(fileAsBytes);
-			}
-			return ResponseEntity.status(response.getStatusLine().getStatusCode())
-					.build();
+			return ResponseEntity.ok(bytes.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
@@ -443,19 +443,14 @@ public class ArtifactController {
 	private ResponseEntity<Integer> uploadArtifactHelper(
 			final UUID artifactId, final String fileName, final HttpEntity artifactHttpEntity) {
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
+		try {
 
 			// upload file to S3
-			final PresignedURL presignedURL = artifactService.getUploadUrl(artifactId, fileName);
-			final HttpPut put = new HttpPut(presignedURL.getUrl());
-			put.setEntity(artifactHttpEntity);
-			final HttpResponse response = httpclient.execute(put);
+			final Integer status = artifactService.uploadFile(artifactId, fileName, artifactHttpEntity);
+			return ResponseEntity.ok(status);
 
-			return ResponseEntity.ok(response.getStatusLine().getStatusCode());
-
-		} catch (final Exception e) {
-			log.error("Unable to PUT artifact data", e);
+		} catch (final IOException e) {
+			log.error("Unable to upload artifact data", e);
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to PUT artifact data");
 		}

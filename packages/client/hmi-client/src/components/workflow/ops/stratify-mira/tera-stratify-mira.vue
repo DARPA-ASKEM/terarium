@@ -1,17 +1,35 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update:selection="onSelection"
 	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-4 pt-3">
+			<tera-drilldown-section class="pl-4">
 				<div class="form-section">
-					<h5>Stratify model</h5>
-					<p>The model will be stratified with the following settings.</p>
-					<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-						Note: Code has been executed which may not be reflected here.
-					</p>
+					<header class="inline-flex justify-content-between">
+						<section>
+							<h5>Stratify model</h5>
+							<p>The model will be stratified with the following settings.</p>
+							<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+								Note: Code has been executed which may not be reflected here.
+							</p>
+						</section>
+						<section>
+							<Button
+								style="margin-right: auto"
+								size="small"
+								severity="secondary"
+								outlined
+								label="Reset"
+								@click="resetModel"
+								class="mr-2"
+							/>
+							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
+						</section>
+					</header>
 					<tera-stratification-group-form
 						class="mt-2"
 						:model-node-options="modelNodeOptions"
@@ -19,30 +37,25 @@
 						@update-self="updateStratifyGroupForm"
 					/>
 				</div>
-				<template #footer>
-					<div class="flex flex-row gap-2 w-full mb-2">
-						<Button
-							outlined
-							label="Stratify"
-							size="large"
-							icon="pi pi-play"
-							@click="stratifyModel"
-						/>
-						<Button
-							style="margin-right: auto"
-							size="large"
-							severity="secondary"
-							outlined
-							label="Reset"
-							@click="resetModel"
-						/>
-					</div>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
-			<tera-drilldown-section>
-				<p class="mt-3 ml-4">Code Editor - Python</p>
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar">
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="sampleAgentQuestions"
+						:context-language="'python3'"
+						@llm-output="(data: any) => processLLMOutput(data)"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="updateLlmQuery"
+					>
+						<template #toolbar-right-side>
+							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
+						</template>
+					</tera-notebook-jupyter-input>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -52,28 +65,14 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
-
-				<template #footer>
-					<Button
-						outlined
-						style="margin-right: auto"
-						label="Run"
-						size="large"
-						icon="pi pi-play"
-						@click="runCodeStratify"
-						class="ml-4 mb-2"
-					/>
-				</template>
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"
-				:options="outputs"
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error
@@ -90,72 +89,46 @@
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</div>
-				<template #footer>
-					<Button
-						:disabled="!amr"
-						outlined
-						severity="secondary"
-						size="large"
-						label="Save as new model"
-						@click="isNewModelModalVisible = true"
-					/>
-					<Button label="Close" size="large" @click="emit('close')" />
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="isNewModelModalVisible" class="save-as-dialog">
-		<template #header>
-			<h4>Save as a new model</h4>
-		</template>
-		<form @submit.prevent class="mt-3">
-			<label for="new-model">What would you like to call it?</label>
-			<InputText
-				id="new-model"
-				type="text"
-				v-model="newModelName"
-				placeholder="Enter a unique name for your model"
-			/>
-		</form>
-		<template #footer>
-			<Button label="Save" size="large" @click="() => saveNewModel(newModelName)" />
-			<Button
-				class="p-button-secondary"
-				size="large"
-				label="Cancel"
-				@click="isNewModelModalVisible = false"
-			/>
-		</template>
-	</tera-modal>
+	<tera-save-asset-modal
+		v-if="stratifiedAmr"
+		:asset="stratifiedAmr"
+		:assetType="AssetType.Model"
+		:is-visible="showSaveModelModal"
+		@close-modal="showSaveModelModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import _ from 'lodash';
-import { AssetType } from '@/types/Types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useProjects } from '@/composables/project';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
+
 import { createModel, getModel } from '@/services/model';
+
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
 import { v4 as uuidv4 } from 'uuid';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import { useToastService } from '@/services/toast';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -176,6 +149,16 @@ const emit = defineEmits([
 	'select-output'
 ]);
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-pencil',
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
+
 enum StratifyTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
@@ -190,27 +173,27 @@ const executeResponse = ref({
 	traceback: ''
 });
 const modelNodeOptions = ref<string[]>([]);
-
-const isNewModelModalVisible = ref(false);
-const newModelName = ref('');
+const showSaveModelModal = ref(false);
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
 
 const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmQuery = ref('');
+const llmThoughts = ref<any[]>([]);
+
+const sampleAgentQuestions = [
+	'Stratify my model by the ages young and old',
+	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
+	'What is cartesian_control in stratify?'
+];
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -220,6 +203,11 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 
 const stratifyModel = () => {
 	stratifyRequest();
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+	saveCodeToState(data.content.code, false);
 };
 
 const resetModel = () => {
@@ -258,16 +246,13 @@ const stratifyRequest = () => {
 	});
 
 	const messageContent = {
-		stratify_args: {
-			key: strataOption.name,
-			strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
-			concepts_to_stratify: conceptsToStratify,
-			params_to_stratify: parametersToStratify,
-			cartesian_control: strataOption.cartesianProduct,
-			structure: strataOption.useStructure === true ? null : []
-		}
+		key: strataOption.name,
+		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
+		concepts_to_stratify: conceptsToStratify,
+		params_to_stratify: parametersToStratify,
+		cartesian_control: strataOption.cartesianProduct,
+		structure: strataOption.useStructure === true ? null : []
 	};
-
 	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
@@ -288,6 +273,10 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	if (!stratifiedAmr.value) {
+		logger.error('Error getting updated model from beaker');
+		return;
+	}
 
 	// Create output
 	const modelData = await createModel(stratifiedAmr.value);
@@ -312,7 +301,7 @@ const buildJupyterContext = () => {
 	}
 
 	return {
-		context: 'mira_model',
+		context: 'mira_model_edit',
 		language: 'python3',
 		context_info: {
 			id: amr.value.id
@@ -321,7 +310,7 @@ const buildJupyterContext = () => {
 };
 
 const getStatesAndParameters = (amrModel: Model) => {
-	const modelFramework = amrModel.header.schema_name;
+	const modelFramework = amrModel.header.schema_name?.toLowerCase();
 	const modelStates: string[] = [];
 	const modelParameters: string[] = [];
 
@@ -345,7 +334,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 		});
 	} else if (modelFramework === AMRSchemaNames.REGNET) {
 		model.vertices.forEach((v) => {
-			modelStates.push(v.id);
+			modelStates.push(v.name);
 		});
 		model.parameters.forEach((p) => {
 			modelParameters.push(p.id);
@@ -358,7 +347,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const modelId = props.node.inputs[0].value?.[0];
+	const input = props.node.inputs[0];
+	if (!input) return;
+
+	let modelId: string | null = null;
+	if (input.type === 'modelId') {
+		modelId = input.value?.[0];
+	} else if (input.type === 'modelConfigId') {
+		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+	}
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -376,21 +373,6 @@ const inputChangeHandler = async () => {
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
-};
-
-const saveNewModel = async (modelName: string) => {
-	if (!stratifiedAmr.value || !modelName) return;
-	stratifiedAmr.value.header.name = modelName;
-
-	const projectResource = useProjects();
-	const modelData = await createModel(stratifiedAmr.value);
-	const projectId = projectResource.activeProject.value?.id;
-
-	if (!modelData) return;
-	await projectResource.addAsset(AssetType.Model, modelData.id, projectId);
-	useToastService().success('', `Saved to project ${projectResource.activeProject.value?.name}`);
-
-	isNewModelModalVisible.value = false;
 };
 
 const initialize = (editorInstance: any) => {
@@ -446,20 +428,19 @@ const runCodeStratify = () => {
 	});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service. Migrate it to use saveCodeToState from @/services/notebook
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
-
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
 	const timestamp = Date.now();
+	const llm = { llmQuery: llmQuery.value, llmThoughts: llmThoughts.value };
 	if (codeHistoryLength > 0) {
-		state.strataCodeHistory[0] = { code, timestamp };
+		state.strataCodeHistory[0] = { code, timestamp, ...llm };
 	} else {
-		state.strataCodeHistory.push({ code, timestamp });
+		state.strataCodeHistory.push({ code, timestamp, ...llm });
 	}
-
 	emit('update-state', state);
 };
 
@@ -508,6 +489,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .code-executed-warning {
 	background-color: #ffe6e6;
 	color: #cc0000;

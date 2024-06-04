@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CompareModelsResponseHandler extends TaskResponseHandler {
-	public static final String NAME = "gollm:compare_models";
+	public static final String NAME = "gollm_task:compare_models";
 
 	@Override
 	public String getName() {
@@ -27,6 +27,8 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Properties {
 		List<UUID> modelIds;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Data

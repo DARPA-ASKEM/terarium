@@ -39,13 +39,17 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
-	handlers: TaskEventHandlers
+	handlers: TaskEventHandlers,
+	workflowId?: string,
+	nodeId?: string
 ): Promise<TaskHandler | null> {
 	try {
 		const response = await API.get<TaskResponse>('/gollm/configure-model', {
 			params: {
 				'model-id': modelId,
-				'document-id': documentId
+				'document-id': documentId,
+				'workflow-id': workflowId,
+				'node-id': nodeId
 			}
 		});
 
@@ -64,7 +68,9 @@ export async function configureModelFromDatasets(
 	modelId: string,
 	datasetIds: string[],
 	matrixStr: string,
-	handlers: TaskEventHandlers
+	handlers: TaskEventHandlers,
+	workflowId?: string,
+	nodeId?: string
 ): Promise<TaskHandler | null> {
 	try {
 		// FIXME: Using first dataset for now...
@@ -74,7 +80,9 @@ export async function configureModelFromDatasets(
 			{
 				params: {
 					'model-id': modelId,
-					'dataset-ids': datasetIds.join()
+					'dataset-ids': datasetIds.join(),
+					'workflow-id': workflowId,
+					'node-id': nodeId
 				}
 			}
 		);
@@ -88,7 +96,11 @@ export async function configureModelFromDatasets(
 	return null;
 }
 
-export async function compareModels(modelIds: string[]): Promise<CompareModelsResponseType> {
+export async function compareModels(
+	modelIds: string[],
+	workflowId?: string,
+	nodeId?: string
+): Promise<CompareModelsResponseType> {
 	let resolve;
 	let reject;
 
@@ -100,7 +112,9 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	try {
 		const response = await API.get<TaskResponse>('/gollm/compare-models', {
 			params: {
-				'model-ids': modelIds.join(',')
+				'model-ids': modelIds.join(','),
+				'workflow-id': workflowId,
+				'node-id': nodeId
 			}
 		});
 
@@ -127,6 +141,14 @@ export async function compareModels(modelIds: string[]): Promise<CompareModelsRe
 	}
 
 	return promise;
+}
+
+export async function cancelTask(taskId: string): Promise<void> {
+	try {
+		await API.put<TaskResponse>(`/gollm/${taskId}`);
+	} catch (err) {
+		logger.error(`An issue occurred while cancelling task with id: ${taskId}. ${err}`);
+	}
 }
 
 /**

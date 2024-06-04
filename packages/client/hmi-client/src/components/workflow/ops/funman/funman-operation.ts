@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 
+const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
+
 export interface ConstraintGroup {
 	borderColour: string;
 	name: string;
@@ -32,12 +34,16 @@ export interface FunmanOperationState extends BaseState {
 	useCompartmentalConstraint: boolean;
 	constraintGroups: ConstraintGroup[];
 	requestParameters: RequestParameter[];
+
+	// selected state in ouptut
+	trajectoryState?: string;
 }
 
 export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
 	displayName: 'Validate configuration',
 	description: 'Validate configuration',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'funmanQueryId' }],
 	isRunnable: true,

@@ -1,11 +1,17 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
 				<div class="form-section">
 					<h5>Settings</h5>
 					<div class="input-row">
@@ -61,6 +67,14 @@
 								]"
 							/>
 						</div>
+						<div class="label-and-input">
+							<label>Maxiter</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+						</div>
+						<div class="label-and-input">
+							<label>Maxfeval</label>
+							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+						</div>
 					</div>
 					<Button
 						v-if="showAdditionalOptions"
@@ -107,7 +121,7 @@
 					<h5>Constraint</h5>
 					<div class="constraint-row">
 						<div class="label-and-input">
-							<label>Target-variable(s)</label>
+							<label>Target-variable</label>
 							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
@@ -117,7 +131,7 @@
 							/>
 						</div>
 						<div class="label-and-input">
-							<label>Qoi Method</label>
+							<label>QoI Method</label>
 							<Dropdown
 								class="p-inputtext-sm"
 								:options="[
@@ -150,14 +164,6 @@
 								:max-fraction-digits="10"
 							/>
 						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
-						</div>
 					</div>
 				</div>
 			</tera-drilldown-section>
@@ -173,7 +179,6 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
 				<!-- Optimize result.json display: -->
@@ -216,7 +221,10 @@
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="simulationRunResults[knobs.forecastRunId]"
-							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
+							:chartConfig="{
+								selectedRun: knobs.forecastRunId,
+								selectedVariable: cfg
+							}"
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
@@ -251,27 +259,11 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button
-				:disabled="isRunDisabled"
-				outlined
-				severity="secondary"
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runOptimize"
+			<tera-save-dataset-from-simulation
+				:simulation-run-id="knobs.forecastRunId"
+				:showDialog="showSaveDataDialog"
+				@dialog-hide="showSaveDataDialog = false"
 			/>
-			<tera-pyciemss-cancel-button
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
-			<Button
-				outlined
-				severity="secondary"
-				label="Save as a new model configuration"
-				@click="showModelModal = true"
-			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="knobs.forecastRunId" />
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 	<Dialog
@@ -282,14 +274,14 @@
 	>
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<InputText v-model="knobs.modelConfigName" />
+			<InputText v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<InputText v-model="knobs.modelConfigDesc" />
+			<InputText v-model="modelConfigDesc" />
 		</div>
 		<Button
-			:disabled="knobs.modelConfigName === ''"
+			:disabled="modelConfigName === ''"
 			outlined
 			label="Save as a new model configuration"
 			@click="saveModelConfiguration"
@@ -303,11 +295,11 @@ import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -331,12 +323,11 @@ import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
 	ModelConfiguration,
-	Model,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	OptimizedIntervention
+	PolicyInterventions
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
@@ -344,12 +335,15 @@ import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { useProjects } from '@/composables/project';
+import { isSaveDataSetDisabled } from '@/components/dataset/utils';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
 	ContextMethods,
 	InterventionPolicyGroup,
-	blankInterventionPolicyGroup
+	blankInterventionPolicyGroup,
+	getOptimizedInterventions
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -381,8 +375,6 @@ interface BasicKnobs {
 	isMinimized: boolean;
 	forecastRunId: string;
 	optimizationRunId: string;
-	modelConfigName: string;
-	modelConfigDesc: string;
 	interventionType: InterventionTypes;
 }
 
@@ -399,10 +391,12 @@ const knobs = ref<BasicKnobs>({
 	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	modelConfigName: props.node.state.modelConfigName ?? '',
-	modelConfigDesc: props.node.state.modelConfigDesc ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
+
+const modelConfigName = ref<string>('');
+const modelConfigDesc = ref<string>('');
+const showSaveDataDialog = ref<boolean>(false);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -410,6 +404,29 @@ const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(
 	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
 );
+
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+);
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as a new model configuration',
+		icon: 'pi pi-pencil',
+		disabled: modelConfigName.value === '',
+		command: () => {
+			showModelModal.value = true;
+		}
+	},
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
 
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);
@@ -503,7 +520,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = modelConfiguration.value.configuration as Model;
+	const model = modelConfiguration.value.configuration;
 
 	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
@@ -532,8 +549,8 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.upperBound]);
 	});
 
-	const optimizeInterventions: OptimizedIntervention = {
-		selection: knobs.value.interventionType,
+	const optimizeInterventions: PolicyInterventions = {
+		interventionType: knobs.value.interventionType,
 		paramNames,
 		startTime,
 		paramValues
@@ -547,7 +564,7 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		interventions: optimizeInterventions,
+		policyInterventions: optimizeInterventions,
 		qoi: {
 			contexts: knobs.value.targetVariables,
 			method: knobs.value.qoiMethod
@@ -568,7 +585,6 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
@@ -580,14 +596,19 @@ const runOptimize = async () => {
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
-	// TODO: This should be taking some values from our output result but its TBD
+	if (!knobs.value.optimizationRunId) {
+		logger.error('No optimization run to create model configuration from');
+	}
+	const optRunId = knobs.value.optimizationRunId;
+	const interventions = await getOptimizedInterventions(optRunId);
 	const data = await createModelConfiguration(
 		modelConfiguration.value.model_id,
-		knobs.value.modelConfigName,
-		knobs.value.modelConfigDesc,
-		modelConfiguration.value.configuration as Model
+		modelConfigName.value,
+		modelConfigDesc.value,
+		modelConfiguration.value.configuration,
+		false,
+		interventions
 	);
-
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;
@@ -634,8 +655,6 @@ watch(
 		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.modelConfigName = knobs.value.modelConfigName;
-		state.modelConfigDesc = knobs.value.modelConfigDesc;
 		state.interventionType = knobs.value.interventionType;
 		state.isMinimized = knobs.value.isMinimized;
 		state.qoiMethod = knobs.value.qoiMethod;
@@ -650,21 +669,13 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-		}
-
-		// Update knobs with current selected output state
-		// timespan.value = props.node.state.currentTimespan;
-		// numSamples.value = props.node.state.numSamples;
-		// method.value = props.node.state.method;
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => knobs.value.forecastRunId,
-	async () => {
-		if (knobs.value.forecastRunId !== '') {
-			setOutputValues();
+			initialize();
+			if (props.node.state.forecastRunId !== '') {
+				// The run has finished
+				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
+				knobs.value.forecastRunId = props.node.state.forecastRunId;
+				setOutputValues();
+			}
 		}
 	},
 	{ immediate: true }

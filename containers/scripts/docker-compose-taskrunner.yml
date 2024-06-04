@@ -15,7 +15,7 @@ services:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
 
   mira-taskrunner:
     container_name: mira-taskrunner
@@ -31,4 +31,20 @@ services:
       rabbitmq:
         condition: service_healthy
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "${local_host_name}:host-gateway"
+
+  funman-taskrunner:
+    container_name: funman-taskrunner
+    image: ghcr.io/darpa-askem/funman-taskrunner:latest
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ-PASSWORD: "terarium123"
+      TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST-TYPE: "funman"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"

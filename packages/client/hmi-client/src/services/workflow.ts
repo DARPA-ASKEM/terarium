@@ -15,6 +15,7 @@ import type {
 	WorkflowOutput
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { summarizeNotebook } from './beaker';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -69,6 +70,7 @@ export const addNode = (
 		workflowId: wf.id,
 		operationType: op.name,
 		displayName: op.displayName,
+		documentationUrl: op.documentationUrl,
 		x: pos.x,
 		y: pos.y,
 		state: options.state ?? {},
@@ -82,17 +84,19 @@ export const addNode = (
 			isOptional: port.isOptional ?? false,
 			acceptMultiple: port.acceptMultiple
 		})),
-		outputs: [],
-		/*
+
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			isOptional: false,
+			acceptMultiple: false,
+			state: {}
 		})),
-	  */
-		status: OperatorStatus.DEFAULT,
+
+		status: OperatorStatus.INVALID,
 
 		width: nodeSize.width,
 		height: nodeSize.height
@@ -114,14 +118,11 @@ export const addEdge = (
 ) => {
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
 	const targetNode = wf.nodes.find((d) => d.id === targetId);
-	if (!sourceNode) return;
-	if (!targetNode) return;
+	if (!sourceNode || !targetNode) return;
 
 	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
 	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
-
-	if (!sourceOutputPort) return;
-	if (!targetInputPort) return;
+	if (!sourceOutputPort || !targetInputPort) return;
 
 	// Check if edge already exist
 	const existingEdge = wf.edges.find(
@@ -131,16 +132,14 @@ export const addEdge = (
 			d.target === targetId &&
 			d.targetPortId === targetPortId
 	);
-
 	if (existingEdge) return;
 
 	// Check if type is compatible
-	if (sourceOutputPort.value === null) return;
-
 	const allowedTypes = targetInputPort.type.split('|');
-	if (!allowedTypes.includes(sourceOutputPort.type)) return;
-
-	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+	if (
+		!allowedTypes.includes(sourceOutputPort.type) ||
+		(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
+	) {
 		return;
 	}
 
@@ -153,9 +152,10 @@ export const addEdge = (
 		targetInputPort.value = sourceOutputPort.value;
 	}
 
-	// Transfer concrete type information where it can accept multiple types
-	// Note this will lock in the typing, even after unlink
+	// Transfer concrete type to the input type to match the output type
+	// Saves the original type in case we want to revert when we unlink the edge
 	if (allowedTypes.length > 1) {
+		targetInputPort.originalType = targetInputPort.type;
 		targetInputPort.type = sourceOutputPort.type;
 	}
 
@@ -181,11 +181,18 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	// Remove the data reference at the targetPort
 	const targetNode = wf.nodes.find((d) => d.id === edgeToRemove.target);
 	if (!targetNode) return;
+
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
+
 	targetPort.value = null;
 	targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
 	delete targetPort.label;
+
+	// Resets the type to the original type (used when multiple types for a port are allowed)
+	if (targetPort?.originalType) {
+		targetPort.type = targetPort.originalType;
+	}
 
 	// Edge re-assignment
 	wf.edges = wf.edges.filter((edge) => edge.id !== id);
@@ -229,6 +236,7 @@ const defaultPortLabels = {
 	modelId: 'Model',
 	modelConfigId: 'Model configuration',
 	datasetId: 'Dataset',
+	simulationId: 'Simulation',
 	codeAssetId: 'Code asset'
 };
 
@@ -240,6 +248,11 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	// Assign to default label using port type
 	else if (defaultPortLabels[type]) {
 		portLabel = defaultPortLabels[type];
+	}
+	// Create name if there are multiple types
+	else if (type.includes('|')) {
+		const types = type.split('|');
+		portLabel = types.map((t) => defaultPortLabels[t] ?? t).join(' or ');
 	}
 
 	if (isOptional) portLabel = portLabel.concat(' (optional)');
@@ -264,9 +277,10 @@ export const updateWorkflow = async (workflow: Workflow) => {
 	return response?.data ?? null;
 };
 
-// Get
-export const getWorkflow = async (id: string) => {
-	const response = await API.get(`/workflows/${id}`);
+// Get workflow
+// Note that projectId is optional as projectId is assigned by the axios API interceptor if value is available from activeProjectId. If the method is call from place where activeProjectId is not available, projectId should be passed as an argument as all endpoints requires projectId as a parameter.
+export const getWorkflow = async (id: string, projectId?: string) => {
+	const response = await API.get(`/workflows/${id}`, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
 };
 
@@ -419,10 +433,36 @@ export function selectOutput(
 	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
+export function getActiveOutputSummary(node: WorkflowNode<any>) {
+	const output = node.outputs.find((o) => o.id === node.active);
+	return output?.summary;
+}
+
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
+}
+
+// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
+const summaryGenerationRequestIds = new Set<string>();
+
+export async function generateSummary(
+	node: WorkflowNode<any>,
+	outputPort: WorkflowOutput<any>,
+	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
+) {
+	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
+	try {
+		summaryGenerationRequestIds.add(outputPort.id);
+		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
+		const result = await summarizeNotebook(notebook);
+		return result;
+	} catch {
+		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
+	} finally {
+		summaryGenerationRequestIds.delete(outputPort.id);
+	}
 }
 
 // Check if the current-state matches that of the output-state.

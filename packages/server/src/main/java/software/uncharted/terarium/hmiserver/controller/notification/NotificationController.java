@@ -14,8 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +30,7 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class NotificationController {
 
 	private final CurrentUserService currentUserService;
@@ -67,13 +70,15 @@ public class NotificationController {
 		return ResponseEntity.ok(notificationService.getUnAckedNotificationGroupsCreatedSince(userId, since));
 	}
 
-	@GetMapping("/ack/{groupId}")
+	@PutMapping("/ack/{groupId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Acknowledges all events in notification group")
 	@ApiResponses(
 			value = {
-				@ApiResponse(responseCode = "200", description = "Returned recent notifications successfully"),
-				@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
+				@ApiResponse(responseCode = "200", description = "Acknowledged all events in notification group"),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue acknowledging the notification group")
 			})
 	public ResponseEntity<Void> acknowledgeNotificationGroup(@PathVariable("groupId") final UUID groupId) {
 

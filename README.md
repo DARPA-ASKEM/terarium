@@ -46,9 +46,10 @@ There are many ways/package managers to install these dependencies. We recommend
 
 ```bash
 brew tap homebrew/cask-versions
-brew install --cask temurin17 # OR brew install openjdk@17
+brew install openjdk@17
 brew install gradle
-brew install yarn
+brew install node
+brew install yarnb
 brew install ansible
 ```
 
@@ -113,7 +114,7 @@ To generate the typescript models as a single command:
 yarn workspace @uncharted/server-type-generator run generateTypes
 ```
 
-The client, when running with the command `yarn dev`, connects to the server in the staging environment, enabling client-side development without the need to spin up the server locally.
+The client, when running with the command `yarn dev`, connects to the server in the dev environment, enabling client-side development without the need to spin up the server locally.
 
 To run the client while connecting to the server running locally, use the following command:
 
@@ -169,13 +170,26 @@ If you don't intend to run the backend with a debugger, you can simply kick off 
 ./hmiServerDev.sh start local run
 ```
 
-If you are going to run the server using the Intellij / VSCode debugger, the first step is to decrypt the `application-secrets.properties.encrypted` file:
+> Note: to run everything local you need to update your `/etc/hosts` with the following `127.0.0.1 minio`.
+
+If you are going to run the server using the Intellij / VSCode debugger, you can run just the required containers and handle decryption with the following command
+```shell
+./hmiServerDev.sh start local
+```
+
+If you're looking to just decrypt or encrypt secrets you can run:
 
 ```shell
 ./hmiServerDev.sh decrypt
 ```
+or
+```shell
+./hmiServerDev.sh encrypt
+```
 
+If running decrypt, you'll see the contents of `application-secrets.properties.encrypted` decrypted to plain text.
 There should now be a `application-secrets.properties` file in the `packages/server/src/main/resources` dir.
+If running encrypt, `application-secrets.properties`'s content will be encrypted into the *.encrypted file.
 
 <details>
 <summary><b>Debugging the Server in IntelliJ</b></summary>

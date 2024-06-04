@@ -79,7 +79,8 @@ const emit = defineEmits([
 	'update-kernel-status',
 	'new-dataset-saved',
 	'new-model-saved',
-	'update-kernel-state'
+	'update-kernel-state',
+	'update-language'
 ]);
 
 const props = defineProps<{
@@ -300,6 +301,8 @@ const newJupyterMessage = (jupyterMessage) => {
 	} else if (jupyterMessage.header.msg_type === 'model_preview') {
 		updateNotebookCells(jupyterMessage);
 		isExecutingCode.value = false;
+	} else if (jupyterMessage.header.msg_type === 'context_setup_response') {
+		emit('update-language', jupyterMessage.content.subkernel);
 	} else {
 		console.log('Unknown Jupyter event', jupyterMessage);
 	}
@@ -401,7 +404,6 @@ watch(
 		if (props.notebookSession) {
 			await updateNotebookSession({
 				id: props.notebookSession.id,
-				name: props.notebookSession.name,
 				description: props.notebookSession.description,
 				data: { history: notebookItems.value }
 			});

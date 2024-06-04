@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -28,16 +29,23 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/model-configurations")
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ModelConfigurationController {
 
 	final ModelConfigurationService modelConfigurationService;
 	final ObjectMapper objectMapper;
+
+	final ProjectService projectService;
+	final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -64,7 +72,7 @@ public class ModelConfigurationController {
 			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
 
 		try {
-			return ResponseEntity.ok(modelConfigurationService.getAssets(pageSize, page));
+			return ResponseEntity.ok(modelConfigurationService.getPublicNotTemporaryAssets(pageSize, page));
 		} catch (final IOException e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
@@ -91,10 +99,15 @@ public class ModelConfigurationController {
 						description = "There was an issue creating the configuration",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> createModelConfiguration(@RequestBody final ModelConfiguration config) {
+	public ResponseEntity<ModelConfiguration> createModelConfiguration(
+			@RequestBody final ModelConfiguration config,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(modelConfigurationService.createAsset(config));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(modelConfigurationService.createAsset(config, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create model configuration";
 			log.error(error, e);
@@ -125,10 +138,14 @@ public class ModelConfigurationController {
 						description = "There was an issue retrieving the configuration from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<ModelConfiguration> getModelConfiguration(@PathVariable("id") final UUID id) {
+	public ResponseEntity<ModelConfiguration> getModelConfiguration(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
 			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
 					.build());
 		} catch (final IOException e) {
@@ -162,11 +179,15 @@ public class ModelConfigurationController {
 						content = @Content)
 			})
 	public ResponseEntity<ModelConfiguration> updateModelConfiguration(
-			@PathVariable("id") final UUID id, @RequestBody final ModelConfiguration config) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final ModelConfiguration config,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config);
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -193,10 +214,14 @@ public class ModelConfigurationController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(@PathVariable("id") final UUID id) {
+	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelConfigurationService.deleteAsset(id);
+			modelConfigurationService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete model configuration";

@@ -1,11 +1,21 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:style="{ marginRight: 'auto' }"
+						label="Run"
+						icon="pi pi-play"
+						@click="runCalibrate"
+						:disabled="disableRunButton"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
@@ -119,7 +129,6 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<div class="form-section">
 					<h5>Calibrated parameters</h5>
@@ -173,17 +182,6 @@
 					</div>
 				</div>
 			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runCalibrate"
-				:disabled="disableRunButton"
-			/>
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -310,7 +308,7 @@ const updateStateExtras = () => {
 
 const filterStateVars = (params) => {
 	const initialStates =
-		modelConfig.value?.configuration.semantics.ode.initials.map((d) => d.expression) ?? [];
+		modelConfig.value?.configuration?.semantics?.ode?.initials?.map((d) => d.expression) ?? [];
 	return Object.keys(params).reduce((acc, key) => {
 		if (!initialStates.includes(key)) {
 			acc[key] = params[key];

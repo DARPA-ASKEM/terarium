@@ -8,6 +8,7 @@ export interface NodeData {
 	type: string;
 	expression?: string;
 	strataType?: string;
+	isStratified?: boolean;
 }
 
 export interface EdgeData {

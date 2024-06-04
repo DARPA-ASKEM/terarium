@@ -12,6 +12,8 @@
 					:show-chat-thoughts="showChatThoughts"
 					@new-dataset-saved="addOutputPort"
 					:notebook-session="notebookSession"
+					:programming-language="node.state.programmingLanguage"
+					@update-language="(lang) => onUpdateLanguage(lang)"
 				/>
 			</Suspense>
 		</div>
@@ -57,7 +59,6 @@ onMounted(async () => {
 		// create a new notebook session log if it does not exist
 		const response = await createNotebookSession({
 			id: uuidv4(),
-			name: props.node.id,
 			description: '',
 			data: { history: [] }
 		});
@@ -72,6 +73,12 @@ onMounted(async () => {
 
 	notebookSession.value = await getNotebookSessionById(notebookSessionId!);
 });
+
+const onUpdateLanguage = (language: string) => {
+	const state = cloneDeep(props.node.state);
+	state.programmingLanguage = language;
+	emit('update-state', state);
+};
 
 const addOutputPort = (data: any) => {
 	emit('append-output', {

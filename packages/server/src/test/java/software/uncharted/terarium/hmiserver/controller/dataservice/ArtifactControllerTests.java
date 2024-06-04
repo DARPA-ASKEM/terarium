@@ -50,9 +50,11 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateArtifact() throws Exception {
 
-		final Artifact artifact = new Artifact().setName("test-artifact-name").setDescription("my description");
+		final Artifact artifact =
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/artifacts")
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
 						.content(objectMapper.writeValueAsString(artifact)))
@@ -64,9 +66,11 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanGetArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 	}
@@ -75,9 +79,15 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifacts() throws Exception {
 
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
-		artifactService.createAsset(new Artifact().setName("test-artifact-name").setDescription("my description"));
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
+		artifactService.createAsset(
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf()))
 				.andExpect(status().isOk())
@@ -89,13 +99,17 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
+						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
 
-		Assertions.assertTrue(artifactService.getAsset(artifact.getId()).isEmpty());
+		Assertions.assertTrue(artifactService
+				.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION)
+				.isEmpty());
 	}
 
 	@Test
@@ -103,7 +117,8 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
 		final MockMultipartFile file = new MockMultipartFile(
@@ -131,7 +146,8 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifactFromGithub() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 						.with(csrf())
@@ -147,7 +163,8 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifact() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 
@@ -188,7 +205,8 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifactAsText() throws Exception {
 
 		final Artifact artifact = artifactService.createAsset(
-				new Artifact().setName("test-artifact-name").setDescription("my description"));
+				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
 

@@ -3,7 +3,11 @@
 
 name: Server Tests
 
+env:
+  local_host_name: "localhost"
+
 # Controls when the action will run.
+# yamllint disable-line rule:truthy
 on:
   # Triggers the workflow on push or pull request events but only for the $default-branch branch
   push:
@@ -19,9 +23,14 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  lint-server:
+    name: Lint and format server
+    uses: ./.github/workflows/lint-server.yaml
+
   server-tests:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
+    needs: lint-server
 
     permissions:
       contents: read

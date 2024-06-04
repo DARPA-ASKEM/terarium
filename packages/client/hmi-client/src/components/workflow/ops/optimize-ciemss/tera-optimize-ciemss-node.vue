@@ -43,16 +43,19 @@ import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import {
 	pollAction,
-	getRunResult,
 	getRunResultCiemss,
 	makeForecastJobCiemss,
 	getSimulation
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
-import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
+import { SimulationRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import {
+	OptimizeCiemssOperationState,
+	OptimizeCiemssOperation,
+	getOptimizedInterventions
+} from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -106,32 +109,8 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const getSimulationInterventions = async (id) => {
-	const policyResult = await getRunResult(id, 'policy.json');
-	const paramNames: string[] = [];
-	const paramValues: number[] = [];
-	const startTime: number[] = [];
-	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		paramNames.push(ele.parameter);
-		paramValues.push(ele.paramValue);
-		startTime.push(ele.startTime);
-	});
-
-	const simulationIntervetions: SimulationIntervention[] = [];
-	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-	for (let i = 0; i < paramNames.length; i++) {
-		simulationIntervetions.push({
-			name: paramNames[i],
-			timestep: startTime[i],
-			value: policyResult[i]
-		});
-	}
-	return simulationIntervetions;
-};
-
 const startForecast = async (simulationIntervetions) => {
 	const simulationPayload: SimulationRequest = {
-		projectId: '',
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
 			start: 0,
@@ -152,19 +131,19 @@ const startForecast = async (simulationIntervetions) => {
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
-	async (id) => {
-		if (!id || id === '') return;
+	async (optId) => {
+		if (!optId || optId === '') return;
 
-		const response = await pollResult(id);
+		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getSimulationInterventions(id);
+			const simulationIntervetions = await getOptimizedInterventions(optId);
 			const forecastResponse = await startForecast(simulationIntervetions);
 			const forecastId = forecastResponse.id;
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
-			state.optimizationRunId = id;
+			state.optimizationRunId = optId;
 			state.inProgressForecastId = forecastId;
 			emit('update-state', state);
 		}
@@ -174,21 +153,21 @@ watch(
 
 watch(
 	() => props.node.state.inProgressForecastId,
-	async (id) => {
-		if (!id || id === '') return;
+	async (simId) => {
+		if (!simId || simId === '') return;
 
-		const response = await pollResult(id);
+		const response = await pollResult(simId);
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
 			state.inProgressForecastId = '';
-			state.forecastRunId = id;
+			state.forecastRunId = simId;
 			emit('update-state', state);
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
 				label: `Simulation output - ${props.node.outputs.length + 1}`,
-				value: [id],
+				value: [simId],
 				isSelected: false,
 				state
 			});

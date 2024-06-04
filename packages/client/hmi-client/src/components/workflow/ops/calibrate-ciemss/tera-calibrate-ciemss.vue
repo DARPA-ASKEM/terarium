@@ -3,9 +3,19 @@
 		:node="node"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update:selection="onSelection"
 	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+					<Button
+						label="Run"
+						icon="pi pi-play"
+						@click="runCalibrate"
+						:disabled="disableRunButton"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
@@ -106,7 +116,6 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
@@ -154,21 +163,6 @@
 					v-bind="node.state.errorMessage"
 				/>
 			</tera-drilldown-preview>
-		</template>
-		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runCalibrate"
-				:disabled="disableRunButton"
-			/>
-			<tera-pyciemss-cancel-button
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
-			/>
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -462,12 +456,12 @@ watch(
 
 <style scoped>
 .mapping-table:deep(td) {
-	padding: 0rem 0.25rem 0.5rem 0rem !important;
+	padding: 0 0.25rem 0.5rem 0 !important;
 	border: none !important;
 }
 
 .mapping-table:deep(th) {
-	padding: 0rem 0.25rem 0.5rem 0.25rem !important;
+	padding: 0 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
 	width: 50%;
 }

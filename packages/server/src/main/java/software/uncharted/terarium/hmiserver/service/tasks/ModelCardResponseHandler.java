@@ -16,7 +16,7 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 @RequiredArgsConstructor
 @Slf4j
 public class ModelCardResponseHandler extends TaskResponseHandler {
-	public static final String NAME = "gollm:model_card";
+	public static final String NAME = "gollm_task:model_card";
 	private final ObjectMapper objectMapper;
 	private final DocumentAssetService documentAssetService;
 
@@ -49,15 +49,16 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			final String serializedString = objectMapper.writeValueAsString(resp.getAdditionalProperties());
 			final Properties props = objectMapper.readValue(serializedString, Properties.class);
 			log.info("Writing model card to database for document {}", props.getDocumentId());
-			final DocumentAsset document =
-					documentAssetService.getAsset(props.getDocumentId()).orElseThrow();
+			final DocumentAsset document = documentAssetService
+					.getAsset(props.getDocumentId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+					.orElseThrow();
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (document.getMetadata() == null) {
 				document.setMetadata(new java.util.HashMap<>());
 			}
 			document.getMetadata().put("gollmCard", card.response);
 
-			documentAssetService.updateAsset(document);
+			documentAssetService.updateAsset(document, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);

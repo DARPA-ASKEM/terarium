@@ -4,20 +4,21 @@
 		outlined
 		severity="secondary"
 		@click="cancelSimulation"
-		label="Cancel"
-		icon="pi pi-times"
+		label="Stop"
 	/>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import Button from 'primevue/button';
 import { cancelCiemssJob } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	simulationRunId?: string;
-	disabled: boolean;
 }>();
+
+const disabled = computed(() => props.simulationRunId === '');
 
 const cancelSimulation = async () => {
 	if (!props.simulationRunId) return;

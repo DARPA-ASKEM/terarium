@@ -1,5 +1,10 @@
+import { getModel } from '@/services/model';
+import { createNotebookFromCode } from '@/services/notebook';
 import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
+
+const DOCUMENTATION_URL =
+	'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
 
 export interface StratifyGroup {
 	borderColour: string;
@@ -15,6 +20,8 @@ export interface StratifyGroup {
 }
 
 export interface StratifyCode {
+	llmQuery: string;
+	llmThoughts: any[];
 	code: string;
 	timestamp: number;
 }
@@ -53,8 +60,11 @@ export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
 	displayName: 'Stratify model',
 	description: 'Stratify a model',
-	inputs: [{ type: 'modelId', label: 'Model', acceptMultiple: false }],
-	outputs: [{ type: 'model' }],
+	documentationUrl: DOCUMENTATION_URL,
+	inputs: [
+		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }
+	],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	isRunnable: false,
 	action: () => {},
 	initState: () => {
@@ -64,5 +74,13 @@ export const StratifyMiraOperation: Operation = {
 			hasCodeBeenRun: false
 		};
 		return init;
+	},
+	createNotebook: async (state: StratifyOperationStateMira, value?: any[] | null) => {
+		const modelIdToLoad = value?.[0];
+		const outputModel = await getModel(modelIdToLoad);
+		const code = state.strataCodeHistory?.[0].code ?? '';
+		// TODO: Add llm query and thought to the notebook
+		const notebook = createNotebookFromCode(code, 'python3', { 'application/json': outputModel });
+		return notebook;
 	}
 };

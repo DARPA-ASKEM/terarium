@@ -3,70 +3,50 @@ package software.uncharted.terarium.hmiserver.models.notification;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.JsonConverter;
+import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 
 @Data
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @TSModel
 @Entity
-public class NotificationEvent {
+public class NotificationEvent extends TerariumEntity {
 
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
 
-	@Id
-	private UUID id = UUID.randomUUID();
-
 	private Double progress = 0.0;
+
+	@Enumerated(EnumType.STRING)
 	private ProgressState state = null;
 
 	@ManyToOne
-	@JoinColumn(name = "notification_group_id", nullable = false)
 	@JsonBackReference
-	@EqualsAndHashCode.Exclude
-	private NotificationGroup notificationGroup;
-
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
-	@NotNull private Timestamp createdOn;
+	@NotNull private NotificationGroup notificationGroup;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp acknowledgedOn = null;
 
-	@PrePersist
-	protected void onCreate() {
-		this.createdOn = this.createdOn != null
-				? this.createdOn
-				: Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
-	}
-
-	@Convert(converter = JsonConverter.class)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private JsonNode data;
-
-	public NotificationEvent setData(final JsonNode arg) {
-		data = arg;
-		return this;
-	}
 
 	public <T> NotificationEvent setData(final T arg) {
 		data = new ObjectMapper().valueToTree(arg);

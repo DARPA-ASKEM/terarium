@@ -9,7 +9,7 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'io.spring.dependency-management' version '1.1.5'
     id 'org.springframework.boot' version '3.1.5'
     id 'org.hibernate.orm' version '6.2.7.Final'
     id 'org.graalvm.buildtools.native' version '0.9.28'
@@ -65,12 +65,13 @@ dependencies {
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     implementation 'io.grpc:grpc-all:1.52.1'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.5'
     implementation 'javax.inject:javax.inject:1'
     implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
     implementation 'org.apache.commons:commons-text:1.10.0'
     implementation 'org.eclipse.microprofile.jwt:microprofile-jwt-auth-api:2.1'
-    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.19'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.21'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.jsoup:jsoup:1.7.2'
     implementation 'org.keycloak:keycloak-admin-client:20.0.5'
@@ -109,14 +110,6 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-}
-
-hibernate {
-    enhancement {
-        lazyInitialization true
-        dirtyTracking true
-        associationManagement true
-    }
 }
 
 generateTypeScript {

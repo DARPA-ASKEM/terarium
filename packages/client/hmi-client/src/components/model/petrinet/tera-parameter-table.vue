@@ -42,45 +42,6 @@
 			</template>
 		</Column>
 
-		<Column header="Concept" class="w-1">
-			<template #body="{ data }">
-				<template v-if="data.concept?.identifiers && !isEmpty(data.concept.identifiers)">
-					{{
-						getNameOfCurieCached(
-							nameOfCurieCache,
-							getCurieFromGroudingIdentifier(data.concept.identifiers)
-						)
-					}}
-
-					<a
-						target="_blank"
-						rel="noopener noreferrer"
-						:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept.identifiers))"
-						@click.stop
-						aria-label="Open Concept"
-					>
-						<i class="pi pi-external-link" />
-					</a>
-				</template>
-				<template v-else>--</template>
-			</template>
-			<template v-if="!configView && !readonly" #editor="{ data }">
-				<AutoComplete
-					v-model="conceptSearchTerm.name"
-					:suggestions="curies"
-					@complete="onSearch"
-					@item-select="
-						updateParamValue(data.value, 'grounding', {
-							identifiers: parseCurie($event.value.curie)
-						})
-					"
-					optionLabel="name"
-					:forceSelection="true"
-					:inputStyle="{ width: '100%' }"
-				/>
-			</template>
-		</Column>
-
 		<Column header="Unit" class="w-1">
 			<template #body="slotProps">
 				<InputText
@@ -99,8 +60,8 @@
 			</template>
 		</Column>
 
-		<!-- Value type: Matrix or a Dropdown with: Time varying, Constant, Distribution (with icons) -->
-		<Column field="type" header="Value Type" class="w-2">
+		<!-- Value type: Matrix or a Contant -->
+		<Column field="type" header="Constant" class="pl-2 pr-6 w-2">
 			<template #body="slotProps">
 				<Button
 					text
@@ -110,38 +71,20 @@
 					@click="openMatrixModal(slotProps.data)"
 					class="p-0"
 				/>
-				<Dropdown
+				<tera-input-number
 					v-else
-					class="value-type-dropdown w-9"
-					:model-value="slotProps.data.type"
-					:options="typeOptions"
-					optionLabel="label"
-					optionValue="value"
-					placeholder="Select a parameter type"
+					class="constant-number"
+					v-model.lazy="slotProps.data.value.value"
+					:min-fraction-digits="1"
+					:max-fraction-digits="10"
 					:disabled="readonly"
-					@update:model-value="(val) => (slotProps.data.type = val)"
-				>
-					<template #value="slotProps">
-						<span class="flex align-items-center">
-							<span
-								class="p-dropdown-item-icon mr-2"
-								:class="typeOptions[slotProps.value].icon"
-							></span>
-							<span>{{ typeOptions[slotProps.value].label }}</span>
-						</span>
-					</template>
-					<template #option="slotProps">
-						<span class="flex align-items-center">
-							<span class="p-dropdown-item-icon mr-2" :class="slotProps.option.icon"></span>
-							<span>{{ slotProps.option.label }}</span>
-						</span>
-					</template>
-				</Dropdown>
+					@update:model-value="emit('update-value', [slotProps.data.value])"
+				/>
 			</template>
 		</Column>
 
 		<!-- Value: the thing we show depends on the type of number -->
-		<Column field="value" header="Value" class="w-2 pr-2">
+		<Column field="value" header="Distribution" class="w-4 pl-2 pr-2">
 			<template #body="slotProps">
 				<!-- Matrix -->
 				<span
@@ -151,10 +94,7 @@
 					>Open matrix</span
 				>
 				<!-- Distribution -->
-				<div
-					v-else-if="slotProps.data.type === ParamType.DISTRIBUTION"
-					class="distribution-container"
-				>
+				<div v-else class="distribution-container">
 					<label>Min</label>
 					<tera-input-number
 						class="distribution-item min-value"
@@ -174,71 +114,6 @@
 						@update:model-value="emit('update-value', [slotProps.data.value])"
 					/>
 				</div>
-
-				<!-- Constant: Includes the value, a button and input box to convert it into a distributions with a customizable range -->
-				<span
-					v-else-if="slotProps.data.type === ParamType.CONSTANT"
-					class="flex align-items-center"
-				>
-					<tera-input-number
-						class="constant-number"
-						v-model.lazy="slotProps.data.value.value"
-						:min-fraction-digits="1"
-						:max-fraction-digits="10"
-						:disabled="readonly"
-						@update:model-value="emit('update-value', [slotProps.data.value])"
-					/>
-					<!-- This is a button with an input field inside it, weird huh?, but it works -->
-					<!--
-					<Button
-						v-if="!readonly"
-						class="ml-2 pt-0 pb-0 w-5"
-						text
-						@click="changeType(slotProps.data.value, 1)"
-						v-tooltip="'Convert to distribution'"
-					>
-						<span class="white-space-nowrap text-sm">Add ±</span>
-						<InputNumber
-							v-model="addPlusMinus"
-
-							text
-							class="constant-number add-plus-minus w-full"
-							inputId="convert-to-distribution"
-							suffix="%"
-							:min="0"
-							:max="100"
-							:disabled="readonly"
-							@click.stop
-						/>
-					-->
-				</span>
-
-				<!-- Time series -->
-				<span
-					class="timeseries-container mr-2"
-					v-else-if="slotProps.data.type === ParamType.TIME_SERIES"
-				>
-					<InputText
-						:placeholder="'step:value, step:value, (e.g., 0:25, 1:26, 2:27 etc.)'"
-						v-model.lazy="slotProps.data.timeseries"
-						:disabled="readonly"
-						@update:model-value="(val) => updateTimeseries(slotProps.data.value.id, val)"
-					/>
-					<small v-if="errorMessage" class="invalid-message">{{ errorMessage }}</small>
-				</span>
-			</template>
-		</Column>
-
-		<!-- Source  -->
-		<Column field="source" header="Source" class="w-2">
-			<template #body="{ data }">
-				<InputText
-					v-if="data.type !== ParamType.MATRIX"
-					class="w-full"
-					v-model.lazy="data.source"
-					:disabled="readonly"
-					@update:model-value="(val) => updateMetadataFromInput(data.value.id, 'source', val)"
-				/>
 			</template>
 		</Column>
 
@@ -291,6 +166,7 @@
 		<tera-modal
 			v-if="suggestedValuesModalContext.isOpen"
 			@modal-mask-clicked="onCloseSuggestedValuesModal"
+			:width="1000"
 		>
 			<template #header
 				><h5>Suggested configurations for {{ suggestedValuesModalContext.id }}</h5></template
@@ -299,7 +175,7 @@
 				:value="suggestedValues"
 				dataKey="index"
 				v-model:selection="selectedValue"
-				tableStyle="min-width: 50rem"
+				tableStyle="min-width: 80rem"
 			>
 				<Column selectionMode="single" class="w-3rem"></Column>
 				<Column header="Symbol">
@@ -321,39 +197,17 @@
 						{{ data.configuration?.name }}
 					</template>
 				</Column>
-				<Column header="Value type">
+				<Column header="Constant">
 					<template #body="{ data }">
-						{{ typeOptions[getParamType(data.parameter, data.configuration.configuration)].label }}
+						{{ data.parameter.value }}
 					</template>
 				</Column>
-				<Column header="Value">
+				<Column header="Distribution">
 					<template #body="{ data }">
-						<span
-							v-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.CONSTANT
-							"
-						>
-							{{ data.parameter.value }}
-						</span>
-						<div
-							class="distribution-container"
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.DISTRIBUTION
-							"
-						>
-							<span>Min: {{ data.parameter.distribution.parameters.minimum }}</span>
-							<span>Max: {{ data.parameter.distribution.parameters.maximum }}</span>
+						<div class="distribution-container">
+							<span>Min: {{ data.parameter.distribution?.parameters.minimum }}</span>
+							<span>Max: {{ data.parameter.distribution?.parameters.maximum }}</span>
 						</div>
-						<span
-							v-else-if="
-								getParamType(data.parameter, data.configuration.configuration) ===
-								ParamType.TIME_SERIES
-							"
-						>
-							{{ data.configuration?.configuration?.metadata?.timeseries?.[data.parameter.id] }}
-						</span>
 					</template>
 				</Column>
 				<Column header="Source">
@@ -381,22 +235,13 @@
 import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { DKG, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import Dropdown from 'primevue/dropdown';
+import type { Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { StratifiedMatrix } from '@/types/Model';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { AMRSchemaNames, ModelConfigTableData, ParamType } from '@/types/common';
-import {
-	getCurieFromGroudingIdentifier,
-	getCurieUrl,
-	getNameOfCurieCached,
-	parseCurie,
-	searchCuriesEntities
-} from '@/services/concept';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 
 import { getModelType } from '@/services/model';
 import { matrixEffect } from '@/utils/easter-eggs';
@@ -404,11 +249,8 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { isStratifiedModel, collapseParameters } from '@/model-representation/mira/mira';
 import {
 	updateVariable,
-	validateTimeSeries,
-	getTimeseries,
 	getParameterMetadata,
-	getParameters,
-	updateParameterMetadata
+	getParameters
 } from '@/model-representation/service';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
@@ -423,12 +265,6 @@ const props = defineProps<{
 	readonly?: boolean;
 	configView?: boolean; // if the table is in the model config view we have limited functionality
 }>();
-
-const typeOptions = [
-	{ label: 'Constant', value: ParamType.CONSTANT, icon: 'pi pi-hashtag' },
-	{ label: 'Distribution', value: ParamType.DISTRIBUTION, icon: 'custom-icon-distribution' },
-	{ label: 'Time varying', value: ParamType.TIME_SERIES, icon: 'pi pi-clock' }
-];
 
 const emit = defineEmits(['update-value', 'update-model']);
 
@@ -486,13 +322,11 @@ const tableFormattedParams = ref<ModelConfigTableData[]>([]);
 // FIXME: This method doee not really work in this context, the different types
 // of CONSTANT/TIME_SERIES/DISTRIBUTION are not mutually exclusive, a parameter
 // can have one or more types
-const getParamType = (param: ModelParameter | undefined, model: Model = props.model) => {
+const getParamType = (param: ModelParameter | undefined) => {
 	let type = ParamType.CONSTANT;
 	if (!param) return type;
 
-	if (model.metadata?.timeseries?.[param.id] && model.metadata?.timeseries?.[param.id] !== null) {
-		type = ParamType.TIME_SERIES;
-	} else if (param?.distribution) {
+	if (param?.distribution) {
 		type = ParamType.DISTRIBUTION;
 	}
 	return type;
@@ -507,9 +341,20 @@ const buildParameterTable = () => {
 			const tableFormattedMatrix: ModelConfigTableData[] = vals.map((v) => {
 				const param = getParameters(model).find((i) => i.id === v);
 				const paramType = getParamType(param);
-				const timeseriesValue = getTimeseries(props.model, param!.id);
 				const parametersMetadata = getParameterMetadata(props.model, param!.id);
 				const sourceValue = parametersMetadata?.source;
+				// If the parameter does not have a distribution, add a default distribution for editing purposes
+				if (param && !param.distribution) {
+					const lb = '';
+					const ub = '';
+					param.distribution = {
+						type: 'StandardUniform1',
+						parameters: {
+							minimum: lb,
+							maximum: ub
+						}
+					};
+				}
 				return {
 					id: v,
 					name: param?.name ?? '',
@@ -519,8 +364,7 @@ const buildParameterTable = () => {
 					units: param?.units?.expression ?? '',
 					value: param,
 					source: sourceValue,
-					visibility: false,
-					timeseries: timeseriesValue
+					visibility: false
 				};
 			});
 			formattedParams.push({
@@ -541,9 +385,19 @@ const buildParameterTable = () => {
 			if (!param) return;
 			const paramType = getParamType(param);
 
-			const timeseriesValue = getTimeseries(props.model, param.id);
 			const parametersMetadata = getParameterMetadata(props.model, param.id);
 			const sourceValue = parametersMetadata?.source;
+			if (!param.distribution) {
+				const lb = '';
+				const ub = '';
+				param.distribution = {
+					type: 'StandardUniform1',
+					parameters: {
+						minimum: lb,
+						maximum: ub
+					}
+				};
+			}
 			formattedParams.push({
 				id: init,
 				name: param.name ?? '',
@@ -553,8 +407,7 @@ const buildParameterTable = () => {
 				unit: param.units?.expression,
 				value: param,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 
@@ -562,7 +415,6 @@ const buildParameterTable = () => {
 		const auxiliaries = model.model?.auxiliaries ?? [];
 		auxiliaries.forEach((aux) => {
 			const paramType = getParamType(aux);
-			const timeseriesValue = model.metadata?.timeseries?.[aux.id];
 			const parametersMetadata = model.metadata?.parameters?.[aux.id];
 			const sourceValue = parametersMetadata?.source;
 			formattedParams.push({
@@ -574,8 +426,7 @@ const buildParameterTable = () => {
 				unit: aux.units?.expression,
 				value: aux,
 				source: sourceValue,
-				visibility: false,
-				timeseries: timeseriesValue
+				visibility: false
 			});
 		});
 	}
@@ -586,15 +437,10 @@ const conceptSearchTerm = ref({
 	curie: '',
 	name: ''
 });
-const nameOfCurieCache = ref(new Map<string, string>());
-
-const curies = ref<DKG[]>([]);
 
 const modelType = computed(() => getModelType(props.model));
 
 // const addPlusMinus = ref(10);
-
-const errorMessage = ref('');
 
 const expandedRows = ref([]);
 
@@ -624,39 +470,6 @@ const updateParamValue = (param: ModelParameter, key: string, value: any) => {
 	emit('update-value', [clonedParam]);
 };
 
-const updateTimeseries = (id: string, value: string) => {
-	// Empty string => removal
-	if (value === '') {
-		const clonedModel = cloneDeep(props.model);
-		if (clonedModel.metadata && clonedModel.metadata.timeseries) {
-			clonedModel.metadata.timeseries[id] = null;
-		}
-		emit('update-model', clonedModel);
-		return;
-	}
-
-	if (!validateTimeSeries(value)) return;
-	const clonedModel = cloneDeep(props.model);
-	clonedModel.metadata ??= {};
-	clonedModel.metadata.timeseries ??= {};
-	clonedModel.metadata.timeseries[id] = value;
-	emit('update-model', clonedModel);
-};
-
-const updateMetadataFromInput = (id: string, key: string, value: any) => {
-	const clonedModel = cloneDeep(props.model);
-	updateParameterMetadata(clonedModel, id, key, value);
-	emit('update-model', clonedModel);
-};
-
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
-}
-
 const openSuggestedValuesModal = (id: string) => {
 	suggestedValuesModalContext.value.isOpen = true;
 	suggestedValuesModalContext.value.id = id;
@@ -672,10 +485,6 @@ const applySelectedValue = () => {
 	if (!selectedValue.value) return;
 
 	const clonedModel = cloneDeep(props.model);
-	const timeseries =
-		selectedValue.value.configuration.configuration.metadata?.timeseries?.[
-			selectedValue.value.parameter.id
-		];
 	const metadata =
 		selectedValue.value.configuration.configuration.metadata?.parameters?.[
 			selectedValue.value.parameter.id
@@ -683,9 +492,7 @@ const applySelectedValue = () => {
 
 	clonedModel.metadata ??= {};
 	clonedModel.metadata.parameters ??= {};
-	clonedModel.metadata.timeseries ??= {};
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id] = metadata;
-	clonedModel.metadata.timeseries[selectedValue.value.parameter.id] = timeseries;
 
 	// default source to use confirguration's source if there is no source
 	clonedModel.metadata.parameters[selectedValue.value.parameter.id].source =
@@ -716,12 +523,12 @@ const countSuggestions = (id): number =>
 	).length ?? 0;
 
 watch(
-	() => parameters.value,
-	(params) => {
-		if (!params) return;
+	() => [parameters.value, props.model],
+	(val) => {
+		if (!val) return;
 		buildParameterTable();
 	},
-	{ immediate: true }
+	{ deep: true, immediate: true }
 );
 </script>
 
@@ -768,10 +575,6 @@ watch(
 	font-feature-settings: 'tnum';
 	font-size: var(--font-caption);
 	text-align: right;
-}
-
-.timeseries-container {
-	font-size: var(--font-caption);
 }
 
 .add-plus-minus {
@@ -826,11 +629,6 @@ watch(
 }
 .invalid-message {
 	color: var(--text-color-danger);
-}
-
-.timeseries-container {
-	display: flex;
-	flex-direction: column;
 }
 
 .secondary-text {

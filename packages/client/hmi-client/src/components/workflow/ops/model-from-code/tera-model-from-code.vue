@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
@@ -28,13 +29,14 @@
 							@change="setKernelContext"
 						/>
 						<span
-							><label>Model framework</label
-							><Dropdown
+							><label>Model framework</label>
+							<Dropdown
 								size="small"
 								v-model="clonedState.modelFramework"
 								:options="modelFrameworks"
 								@change="setKernelContext"
-						/></span>
+							/>
+						</span>
 						<span class="mr-auto">
 							<label>Service</label>
 							<Dropdown
@@ -137,11 +139,12 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<tera-model-modal
-		:modelId="selectedModel?.id"
-		:is-visible="isNewModelModalVisible"
+	<tera-save-asset-modal
+		v-if="selectedModel"
+		:model="selectedModel"
+		:is-visible="showSaveModelModal"
 		@close-modal="onCloseModelModal"
-		@update="onAddModel"
+		@on-save="onAddModel"
 	/>
 </template>
 
@@ -156,7 +159,7 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraModelModal from '@/page/project/components/tera-model-modal.vue';
+import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -192,7 +195,7 @@ enum ModelFramework {
 	Petrinet = 'Petrinet',
 	Decapodes = 'Decapodes'
 }
-const isNewModelModalVisible = ref(false);
+const showSaveModelModal = ref(false);
 const isProcessing = ref(false);
 const fetchingInputBlocks = ref(false);
 
@@ -277,8 +280,8 @@ const outputs = computed(() => {
 	return groupedOutputs;
 });
 const selectedOutputId = ref<string>('');
-const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(
-	() => props.node.outputs?.find((output) => selectedOutputId.value === output.id)
+const selectedOutput = computed<WorkflowOutput<ModelFromCodeState> | undefined>(() =>
+	props.node.outputs?.find((output) => selectedOutputId.value === output.id)
 );
 
 const card = ref<Card | null>(null);
@@ -350,6 +353,7 @@ async function handleCode() {
 			description: 'tempDescription',
 			files: {
 				[fileName]: {
+					fileName,
 					language: clonedState.value.codeLanguage,
 					dynamics: {
 						name: 'dynamic',
@@ -399,7 +403,7 @@ async function handleCode() {
 }
 
 function openModal() {
-	isNewModelModalVisible.value = true;
+	if (selectedModel.value) showSaveModelModal.value = true;
 }
 
 function onAddModel(modelName: string) {
@@ -407,7 +411,7 @@ function onAddModel(modelName: string) {
 	updateNodeLabel(selectedOutputId.value, modelName);
 }
 function onCloseModelModal() {
-	isNewModelModalVisible.value = false;
+	showSaveModelModal.value = false;
 }
 
 function handleCompileExprResponse() {
@@ -574,6 +578,7 @@ span {
 	align-items: center;
 	gap: 0.5rem;
 }
+
 .p-dropdown {
 	max-height: 40px;
 }

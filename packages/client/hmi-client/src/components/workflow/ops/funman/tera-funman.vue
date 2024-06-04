@@ -1,11 +1,23 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
+		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:loading="showSpinner"
+						class="run-button"
+						label="Run"
+						icon="pi pi-play"
+						@click="runMakeQuery"
+						size="large"
+					/>
+				</template>
 				<main>
 					<h5>
 						Set validation parameters
@@ -97,7 +109,7 @@
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index + Date.now()"
+						:key="selectedOutputId + ':' + index"
 						:config="cfg"
 						:index="index"
 						:model-states="modelStates"
@@ -132,32 +144,23 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
-				class="pt-3 pb-3 pl-2 pr-4"
+				class="pb-3 pl-2 pr-4"
 			>
 				<template v-if="showSpinner">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</template>
 				<template v-else>
-					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<tera-funman-output
+						v-if="activeOutput"
+						:fun-model-id="activeOutput.value?.[0]"
+						:trajectoryState="node.state.trajectoryState"
+						@update:trajectoryState="updateTrajectorystate"
+					/>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</template>
-
-		<template #footer>
-			<Button
-				outlined
-				:loading="showSpinner"
-				class="run-button"
-				label="Run"
-				icon="pi pi-play"
-				@click="runMakeQuery"
-				size="large"
-			/>
-			<Button outlined label="Save as a new model" size="large" />
-			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -235,59 +238,58 @@ const requestStepList = computed(() => getStepList());
 const requestStepListString = computed(() => requestStepList.value.join()); // Just used to display. dont like this but need to be quick
 
 const MAX = 99999999999;
-const requestConstraints = computed(
-	() =>
-		// Same as node state's except typing for state vs linear constraint
-		props.node.state.constraintGroups?.map((ele) => {
-			if (ele.constraintType === 'monotonicityConstraint') {
-				const weights = ele.weights ? ele.weights : [1.0];
-				const constraint: any = {
-					soft: true,
-					name: ele.name,
-					timepoints: null,
-					additive_bounds: {
-						lb: 0.0,
-						// ub: 0.0,
-						// closed_upper_bound: true,
-						original_width: MAX
-					},
-					variables: ele.variables,
-					weights: weights.map((d) => -Math.abs(d)), // should be all negative
-					derivative: true
-				};
-
-				if (ele.derivativeType === 'increasing') {
-					// delete constraint.additive_bounds.closed_upper_bound;
-					// delete constraint.additive_bounds.ub;
-					// constraint.additive_bounds.lb = 0;
-					constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
-				}
-				return constraint;
-			}
-
-			if (ele.timepoints) {
-				ele.timepoints.closed_upper_bound = true;
-			}
-			if (ele.variables.length === 1) {
-				// State Variable Constraint
-				const singleVarConstraint = {
-					name: ele.name,
-					variable: ele.variables[0],
-					interval: ele.interval,
-					timepoints: ele.timepoints
-				};
-				return singleVarConstraint;
-			}
-
-			return {
-				// Linear Constraint
+const requestConstraints = computed(() =>
+	// Same as node state's except typing for state vs linear constraint
+	props.node.state.constraintGroups?.map((ele) => {
+		if (ele.constraintType === 'monotonicityConstraint') {
+			const weights = ele.weights ? ele.weights : [1.0];
+			const constraint: any = {
+				soft: true,
 				name: ele.name,
+				timepoints: null,
+				additive_bounds: {
+					lb: 0.0,
+					// ub: 0.0,
+					// closed_upper_bound: true,
+					original_width: MAX
+				},
 				variables: ele.variables,
-				weights: ele.weights,
-				additive_bounds: ele.interval,
+				weights: weights.map((d) => -Math.abs(d)), // should be all negative
+				derivative: true
+			};
+
+			if (ele.derivativeType === 'increasing') {
+				// delete constraint.additive_bounds.closed_upper_bound;
+				// delete constraint.additive_bounds.ub;
+				// constraint.additive_bounds.lb = 0;
+				constraint.weights = weights.map((d) => Math.abs(d)); // should be all positive
+			}
+			return constraint;
+		}
+
+		if (ele.timepoints) {
+			ele.timepoints.closed_upper_bound = true;
+		}
+		if (ele.variables.length === 1) {
+			// State Variable Constraint
+			const singleVarConstraint = {
+				name: ele.name,
+				variable: ele.variables[0],
+				interval: ele.interval,
 				timepoints: ele.timepoints
 			};
-		})
+			return singleVarConstraint;
+		}
+
+		return {
+			// Linear Constraint
+			name: ele.name,
+			variables: ele.variables,
+			weights: ele.weights,
+			additive_bounds: ele.interval,
+			timepoints: ele.timepoints
+		};
+	})
 );
 
 const requestParameters = ref<any[]>([]);
@@ -315,6 +317,15 @@ const activeOutput = ref<WorkflowOutput<FunmanOperationState> | null>(null);
 const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model configurations',
+		icon: 'pi pi-pencil',
+		disabled: true,
+		command: () => {}
+	}
+]);
 
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {
@@ -423,7 +434,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = modelConfiguration.value.configuration as Model;
+	model.value = modelConfiguration.value.configuration;
 };
 
 const setModelOptions = async () => {
@@ -442,7 +453,8 @@ const setModelOptions = async () => {
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[renameReserved(d.id)] = d.value;
+		// FIXME: may need to sample distributions if value is not available
+		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(
@@ -491,10 +503,10 @@ const setModelOptions = async () => {
 // eslint-disable-next-line
 const setRequestParameters = (modelParameters: ModelParameter[]) => {
 	const previous = props.node.state.requestParameters;
-	if (previous && previous.length > 0) {
-		requestParameters.value = _.cloneDeep(props.node.state.requestParameters);
-		return;
-	}
+	const labelMap = new Map<string, string>();
+	previous.forEach((p) => {
+		labelMap.set(p.name, p.label);
+	});
 
 	requestParameters.value = modelParameters.map((ele) => {
 		let interval = { lb: ele.value, ub: ele.value };
@@ -504,12 +516,19 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 				ub: ele.distribution.parameters.maximum
 			};
 		}
-		return {
-			name: ele.id,
-			interval,
-			label: 'any'
-		};
+
+		const param = { name: ele.id, interval, label: 'any' };
+		if (labelMap.has(param.name)) {
+			param.label = labelMap.get(param.name) as string;
+		}
+		return param;
 	});
+};
+
+const updateTrajectorystate = (s: string) => {
+	const state = _.cloneDeep(props.node.state);
+	state.trajectoryState = s;
+	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

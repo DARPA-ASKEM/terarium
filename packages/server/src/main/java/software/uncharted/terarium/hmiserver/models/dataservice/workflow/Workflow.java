@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Convert;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -12,16 +12,9 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.ObjectConverter;
 
-/**
- * The workflow data structure is not very well defined. It is also meant to carry operations each with their own unique
- * representations. As such this is just a pass-thru class for the proxy. The UI has it's own typinging definition that
- * is not generated.
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -31,28 +24,24 @@ public class Workflow extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = -1565930053830366145L;
 
-	@Schema(defaultValue = "My New Workflow")
-	private String name;
-
-	private String description;
-
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private Transform transform;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowNode> nodes;
 
-	@Convert(converter = ObjectConverter.class)
-	@JdbcTypeCode(SqlTypes.JSON)
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
+	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
 
 		cloneSuperFields(clone);
 
-		clone.name = this.name;
-		clone.description = this.description;
 		if (this.transform != null) {
 			clone.transform = new Transform()
 					.setX(this.transform.getX())

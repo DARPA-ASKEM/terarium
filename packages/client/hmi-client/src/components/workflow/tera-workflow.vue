@@ -204,10 +204,9 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowOutput,
-	WorkflowPort,
-	OperatorStatus
+	WorkflowPort
 } from '@/types/workflow';
-import { WorkflowDirection, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
@@ -361,9 +360,18 @@ function appendInputPort(
  * */
 function appendOutput(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
+	port: {
+		type: string;
+		label?: string;
+		value: any;
+		state?: any;
+		isSelected?: boolean;
+	}
 ) {
 	if (!node) return;
+
+	// we assume that if we can produce an output, the status is okay
+	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
 	const outputPort: WorkflowOutput<any> = {
@@ -375,16 +383,36 @@ function appendOutput(
 		status: WorkflowPortStatus.NOT_CONNECTED,
 		state: port.state,
 		isSelected: true,
-		timestamp: new Date()
+		timestamp: new Date(),
+		operatorStatus: node.status
 	};
 
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
-	selectOutput(node, uuid);
+	// Filter out temporary outputs where value is null
+	node.outputs = node.outputs.filter((d) => d.value);
 
+	selectOutput(node, uuid);
+	generateSummary(node, outputPort);
 	workflowDirty = true;
+}
+
+async function generateSummary(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
+	outputPort.summary = ''; // Indicating that the summary generation is initiated
+	const result = await workflowService.generateSummary(
+		node,
+		outputPort,
+		registry.getOperation(node.operationType)?.createNotebook ?? null
+	);
+	if (!result) return;
+	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
+	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
+	if (!updateNode || !updateOutput) return;
+	updateOutput.summary = result.summary;
+	updateOutput.label = result.title;
+	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -441,12 +469,14 @@ const closeDrilldown = async () => {
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
+	workflowDirty = true;
 };
 
 const duplicateBranch = (id: string) => {
 	workflowService.branchWorkflow(wf.value, id);
 
 	cloneNoteBookSessions();
+	workflowDirty = true;
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
@@ -710,12 +740,37 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
+
+	// Build a traversal map before we do actual removal
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.value.nodes.map((node) => [node.id, node])
+	);
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	wf.value.edges.forEach((edge) => {
+		if (!edge.source || !edge.target) return;
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+	});
+	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
+
+	// Remove edge
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id);
 		});
 		workflowDirty = true;
-	} else logger.error(`Edges with port id:${portId} not found.`);
+	} else {
+		logger.error(`Edges with port id:${portId} not found.`);
+		return;
+	}
+
+	// cascade invalid status to downstream operators
+	if (startingNodeId !== '') {
+		workflowService.cascadeInvalidateDownstream(
+			nodeMap.get(startingNodeId) as WorkflowNode<any>,
+			nodeCache
+		);
+	}
 }
 
 function onCanvasClick() {

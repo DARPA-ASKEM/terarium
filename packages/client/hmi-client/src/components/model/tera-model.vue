@@ -5,6 +5,7 @@
 		:is-naming-asset="isNaming"
 		@close-preview="emit('close-preview')"
 		:is-loading="isModelLoading"
+		show-table-of-contents
 	>
 		<template #name-input>
 			<InputText
@@ -42,7 +43,6 @@
 			@update-model="updateModelContent"
 			@update-configuration="updateConfiguration"
 			@fetch-model="fetchModel"
-			class="pl-1 pr-1"
 		/>
 	</tera-asset>
 </template>
@@ -125,6 +125,24 @@ const optionsMenuItems = computed(() => [
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
+	},
+	{
+		icon: 'pi pi-download',
+		label: 'Download',
+		command: async () => {
+			if (model.value) {
+				const data = `text/json;charset=utf-8,${encodeURIComponent(
+					JSON.stringify(model.value, null, 2)
+				)}`;
+				const a = document.createElement('a');
+				a.href = `data:${data}`;
+				a.download = `${model.value.header.name ?? 'model'}.json`;
+				a.innerHTML = 'download JSON';
+				a.click();
+				a.remove();
+			}
+			emit('close-preview');
+		}
 	}
 
 	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }

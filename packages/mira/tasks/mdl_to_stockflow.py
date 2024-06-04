@@ -1,6 +1,6 @@
 import sys
 import os
-from core.taskrunner import TaskRunnerInterface
+from taskrunner import TaskRunnerInterface
 from mira.sources.system_dynamics.vensim import template_model_from_mdl_file
 from mira.modeling.amr.stockflow import template_model_to_stockflow_json
 
@@ -32,7 +32,7 @@ def main():
         taskrunner = TaskRunnerInterface(description="MDL to StockFlow")
         taskrunner.on_cancellation(cleanup)
 
-        mdl = taskrunner.read_input_with_timeout()
+        mdl = taskrunner.read_input_str_with_timeout()
 
         filename = get_filename(taskrunner.id)
 
@@ -44,7 +44,7 @@ def main():
         taskrunner.log("Converting template model to stockflow...")
         stockflow_json = template_model_to_stockflow_json(model_tm)
 
-        taskrunner.write_output_with_timeout({"response": stockflow_json})
+        taskrunner.write_output_dict_with_timeout({"response": stockflow_json})
         print("MDL to StockFlow conversion succeeded")
 
     except Exception as e:

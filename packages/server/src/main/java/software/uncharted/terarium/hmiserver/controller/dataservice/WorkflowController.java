@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -28,15 +29,26 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/workflows")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class WorkflowController {
 
 	final WorkflowService workflowService;
+
+	final ProjectAssetService projectAssetService;
+
+	final ProjectService projectService;
+
+	final CurrentUserService currentUserService;
 
 	@GetMapping
 	@Secured(Roles.USER)
@@ -67,7 +79,7 @@ public class WorkflowController {
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
-		final List<Workflow> workflows = workflowService.getAssets(page, pageSize);
+		final List<Workflow> workflows = workflowService.getPublicNotTemporaryAssets(page, pageSize);
 		if (workflows.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
@@ -94,9 +106,13 @@ public class WorkflowController {
 						description = "There was an issue retrieving the workflow from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Workflow> getWorkflow(@PathVariable("id") final UUID id) {
+	public ResponseEntity<Workflow> getWorkflow(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id);
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		return workflow.map(ResponseEntity::ok)
 				.orElseGet(() -> ResponseEntity.noContent().build());
 	}
@@ -120,9 +136,13 @@ public class WorkflowController {
 						description = "There was an issue creating the workflow",
 						content = @Content)
 			})
-	public ResponseEntity<Workflow> createWorkflow(@RequestBody final Workflow item) {
+	public ResponseEntity<Workflow> createWorkflow(
+			@RequestBody final Workflow item,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item));
+			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
@@ -151,10 +171,14 @@ public class WorkflowController {
 						content = @Content)
 			})
 	public ResponseEntity<Workflow> updateWorkflow(
-			@PathVariable("id") final UUID id, @RequestBody final Workflow workflow) {
+			@PathVariable("id") final UUID id,
+			@RequestBody final Workflow workflow,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			workflow.setId(id);
-			final Optional<Workflow> updated = workflowService.updateAsset(workflow);
+			final Optional<Workflow> updated = workflowService.updateAsset(workflow, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -188,9 +212,14 @@ public class WorkflowController {
 						description = "There was an issue deleting the workflow",
 						content = @Content)
 			})
-	public ResponseEntity<ResponseDeleted> deleteWorkflow(@PathVariable("id") final UUID id) {
+	public ResponseEntity<ResponseDeleted> deleteWorkflow(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
 		try {
-			workflowService.deleteAsset(id);
+			workflowService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);

@@ -16,7 +16,7 @@
 		<template #edit-buttons>
 			<SelectButton
 				:model-value="view"
-				@change="if ($event.value) view = $event.value;"
+				@change="changeView"
 				:options="viewOptions"
 				option-value="value"
 				option-disabled="disabled"
@@ -142,7 +142,7 @@
 				viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
-			PDF Extractions may still be processing please refresh in some time...
+			PDF Extractions are processing please come back in some time...
 		</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"
@@ -154,15 +154,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig } from '@/types/common';
+import { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import type { DocumentAsset } from '@/types/Types';
-import { AssetType, ExtractionAssetType } from '@/types/Types';
+import type { ClientEvent, DocumentAsset } from '@/types/Types';
+import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
 import {
 	downloadDocumentAsset,
 	getDocumentAsset,
@@ -176,6 +176,7 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
+import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -200,6 +201,12 @@ const extractionsOption = { value: DocumentView.EXTRACTIONS, icon: 'pi pi-list' 
 const pdfOption = { value: DocumentView.PDF, icon: 'pi pi-file-pdf' };
 const txtOption = { value: DocumentView.TXT, icon: 'pi pi-file' };
 const notFoundOption = { value: DocumentView.NOT_FOUND, icon: 'pi pi-file', disabled: true };
+
+const changeView = (event) => {
+	if (event.value) {
+		view.value = event.value;
+	}
+};
 
 const viewOptions = computed(() => {
 	const options: { value: DocumentView; icon: string; disabled?: boolean }[] = [extractionsOption];
@@ -301,12 +308,31 @@ watch(
 	{ immediate: true }
 );
 
-const formattedAbstract = computed<string>(() => document.value?.description ?? '');
+const formattedAbstract = computed<string>(() => document.value?.documentAbstract ?? '');
 
 onUpdated(() => {
 	if (document.value) {
 		emit('asset-loaded');
 	}
+});
+
+onMounted(async () => {
+	await subscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
+});
+
+async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
+	console.log(event.data.message);
+	if (!event.data || event.data.data.documentId !== props.assetId) return;
+
+	const status = event.data.state;
+	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
+	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
+		document.value = await getDocumentAsset(props.assetId);
+	}
+}
+
+onUnmounted(async () => {
+	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 });
 </script>
 <style scoped>

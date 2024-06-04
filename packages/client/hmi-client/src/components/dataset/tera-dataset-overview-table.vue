@@ -15,13 +15,13 @@
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
 						{{
-							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroudingIdentifier(data.concept))
+							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept))
 						}}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"
 							rel="noopener noreferrer"
-							:href="getCurieUrl(getCurieFromGroudingIdentifier(data.concept))"
+							:href="getCurieUrl(getCurieFromGroundingIdentifier(data.concept))"
 							@click.stop
 							aria-label="Open Concept"
 						>
@@ -66,7 +66,7 @@ import type { Dataset, DatasetColumn, DKG } from '@/types/Types';
 import { computed, ref } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import {
-	getCurieFromGroudingIdentifier,
+	getCurieFromGroundingIdentifier,
 	getCurieUrl,
 	getNameOfCurieCached,
 	parseCurie,
@@ -120,16 +120,25 @@ function onCellEditComplete() {
 }
 
 function formatData(data: DatasetColumn[]) {
-	return data.map((col) => ({
-		id: col.name,
-		name: formatName(col.name),
-		description: col.description,
-		concept: col.metadata?.groundings?.identifiers,
-		unit: col.metadata?.unit,
-		dataType: col.dataType,
-		stats: col.metadata?.column_stats,
-		column: col
-	}));
+	return data.map((col) => {
+		let concept: object | undefined;
+		if (col.metadata?.groundings?.identifiers) {
+			concept = col.metadata.groundings.identifiers;
+		} else if (col.grounding?.identifiers[0]) {
+			concept = parseCurie(String(col.grounding.identifiers[0].curie));
+		}
+
+		return {
+			id: col.name,
+			name: formatName(col.name),
+			description: col.description,
+			concept,
+			unit: col.metadata?.unit,
+			dataType: col.metadata?.column_stats?.type,
+			stats: col.metadata?.column_stats,
+			column: col
+		};
+	});
 }
 </script>
 

@@ -1,14 +1,18 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,15 +45,21 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/models")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class ModelController {
 
 	final ModelService modelService;
@@ -61,6 +71,14 @@ public class ModelController {
 	final ObjectMapper objectMapper;
 
 	final DatasetService datasetService;
+
+	final ProjectService projectService;
+
+	final CurrentUserService currentUserService;
+
+	final ProjectAssetService projectAssetService;
+
+	final Messages messages;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
@@ -115,10 +133,14 @@ public class ModelController {
 						description = "There was an issue retrieving the description from the data store",
 						content = @Content)
 			})
-	ResponseEntity<ModelDescription> getDescription(@PathVariable("id") final UUID id) {
+	ResponseEntity<ModelDescription> getDescription(
+			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
+
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<ModelDescription> model = modelService.getDescription(id);
+			final Optional<ModelDescription> model = modelService.getDescription(id, permission);
 			return model.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -147,14 +169,23 @@ public class ModelController {
 						description = "There was an issue retrieving the model from the data store",
 						content = @Content)
 			})
-	ResponseEntity<Model> getModel(@PathVariable("id") final UUID id) {
+	ResponseEntity<Model> getModel(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(), projectId);
 
 		try {
 
 			// Fetch the model from the data-service
-			final Optional<Model> model = modelService.getAsset(id);
+			final Optional<Model> model = modelService.getAsset(id, permission);
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
+			}
+			// GETs not associated to a projectId cannot read private or temporary assets
+			if (permission.equals(Schema.Permission.NONE)
+					&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			// Find the Document Assets linked via provenance to the model
@@ -177,7 +208,7 @@ public class ModelController {
 					try {
 						// Fetch the Document extractions
 						final Optional<DocumentAsset> document =
-								documentAssetService.getAsset(UUID.fromString(documentId));
+								documentAssetService.getAsset(UUID.fromString(documentId), permission);
 						if (document.isPresent()) {
 							if (document.get().getMetadata() == null) {
 								document.get().setMetadata(new HashMap<>());
@@ -206,7 +237,7 @@ public class ModelController {
 
 			// Return the model
 			return ResponseEntity.ok(model.get());
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			final String error = "Unable to get model";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
@@ -234,12 +265,37 @@ public class ModelController {
 						content = @Content)
 			})
 	public ResponseEntity<List<Model>> searchModels(
-			@RequestBody final JsonNode query,
+			@RequestBody final JsonNode queryJson,
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
 		try {
-			return ResponseEntity.ok(modelService.searchModels(page, pageSize, query));
+
+			Query query = null;
+			if (queryJson != null) {
+				// if query is provided deserialize it, append the soft delete filter
+				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
+				query = new Query.Builder()
+						.bool(b -> b.must(new Query.Builder()
+										.withJson(new ByteArrayInputStream(bytes))
+										.build())
+								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
+			} else {
+				query = new Query.Builder()
+						.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
+						.build();
+			}
+
+			final SourceConfig source = new SourceConfig.Builder()
+					.filter(new SourceFilter.Builder()
+							.excludes("model", "semantics")
+							.build())
+					.build();
+
+			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
 		} catch (final IOException e) {
 			final String error = "Unable to search models";
 			log.error(error, e);
@@ -267,14 +323,19 @@ public class ModelController {
 						description = "There was an issue updating the model",
 						content = @Content)
 			})
-	ResponseEntity<Model> updateModel(@PathVariable("id") final UUID id, @RequestBody final Model model) {
+	ResponseEntity<Model> updateModel(
+			@PathVariable("id") final UUID id,
+			@RequestBody final Model model,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			model.setId(id);
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			final Optional<Model> updated = modelService.updateAsset(model);
+			final Optional<Model> updated = modelService.updateAsset(model, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -301,10 +362,14 @@ public class ModelController {
 						}),
 				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 			})
-	ResponseEntity<ResponseDeleted> deleteModel(@PathVariable("id") final UUID id) {
+	ResponseEntity<ResponseDeleted> deleteModel(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelService.deleteAsset(id);
+			modelService.deleteAsset(id, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Model", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete model";
@@ -332,14 +397,17 @@ public class ModelController {
 						description = "There was an issue creating the model",
 						content = @Content)
 			})
-	ResponseEntity<Model> createModel(@RequestBody Model model) {
+	ResponseEntity<Model> createModel(
+			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
 			model.setName(model.getHeader().getName());
-			model = modelService.createAsset(model);
+			model = modelService.createAsset(model, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
@@ -371,19 +439,22 @@ public class ModelController {
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 			@PathVariable("id") final UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize) {
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
 					modelService.getModelConfigurationsByModelId(id, page, pageSize);
 
 			modelConfigurations.forEach(config -> {
-				final JsonNode configuration = objectMapper.valueToTree(config.getConfiguration());
+				final Model configuration = config.getConfiguration();
 
 				// check if configuration has a metadata field, if it doesnt make it an empty
 				// object
-				if (configuration.get("metadata") == null) {
-					((ObjectNode) configuration).putObject("metadata");
+				if (configuration.getMetadata() == null) {
+					configuration.setMetadata(new ModelMetadata());
 				}
 
 				// Find the Document Assets linked via provenance to the model configuration
@@ -398,7 +469,7 @@ public class ModelController {
 					try {
 						// Fetch the Document extractions
 						final Optional<DocumentAsset> document =
-								documentAssetService.getAsset(UUID.fromString(documentId));
+								documentAssetService.getAsset(UUID.fromString(documentId), permission);
 						if (document.isPresent()) {
 							final String name = document.get().getName();
 							documentSourceNames.add(name);
@@ -419,7 +490,8 @@ public class ModelController {
 				datasetIds.forEach(datasetId -> {
 					try {
 						// Fetch the Document extractions
-						final Optional<Dataset> dataset = datasetService.getAsset(UUID.fromString(datasetId));
+						final Optional<Dataset> dataset =
+								datasetService.getAsset(UUID.fromString(datasetId), permission);
 						if (dataset.isPresent()) {
 							final String name = dataset.get().getName();
 							documentSourceNames.add(name);
@@ -433,11 +505,7 @@ public class ModelController {
 				sourceNames.addAll(documentSourceNames);
 				sourceNames.addAll(datasetSourceNames);
 
-				final ObjectNode metadata = (ObjectNode) configuration.get("metadata");
-
-				metadata.set("source", objectMapper.valueToTree(sourceNames));
-
-				((ObjectNode) configuration).set("metadata", metadata);
+				configuration.getMetadata().setSource(objectMapper.valueToTree(sourceNames));
 
 				config.setConfiguration(configuration);
 			});
