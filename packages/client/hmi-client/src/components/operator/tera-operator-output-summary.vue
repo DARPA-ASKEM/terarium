@@ -17,10 +17,10 @@
 				<Button icon="pi pi-check" rounded text @click="updateSummary" />
 			</div>
 		</template>
-		<div v-else-if="!isEmpty(summary)" class="summary">
+		<div v-else-if="!isNil(summary)" class="summary">
 			<img v-if="isGenerating || isGenerated" src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 			<p v-if="isGenerating">Generating AI summary...</p>
-			<p v-else @click="isEditing = true">
+			<p v-else-if="!isRemoved" @click="isEditing = true">
 				{{ summary }}<span class="pi pi-pencil ml-2 text-xs" />
 			</p>
 		</div>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isNil } from 'lodash';
 import { ref, watch, PropType, computed } from 'vue';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
@@ -77,6 +77,9 @@ const isGenerated = computed(
 	() =>
 		activeOutput?.value?.summaryHasBeenEdited !== true &&
 		(activeOutput?.value?.summary?.length ?? 0) > 0
+);
+const isRemoved = computed(
+	() => activeOutput?.value?.summaryHasBeenEdited === true && activeOutput?.value?.summary === ''
 );
 
 watch(
