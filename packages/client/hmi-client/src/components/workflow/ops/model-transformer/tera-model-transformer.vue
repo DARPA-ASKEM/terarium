@@ -58,7 +58,6 @@ onMounted(async () => {
 		// create a new notebook session log if it does not exist
 		const response = await createNotebookSession({
 			id: uuidv4(),
-			workflowId: props.node.id,
 			description: '',
 			data: { history: [] }
 		});

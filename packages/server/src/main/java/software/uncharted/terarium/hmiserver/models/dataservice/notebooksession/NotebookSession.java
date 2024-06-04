@@ -5,7 +5,6 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -23,8 +22,6 @@ public class NotebookSession extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = 9176019416379347233L;
 
-	private UUID workflowId;
-
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private JsonNode data;
@@ -34,7 +31,6 @@ public class NotebookSession extends TerariumAsset {
 		final NotebookSession session = new NotebookSession();
 		super.cloneSuperFields(session);
 		session.setData(data.deepCopy());
-		session.workflowId = workflowId;
 		return session;
 	}
 }
