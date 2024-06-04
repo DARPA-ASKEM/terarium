@@ -122,10 +122,10 @@ onMounted(async () => {
 	mmtParams.value = response.template_params;
 	ready.value = true;
 
-	document.onpaste = processPasteEvent;
+	document.addEventListener('paste', processPasteEvent);
 });
 
 onUnmounted(() => {
-	document.onpaste = null;
+	document.removeEventListener('paste', processPasteEvent);
 });
 </script>
