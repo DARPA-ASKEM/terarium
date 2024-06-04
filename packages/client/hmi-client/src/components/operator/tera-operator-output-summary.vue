@@ -5,7 +5,6 @@
 				v-focus
 				v-model="summary"
 				:maxlength="MAX_LENGTH"
-				placeholder="Add a note..."
 				autoResize
 				rows="1"
 				@click.stop
