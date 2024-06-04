@@ -241,7 +241,7 @@ interface BasicKnobs {
 }
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
