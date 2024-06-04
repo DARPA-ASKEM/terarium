@@ -315,3 +315,12 @@ export function getParameters(config: ModelConfigurationLegacy): ModelParameter[
 export function getInitials(config: ModelConfigurationLegacy): Initial[] {
 	return config.configuration.semantics?.ode.initials ?? [];
 }
+
+export function setParameterDistributions(
+	config: ModelConfigurationLegacy,
+	distributionParameterMappings: { id: string; distribution: ModelDistribution }[]
+): void {
+	distributionParameterMappings.forEach((mapping) => {
+		setParameterDistribution(config, mapping.id, mapping.distribution);
+	});
+}
