@@ -249,7 +249,7 @@ export interface ObservableSemantic extends Semantic {
 }
 
 export interface ParameterSemantic extends Semantic {
-    value: number;
+    referenceId: string;
     distribution: ModelDistribution;
     interventions: Intervention[];
     modelUnit: ModelUnit;
