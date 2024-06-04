@@ -115,6 +115,7 @@ section {
 
 		img {
 			padding-right: var(--gap-small);
+			width: 21px;
 		}
 	}
 
