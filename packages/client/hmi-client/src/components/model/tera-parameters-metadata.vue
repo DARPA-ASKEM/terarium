@@ -98,16 +98,18 @@ function updateBaseParameter(baseParameter: string, event: any) {
 
 <style scoped>
 li {
-	padding: var(--gap-xsmall) 0;
+	padding-bottom: var(--gap-small);
 	border-bottom: 1px solid var(--surface-border);
 }
 
 .stratified {
-	margin-left: var(--gap-medium);
+	gap: var(--gap-xsmall);
+	margin: var(--gap-small) 0 0 var(--gap-medium);
 
 	& > li {
 		border-left: 2px solid var(--primary-color-dark);
 		padding-left: var(--gap);
+		padding-bottom: 0;
 		border-bottom: none;
 	}
 }
