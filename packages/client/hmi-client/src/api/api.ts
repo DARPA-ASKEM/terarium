@@ -48,9 +48,7 @@ API.interceptors.response.use(
 		if (error.status === 401) {
 			// redirect to login
 			const auth = useAuthStore();
-			auth.keycloak?.login({
-				redirectUri: window.location.href
-			});
+			auth.login(window.location.href);
 		} else {
 			let message = error.message;
 			let title = `${error.response?.statusText} (${error.response?.status})`;
