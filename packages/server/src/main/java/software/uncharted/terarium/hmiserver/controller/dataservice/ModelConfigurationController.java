@@ -238,17 +238,15 @@ public class ModelConfigurationController {
         }
     }
  private void updateModelInitials(List<Initial> modelInitials, List<InitialSemantic> configInitials) {
-				// Create a map from ConfigParameter IDs to ConfigParameter objects
 				Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 				for (InitialSemantic configInitial : configInitials) {
 						configInitialMap.put(configInitial.getTarget(), configInitial);
 				}
 
-				// Iterate through the list of ModelParameter objects
 				for (Initial modelInitial : modelInitials) {
-						// Look up the corresponding ConfigParameter in the map
 						InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
 						if (matchingConfigInitial != null) {
+							//FIXME: is there something like pyodide on the backend? otherwise we might have to store the expressionMathML as well
 								modelInitial.setExpression(matchingConfigInitial.getExpression());
 						}
 				}
