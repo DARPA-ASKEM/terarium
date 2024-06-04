@@ -36,18 +36,13 @@ import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
 
-/**
- * Router
- */
+/* Router */
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
-
 const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
 
-/**
- * Project
- */
+/* Project */
 API.interceptors.response.use(
 	(response) => response,
 	(error) => {
