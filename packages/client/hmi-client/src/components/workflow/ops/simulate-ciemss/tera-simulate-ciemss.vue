@@ -196,7 +196,7 @@ const viewOptions = ref([
 ]);
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(selectedRunId.value, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
