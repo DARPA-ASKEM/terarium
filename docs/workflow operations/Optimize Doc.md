@@ -1,14 +1,15 @@
 # Optimize:
 ## Goal
-Used to find the minimum or maximum value to a given parameter value or time that a QoI (Quality of Interest) constraint does not exceed the provided threshold.
+This is used to find the minimum or maximum value to a given parameter value or time that a QoI (Quality of Interest) constraint does not exceed the provided threshold.
 
-We can ask questions to try to find out a good start time for an intervention:
+We can ask questions to try to find out a good start time for an intervention. 
+For example:
+  "I want to turn on some masking intervention (beta set to a smaller value ~0.1) 
+  but I want to know how late I can do it while making the number of infected never exceed a specified number."
 
-I want to turn on "masking" (beta set to a smaller value ~0.1) 
-but I want to know how late I can do it while making the number of infected never exceed a specified number.
-
-We can use questions to try to find out parameter values:
-I want to turn on "quarantine" in day 30. How strong/effective (high beta needs to be) will this quarantine need to be in order to keep the number of infected lower than a (specified threshold) number?
+We can use questions to try to find out parameter values
+For example:
+  "I want to turn on a quarantine intervention in day 30. How strong/effective (high beta needs to be) will this quarantine need to be in order to keep the number of infected lower than a (specified threshold) number?"
 
 ## Knobs:
 `End time` (Settings)
