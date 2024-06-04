@@ -26,10 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
@@ -40,6 +42,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 @Slf4j
 public class ModelConfigurationController {
 	final ModelConfigurationService modelConfigurationService;
+	final ModelService modelService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
 	final ProjectService projectService;
@@ -131,8 +134,71 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
-			return modelConfiguration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
-					.build());
+			if (modelConfiguration.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
+			}
+			return ResponseEntity.ok(modelConfiguration.get());
+		} catch (final Exception e) {
+			log.error("Unable to get model configuration from postgres db", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	/**
+	 * Create a configured model from a model config
+	 *
+	 * @param id id of the model configuration
+	 * @param projectId associated project for permissions
+	 * @return configured model
+	 */
+	@GetMapping("/as-configured-model/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets a specific model configuration by id")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Configured model created",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema = @Schema(implementation = Model.class))),
+				@ApiResponse(
+						responseCode = "404",
+						description = "There was no model or model configuration found by this ID",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "403",
+						description = "User does not have permissions to this model configuration",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "There was an issue communicating with back-end services",
+						content = @Content)
+			})
+	public ResponseEntity<Model> getConfiguredModel(
+			@PathVariable("id") final UUID id,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		try {
+
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			if (modelConfiguration.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
+			}
+			final Optional<Model> model =
+					modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			if (model.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+			}
+
+			// TODO: Apply configuration to the Model here. Should this use ModelConfigurationLegacy??
+
+			throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
