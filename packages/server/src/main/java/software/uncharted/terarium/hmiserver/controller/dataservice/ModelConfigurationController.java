@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -194,10 +200,10 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
+			updateModelInitials(model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
+			updateModelParameters(model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
 
-			// TODO: Apply configuration to the Model here. Should this use ModelConfigurationLegacy??
-
-			throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -206,6 +212,47 @@ public class ModelConfigurationController {
 					messages.get("postgres.service-unavailable"));
 		}
 	}
+
+	private void updateModelParameters(List<ModelParameter> modelParameters, List<ParameterSemantic> configParameters) {
+        // Create a map from ConfigParameter IDs to ConfigParameter objects
+        Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
+        for (ParameterSemantic configParameter : configParameters) {
+            configParameterMap.put(configParameter.getReferenceId(), configParameter);
+        }
+
+        // Iterate through the list of ModelParameter objects
+        for (ModelParameter modelParameter : modelParameters) {
+            // Look up the corresponding ConfigParameter in the map
+            ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+            if (matchingConfigParameter != null) {
+								// I'm not sure if we want the set the id, name, description here since we have that on model already
+
+								// set distributions
+                if(matchingConfigParameter.getDistribution().getType() == "Constant") {
+										modelParameter.setValue((Double) matchingConfigParameter.getDistribution().getParameters().get("value"));
+										modelParameter.setDistribution(null);
+								} else {
+										modelParameter.setDistribution(matchingConfigParameter.getDistribution());
+								}
+            }
+        }
+    }
+ private void updateModelInitials(List<Initial> modelInitials, List<InitialSemantic> configInitials) {
+				// Create a map from ConfigParameter IDs to ConfigParameter objects
+				Map<String, InitialSemantic> configInitialMap = new HashMap<>();
+				for (InitialSemantic configInitial : configInitials) {
+						configInitialMap.put(configInitial.getTarget(), configInitial);
+				}
+
+				// Iterate through the list of ModelParameter objects
+				for (Initial modelInitial : modelInitials) {
+						// Look up the corresponding ConfigParameter in the map
+						InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
+						if (matchingConfigInitial != null) {
+								modelInitial.setExpression(matchingConfigInitial.getExpression());
+						}
+				}
+		}
 
 	/**
 	 * Creates a new model config and saves it to the DB
