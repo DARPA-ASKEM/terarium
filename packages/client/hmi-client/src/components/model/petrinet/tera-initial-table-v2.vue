@@ -1,40 +1,47 @@
 <template>
-	<!-- Stratified -->
-	<Accordion v-if="isStratified" multiple>
-		<AccordionTab v-for="[key, values] in collapseInitials(props.mmt).entries()" :key="key">
+	<Accordion multiple :active-index="[0]">
+		<AccordionTab>
 			<template #header>
-				<span>{{ key }}</span>
-				<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = key" />
+				Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 			</template>
-			<div class="flex">
-				<Divider layout="vertical" type="solid" />
-				<ul>
-					<li v-for="initial in values" :key="initial">
-						<tera-initial-entry
-							:model-configuration="props.modelConfiguration"
-							:initial-id="initial"
-							@update-expression="emit('update-expression', $event)"
-							@update-source="emit('update-source', $event)"
-						/>
-						<Divider type="solid" />
-					</li>
-				</ul>
-			</div>
+			<Accordion v-if="isStratified" multiple>
+				<AccordionTab v-for="[key, values] in collapseInitials(props.mmt).entries()" :key="key">
+					<template #header>
+						<span>{{ key }}</span>
+						<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = key" />
+					</template>
+					<div class="flex">
+						<Divider layout="vertical" type="solid" />
+						<ul>
+							<li v-for="initial in values" :key="initial">
+								<tera-initial-entry
+									:model-configuration="props.modelConfiguration"
+									:initial-id="initial"
+									@update-expression="emit('update-expression', $event)"
+									@update-source="emit('update-source', $event)"
+								/>
+								<Divider type="solid" />
+							</li>
+						</ul>
+					</div>
+				</AccordionTab>
+			</Accordion>
+
+			<!-- Unstratified -->
+			<ul v-else class="flex-grow">
+				<li v-for="{ target } in getInitials(modelConfiguration)" :key="target">
+					<tera-initial-entry
+						:model-configuration="modelConfiguration"
+						:initial-id="target"
+						@update-expression="emit('update-expression', $event)"
+						@update-source="emit('update-source', $event)"
+					/>
+					<Divider type="solid" />
+				</li>
+			</ul>
 		</AccordionTab>
 	</Accordion>
-
-	<!-- Unstratified -->
-	<ul v-else class="flex-grow">
-		<li v-for="{ target } in getInitials(modelConfiguration)" :key="target">
-			<tera-initial-entry
-				:model-configuration="modelConfiguration"
-				:initial-id="target"
-				@update-expression="emit('update-expression', $event)"
-				@update-source="emit('update-source', $event)"
-			/>
-			<Divider type="solid" />
-		</li>
-	</ul>
+	<!-- Stratified -->
 
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
@@ -56,7 +63,7 @@
 import { ModelConfiguration } from '@/types/Types';
 import { getInitials } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import Accordion from 'primevue/accordion';
@@ -77,6 +84,8 @@ const emit = defineEmits(['update-expression', 'update-source']);
 const isStratified = isStratifiedModel(props.mmt);
 
 const matrixModalId = ref('');
+
+const numInitials = computed(() => Object.keys(props.mmt.initials).length);
 </script>
 
 <style scoped>
@@ -85,6 +94,12 @@ ul {
 	li {
 		list-style: none;
 	}
+}
+
+.artifact-amount {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
 }
 
 :deep(.p-divider) {
