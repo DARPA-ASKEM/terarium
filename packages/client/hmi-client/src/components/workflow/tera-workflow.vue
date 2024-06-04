@@ -397,7 +397,6 @@ function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	// generateSummary(node, outputPort);
 	workflowDirty = true;
 }
 
