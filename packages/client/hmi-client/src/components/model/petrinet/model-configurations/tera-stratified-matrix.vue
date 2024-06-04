@@ -109,16 +109,17 @@ const props = defineProps<{
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
 	shouldEval: boolean;
+	matrixType?: string;
 }>();
 
 const emit = defineEmits(['update-cell-value']);
 
 const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
-const matrixType = ref('subjectOutcome');
+const matrixType = ref(props.matrixType || 'subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
 
-const currentMatrixtype = ref('');
+const currentMatrixtype = ref(props.matrixType || '');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
