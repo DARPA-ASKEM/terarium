@@ -1,6 +1,6 @@
 # Optimize:
 ## Goal
-Used to find the minimal or maximum value to a given parameter value or time that a QoI (Quality of Interest) constraint does not exceed the provided threshold.
+Used to find the minimum or maximum value to a given parameter value or time that a QoI (Quality of Interest) constraint does not exceed the provided threshold.
 
 We can ask questions to try to find out a good start time for an intervention:
 
