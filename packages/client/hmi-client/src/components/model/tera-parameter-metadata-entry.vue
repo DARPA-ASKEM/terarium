@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'has-toggle': isBase }">
+	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
 		<h6>{{ id }}</h6>
 		<tera-input
 			label="Name"
@@ -38,7 +38,7 @@
 						: ''
 				"
 			/>
-			<Button v-if="isBase" label="Open matrix" text @click="$emit('open-matrix')" />
+			<Button v-if="isBase" size="small" label="Open matrix" text @click="$emit('open-matrix')" />
 		</template>
 	</section>
 </template>
@@ -77,6 +77,10 @@ section.has-toggle {
 		'symbol name description description'
 		'toggle	unit concept open-matrix';
 	grid-template-columns: max-content 30% auto 8rem;
+}
+
+section.no-second-row {
+	gap: 0 var(--gap-small);
 }
 
 h6 {

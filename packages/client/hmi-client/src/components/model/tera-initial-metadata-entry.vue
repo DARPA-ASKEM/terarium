@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'has-toggle': isBase }">
+	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
 		<h6>{{ target }}</h6>
 		<tera-input
 			label="Name"
@@ -72,6 +72,10 @@ section.has-toggle {
 	grid-template-areas:
 		'symbol name description description'
 		'toggle	unit concept .';
+}
+
+section.no-second-row {
+	gap: 0 var(--gap-small);
 }
 
 h6 {
