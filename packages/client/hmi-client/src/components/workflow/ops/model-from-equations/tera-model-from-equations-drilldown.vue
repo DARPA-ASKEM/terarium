@@ -19,14 +19,54 @@
 			/>
 		</template>
 		<tera-drilldown-section :is-loading="assetLoading">
-			<header class="header-group ml-4 mt-3">
-				<p>These equations will be used to create your model.</p>
-				<Button label="Add an equation" icon="pi pi-plus" text @click="addEquation" />
+			<template #header-controls-left>
+				<section class="align-items-center pl-3">
+					<h5>Equation conversions</h5>
+					<p>These equations will be used to create your model.</p>
+				</section>
+			</template>
+			<template #header-controls-right>
+				<p class="inline-flex align-items-center">Framework</p>
+				<Dropdown
+					class="w-full md:w-14rem ml-2"
+					v-model="clonedState.modelFramework"
+					:options="modelFrameworks"
+					option-label="label"
+					option-value="value"
+					option-disabled="disabled"
+					@change="onChangeModelFramework"
+				/>
+				<!--				<Button-->
+				<!--					class="mr-auto"-->
+				<!--					label="Save as new model"-->
+				<!--					:disabled="!selectedModel"-->
+				<!--					outlined-->
+				<!--					:loading="savingAsset"-->
+				<!--					@click="showSaveModelModal = true"-->
+				<!--				></Button>-->
+				<!--				<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />-->
+				<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
+			</template>
+			<header class="header-group pl-3">
+				<Textarea
+					v-model="multipleEquations"
+					autoResize
+					rows="1"
+					cols="85"
+					placeholder="Add an expression(s) with LaTex"
+				/>
+				<Button label="Add" @click="getEquations" />
 			</header>
+			<section>
+				<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
+				<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
+			</section>
 			<ul class="blocks-container ml-3">
 				<li v-for="(equation, i) in clonedState.equations" :key="i">
 					<tera-asset-block
 						:is-included="equation.includeInProcess"
+						:collapsed="equation.collapsed"
+						@update:collapsed="(isCollapsed) => changeCollapsed(equation, isCollapsed)"
 						@update:is-included="onUpdateInclude(equation)"
 						:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
 						@delete="removeEquation(i)"
@@ -60,22 +100,11 @@
 				</li>
 			</ul>
 			<template #footer>
-				<span class="mb-2">
-					<label>Model framework</label>
-					<Dropdown
-						class="w-full md:w-14rem ml-2"
-						v-model="clonedState.modelFramework"
-						:options="modelFrameworks"
-						option-label="label"
-						option-value="value"
-						option-disabled="disabled"
-						@change="onChangeModelFramework"
-					/>
-				</span>
+				<span class="mb-2"> </span>
 			</template>
 		</tera-drilldown-section>
 		<template #preview>
-			<tera-drilldown-preview class="mt-3 mr-4 mb-2 ml-2">
+			<tera-drilldown-preview>
 				<section v-if="selectedModel">
 					<tera-model-description
 						:model="selectedModel"
@@ -90,24 +119,6 @@
 					:operation-type="node.operationType"
 					style="height: 100%"
 				/>
-				<template #footer>
-					<Button
-						class="mr-auto"
-						label="Save as new model"
-						:disabled="!selectedModel"
-						outlined
-						:loading="savingAsset"
-						@click="showSaveModelModal = true"
-					></Button>
-					<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />
-					<Button
-						label="Run"
-						@click="onRun"
-						:diabled="assetLoading"
-						:loading="loadingModel"
-						size="large"
-					></Button>
-				</template>
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -139,6 +150,7 @@ import { generateModelCard, getModel, updateModel } from '@/services/model';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { ModelServiceType } from '@/types/common';
@@ -237,8 +249,10 @@ const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const showSaveModelModal = ref(false);
-const savingAsset = ref(false);
+// const savingAsset = ref(false);
 const isGeneratingCard = ref(false);
+const multipleEquations = ref<string>('');
+
 onMounted(async () => {
 	clonedState.value = cloneDeep(props.node.state);
 	if (selectedOutputId.value) {
@@ -379,20 +393,69 @@ function updateNodeLabel(id: string, label: string) {
 	emit('update-output-port', outputPort);
 }
 
-function addEquation() {
-	clonedState.value.equations.push({
-		name: 'Equation',
-		includeInProcess: true,
-		asset: {
-			text: ''
-		}
-	});
-	emit('update-state', clonedState.value);
-}
+// function addEquation() {
+// 	clonedState.value.equations.push({
+// 		name: 'Equation',
+// 		collapsed: false,
+// 		includeInProcess: true,
+// 		asset: {
+// 			text: ''
+// 		}
+// 	});
+// 	emit('update-state', clonedState.value);
+// }
 
 function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
+}
+
+function getEquations() {
+	const newEquations = multipleEquations.value.split('\n');
+	newEquations.forEach((equation) => {
+		clonedState.value.equations.push({
+			name: 'Equation',
+			includeInProcess: true,
+			asset: {
+				text: equation
+			}
+		});
+	});
+	emit('update-state', clonedState.value);
+}
+
+const allEquationCollapsed = computed(
+	() => !clonedState.value.equations.some((equation) => !equation.collapsed)
+);
+
+const allEquationsInProcess = computed(
+	() => !clonedState.value.equations.some((equation) => !equation.includeInProcess)
+);
+
+function getCollapsedLabel() {
+	return allEquationCollapsed.value ? 'Expand All' : 'Collapse all';
+}
+
+function getIncludedEquationLabel() {
+	return allEquationsInProcess.value ? 'Remove all from process' : 'Include all in process';
+}
+
+function changeCollapsed(equation, isCollapsed = false) {
+	equation.collapsed = isCollapsed;
+}
+
+function toggleCollapseAll() {
+	const collapseEquations = allEquationCollapsed.value;
+	clonedState.value.equations.forEach((equation) => {
+		changeCollapsed(equation, !collapseEquations);
+	});
+}
+
+function toggleIncludedEquations() {
+	const allEquationsIncluded = allEquationsInProcess.value;
+	clonedState.value.equations.forEach((equation) => {
+		equation.includeInProcess = !allEquationsIncluded;
+	});
 }
 
 // generates the model card and fetches the model when finished
