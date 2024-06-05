@@ -54,6 +54,9 @@ public class ModelConfigurationController {
 	final Messages messages;
 	final ProjectService projectService;
 
+	private static final String CONSTANT_TYPE = "Constant";
+	private static final String VALUE_PARAM = "value";
+
 	/**
 	 * Gets all model configurations (which are visible to this user)
 	 *
@@ -363,11 +366,12 @@ public class ModelConfigurationController {
 				// I'm not sure if we want the set the id, name, description here since we have that on model already
 
 				// set distributions
-				if (matchingConfigParameter.getDistribution().getType() == "Constant") {
+				if (CONSTANT_TYPE.equals(
+						matchingConfigParameter.getDistribution().getType())) {
 					modelParameter.setValue((Double) matchingConfigParameter
 							.getDistribution()
 							.getParameters()
-							.get("value"));
+							.get(VALUE_PARAM));
 					modelParameter.setDistribution(null);
 				} else {
 					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
