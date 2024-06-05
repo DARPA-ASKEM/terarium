@@ -21,7 +21,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 @Entity
 public class ParameterSemantic extends Semantic {
 
-	private String referenceID;
+	private String referenceId;
 
 	private ModelDistribution distribution;
 

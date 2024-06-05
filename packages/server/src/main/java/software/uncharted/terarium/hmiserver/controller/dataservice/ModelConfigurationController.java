@@ -347,13 +347,13 @@ public class ModelConfigurationController {
 
 		if (modelConfiguration.getObservableSemanticList() != null) {
 			for (final ObservableSemantic observableSemantic : modelConfiguration.getObservableSemanticList()) {
-				modelConfiguration.getValues().put(observableSemantic.getReferenceID(), observableSemantic);
+				modelConfiguration.getValues().put(observableSemantic.getReferenceId(), observableSemantic);
 			}
 		}
 
 		if (modelConfiguration.getParameterSemanticList() != null) {
 			for (final ParameterSemantic parameterSemantic : modelConfiguration.getParameterSemanticList()) {
-				modelConfiguration.getValues().put(parameterSemantic.getReferenceID(), parameterSemantic);
+				modelConfiguration.getValues().put(parameterSemantic.getReferenceId(), parameterSemantic);
 			}
 		}
 
