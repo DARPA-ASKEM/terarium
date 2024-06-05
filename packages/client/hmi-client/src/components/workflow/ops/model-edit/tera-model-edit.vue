@@ -3,7 +3,7 @@
 		:node="node"
 		:menu-items="menuItems"
 		@update:selection="onSelection"
-		@on-close-clicked="emit('close')"
+		@on-close-clicked="onDrilldownClose"
 		@update-state="(state: any) => emit('update-state', state)"
 		v-bind="$attrs"
 	>
@@ -15,6 +15,7 @@
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 				@sync-with-mira-model="syncWithMiraModel"
 				@save-new-model-output="createOutput"
+				@reset="resetModel"
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
@@ -140,8 +141,8 @@ const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
-const readyToSaveOutputModel = ref(false);
 const showSaveModelModal = ref(false);
+let isDraft = false;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -201,14 +202,8 @@ const syncWithMiraModel = (data: any) => {
 		return;
 	}
 	updatedModel.id = activeModelId;
-	const firstOutputId = outputs.value?.[0].items[0].id;
-	// If the first output is edited, create a new output
-	if (firstOutputId === selectedOutputId.value) {
-		createOutput(updatedModel);
-	} else {
-		amr.value = updatedModel;
-		readyToSaveOutputModel.value = true;
-	}
+	amr.value = updatedModel;
+	isDraft = true;
 };
 
 // Reset model, then execute the code
@@ -267,6 +262,7 @@ const resetModel = () => {
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
+	isDraft = false;
 };
 
 const handleResetResponse = (data: any) => {
@@ -291,12 +287,12 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 	emit('update-state', state);
 }
 
-// FIXME: Output port should not be updated as outputs are read only, this is a temporary fix so that code and model are in sync
-// FIXME: We should create the output once a Save button is clicked, any edits made on an output would be saved as a draft
-// Saves the output model in the backend
-// Not called after every little model edit to avoid too many requests
-// Called when the selected output is changed, component unmounts or before the window is closed
-// Put are you sure modal here
+function onDrilldownClose() {
+	if (isDraft) {
+		// TODO: Prompt user to save draft
+	}
+	emit('close');
+}
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
@@ -310,6 +306,8 @@ const createOutput = async (modelToSave: Model) => {
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
+
+	isDraft = false;
 };
 
 const buildJupyterContext = () => {
@@ -351,7 +349,6 @@ const handleOutputChange = async () => {
 };
 
 const onSelection = (id: string) => {
-	// Modal popup for saving a draft?
 	emit('select-output', id);
 };
 

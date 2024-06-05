@@ -49,8 +49,8 @@
 						:disabled="isDecomposedLoading"
 					/>
 					<span class="btn-group">
-						<Button label="Reset" outlined severity="secondary" />
-						<Button label="Save" @click="$emit('save-new-model-output')" />
+						<Button label="Reset" outlined severity="secondary" @click="$emit('reset')" />
+						<Button label="Save" @click="$emit('save-new-model-output', model)" />
 					</span>
 				</section>
 				<tera-progress-spinner
@@ -166,7 +166,7 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code', 'sync-with-mira-model', 'save-new-model-output']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model', 'save-new-model-output', 'reset']);
 
 function outputCode(data: any) {
 	emit('output-code', data);
