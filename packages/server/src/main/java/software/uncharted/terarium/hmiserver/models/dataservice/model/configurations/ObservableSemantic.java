@@ -20,6 +20,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @Entity
 public class ObservableSemantic extends Semantic {
 
+	private String referenceID;
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private State[] states;
