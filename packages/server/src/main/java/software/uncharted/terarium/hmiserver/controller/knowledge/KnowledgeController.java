@@ -8,20 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -72,6 +58,21 @@ import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RequestMapping("/knowledge")
 @RestController
@@ -301,14 +302,14 @@ public class KnowledgeController {
 				}
 			} catch (final IOException e) {
 				log.error("Unable to write to zip file", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			} finally {
 				try {
 					zipf.close();
 				} catch (final IOException e) {
 					log.error("Unable to close zip file", e);
 					throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 				}
 			}
 
@@ -435,7 +436,7 @@ public class KnowledgeController {
 			fileAsBytes = input.getBytes();
 		} catch (final IOException e) {
 			log.error("Unable to read file", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
 		final String filename = input.getOriginalFilename();
@@ -549,7 +550,7 @@ public class KnowledgeController {
 			card = mapper.treeToValue(resp.getBody(), Card.class);
 		} catch (final IOException e) {
 			log.error("Unable to convert response to card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		if (model.getHeader() == null) {
