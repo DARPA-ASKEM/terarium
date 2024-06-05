@@ -20,6 +20,11 @@ export interface FeatureConfig {
 	isPreview: boolean;
 }
 
+export enum DrillDownTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
+}
+
 export enum ParamType {
 	CONSTANT,
 	DISTRIBUTION,

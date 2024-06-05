@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -10,100 +11,108 @@
 				:state="node.state"
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
+			<!-- Unsure how to handle this -->
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				:is-loading="assetLoading"
 				is-selectable
+				class="hidden"
 			/>
 		</template>
-		<tera-drilldown-section :is-loading="assetLoading">
-			<template #header-controls-left>
-				<section class="align-items-center pl-3">
-					<h5>Equation conversions</h5>
-					<p>These equations will be used to create your model.</p>
-				</section>
-			</template>
-			<template #header-controls-right>
-				<p class="inline-flex align-items-center">Framework</p>
-				<Dropdown
-					class="w-full md:w-14rem ml-2"
-					v-model="clonedState.modelFramework"
-					:options="modelFrameworks"
-					option-label="label"
-					option-value="value"
-					option-disabled="disabled"
-					@change="onChangeModelFramework"
-				/>
-				<!--				<Button-->
-				<!--					class="mr-auto"-->
-				<!--					label="Save as new model"-->
-				<!--					:disabled="!selectedModel"-->
-				<!--					outlined-->
-				<!--					:loading="savingAsset"-->
-				<!--					@click="showSaveModelModal = true"-->
-				<!--				></Button>-->
-				<!--				<Button label="Close" @click="emit('close')" severity="secondary" outlined size="large" />-->
-				<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
-			</template>
-			<header class="header-group pl-3">
-				<Textarea
-					v-model="multipleEquations"
-					autoResize
-					rows="1"
-					cols="85"
-					placeholder="Add an expression(s) with LaTex"
-				/>
-				<Button label="Add" @click="getEquations" />
-			</header>
-			<section>
-				<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
-				<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
-			</section>
-			<ul class="blocks-container ml-3">
-				<li v-for="(equation, i) in clonedState.equations" :key="i">
-					<tera-asset-block
-						:is-included="equation.includeInProcess"
-						:collapsed="equation.collapsed"
-						@update:collapsed="(isCollapsed) => changeCollapsed(equation, isCollapsed)"
-						@update:is-included="onUpdateInclude(equation)"
-						:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
-						@delete="removeEquation(i)"
-					>
-						<template #header>
-							<h5>{{ equation.name }}</h5>
-						</template>
-						<div class="block-container">
-							<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
-								<label>Extracted Image:</label>
-								<Image
-									id="img"
-									:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
-									:alt="''"
-									preview
-								/>
-							</template>
-							<tera-math-editor
-								v-if="equation.asset.text"
-								:latex-equation="equation.asset.text"
-								:is-editable="false"
-							/>
-							<div v-else class="mt-2" />
-							<InputText
-								v-model="equation.asset.text"
-								placeholder="Add an expression with LaTeX"
-								@update:model-value="emit('update-state', clonedState)"
-							/>
+		<section :tabName="DrillDownTabs.Wizard">
+			<tera-drilldown-section :is-loading="assetLoading">
+				<template #header-controls-left>
+					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
+				</template>
+				<template #header-controls-right>
+					<p class="inline-flex align-items-center">Framework</p>
+					<Dropdown
+						class="w-full md:w-14rem ml-2"
+						v-model="clonedState.modelFramework"
+						:options="modelFrameworks"
+						option-label="label"
+						option-value="value"
+						option-disabled="disabled"
+						@change="onChangeModelFramework"
+					/>
+					<Button
+						label="Run"
+						@click="onRun"
+						:diabled="assetLoading"
+						:loading="loadingModel"
+					></Button>
+				</template>
+				<header>
+					<section class="header-group">
+						<Textarea
+							v-model="multipleEquations"
+							autoResize
+							rows="1"
+							placeholder="Add an expression(s) with LaTex"
+							class="w-full"
+						/>
+						<Button label="Add" @click="getEquations" class="ml-2" />
+					</section>
+
+					<section class="header-group">
+						<div class="inline-flex align-items-center">
+							<h6>Equations</h6>
+							<span class="pl-1">{{ getEquationSelectedLabel() }}</span>
 						</div>
-					</tera-asset-block>
-				</li>
-			</ul>
-			<template #footer>
-				<span class="mb-2"> </span>
-			</template>
-		</tera-drilldown-section>
-		<template #preview>
+						<div>
+							<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
+							<Button text @click="toggleIncludedEquations">{{
+								getIncludedEquationLabel()
+							}}</Button>
+						</div>
+					</section>
+				</header>
+				<ul class="blocks-container ml-3">
+					<li v-for="(equation, i) in clonedState.equations" :key="i">
+						<tera-asset-block
+							:is-included="equation.includeInProcess"
+							:collapsed="equation.collapsed"
+							@update:collapsed="(isCollapsed) => changeCollapsed(equation, isCollapsed)"
+							@update:is-included="onUpdateInclude(equation)"
+							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
+							@delete="removeEquation(i)"
+						>
+							<template #header>
+								<h5>{{ equation.name }}</h5>
+							</template>
+							<div class="block-container">
+								<template v-if="instanceOfEquationFromImageBlock(equation.asset)">
+									<label>Extracted Image:</label>
+									<Image
+										id="img"
+										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
+										:alt="''"
+										preview
+									/>
+								</template>
+								<tera-math-editor
+									v-if="equation.asset.text"
+									:latex-equation="equation.asset.text"
+									:is-editable="false"
+								/>
+								<div v-else class="mt-2" />
+								<span>{{ getEquationErrorLabel(equation) }}</span>
+								<InputText
+									v-model="equation.asset.text"
+									placeholder="Add an expression with LaTeX"
+									@update:model-value="emit('update-state', clonedState)"
+								/>
+							</div>
+						</tera-asset-block>
+					</li>
+				</ul>
+				<template #footer>
+					<span class="mb-2"> </span>
+				</template>
+			</tera-drilldown-section>
+			<template></template>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
 					<tera-model-description
@@ -120,7 +129,10 @@
 					style="height: 100%"
 				/>
 			</tera-drilldown-preview>
-		</template>
+		</section>
+		<section :tabName="DrillDownTabs.Notebook">
+			<h5>Notebook</h5>
+		</section>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
@@ -153,7 +165,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import { ModelServiceType } from '@/types/common';
+import { DrillDownTabs, ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 
@@ -393,22 +405,21 @@ function updateNodeLabel(id: string, label: string) {
 	emit('update-output-port', outputPort);
 }
 
-// function addEquation() {
-// 	clonedState.value.equations.push({
-// 		name: 'Equation',
-// 		collapsed: false,
-// 		includeInProcess: true,
-// 		asset: {
-// 			text: ''
-// 		}
-// 	});
-// 	emit('update-state', clonedState.value);
-// }
-
 function removeEquation(index: number) {
 	clonedState.value.equations.splice(index, 1);
 	emit('update-state', clonedState.value);
 }
+
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model',
+		icon: 'pi pi-download',
+		disabled: !selectedModel.value,
+		command: () => {
+			showSaveModelModal.value = true;
+		}
+	}
+]);
 
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
@@ -422,6 +433,7 @@ function getEquations() {
 		});
 	});
 	emit('update-state', clonedState.value);
+	multipleEquations.value = '';
 }
 
 const allEquationCollapsed = computed(
@@ -431,6 +443,19 @@ const allEquationCollapsed = computed(
 const allEquationsInProcess = computed(
 	() => !clonedState.value.equations.some((equation) => !equation.includeInProcess)
 );
+
+const selectedEquations = computed(() =>
+	clonedState.value.equations.filter((equation) => equation.includeInProcess)
+);
+
+function getEquationErrorLabel(equation) {
+	return equation.asset.extractionError ? "Couldn't extract equation" : '';
+}
+
+function getEquationSelectedLabel() {
+	const total = clonedState.value.equations.length;
+	return `(${selectedEquations.value.length}/${total} selected)`;
+}
 
 function getCollapsedLabel() {
 	return allEquationCollapsed.value ? 'Expand All' : 'Collapse all';
@@ -518,6 +543,7 @@ watch(
 
 .header-group {
 	display: flex;
+	padding-left: 0.75em;
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
