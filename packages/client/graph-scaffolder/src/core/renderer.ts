@@ -55,6 +55,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	isDragEnabled: boolean = false;
 
+	lastTransform: d3.ZoomTransform | null = null;
+
 	constructor(options: Options) {
 		super(); // Event emitter
 		this.options = options;
@@ -328,7 +330,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
 			if (this.options.useZoom === false) return;
-			if (chart) chart.attr('transform', evt.transform);
+
+			this.lastTransform = evt.transform;
+
+			if (chart) {
+				const transform = evt.transform;
+				if (evt.sourceEvent.shiftKey && this.lastTransform) {
+					transform.k = this.lastTransform.k;
+				}
+				chart.attr('transform', transform);
+			}
 
 			if (this.options.useGrid) {
 				gX.call(xAxis.scale(evt.transform.rescaleX(x)));
