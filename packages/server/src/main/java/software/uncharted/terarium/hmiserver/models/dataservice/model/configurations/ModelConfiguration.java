@@ -23,8 +23,12 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors
 @Entity
 public class ModelConfiguration extends TerariumAsset {
+
 	private UUID calibrationRunId;
+
 	private UUID modelId;
+
+	private UUID simulationId;
 
 	@Transient
 	private Map<String, Semantic> values;
