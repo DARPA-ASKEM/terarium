@@ -12,7 +12,6 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 
 @EqualsAndHashCode(callSuper = true)
@@ -24,8 +23,6 @@ public class ParameterSemantic extends Semantic {
 
 	private String referenceID;
 
-	private Number value;
-
 	private ModelDistribution distribution;
 
 	private boolean isDefault;
@@ -33,8 +30,6 @@ public class ParameterSemantic extends Semantic {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private Intervention[] interventions;
-
-	private ModelUnit modelUnit;
 
 	@ManyToOne
 	@JsonBackReference
