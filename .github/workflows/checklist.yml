@@ -46,6 +46,12 @@ jobs:
             if (!botComment.body.match(/- \[ \]/g)) {
               console.log("All checklist items are checked.");
 
+              // Check if the comment has already been updated
+              if (botComment.body.includes("All checklist items are checked.")) {
+                console.log("Bot comment already updated.");
+                return;
+              }
+
               // Update the bot comment with the approved message.
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

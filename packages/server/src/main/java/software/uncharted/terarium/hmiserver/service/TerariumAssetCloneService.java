@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
@@ -27,6 +28,7 @@ import software.uncharted.terarium.hmiserver.utils.AssetDependencyUtil;
 import software.uncharted.terarium.hmiserver.utils.AssetDependencyUtil.AssetDependencyMap;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TerariumAssetCloneService {
@@ -86,6 +88,7 @@ public class TerariumAssetCloneService {
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
+				log.warn("Asset {} on project {} not longer exists, omitting from export", currentAssetId, projectId);
 				oldToNewIds.put(currentAssetId, currentAssetId); // map to the same id to prevent an exception later
 				continue;
 			}
@@ -153,7 +156,10 @@ public class TerariumAssetCloneService {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public ProjectExport exportProject(final UUID projectId) throws IOException {
 
-		final Project project = projectService.getProject(projectId).orElseThrow();
+		final Optional<Project> projectOptional = projectService.getProject(projectId);
+		if (projectOptional.isEmpty()) {
+			throw new RuntimeException("Project " + projectId + " not found");
+		}
 
 		final List<ProjectAsset> projectAssets =
 				projectAssetService.getProjectAssets(projectId, Schema.Permission.READ);
@@ -170,6 +176,10 @@ public class TerariumAssetCloneService {
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
+				log.warn(
+						"Asset {} on project {} not longer exists, omitting from export",
+						currentProjectAsset.getAssetId(),
+						projectId);
 				continue;
 			}
 
@@ -186,7 +196,7 @@ public class TerariumAssetCloneService {
 		}
 
 		final ProjectExport projectExport = new ProjectExport();
-		projectExport.setProject(project.clone());
+		projectExport.setProject(projectOptional.get().clone());
 		projectExport.getProject().setUserId(null); // clear the user id
 		projectExport.getProject().setUserName(null); // clear the user name
 		projectExport.setAssets(exportedAssets);

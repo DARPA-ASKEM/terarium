@@ -22,15 +22,14 @@ public class NotebookSession extends TerariumAsset {
 	@Serial
 	private static final long serialVersionUID = 9176019416379347233L;
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3719
-	// private UUID workflowId;
-
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private JsonNode data;
 
+	@Override
 	public NotebookSession clone() {
-		NotebookSession session = new NotebookSession();
+		final NotebookSession session = new NotebookSession();
+		super.cloneSuperFields(session);
 		session.setData(data.deepCopy());
 		return session;
 	}
