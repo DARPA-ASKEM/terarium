@@ -86,6 +86,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
+import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	model: Model;
@@ -112,10 +113,7 @@ function getSourceLabel(initialId) {
 }
 
 function formatPayloadFromParameterChange(parameters) {
-	const parameterDistribution = getParameterDistribution(
-		props.modelConfiguration,
-		props.parameterId
-	);
+	const parameterDistribution = cloneDeep(distribution.value);
 	Object.keys(parameters).forEach((key) => {
 		if (!parameterDistribution) return;
 		if (key in parameterDistribution.parameters) {
@@ -127,11 +125,7 @@ function formatPayloadFromParameterChange(parameters) {
 }
 
 function formatPayloadFromTypeChange(type: DistributionType) {
-	const parameterDistribution = getParameterDistribution(
-		props.modelConfiguration,
-		props.parameterId
-	);
-
+	const parameterDistribution = cloneDeep(distribution.value);
 	parameterDistribution.type = type;
 	parameterDistribution.parameters = {};
 	return parameterDistribution;
