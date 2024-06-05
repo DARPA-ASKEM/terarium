@@ -123,7 +123,7 @@ const teraModelDiagramRef = ref();
 const descriptionType = ref('TA1');
 const descriptionOptions = ref(['TA1', 'TA4']);
 
-// FIXME: expand Card typing definition?
+// FIXME: expand Card typing definition
 const card = computed<any>(() => {
 	// Display the GoLLM card if the description is set to TA4 (true).
 	if (descriptionType.value === 'TA4' && props.model.metadata?.gollmCard) {
