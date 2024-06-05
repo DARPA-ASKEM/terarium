@@ -28,6 +28,7 @@ public class ModelConfiguration extends TerariumAsset {
 
 	private UUID modelId;
 
+	/** This is "simulation" in the sense of our POJO. It actually corresponds to a pyciemss calibration */
 	private UUID simulationId;
 
 	@Transient
