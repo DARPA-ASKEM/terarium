@@ -14,8 +14,6 @@ import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 @Entity
 public abstract class Semantic extends TerariumEntity {
 
-	private String name;
-	private String description;
 	private String source;
 	private SemanticType type;
 }

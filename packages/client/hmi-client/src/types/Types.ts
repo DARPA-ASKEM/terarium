@@ -232,7 +232,6 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
 export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
-    unit: string;
     modelConfiguration: ModelConfiguration;
 }
 
@@ -244,25 +243,21 @@ export interface ModelConfiguration extends TerariumAsset {
 }
 
 export interface ObservableSemantic extends Semantic {
-    referenceID: string;
+    referenceId: string;
     states: State[];
     expression: string;
     modelConfiguration: ModelConfiguration;
 }
 
 export interface ParameterSemantic extends Semantic {
-    referenceID: string;
-    value: number;
+    referenceId: string;
     distribution: ModelDistribution;
     interventions: Intervention[];
-    modelUnit: ModelUnit;
     default: boolean;
     modelConfiguration: ModelConfiguration;
 }
 
 export interface Semantic extends TerariumEntity {
-    name: string;
-    description: string;
     source: string;
     type: SemanticType;
 }
@@ -925,15 +920,15 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface ModelUnit {
-    expression: string;
-    expression_mathml: string;
-}
-
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
     modifiers?: any;
+}
+
+export interface ModelUnit {
+    expression: string;
+    expression_mathml: string;
 }
 
 export interface Properties {
