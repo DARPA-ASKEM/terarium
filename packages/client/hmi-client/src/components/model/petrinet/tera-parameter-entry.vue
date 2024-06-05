@@ -3,7 +3,7 @@
 		<header>
 			<strong>{{ parameterId }}</strong>
 			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-			<span v-if="unit" class="ml-2">({{ unit }})</span>
+			<span v-if="units" class="ml-2">({{ units }})</span>
 			<span v-if="description" class="ml-4">{{ description }}</span>
 		</header>
 		<main>
@@ -96,7 +96,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-parameter', 'update-source']);
 
 const name = getParameter(props.model, props.parameterId)?.name;
-const unit = getParameter(props.model, props.parameterId)?.units?.expression;
+const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
 
 const distribution = computed(() =>
