@@ -8,9 +8,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +42,12 @@ import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowRespons
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequestMapping("/mira")
 @RestController
@@ -62,6 +64,8 @@ public class MiraController {
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+
+	private final Messages messages;
 
 	@Data
 	public static class ModelConversionRequest {
@@ -115,10 +119,16 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
-		try {
 			final TaskRequest req = new TaskRequest();
 			req.setType(TaskType.MIRA);
-			req.setInput(objectMapper.writeValueAsString(model).getBytes());
+
+			try {
+				req.setInput(objectMapper.writeValueAsString(model).getBytes());
+			} catch (final Exception e) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST, messages.get("generic.io-error.write"));
+			}
+
 			req.setScript(AMRToMMTResponseHandler.NAME);
 			req.setUserId(currentUserService.get().getId());
 
@@ -126,13 +136,6 @@ public class MiraController {
 			final TaskResponse resp = taskService.runTaskSync(req);
 			final JsonNode mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(mmtInfo);
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to convert Model to MIRA model template. \n{}: {}", error, e.getMessage());
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to convert Model to MIRA model template.");
-		}
 	}
 
 	@PostMapping("/convert-and-create-model")
