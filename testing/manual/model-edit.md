@@ -43,7 +43,7 @@ Estimated time to completion: [X] minutes
 3. Close the operator and then check if your new model is in your project.
 
 ### 6. Edit the model (notebook tab)
-1. Go to one of your step 3 outputs output where you made some edits to the model.
+1. Go to one of the outputs you made from following step 3.
 2. In the Notebook tab copy the code.
 3. Select the original model output (first output).
 4. Paste the code into the Notebook view and click the 'Run' button
