@@ -10,6 +10,7 @@
 				<ul>
 					<li v-for="initial in values" :key="initial">
 						<tera-initial-entry
+							:model="model"
 							:model-configuration="props.modelConfiguration"
 							:initial-id="initial"
 							@update-expression="emit('update-expression', $event)"
@@ -26,6 +27,7 @@
 	<ul v-else class="flex-grow">
 		<li v-for="{ target } in getInitials(modelConfiguration)" :key="target">
 			<tera-initial-entry
+				:model="model"
 				:model-configuration="modelConfiguration"
 				:initial-id="target"
 				@update-expression="emit('update-expression', $event)"
@@ -53,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitials } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { ref } from 'vue';
@@ -67,6 +69,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 import TeraInitialEntry from './tera-initial-entry.vue';
 
 const props = defineProps<{
+	model: Model;
 	modelConfiguration: ModelConfiguration;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;

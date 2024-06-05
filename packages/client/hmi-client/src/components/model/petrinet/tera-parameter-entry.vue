@@ -9,7 +9,7 @@
 		<main>
 			<span class="flex gap-2">
 				<Dropdown
-					:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
+					:model-value="distribution.type"
 					@change="
 						emit('update-parameter', {
 							id: parameterId,
@@ -23,13 +23,10 @@
 
 				<!-- Constant -->
 				<tera-input
-					v-if="
-						getParameterDistribution(modelConfiguration, parameterId).type ===
-						DistributionType.Constant
-					"
+					v-if="distribution.type === DistributionType.Constant"
 					label="Constant"
 					type="nist"
-					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
+					:model-value="distribution?.parameters.value"
 					@update:model-value="
 						emit('update-parameter', {
 							id: parameterId,
@@ -38,18 +35,11 @@
 					"
 				/>
 				<!-- Uniform Distribution -->
-				<template
-					v-if="
-						getParameterDistribution(modelConfiguration, parameterId).type ===
-						DistributionType.Uniform
-					"
-				>
+				<template v-if="distribution.type === DistributionType.Uniform">
 					<tera-input
 						label="Min"
 						type="nist"
-						:model-value="
-							getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum
-						"
+						:model-value="distribution?.parameters.minimum"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -60,9 +50,7 @@
 					<tera-input
 						label="Max"
 						type="nist"
-						:model-value="
-							getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum
-						"
+						:model-value="distribution?.parameters.maximum"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -90,30 +78,30 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
-import {
-	getParameterName,
-	getParameterDescription,
-	getParameterUnit,
-	getParameterSource,
-	getParameterDistribution
-} from '@/services/model-configurations';
+import { Model, ModelConfiguration } from '@/types/Types';
+import { getParameterSource, getParameterDistribution } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import { getParameter } from '@/model-representation/service';
 
 const props = defineProps<{
+	model: Model;
 	modelConfiguration: ModelConfiguration;
 	parameterId: string;
 }>();
 
 const emit = defineEmits(['update-parameter', 'update-source']);
 
-const name = getParameterName(props.modelConfiguration, props.parameterId);
-const unit = getParameterUnit(props.modelConfiguration, props.parameterId);
-const description = getParameterDescription(props.modelConfiguration, props.parameterId);
+const name = getParameter(props.model, props.parameterId)?.name;
+const unit = getParameter(props.model, props.parameterId)?.units?.expression;
+const description = getParameter(props.model, props.parameterId)?.description;
+
+const distribution = computed(() =>
+	getParameterDistribution(props.modelConfiguration, props.parameterId)
+);
 
 const isSourceOpen = ref(false);
 
@@ -124,11 +112,14 @@ function getSourceLabel(initialId) {
 }
 
 function formatPayloadFromParameterChange(parameters) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
+	const parameterDistribution = getParameterDistribution(
+		props.modelConfiguration,
+		props.parameterId
+	);
 	Object.keys(parameters).forEach((key) => {
-		if (!distribution) return;
-		if (key in distribution.parameters) {
-			distribution.parameters[key] = parameters[key];
+		if (!parameterDistribution) return;
+		if (key in parameterDistribution.parameters) {
+			parameterDistribution.parameters[key] = parameters[key];
 		}
 	});
 
@@ -136,11 +127,14 @@ function formatPayloadFromParameterChange(parameters) {
 }
 
 function formatPayloadFromTypeChange(type: DistributionType) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
+	const parameterDistribution = getParameterDistribution(
+		props.modelConfiguration,
+		props.parameterId
+	);
 
-	distribution.type = type;
-	distribution.parameters = {};
-	return distribution;
+	parameterDistribution.type = type;
+	parameterDistribution.parameters = {};
+	return parameterDistribution;
 }
 </script>
 
