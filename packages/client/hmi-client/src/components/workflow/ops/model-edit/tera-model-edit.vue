@@ -135,6 +135,12 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const isReadyToCreateDefaultOutput = computed(
+	() =>
+		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
+);
+
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
@@ -302,12 +308,14 @@ function onDrilldownClose() {
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
-	const modelData = isEmpty(outputs.value) ? modelToSave : await createModel(modelToSave);
+	const modelData = isReadyToCreateDefaultOutput.value
+		? modelToSave
+		: await createModel(modelToSave);
 	if (!modelData) return;
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: isEmpty(outputs.value) ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
+		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
 		type: 'modelId',
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
@@ -374,7 +382,7 @@ watch(
 
 onMounted(async () => {
 	// By default the first output option is the original model
-	if (isEmpty(outputs.value)) {
+	if (isReadyToCreateDefaultOutput.value) {
 		const input = props.node.inputs[0];
 		if (!input) return;
 
