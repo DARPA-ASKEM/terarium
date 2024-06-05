@@ -216,7 +216,7 @@ import type {
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
-import { isSaveDataSetDisabled } from '@/components/dataset/utils';
+import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	EnsembleCalibrateExtraCiemss
@@ -241,7 +241,7 @@ interface BasicKnobs {
 }
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
