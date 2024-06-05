@@ -22,16 +22,7 @@
 									onmouseout="this.style.backgroundColor='(--gray-50)';"
 									severity="secondary"
 								/>
-								<Button
-									@click="isZoomLocked = !isZoomLocked"
-									:icon="isZoomLocked ? 'pi pi-lock' : 'pi pi-unlock'"
-									:label="isZoomLocked ? 'Unlock zoom' : 'Lock zoom'"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
-									severity="secondary"
-								/>
+								<span class="how-to-zoom"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
 							</span>
 						</template>
 						<template #center> </template>
@@ -39,6 +30,7 @@
 							<span>
 								<SelectButton
 									v-if="model && isStratified"
+									class="p-button-sm"
 									:model-value="stratifiedView"
 									@change="
 										if ($event.value) {
@@ -110,7 +102,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed, nextTick, onMounted } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -269,15 +261,6 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
-
-onMounted(() => {
-	// document.addEventListener('wheel', (event) => {
-	// 	console.log(event);
-	// 	if (isZoomLocked.value) {
-	// 		event.stopPropagation();
-	// 	}
-	// });
-});
 </script>
 
 <style scoped>
@@ -348,6 +331,11 @@ main {
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
 }
 
 :deep(.graph-element .p-button) {
@@ -357,24 +345,40 @@ main {
 	}
 }
 
+.how-to-zoom {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-caption);
+}
+
+kbd {
+	background-color: var(--surface-section);
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: 0 var(--gap-xsmall);
+	font-size: var(--font-tiny);
+}
+
 .legend {
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	display: flex;
-	margin: 1rem;
+	margin: var(--gap-small);
+	margin-bottom: var(--gap);
+	gap: var(--gap);
+	pointer-events: none;
 }
 .legend-item {
 	display: flex;
 	align-items: center;
-	margin: 0 1rem;
+	gap: var(--gap-xsmall);
 }
 .legend-circle {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
 	border-radius: 50%;
-	margin-right: 0.5rem;
 }
 
 .legend-anchor {

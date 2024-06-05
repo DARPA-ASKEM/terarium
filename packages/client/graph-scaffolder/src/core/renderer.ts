@@ -57,6 +57,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	lastTransform: d3.ZoomTransform | null = null;
 
+	ctrlIsPressed: boolean = false;
+
 	constructor(options: Options) {
 		super(); // Event emitter
 		this.options = options;
@@ -326,20 +328,19 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				.style('pointer-events', 'none');
 		}
 
+		window.addEventListener('keydown', (event) => {
+			if (event.key === 'z') this.ctrlIsPressed = true;
+		});
+
+		window.addEventListener('keyup', (event) => {
+			if (event.key === 'z') this.ctrlIsPressed = false;
+		});
+
 		// Zoom control
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
 			if (this.options.useZoom === false) return;
-
-			this.lastTransform = evt.transform;
-
-			if (chart) {
-				const transform = evt.transform;
-				if (evt.sourceEvent.shiftKey && this.lastTransform) {
-					transform.k = this.lastTransform.k;
-				}
-				chart.attr('transform', transform);
-			}
+			if (chart) chart.attr('transform', evt.transform);
 
 			if (this.options.useGrid) {
 				gX.call(xAxis.scale(evt.transform.rescaleX(x)));
@@ -365,16 +366,17 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
+		const zoomRange = this.options.zoomRange || [minZoom, maxZoom];
 
-		if (this.options.zoomRange) {
-			this.zoom = d3
-				.zoom()
-				.scaleExtent(this.options.zoomRange)
-				.on('zoom', zoomed)
-				.on('end', zoomEnd);
-		} else {
-			this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
-		}
+		this.zoom = d3
+			.zoom()
+			.filter((evt: any) => {
+				console.log(!this.ctrlIsPressed && !(evt.type === 'wheel'));
+				return !this.ctrlIsPressed && !(evt.type === 'wheel');
+			})
+			.scaleExtent(zoomRange)
+			.on('zoom', zoomed)
+			.on('end', zoomEnd);
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		if (this.options.useStableZoomPan && this.zoomTransformObject) {
