@@ -9,7 +9,7 @@
 		<main>
 			<span class="flex gap-2">
 				<Dropdown
-					:model-value="distribution.type"
+					:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
 					@change="
 						emit('update-parameter', {
 							id: parameterId,
@@ -23,10 +23,13 @@
 
 				<!-- Constant -->
 				<tera-input
-					v-if="distribution.type === DistributionType.Constant"
+					v-if="
+						getParameterDistribution(modelConfiguration, parameterId).type ===
+						DistributionType.Constant
+					"
 					label="Constant"
 					type="nist"
-					:model-value="distribution?.parameters.value"
+					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
 					@update:model-value="
 						emit('update-parameter', {
 							id: parameterId,
@@ -35,11 +38,18 @@
 					"
 				/>
 				<!-- Uniform Distribution -->
-				<template v-if="distribution.type === DistributionType.Uniform">
+				<template
+					v-if="
+						getParameterDistribution(modelConfiguration, parameterId).type ===
+						DistributionType.Uniform
+					"
+				>
 					<tera-input
 						label="Min"
 						type="nist"
-						:model-value="distribution?.parameters.minimum"
+						:model-value="
+							getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum
+						"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -50,7 +60,9 @@
 					<tera-input
 						label="Max"
 						type="nist"
-						:model-value="distribution?.parameters.maximum"
+						:model-value="
+							getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum
+						"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -81,12 +93,11 @@
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getParameterSource, getParameterDistribution } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
-import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	model: Model;
@@ -100,10 +111,6 @@ const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
 
-const distribution = computed(() =>
-	getParameterDistribution(props.modelConfiguration, props.parameterId)
-);
-
 const isSourceOpen = ref(false);
 
 function getSourceLabel(initialId) {
@@ -113,11 +120,11 @@ function getSourceLabel(initialId) {
 }
 
 function formatPayloadFromParameterChange(parameters) {
-	const parameterDistribution = cloneDeep(distribution.value);
+	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
 	Object.keys(parameters).forEach((key) => {
-		if (!parameterDistribution) return;
-		if (key in parameterDistribution.parameters) {
-			parameterDistribution.parameters[key] = parameters[key];
+		if (!distribution) return;
+		if (key in distribution.parameters) {
+			distribution.parameters[key] = parameters[key];
 		}
 	});
 
@@ -125,10 +132,11 @@ function formatPayloadFromParameterChange(parameters) {
 }
 
 function formatPayloadFromTypeChange(type: DistributionType) {
-	const parameterDistribution = cloneDeep(distribution.value);
-	parameterDistribution.type = type;
-	parameterDistribution.parameters = {};
-	return parameterDistribution;
+	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
+
+	distribution.type = type;
+	distribution.parameters = {};
+	return distribution;
 }
 </script>
 
