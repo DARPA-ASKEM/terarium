@@ -13,7 +13,7 @@
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3">
+			<tera-drilldown-section class="pl-3 pr-3">
 				<template #header-controls>
 					<Button
 						size="small"
@@ -113,8 +113,13 @@
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 				</Accordion>
+				<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
+					>Some metadata is missing from these values. This information can be added manually to the
+					attached model.</Message
+				>
 				<tera-initial-table-v2
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
+					:model="model"
 					:model-configuration="knobs.transientModelConfig"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
@@ -125,6 +130,7 @@
 				/>
 				<tera-parameter-table-v2
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
+					:model="model"
 					:model-configuration="knobs.transientModelConfig"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
@@ -300,8 +306,9 @@ import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { cleanModel } from '@/model-representation/service';
+import { cleanModel, isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
+import Message from 'primevue/message';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {

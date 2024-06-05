@@ -372,7 +372,7 @@ export function isModelMissingMetadata(model: Model): boolean {
 
 	const initialsCheck = initials.some((i) => {
 		const initialMetadata = getInitialMetadata(model, i.target);
-		return !initialMetadata.name || !initialMetadata.description || !initialMetadata.units;
+		return !initialMetadata?.name || !initialMetadata?.description || !initialMetadata?.units;
 	});
 
 	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
