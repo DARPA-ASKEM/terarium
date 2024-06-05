@@ -117,16 +117,23 @@
 					>Some metadata is missing from these values. This information can be added manually to the
 					attached model.</Message
 				>
-				<tera-initial-table-v2
-					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
-					:model-configuration="knobs.transientModelConfig"
-					:mmt="mmt"
-					:mmt-params="mmtParams"
-					@update-expression="
-						setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
-					"
-					@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
-				/>
+				<Accordion multiple :active-index="[0]">
+					<AccordionTab>
+						<template #header>
+							Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
+						</template>
+						<tera-initial-table-v2
+							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
+							:model-configuration="knobs.transientModelConfig"
+							:mmt="mmt"
+							:mmt-params="mmtParams"
+							@update-expression="
+								setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
+							"
+							@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
+						/>
+					</AccordionTab>
+				</Accordion>
 				<tera-parameter-table-v2
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
 					:model-configuration="knobs.transientModelConfig"
@@ -570,6 +577,11 @@ const isLoading = computed(
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+
+const numInitials = computed(() => {
+	if (!mmt.value) return 0;
+	return Object.keys(mmt.value.initials).length;
+});
 
 const addIntervention = () => {
 	if (knobs.value.transientModelConfig.interventions) {
