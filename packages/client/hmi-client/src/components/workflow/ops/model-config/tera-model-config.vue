@@ -119,7 +119,6 @@
 				>
 				<tera-initial-table-v2
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
-					:model="model"
 					:model-configuration="knobs.transientModelConfig"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
@@ -130,7 +129,6 @@
 				/>
 				<tera-parameter-table-v2
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
-					:model="model"
 					:model-configuration="knobs.transientModelConfig"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
