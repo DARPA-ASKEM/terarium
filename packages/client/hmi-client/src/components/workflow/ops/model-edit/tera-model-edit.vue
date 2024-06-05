@@ -28,7 +28,7 @@
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="llmThoughts = []"
+							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
 								<Button
@@ -163,6 +163,7 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 
 const executeResponse = ref({
@@ -181,6 +182,11 @@ const menuItems = computed(() => [
 		}
 	}
 ]);
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
 
 const appendCode = (data: any, property: string) => {
 	const newCode = data.content[property] as string;

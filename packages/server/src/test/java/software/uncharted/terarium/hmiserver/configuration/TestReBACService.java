@@ -74,12 +74,14 @@ public class TestReBACService extends ReBACService {
 		}
 	}
 
+	@Override
 	public PermissionGroup createGroup(final String name) {
 		final String id = UUID.randomUUID().toString();
 		groups.put(name, null);
 		return new PermissionGroup(id, name);
 	}
 
+	@Override
 	public PermissionUser getUser(final String id) {
 		for (final User user : USERS) {
 			if (user.getId() == id) {
@@ -89,14 +91,17 @@ public class TestReBACService extends ReBACService {
 		throw new RuntimeException("User not found for id: " + id);
 	}
 
+	@Override
 	public List<PermissionUser> getUsers() {
 		return new ArrayList<>(users.values());
 	}
 
+	@Override
 	public List<PermissionRole> getRoles() {
 		return new ArrayList<>(roles.values());
 	}
 
+	@Override
 	public List<PermissionGroup> getGroups() {
 		final List<PermissionGroup> response = new ArrayList<>();
 		for (final Map.Entry<String, String> group : groups.entrySet()) {
@@ -106,6 +111,7 @@ public class TestReBACService extends ReBACService {
 		return response;
 	}
 
+	@Override
 	public PermissionGroup getGroup(final String id) {
 		if (groups.containsKey(id)) {
 			return new PermissionGroup(id, groups.get(id));
@@ -121,6 +127,7 @@ public class TestReBACService extends ReBACService {
 		return true;
 	}
 
+	@Override
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
 		return true;
 	}
@@ -129,22 +136,27 @@ public class TestReBACService extends ReBACService {
 		return true;
 	}
 
+	@Override
 	public boolean isCreator(final SchemaObject who, final SchemaObject what) throws Exception {
 		return true;
 	}
 
+	@Override
 	public void createRelationship(
 			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
 			throws Exception, RelationshipAlreadyExistsException {}
 
+	@Override
 	public void removeRelationship(
 			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
 			throws Exception, RelationshipAlreadyExistsException {}
 
+	@Override
 	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
 		return new ArrayList<>();
 	}
 
+	@Override
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
 
 		if (!users.containsKey(userId)) {
@@ -165,6 +177,7 @@ public class TestReBACService extends ReBACService {
 		return ResponseEntity.notFound().build();
 	}
 
+	@Override
 	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
 
 		if (!users.containsKey(userId)) {
@@ -195,6 +208,7 @@ public class TestReBACService extends ReBACService {
 		return ResponseEntity.ok().build();
 	}
 
+	@Override
 	public List<UUID> lookupResources(
 			final SchemaObject who, final Schema.Permission permission, final Schema.Type type) throws Exception {
 

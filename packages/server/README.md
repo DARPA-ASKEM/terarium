@@ -92,6 +92,9 @@ class Child {
 };
 ```
 
+**Note:** When storing the relationships, BOTH SIDES NEED TO BE SET!
+
+
 ### Defining Uni-directional Relationships
 
 Uni-directional relationships are where only one side of the reference is defined in the code, inside the "owning" entity. For these relationships the `mappedBy` argument is omitted and the relationship is stored depends on the `@JoinColumn` annotation. By default if `@JoinColumn` is not defined, an additional table is created to define the relationship.
@@ -137,16 +140,16 @@ class Parent {
 class Child {
 
     @Id
-    private UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
 
-};
+}
 ```
 
 ## Migrations:
 
 There are two "passes" for migrations in the app.
 
-1) For local, staging, and prod we have `spring.jpa.hibernate.ddl-auto=update`. On server startup Hibernate will update the schema if it detects that the entities and tables/columns are out of sync. It will add new tables/columns and update existing ones as needed, but it won't delete any existing tables or columns.
+1) For local, dev, staging, and prod we have `spring.jpa.hibernate.ddl-auto=update`. On server startup Hibernate will update the schema if it detects that the entities and tables/columns are out of sync. It will add new tables/columns and update existing ones as needed, but it won't delete any existing tables or columns.
 
 This ensures that new tables are created and new columns are added. However this leaves the case of _modifying existing columns_.
 

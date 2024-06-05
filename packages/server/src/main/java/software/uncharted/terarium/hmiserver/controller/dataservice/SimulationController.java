@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class SimulationController {
 
 	private final ObjectMapper mapper;
@@ -330,7 +332,7 @@ public class SimulationController {
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
 			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
-			dataset.setName(datasetName + " Result Dataset");
+			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());

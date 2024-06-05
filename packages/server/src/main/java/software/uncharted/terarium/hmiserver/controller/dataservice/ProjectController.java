@@ -22,6 +22,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,7 +33,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -567,31 +570,78 @@ public class ProjectController {
 	@ApiResponses(
 			value = {
 				@ApiResponse(
-						responseCode = "200",
+						responseCode = "201",
 						description = "The project export",
 						content = {
 							@Content(
 									mediaType = "application/json",
 									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ProjectExport.class))
+											@io.swagger.v3.oas.annotations.media.Schema(implementation = Project.class))
 						}),
+				@ApiResponse(
+						responseCode = "400",
+						description = "An error occurred when trying to parse the import file",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was a rebac issue when creating the project",
+						content = @Content),
 				@ApiResponse(
 						responseCode = "503",
 						description = "An error occurred when trying to communicate with either the postgres or spicedb"
 								+ " databases",
 						content = @Content)
 			})
-	@PostMapping("/import")
+	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
-	public ResponseEntity<Project> importProject(@RequestBody final ProjectExport projectExport) {
+	public ResponseEntity<Project> importProject(@RequestPart("file") final MultipartFile input) {
+
+		ProjectExport projectExport;
 		try {
-			return ResponseEntity.ok(cloneService.importProject(projectExport));
+			projectExport = objectMapper.readValue(input.getInputStream(), ProjectExport.class);
+		} catch (final Exception e) {
+			log.error("Error parsing project export", e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.import-parse-failure"));
+		}
+
+		final String userId = currentUserService.get().getId();
+		final String userName = userService.getById(userId).getName();
+
+		Project project;
+		try {
+			project = cloneService.importProject(userId, userName, projectExport);
 		} catch (final Exception e) {
 			log.error("Error importing project", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
+
+		try {
+			project = projectService.createProject(project);
+		} catch (final Exception e) {
+			log.error("Error creating project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		try {
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacGroup rebacAskemAdminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+			final RebacUser rebacUser = new RebacUser(userId, reBACService);
+
+			rebacUser.createCreatorRelationship(rebacProject);
+			rebacAskemAdminGroup.createWriterRelationship(rebacProject);
+		} catch (final Exception e) {
+			log.error("Error setting user's permissions for project", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		} catch (final RelationshipAlreadyExistsException e) {
+			log.error("Error the user is already the creator of this project", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("rebac.relationship-already-exists"));
+		}
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(project);
 	}
 
 	// --------------------------------------------------------------------------

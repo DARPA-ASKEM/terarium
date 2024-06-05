@@ -29,9 +29,7 @@ CONFIGURATION.interceptors.response.use(
 		if (status === 401) {
 			// redirect to login
 			const auth = useAuthStore();
-			auth.keycloak?.login({
-				redirectUri: window.location.href
-			});
+			auth.login(window.location.href);
 		}
 		return null;
 	}

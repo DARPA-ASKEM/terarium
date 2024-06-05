@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -23,8 +24,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -77,6 +76,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class DocumentController {
 
 	final ReBACService reBACService;
@@ -403,9 +403,7 @@ public class DocumentController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		try (final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build()) {
-
+		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
 			// if the fileEntity is not a PDF, then we need to extract the text and update
@@ -558,7 +556,9 @@ public class DocumentController {
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(
 					document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
 			if (filename != null) {
-				documentAsset.getFileNames().add(filename);
+				if (!documentAsset.getFileNames().contains(filename)) {
+					documentAsset.getFileNames().add(filename);
+				}
 				documentAsset = documentAssetService
 						.updateAsset(documentAsset, permission)
 						.orElseThrow();
@@ -811,7 +811,6 @@ public class DocumentController {
 							.getMetadata()
 							.put("description", extraction.getProperties().getCaption());
 					documentAsset.getAssets().add(documentExtraction);
-					documentAsset.getFileNames().add(documentExtraction.getFileName());
 				}
 			}
 		}
