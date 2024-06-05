@@ -243,12 +243,14 @@ export interface ModelConfiguration extends TerariumAsset {
 }
 
 export interface ObservableSemantic extends Semantic {
+    referenceID: string;
     states: State[];
     expression: string;
     modelConfiguration: ModelConfiguration;
 }
 
 export interface ParameterSemantic extends Semantic {
+    referenceID: string;
     value: number;
     distribution: ModelDistribution;
     interventions: Intervention[];
