@@ -332,7 +332,7 @@ public class SimulationController {
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
 			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
-			dataset.setName(datasetName + " Result Dataset");
+			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());

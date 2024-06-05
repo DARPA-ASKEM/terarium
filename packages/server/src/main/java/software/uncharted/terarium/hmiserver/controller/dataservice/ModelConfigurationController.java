@@ -31,6 +31,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
@@ -92,6 +93,8 @@ public class ModelConfigurationController {
 			if (modelConfigurations.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
+			modelConfigurations.forEach(ModelConfigurationController::stuffModelConfigSemanticsForFrontEnd);
+
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
 			log.error("Unable to get model configurations from postgres db", e);
@@ -143,6 +146,7 @@ public class ModelConfigurationController {
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
+			stuffModelConfigSemanticsForFrontEnd(modelConfiguration.get());
 			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -200,8 +204,10 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			updateModelInitials(model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
-			updateModelParameters(model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
+			updateModelInitials(
+					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
+			updateModelParameters(
+					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
 
 			return ResponseEntity.ok(model.get());
 
@@ -212,45 +218,6 @@ public class ModelConfigurationController {
 					messages.get("postgres.service-unavailable"));
 		}
 	}
-
-	private void updateModelParameters(List<ModelParameter> modelParameters, List<ParameterSemantic> configParameters) {
-        // Create a map from ConfigParameter IDs to ConfigParameter objects
-        Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
-        for (ParameterSemantic configParameter : configParameters) {
-            configParameterMap.put(configParameter.getReferenceId(), configParameter);
-        }
-
-        // Iterate through the list of ModelParameter objects
-        for (ModelParameter modelParameter : modelParameters) {
-            // Look up the corresponding ConfigParameter in the map
-            ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
-            if (matchingConfigParameter != null) {
-								// I'm not sure if we want the set the id, name, description here since we have that on model already
-
-								// set distributions
-                if(matchingConfigParameter.getDistribution().getType() == "Constant") {
-										modelParameter.setValue((Double) matchingConfigParameter.getDistribution().getParameters().get("value"));
-										modelParameter.setDistribution(null);
-								} else {
-										modelParameter.setDistribution(matchingConfigParameter.getDistribution());
-								}
-            }
-        }
-    }
- private void updateModelInitials(List<Initial> modelInitials, List<InitialSemantic> configInitials) {
-				Map<String, InitialSemantic> configInitialMap = new HashMap<>();
-				for (InitialSemantic configInitial : configInitials) {
-						configInitialMap.put(configInitial.getTarget(), configInitial);
-				}
-
-				for (Initial modelInitial : modelInitials) {
-						InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
-						if (matchingConfigInitial != null) {
-							//FIXME: is there something like pyodide on the backend? otherwise we might have to store the expressionMathML as well
-								modelInitial.setExpression(matchingConfigInitial.getExpression());
-						}
-				}
-		}
 
 	/**
 	 * Creates a new model config and saves it to the DB
@@ -377,6 +344,79 @@ public class ModelConfigurationController {
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 					messages.get("postgres.service-unavailable"));
+		}
+	}
+
+	private static void updateModelParameters(
+			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
+		// Create a map from ConfigParameter IDs to ConfigParameter objects
+		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
+		for (final ParameterSemantic configParameter : configParameters) {
+			configParameterMap.put(configParameter.getReferenceId(), configParameter);
+		}
+
+		// Iterate through the list of ModelParameter objects
+		for (final ModelParameter modelParameter : modelParameters) {
+			// Look up the corresponding ConfigParameter in the map
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+			if (matchingConfigParameter != null) {
+				// I'm not sure if we want the set the id, name, description here since we have that on model already
+
+				// set distributions
+				if (matchingConfigParameter.getDistribution().getType() == "Constant") {
+					modelParameter.setValue((Double) matchingConfigParameter
+							.getDistribution()
+							.getParameters()
+							.get("value"));
+					modelParameter.setDistribution(null);
+				} else {
+					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
+				}
+			}
+		}
+	}
+
+	private static void updateModelInitials(
+			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
+		for (final InitialSemantic configInitial : configInitials) {
+			configInitialMap.put(configInitial.getTarget(), configInitial);
+		}
+
+		for (final Initial modelInitial : modelInitials) {
+			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
+			if (matchingConfigInitial != null) {
+				// FIXME: is there something like pyodide on the backend? otherwise we might have to store the
+				// expressionMathML as well
+				modelInitial.setExpression(matchingConfigInitial.getExpression());
+			}
+		}
+	}
+
+	/**
+	 * Stuffs the individual lists of semantics into a common map, indexed by the target/id of each semantic
+	 *
+	 * @param modelConfiguration config to stuff for front end.
+	 */
+	private static void stuffModelConfigSemanticsForFrontEnd(final ModelConfiguration modelConfiguration) {
+		modelConfiguration.setValues(new HashMap<>());
+
+		if (modelConfiguration.getObservableSemanticList() != null) {
+			for (final ObservableSemantic observableSemantic : modelConfiguration.getObservableSemanticList()) {
+				modelConfiguration.getValues().put(observableSemantic.getReferenceId(), observableSemantic);
+			}
+		}
+
+		if (modelConfiguration.getParameterSemanticList() != null) {
+			for (final ParameterSemantic parameterSemantic : modelConfiguration.getParameterSemanticList()) {
+				modelConfiguration.getValues().put(parameterSemantic.getReferenceId(), parameterSemantic);
+			}
+		}
+
+		if (modelConfiguration.getInitialSemanticList() != null) {
+			for (final InitialSemantic initialSemantic : modelConfiguration.getInitialSemanticList()) {
+				modelConfiguration.getValues().put(initialSemantic.getTarget(), initialSemantic);
+			}
 		}
 	}
 }

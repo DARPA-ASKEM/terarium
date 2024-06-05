@@ -30,19 +30,19 @@ public class ModelConfiguration extends TerariumAsset {
 	private Map<String, Semantic> values;
 
 	@TSIgnore
-	@OneToMany(mappedBy = "model_configuration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<ObservableSemantic> observableSemanticList;
 
 	@TSIgnore
-	@OneToMany(mappedBy = "model_configuration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<ParameterSemantic> parameterSemanticList;
 
 	@TSIgnore
-	@OneToMany(mappedBy = "model_configuration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
 	private List<InitialSemantic> initialSemanticList;

@@ -42,8 +42,8 @@ const emit = defineEmits(['hide-dialog']);
 const saveDatasetToProject = async () => {
 	const { activeProject, refresh } = useProjects();
 	if (activeProject.value?.id) {
-		logger.success(`Added dataset: ${saveAsName.value}`);
 		if (await saveDataset(activeProject.value.id, props.simulationRunId, saveAsName.value)) {
+			logger.success(`Added dataset: ${saveAsName.value}`);
 			refresh();
 		}
 	}
