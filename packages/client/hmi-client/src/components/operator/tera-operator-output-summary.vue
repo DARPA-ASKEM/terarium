@@ -19,7 +19,7 @@
 		<div v-else-if="!isNil(activeOutput?.summary)" class="summary">
 			<img v-if="isGenerating || isGenerated" src="@assets/svg/icons/magic.svg" alt="Magic icon" />
 			<p v-if="isGenerating">Generating AI summary...</p>
-			<p v-else-if="!isRemoved" @click="isEditing = true">
+			<p v-else @click="isEditing = true">
 				{{ summary }}<span class="pi pi-pencil ml-2 text-xs" />
 			</p>
 		</div>
@@ -76,9 +76,6 @@ const isGenerated = computed(
 	() =>
 		activeOutput?.value?.summaryHasBeenEdited !== true &&
 		(activeOutput?.value?.summary?.length ?? 0) > 0
-);
-const isRemoved = computed(
-	() => activeOutput?.value?.summaryHasBeenEdited === true && activeOutput?.value?.summary === ''
 );
 
 watch(
