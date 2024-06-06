@@ -90,7 +90,7 @@
 										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
 										:alt="''"
 										preview
-										class="border-dashed border-2"
+										class="equation-image"
 									/>
 								</template>
 								<tera-math-editor
@@ -540,6 +540,12 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+}
+
+.equation-image {
+	border-style: dashed;
+	border-color: var(--primary-color);
+	border-width: thin;
 }
 
 .header-group {
