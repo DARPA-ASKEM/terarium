@@ -39,7 +39,7 @@
 		>
 			<template #foreground>
 				<!--FIXME: This container holding the toggles overlaps the top of the canvas so the drag area is slightly cutoff-->
-				<section class="view-toggles">
+				<section class="button-container">
 					<!-- TODO: There will be a Diagram/Equation toggle here. There may be plans to make a component for this specific
 						toggle though since in some designs it is used outside of tera-model-diagram and others are inside -->
 					<SelectButton
@@ -48,6 +48,10 @@
 						:options="modelFormatOptions"
 						:disabled="isDecomposedLoading"
 					/>
+					<span class="btn-group">
+						<Button label="Reset" outlined severity="secondary" @click="$emit('reset')" />
+						<Button label="Save" @click="$emit('save-new-model-output', model)" />
+					</span>
 				</section>
 				<tera-progress-spinner
 					v-if="isDecomposedLoading"
@@ -149,6 +153,7 @@ import type {
 } from '@/types/model-templating';
 import * as modelTemplatingService from '@/services/model-templating';
 import SelectButton from 'primevue/selectbutton';
+import Button from 'primevue/button';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraInfiniteCanvas from '../widgets/tera-infinite-canvas.vue';
 import TeraModelTemplate from './tera-model-template.vue';
@@ -161,7 +166,7 @@ const props = defineProps<{
 	kernelManager: KernelSessionManager;
 }>();
 
-const emit = defineEmits(['output-code', 'sync-with-mira-model']);
+const emit = defineEmits(['output-code', 'sync-with-mira-model', 'save-new-model-output', 'reset']);
 
 function outputCode(data: any) {
 	emit('output-code', data);
@@ -508,19 +513,25 @@ onUnmounted(() => {
 	position: relative;
 }
 
-:deep(.card) {
-	cursor: pointer;
+:deep(.foreground-layer) {
+	pointer-events: none;
 }
 
-.view-toggles {
-	padding: 0.5rem;
+.button-container {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--gap-small);
 	pointer-events: none;
-	.pi-spin {
+	& .pi-spin {
 		color: var(--text-color-subdued);
 	}
-}
-.view-toggles > * {
-	pointer-events: auto;
+	& .btn-group {
+		display: flex;
+		gap: var(--gap-small);
+	}
+	& > * {
+		pointer-events: auto;
+	}
 }
 
 .spinner {
@@ -534,7 +545,7 @@ aside {
 	background-color: #f4f7fa;
 	border-right: 1px solid var(--surface-border-light);
 	padding: var(--gap);
-	gap: 0.5rem;
+	gap: var(--gap-small);
 	overflow: hidden;
 	z-index: 1;
 }
@@ -543,14 +554,14 @@ ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
+	gap: var(--gap-small);
+	margin-top: var(--gap-small);
 }
 
 h5 {
 	display: flex;
 	align-items: center;
-	gap: 0.25rem;
+	gap: var(--gap-xsmall);
 	font-weight: var(--font-weight);
 }
 
@@ -575,7 +586,7 @@ header {
 
 	& > ul {
 		height: 85%;
-		padding: 0.25rem 0 0.25rem var(--gap-small);
+		padding: var(--gap-xsmall) 0 var(--gap-xsmall) var(--gap-small);
 	}
 }
 
@@ -590,7 +601,7 @@ header {
 
 	& > .pi-trash {
 		font-size: 1.5rem;
-		margin-bottom: 0.5rem;
+		margin-bottom: var(--gap-small);
 	}
 }
 </style>
