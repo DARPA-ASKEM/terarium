@@ -1,6 +1,11 @@
 <template>
 	<nav>
-		<a v-for="[id, navOption] in navIds" :key="id" @click="scrollTo(id)">
+		<a
+			v-for="[id, navOption] in navIds"
+			:class="{ 'chosen-item': id === chosenItem }"
+			:key="id"
+			@click="scrollTo(id)"
+		>
 			{{ navOption }}
 		</a>
 	</nav>
@@ -14,11 +19,13 @@ const props = defineProps<{
 }>();
 
 const navIds = ref<Map<string, string>>(new Map());
+const chosenItem = ref<string | null>(null);
 
 async function scrollTo(id: string) {
 	const element = props.elementWithNavIds.querySelector(`#${id}`);
 	if (!element) return;
 	element.scrollIntoView({ behavior: 'smooth' });
+	chosenItem.value = id;
 }
 
 onMounted(async () => {
@@ -56,5 +63,10 @@ nav {
 	position: sticky;
 	top: 0;
 	height: fit-content;
+}
+
+.chosen-item {
+	font-weight: var(--font-weight-semibold);
+	color: var(--primary-color);
 }
 </style>
