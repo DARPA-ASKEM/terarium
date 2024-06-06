@@ -1,77 +1,64 @@
 <template>
-	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<header v-if="shrinkHeader" class="shrinked">
-			<h4 v-html="name" />
-			<aside class="flex align-items-center">
+	<header
+		id="asset-top"
+		:class="{
+			'overview-banner': pageType === ProjectPages.OVERVIEW,
+			'with-tabs': tabs.length > 1
+		}"
+		ref="headerRef"
+	>
+		<section>
+			<!-- put the buttons above the title if there is an overline -->
+			<div v-if="overline" class="vertically-center">
+				<span class="overline">{{ overline }}</span>
 				<slot name="edit-buttons" />
-				<Button
-					v-if="featureConfig.isPreview"
-					icon="pi pi-times"
-					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-					@click="emit('close-preview')"
-				/>
-			</aside>
-		</header>
-		<template v-if="!hideIntro && name">
-			<header
-				id="asset-top"
-				:class="{
-					'overview-banner': pageType === ProjectPages.OVERVIEW,
-					'with-tabs': tabs.length > 1
-				}"
-				ref="headerRef"
+			</div>
+			<slot name="info-bar" />
+
+			<!--For naming asset such as model or code file-->
+			<div class="vertically-center">
+				<slot name="name-input" />
+				<h4 v-if="!isNamingAsset" v-html="name" />
+
+				<div v-if="!overline" class="vertically-center">
+					<slot name="edit-buttons" />
+				</div>
+			</div>
+
+			<!--put model contributors here too-->
+			<span class="authors" v-if="authors">
+				<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
+				<span v-html="authors" />
+			</span>
+			<div v-if="doi">
+				DOI:
+				<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+			</div>
+			<div v-if="publisher" v-html="publisher" />
+			<!--created on: date-->
+			<div class="header-buttons">
+				<slot name="bottom-header-buttons" />
+			</div>
+			<slot name="overview-summary" />
+			<TabView
+				v-if="tabs.length > 1"
+				:active-index="selectedTabIndex"
+				@tab-change="(e) => emit('tab-change', e)"
 			>
-				<section>
-					<!-- put the buttons above the title if there is an overline -->
-					<div v-if="overline" class="vertically-center">
-						<span class="overline">{{ overline }}</span>
-						<slot name="edit-buttons" />
-					</div>
-					<slot name="info-bar" />
-
-					<!--For naming asset such as model or code file-->
-					<div class="vertically-center">
-						<slot name="name-input" />
-						<h4 v-if="!isNamingAsset" v-html="name" />
-
-						<div v-if="!overline" class="vertically-center">
-							<slot name="edit-buttons" />
-						</div>
-					</div>
-
-					<!--put model contributors here too-->
-					<span class="authors" v-if="authors">
-						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-						<span v-html="authors" />
-					</span>
-					<div v-if="doi">
-						DOI:
-						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
-					</div>
-					<div v-if="publisher" v-html="publisher" />
-					<!--created on: date-->
-					<div class="header-buttons">
-						<slot name="bottom-header-buttons" />
-					</div>
-					<slot name="overview-summary" />
-					<TabView
-						v-if="tabs.length > 1"
-						:active-index="selectedTabIndex"
-						@tab-change="(e) => emit('tab-change', e)"
-					>
-						<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
-					</TabView>
-				</section>
-				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
-					<Button
-						v-if="featureConfig.isPreview"
-						icon="pi pi-times"
-						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-						@click="emit('close-preview')"
-					/>
-				</aside>
-			</header>
-		</template>
+				<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
+			</TabView>
+		</section>
+		<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
+			<Button
+				v-if="featureConfig.isPreview"
+				icon="pi pi-times"
+				rounded
+				text
+				@click="emit('close-preview')"
+			/>
+		</aside>
+	</header>
+	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<section :class="overflowHiddenClass" ref="assetElementRef">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
@@ -139,19 +126,17 @@ const headerRef = ref();
 const assetElementRef = ref();
 const scrollPosition = ref(0);
 
-const shrinkHeader = computed(() => {
-	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
-	return (
-		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
-		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
-		!props.isNamingAsset // Don't appear while creating an asset eg. a model
-	);
-});
+// The header should be able to shrink and grow based on the scroll position
+// const shrinkHeader = computed(() => {
+// 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
+// 	return (
+// 		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
+// 		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
+// 		!props.isNamingAsset // Don't appear while creating an asset eg. a model
+// 	);
+// });
 
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
-
-// Scroll padding for anchors are adjusted depending on the header (inserted in css)
-const scrollPaddingTop = computed(() => (shrinkHeader.value ? '3.5rem' : '1rem'));
 
 const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
 
@@ -196,10 +181,6 @@ main > section {
 	& > :deep(*:not(nav)) {
 		flex: 1;
 	}
-
-	& > :deep(nav) {
-		padding-top: v-bind(scrollPaddingTop);
-	}
 }
 
 header {
@@ -211,20 +192,12 @@ header {
 	display: flex;
 	gap: var(--gap);
 	align-items: center;
-	background: var(--surface-ground);
-}
-
-header.shrinked {
-	position: sticky;
-	top: 0px;
-	z-index: 100;
-	isolation: isolate;
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
 	border-bottom: 1px solid var(--surface-border-light);
 }
 
-header.shrinked h4 {
+header h4 {
 	align-self: center;
 	overflow: hidden;
 	text-align: left;
@@ -243,6 +216,7 @@ header aside {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
+	align-self: center;
 }
 
 header aside {
@@ -251,9 +225,6 @@ header aside {
 	max-height: 2.5rem;
 }
 
-header.shrinked aside {
-	align-self: center;
-}
 header.overview-banner section {
 	width: 100%;
 	max-width: 100%;
@@ -311,11 +282,6 @@ header aside {
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
 	margin: var(--gap-small);
-}
-
-/*  Gives some top padding when you auto-scroll to an anchor */
-main:deep(.p-accordion-header > a > header) {
-	scroll-padding-top: v-bind('scrollPaddingTop');
 }
 
 main:deep(.p-accordion-content) {
