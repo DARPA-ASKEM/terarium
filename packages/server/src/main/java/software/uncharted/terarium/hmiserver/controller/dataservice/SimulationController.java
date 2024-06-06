@@ -1,20 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +21,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -73,27 +76,15 @@ public class SimulationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new simulation")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Simulation created.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the simulation",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Simulation created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the simulation", content = @Content)
+	})
 	public ResponseEntity<Simulation> createSimulation(
 			@RequestBody final Simulation simulation,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			final Simulation sim = simulationService.createAsset(simulation, permission);
@@ -109,31 +100,16 @@ public class SimulationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get a simulation by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Simulation found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no simulations found and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving simulations from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Simulation found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "204", description = "There are no simulations found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving simulations from the data store", content = @Content)
+	})
 	public ResponseEntity<Simulation> getSimulation(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			Optional<Simulation> simulation = simulationService.getAsset(id, permission);
@@ -152,8 +128,8 @@ public class SimulationController {
 								|| sim.getStatusMessage().isEmpty())) {
 					if (sim.getEngine().equals(SimulationEngine.CIEMSS)) {
 						// Pyciemss can give us a nice error message. Attempt to get it.
-						final ResponseEntity<SimulationStatusMessage> statusResponse =
-								simulationCiemssServiceProxy.getRunStatus(
+						final ResponseEntity<SimulationStatusMessage> statusResponse = simulationCiemssServiceProxy
+								.getRunStatus(
 										sim.getId().toString());
 						if (statusResponse == null
 								|| statusResponse.getBody() == null
@@ -187,29 +163,17 @@ public class SimulationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a simulation by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Simulation updated.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the simulation",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Simulation updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
+	})
 	public ResponseEntity<Simulation> updateSimulation(
 			@PathVariable("id") final UUID id,
 			@RequestBody final Simulation simulation,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			simulation.setId(id);
@@ -226,22 +190,15 @@ public class SimulationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a simulation by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Simulation deleted.",
-						content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue deleting the simulation",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Simulation deleted.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the simulation", content = @Content)
+	})
 	public String deleteSimulation(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			simulationService.deleteAsset(id, permission);
@@ -256,22 +213,10 @@ public class SimulationController {
 	@GetMapping("/{id}/result")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get the result of a simulation by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Simulation result found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving simulation results from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Simulation result found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving simulation results from the data store", content = @Content)
+	})
 	public ResponseEntity<String> getSimulationResults(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -289,39 +234,28 @@ public class SimulationController {
 	}
 
 	/**
-	 * Creates a new dataset from a simulation result, then add it to a project as a Dataset.
+	 * Creates a new dataset from a simulation result, then add it to a project as a
+	 * Dataset.
 	 *
-	 * @param id ID of the simulation to create a dataset from
+	 * @param id        ID of the simulation to create a dataset from
 	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */
 	@GetMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Dataset created and added to project.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ProjectAsset.class))),
-				@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the dataset or adding it to the project",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Dataset created and added to project.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProjectAsset.class))),
+			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset or adding it to the project", content = @Content)
+	})
 	public ResponseEntity<ProjectAsset> createFromSimulationResult(
 			@PathVariable("id") final UUID id,
 			@PathVariable("project-id") final UUID projectId,
 			@RequestParam("dataset-name") final String datasetName) {
 
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
@@ -351,19 +285,18 @@ public class SimulationController {
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (project.isPresent()) {
-				final Optional<ProjectAsset> asset =
-						projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
+				final Optional<ProjectAsset> asset = projectAssetService.createProjectAsset(project.get(),
+						AssetType.DATASET, dataset, permission);
 				// underlying asset does not exist
-				return asset.map(projectAsset ->
-								ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
+				return asset.map(projectAsset -> ResponseEntity.status(HttpStatus.CREATED).body(projectAsset))
 						.orElseGet(() -> ResponseEntity.notFound().build());
 			} else {
 				log.error("Failed to add the dataset from simulation {} result", id);
 				return ResponseEntity.internalServerError().build();
 			}
 		} catch (final IOException e) {
-			final String error =
-					String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
+			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id,
+					projectId);
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
@@ -372,22 +305,10 @@ public class SimulationController {
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to upload the simulation results")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -403,26 +324,11 @@ public class SimulationController {
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the simulation results")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "There was no simulation found with the given ID",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "There was no simulation found with the given ID", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -440,17 +346,10 @@ public class SimulationController {
 	@GetMapping("/subscribe")
 	@Secured(Roles.USER)
 	@Operation(summary = "Subscribe to simulation events")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Subscribed to simulation events",
-						content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue subscribing to simulation events",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Subscribed to simulation events", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue subscribing to simulation events", content = @Content)
+	})
 	public ResponseEntity<Void> subscribe(@RequestParam("simulation-ids") final List<String> simulationIds) {
 
 		simulationEventService.subscribe(simulationIds, currentUserService.get());
@@ -460,17 +359,10 @@ public class SimulationController {
 	@GetMapping("/unsubscribe")
 	@Secured(Roles.USER)
 	@Operation(summary = "Unsubscribe from simulation events")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Unsubscribed from simulation events",
-						content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue unsubscribing from simulation events",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Unsubscribed from simulation events", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue unsubscribing from simulation events", content = @Content)
+	})
 	public ResponseEntity<Void> unsubscribe(@RequestParam("simulation-ids") final List<String> simulationIds) {
 
 		simulationEventService.unsubscribe(simulationIds, currentUserService.get());
