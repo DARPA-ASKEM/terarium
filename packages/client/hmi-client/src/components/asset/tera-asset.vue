@@ -1,5 +1,6 @@
 <template>
 	<header
+		v-if="showHeader"
 		id="asset-top"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
@@ -13,16 +14,11 @@
 				<span class="overline">{{ overline }}</span>
 				<slot name="edit-buttons" />
 			</div>
-			<slot name="info-bar" />
-
 			<!--For naming asset such as model or code file-->
 			<div class="vertically-center">
 				<slot name="name-input" />
-				<h4 v-if="!isNamingAsset" v-html="name" />
-
-				<div v-if="!overline" class="vertically-center">
-					<slot name="edit-buttons" />
-				</div>
+				<h4 v-if="!isNamingAsset">{{ name }}</h4>
+				<slot v-if="!overline" name="edit-buttons" />
 			</div>
 
 			<!--put model contributors here too-->
@@ -107,6 +103,10 @@ const props = defineProps({
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
 	},
+	showHeader: {
+		type: Boolean,
+		default: true
+	},
 	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
 	isNamingAsset: Boolean,
@@ -189,7 +189,6 @@ header {
 	height: fit-content;
 	color: var(--text-color-subdued);
 	padding: var(--gap-small) var(--gap-medium);
-	display: flex;
 	gap: var(--gap);
 	align-items: center;
 	background-color: var(--surface-ground-transparent);
