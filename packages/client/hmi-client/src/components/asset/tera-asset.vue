@@ -1,6 +1,6 @@
 <template>
 	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
+		<header v-if="shrinkHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="flex align-items-center">
 				<slot name="edit-buttons" />
@@ -124,8 +124,6 @@ const props = defineProps({
 	showTableOfContents: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
-	showStickyHeader: Boolean,
-	stretchContent: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
 	selectedTabIndex: {

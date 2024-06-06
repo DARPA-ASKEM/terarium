@@ -9,8 +9,6 @@
 		:overline="document?.source ?? ''"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
-		:stretch-content="view === DocumentView.PDF"
-		:show-sticky-header="view === DocumentView.PDF"
 		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
