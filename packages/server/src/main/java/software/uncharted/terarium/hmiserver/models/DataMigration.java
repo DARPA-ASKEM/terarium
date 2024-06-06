@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import java.io.Serial;
-import java.sql.Timestamp;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import java.io.Serial;
+import java.sql.Timestamp;
 import lombok.Data;
 
 @Data
