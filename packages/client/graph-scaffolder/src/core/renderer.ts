@@ -57,7 +57,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	lastTransform: d3.ZoomTransform | null = null;
 
-	ctrlIsPressed: boolean = false;
+	zIsPressed: boolean = false;
 
 	constructor(options: Options) {
 		super(); // Event emitter
@@ -329,11 +329,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		window.addEventListener('keydown', (event) => {
-			if (event.key === 'z') this.ctrlIsPressed = true;
+			if (event.key === 'z') this.zIsPressed = true;
 		});
 
 		window.addEventListener('keyup', (event) => {
-			if (event.key === 'z') this.ctrlIsPressed = false;
+			if (event.key === 'z') this.zIsPressed = false;
 		});
 
 		// Zoom control
@@ -370,10 +370,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		this.zoom = d3
 			.zoom()
-			.filter((evt: any) => {
-				console.log(!this.ctrlIsPressed && !(evt.type === 'wheel'));
-				return !this.ctrlIsPressed && !(evt.type === 'wheel');
-			})
+			.filter((evt: any) => this.zIsPressed || !(evt.type === 'wheel'))
 			.scaleExtent(zoomRange)
 			.on('zoom', zoomed)
 			.on('end', zoomEnd);

@@ -16,13 +16,11 @@
 								<Button
 									@click="resetZoom"
 									label="Reset zoom"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
+									size="small"
 									severity="secondary"
+									outlined
 								/>
-								<span class="how-to-zoom"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
+								<span class="how-to-zoom"><kbd>Z</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
 							</span>
 						</template>
 						<template #center> </template>
@@ -349,6 +347,12 @@ main {
 	display: flex;
 	align-items: center;
 	font-size: var(--font-caption);
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: 0 var(--gap-small);
+	border-radius: var(--border-radius);
+	pointer-events: none;
+	user-select: none;
 }
 
 kbd {
@@ -357,6 +361,7 @@ kbd {
 	border-radius: var(--border-radius);
 	padding: 0 var(--gap-xsmall);
 	font-size: var(--font-tiny);
+	font-weight: var(--font-weight-semibold);
 }
 
 .legend {
