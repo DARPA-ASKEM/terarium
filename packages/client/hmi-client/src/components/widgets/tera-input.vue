@@ -2,7 +2,6 @@
 	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput" :label="label">
 		<label @click.self.stop="focusInput">{{ label }}</label>
 		<input
-			v-bind="attrs"
 			ref="inputField"
 			:value="getValue()"
 			@input="updateValue"

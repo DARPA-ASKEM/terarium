@@ -248,8 +248,10 @@ export function setIntervention(
 	interventions[index] = intervention;
 }
 
-export function removeIntervention(config: ModelConfiguration, index: number): void {
+export function removeIntervention(config: ModelConfiguration, intervention: Intervention): void {
 	const interventions = getInterventions(config);
+	const interventionId = intervention.name + intervention.timestep + intervention.value;
+	const index = interventions.findIndex((i) => i.name + i.timestep + i.value === interventionId);
 	interventions.splice(index, 1);
 }
 

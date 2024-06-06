@@ -147,8 +147,8 @@
 				<Accordion multiple :active-index="[0]" class="pb-6">
 					<AccordionTab>
 						<template #header> Interventions </template>
-						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
-						<tera-model-intervention
+
+						<!-- <tera-model-intervention
 							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
 							:key="intervention.name + intervention.timestep + intervention.value"
 							:intervention="intervention"
@@ -159,6 +159,25 @@
 								}
 							"
 							@delete="removeIntervention(knobs.transientModelConfig, idx)"
+						/> -->
+						<ul v-if="model">
+							<li v-for="(intervention, index) in interventionMap" :key="index">
+								<tera-intervention
+									:model="model"
+									:parameterId="intervention[0]"
+									:interventions="intervention[1]"
+									@delete-intervention="removeIntervention(knobs.transientModelConfig, $event)"
+								>
+								</tera-intervention>
+								<Divider />
+							</li>
+						</ul>
+						<Button
+							icon="pi pi-plus"
+							text
+							size="small"
+							label="Add Intervention"
+							@click="addIntervention"
 						/>
 					</AccordionTab>
 				</Accordion>
@@ -281,7 +300,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
@@ -299,7 +317,6 @@ import { getMMT, getModel, getModelConfigurations } from '@/services/model';
 import {
 	sanityCheck,
 	createModelConfiguration,
-	setIntervention,
 	removeIntervention,
 	setInitialSource,
 	setInitialExpression,
@@ -316,6 +333,8 @@ import { logger } from '@/utils/logger';
 import { cleanModel, isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
+import TeraIntervention from '@/components/model/petrinet/tera-intervention.vue';
+import Divider from 'primevue/divider';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -761,6 +780,11 @@ const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfigurationContext.value.modelConfiguration = config;
 	suggestedConfigurationContext.value.isOpen = true;
 };
+
+const interventionMap = computed<Map<string, Intervention[]>>(() => {
+	if (!knobs.value.transientModelConfig.interventions) return new Map();
+	return Map.groupBy(knobs.value.transientModelConfig.interventions, ({ name }) => name);
+});
 
 onMounted(async () => {
 	await initialize();
