@@ -13,7 +13,7 @@
 			/>
 		</template>
 		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3">
+			<tera-drilldown-section class="pl-3 pr-3">
 				<template #header-controls>
 					<Button
 						size="small"
@@ -94,7 +94,7 @@
 						</AccordionTab>
 					</Accordion>
 				</div>
-				<Accordion multiple :active-index="[0, 1, 2, 3, 4]">
+				<Accordion multiple :active-index="[0, 1, 2, 3]">
 					<AccordionTab header="Context">
 						<p class="text-sm mb-1">Name</p>
 						<InputText
@@ -112,51 +112,32 @@
 					<AccordionTab header="Diagram">
 						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
-					<template v-if="isPetriNet || isStockFlow">
-						<AccordionTab>
-							<template #header>
-								Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
-							</template>
-							<tera-initial-table-v2
-								v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials)"
-								:model-configuration="knobs.transientModelConfig"
-								:mmt="mmt"
-								:mmt-params="mmtParams"
-								@update-expression="
-									setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
-								"
-								@update-source="
-									setInitialSource(knobs.transientModelConfig, $event.id, $event.value)
-								"
-							/>
-						</AccordionTab>
-					</template>
-					<template v-else-if="isRegNet">
-						<AccordionTab header="Vertices">
-							<DataTable v-if="!isEmpty(vertices)" data-key="id" :value="vertices">
-								<Column field="id" header="Symbol" />
-								<Column field="name" header="Name" />
-								<Column field="rate_constant" header="Rate Constant" />
-								<Column field="initial" header="Initial Value">
-									<template #body="{ data, field }">
-										<!-- FIXME: temporary hack -->
-										<InputText v-model="data[field]" @blur="tempUpdate(data, field)" />
-									</template>
-								</Column>
-							</DataTable>
-						</AccordionTab>
-						<AccordionTab header="Edges">
-							<DataTable v-if="!isEmpty(edges)" data-key="id" :value="edges">
-								<Column field="id" header="Symbol" />
-								<Column field="source" header="Source" />
-								<Column field="target" header="Target" />
-								<Column field="properties.rate_constant" header="Rate Constant" />
-							</DataTable>
-						</AccordionTab>
-					</template>
+				</Accordion>
+				<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
+					>Some metadata is missing from these values. This information can be added manually to the
+					attached model.</Message
+				>
+				<Accordion multiple :active-index="[0]">
+					<AccordionTab>
+						<template #header>
+							Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
+						</template>
+						<tera-initial-table-v2
+							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
+							:model="model"
+							:model-configuration="knobs.transientModelConfig"
+							:mmt="mmt"
+							:mmt-params="mmtParams"
+							@update-expression="
+								setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
+							"
+							@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
+						/>
+					</AccordionTab>
 				</Accordion>
 				<tera-parameter-table-v2
-					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters)"
+					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
+					:model="model"
 					:model-configuration="knobs.transientModelConfig"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
@@ -314,7 +295,7 @@ import {
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getMMT, getModel, getModelConfigurations, getModelType } from '@/services/model';
+import { getMMT, getModel, getModelConfigurations } from '@/services/model';
 import {
 	sanityCheck,
 	createModelConfiguration,
@@ -328,13 +309,13 @@ import {
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
-import { AMRSchemaNames } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { cleanModel } from '@/model-representation/service';
+import { cleanModel, isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
+import Message from 'primevue/message';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -456,10 +437,6 @@ const runFromCode = () => {
 			};
 		});
 };
-const edges = computed(() => knobs?.value?.transientModelConfig.configuration?.model?.edges ?? []);
-const vertices = computed(
-	() => knobs?.value?.transientModelConfig?.configuration.model?.vertices ?? []
-);
 
 // FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
@@ -607,11 +584,6 @@ const numInitials = computed(() => {
 	if (!mmt.value) return 0;
 	return Object.keys(mmt.value.initials).length;
 });
-
-const modelType = computed(() => getModelType(model.value));
-const isRegNet = computed(() => modelType.value === AMRSchemaNames.REGNET);
-const isPetriNet = computed(() => modelType.value === AMRSchemaNames.PETRINET);
-const isStockFlow = computed(() => modelType.value === AMRSchemaNames.STOCKFLOW);
 
 const addIntervention = () => {
 	if (knobs.value.transientModelConfig.interventions) {
@@ -788,11 +760,6 @@ const applyConfigValues = (config: ModelConfiguration) => {
 const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfigurationContext.value.modelConfiguration = config;
 	suggestedConfigurationContext.value.isOpen = true;
-};
-
-// FIXME: temporary hack, need proper config/states to handle all frameworks and fields
-const tempUpdate = (data: any, field: any) => {
-	data[field] = +data[field];
 };
 
 onMounted(async () => {
