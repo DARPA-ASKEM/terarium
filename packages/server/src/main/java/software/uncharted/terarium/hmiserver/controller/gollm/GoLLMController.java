@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelRespons
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/gollm")
@@ -66,6 +70,8 @@ public class GoLLMController {
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+
+	private final Messages messages;
 
 	@PostConstruct
 	void init() {
@@ -109,49 +115,67 @@ public class GoLLMController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		try {
-			// Grab the document
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-			if (document.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
-			}
-
-			// make sure there is text in the document
-			if (document.get().getText() == null || document.get().getText().isEmpty()) {
-				log.warn("Document {} has no text to send", documentId);
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
-			}
-
-			// check for input length
-			if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-				log.warn("Document {} text too long for GoLLM model card task", documentId);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Document text is too long");
-			}
-
-			final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-			input.setResearchPaper(document.get().getText());
-
-			// Create the task
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.GOLLM);
-			req.setScript(ModelCardResponseHandler.NAME);
-			req.setUserId(currentUserService.get().getId());
-			req.setInput(objectMapper.writeValueAsBytes(input));
-			req.setProjectId(projectId);
-
-			final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
-			props.setDocumentId(documentId);
-			req.setAdditionalProperties(props);
-
-			// send the request
-			return ResponseEntity.ok().body(taskService.runTask(mode, req));
-
-		} catch (final ResponseStatusException e) {
-			throw e;
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		// Grab the document
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		if (document.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
+
+		// make sure there is text in the document
+		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+			log.warn("Document {} has no text to send", documentId);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		// check for input length
+		if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+			log.warn("Document {} text too long for GoLLM model card task", documentId);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
+		}
+
+		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+		input.setResearchPaper(document.get().getText());
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(ModelCardResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+		props.setDocumentId(documentId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		// send the response
+		return ResponseEntity.ok().body(resp);
 	}
 
 	@GetMapping("/configure-model")
@@ -187,58 +211,73 @@ public class GoLLMController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		try {
-
-			// Grab the document
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-			if (document.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found");
-			}
-
-			// make sure there is text in the document
-			if (document.get().getText() == null || document.get().getText().isEmpty()) {
-				log.warn("Document {} has no text to send", documentId);
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Document has no text");
-			}
-
-			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId, permission);
-			if (model.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
-			}
-
-			final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
-			input.setResearchPaper(document.get().getText());
-			// stripping the metadata from the model before its sent since it can cause
-			// gollm to fail with massive inputs
-			model.get().setMetadata(null);
-			input.setAmr(model.get());
-
-			// Create the task
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.GOLLM);
-			req.setScript(ConfigureModelResponseHandler.NAME);
-			req.setUserId(currentUserService.get().getId());
-			req.setInput(objectMapper.writeValueAsBytes(input));
-			req.setProjectId(projectId);
-
-			final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
-			props.setDocumentId(documentId);
-			props.setModelId(modelId);
-			props.setWorkflowId(workflowId);
-			props.setNodeId(nodeId);
-			req.setAdditionalProperties(props);
-
-			// send the request
-			return ResponseEntity.ok().body(taskService.runTask(mode, req));
-
-		} catch (final ResponseStatusException e) {
-			throw e;
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		// Grab the document
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		if (document.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
+
+		// make sure there is text in the document
+		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+			log.warn("Document {} has no text to send", documentId);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final ConfigureModelResponseHandler.Input input = new ConfigureModelResponseHandler.Input();
+		input.setResearchPaper(document.get().getText());
+		// stripping the metadata from the model before its sent since it can cause
+		// gollm to fail with massive inputs
+		model.get().setMetadata(null);
+		input.setAmr(model.get());
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(ConfigureModelResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
+		props.setDocumentId(documentId);
+		props.setModelId(modelId);
+		props.setWorkflowId(workflowId);
+		props.setNodeId(nodeId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
 	}
 
 	@Data
@@ -284,84 +323,99 @@ public class GoLLMController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		try {
-			// Grab the datasets
-			final List<String> datasets = new ArrayList<>();
-			for (final UUID datasetId : datasetIds) {
-				final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
-				if (dataset.isEmpty()) {
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset not found");
-				}
+		// Grab the datasets
+		final List<String> datasets = new ArrayList<>();
+		for (final UUID datasetId : datasetIds) {
+			final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+			if (dataset.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+			}
 
-				// make sure there is text in the document
-				if (dataset.get().getFileNames() == null
-						|| dataset.get().getFileNames().isEmpty()) {
-					log.warn("Dataset {} has no source files to send", datasetId);
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dataset has no filenames");
-				}
+			// make sure there is text in the document
+			if (dataset.get().getFileNames() == null
+					|| dataset.get().getFileNames().isEmpty()) {
+				log.error("Dataset {} has no source files to send", datasetId);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
+			}
 
-				for (final String filename : dataset.get().getFileNames()) {
-					try {
-						final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
-						if (datasetText.isPresent()) {
-							// ensure unescaped newlines are escaped
-							datasets.add(
-									datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
-						}
-					} catch (final Exception e) {
-						throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to fetch file for dataset");
+			for (final String filename : dataset.get().getFileNames()) {
+				try {
+					final Optional<String> datasetText = datasetService.fetchFileAsString(datasetId, filename);
+					if (datasetText.isPresent()) {
+						// ensure unescaped newlines are escaped
+						datasets.add(datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
 					}
+				} catch (final Exception e) {
+					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
 				}
 			}
-
-			if (datasets.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No datasets found");
-			}
-
-			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId, permission);
-			if (model.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
-			}
-
-			final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
-			input.setDatasets(datasets);
-			// stripping the metadata from the model before its sent since it can cause
-			// gollm to fail with massive inputs
-			model.get().setMetadata(null);
-			input.setAmr(model.get());
-
-			// set matrix string if provided
-			if (body != null && !body.getMatrixStr().isEmpty()) {
-				input.setMatrixStr(body.getMatrixStr());
-			}
-
-			// Create the task
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.GOLLM);
-			req.setScript(ConfigureFromDatasetResponseHandler.NAME);
-			req.setUserId(currentUserService.get().getId());
-			req.setInput(objectMapper.writeValueAsBytes(input));
-			req.setProjectId(projectId);
-
-			final ConfigureFromDatasetResponseHandler.Properties props =
-					new ConfigureFromDatasetResponseHandler.Properties();
-			props.setDatasetIds(datasetIds);
-			props.setModelId(modelId);
-			props.setWorkflowId(workflowId);
-			props.setNodeId(nodeId);
-			req.setAdditionalProperties(props);
-
-			// send the request
-			return ResponseEntity.ok().body(taskService.runTask(mode, req));
-
-		} catch (final ResponseStatusException e) {
-			throw e;
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		if (datasets.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+		}
+
+		// Grab the model
+		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		if (model.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final ConfigureFromDatasetResponseHandler.Input input = new ConfigureFromDatasetResponseHandler.Input();
+		input.setDatasets(datasets);
+		// stripping the metadata from the model before its sent since it can cause
+		// gollm to fail with massive inputs
+		model.get().setMetadata(null);
+		input.setAmr(model.get());
+
+		// set matrix string if provided
+		if (body != null && !body.getMatrixStr().isEmpty()) {
+			input.setMatrixStr(body.getMatrixStr());
+		}
+
+		// Create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(ConfigureFromDatasetResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final Exception e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final ConfigureFromDatasetResponseHandler.Properties props =
+				new ConfigureFromDatasetResponseHandler.Properties();
+		props.setDatasetIds(datasetIds);
+		props.setModelId(modelId);
+		props.setWorkflowId(workflowId);
+		props.setNodeId(nodeId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
 	}
 
 	@GetMapping("/compare-models")
@@ -395,52 +449,74 @@ public class GoLLMController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-		try {
-			final List<String> modelCards = new ArrayList<>();
-			for (final UUID modelId : modelIds) {
-				// Grab the model
-				final Optional<Model> model = modelService.getAsset(modelId, permission);
-				if (model.isEmpty()) {
-					throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Model not found");
-				}
-				if (model.get().getMetadata().getGollmCard() != null) {
+
+		final List<String> modelCards = new ArrayList<>();
+		for (final UUID modelId : modelIds) {
+			// Grab the model
+			final Optional<Model> model = modelService.getAsset(modelId, permission);
+			if (model.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+			}
+			if (model.get().getMetadata().getGollmCard() != null) {
+				try {
 					modelCards.add(objectMapper.writeValueAsString(
 							model.get().getMetadata().getGollmCard()));
+				} catch (final JsonProcessingException e) {
+					log.error("Unable to serialize model card: {}", e.getMessage());
+					throw new ResponseStatusException(
+							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 				}
 			}
-
-			// if the number of models is less than 2, return an error
-			if (modelCards.size() < 2) {
-				throw new ResponseStatusException(
-						HttpStatus.BAD_REQUEST, "At least two models with model cards are required");
-			}
-
-			final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-			input.setModelCards(modelCards);
-
-			// create the task
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.GOLLM);
-			req.setScript(CompareModelsResponseHandler.NAME);
-			req.setUserId(currentUserService.get().getId());
-			req.setInput(objectMapper.writeValueAsBytes(input));
-			req.setProjectId(projectId);
-
-			final CompareModelsResponseHandler.Properties props = new CompareModelsResponseHandler.Properties();
-			props.setWorkflowId(workflowId);
-			props.setNodeId(nodeId);
-			req.setAdditionalProperties(props);
-
-			// send the request
-			return ResponseEntity.ok().body(taskService.runTask(mode, req));
-
-		} catch (final ResponseStatusException e) {
-			throw e;
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		// if the number of models is less than 2, return an error
+		if (modelCards.size() < 2) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("task.gollm.model-card.bad-number"));
+		}
+
+		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
+		input.setModelCards(modelCards);
+
+		// create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(CompareModelsResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final CompareModelsResponseHandler.Properties props = new CompareModelsResponseHandler.Properties();
+		props.setWorkflowId(workflowId);
+		props.setNodeId(nodeId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
 	}
 
 	@PutMapping("/{task-id}")
