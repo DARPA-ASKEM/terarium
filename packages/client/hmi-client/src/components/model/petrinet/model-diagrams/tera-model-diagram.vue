@@ -4,11 +4,7 @@
 		:show-tooltip="!isEmpty(hoveredTransitionId)"
 	>
 		<main>
-			<TeraResizablePanel
-				v-if="!isPreview"
-				class="diagram-container"
-				:class="{ 'unlocked-zoom': !isZoomLocked }"
-			>
+			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
@@ -276,9 +272,7 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-.unlocked-zoom {
-	border: 1px solid var(--primary-color);
-}
+
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
