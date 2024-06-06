@@ -174,8 +174,6 @@ async function renderGraph() {
 	const rawTemplates = rawTemplatesSummary(mmt.value);
 
 	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
-	console.log(renderer, renderer.svgEl);
-	console.log(graphElement.value);
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
