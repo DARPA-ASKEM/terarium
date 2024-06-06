@@ -1,5 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import co.elastic.clients.elasticsearch._types.FieldSort;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOptions;
@@ -11,17 +22,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.metamodel.Metamodel;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.DataMigration;
 import software.uncharted.terarium.hmiserver.models.DataMigration.MigrationState;
@@ -31,8 +34,10 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteReposito
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 /**
- * When migated asset services to use postgres as the central storage, this will migrate existing data from
- * elasticsearch into the postgres table, storing the result of the migration in pg so it doesn't do it multiple times.
+ * When migated asset services to use postgres as the central storage, this will
+ * migrate existing data from
+ * elasticsearch into the postgres table, storing the result of the migration in
+ * pg so it doesn't do it multiple times.
  */
 @Service
 @Profile("!test") // don't run in test profile
@@ -73,14 +78,14 @@ public class DataMigrationESToPG {
 			this.index = index;
 		}
 
-		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
+		Pair<Integer, Integer> migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
 			if (!elasticService.indexExists(index)) {
-				return;
+				return Pair.of(0, 0);
 			}
 
 			if (elasticService.count(index) == 0) {
-				return;
+				return Pair.of(0, 0);
 			}
 
 			// check if the data has already been migrated
@@ -91,6 +96,9 @@ public class DataMigrationESToPG {
 			log.info("Migrating from ES index {} to SQL...", index);
 
 			final String SORT_FIELD = "createdOn";
+
+			Integer totalSuccess = 0;
+			Integer totalFailed = 0;
 
 			while (true) {
 				final SearchRequest.Builder reqBuilder = new SearchRequest.Builder()
@@ -132,13 +140,15 @@ public class DataMigrationESToPG {
 					for (final T asset : assets) {
 						try {
 							service.getRepository().save(asset);
+							totalSuccess++;
 						} catch (final Exception e) {
 							log.warn("Failed to insert id: {}", asset.getId(), e);
 							failed += 1;
+							totalFailed++;
 						}
 					}
 					if (failed == assets.size()) {
-						throw new RuntimeException("All assets faield to insert");
+						throw new RuntimeException("All assets failed to insert");
 					}
 				}
 
@@ -150,6 +160,8 @@ public class DataMigrationESToPG {
 				// over and over
 				lastPagesLastId = lastId;
 			}
+
+			return Pair.of(totalSuccess, totalFailed);
 		}
 	}
 
@@ -172,20 +184,22 @@ public class DataMigrationESToPG {
 			final String tableName = getTableName(migration.getService().getAssetClass());
 
 			try {
-				DataMigration migrationRecord =
-						migrationRepository.findByTableName(tableName).orElse(null);
+				DataMigration migrationRecord = migrationRepository.findByTableName(tableName).orElse(null);
 
 				if (migrationRecord != null && migrationRecord.getState() == MigrationState.SUCCESS) {
 					log.info("Data already migrated for table: {}", tableName);
 					continue;
 				}
 
-				migration.migrateFromEsToPg(elasticService);
+				final Pair<Integer, Integer> res = migration.migrateFromEsToPg(elasticService);
 
 				migrationRecord = new DataMigration();
 				migrationRecord.setTableName(tableName);
 				migrationRecord.setTimestamp(new Timestamp(System.currentTimeMillis()));
 				migrationRecord.setState(MigrationState.SUCCESS);
+				migrationRecord.setTotalDocuments(res.getLeft() + res.getRight());
+				migrationRecord.setSuccessfulDocuments(res.getLeft());
+				migrationRecord.setFailedDocuments(res.getRight());
 				migrationRepository.save(migrationRecord);
 
 				log.info("Migrated ES index {} to PG table {} successfully", migration.getIndex(), tableName);
