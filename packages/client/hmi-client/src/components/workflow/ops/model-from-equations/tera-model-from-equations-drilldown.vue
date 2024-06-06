@@ -90,6 +90,7 @@
 										:src="getAssetUrl(equation as AssetBlock<EquationFromImageBlock>)"
 										:alt="''"
 										preview
+										class="border-dashed border-2"
 									/>
 								</template>
 								<tera-math-editor
