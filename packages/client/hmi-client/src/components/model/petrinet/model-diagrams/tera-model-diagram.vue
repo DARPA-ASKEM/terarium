@@ -131,7 +131,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
-const isZoomLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -218,10 +217,6 @@ async function renderGraph() {
 		const { data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) hoveredTransitionId.value = '';
 	});
-
-	if (isZoomLocked.value) {
-		renderer.disableZoom();
-	}
 
 	// Render graph
 	const graphData =

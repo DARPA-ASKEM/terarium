@@ -380,9 +380,4 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				return { x: node.x, y: node.y };
 		}
 	}
-
-	disableZoom() {
-		console.log(this);
-		// this?.svgEl?.on('wheel.zoom', null);
-	}
 }

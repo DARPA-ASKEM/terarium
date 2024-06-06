@@ -55,7 +55,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	isDragEnabled: boolean = false;
 
-	enableZoom: boolean = false;
+	isZoomable: boolean = false;
 
 	constructor(options: Options) {
 		super(); // Event emitter
@@ -327,11 +327,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		window.addEventListener('keydown', (event) => {
-			if (event.key === 'z') this.enableZoom = true;
+			if (event.key === 'z') this.isZoomable = true;
 		});
 
 		window.addEventListener('keyup', (event) => {
-			if (event.key === 'z') this.enableZoom = false;
+			if (event.key === 'z') this.isZoomable = false;
 		});
 
 		// Zoom control
@@ -368,7 +368,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		this.zoom = d3
 			.zoom()
-			.filter((evt: any) => this.enableZoom || !(evt.type === 'wheel'))
+			.filter((evt: any) => this.isZoomable || !(evt.type === 'wheel'))
 			.scaleExtent(zoomRange)
 			.on('zoom', zoomed)
 			.on('end', zoomEnd);
