@@ -17,11 +17,11 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Model setup
-1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
+1. Use/upload a model from [Google Drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
 2. Connect the model to a Model Configuration operation, create a configuration
 3. Ensure that the model parameters (e.g. beta, gamma) have distribution ranges
 4. Connect the model-configuration to a Calibrate-PyCIEMSS operation
-5. Use/upload a dataset from [gogole drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
+5. Use/upload a dataset from [Google Drive](https://drive.google.com/drive/folders/1hjxiggCkBCofjCQgf9gXZEHBLkBqaVwe)
 6. Connect the dataset to Calibrate-PyCIEMSS
 
 
@@ -38,7 +38,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 ### 4. Check results
 1. Verify that there is a loss chart available showing the loss value over time
 2. Verify that there is a simulate chart avaible showing sample projections from the calibrated parameters
-3. Should be able to add/remoe simulate charts
+3. Should be able to add/remove simulate charts
 
 
 ### 5. End test
