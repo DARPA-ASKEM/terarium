@@ -365,3 +365,17 @@ export function cleanModel(model: Model): void {
 		}
 	});
 }
+
+export function isModelMissingMetadata(model: Model): boolean {
+	const parameters: ModelParameter[] = getParameters(model);
+	const initials: Initial[] = getInitials(model);
+
+	const initialsCheck = initials.some((i) => {
+		const initialMetadata = getInitialMetadata(model, i.target);
+		return !initialMetadata?.name || !initialMetadata?.description || !initialMetadata?.units;
+	});
+
+	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
+
+	return initialsCheck || parametersCheck;
+}
