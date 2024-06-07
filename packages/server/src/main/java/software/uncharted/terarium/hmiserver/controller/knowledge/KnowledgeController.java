@@ -301,14 +301,15 @@ public class KnowledgeController {
 				}
 			} catch (final IOException e) {
 				log.error("Unable to write to zip file", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+				throw new ResponseStatusException(
+						HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			} finally {
 				try {
 					zipf.close();
 				} catch (final IOException e) {
 					log.error("Unable to close zip file", e);
 					throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 				}
 			}
 
@@ -435,7 +436,7 @@ public class KnowledgeController {
 			fileAsBytes = input.getBytes();
 		} catch (final IOException e) {
 			log.error("Unable to read file", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
 		final String filename = input.getOriginalFilename();
@@ -549,7 +550,7 @@ public class KnowledgeController {
 			card = mapper.treeToValue(resp.getBody(), Card.class);
 		} catch (final IOException e) {
 			log.error("Unable to convert response to card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		if (model.getHeader() == null) {
