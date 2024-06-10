@@ -41,6 +41,7 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
+					<!--
 					<Button
 						label="Show everything"
 						severity="secondary"
@@ -59,6 +60,7 @@
 						disabled
 						class="white-space-nowrap"
 					/>
+					-->
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
@@ -991,16 +993,6 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
 });
-
-function cleanUpLayout() {
-	// TODO: clean up layout of nodes
-	console.log('clean up layout');
-}
-
-function resetZoom() {
-	// TODO: reset zoom level and position
-	console.log('clean up layout');
-}
 </script>
 
 <style scoped>
