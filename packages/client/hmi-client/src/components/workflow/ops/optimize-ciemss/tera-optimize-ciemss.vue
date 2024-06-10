@@ -336,7 +336,7 @@ import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDataSetDisabled } from '@/components/dataset/utils';
+import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -406,7 +406,7 @@ const cancelRunId = computed(
 );
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [

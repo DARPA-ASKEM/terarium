@@ -161,7 +161,7 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDataSetDisabled } from '@/components/dataset/utils';
+import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -196,7 +196,7 @@ const viewOptions = ref([
 ]);
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDataSetDisabled(selectedRunId.value, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [

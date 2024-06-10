@@ -174,10 +174,15 @@ const sourceDataset = computed(() => card.value?.dataset ?? '');
 const provenance = computed(() => card.value?.provenance ?? '');
 const schema = computed(() => card.value?.schema ?? '');
 const authors = computed(() => {
-	const authorsArray = props.model?.metadata?.annotations?.authors ?? [];
-	if (card.value?.ModelCardAuthors) authorsArray.unshift(card.value?.ModelCardAuthors);
-	else if (card.value?.authorAuthor) authorsArray.unshift(card.value?.authorAuthor);
-	return authorsArray.join(', ');
+	const authorsSet: Set<string> = new Set();
+	if (props.model?.metadata?.annotations?.authors)
+		props.model.metadata.annotations.authors.forEach((ele) => authorsSet.add(ele));
+	if (card.value?.ModelCardAuthors)
+		card.value.ModelCardAuthors.forEach((ele) => authorsSet.add(ele));
+	if (card.value?.authorAuthor)
+		card.value.authorAuthor.split(',').forEach((ele) => authorsSet.add(ele));
+	const authorsList = [...authorsSet];
+	return authorsList.join(', ');
 });
 
 const documents = computed<{ name: string; id: string }[]>(

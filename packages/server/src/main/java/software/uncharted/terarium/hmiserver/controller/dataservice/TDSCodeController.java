@@ -189,7 +189,7 @@ public class TDSCodeController {
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<Code> code = codeService.getAsset(id, permission);
