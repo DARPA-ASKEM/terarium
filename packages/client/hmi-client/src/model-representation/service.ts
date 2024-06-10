@@ -139,6 +139,7 @@ export const getModelRenderer = (
 			el: graphElement,
 			useAStarRouting: false,
 			useStableZoomPan: true,
+			zoomModifier: 'Alt',
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
@@ -150,6 +151,7 @@ export const getModelRenderer = (
 		el: graphElement,
 		useAStarRouting: false,
 		useStableZoomPan: true,
+		zoomModifier: 'Alt',
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});

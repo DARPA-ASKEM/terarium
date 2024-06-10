@@ -326,13 +326,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				.style('pointer-events', 'none');
 		}
 
-		window.addEventListener('keydown', (event) => {
-			if (event.key === 'z') this.isZoomable = true;
-		});
+		const enableZoom = (event: KeyboardEvent) => {
+			if (event.key === this.options.zoomModifier) renderer.isZoomable = true;
+		};
 
-		window.addEventListener('keyup', (event) => {
-			if (event.key === 'z') this.isZoomable = false;
-		});
+		const disableZoom = (event: KeyboardEvent) => {
+			if (event.key === this.options.zoomModifier) renderer.isZoomable = false;
+		};
+
+		window.addEventListener('keydown', enableZoom);
+		window.addEventListener('keyup', disableZoom);
 
 		// Zoom control
 		// FIXME: evt type
@@ -356,6 +359,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 					.style('pointer-events', 'none');
 			}
 		};
+
 		const zoomEnd = () => {
 			if (!this.graph || !chart) return;
 			this.zoomTransformObject = d3.zoomTransform(chart.node() as Element);
@@ -368,10 +372,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		this.zoom = d3
 			.zoom()
-			.filter((evt: any) => this.isZoomable || !(evt.type === 'wheel'))
+			.filter((evt: any) => {
+				if (renderer.options?.zoomModifier) {
+					return this.isZoomable || !(evt.type === 'wheel');
+				}
+				return true;
+			})
 			.scaleExtent(zoomRange)
 			.on('zoom', zoomed)
 			.on('end', zoomEnd);
+
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		if (this.options.useStableZoomPan && this.zoomTransformObject) {

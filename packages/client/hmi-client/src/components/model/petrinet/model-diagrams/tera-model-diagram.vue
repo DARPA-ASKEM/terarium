@@ -16,7 +16,11 @@
 									severity="secondary"
 									outlined
 								/>
-								<span class="how-to-zoom"><kbd>Z</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
+								<span class="how-to-zoom">
+									<kbd>{{ zoomModifierKey }}</kbd>
+									+
+									<kbd>scroll</kbd>&nbsp;to zoom</span
+								>
 							</span>
 						</template>
 						<template #center> </template>
@@ -96,7 +100,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -130,6 +134,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-configuration']);
+
+const zoomModifierKey = navigator.userAgent.includes('Mac') ? 'Option' : 'Alt';
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
@@ -248,6 +254,13 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
+
+onMounted(() => {
+	if (!props.isPreview) {
+		graphElement.value?.addEventListener('keydown', () => console.log(9));
+		graphElement.value?.addEventListener('keyup', () => console.log(9));
+	}
+});
 </script>
 
 <style scoped>
