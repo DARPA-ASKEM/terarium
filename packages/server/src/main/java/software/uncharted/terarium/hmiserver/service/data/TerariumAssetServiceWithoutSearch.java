@@ -314,15 +314,17 @@ public abstract class TerariumAssetServiceWithoutSearch<
 			throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final List<String> validFileNames = new ArrayList<>();
-		for (final String fileName : oldAsset.getFileNames()) {
-			final String srcKey = getPath(oldAsset.getId(), fileName);
-			final String dstKey = getPath(newAsset.getId(), fileName);
-			try {
-				s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
-				validFileNames.add(fileName);
-			} catch (final NoSuchKeyException e) {
-				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-				continue;
+		if (oldAsset.getFileNames() != null) {
+			for (final String fileName : oldAsset.getFileNames()) {
+				final String srcKey = getPath(oldAsset.getId(), fileName);
+				final String dstKey = getPath(newAsset.getId(), fileName);
+				try {
+					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
+					validFileNames.add(fileName);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
 			}
 		}
 		newAsset.setFileNames(validFileNames);
@@ -335,24 +337,26 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		final String bucket = config.getFileStorageS3BucketName();
 
 		final Map<String, FileExport> files = new HashMap<>();
-		for (final String fileName : asset.getFileNames()) {
-			final String key = getPath(assetId, fileName);
+		if (asset.getFileNames() != null) {
+			for (final String fileName : asset.getFileNames()) {
+				final String key = getPath(assetId, fileName);
 
-			try {
-				final ResponseInputStream<GetObjectResponse> stream =
-						s3ClientService.getS3Service().getObject(bucket, key);
-				final byte[] bytes = stream.readAllBytes();
+				try {
+					final ResponseInputStream<GetObjectResponse> stream =
+							s3ClientService.getS3Service().getObject(bucket, key);
+					final byte[] bytes = stream.readAllBytes();
 
-				final String contentType = stream.response().contentType();
+					final String contentType = stream.response().contentType();
 
-				final FileExport fileExport = new FileExport();
-				fileExport.setBytes(bytes);
-				fileExport.setContentType(ContentType.parse(contentType));
+					final FileExport fileExport = new FileExport();
+					fileExport.setBytes(bytes);
+					fileExport.setContentType(ContentType.parse(contentType));
 
-				files.put(fileName, fileExport);
-			} catch (final NoSuchKeyException e) {
-				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-				continue;
+					files.put(fileName, fileExport);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
 			}
 		}
 		return files;

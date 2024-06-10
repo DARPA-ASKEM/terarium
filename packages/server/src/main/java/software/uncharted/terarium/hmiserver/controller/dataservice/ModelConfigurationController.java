@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
@@ -96,7 +94,6 @@ public class ModelConfigurationController {
 			if (modelConfigurations.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			modelConfigurations.forEach(ModelConfigurationController::stuffModelConfigSemanticsForFrontEnd);
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
@@ -149,7 +146,6 @@ public class ModelConfigurationController {
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			stuffModelConfigSemanticsForFrontEnd(modelConfiguration.get());
 			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);

@@ -69,7 +69,13 @@ export default defineConfig({
 		format: 'es'
 	},
 	build: {
-		target: 'esnext'
+		target: 'esnext',
+		rollupOptions: {
+			input: {
+				main: path.resolve(__dirname, 'index.html'),
+				sso: path.resolve(__dirname, 'silent-sso.html')
+			}
+		}
 	},
 	plugins: [
 		vue({

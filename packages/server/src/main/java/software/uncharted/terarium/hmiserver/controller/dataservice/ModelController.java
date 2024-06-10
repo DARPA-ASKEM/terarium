@@ -137,7 +137,7 @@ public class ModelController {
 			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
 
 		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id, permission);
@@ -430,7 +430,8 @@ public class ModelController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfigurationLegacy.class)))),
+																		implementation =
+																				ModelConfigurationLegacy.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configurations from the data store",
@@ -442,7 +443,7 @@ public class ModelController {
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			final List<ModelConfigurationLegacy> modelConfigurations =

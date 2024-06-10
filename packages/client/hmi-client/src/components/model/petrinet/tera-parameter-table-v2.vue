@@ -70,6 +70,7 @@
 										@change="onSelect(parameterId)"
 									/>
 									<tera-parameter-entry
+										:model="model"
 										:model-configuration="props.modelConfiguration"
 										:parameter-id="parameterId"
 										@update-parameter="emit('update-parameters', [$event])"
@@ -97,6 +98,7 @@
 							@change="onSelect(id)"
 						/>
 						<tera-parameter-entry
+							:model="model"
 							:model-configuration="modelConfiguration"
 							:parameter-id="id"
 							@update-parameter="emit('update-parameters', [$event])"
@@ -134,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfigurationLegacy, ModelDistribution } from '@/types/Types';
+import { Model, ModelConfigurationLegacy, ModelDistribution } from '@/types/Types';
 import { getParameterDistribution, getParameters } from '@/services/model-configurations-legacy';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
@@ -156,6 +158,7 @@ import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{
+	model: Model;
 	modelConfiguration: ModelConfigurationLegacy;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
