@@ -149,7 +149,8 @@ public class DataMigrationESToPG {
 					}
 				}
 
-				if (Objects.equals(lastId, lastPagesLastId) || resp.hits().hits().size() < PAGE_SIZE) {
+				if (Objects.equals(lastId, lastPagesLastId)
+						|| resp.hits().hits().size() < PAGE_SIZE) {
 					break;
 				}
 
