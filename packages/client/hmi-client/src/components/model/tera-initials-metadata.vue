@@ -1,7 +1,8 @@
 <template>
-	<ul v-if="isStratified">
+	<!-- <ul v-if="isStratified">
 		<li v-for="([baseTarget, values], index) in collapsedInitials.entries()" :key="baseTarget">
 			<tera-initial-metadata-entry
+				:state="states[0]"
 				:model="model"
 				:target="baseTarget"
 				is-base
@@ -12,6 +13,7 @@
 			<ul v-if="toggleStates[index]" class="stratified">
 				<li v-for="target in values" :key="target">
 					<tera-initial-metadata-entry
+						:state="states[0]"
 						:model="model"
 						:target="target"
 						is-stratified
@@ -20,24 +22,25 @@
 				</li>
 			</ul>
 		</li>
-	</ul>
-	<ul v-else>
-		<li v-for="{ target } in initials" :key="target">
+	</ul> -->
+	<!-- <ul v-else> -->
+	<ul>
+		<li v-for="state in states" :key="state.id">
 			<tera-initial-metadata-entry
+				:state="state"
 				:model="model"
-				:target="target"
-				@update-initial-metadata="$emit('update-initial-metadata', { target, ...$event })"
+				@update-initial-metadata="$emit('update-initial-metadata', { id: state.id, ...$event })"
 			/>
 		</li>
 	</ul>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+// import { ref } from 'vue';
 import { Model } from '@/types/Types';
 import { MiraModel } from '@/model-representation/mira/mira-common';
-import { getInitials } from '@/model-representation/service';
-import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
+// import { getInitials } from '@/model-representation/service';
+// import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
 import TeraInitialMetadataEntry from '@/components/model/tera-initial-metadata-entry.vue';
 
 const props = defineProps<{
@@ -45,22 +48,25 @@ const props = defineProps<{
 	mmt: MiraModel;
 }>();
 
-const emit = defineEmits(['update-initial-metadata']);
+// const emit = defineEmits(['update-initial-metadata']);
 
-const initials = getInitials(props.model);
-const isStratified = isStratifiedModel(props.mmt);
-const collapsedInitials = collapseInitials(props.mmt);
+const { states } = props.model.model;
+console.log(states);
 
-const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
+// const initials = getInitials(props.model);
+// const isStratified = isStratifiedModel(props.mmt);
+// const collapsedInitials = collapseInitials(props.mmt);
 
-function updateBaseInitial(baseTarget: string, event: any) {
-	emit('update-initial-metadata', { target: baseTarget, ...event });
-	// Update stratified initials if the event is a unit change
-	const targets = collapsedInitials.get(baseTarget);
-	if (targets && event.key === 'units') {
-		targets.forEach((target) => emit('update-initial-metadata', { target, ...event }));
-	}
-}
+// const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
+
+// function updateBaseInitial(baseTarget: string, event: any) {
+// 	emit('update-initial-metadata', { target: baseTarget, ...event });
+// 	// Update stratified initials if the event is a unit change
+// 	const targets = collapsedInitials.get(baseTarget);
+// 	if (targets && event.key === 'units') {
+// 		targets.forEach((target) => emit('update-initial-metadata', { target, ...event }));
+// 	}
+// }
 </script>
 
 <style scoped>

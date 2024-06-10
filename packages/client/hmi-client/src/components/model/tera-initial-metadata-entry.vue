@@ -1,14 +1,14 @@
 <template>
 	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
-		<h6>{{ target }}</h6>
+		<h6>{{ id }}</h6>
 		<tera-input
 			label="Name"
-			:model-value="getInitialName(model, target)"
+			:model-value="name ?? ''"
 			@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
 		/>
 		<tera-input
 			label="Description"
-			:model-value="getInitialDescription(model, target)"
+			:model-value="getInitialDescription(model, id)"
 			@update:model-value="
 				$emit('update-initial-metadata', {
 					key: 'description',
@@ -26,35 +26,34 @@
 			/>
 			<tera-input
 				label="Unit"
-				:model-value="getInitialUnits(model, target)"
+				:model-value="initial?.expression ?? ''"
 				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
 			/>
 			<!--TODO: Add support for editing concepts-->
-			<tera-input label="Concept" :model-value="getInitialConcept(model, target)" disabled />
+			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
 		</template>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { Model } from '@/types/Types';
-import {
-	getInitialName,
-	getInitialDescription,
-	getInitialUnits,
-	getInitialConcept
-} from '@/model-representation/service';
+import { Model, PetriNetState } from '@/types/Types';
+import { getInitialDescription } from '@/model-representation/service';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Button from 'primevue/button';
 
-defineProps<{
+const props = defineProps<{
 	model: Model;
-	target: string;
+	state: PetriNetState;
 	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
 defineEmits(['update-initial-metadata', 'toggle-stratified-variables', 'open-matrix']);
+
+const { id, name, grounding, initial } = props.state;
+
+console.log(props.model);
 </script>
 
 <style scoped>
