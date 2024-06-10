@@ -133,7 +133,7 @@ public class SimulationController {
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
 			Optional<Simulation> simulation = simulationService.getAsset(id, permission);
@@ -332,7 +332,7 @@ public class SimulationController {
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
 			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
-			dataset.setName(datasetName + " Result Dataset");
+			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());

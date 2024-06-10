@@ -40,7 +40,6 @@ image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace hmi-client build
 	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-
 ## Clean
 .PHONY: clean
 clean: $(TARGETS:%=clean-%)
