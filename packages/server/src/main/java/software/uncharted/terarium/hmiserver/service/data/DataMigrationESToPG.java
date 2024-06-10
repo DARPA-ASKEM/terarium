@@ -129,7 +129,13 @@ public class DataMigrationESToPG {
 						continue;
 					}
 					if (asset.getId() == null || !asset.getId().toString().equals(hit.id())) {
-						asset.setId(UUID.fromString(hit.id()));
+						try {
+							asset.setId(UUID.fromString(hit.id()));
+						} catch (final Exception e) {
+							log.warn("Unable to parse id into UUID: {}, discarding doc", hit.id());
+							totalFailed++;
+							continue;
+						}
 					}
 					assets.add(asset);
 				}
