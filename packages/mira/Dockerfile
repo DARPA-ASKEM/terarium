@@ -27,8 +27,11 @@ COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 # Install Mira
+COPY ./packages/mira/mira-version.txt /mira-version.txt
+RUN COMMIT_SHA=$(cat /mira-version.txt)
+
 RUN echo "Cache bust so we can always pull latest MIRA" $(date -u)
-RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/refs/heads/main.tar.gz && \
+RUN wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/$COMMIT_SHA.tar.gz && \
     tar -zxvf mira.tar.gz && \
     mv mira-* mira && \
     cd /mira && \
