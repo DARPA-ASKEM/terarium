@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +35,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -208,7 +210,7 @@ public class ModelConfigurationController {
 					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
 			updateModelInitials(
 					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
-
+			updateModelObservables(model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
 			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
@@ -386,10 +388,29 @@ public class ModelConfigurationController {
 			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
 			if (matchingConfigInitial != null) {
 				modelInitial.setExpression(matchingConfigInitial.getExpression());
-				modelInitial.setExpressionMathml(matchingConfigInitial.getExpression_mathml());
+				modelInitial.setExpressionMathml(matchingConfigInitial.getExpressionMathml());
 			}
 		}
 	}
+
+	private static void updateModelObservables(
+		final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
+		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
+		for (final ObservableSemantic configObservable : configObservables) {
+			configObservableMap.put(configObservable.getReferenceId(), configObservable);
+		}
+
+		for (final Observable modelObservable : modelObservables) {
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
+			if (matchingConfigObservable != null) {
+				modelObservable.setStates(matchingConfigObservable.getStates());
+				modelObservable.setExpression(matchingConfigObservable.getExpression());
+				modelObservable.setExpressionMathml(matchingConfigObservable.getExpressionMathml());
+			}
+		}
+	}
+
+
 
 	/**
 	 * Stuffs the individual lists of semantics into a common map, indexed by the target/id of each semantic
