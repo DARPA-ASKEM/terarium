@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,10 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -90,7 +86,6 @@ public class ModelConfigurationController {
 			if (modelConfigurations.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			modelConfigurations.forEach(ModelConfigurationController::stuffModelConfigSemanticsForFrontEnd);
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
@@ -143,7 +138,6 @@ public class ModelConfigurationController {
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			stuffModelConfigSemanticsForFrontEnd(modelConfiguration.get());
 			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -339,28 +333,6 @@ public class ModelConfigurationController {
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 					messages.get("postgres.service-unavailable"));
-		}
-	}
-
-	private static void stuffModelConfigSemanticsForFrontEnd(final ModelConfiguration modelConfiguration) {
-		modelConfiguration.setValues(new HashMap<>());
-
-		if (modelConfiguration.getObservableSemanticList() != null) {
-			for (final ObservableSemantic observableSemantic : modelConfiguration.getObservableSemanticList()) {
-				modelConfiguration.getValues().put(observableSemantic.getReferenceId(), observableSemantic);
-			}
-		}
-
-		if (modelConfiguration.getParameterSemanticList() != null) {
-			for (final ParameterSemantic parameterSemantic : modelConfiguration.getParameterSemanticList()) {
-				modelConfiguration.getValues().put(parameterSemantic.getReferenceId(), parameterSemantic);
-			}
-		}
-
-		if (modelConfiguration.getInitialSemanticList() != null) {
-			for (final InitialSemantic initialSemantic : modelConfiguration.getInitialSemanticList()) {
-				modelConfiguration.getValues().put(initialSemantic.getTarget(), initialSemantic);
-			}
 		}
 	}
 }
