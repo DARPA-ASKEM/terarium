@@ -490,7 +490,7 @@ public class DatasetController {
 			@RequestParam("filename") final String filename,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final Optional<Dataset> dataset;
 		try {
