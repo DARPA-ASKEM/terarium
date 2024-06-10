@@ -125,26 +125,27 @@ public class DataMigrationESToPG {
 						continue;
 					}
 					if (asset.getId() == null || !asset.getId().toString().equals(hit.id())) {
-						asset.setId(UUID.fromString(hit.id()));
+						try {
+							asset.setId(UUID.fromString(hit.id()));
+						} catch (final Exception e) {
+							log.warn("Unable to parse id into UUID: {}, discarding doc", hit.id());
+							totalFailed++;
+							continue;
+						}
 					}
 					assets.add(asset);
 				}
 
 				if (!assets.isEmpty()) {
 					log.info("Saving {} rows to SQL...", assets.size());
-					long failed = 0;
 					for (final T asset : assets) {
 						try {
 							service.getRepository().save(asset);
 							totalSuccess++;
 						} catch (final Exception e) {
 							log.warn("Failed to insert id: {}", asset.getId(), e);
-							failed += 1;
 							totalFailed++;
 						}
-					}
-					if (failed == assets.size()) {
-						throw new RuntimeException("All assets failed to insert");
 					}
 				}
 
