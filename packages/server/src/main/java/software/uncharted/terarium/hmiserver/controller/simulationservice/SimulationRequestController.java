@@ -33,11 +33,14 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.notification.SimulationRequestStatusNotifier;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/simulation-request")
@@ -59,6 +62,9 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final ModelService modelService;
 	private final ModelConfigurationService modelConfigService;
+
+	private final NotificationService notificationService;
+	private final ClientEventService clientEventService;
 
 	private final ObjectMapper objectMapper;
 
@@ -101,6 +107,15 @@ public class SimulationRequestController implements SnakeCaseController {
 		final Simulation sim = new Simulation();
 		sim.setId(UUID.fromString(res.getSimulationId()));
 		sim.setType(SimulationType.SIMULATION);
+
+		// Fire and forget
+		new SimulationRequestStatusNotifier(
+			notificationService,
+			clientEventService,
+			simulationService,
+			sim.getId(),
+			permission
+		).startPolling();
 
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.SCIML.toString());

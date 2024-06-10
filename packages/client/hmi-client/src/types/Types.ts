@@ -1233,6 +1233,7 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",

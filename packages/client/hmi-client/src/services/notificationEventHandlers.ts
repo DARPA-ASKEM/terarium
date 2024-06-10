@@ -105,6 +105,8 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		) => void = () => {}
 	) => {
 		handlers[eventType] = (event: ClientEvent<T>) => {
+			console.log('from event handler');
+			console.log(event);
 			if (!event.data) return;
 			const existingItem = notificationItems.value.find(
 				(item) => item.notificationGroupId === event.notificationGroupId
@@ -183,6 +185,13 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
+	registerHandler<StatusUpdate<{ simulationId: string }>>(
+		ClientEventType.SimulationNotification,
+		(event, created) => {
+			console.log(event, created);
+			// Handle creation of the notification item
+		}
+	);
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
