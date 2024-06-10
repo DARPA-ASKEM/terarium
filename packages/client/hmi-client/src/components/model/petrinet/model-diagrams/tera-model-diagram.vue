@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, watch, computed, nextTick, onMounted } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -252,13 +252,6 @@ watch(
 	},
 	{ immediate: true, deep: true }
 );
-
-onMounted(() => {
-	if (!props.isPreview) {
-		graphElement.value?.addEventListener('keydown', () => console.log(9));
-		graphElement.value?.addEventListener('keyup', () => console.log(9));
-	}
-});
 </script>
 
 <style scoped>
