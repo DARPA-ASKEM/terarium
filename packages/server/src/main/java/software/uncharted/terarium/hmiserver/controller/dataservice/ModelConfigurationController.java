@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -406,35 +406,6 @@ public class ModelConfigurationController {
 				modelObservable.setStates(matchingConfigObservable.getStates());
 				modelObservable.setExpression(matchingConfigObservable.getExpression());
 				modelObservable.setExpressionMathml(matchingConfigObservable.getExpressionMathml());
-			}
-		}
-	}
-
-
-
-	/**
-	 * Stuffs the individual lists of semantics into a common map, indexed by the target/id of each semantic
-	 *
-	 * @param modelConfiguration config to stuff for front end.
-	 */
-	private static void stuffModelConfigSemanticsForFrontEnd(final ModelConfiguration modelConfiguration) {
-		modelConfiguration.setValues(new HashMap<>());
-
-		if (modelConfiguration.getObservableSemanticList() != null) {
-			for (final ObservableSemantic observableSemantic : modelConfiguration.getObservableSemanticList()) {
-				modelConfiguration.getValues().put(observableSemantic.getReferenceId(), observableSemantic);
-			}
-		}
-
-		if (modelConfiguration.getParameterSemanticList() != null) {
-			for (final ParameterSemantic parameterSemantic : modelConfiguration.getParameterSemanticList()) {
-				modelConfiguration.getValues().put(parameterSemantic.getReferenceId(), parameterSemantic);
-			}
-		}
-
-		if (modelConfiguration.getInitialSemanticList() != null) {
-			for (final InitialSemantic initialSemantic : modelConfiguration.getInitialSemanticList()) {
-				modelConfiguration.getValues().put(initialSemantic.getTarget(), initialSemantic);
 			}
 		}
 	}
