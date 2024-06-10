@@ -17,7 +17,7 @@
 									outlined
 								/>
 								<span class="how-to-zoom">
-									<kbd>{{ zoomModifierKey }}</kbd>
+									<kbd>Ctrl</kbd>
 									+
 									<kbd>scroll</kbd>&nbsp;to zoom</span
 								>
@@ -134,8 +134,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-configuration']);
-
-const zoomModifierKey = navigator.userAgent.includes('Mac') ? 'Option' : 'Alt';
 
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
