@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
@@ -203,10 +204,10 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			updateModelInitials(
-					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
 			updateModelParameters(
 					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
+			updateModelInitials(
+					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
 
 			return ResponseEntity.ok(model.get());
 
@@ -359,8 +360,6 @@ public class ModelConfigurationController {
 			// Look up the corresponding ConfigParameter in the map
 			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
 			if (matchingConfigParameter != null) {
-				// I'm not sure if we want the set the id, name, description here since we have that on model already
-
 				// set distributions
 				if (CONSTANT_TYPE.equals(
 						matchingConfigParameter.getDistribution().getType())) {
@@ -386,9 +385,8 @@ public class ModelConfigurationController {
 		for (final Initial modelInitial : modelInitials) {
 			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
 			if (matchingConfigInitial != null) {
-				// FIXME: is there something like pyodide on the backend? otherwise we might have to store the
-				// expressionMathML as well
 				modelInitial.setExpression(matchingConfigInitial.getExpression());
+				modelInitial.setExpressionMathml(matchingConfigInitial.getExpression_mathml());
 			}
 		}
 	}

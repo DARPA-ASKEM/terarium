@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 public class InitialSemantic extends Semantic {
 	private String target;
 	private String expression;
+	private String expression_mathml;
 
 	@ManyToOne
 	@JsonBackReference
