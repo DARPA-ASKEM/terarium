@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model.configura
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
@@ -32,5 +33,6 @@ public class ObservableSemantic extends Semantic {
 
 	@ManyToOne
 	@JsonBackReference
+	@Schema(hidden = true)
 	@NotNull private ModelConfiguration modelConfiguration;
 }

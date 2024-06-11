@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -24,17 +24,14 @@ public class ModelConfiguration extends TerariumAsset {
 	private UUID modelId;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
-	private List<ObservableSemantic> observableSemanticList;
+	private List<ObservableSemantic> observableSemanticList = new ArrayList<>();
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
-	private List<ParameterSemantic> parameterSemanticList;
+	private List<ParameterSemantic> parameterSemanticList = new ArrayList<>();
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
-	private List<InitialSemantic> initialSemanticList;
+	private List<InitialSemantic> initialSemanticList = new ArrayList<>();
 }
