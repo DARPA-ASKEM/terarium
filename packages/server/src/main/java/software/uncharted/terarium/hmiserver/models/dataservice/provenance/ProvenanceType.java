@@ -1,9 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.Arrays;
 
 public enum ProvenanceType {
 	@JsonAlias("Concept")
