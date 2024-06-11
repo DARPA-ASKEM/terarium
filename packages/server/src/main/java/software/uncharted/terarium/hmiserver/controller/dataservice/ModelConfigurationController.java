@@ -206,11 +206,11 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			updateModelParameters(
+			setModelParameters(
 					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
-			updateModelInitials(
+			setModelInitials(
 					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
-			updateModelObservables(model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
+			setModelObservables(model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
 			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
@@ -349,7 +349,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private static void updateModelParameters(
+	private void setModelParameters(
 			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
 		// Create a map from ConfigParameter IDs to ConfigParameter objects
 		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
@@ -377,7 +377,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private static void updateModelInitials(
+	private void setModelInitials(
 			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
@@ -393,7 +393,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private static void updateModelObservables(
+	private void setModelObservables(
 		final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {
