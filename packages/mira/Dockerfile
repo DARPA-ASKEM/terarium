@@ -28,25 +28,31 @@ COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 # Install Mira
 RUN echo "Cache bust so we can always pull latest MIRA" $(date -u)
-COPY ./packages/mira/mira-version.txt /mira-version.txt
-RUN COMMIT_SHA=$(cat /mira-version.txt) && \
-    wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/$COMMIT_SHA.tar.gz && \
-    tar -zxvf mira.tar.gz && \
-    mv mira-* mira && \
-    cd /mira && \
-    pip install -e .[sbml,biomodels]
+COPY ./packages/mira/mira-version.txt /miraVersion.txt
+RUN COMMIT_SHA=$(cat /miraVersion.txt) && \
+    echo "Using MIRA commit $COMMIT_SHA" && \
+    wget -O mira.tar.gz https://github.com/gyorilab/mira/archive/${COMMIT_SHA}.tar.gz
+
+RUN tar -zxvf mira.tar.gz && \
+    rm mira.tar.gz
+RUN	mv -v mira-* mira
+
+WORKDIR /mira
+RUN pip install -e .[sbml,biomodels]
 
 # Install taskrunner
+WORKDIR /
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
+
 WORKDIR /taskrunner
 RUN pip install -e .
 
 # Install Mira tasks
 COPY ./packages/mira /mira_task
+
 WORKDIR /mira_task
 RUN pip install -e .
 
 WORKDIR /
-
 CMD ["java", "-jar", "taskrunner.jar"]
