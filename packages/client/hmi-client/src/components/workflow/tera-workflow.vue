@@ -190,6 +190,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -388,6 +389,7 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
+	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -397,12 +399,17 @@ function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	generateSummary(node, outputPort);
 	workflowDirty = true;
 }
 
-async function generateSummary(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	outputPort.summary = ''; // Indicating that the summary generation is initiated
+function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
+	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
+	if (!registry.getOperation(node.operationType)?.createNotebook) return;
+	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
+}
+
+async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
+	if (!node) return;
 	const result = await workflowService.generateSummary(
 		node,
 		outputPort,
