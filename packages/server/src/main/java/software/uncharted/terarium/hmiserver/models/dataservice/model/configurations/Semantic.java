@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +15,8 @@ import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 @Entity
 public abstract class Semantic extends TerariumEntity {
 
+	@Column(columnDefinition = "text")
 	private String source;
+
 	private SemanticType type;
 }

@@ -24,6 +24,8 @@ public class ParameterSemantic extends Semantic {
 
 	private String referenceId;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
 	private ModelDistribution distribution;
 
 	private boolean isDefault;
