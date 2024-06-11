@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import java.util.Map;
-import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 
 @Slf4j
 public class TaskNotificationEventTypes {
@@ -16,7 +16,7 @@ public class TaskNotificationEventTypes {
 
 	public static ClientEventType getTypeFor(String taskName) {
 		final ClientEventType eventType = clientEventTypes.get(taskName);
-		if (eventType == null){
+		if (eventType == null) {
 			log.warn("Event type not found for task: " + taskName);
 			return ClientEventType.TASK_UNDEFINED_EVENT;
 		}
