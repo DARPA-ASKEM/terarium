@@ -433,8 +433,12 @@ export function selectOutput(
 	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
+export function getActiveOutput(node: WorkflowNode<any>) {
+	return node.outputs.find((o) => o.id === node.active);
+}
+
 export function getActiveOutputSummary(node: WorkflowNode<any>) {
-	const output = node.outputs.find((o) => o.id === node.active);
+	const output = getActiveOutput(node);
 	return output?.summary;
 }
 
@@ -445,6 +449,7 @@ export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: Wor
 }
 
 // Keep track of the summary generation requests to prevent multiple requests for the same workflow output
+// TODO: Instead of relying on the Ids stored in memory, consider creating a table in the backend to store the summaries to keep track of their status and results.
 const summaryGenerationRequestIds = new Set<string>();
 
 export async function generateSummary(
@@ -457,6 +462,7 @@ export async function generateSummary(
 		summaryGenerationRequestIds.add(outputPort.id);
 		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
 		const result = await summarizeNotebook(notebook);
+		if (!result.summary) throw new Error('AI Generated summary is empty.');
 		return result;
 	} catch {
 		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };

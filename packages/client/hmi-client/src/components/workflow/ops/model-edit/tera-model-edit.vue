@@ -2,9 +2,12 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		:output-summary="true"
 		@update:selection="onSelection"
 		@on-close-clicked="onDrilldownClose"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update-output-port="(output: any) => emit('update-output-port', output)"
+		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		v-bind="$attrs"
 	>
 		<div :tabName="ModelEditTabs.Wizard">
@@ -117,7 +120,14 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
+const emit = defineEmits([
+	'append-output',
+	'update-state',
+	'close',
+	'select-output',
+	'generate-output-summary',
+	'update-output-port'
+]);
 
 enum ModelEditTabs {
 	Wizard = 'Wizard',
@@ -295,7 +305,7 @@ const initializeAceEditor = (editorInstance: any) => {
 };
 
 function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
-	const state = saveCodeToState(props.node, code, hasCodeRun);
+	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
 }
 
