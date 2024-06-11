@@ -20,7 +20,7 @@
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
-						@click="createConfiguration(false)"
+						@click="createConfiguration()"
 					/>
 				</template>
 				<template #header-controls-right>
@@ -28,7 +28,7 @@
 						class="mr-3"
 						:disabled="isSaveDisabled"
 						label="Save"
-						@click="() => createConfiguration(false)"
+						@click="() => createConfiguration()"
 					/>
 				</template>
 				<!-- Suggested configurations -->
@@ -618,7 +618,7 @@ const downloadConfiguredModel = async () => {
 };
 
 const createConfiguration = async (force: boolean = false) => {
-	if (!model.value || !props.node.state?.transientModelConfig?.name) return;
+	if (!model.value || isSaveDisabled) return;
 
 	const state = cloneDeep(props.node.state);
 
