@@ -62,10 +62,6 @@ const options = ref([
 		label: 'Open in new window',
 		command: () => emit('open-in-new-window')
 	},
-	/*
-	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => emit('bring-to-front') },
-	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => emit('bring-to-front') },
-	*/
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove-operator') }
 ]);
 </script>

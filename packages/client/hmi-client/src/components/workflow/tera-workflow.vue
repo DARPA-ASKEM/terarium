@@ -41,26 +41,6 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<!--
-					<Button
-						label="Show everything"
-						severity="secondary"
-						outlined
-						@click="resetZoom"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					<Button
-						label="Clean up layout"
-						severity="secondary"
-						outlined
-						@click="cleanUpLayout"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					-->
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
