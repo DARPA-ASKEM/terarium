@@ -95,11 +95,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return clone;
 	}
 
-@JsonIgnore
-@TSIgnore
-public List<Observable> getObservables() {
-	return this.getSemantics().getOde().getObservables();
-}
+	@JsonIgnore
+	@TSIgnore
+	public List<Observable> getObservables() {
+		return this.getSemantics().getOde().getObservables();
+	}
 
 	@JsonIgnore
 	@TSIgnore

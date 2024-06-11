@@ -208,9 +208,9 @@ public class ModelConfigurationController {
 			}
 			setModelParameters(
 					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
-			setModelInitials(
-					model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
-			setModelObservables(model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
+			setModelInitials(model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
+			setModelObservables(
+					model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
 			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
@@ -377,8 +377,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private void setModelInitials(
-			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+	private void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);
@@ -394,7 +393,7 @@ public class ModelConfigurationController {
 	}
 
 	private void setModelObservables(
-		final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
+			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {
 			configObservableMap.put(configObservable.getReferenceId(), configObservable);
