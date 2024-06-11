@@ -80,7 +80,8 @@
 					:open-value-config="openValueConfig"
 					@close-modal="openValueConfig = false"
 					@update-configuration="
-						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+						(configToUpdate: ModelConfigurationLegacy) =>
+							emit('update-configuration', configToUpdate)
 					"
 				/>
 			</Teleport>
@@ -106,7 +107,7 @@ import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfigurationLegacy } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
@@ -129,7 +130,7 @@ import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfiguration?: ModelConfiguration;
+	modelConfiguration?: ModelConfigurationLegacy;
 	isPreview?: boolean;
 }>();
 
