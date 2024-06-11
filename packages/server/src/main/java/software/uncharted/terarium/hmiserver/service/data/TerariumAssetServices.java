@@ -14,7 +14,7 @@ public class TerariumAssetServices {
 	private final CodeService codeService;
 	private final DatasetService datasetService;
 	private final DocumentAssetService documentAssetService;
-	private final ModelConfigurationService modelConfigurationService;
+	private final ModelConfigurationLegacyService modelConfigurationService;
 	private final ModelService modelService;
 	private final NotebookSessionService notebookSessionService;
 	private final WorkflowService workflowService;
