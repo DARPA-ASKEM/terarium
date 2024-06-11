@@ -25,7 +25,6 @@ Estimated time to completion: [X] minutes
 ### 3. Apply configuration values
 1. Under the suggested configurations table click the "apply configurations values" button
 2. Ensure that the configuration has been populated with the selected configuration's values
-3. Lastly in the parameters table click the "Suggested configurations" button and apply and value and see if the value is populated accordingly
 
 ### 4. End test
 1. logout of the application 
