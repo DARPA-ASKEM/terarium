@@ -3,7 +3,7 @@
 		<header>
 			<strong>{{ parameterId }}</strong>
 			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-			<span v-if="unit" class="ml-2">({{ unit }})</span>
+			<span v-if="units" class="ml-2">({{ units }})</span>
 			<span v-if="description" class="ml-4">{{ description }}</span>
 		</header>
 		<main>
@@ -90,11 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfigurationLegacy } from '@/types/Types';
+import { ModelConfigurationLegacy, Model } from '@/types/Types';
 import {
-	getParameterName,
-	getParameterDescription,
-	getParameterUnit,
 	getParameterSource,
 	getParameterDistribution
 } from '@/services/model-configurations-legacy';
@@ -103,17 +100,19 @@ import { ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
+import { getParameter } from '@/model-representation/service';
 
 const props = defineProps<{
+	model: Model;
 	modelConfiguration: ModelConfigurationLegacy;
 	parameterId: string;
 }>();
 
 const emit = defineEmits(['update-parameter', 'update-source']);
 
-const name = getParameterName(props.modelConfiguration, props.parameterId);
-const unit = getParameterUnit(props.modelConfiguration, props.parameterId);
-const description = getParameterDescription(props.modelConfiguration, props.parameterId);
+const name = getParameter(props.model, props.parameterId)?.name;
+const units = getParameter(props.model, props.parameterId)?.units?.expression;
+const description = getParameter(props.model, props.parameterId)?.description;
 
 const isSourceOpen = ref(false);
 

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ObservableSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -50,6 +54,9 @@ public class ModelConfigurationController {
 	final CurrentUserService currentUserService;
 	final Messages messages;
 	final ProjectService projectService;
+
+	private static final String CONSTANT_TYPE = "Constant";
+	private static final String VALUE_PARAM = "value";
 
 	/**
 	 * Gets all model configurations (which are visible to this user)
@@ -90,7 +97,6 @@ public class ModelConfigurationController {
 			if (modelConfigurations.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
-			modelConfigurations.forEach(ModelConfigurationController::stuffModelConfigSemanticsForFrontEnd);
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
@@ -143,7 +149,6 @@ public class ModelConfigurationController {
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			stuffModelConfigSemanticsForFrontEnd(modelConfiguration.get());
 			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -201,10 +206,12 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-
-			// TODO: Apply configuration to the Model here. Should this use ModelConfigurationLegacy??
-
-			throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+			setModelParameters(
+					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
+			setModelInitials(model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
+			setModelObservables(
+					model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
+			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -342,24 +349,62 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private static void stuffModelConfigSemanticsForFrontEnd(final ModelConfiguration modelConfiguration) {
-		modelConfiguration.setValues(new HashMap<>());
-
-		if (modelConfiguration.getObservableSemanticList() != null) {
-			for (final ObservableSemantic observableSemantic : modelConfiguration.getObservableSemanticList()) {
-				modelConfiguration.getValues().put(observableSemantic.getReferenceId(), observableSemantic);
-			}
+	private void setModelParameters(
+			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
+		// Create a map from ConfigParameter IDs to ConfigParameter objects
+		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
+		for (final ParameterSemantic configParameter : configParameters) {
+			configParameterMap.put(configParameter.getReferenceId(), configParameter);
 		}
 
-		if (modelConfiguration.getParameterSemanticList() != null) {
-			for (final ParameterSemantic parameterSemantic : modelConfiguration.getParameterSemanticList()) {
-				modelConfiguration.getValues().put(parameterSemantic.getReferenceId(), parameterSemantic);
+		// Iterate through the list of ModelParameter objects
+		for (final ModelParameter modelParameter : modelParameters) {
+			// Look up the corresponding ConfigParameter in the map
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+			if (matchingConfigParameter != null) {
+				// set distributions
+				if (CONSTANT_TYPE.equals(
+						matchingConfigParameter.getDistribution().getType())) {
+					modelParameter.setValue((Double) matchingConfigParameter
+							.getDistribution()
+							.getParameters()
+							.get(VALUE_PARAM));
+					modelParameter.setDistribution(null);
+				} else {
+					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
+				}
 			}
 		}
+	}
 
-		if (modelConfiguration.getInitialSemanticList() != null) {
-			for (final InitialSemantic initialSemantic : modelConfiguration.getInitialSemanticList()) {
-				modelConfiguration.getValues().put(initialSemantic.getTarget(), initialSemantic);
+	private void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
+		for (final InitialSemantic configInitial : configInitials) {
+			configInitialMap.put(configInitial.getTarget(), configInitial);
+		}
+
+		for (final Initial modelInitial : modelInitials) {
+			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
+			if (matchingConfigInitial != null) {
+				modelInitial.setExpression(matchingConfigInitial.getExpression());
+				modelInitial.setExpressionMathml(matchingConfigInitial.getExpressionMathml());
+			}
+		}
+	}
+
+	private void setModelObservables(
+			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
+		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
+		for (final ObservableSemantic configObservable : configObservables) {
+			configObservableMap.put(configObservable.getReferenceId(), configObservable);
+		}
+
+		for (final Observable modelObservable : modelObservables) {
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
+			if (matchingConfigObservable != null) {
+				modelObservable.setStates(matchingConfigObservable.getStates());
+				modelObservable.setExpression(matchingConfigObservable.getExpression());
+				modelObservable.setExpressionMathml(matchingConfigObservable.getExpressionMathml());
 			}
 		}
 	}

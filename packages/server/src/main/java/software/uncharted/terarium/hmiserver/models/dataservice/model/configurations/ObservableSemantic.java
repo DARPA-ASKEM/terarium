@@ -2,16 +2,17 @@ package software.uncharted.terarium.hmiserver.models.dataservice.model.configura
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -24,11 +25,16 @@ public class ObservableSemantic extends Semantic {
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private State[] states;
+	private List<String> states;
 
+	@Column(columnDefinition = "text")
 	private String expression;
+
+	@Column(columnDefinition = "text")
+	private String expressionMathml;
 
 	@ManyToOne
 	@JsonBackReference
+	@Schema(hidden = true)
 	@NotNull private ModelConfiguration modelConfiguration;
 }
