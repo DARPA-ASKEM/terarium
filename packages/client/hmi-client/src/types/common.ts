@@ -20,7 +20,7 @@ export interface FeatureConfig {
 	isPreview: boolean;
 }
 
-export enum DrillDownTabs {
+export enum DrilldownTabs {
 	Wizard = 'Wizard',
 	Notebook = 'Notebook'
 }

@@ -21,7 +21,7 @@
 				class="hidden"
 			/>
 		</template>
-		<section :tabName="DrillDownTabs.Wizard">
+		<section :tabName="DrilldownTabs.Wizard">
 			<tera-drilldown-section :is-loading="assetLoading">
 				<template #header-controls-left>
 					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
@@ -73,7 +73,7 @@
 					<li v-for="(equation, i) in clonedState.equations" :key="i">
 						<tera-asset-block
 							:is-included="equation.includeInProcess"
-							:collapsed="equation.collapsed"
+							:collapsed="equation.isCollapsed"
 							@update:collapsed="(isCollapsed) => changeCollapsed(equation, isCollapsed)"
 							@update:is-included="onUpdateInclude(equation)"
 							:is-deletable="!instanceOfEquationFromImageBlock(equation.asset)"
@@ -113,7 +113,6 @@
 					<span class="mb-2"> </span>
 				</template>
 			</tera-drilldown-section>
-			<template></template>
 			<tera-drilldown-preview>
 				<section v-if="selectedModel">
 					<tera-model-description
@@ -131,7 +130,7 @@
 				/>
 			</tera-drilldown-preview>
 		</section>
-		<section :tabName="DrillDownTabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
 	</tera-drilldown>
@@ -166,7 +165,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import { DrillDownTabs, ModelServiceType } from '@/types/common';
+import { DrilldownTabs, ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 
@@ -262,7 +261,6 @@ const card = ref<Card | null>(null);
 const goLLMCard = computed<any>(() => document.value?.metadata?.gollmCard);
 
 const showSaveModelModal = ref(false);
-// const savingAsset = ref(false);
 const isGeneratingCard = ref(false);
 const multipleEquations = ref<string>('');
 
@@ -438,7 +436,7 @@ function getEquations() {
 }
 
 const allEquationCollapsed = computed(
-	() => !clonedState.value.equations.some((equation) => !equation.collapsed)
+	() => !clonedState.value.equations.some((equation) => !equation.isCollapsed)
 );
 
 const allEquationsInProcess = computed(
@@ -467,7 +465,7 @@ function getIncludedEquationLabel() {
 }
 
 function changeCollapsed(equation, isCollapsed = false) {
-	equation.collapsed = isCollapsed;
+	equation.isCollapsed = isCollapsed;
 }
 
 function toggleCollapseAll() {
