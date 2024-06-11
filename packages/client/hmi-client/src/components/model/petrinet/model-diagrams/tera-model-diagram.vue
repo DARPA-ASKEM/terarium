@@ -4,12 +4,7 @@
 		:show-tooltip="!isEmpty(hoveredTransitionId)"
 	>
 		<main>
-			<TeraResizablePanel
-				v-if="!isPreview"
-				class="diagram-container"
-				:class="{ unlocked: !isLocked }"
-				:style="isLocked && { pointerEvents: 'none' }"
-			>
+			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
@@ -17,22 +12,15 @@
 								<Button
 									@click="resetZoom"
 									label="Reset zoom"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
+									size="small"
 									severity="secondary"
+									outlined
 								/>
-								<Button
-									@click="isLocked = !isLocked"
-									:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
-									:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
-									severity="secondary"
-								/>
+								<span class="how-to-zoom">
+									<kbd>Ctrl</kbd>
+									+
+									<kbd>scroll</kbd>&nbsp;to zoom</span
+								>
 							</span>
 						</template>
 						<template #center> </template>
@@ -40,6 +28,7 @@
 							<span>
 								<SelectButton
 									v-if="model && isStratified"
+									class="p-button-sm"
 									:model-value="stratifiedView"
 									@change="
 										if ($event.value) {
@@ -90,7 +79,8 @@
 					:stratified-matrix-type="StratifiedMatrix.Rates"
 					@close-modal="openValueConfig = false"
 					@update-configuration="
-						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
+						(configToUpdate: ModelConfigurationLegacy) =>
+							emit('update-configuration', configToUpdate)
 					"
 				/>
 			</Teleport>
@@ -116,7 +106,7 @@ import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfigurationLegacy } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
@@ -139,13 +129,12 @@ import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfiguration?: ModelConfiguration;
+	modelConfiguration?: ModelConfigurationLegacy;
 	isPreview?: boolean;
 }>();
 
 const emit = defineEmits(['update-configuration']);
 
-const isLocked = ref(true);
 const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -235,7 +224,7 @@ async function renderGraph() {
 
 	// Render graph
 	const graphData =
-		isCollapsed.value === true && isStratified.value
+		isCollapsed.value && isStratified.value
 			? convertToIGraph(templatesSummary)
 			: convertToIGraph(rawTemplates);
 
@@ -282,9 +271,7 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-.unlocked {
-	border: 1px solid var(--primary-color);
-}
+
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
@@ -333,6 +320,11 @@ main {
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
 }
 
 :deep(.graph-element .p-button) {
@@ -342,24 +334,47 @@ main {
 	}
 }
 
+.how-to-zoom {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-caption);
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: 0 var(--gap-small);
+	border-radius: var(--border-radius);
+	pointer-events: none;
+	user-select: none;
+}
+
+kbd {
+	background-color: var(--surface-section);
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: 2px var(--gap-xsmall);
+	font-size: var(--font-tiny);
+	font-weight: var(--font-weight-semibold);
+}
+
 .legend {
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	display: flex;
-	margin: 1rem;
+	margin: var(--gap-small);
+	margin-bottom: var(--gap);
+	gap: var(--gap);
+	pointer-events: none;
 }
 .legend-item {
 	display: flex;
 	align-items: center;
-	margin: 0 1rem;
+	gap: var(--gap-xsmall);
 }
 .legend-circle {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
 	border-radius: 50%;
-	margin-right: 0.5rem;
 }
 
 .legend-anchor {

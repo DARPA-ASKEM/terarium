@@ -234,7 +234,7 @@
 import { computed, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
-import type { Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type { Model, ModelConfigurationLegacy, ModelParameter } from '@/types/Types';
 import InputText from 'primevue/inputtext';
 import Datatable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -256,7 +256,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
+	modelConfigurations?: ModelConfigurationLegacy[];
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 	data?: ModelConfigTableData[]; // we can use our own passed in data or the computed one.  this is for the embedded matrix table
@@ -271,7 +271,7 @@ const isStratified = computed(() => isStratifiedModel(props.mmt));
 
 interface SuggestedValue {
 	parameter: ModelParameter;
-	configuration: ModelConfiguration;
+	configuration: ModelConfigurationLegacy;
 	index: number;
 }
 const selectedValue = ref<SuggestedValue | null>(null);
