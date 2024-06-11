@@ -1,15 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.hibernate.annotations.Type;
-
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,9 +14,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
@@ -50,8 +47,7 @@ public class DatasetColumn extends TerariumEntity {
 	private String fileName;
 
 	/**
-	 * Datatype. One of: unknown, boolean, string, char, integer, int, float,
-	 * double, timestamp, datetime, date, time
+	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
 	 */
 	@JsonAlias("data_type")
 	@Enumerated(EnumType.STRING)
@@ -108,8 +104,7 @@ public class DatasetColumn extends TerariumEntity {
 			clone.metadata = this.metadata.deepCopy();
 		}
 
-		if (this.grounding != null)
-			clone.grounding = this.grounding.clone();
+		if (this.grounding != null) clone.grounding = this.grounding.clone();
 
 		clone.description = this.description;
 

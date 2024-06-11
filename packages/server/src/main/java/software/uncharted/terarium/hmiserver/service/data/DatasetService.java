@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,16 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -168,10 +165,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			dataset.setColumns(new ArrayList<>());
 		}
 		for (final String header : headers) {
-			final DatasetColumn column = new DatasetColumn()
-					.setName(header)
-					.setFileName(fileName)
-					.setAnnotations(new ArrayList<>());
+			final DatasetColumn column =
+					new DatasetColumn().setName(header).setFileName(fileName).setAnnotations(new ArrayList<>());
 			column.setDataset(dataset);
 			dataset.getColumns().add(column);
 		}
