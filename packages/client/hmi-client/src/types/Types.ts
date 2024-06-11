@@ -1247,7 +1247,6 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
-    Publication = "publication",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1361,7 +1360,6 @@ export enum ProvenanceType {
     ModelRevision = "ModelRevision",
     ModelConfiguration = "ModelConfiguration",
     Project = "Project",
-    Publication = "Publication",
     Simulation = "Simulation",
     SimulationRun = "SimulationRun",
     Plan = "Plan",
