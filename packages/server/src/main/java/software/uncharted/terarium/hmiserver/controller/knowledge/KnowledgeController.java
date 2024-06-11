@@ -509,7 +509,9 @@ public class KnowledgeController {
 				}
 				//Try to get TA4 card.
 				if (document.getMetadata() != null){
-					gollmCard = document.getMetadata().get("gollemCard");
+					if (document.getMetadata().get("gollmCard") != null){
+						gollmCard = document.getMetadata().get("gollmCard").deepCopy();
+					}
 				}
 
 				try {
