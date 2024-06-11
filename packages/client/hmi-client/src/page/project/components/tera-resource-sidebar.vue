@@ -52,8 +52,7 @@
 				<template #header>
 					<div class="flex justify-space-between w-full">
 						<div class="flex align-items-center w-full">
-							<template v-if="type === AssetType.Publication">External Publications</template>
-							<template v-else-if="type === AssetType.Document">Documents</template>
+							<template v-if="type === AssetType.Document">Documents</template>
 							<template v-else>{{ capitalize(type) }}</template>
 							<aside>({{ assetItems.size }})</aside>
 						</div>
