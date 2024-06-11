@@ -232,6 +232,7 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
 export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
+    expressionMathml: string;
     modelConfiguration: ModelConfiguration;
 }
 
@@ -245,8 +246,9 @@ export interface ModelConfiguration extends TerariumAsset {
 
 export interface ObservableSemantic extends Semantic {
     referenceId: string;
-    states: State[];
+    states: string[];
     expression: string;
+    expressionMathml: string;
     modelConfiguration: ModelConfiguration;
 }
 
