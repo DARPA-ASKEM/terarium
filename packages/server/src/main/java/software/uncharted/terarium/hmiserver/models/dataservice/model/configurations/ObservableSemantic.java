@@ -10,9 +10,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.util.List;
+
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -23,11 +25,11 @@ public class ObservableSemantic extends Semantic {
 
 	private String referenceId;
 
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private State[] states;
+	private List<String> states;
 
 	private String expression;
+
+	private String expressionMathml;
 
 	@ManyToOne
 	@JsonBackReference
