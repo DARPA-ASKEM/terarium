@@ -239,6 +239,7 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     calibrationRunId: string;
     modelId: string;
+    simulationId: string;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
