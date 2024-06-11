@@ -78,9 +78,14 @@ export const StratifyMiraOperation: Operation = {
 	createNotebook: async (state: StratifyOperationStateMira, value?: any[] | null) => {
 		const modelIdToLoad = value?.[0];
 		const outputModel = await getModel(modelIdToLoad);
-		const code = state.strataCodeHistory?.[0].code ?? '';
-		// TODO: Add llm query and thought to the notebook
-		const notebook = createNotebookFromCode(code, 'python3', { 'application/json': outputModel });
+		const { code, llmQuery, llmThoughts } = state.strataCodeHistory?.[0] ?? {};
+		const notebook = createNotebookFromCode(
+			code ?? '',
+			'python3',
+			{ 'application/json': outputModel },
+			llmQuery,
+			llmThoughts
+		);
 		return notebook;
 	}
 };
