@@ -18,7 +18,8 @@ public class TaskNotificationEventTypes {
 		final ClientEventType eventType = clientEventTypes.get(taskName);
 		if (eventType == null){
 			log.warn("Event type not found for task: " + taskName);
+			return ClientEventType.TASK_UNDEFINED_EVENT;
 		}
-		return eventType == null ? ClientEventType.TASK_UNDEFINED_EVENT : eventType;
+		return eventType;
 	}
 }
