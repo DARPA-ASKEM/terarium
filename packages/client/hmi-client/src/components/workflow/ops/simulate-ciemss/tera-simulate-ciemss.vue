@@ -66,9 +66,26 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
-			<p>Under construction. Use the wizard for now.</p>
-		</section>
+		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
+			<Suspense>
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:context-language="contextLanguage"
+				>
+					<template #toolbar-right-side>
+						<Button label="Setup" @click="setup"></Button>
+						<Button icon="pi pi-play" label="Run" @click="runCode" />
+					</template>
+				</tera-notebook-jupyter-input>
+			</Suspense>
+			<v-ace-editor
+				v-model:value="codeText"
+				lang="python"
+				theme="chrome"
+				style="flex-grow: 1; width: 100%"
+				class="ace-editor"
+			/>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
@@ -137,7 +154,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
@@ -162,12 +179,18 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
+import { VAceEditor } from 'vue3-ace-editor';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
+
+const codeText = ref('');
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
@@ -214,6 +237,9 @@ const showSpinner = ref(false);
 const runResults = ref<{ [runId: string]: RunResults }>({});
 
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+const kernelManager = new KernelSessionManager();
+const contextLanguage = ref<string>('python3');
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -292,6 +318,44 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const buildJupyterContext = async () => {
+	const modelConfigId = props.node.inputs[0].value?.[0];
+	if (!modelConfigId) return;
+	try {
+		const jupyterContext = {
+			context: 'pyciemss',
+			language: 'python3',
+			context_info: {
+				model_config_id: modelConfigId
+			}
+		};
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+};
+
+const setup = async () => {
+	kernelManager.sendMessage('get_simulate_request', {}).register('code_cell', (data) => {
+		codeText.value = data.content.code;
+	});
+};
+
+const runCode = () => {
+	kernelManager
+		.sendMessage('execute_request', { code: codeText.value })
+		.register('execute_reply', () => {
+			kernelManager.sendMessage('save_results_to_hmi_request', {}).register('code_cell', (d) => {
+				console.log(d);
+			});
+		});
+};
+
 watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
@@ -315,6 +379,16 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onMounted(() => {
+	buildJupyterContext();
+});
+
+onUnmounted(() => {
+	if (kernelManager.jupyterSession !== null) {
+		kernelManager.shutdown();
+	}
+});
 </script>
 
 <style scoped>
