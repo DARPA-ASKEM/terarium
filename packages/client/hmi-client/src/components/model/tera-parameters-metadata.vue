@@ -1,7 +1,7 @@
 <template>
 	<ul>
 		<li
-			v-for="({ baseParameter, childParameters, isVirtual }, index) in baseParameterList"
+			v-for="({ baseParameter, childParameters, isVirtual }, index) in parameterList"
 			:key="baseParameter.id"
 		>
 			<template v-if="isVirtual">
@@ -65,7 +65,7 @@ const emit = defineEmits(['update-parameter']);
 
 const parameters = getParameters(props.model);
 const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-const baseParameterList = Array.from(collapsedParameters.keys())
+const parameterList = Array.from(collapsedParameters.keys())
 	.flat()
 	.map((id) => {
 		const childIds = collapsedParameters.get(id) ?? [];
@@ -76,7 +76,7 @@ const baseParameterList = Array.from(collapsedParameters.keys())
 
 		// If the parameter is virtual, we need to get the parameter data from model.metadata
 		const baseParameter = isVirtual
-			? props.model.metadata?.parameters?.[id] ?? { id } // If we haven't saved it in the metadata yet create it
+			? props.model.metadata?.parameters?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
 			: parameters.find((p) => p.id === id);
 
 		return { baseParameter, childParameters, isVirtual };
