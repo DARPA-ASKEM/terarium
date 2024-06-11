@@ -1,11 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -42,10 +44,7 @@ public enum AssetType {
 	MODEL_CONFIGURATION,
 
 	@JsonProperty("artifact")
-	ARTIFACT,
-
-	@JsonProperty("publication")
-	PUBLICATION;
+	ARTIFACT;
 
 	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
 			throws ResponseStatusException {
@@ -72,8 +71,6 @@ public enum AssetType {
 				return Model.class;
 			case MODEL_CONFIGURATION:
 				return ModelConfiguration.class;
-			case PUBLICATION:
-				throw new IllegalArgumentException("Publication assets are not supported");
 			case SIMULATION:
 				return Simulation.class;
 			case WORKFLOW:

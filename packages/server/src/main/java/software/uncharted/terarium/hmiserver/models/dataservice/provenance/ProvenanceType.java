@@ -1,38 +1,50 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.provenance;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
 
 public enum ProvenanceType {
 	@JsonAlias("Concept")
 	CONCEPT("Concept"),
+
 	@JsonAlias("Dataset")
 	DATASET("Dataset"),
+
 	@JsonAlias("Model")
 	MODEL("Model"),
+
 	@JsonAlias("ModelRevision")
 	MODEL_REVISION("ModelRevision"),
+
 	@JsonAlias("ModelConfiguration")
 	MODEL_CONFIGURATION("ModelConfiguration"),
+
 	@JsonAlias("Project")
 	PROJECT("Project"),
-	@JsonAlias("Concept")
-	PUBLICATION("Publication"),
+
 	@JsonAlias("Simulation")
 	SIMULATION("Simulation"),
+
 	@JsonAlias("SimulationRun")
 	SIMULATION_RUN("SimulationRun"),
+
 	@JsonAlias("Plan")
 	PLAN("Plan"),
+
 	@JsonAlias("Artifact")
 	ARTIFACT("Artifact"),
+
 	@JsonAlias("Code")
 	CODE("Code"),
+
 	@JsonAlias("Document")
 	DOCUMENT("Document"),
+
 	@JsonAlias("Workflow")
 	WORKFLOW("Workflow"),
+
 	@JsonAlias("Equation")
 	EQUATION("Equation");
 
