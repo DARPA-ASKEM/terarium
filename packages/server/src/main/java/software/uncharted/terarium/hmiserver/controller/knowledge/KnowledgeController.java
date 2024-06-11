@@ -491,6 +491,7 @@ public class KnowledgeController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
+		JsonNode gollmCard = null;
 		String documentText = "";
 		if (documentId != null) {
 			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
@@ -505,6 +506,10 @@ public class KnowledgeController {
 				} else {
 					throw new ResponseStatusException(
 							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
+				}
+				//Try to get TA4 card.
+				if (document.getMetadata() != null){
+					gollmCard = document.getMetadata().get("gollemCard");
 				}
 
 				try {
@@ -533,7 +538,6 @@ public class KnowledgeController {
 		} catch (final FeignException e) {
 			final String error = "Unable to get model card";
 			log.error(error, e);
-
 			throw handleMitFeignException(e);
 		}
 
@@ -545,6 +549,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
+		//Get TA1 Card:
 		final Card card;
 		try {
 			card = mapper.treeToValue(resp.getBody(), Card.class);
@@ -563,6 +568,7 @@ public class KnowledgeController {
 
 		model.getHeader().setDescription(card.getDescription());
 		model.getMetadata().setCard(card);
+		model.getMetadata().setGollmCard(gollmCard);
 
 		final Optional<Model> updatedModel;
 		try {
