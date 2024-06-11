@@ -20,11 +20,16 @@
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
-						@click="createConfiguration(false)"
+						@click="createConfiguration()"
 					/>
 				</template>
 				<template #header-controls-right>
-					<Button class="mr-3" label="Save" @click="() => createConfiguration(false)" />
+					<Button
+						class="mr-3"
+						:disabled="isSaveDisabled"
+						label="Save"
+						@click="() => createConfiguration()"
+					/>
 				</template>
 				<!-- Suggested configurations -->
 				<div class="box-container mr-2" v-if="model">
@@ -613,7 +618,7 @@ const downloadConfiguredModel = async () => {
 };
 
 const createConfiguration = async (force: boolean = false) => {
-	if (!model.value) return;
+	if (!model.value || isSaveDisabled) return;
 
 	const state = cloneDeep(props.node.state);
 
