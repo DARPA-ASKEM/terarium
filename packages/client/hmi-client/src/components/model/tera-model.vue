@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch } from 'vue';
+import { computed, onUnmounted, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
@@ -225,4 +225,8 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	console.log('test2');
+});
 </script>

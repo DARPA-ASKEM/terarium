@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
 import { TabViewChangeEvent } from 'primevue/tabview';
-import { computed, ref, useSlots } from 'vue';
+import { computed, onUnmounted, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
@@ -149,6 +149,10 @@ const outputOptions = computed(() => {
 const toggle = (event) => {
 	menu.value.toggle(event);
 };
+
+onUnmounted(() => {
+	console.log('testetst');
+});
 </script>
 
 <style scoped>

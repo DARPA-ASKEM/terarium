@@ -4,8 +4,13 @@
 	</main>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onUnmounted } from 'vue';
 
+onUnmounted(() => {
+	console.log('testasdasdasdasdasdasd');
+});
+</script>
 <style scoped>
 main {
 	display: grid;

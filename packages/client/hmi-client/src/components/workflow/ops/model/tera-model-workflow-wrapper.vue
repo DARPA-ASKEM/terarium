@@ -6,7 +6,8 @@
 	>
 		<section>
 			<tera-model
-				:asset-id="props.node.state.modelId as string"
+				v-if="node.state.modelId"
+				:asset-id="node.state.modelId"
 				@new-model-configuration="refreshModelNode"
 				@update-model-configuration="refreshModelNode"
 			/>
@@ -22,9 +23,10 @@ import TeraModel from '@/components/model/tera-model.vue';
 // import { workflowEventBus } from '@/services/workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
+import { onUnmounted } from 'vue';
 import { ModelOperationState } from './model-operation';
 
-const props = defineProps<{
+defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
@@ -37,4 +39,8 @@ const refreshModelNode = () => {
 	// 	nodeId: props.node.id
 	// });
 };
+
+onUnmounted(() => {
+	console.log('test');
+});
 </script>
