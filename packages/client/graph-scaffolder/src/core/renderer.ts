@@ -346,6 +346,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 					.style('pointer-events', 'none');
 			}
 		};
+
 		const zoomEnd = () => {
 			if (!this.graph || !chart) return;
 			this.zoomTransformObject = d3.zoomTransform(chart.node() as Element);
@@ -354,16 +355,20 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
+		const zoomRange = this.options.zoomRange || [minZoom, maxZoom];
 
-		if (this.options.zoomRange) {
-			this.zoom = d3
-				.zoom()
-				.scaleExtent(this.options.zoomRange)
-				.on('zoom', zoomed)
-				.on('end', zoomEnd);
-		} else {
-			this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
-		}
+		this.zoom = d3
+			.zoom()
+			.filter((event: MouseEvent) => {
+				if (renderer.options?.zoomModifier) {
+					return !(event.type === 'wheel') || event?.[renderer.options.zoomModifier];
+				}
+				return true;
+			})
+			.scaleExtent(zoomRange)
+			.on('zoom', zoomed)
+			.on('end', zoomEnd);
+
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		if (this.options.useStableZoomPan && this.zoomTransformObject) {

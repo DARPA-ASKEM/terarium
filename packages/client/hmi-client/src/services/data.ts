@@ -1,16 +1,4 @@
-import { isEmpty, uniqBy } from 'lodash';
-import {
-	Facets,
-	FullSearchResults,
-	ResourceType,
-	ResultType,
-	SearchParameters,
-	SearchResults
-} from '@/types/common';
-import { DatasetSource } from '@/types/search';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
 import {
 	Dataset,
@@ -23,13 +11,25 @@ import {
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import {
-	XDD_RESULT_DEFAULT_PAGE_SIZE,
 	XDDDictionary,
 	XDDExtractionType,
 	XDDResult,
-	XDDSearchParams
+	XDDSearchParams,
+	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
+import {
+	Facets,
+	FullSearchResults,
+	ResourceType,
+	ResultType,
+	SearchParameters,
+	SearchResults
+} from '@/types/common';
+import { DatasetSource } from '@/types/search';
+import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
+import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { logger } from '@/utils/logger';
+import { isEmpty, uniqBy } from 'lodash';
 import { ID, MODEL_FILTER_FIELDS, ModelSearchParams } from '../types/Model';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
@@ -470,19 +470,6 @@ const fetchData = async (
 					finalResponse.allData.push(response.allData);
 					finalResponse.allDataFilteredWithFacets.push(response.allDataFilteredWithFacets);
 				}
-				if (searchParam?.xdd.related_search_enabled) {
-					// FIXME:
-					//   searchParam?.xdd.related_search_id will be equal to a document docid/gddid which is an xDD ID
-					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
-					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given document would exist becuase documents are external artifact by definition.
-					//
-					//   One way to simplify the issue is to query the /external/documents API path to search TDS for the internal artifact ID for a given xDD document using the document gddid/docid as input.
-					//   If such ID exists, then it can be used to retrieve related artifacts
-					relatedArtifacts = await getRelatedArtifacts(
-						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Publication
-					);
-				}
 			}
 
 			// are we executing a search-by-example
@@ -568,14 +555,14 @@ const fetchData = async (
 
 export {
 	fetchData,
-	getXDDSets,
-	getXDDDictionaries,
-	getXDDArtifacts,
-	searchXDDDocuments,
 	getAssets,
-	getDocumentById,
+	getAutocomplete,
 	getBulkXDDDocuments,
+	getDocumentById,
 	getRelatedDocuments,
 	getRelatedTerms,
-	getAutocomplete
+	getXDDArtifacts,
+	getXDDDictionaries,
+	getXDDSets,
+	searchXDDDocuments
 };

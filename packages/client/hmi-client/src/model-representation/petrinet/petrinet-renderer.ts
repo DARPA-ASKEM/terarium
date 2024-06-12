@@ -226,7 +226,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection.selectAll('path').style('stroke-width', 2);
 	}
 
-	toggoleNodeSelectionByLabel(label: string) {
+	toggleNodeSelectionByLabel(label: string) {
 		const selection = this.chart?.selectAll('.node-ui').filter((d: any) => d.label === label);
 		if (selection && selection.size() === 1) {
 			this.toggleNodeSelection(selection as D3SelectionINode<NodeData>);

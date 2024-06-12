@@ -230,27 +230,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, onUpdated, PropType } from 'vue';
+import { getDocumentById, getXDDArtifacts } from '@/services/data';
+import { XDDExtractionType } from '@/types/XDD';
+import { CodeRequest, FeatureConfig, ResultType } from '@/types/common';
+import { getDocumentDoi, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import Button from 'primevue/button';
-import { getDocumentById, getXDDArtifacts } from '@/services/data';
-import { XDDExtractionType } from '@/types/XDD';
-import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import { PropType, computed, onMounted, onUpdated, ref, watch } from 'vue';
 // import { getRelatedArtifacts } from '@/services/provenance';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import type { Model, Extraction, Document, Dataset } from '@/types/Types';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import type { Dataset, Document, Extraction, Model } from '@/types/Types';
 // import { ProvenanceType } from '@/types/Types';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
-import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import TeraAsset from '@/components/asset/tera-asset.vue';
 import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
@@ -392,16 +392,6 @@ const fetchDocumentArtifacts = async () => {
 	}
 };
 
-const fetchAssociatedResources = async () => {
-	// if (doc.value) {
-	// TODO: getRelatedArtifacts and down the chain are expecting a UUID not an xddUri as the first parameter, (how) do we fix this?
-	// const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-	// associatedResources.value = results;
-	// } else {
-	associatedResources.value = [];
-	// }
-};
-
 /*
 // Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
@@ -453,7 +443,6 @@ watch(
 	async (currentValue, oldValue) => {
 		if (currentValue !== oldValue) {
 			fetchDocumentArtifacts();
-			fetchAssociatedResources();
 			viewOptions.value = [extractionsOption, pdfOption];
 			view.value = DocumentView.EXTRACTIONS;
 			pdfLink.value = null;
@@ -495,7 +484,6 @@ function openImportGithubFileModal(url: string) {
 
 onMounted(async () => {
 	fetchDocumentArtifacts();
-	fetchAssociatedResources();
 });
 
 onUpdated(() => {

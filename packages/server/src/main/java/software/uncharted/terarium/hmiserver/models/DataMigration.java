@@ -23,4 +23,8 @@ public class DataMigration {
 
 	private MigrationState state;
 	private Timestamp timestamp;
+
+	private Integer totalDocuments;
+	private Integer successfulDocuments;
+	private Integer failedDocuments;
 }
