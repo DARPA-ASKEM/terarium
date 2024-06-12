@@ -164,6 +164,7 @@ export interface Dataset extends TerariumAsset {
 
 export interface DatasetColumn extends TerariumEntity {
     name: string;
+    fileName: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
@@ -239,6 +240,7 @@ export interface InitialSemantic extends Semantic {
 export interface ModelConfiguration extends TerariumAsset {
     calibrationRunId: string;
     modelId: string;
+    simulationId?: string;
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
