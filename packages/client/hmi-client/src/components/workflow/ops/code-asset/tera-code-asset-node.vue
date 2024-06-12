@@ -29,6 +29,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import Button from 'primevue/button';
 import { getCodeBlocks } from '@/utils/code-asset';
+import { canPropagateResource } from '@/services/workflow';
 import { CodeAssetState } from './code-asset-operation';
 
 const props = defineProps<{
@@ -49,7 +50,7 @@ async function getCodeById(codeAssetId: string) {
 		emit('update-state', state);
 
 		const outputs = props.node.outputs;
-		if (_.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+		if (canPropagateResource(outputs)) {
 			const blocks = await getCodeBlocks(code.value);
 			emit('append-output', {
 				type: 'codeAssetId',
