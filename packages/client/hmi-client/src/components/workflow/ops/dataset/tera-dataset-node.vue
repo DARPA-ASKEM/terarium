@@ -60,12 +60,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { isEmpty } from 'lodash';
 import { AssetType } from '@/types/Types';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { getDataset } from '@/services/dataset';
+import { canPropagateResource } from '@/services/workflow';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
@@ -100,7 +100,7 @@ async function getDatasetById(id: string) {
 	if (dataset.value && dataset.value?.id) {
 		// Once a dataset is selected the output is assigned here,
 		const outputs = props.node.outputs;
-		if (isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+		if (canPropagateResource(outputs)) {
 			emit('update-state', {
 				datasetId: dataset.value.id
 			});

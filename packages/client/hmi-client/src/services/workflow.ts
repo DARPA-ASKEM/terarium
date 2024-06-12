@@ -260,6 +260,12 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	return portLabel;
 }
 
+// Checker for resource-operators (e.g. model, dataset) that automatically create an output
+// without needing to "run" the operator because we can drag them onto the canvas
+export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
+	return _.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value);
+}
+
 /**
  * API hooks: Handles reading and writing back to the store
  * */

@@ -40,12 +40,6 @@
 			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 			<!--Add new process/asset views here-->
 			<template v-else-if="assetId">
-				<tera-external-publication
-					v-if="pageType === AssetType.Publication"
-					:xdd-uri="getXDDuri(assetId)"
-					:previewLineLimit="10"
-					@open-code="openCode"
-				/>
 				<tera-document-asset
 					v-if="pageType === AssetType.Document"
 					:assetId="assetId"
@@ -76,34 +70,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { isEqual } from 'lodash';
-import { useRoute, useRouter } from 'vue-router';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
-import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
-import { RouteName } from '@/router/routes';
-import { AssetRoute } from '@/types/common';
-import { isProjectAssetTypes, ProjectPages } from '@/types/Project';
-import { logger } from '@/utils/logger';
-import { AssetType } from '@/types/Types';
-import { useProjects } from '@/composables/project';
-import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
-import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
-import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import TeraModel from '@/components/model/tera-model.vue';
-import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import { getCodeFileAsText } from '@/services/code';
 import TeraCode from '@/components/code/tera-code.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
+import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
+import TeraModel from '@/components/model/tera-model.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
+import { useProjects } from '@/composables/project';
+import TeraNotesSidebar from '@/page/project/components/tera-notes-sidebar.vue';
+import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
+import { RouteName } from '@/router/routes';
+import { ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { AssetType } from '@/types/Types';
+import { AssetRoute } from '@/types/common';
+import { logger } from '@/utils/logger';
+import { isEqual } from 'lodash';
 import Button from 'primevue/button';
-import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import TeraSaveAssetModal from './components/tera-save-asset-modal.vue';
+import TeraUploadResourcesModal from './components/tera-upload-resources-modal.vue';
 
 const route = useRoute();
 const router = useRouter();
 
-const code = ref<string>();
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const showSaveAssetModal = ref(false);
@@ -113,28 +104,6 @@ const isUploadResourcesModalVisible = ref(false);
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as string) ?? '');
 const openedAssetRoute = computed(() => ({ pageType: pageType.value, assetId: assetId.value }));
-const assetName = computed<string>(() => {
-	if (pageType.value === ProjectPages.OVERVIEW) return 'Overview';
-
-	const assets = useProjects().activeProject.value?.projectAssets;
-
-	/**
-	 * FIXME: to properly type this we'd want to have a base type with common attributes id/name ... etc
-	 *
-	 *   const list = assets[ pageType.value as string] as IdentifiableAsset[]
-	 *   const asset = list.find(...)
-	 */
-	if (assets) {
-		const asset: any = assets[pageType.value as string].find((d: any) => d.id === assetId.value);
-
-		// FIXME should unify upstream via a summary endpoint
-		if (asset.header && asset.header.name) return asset.header.name;
-
-		if (asset.name) return asset.name;
-	}
-	if (pageType.value === AssetType.Code) return 'New File';
-	return 'n/a';
-});
 
 function openAsset(assetRoute: AssetRoute) {
 	if (!isEqual(assetRoute, openedAssetRoute.value)) {
@@ -172,18 +141,6 @@ const openNewAsset = (assetType: AssetType) => {
 	showSaveAssetModal.value = true;
 };
 
-// TODO:
-// This conversion should maybe be done in tera-external-publication.vue - tera-preview-panel.vue does this conversion differently...
-// This should be deleted eventually since publications are deprecated
-// So delete this when we choose to delete tera-external-publication.vue
-const getXDDuri = (docAssetId: string): string => docAssetId;
-
-async function openCode() {
-	const res: string | null = await getCodeFileAsText(assetId.value!, assetName.value!);
-	if (!res) return;
-	code.value = res;
-}
-
 onMounted(() => {
 	if (!route.params.assetId || !route.params.pageType) {
 		const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
@@ -217,6 +174,7 @@ section {
 	flex-grow: 1;
 	min-width: 140px;
 	justify-content: center;
+
 	& :deep(.p-button-label) {
 		flex-grow: 0;
 	}
