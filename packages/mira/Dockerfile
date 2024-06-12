@@ -14,7 +14,7 @@ FROM python:3.10-slim
 
 WORKDIR /
 
-# Install OpenJDK JRE and git
+# Install OpenJDK JRE and wget
 RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
     apt-get install -y --no-install-recommends wget && \
