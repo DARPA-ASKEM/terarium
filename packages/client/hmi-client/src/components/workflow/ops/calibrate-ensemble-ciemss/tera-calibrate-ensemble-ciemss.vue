@@ -209,7 +209,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/components/workflow/util';
 import type {
 	CsvAsset,
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
 	State
@@ -287,7 +287,7 @@ const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const allModelConfigurations = ref<ModelConfiguration[]>([]);
+const allModelConfigurations = ref<ModelConfigurationLegacy[]>([]);
 // List of each observible + state for each model.
 const allModelOptions = ref<State[][]>([]);
 

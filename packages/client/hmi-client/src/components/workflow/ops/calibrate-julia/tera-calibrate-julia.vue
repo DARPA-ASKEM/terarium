@@ -201,7 +201,7 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	ScimlStatusUpdate,
 	State
 } from '@/types/Types';
@@ -257,7 +257,7 @@ const inProgressSimulationId = ref<string>(props.node.state.inProgressSimulation
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const modelConfig = ref<ModelConfiguration>();
+const modelConfig = ref<ModelConfigurationLegacy>();
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();

@@ -43,6 +43,9 @@ public class DatasetColumn extends TerariumEntity {
 	@JsonBackReference
 	private Dataset dataset;
 
+	@Column(length = 255)
+	private String fileName;
+
 	/**
 	 * Datatype. One of: unknown, boolean, string, char, integer, int, float, double, timestamp, datetime, date, time
 	 */

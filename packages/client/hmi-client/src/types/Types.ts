@@ -164,6 +164,7 @@ export interface Dataset extends TerariumAsset {
 
 export interface DatasetColumn extends TerariumEntity {
     name: string;
+    fileName: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
@@ -210,7 +211,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
+export interface ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
     configuration: Model;
     interventions?: Intervention[];
     model_id: string;
@@ -227,6 +228,43 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
     name: string;
     version: string;
     semantics: string;
+}
+
+export interface InitialSemantic extends Semantic {
+    target: string;
+    expression: string;
+    expressionMathml: string;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface ModelConfiguration extends TerariumAsset {
+    calibrationRunId: string;
+    modelId: string;
+    simulationId?: string;
+    observableSemanticList: ObservableSemantic[];
+    parameterSemanticList: ParameterSemantic[];
+    initialSemanticList: InitialSemantic[];
+}
+
+export interface ObservableSemantic extends Semantic {
+    referenceId: string;
+    states: string[];
+    expression: string;
+    expressionMathml: string;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface ParameterSemantic extends Semantic {
+    referenceId: string;
+    distribution: ModelDistribution;
+    interventions: Intervention[];
+    default: boolean;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface Semantic extends TerariumEntity {
+    source: string;
+    type: SemanticType;
 }
 
 export interface State {
@@ -895,6 +933,11 @@ export interface ModelMetadata {
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
@@ -937,11 +980,6 @@ export interface ProvenanceEdge {
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
@@ -1224,7 +1262,6 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
-    Publication = "publication",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1306,6 +1343,12 @@ export enum ColumnType {
     Time = "TIME",
 }
 
+export enum SemanticType {
+    Initial = "initial",
+    Parameter = "parameter",
+    Observable = "observable",
+}
+
 export enum ProvenanceRelationType {
     BeginsAt = "BEGINS_AT",
     Cites = "CITES",
@@ -1333,7 +1376,6 @@ export enum ProvenanceType {
     ModelRevision = "ModelRevision",
     ModelConfiguration = "ModelConfiguration",
     Project = "Project",
-    Publication = "Publication",
     Simulation = "Simulation",
     SimulationRun = "SimulationRun",
     Plan = "Plan",
