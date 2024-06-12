@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,9 @@ public class CalibrationRequestCiemss implements Serializable {
 
 	@TSOptional
 	private List<Intervention> interventions;
+
+	@TSOptional
+	private JsonNode metadata;
 
 	private DatasetLocation dataset;
 	private String engine;

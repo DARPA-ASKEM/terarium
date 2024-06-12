@@ -116,7 +116,11 @@ public class NotificationGroupInstance<T> {
 	}
 
 	public void sendFinalMessage(final String msg, ProgressState state) {
-		sendNotification(msg, null, 1.0, state);
+		if (state.equals(ProgressState.ERROR) || state.equals(ProgressState.FAILED)) {
+			sendNotification(null, msg, 1.0, state);
+		} else {
+			sendNotification(msg, null, 1.0, state);
+		}
 	}
 
 	public void sendError(final String msg) {

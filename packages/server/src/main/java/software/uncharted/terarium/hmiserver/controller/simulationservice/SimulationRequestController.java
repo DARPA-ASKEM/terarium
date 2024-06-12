@@ -114,7 +114,9 @@ public class SimulationRequestController implements SnakeCaseController {
 			clientEventService,
 			simulationService,
 			sim.getId(),
-			permission
+			projectId,
+			permission,
+			request.getMetadata()
 		).startPolling();
 
 		// FIXME: engine is set twice, talk to TDS

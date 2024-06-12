@@ -6,7 +6,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import lombok.Data;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
@@ -21,7 +24,9 @@ public class SimulationRequestStatusNotifier {
 	private int POLLING_INTERVAL_SECONDS = 5;
 
 	private UUID simulationId;
+	private UUID projectId;
 	private Schema.Permission permission;
+	private JsonNode metadata; // Arbitrary metadata to be sent to the client
 
 	private final ScheduledExecutorService executor;
 	private final ClientEventService clientEventService;
@@ -29,10 +34,12 @@ public class SimulationRequestStatusNotifier {
 	private final SimulationService simulationService;
 
 	@Data
+	@TSModel
 	private static class SimulationNotificationData {
 		private final UUID simulationId;
 		private final SimulationType simulationType;
 		private final SimulationEngine simulationEngine;
+		private final JsonNode metadata;
 	}
 
 	public SimulationRequestStatusNotifier(
@@ -40,22 +47,26 @@ public class SimulationRequestStatusNotifier {
 		final ClientEventService clientEventService,
 		final SimulationService simulationService,
 		final UUID simulationId,
-		final Schema.Permission permission
+		final UUID projectId,
+		final Schema.Permission permission,
+		final JsonNode metadata
 	) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
 		this.simulationService = simulationService;
 		this.simulationId = simulationId;
+		this.projectId = projectId;
 		this.permission = permission;
+		this.metadata = metadata;
 
 		this.executor = Executors.newScheduledThreadPool(1);
 	}
 
 	private void sendStatusMessage(final NotificationGroupInstance<SimulationNotificationData> notificationInterface, final Simulation simulation) {
+		final String statusMessage = simulation.getStatusMessage();
 		final ProgressState status = simulation.getStatus();
 		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
-			final String msg = simulation.getStatusMessage();
-			throw new RuntimeException((msg.isEmpty() || msg == null) ? "Failed running simulation " + simulation.getId() : msg);
+			throw new RuntimeException((statusMessage.isEmpty() || statusMessage == null) ? "Failed running simulation " + simulation.getId() : statusMessage);
 		} else if (status.equals(ProgressState.CANCELLED)) {
 			notificationInterface.sendFinalMessage("Simulation has been cancelled.", ProgressState.CANCELLED);
 			this.executor.shutdown();
@@ -63,9 +74,9 @@ public class SimulationRequestStatusNotifier {
 			notificationInterface.sendFinalMessage("Simulation has completed.", ProgressState.COMPLETE);
 			this.executor.shutdown();
 		} else if (status.equals(ProgressState.QUEUED)) {
-			notificationInterface.sendMessage("Simulation is queued.", ProgressState.QUEUED);
+			notificationInterface.sendMessage("Simulation is queued...", ProgressState.QUEUED);
 		} else {
-			notificationInterface.sendMessage("Simulation is running: " + simulation.getStatusMessage());
+			notificationInterface.sendMessage((statusMessage.isEmpty() || statusMessage == null) ? "Simulation is running..." : statusMessage);
 		}
 	}
 
@@ -80,8 +91,8 @@ public class SimulationRequestStatusNotifier {
 			clientEventService,
 			notificationService,
 			ClientEventType.SIMULATION_NOTIFICATION,
-			sim.getProjectId(),
-			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine())
+			this.projectId,
+			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata)
 		);
 		this.sendStatusMessage(notificationInterface, sim);
 
@@ -101,8 +112,6 @@ public class SimulationRequestStatusNotifier {
 				this.executor.shutdown();
 			}
 		};
-
 		executor.scheduleAtFixedRate(poller, POLLING_INTERVAL_SECONDS, POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS);
 	}
-
 }

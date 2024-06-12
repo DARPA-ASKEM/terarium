@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +51,9 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	private OptimizeExtra extra;
 	private String engine;
+
+	@TSOptional
+	private JsonNode metadata;
 
 	@JsonAlias("user_id")
 	private String userId;

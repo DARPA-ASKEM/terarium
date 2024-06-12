@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.Serializable;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -21,6 +23,9 @@ public class CalibrationRequestJulia implements Serializable {
 
 	@TSOptional
 	private TimeSpan timespan;
+
+	@TSOptional
+	private JsonNode metadata;
 
 	private DatasetLocation dataset;
 	private String engine;

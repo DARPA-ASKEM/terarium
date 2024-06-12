@@ -226,7 +226,13 @@ const makeForecastRequest = async (): Promise<string> => {
 			end: state.currentTimespan.end
 		},
 		extra: {},
-		engine: 'sciml'
+		engine: 'sciml',
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		}
 	};
 	const response = await makeForecastJob(payload);
 	return response.id;
