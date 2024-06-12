@@ -1,31 +1,28 @@
 <template>
 	<ul>
-		<li
-			v-for="({ baseInitial, childInitials, isVirtual }, index) in initialList"
-			:key="baseInitial.id"
-		>
+		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="baseState.id">
 			<template v-if="isVirtual">
 				<tera-state-metadata-entry
-					:state="baseInitial"
+					:state="baseState"
 					is-base
 					:show-stratified-variables="toggleStates[index]"
 					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-state="updateBaseInitial(baseInitial.target, $event)"
+					@update-state="updateBaseState(baseState.id, $event)"
 				/>
 				<ul v-if="toggleStates[index]" class="stratified">
-					<li v-for="childInitial in childInitials" :key="childInitial.target">
+					<li v-for="childState in childStates" :key="childState.id">
 						<tera-state-metadata-entry
-							:state="childInitial"
+							:state="childState"
 							is-stratified
-							@update-state="$emit('update-state', { id: childInitial.target, ...$event })"
+							@update-state="$emit('update-state', { id: childState.id, ...$event })"
 						/>
 					</li>
 				</ul>
 			</template>
 			<tera-state-metadata-entry
 				v-else
-				:state="baseInitial"
-				@update-state="$emit('update-state', { id: baseInitial.target, ...$event })"
+				:state="baseState"
+				@update-state="$emit('update-state', { id: baseState.id, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -49,32 +46,30 @@ const emit = defineEmits(['update-state']);
 const states = getStates(props.model); // could be states, vertices, and stocks type
 
 const collapsedInitials = collapseInitials(props.mmt);
-const initialList = Array.from(collapsedInitials.keys())
+const stateList = Array.from(collapsedInitials.keys())
 	.flat()
 	.map((id) => {
 		const childTargets = collapsedInitials.get(id) ?? [];
-		const childInitials = childTargets
+		const childStates = childTargets
 			.map((childTarget) => states.find((i: any) => i.id === childTarget))
 			.filter(Boolean);
 		const isVirtual = childTargets.length > 1;
 
 		// If the initial is virtual, we need to get it from model.metadata
-		const baseInitial = isVirtual
+		const baseState = isVirtual
 			? props.model.metadata?.initials?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
 			: states.find((i: any) => i.id === id);
 
-		console.log('baseInitial', baseInitial);
-
-		return { baseInitial, childInitials, isVirtual };
+		return { baseState, childStates, isVirtual };
 	});
 
 const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
 
-function updateBaseInitial(baseTarget: string, event: any) {
+function updateBaseState(baseId: string, event: any) {
 	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-state', { id: baseTarget, isMetadata: true, ...event });
+	emit('update-state', { id: baseId, isMetadata: true, ...event });
 	// Cascade the change to all children
-	const targets = collapsedInitials.get(baseTarget);
+	const targets = collapsedInitials.get(baseId);
 	targets?.forEach((target) => emit('update-state', { id: target, ...event }));
 }
 </script>

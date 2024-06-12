@@ -16,6 +16,7 @@
 					value: $event
 				})
 			"
+			disabled
 		/>
 		<template v-if="!isStratified">
 			<Button
