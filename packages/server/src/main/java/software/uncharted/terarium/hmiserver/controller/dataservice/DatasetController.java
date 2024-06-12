@@ -13,11 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,9 +23,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -57,7 +50,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -246,45 +238,6 @@ public class DatasetController {
 		}
 	}
 
-	/**
-	 * Extracts columns from the dataset if they are not already set and saves the dataset.
-	 *
-	 * @param dataset dataset to extract columns from
-	 * @return the dataset with columns extracted and saved
-	 * @throws IOException if there is an issue saving the dataset after extracting columns
-	 */
-	private Dataset extractColumnsAsNeededAndSave(final Dataset dataset, final Schema.Permission hasWritePermission)
-			throws IOException {
-		if (dataset.getColumns() != null && !dataset.getColumns().isEmpty()) {
-			// columns are set. No need to extract
-			return dataset;
-		}
-		if (dataset.getFileNames() != null || dataset.getFileNames().isEmpty()) {
-			// no file names to extract columns from
-			return dataset;
-		}
-
-		for (final String filename : dataset.getFileNames()) {
-			if (!filename.endsWith(".nc")) {
-				try {
-					final List<List<String>> csv = getCSVFile(filename, dataset.getId(), 1);
-					if (csv == null || csv.isEmpty()) {
-						continue;
-					}
-					updateHeaders(dataset, csv.get(0));
-				} catch (final IOException e) {
-					final String error = "Unable to get dataset CSV for file " + filename;
-					log.error(error, e);
-					continue;
-				}
-			} else {
-				return dataset;
-			}
-		}
-
-		return datasetService.updateAsset(dataset, hasWritePermission).get();
-	}
-
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a dataset")
@@ -384,7 +337,7 @@ public class DatasetController {
 
 		final List<List<String>> csv;
 		try {
-			csv = getCSVFile(filename, datasetId, limit);
+			csv = datasetService.getCSVFile(filename, datasetId, limit);
 			if (csv == null) {
 				final String error = "Unable to get CSV";
 				log.error(error);
@@ -409,32 +362,6 @@ public class DatasetController {
 				csv.subList(0, Math.min(linesToRead + 1, csv.size())), csvColumnStats, headers, csv.size());
 
 		return ResponseEntity.ok(csvAsset);
-	}
-
-	private List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit)
-			throws IOException {
-		String rawCSV = "";
-
-		final Optional<byte[]> bytes = datasetService.fetchFileAsBytes(datasetId, filename);
-		if (bytes.isEmpty()) {
-			return null;
-		}
-
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes.get())));
-
-		String line = null;
-		Integer count = 0;
-		while ((line = reader.readLine()) != null) {
-			if (limit > 0 && count > limit) {
-				break;
-			}
-			rawCSV += line + '\n';
-			count++;
-		}
-
-		final List<List<String>> csv;
-		csv = csvToRecords(rawCSV);
-		return csv;
 	}
 
 	@GetMapping("/{id}/download-file")
@@ -658,7 +585,7 @@ public class DatasetController {
 						description = "There was an issue uploading the file",
 						content = @Content)
 			})
-	public ResponseEntity<Void> uploadData( // HttpServletRequest request,
+	public ResponseEntity<Void> uploadData(
 			@PathVariable("id") final UUID datasetId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
@@ -684,7 +611,7 @@ public class DatasetController {
 				}
 
 				try {
-					updatedDataset = Optional.of(extractColumnsAsNeededAndSave(updatedDataset.get(), permission));
+					updatedDataset = Optional.of(datasetService.extractColumnsFromFiles(updatedDataset.get()));
 				} catch (final IOException e) {
 					final String error = "Unable to extract columns from dataset";
 					log.error(error, e);
@@ -767,7 +694,7 @@ public class DatasetController {
 					return ResponseEntity.internalServerError().build();
 				}
 
-				updateHeaders(updatedDataset.get(), Arrays.asList(headers));
+				datasetService.addDatasetColumns(updatedDataset.get(), filename, Arrays.asList(headers));
 
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
@@ -784,28 +711,6 @@ public class DatasetController {
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to PUT csv data");
 		}
-	}
-
-	private static void updateHeaders(final Dataset dataset, final List<String> headers) {
-		if (dataset.getColumns() == null) {
-			dataset.setColumns(new ArrayList<>());
-		}
-		for (final String header : headers) {
-			final DatasetColumn column = new DatasetColumn().setName(header).setAnnotations(new ArrayList<>());
-			dataset.getColumns().add(column);
-		}
-	}
-
-	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
-		final List<List<String>> records = new ArrayList<>();
-		try (final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
-			for (final CSVRecord csvRecord : parser) {
-				final List<String> values = new ArrayList<>();
-				csvRecord.forEach(values::add);
-				records.add(values);
-			}
-		}
-		return records;
 	}
 
 	private static List<String> getColumn(final List<List<String>> matrix, final int columnNumber) {
