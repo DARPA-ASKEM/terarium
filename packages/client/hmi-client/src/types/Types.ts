@@ -164,6 +164,7 @@ export interface Dataset extends TerariumAsset {
 
 export interface DatasetColumn extends TerariumEntity {
     name: string;
+    fileName: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
