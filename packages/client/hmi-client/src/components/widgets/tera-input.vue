@@ -123,6 +123,7 @@ label {
 input {
 	font-family: var(--font-family);
 	font-feature-settings: 'tnum';
+	flex-grow: 1;
 	border: none;
 	background-color: none;
 	&::-webkit-inner-spin-button,
