@@ -37,7 +37,6 @@ public class ClientEventService {
 	private final ObjectMapper mapper;
 	private final RabbitTemplate rabbitTemplate;
 
-	private static final Long SSE_HEARTBEAT_INTERVAL_MILLIS = 5000L;
 	private static final String CLIENT_USER_EVENT_EXCHANGE = "client-user-event-exchange";
 	private static final String CLIENT_ALL_USERS_EVENT_EXCHANGE = "client-all-users-event-exchange";
 
