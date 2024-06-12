@@ -8654,7 +8654,7 @@ __metadata:
     lodash: "npm:4.17.21"
     mathlive: "npm:0.89.2"
     mathml-to-latex: "npm:1.2.0"
-    oidc-spa: "npm:4.6.1"
+    oidc-spa: "npm:4.6.2"
     p5: "npm:1.6.0"
     path-browserify: "npm:1.0.1"
     pinia: "npm:2.1.7"
@@ -11586,15 +11586,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"oidc-spa@npm:4.6.1":
-  version: 4.6.1
-  resolution: "oidc-spa@npm:4.6.1"
+"oidc-spa@npm:4.6.2":
+  version: 4.6.2
+  resolution: "oidc-spa@npm:4.6.2"
   dependencies:
     jwt-decode: "npm:^3.1.2"
     oidc-client-ts: "npm:2.4.0"
     tsafe: "npm:^1.6.5"
     worker-timers: "npm:^7.1.7"
-  checksum: 8e371fe84b6808b46eb4573c6d706de1a7073f24774e4fc997344d203eff5816d18e3ec43cba34d2b7935c2276d4d1f327610f333774acb5ef53e31255160091
+  checksum: e444c0e37caa80ae39204fccf10e3cfea7777d6895fbc03fd3a31e417317bdcc206b9ccfa79d8d2759401b4dbc2a0dfc3ddb76f9a660d0d208d948a9d9a3604b
   languageName: node
   linkType: hard
 
