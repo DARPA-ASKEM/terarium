@@ -7,7 +7,6 @@ import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -151,7 +150,7 @@ public class ClientEventService {
 		}
 		// Send the message to each user connected and remove disconnected users
 		userIdToEmitters.forEach((userId, emitters) -> {
-			final Set<SseEmitter> emittersToRemove = new HashSet<>();
+			final Set<SseEmitter> emittersToRemove = ConcurrentHashMap.newKeySet();
 			for (final SseEmitter emitter : emitters) {
 				try {
 					emitter.send(messageJson);
@@ -193,7 +192,7 @@ public class ClientEventService {
 		final String userId = messageJson.at("/userId").asText();
 		final java.util.Queue<SseEmitter> emitters = userIdToEmitters.get(userId);
 		if (emitters != null) {
-			final Set<SseEmitter> emittersToRemove = new HashSet<>();
+			final Set<SseEmitter> emittersToRemove = ConcurrentHashMap.newKeySet();
 			for (final SseEmitter emitter : emitters) {
 				try {
 					emitter.send(messageJson.at("/event"));
