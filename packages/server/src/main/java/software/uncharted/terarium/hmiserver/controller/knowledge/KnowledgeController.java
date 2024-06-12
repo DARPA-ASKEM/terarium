@@ -507,9 +507,9 @@ public class KnowledgeController {
 					throw new ResponseStatusException(
 							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
 				}
-				//Try to get TA4 card.
-				if (document.getMetadata() != null){
-					if (document.getMetadata().get("gollmCard") != null){
+				// Try to get TA4 card.
+				if (document.getMetadata() != null) {
+					if (document.getMetadata().get("gollmCard") != null) {
 						gollmCard = document.getMetadata().get("gollmCard").deepCopy();
 					}
 				}
@@ -551,7 +551,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
-		//Get TA1 Card:
+		// Get TA1 Card:
 		final Card card;
 		try {
 			card = mapper.treeToValue(resp.getBody(), Card.class);
