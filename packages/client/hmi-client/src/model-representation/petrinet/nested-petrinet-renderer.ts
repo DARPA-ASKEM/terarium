@@ -74,12 +74,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			d.matrixRows = matrixRowLen;
 			d.matrixCols = matrixColLen;
 
-			// FIXME: Consider rendering 1x1 matrices as a regular transition instead
-			d.data.isStratified = true;
+			if (matrixRowLen > 1 || matrixColLen > 1) d.data.isStratified = true;
 
 			// Initialize aspectRatio to 1 in case the matrix is square or empty
 			d.aspectRatio = 1;
-
 			// Check and set the aspect ratio based on the dimensions of the matrix
 			if (matrixRowLen > matrixColLen) {
 				d.aspectRatio = matrixColLen / matrixRowLen;
@@ -99,10 +97,18 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		});
 
 		const species = selection.filter((d) => d.data.type === NodeType.State);
-		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
+		const stratifiedTransitions = selection.filter(
+			(d) => d.data.type === NodeType.Transition && d.data.isStratified === true
+		);
+		const transitions = selection.filter(
+			(d) => d.data.type === NodeType.Transition && !d.data.isStratified
+		);
+
+		console.log('stratifiedTransitions', stratifiedTransitions);
+		console.log('transitions', transitions);
 
 		// transitions
-		transitions
+		stratifiedTransitions
 			.append('rect')
 			.classed('shape selectableNode', true)
 			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
@@ -176,7 +182,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			renderNestedNodes(nestedMap, parentRadius, 0, 0, g, idx, 1);
 		});
 
-		transitions.each((d, idx, g) => {
+		stratifiedTransitions.each((d, idx, g) => {
 			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
 
 			const matrixRowLen = transitionMatrix.length;
