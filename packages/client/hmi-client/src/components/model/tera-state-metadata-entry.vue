@@ -1,6 +1,6 @@
 <template>
 	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
-		<h6>{{ id }}{{ state }}</h6>
+		<h6>{{ id }}</h6>
 		<tera-input
 			label="Name"
 			:model-value="name ?? ''"
