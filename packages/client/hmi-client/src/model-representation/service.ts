@@ -174,6 +174,21 @@ export function getParameters(model: Model): ModelParameter[] {
 	}
 }
 
+// Gets states, vertices, stocks
+export function getInitialsAlt(model: Model): any[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
+	}
+}
+
 /**
  * Returns the model parameter with the specified ID.
  * @param {Model} model - The model object.
@@ -228,6 +243,23 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
 	if (!auxiliary) return;
 	updateProperty(auxiliary);
+}
+
+export function updateInitial(model: Model, id: string, key: string, value: any) {
+	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+		// TODO: Add support for editing concept/grounding
+		if (key === 'initial') {
+			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
+			obj.initial.expression = value;
+			obj.initial.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			obj[key] = value;
+		}
+	}
+	const initials = getInitials(model);
+	const initial = initials.find((i: any) => i.id === id);
+	if (!initial) return;
+	updateProperty(initial);
 }
 
 /**

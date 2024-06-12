@@ -19,6 +19,7 @@ import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tab
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
 import {
+	updateInitial,
 	updateInitialMetadata,
 	updateParameter,
 	updateParameterMetadata
@@ -49,8 +50,12 @@ const tables = computed(() => {
 });
 
 function onUpdateInitialMetadata(event: any) {
-	const { target, key, value } = event;
-	updateInitialMetadata(transientModel.value, target, key, value);
+	const { id, key, value, isMetadata } = event;
+	if (isMetadata) {
+		updateInitialMetadata(transientModel.value, id, key, value);
+	} else {
+		updateInitial(transientModel.value, id, key, value);
+	}
 }
 
 function onUpdateParameter(event: any) {

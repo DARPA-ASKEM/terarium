@@ -1,46 +1,46 @@
 <template>
-	<!-- <ul v-if="isStratified">
-		<li v-for="([baseTarget, values], index) in collapsedInitials.entries()" :key="baseTarget">
-			<tera-initial-metadata-entry
-				:state="states[0]"
-				:model="model"
-				:target="baseTarget"
-				is-base
-				:show-stratified-variables="toggleStates[index]"
-				@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-				@update-initial-metadata="updateBaseInitial(baseTarget, $event)"
-			/>
-			<ul v-if="toggleStates[index]" class="stratified">
-				<li v-for="target in values" :key="target">
-					<tera-initial-metadata-entry
-						:state="states[0]"
-						:model="model"
-						:target="target"
-						is-stratified
-						@update-initial-metadata="$emit('update-initial-metadata', { target, ...$event })"
-					/>
-				</li>
-			</ul>
-		</li>
-	</ul> -->
-	<!-- <ul v-else> -->
 	<ul>
-		<li v-for="state in states" :key="state.id">
+		<li
+			v-for="({ baseInitial, childInitials, isVirtual }, index) in initialList"
+			:key="baseInitial.id"
+		>
+			<template v-if="isVirtual">
+				<tera-initial-metadata-entry
+					:initial="baseInitial"
+					is-base
+					:show-stratified-variables="toggleStates[index]"
+					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
+					@update-initial-metadata="updateBaseInitial(baseInitial.target, $event)"
+				/>
+				<ul v-if="toggleStates[index]" class="stratified">
+					<li v-for="childInitial in childInitials" :key="childInitial.target">
+						<tera-initial-metadata-entry
+							:initial="childInitial"
+							is-stratified
+							@update-initial-metadata="
+								$emit('update-initial-metadata', { id: childInitial.target, ...$event })
+							"
+						/>
+					</li>
+				</ul>
+			</template>
 			<tera-initial-metadata-entry
-				:state="state"
-				:model="model"
-				@update-initial-metadata="$emit('update-initial-metadata', { id: state.id, ...$event })"
+				v-else
+				:initial="baseInitial"
+				@update-initial-metadata="
+					$emit('update-initial-metadata', { id: baseInitial.target, ...$event })
+				"
 			/>
 		</li>
 	</ul>
 </template>
 
 <script setup lang="ts">
-// import { ref } from 'vue';
+import { ref } from 'vue';
 import { Model } from '@/types/Types';
+import { getInitialsAlt } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
-// import { getInitials } from '@/model-representation/service';
-// import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
+import { collapseInitials } from '@/model-representation/mira/mira';
 import TeraInitialMetadataEntry from '@/components/model/tera-initial-metadata-entry.vue';
 
 const props = defineProps<{
@@ -48,25 +48,37 @@ const props = defineProps<{
 	mmt: MiraModel;
 }>();
 
-// const emit = defineEmits(['update-initial-metadata']);
+const emit = defineEmits(['update-initial-metadata']);
 
-const { states } = props.model.model;
-console.log(states);
+const initials = getInitialsAlt(props.model); // could be states, vertices, and stocks type
 
-// const initials = getInitials(props.model);
-// const isStratified = isStratifiedModel(props.mmt);
-// const collapsedInitials = collapseInitials(props.mmt);
+const collapsedInitials = collapseInitials(props.mmt);
+const initialList = Array.from(collapsedInitials.keys())
+	.flat()
+	.map((target) => {
+		const childTargets = collapsedInitials.get(target) ?? [];
+		const childInitials = childTargets
+			.map((childTarget) => initials.find((i: any) => i.id === childTarget))
+			.filter(Boolean);
+		const isVirtual = childTargets.length > 1;
 
-// const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
+		// If the initial is virtual, we need to get it from model.metadata
+		const baseInitial = isVirtual
+			? props.model.metadata?.initials?.[target] ?? { target } // If we haven't saved it in the metadata yet, create it
+			: initials.find((i: any) => i.id === target);
 
-// function updateBaseInitial(baseTarget: string, event: any) {
-// 	emit('update-initial-metadata', { target: baseTarget, ...event });
-// 	// Update stratified initials if the event is a unit change
-// 	const targets = collapsedInitials.get(baseTarget);
-// 	if (targets && event.key === 'units') {
-// 		targets.forEach((target) => emit('update-initial-metadata', { target, ...event }));
-// 	}
-// }
+		return { baseInitial, childInitials, isVirtual };
+	});
+
+const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
+
+function updateBaseInitial(baseTarget: string, event: any) {
+	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
+	emit('update-initial-metadata', { id: baseTarget, isMetadata: true, ...event });
+	// Cascade the change to all children
+	const targets = collapsedInitials.get(baseTarget);
+	targets?.forEach((target) => emit('update-initial-metadata', { id: target, ...event }));
+}
 </script>
 
 <style scoped>

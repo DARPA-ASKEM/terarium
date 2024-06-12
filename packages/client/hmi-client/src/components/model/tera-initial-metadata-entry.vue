@@ -6,9 +6,10 @@
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
 		/>
+		<!--FIXME: description property should be added to the initial type-->
 		<tera-input
 			label="Description"
-			:model-value="getInitialDescription(model, id)"
+			:model-value="''"
 			@update:model-value="
 				$emit('update-initial-metadata', {
 					key: 'description',
@@ -36,14 +37,12 @@
 </template>
 
 <script setup lang="ts">
-import { Model, PetriNetState } from '@/types/Types';
-import { getInitialDescription } from '@/model-representation/service';
+import { PetriNetState, RegNetVertex } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	model: Model;
-	state: PetriNetState;
+	initial: PetriNetState | RegNetVertex;
 	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
@@ -51,9 +50,7 @@ const props = defineProps<{
 
 defineEmits(['update-initial-metadata', 'toggle-stratified-variables', 'open-matrix']);
 
-const { id, name, grounding, initial } = props.state;
-
-console.log(props.model);
+const { id, name, grounding, initial } = props.initial; // description property should be added to the initial type
 </script>
 
 <style scoped>
