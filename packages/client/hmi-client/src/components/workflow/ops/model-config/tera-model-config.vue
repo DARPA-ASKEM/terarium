@@ -618,7 +618,7 @@ const downloadConfiguredModel = async () => {
 };
 
 const createConfiguration = async (force: boolean = false) => {
-	if (!model.value || isSaveDisabled) return;
+	if (!model.value || isSaveDisabled.value) return;
 
 	const state = cloneDeep(props.node.state);
 

@@ -48,7 +48,6 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
-	openValueConfig: boolean;
 }>();
 
 const emit = defineEmits(['close-modal', 'update-cell-value']);
