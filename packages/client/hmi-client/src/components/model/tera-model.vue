@@ -227,6 +227,6 @@ watch(
 );
 
 onUnmounted(() => {
-	console.log('test2');
+	console.log('model page unmount');
 });
 </script>

@@ -76,6 +76,7 @@ onMounted(() => window.addEventListener('beforeunload', saveChanges));
 
 onUnmounted(() => {
 	saveChanges();
+	console.log('tables unmount');
 	window.removeEventListener('beforeunload', saveChanges);
 });
 </script>
