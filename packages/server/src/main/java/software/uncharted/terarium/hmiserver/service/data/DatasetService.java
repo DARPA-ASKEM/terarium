@@ -134,8 +134,6 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	private Dataset extractColumnsForFreshCreate(final Dataset dataset) throws IOException {
 
-		dataset.setColumns(new ArrayList<>());
-
 		if (dataset.getFileNames() != null || dataset.getFileNames().isEmpty()) {
 			// no file names to extract columns from
 			return dataset;
