@@ -38,15 +38,14 @@ public class ModelConfigurationService
 		throw new UnsupportedOperationException("Model Configurations are not stored in S3");
 	}
 
-	public ModelConfiguration modelConfigurationFromAMR(final Model model) {
+	public ModelConfiguration modelConfigurationFromAMR(final Model model, final String name, final String description) {
 		ModelConfiguration modelConfiguration = new ModelConfiguration();
-		modelConfiguration.setName("Default Configuration");
-		modelConfiguration.setDescription("This is a default configuration.");
+		modelConfiguration.setName(name == null ? name : "Default Configuration");
+		modelConfiguration.setDescription(description == null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
 		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model));
 		modelConfiguration.setObservableSemanticList(createObservableSemanticList(model));
-
 		return modelConfiguration;
 	}
 
@@ -58,7 +57,6 @@ public class ModelConfigurationService
 			initialSemantic.setExpression(initial.getExpression());
 			initialSemantic.setExpressionMathml(initial.getExpressionMathml());
 			initialSemantics.add(initialSemantic);
-
 		}
 		return initialSemantics;
 	}
@@ -82,7 +80,6 @@ public class ModelConfigurationService
 			ParameterSemantic parameterSemantic = new ParameterSemantic();
 			parameterSemantic.setReferenceId(parameter.getId());
 			parameterSemantic.setDefault(true);
-
 
 			ModelDistribution distribution = parameter.getDistribution();
 			// constant distribution
