@@ -1,15 +1,16 @@
 <template>
-	<div :class="{ error: getErrorMessage }" @click.self.stop="focusInput" :label="label">
+	<div class="flex" :label="label">
 		<label @click.self.stop="focusInput">{{ label }}</label>
-		<input
-			v-bind="attrs"
-			ref="inputField"
-			:value="getValue()"
-			@input="updateValue"
-			:style="{ 'text-align': textAlign }"
-			@blur="unmask"
-			:type="getType"
-		/>
+		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+			<input
+				ref="inputField"
+				:value="getValue()"
+				@input="updateValue"
+				:style="{ 'text-align': textAlign }"
+				@blur="unmask"
+				:type="getType"
+			/>
+		</main>
 	</div>
 	<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
 </template>
@@ -84,14 +85,15 @@ const unmask = () => {
 </script>
 
 <style scoped>
-div {
+main {
 	display: flex;
+	flex: 1 1 0;
 	justify-content: space-between;
 	align-items: center;
 	padding: var(--gap-xsmall) var(--gap-small);
 	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-alt);
-	border-radius: var(--border-radius-small);
+	border-radius: var(--border-radius);
 	cursor: text;
 	transition: border-color 0.3s ease-in-out;
 	font-family: var(--font-family);
@@ -115,13 +117,12 @@ label {
 	background-color: none;
 	color: var(--text-color-secondary);
 	cursor: text;
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-xsmall);
 }
 
 input {
 	font-family: var(--font-family);
 	font-feature-settings: 'tnum';
-	flex-grow: 1;
 	border: none;
 	background-color: none;
 	&::-webkit-inner-spin-button,
@@ -140,5 +141,9 @@ aside {
 	i {
 		margin-right: var(--gap-small);
 	}
+}
+
+label {
+	align-self: center;
 }
 </style>
