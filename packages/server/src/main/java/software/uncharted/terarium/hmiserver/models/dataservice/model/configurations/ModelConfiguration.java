@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 @EqualsAndHashCode(callSuper = true)
@@ -22,6 +23,10 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 public class ModelConfiguration extends TerariumAsset {
 	private UUID calibrationRunId;
 	private UUID modelId;
+
+	/** This is "simulation" in the sense of our POJO. It actually corresponds to a pyciemss calibration */
+	@TSOptional
+	private UUID simulationId;
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
