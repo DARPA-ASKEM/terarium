@@ -104,10 +104,69 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			(d) => d.data.type === NodeType.Transition && !d.data.isStratified
 		);
 
-		console.log('stratifiedTransitions', stratifiedTransitions);
-		console.log('transitions', transitions);
+		// species
+		species
+			.append('circle')
+			.classed('shape selectableNode', true)
+			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
+			.attr('fill', (d) =>
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')
+			)
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1)
+			.style('cursor', 'pointer');
 
 		// transitions
+		transitions
+			.append('rect')
+			.classed('shape selectableNode', true)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', (d) =>
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
+			)
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
+
+		// transitions label text
+		transitions
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.html((d) => d.id);
+
+		// transitions expression text
+		transitions
+			.append('text')
+			.attr('y', (d) => -d.height / 2 - 8)
+			.classed('latex-fontt', true)
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
+			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '3px')
+			.style('stroke-linecap', 'butt')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.html((d) => {
+				if (d.data.expression) return d.data.expression;
+				return '';
+			});
+
+		// stratified transitions
 		stratifiedTransitions
 			.append('rect')
 			.classed('shape selectableNode', true)
@@ -121,18 +180,6 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
-
-		// species
-		species
-			.append('circle')
-			.classed('shape selectableNode', true)
-			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')
-			)
-			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1)
-			.style('cursor', 'pointer');
 
 		const renderNestedNodes = (
 			node: { [baseNodeId: string]: any },
@@ -207,62 +254,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
-					// Draw label for number of columns
-					// transitionNode
-					// 	.append('text')
-					// 	.attr('x', 0)
-					// 	.attr('y', -d.height * 0.6)
-					// 	.attr('text-anchor', 'middle') // This will center-align the text horizontally
-					// 	.text(matrixColLen)
-					// 	.style('fill', '#cccccc')
-					// 	.style('font-size', '7px');
-
-					// Draw label for number of rows
-					// transitionNode
-					// 	.append('text')
-					// 	.attr('x', (-d.width * d.aspectRatio!) / 2 - 8)
-					// 	.attr('y', (-d.height * d.aspectRatio!) / 2 + 12)
-					// 	.attr('text-anchor', 'right') // This will center-align the text horizontally
-					// 	.text(matrixRowLen)
-					// 	.style('fill', '#cccccc')
-					// 	.style('font-size', '7px');
 				});
 			});
 		});
-
-		/* Don't show transition labels because we're showing matrices here */
-		// transitions label text
-		// transitions
-		// 	.append('text')
-		// 	.attr('y', () => 5)
-		// 	.style('text-anchor', 'middle')
-		// 	.style('paint-order', 'stroke')
-		// 	.style('fill', 'var(--text-color-primary')
-		// 	.style('pointer-events', 'none')
-		// 	.html((d) => d.id);
-
-		// transitions expression text
-		transitions
-			.append('text')
-			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latex-font', true)
-			.style('font-style', 'italic')
-			.style('font-size', FONT_SIZE_SMALL)
-			.style('text-anchor', 'middle')
-			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'butt')
-			.style('fill', 'var(--text-color-primary')
-			.style('pointer-events', 'none')
-			.html((d) => {
-				if (!this.graph.amr) return '';
-				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
-				if (rate) {
-					return rate.expression;
-				}
-				return '';
-			});
 
 		// species text
 		species

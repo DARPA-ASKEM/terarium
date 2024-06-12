@@ -354,6 +354,10 @@ kbd {
 }
 
 .legend {
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: var(--gap-xsmall) var(--gap-small);
+	border-radius: var(--border-radius);
 	position: absolute;
 	bottom: 0;
 	left: 0;
