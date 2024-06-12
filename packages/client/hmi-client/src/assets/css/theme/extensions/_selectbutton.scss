@@ -6,25 +6,25 @@
     border-radius: 6px;
     border: 1px solid var(--surface-border);
     background-color: var(--tab-backgroundcolor-unselected);
-    height: 40px; 
+    height: 40px;
 
     .p-button {
         padding: 12px;
-        border-radius: $borderRadius; 
+        border-radius: $borderRadius;
         background-color: var(--tab-backgroundcolor-unselected);
         border: none;
          &:hover {
                 background: $toggleButtonHoverBg;
             }
         &:focus {
-            background: $toggleButtonActiveBg;  
+            background: $toggleButtonActiveBg;
             &.p-highlight {
                 background: $toggleButtonBg;
-            } 
+            }
         }
         &.p-highlight {
             background: $toggleButtonBg;
-            border-radius: $borderRadius; 
+            border-radius: $borderRadius;
         }
     }
 }
@@ -42,6 +42,10 @@
     height:24px;
     border-radius: $borderRadius;
 
+		.p-button-label {
+			font-size: var(--font-caption);
+		}
+
     .p-button {
         padding: 8px;
         border-radius: $smallBorderRadius;
@@ -54,6 +58,6 @@
 .p-selectbutton.p-button-xsm {
     @extend .p-button-sm;
     .p-button-label {
-        font-size: var(--font-caption);
+        font-size: var(--font-tiny);
     }
 }
