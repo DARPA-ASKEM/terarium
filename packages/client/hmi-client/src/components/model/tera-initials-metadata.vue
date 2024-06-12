@@ -55,8 +55,8 @@ const initials = getInitialsAlt(props.model); // could be states, vertices, and 
 const collapsedInitials = collapseInitials(props.mmt);
 const initialList = Array.from(collapsedInitials.keys())
 	.flat()
-	.map((target) => {
-		const childTargets = collapsedInitials.get(target) ?? [];
+	.map((id) => {
+		const childTargets = collapsedInitials.get(id) ?? [];
 		const childInitials = childTargets
 			.map((childTarget) => initials.find((i: any) => i.id === childTarget))
 			.filter(Boolean);
@@ -64,8 +64,10 @@ const initialList = Array.from(collapsedInitials.keys())
 
 		// If the initial is virtual, we need to get it from model.metadata
 		const baseInitial = isVirtual
-			? props.model.metadata?.initials?.[target] ?? { target } // If we haven't saved it in the metadata yet, create it
-			: initials.find((i: any) => i.id === target);
+			? props.model.metadata?.initials?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
+			: initials.find((i: any) => i.id === id);
+
+		console.log('baseInitial', baseInitial);
 
 		return { baseInitial, childInitials, isVirtual };
 	});

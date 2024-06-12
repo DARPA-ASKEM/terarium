@@ -51,6 +51,7 @@ const props = defineProps<{
 defineEmits(['update-initial-metadata', 'toggle-stratified-variables', 'open-matrix']);
 
 const { id, name, grounding, initial } = props.initial; // description property should be added to the initial type
+console.log(props.initial);
 </script>
 
 <style scoped>
