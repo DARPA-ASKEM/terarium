@@ -7,12 +7,11 @@ import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +45,7 @@ public class ClientEventService {
 	 * Map of user id to the emitters for that user. Users can have multiple emitters if they have multiple tabs open or
 	 * multiple devices connected
 	 */
-	final Map<String, List<SseEmitter>> userIdToEmitters = new ConcurrentHashMap<>();
-
-	Queue allUsersQueue;
-	Queue userQueue;
+	final Map<String, java.util.Queue<SseEmitter>> userIdToEmitters = new ConcurrentHashMap<>();
 
 	@Data
 	@Accessors(chain = true)
@@ -69,22 +65,19 @@ public class ClientEventService {
 	 * @return the emitter to send messages to the user
 	 */
 	public SseEmitter connect(final User user) {
-		synchronized (userIdToEmitters) {
-			final List<SseEmitter> emitters = userIdToEmitters.getOrDefault(user.getId(), new ArrayList<>());
-			final SseEmitter emitter = new SseEmitter();
-			emitter.onError((e) -> {
-				emitter.complete();
-				synchronized (userIdToEmitters) {
-					emitters.remove(emitter);
-					if (emitters.isEmpty()) {
-						userIdToEmitters.remove(user.getId());
-					}
-				}
-			});
-			emitters.add(emitter);
-			userIdToEmitters.put(user.getId(), emitters);
-			return emitter;
-		}
+		final java.util.Queue<SseEmitter> emitters =
+				userIdToEmitters.getOrDefault(user.getId(), new ConcurrentLinkedQueue<>());
+		final SseEmitter emitter = new SseEmitter();
+		emitter.onError(e -> {
+			emitter.complete();
+			emitters.remove(emitter);
+			if (emitters.isEmpty()) {
+				userIdToEmitters.remove(user.getId());
+			}
+		});
+		emitters.add(emitter);
+		userIdToEmitters.put(user.getId(), emitters);
+		return emitter;
 	}
 
 	/**
@@ -93,16 +86,14 @@ public class ClientEventService {
 	 * @param user the user to disconnect
 	 */
 	public void disconnect(final User user) {
-		synchronized (userIdToEmitters) {
-			final List<SseEmitter> userEmitters = userIdToEmitters.get(user.getId());
-			if (userEmitters != null) {
-				try {
-					userEmitters.forEach(SseEmitter::complete);
-				} catch (final Exception e) {
-					log.error("Error disconnecting user", e);
-				}
-				userIdToEmitters.remove(user.getId());
+		final java.util.Queue<SseEmitter> userEmitters = userIdToEmitters.get(user.getId());
+		if (userEmitters != null) {
+			try {
+				userEmitters.forEach(SseEmitter::complete);
+			} catch (final Exception e) {
+				log.error("Error disconnecting user", e);
 			}
+			userIdToEmitters.remove(user.getId());
 		}
 	}
 
@@ -159,24 +150,22 @@ public class ClientEventService {
 		if (messageJson == null) {
 			return;
 		}
-		synchronized (userIdToEmitters) {
-			// Send the message to each user connected and remove disconnected users
-			userIdToEmitters.forEach((userId, emitterList) -> {
-				final Set<SseEmitter> emittersToRemove = new HashSet<>();
-				for (final SseEmitter emitter : emitterList) {
-					try {
-						emitter.send(messageJson);
-					} catch (final Exception e) {
-						log.warn("Error sending all users message to user {}. User likely disconnected", userId);
-						emittersToRemove.add(emitter);
-					}
+		// Send the message to each user connected and remove disconnected users
+		userIdToEmitters.forEach((userId, emitters) -> {
+			final Set<SseEmitter> emittersToRemove = new HashSet<>();
+			for (final SseEmitter emitter : emitters) {
+				try {
+					emitter.send(messageJson);
+				} catch (final Exception e) {
+					log.warn("Error sending all users message to user {}. User likely disconnected", userId);
+					emittersToRemove.add(emitter);
 				}
-				emitterList.removeAll(emittersToRemove);
-			});
+			}
+			emitters.removeAll(emittersToRemove);
+		});
 
-			// Remove users with no emitters
-			userIdToEmitters.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-		}
+		// Remove users with no emitters
+		userIdToEmitters.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 	}
 
 	/**
@@ -202,21 +191,19 @@ public class ClientEventService {
 			return;
 		}
 
-		synchronized (userIdToEmitters) {
-			final String userId = messageJson.at("/userId").asText();
-			final List<SseEmitter> emitterList = userIdToEmitters.get(userId);
-			if (emitterList != null) {
-				final Set<SseEmitter> emittersToRemove = new HashSet<>();
-				for (final SseEmitter emitter : emitterList) {
-					try {
-						emitter.send(messageJson.at("/event"));
-					} catch (final Exception e) {
-						log.warn("Error sending user message to user {}. User likely disconnected", userId);
-						emittersToRemove.add(emitter);
-					}
+		final String userId = messageJson.at("/userId").asText();
+		final java.util.Queue<SseEmitter> emitters = userIdToEmitters.get(userId);
+		if (emitters != null) {
+			final Set<SseEmitter> emittersToRemove = new HashSet<>();
+			for (final SseEmitter emitter : emitters) {
+				try {
+					emitter.send(messageJson.at("/event"));
+				} catch (final Exception e) {
+					log.warn("Error sending user message to user {}. User likely disconnected", userId);
+					emittersToRemove.add(emitter);
 				}
-				emitterList.removeAll(emittersToRemove);
 			}
+			emitters.removeAll(emittersToRemove);
 		}
 
 		// Remove users with no emitters
