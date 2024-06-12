@@ -383,14 +383,17 @@ export function updateInitialMetadata(model: Model, target: string, key: string,
 		model.metadata ??= {};
 		model.metadata.initials ??= {};
 		model.metadata.initials[target] ??= {};
+		model.metadata.initials[target].id = target;
 	}
+
 	const initialMetadata = model.metadata.initials[target];
 
 	// TODO: Add support for editing concept metadata
-	if (key === 'units') {
-		if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
-		initialMetadata.units.expression = value;
-		initialMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	if (key === 'initial') {
+		if (!initialMetadata.initial)
+			initialMetadata.initial = { expression: '', expression_mathml: '' };
+		initialMetadata.initial.expression = value;
+		initialMetadata.initial.expression_mathml = `<ci>${value}</ci>`;
 	} else {
 		initialMetadata[key] = value;
 	}

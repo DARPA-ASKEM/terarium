@@ -1,6 +1,6 @@
 <template>
 	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
-		<h6>{{ id }}</h6>
+		<h6>{{ id }}{{ state }}</h6>
 		<tera-input
 			label="Name"
 			:model-value="name ?? ''"
@@ -52,7 +52,6 @@ const props = defineProps<{
 defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
 
 const { id, name, grounding, initial } = props.state; // description property should be added to the state type
-console.log(props.state);
 </script>
 
 <style scoped>
