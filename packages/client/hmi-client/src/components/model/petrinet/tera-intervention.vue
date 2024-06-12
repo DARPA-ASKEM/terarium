@@ -30,13 +30,13 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	model: Model;
-	parameterId: string;
+	parameterId: string | number;
 	interventions: Intervention[];
 }>();
 
 const emit = defineEmits(['delete-intervention']);
 
-const name = getParameter(props.model, props.parameterId)?.name;
-const unit = getParameter(props.model, props.parameterId)?.units?.expression;
-const description = getParameter(props.model, props.parameterId)?.description;
+const name = getParameter(props.model, props.parameterId.toString())?.name;
+const unit = getParameter(props.model, props.parameterId.toString())?.units?.expression;
+const description = getParameter(props.model, props.parameterId.toString())?.description;
 </script>

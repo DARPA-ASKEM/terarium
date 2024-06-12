@@ -166,11 +166,11 @@
 							@delete="removeIntervention(knobs.transientModelConfig, idx)"
 						/> -->
 						<ul v-if="model">
-							<li v-for="(intervention, index) in interventionMap" :key="index">
+							<li v-for="(interventions, key) in interventionDict" :key="key">
 								<tera-intervention
 									:model="model"
-									:parameterId="intervention[0]"
-									:interventions="intervention[1]"
+									:parameterId="key"
+									:interventions="interventions"
 									@delete-intervention="removeIntervention(knobs.transientModelConfig, $event)"
 								>
 								</tera-intervention>
@@ -285,7 +285,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { cloneDeep, isEmpty } from 'lodash';
+import { Dictionary, cloneDeep, groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -786,10 +786,9 @@ const onOpenSuggestedConfiguration = (config: ModelConfigurationLegacy) => {
 	suggestedConfigurationContext.value.isOpen = true;
 };
 
-const interventionMap = computed<Map<string, Intervention[]>>(() => {
-	if (!knobs.value.transientModelConfig.interventions) return new Map();
-	return Map.groupBy(knobs.value.transientModelConfig.interventions, ({ name }) => name);
-});
+const interventionDict = computed<Dictionary<Intervention[]>>(() =>
+	groupBy(knobs.value.transientModelConfig.interventions, ({ name }) => name)
+);
 
 onMounted(async () => {
 	await initialize();
