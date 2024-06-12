@@ -127,7 +127,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			projectId,
 			permission,
 			request.getMetadata()
-		).startPolling();
+		).setInterval(3).setThreshold(300).startPolling();
 
 		// FIXME: engine is set twice, talk to TDS
 		request.setEngine(SimulationEngine.SCIML.toString());

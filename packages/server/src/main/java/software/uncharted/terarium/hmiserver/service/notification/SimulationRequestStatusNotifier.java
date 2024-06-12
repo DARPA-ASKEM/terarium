@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.Data;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -19,14 +22,24 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 
+@Accessors(chain = true)
+@Slf4j
 public class SimulationRequestStatusNotifier {
 
-	private int POLLING_INTERVAL_SECONDS = 5;
+	private final int DEFAULT_POLLING_INTERVAL_SECONDS = 5;
+	private final int DEFAULT_POLLING_THRESHOLD = 500; // 500 * 5 seconds = 2500 seconds = 41 minutes
 
 	private UUID simulationId;
 	private UUID projectId;
 	private Schema.Permission permission;
 	private JsonNode metadata; // Arbitrary metadata to be sent to the client
+
+	@Setter
+	private int interval = DEFAULT_POLLING_INTERVAL_SECONDS;
+	@Setter
+	private int threshold = DEFAULT_POLLING_THRESHOLD;
+
+	private int pollAttempts = 0;
 
 	private final ScheduledExecutorService executor;
 	private final ClientEventService clientEventService;
@@ -94,24 +107,32 @@ public class SimulationRequestStatusNotifier {
 			this.projectId,
 			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata)
 		);
+		log.debug("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);
 
 		final Runnable poller = () -> {
 			try {
+				pollAttempts++;
+				if (pollAttempts > this.threshold) {
+					throw new RuntimeException("Timeout while waiting for simulation to complete.");
+				}
 				final Optional<Simulation> result = simulationService.getAsset(this.simulationId, this.permission);
 				if (result.isEmpty()) {
 					throw new RuntimeException("Simulation object is empty.");
 				}
 				final Simulation simulation = result.get();
 				this.sendStatusMessage(notificationInterface, simulation);
-			} catch (final RuntimeException e) {
-				notificationInterface.sendFinalMessage(e.getMessage(), ProgressState.FAILED);
-				this.executor.shutdown();
+				log.debug("Polling attempt {} for simulation {} completed", pollAttempts, this.simulationId);
 			} catch (final Exception e) {
-				notificationInterface.sendFinalMessage("Unexpected error occurred while checking the simulation status.", ProgressState.FAILED);
+				final String errMsg = e instanceof RuntimeException
+					? e.getMessage()
+					: "Unexpected error occurred while checking the simulation status.";
+				notificationInterface.sendFinalMessage(errMsg, ProgressState.FAILED);
+
 				this.executor.shutdown();
+				log.error("Error occurred while polling for simulation {}\n{}", this.simulationId, errMsg);
 			}
 		};
-		executor.scheduleAtFixedRate(poller, POLLING_INTERVAL_SECONDS, POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		executor.scheduleAtFixedRate(poller, this.interval, this.interval, TimeUnit.SECONDS);
 	}
 }
