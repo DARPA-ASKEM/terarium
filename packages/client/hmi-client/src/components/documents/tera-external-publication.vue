@@ -13,7 +13,9 @@
 		<template #bottom-header-buttons>
 			<Button
 				v-if="featureConfig.isPreview"
-				class="p-button-sm p-button-outlined"
+				size="small"
+				severity="secondary"
+				outlined
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"

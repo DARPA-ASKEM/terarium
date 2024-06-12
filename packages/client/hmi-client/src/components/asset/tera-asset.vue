@@ -35,7 +35,7 @@
 			<div class="header-buttons">
 				<slot name="bottom-header-buttons" />
 			</div>
-			<slot name="overview-summary" />
+			<slot name="summary" />
 			<TabView
 				v-if="tabs.length > 1"
 				:active-index="selectedTabIndex"
@@ -44,15 +44,13 @@
 				<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 			</TabView>
 		</section>
-		<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
-			<Button
-				v-if="featureConfig.isPreview"
-				icon="pi pi-times"
-				rounded
-				text
-				@click="emit('close-preview')"
-			/>
-		</aside>
+		<Button
+			v-if="featureConfig.isPreview"
+			icon="pi pi-times"
+			rounded
+			text
+			@click="emit('close-preview')"
+		/>
 	</header>
 	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<section :class="overflowHiddenClass" ref="assetElementRef">
@@ -187,13 +185,14 @@ header {
 	display: flex;
 	flex-direction: row;
 	height: fit-content;
-	color: var(--text-color-subdued);
-	padding: var(--gap-small) var(--gap-medium);
+	padding: var(--gap-small);
+	padding-left: var(--gap);
 	gap: var(--gap);
 	align-items: center;
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
 	border-bottom: 1px solid var(--surface-border-light);
+	overflow: hidden;
 }
 
 header h4 {
@@ -201,27 +200,20 @@ header h4 {
 	overflow: hidden;
 	text-align: left;
 	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: fit-content;
+	/* white-space: nowrap; */
+	/* max-width: fit-content; */
 }
 
-h4,
-header section p {
-	color: var(--text-color-primary);
-}
-
-header section,
-header aside {
+header section {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-small);
 	align-self: center;
 }
 
-header aside {
+header > button {
 	align-self: flex-start;
-	/* Prevent button stretch */
-	max-height: 2.5rem;
+	width: fit-content;
 }
 
 header.overview-banner section {
@@ -257,14 +249,12 @@ header section:deep(> input) {
 	font-size: var(--font-body-medium);
 }
 
-.overline,
-.authors {
-	color: var(--text-color-primary);
+.authors i {
+	margin-right: var(--gap-small);
 }
 
-.authors i {
-	color: var(--text-color-primary);
-	margin-right: var(--gap-small);
+.authors ~ * {
+	color: var(--text-color-subdued);
 }
 
 .header-buttons:empty {
@@ -316,11 +306,6 @@ main:deep(.p-button.p-button-outlined) {
 
 .overflow-hidden {
 	overflow: hidden;
-}
-
-.spread-out {
-	align-items: center;
-	flex-grow: 1;
 }
 
 :deep(.p-tabview .p-tabview-panels) {
