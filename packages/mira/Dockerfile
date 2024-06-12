@@ -38,7 +38,7 @@ RUN tar -zxvf mira.tar.gz && \
 RUN	mv -v mira-* mira
 
 WORKDIR /mira
-RUN pip install -e .[sbml,biomodels]
+RUN pip install --no-cache-dir -e .[sbml,biomodels]
 
 # Install taskrunner
 WORKDIR /
@@ -46,13 +46,13 @@ COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 
 WORKDIR /taskrunner
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 # Install Mira tasks
 COPY ./packages/mira /mira_task
 
 WORKDIR /mira_task
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]

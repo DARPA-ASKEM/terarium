@@ -38,7 +38,7 @@ RUN tar -zxvf gollm.tar.gz && \
 RUN mv GoLLM-* GoLLM
 
 WORKDIR /GoLLM
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 # Install taskrunner
 WORKDIR /
@@ -46,13 +46,13 @@ COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 
 WORKDIR /taskrunner
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 # Install GoLLM tasks
 COPY ./packages/gollm /gollm_task
 
 WORKDIR /gollm_task
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]

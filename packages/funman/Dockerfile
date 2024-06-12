@@ -36,9 +36,9 @@ WORKDIR /funman-api
 RUN COMMIT_SHA=$(cat /funmanVersion.txt) && \
     echo "Using FUNMAN commit $COMMIT_SHA" && \
     git reset --hard $COMMIT_SHA
-RUN pip install . && \
-    pip install auxiliary_packages/funman_dreal && \
-    pip install auxiliary_packages/funman_demo
+RUN pip install --no-cache-dir . && \
+    pip install --no-cache-dir auxiliary_packages/funman_dreal && \
+    pip install --no-cache-dir auxiliary_packages/funman_demo
 
 # Install taskrunner
 WORKDIR /
@@ -46,13 +46,13 @@ COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 
 WORKDIR /taskrunner
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 # Install funman tasks
 COPY ./packages/funman /funman_tasks
 
 WORKDIR /funman_tasks
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]
