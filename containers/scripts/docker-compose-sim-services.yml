@@ -21,7 +21,7 @@ services:
             SIMSERVICE_RABBITMQ_SSL: "false"
         depends_on:
             rabbitmq:
-                condition: service_started
+                condition: service_healthy
         extra_hosts:
             - "${local_host_name}:host-gateway"
 

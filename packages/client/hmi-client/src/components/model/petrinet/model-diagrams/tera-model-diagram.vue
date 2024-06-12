@@ -72,12 +72,12 @@
 			/>
 			<Teleport to="body">
 				<tera-stratified-matrix-modal
-					v-if="openValueConfig && modelConfiguration"
+					v-if="selectedTransitionId"
 					:id="selectedTransitionId"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
 					:stratified-matrix-type="StratifiedMatrix.Rates"
-					@close-modal="openValueConfig = false"
+					@close-modal="selectedTransitionId = ''"
 					@update-configuration="
 						(configToUpdate: ModelConfigurationLegacy) =>
 							emit('update-configuration', configToUpdate)
@@ -139,7 +139,6 @@ const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
-const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
@@ -182,7 +181,6 @@ async function renderGraph() {
 		const { id, data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) {
 			selectedTransitionId.value = id;
-			openValueConfig.value = true;
 		}
 	});
 
@@ -356,6 +354,10 @@ kbd {
 }
 
 .legend {
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: var(--gap-xsmall) var(--gap-small);
+	border-radius: var(--border-radius);
 	position: absolute;
 	bottom: 0;
 	left: 0;
