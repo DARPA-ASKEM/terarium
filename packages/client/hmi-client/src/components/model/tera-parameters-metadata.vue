@@ -86,15 +86,11 @@ const toggleStates = ref(Array.from({ length: collapsedParameters.size }, () => 
 const matrixModalId = ref('');
 
 function updateBaseParameter(baseParameter: string, event: any) {
-	// In order to modify the base parameter we need to do it within the model's metadata since it doesn't actually exist in the model
+	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
 	emit('update-parameter', { parameterId: baseParameter, isMetadata: true, ...event });
-	// Update stratified parameters if the event is a unit change
+	// Cascade the change to all children
 	const ids = collapsedParameters.get(baseParameter);
-	if (ids && event.key === 'units') {
-		ids.forEach((id) => {
-			emit('update-parameter', { parameterId: id, ...event });
-		});
-	}
+	ids?.forEach((id) => emit('update-parameter', { parameterId: id, ...event }));
 }
 </script>
 
