@@ -213,7 +213,7 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else {
+		} else if (obj[key]) {
 			obj[key] = value;
 		}
 	}
@@ -252,7 +252,7 @@ export function updateState(model: Model, id: string, key: string, value: any) {
 			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
 			obj.initial.expression = value;
 			obj.initial.expression_mathml = `<ci>${value}</ci>`;
-		} else {
+		} else if (obj[key]) {
 			obj[key] = value;
 		}
 	}
