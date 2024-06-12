@@ -8,7 +8,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
-				@update-state-metadata="emit('update-state-metadata', $event)"
+				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -137,7 +137,7 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-state-metadata', 'update-parameter']);
+const emit = defineEmits(['update-model', 'update-state', 'update-parameter']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});

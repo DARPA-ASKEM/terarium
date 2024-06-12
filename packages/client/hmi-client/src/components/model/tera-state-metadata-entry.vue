@@ -4,14 +4,14 @@
 		<tera-input
 			label="Name"
 			:model-value="name ?? ''"
-			@update:model-value="$emit('update-state-metadata', { key: 'name', value: $event })"
+			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			label="Description"
 			:model-value="''"
 			@update:model-value="
-				$emit('update-state-metadata', {
+				$emit('update-state', {
 					key: 'description',
 					value: $event
 				})
@@ -28,7 +28,7 @@
 			<tera-input
 				label="Unit"
 				:model-value="initial?.expression ?? ''"
-				@update:model-value="$emit('update-state-metadata', { key: 'units', value: $event })"
+				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
 			/>
 			<!--TODO: Add support for editing concepts-->
 			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
@@ -48,7 +48,7 @@ const props = defineProps<{
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-state-metadata', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
 
 const { id, name, grounding, initial } = props.state; // description property should be added to the state type
 console.log(props.state);

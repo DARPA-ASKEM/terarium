@@ -10,16 +10,14 @@
 					is-base
 					:show-stratified-variables="toggleStates[index]"
 					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-state-metadata="updateBaseInitial(baseInitial.target, $event)"
+					@update-state="updateBaseInitial(baseInitial.target, $event)"
 				/>
 				<ul v-if="toggleStates[index]" class="stratified">
 					<li v-for="childInitial in childInitials" :key="childInitial.target">
 						<tera-state-metadata-entry
 							:state="childInitial"
 							is-stratified
-							@update-state-metadata="
-								$emit('update-state-metadata', { id: childInitial.target, ...$event })
-							"
+							@update-state="$emit('update-state', { id: childInitial.target, ...$event })"
 						/>
 					</li>
 				</ul>
@@ -27,9 +25,7 @@
 			<tera-state-metadata-entry
 				v-else
 				:state="baseInitial"
-				@update-state-metadata="
-					$emit('update-state-metadata', { id: baseInitial.target, ...$event })
-				"
+				@update-state="$emit('update-state', { id: baseInitial.target, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -48,7 +44,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 }>();
 
-const emit = defineEmits(['update-state-metadata']);
+const emit = defineEmits(['update-state']);
 
 const states = getStates(props.model); // could be states, vertices, and stocks type
 
@@ -76,10 +72,10 @@ const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => fa
 
 function updateBaseInitial(baseTarget: string, event: any) {
 	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-state-metadata', { id: baseTarget, isMetadata: true, ...event });
+	emit('update-state', { id: baseTarget, isMetadata: true, ...event });
 	// Cascade the change to all children
 	const targets = collapsedInitials.get(baseTarget);
-	targets?.forEach((target) => emit('update-state-metadata', { id: target, ...event }));
+	targets?.forEach((target) => emit('update-state', { id: target, ...event }));
 }
 </script>
 

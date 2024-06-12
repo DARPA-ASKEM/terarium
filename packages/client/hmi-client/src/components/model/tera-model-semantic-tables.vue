@@ -4,7 +4,7 @@
 		:model="transientModel"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
-		@update-state-metadata="onUpdateState"
+		@update-state="onUpdateState"
 		@update-parameter="onUpdateParameter"
 	/>
 </template>
