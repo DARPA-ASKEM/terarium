@@ -65,7 +65,7 @@ dependencies {
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     implementation 'io.grpc:grpc-all:1.52.1'
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.5'
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.6'
     implementation 'javax.inject:javax.inject:1'
     implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
