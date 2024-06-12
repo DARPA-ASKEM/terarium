@@ -51,6 +51,7 @@ import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
 import { SimulationRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { useProjects } from '@/composables/project';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -121,7 +122,13 @@ const startForecast = async (simulationIntervetions) => {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod
 		},
-		engine: 'ciemss'
+		engine: 'ciemss',
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		}
 	};
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];

@@ -66,7 +66,7 @@ public class SimulationRequestStatusNotifier {
 		final String statusMessage = simulation.getStatusMessage();
 		final ProgressState status = simulation.getStatus();
 		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
-			throw new RuntimeException((statusMessage.isEmpty() || statusMessage == null) ? "Failed running simulation " + simulation.getId() : statusMessage);
+			throw new RuntimeException((statusMessage == null || statusMessage.isEmpty()) ? "Failed running simulation " + simulation.getId() : statusMessage);
 		} else if (status.equals(ProgressState.CANCELLED)) {
 			notificationInterface.sendFinalMessage("Simulation has been cancelled.", ProgressState.CANCELLED);
 			this.executor.shutdown();
@@ -76,7 +76,7 @@ public class SimulationRequestStatusNotifier {
 		} else if (status.equals(ProgressState.QUEUED)) {
 			notificationInterface.sendMessage("Simulation is queued...", ProgressState.QUEUED);
 		} else {
-			notificationInterface.sendMessage((statusMessage.isEmpty() || statusMessage == null) ? "Simulation is running..." : statusMessage);
+			notificationInterface.sendMessage((statusMessage == null || statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage);
 		}
 	}
 

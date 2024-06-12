@@ -209,6 +209,7 @@ import {
 
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
+import { useProjects } from '@/composables/project';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -318,6 +319,12 @@ const runCalibrate = async () => {
 			num_iterations: knobs.value.numIterations
 		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		},
 		engine: 'ciemss'
 	};
 	const response = await makeCalibrateJobCiemss(calibrationRequest);

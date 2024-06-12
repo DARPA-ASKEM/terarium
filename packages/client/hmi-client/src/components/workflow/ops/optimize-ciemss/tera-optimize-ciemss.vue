@@ -579,6 +579,12 @@ const runOptimize = async () => {
 			maxfeval: knobs.value.maxfeval,
 			alpha: (100 - knobs.value.riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
+		},
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
 		}
 	};
 

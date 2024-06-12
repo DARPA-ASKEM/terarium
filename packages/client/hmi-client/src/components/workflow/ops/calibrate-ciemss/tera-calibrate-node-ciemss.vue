@@ -58,6 +58,7 @@ import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { useProjects } from '@/composables/project';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -135,7 +136,13 @@ watch(
 					method: 'dopri5',
 					inferred_parameters: id
 				},
-				engine: 'ciemss'
+				engine: 'ciemss',
+				metadata: {
+					workflowId: props.node.workflowId,
+					workflowName: useProjects().getAssetName(props.node.workflowId),
+					nodeId: props.node.id,
+					nodeName: props.node.displayName
+				}
 			});
 			const forecastId = forecastResponse.id;
 

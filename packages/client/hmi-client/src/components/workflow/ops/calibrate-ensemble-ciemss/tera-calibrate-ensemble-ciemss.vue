@@ -350,6 +350,12 @@ const runEnsemble = async () => {
 			num_particles: knobs.value.extra.numParticles,
 			num_iterations: knobs.value.extra.numIterations,
 			solver_method: knobs.value.extra.solverMethod
+		},
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
 		}
 	};
 	const response = await makeEnsembleCiemssCalibration(calibratePayload);

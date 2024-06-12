@@ -235,6 +235,7 @@ import type {
 import { RunResults } from '@/types/SimulateConfig';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { useProjects } from '@/composables/project';
 import { SimulateEnsembleCiemssOperationState } from './simulate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -321,7 +322,13 @@ const runEnsemble = async () => {
 		modelConfigs: ensembleConfigs.value,
 		timespan: timeSpan.value,
 		engine: 'ciemss',
-		extra: { num_samples: numSamples.value }
+		extra: { num_samples: numSamples.value },
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		}
 	};
 	const response = await makeEnsembleCiemssSimulation(params);
 

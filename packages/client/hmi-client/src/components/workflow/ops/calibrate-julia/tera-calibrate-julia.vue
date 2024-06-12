@@ -228,6 +228,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
 import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { useProjects } from '@/composables/project';
 import { useToastService } from '@/services/toast';
 import {
 	CalibrateExtraJulia,
@@ -354,6 +355,12 @@ const makeCalibrateRequest = async () => {
 		},
 		extra: extra.value,
 		engine: 'sciml',
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		},
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
 	const response = await makeCalibrateJobJulia(calibrationRequest);

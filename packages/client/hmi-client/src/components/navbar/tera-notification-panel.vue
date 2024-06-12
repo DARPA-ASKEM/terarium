@@ -53,7 +53,10 @@
 						>
 					</p>
 
-					<ProgressBar v-if="item.progress !== undefined" :value="item.progress * 100" />
+					<ProgressBar
+						v-if="item.progress !== undefined"
+						:value="isRunning(item) ? item.progress * 100 : 0"
+					/>
 					<ProgressBar v-else mode="indeterminate" />
 					<Button
 						v-if="item.supportCancel"
@@ -61,7 +64,6 @@
 						label="Cancel"
 						text
 						aria-label="Cancel"
-						:disabled="isCancelling(item)"
 						@click="cancelTask(item)"
 					/>
 				</div>

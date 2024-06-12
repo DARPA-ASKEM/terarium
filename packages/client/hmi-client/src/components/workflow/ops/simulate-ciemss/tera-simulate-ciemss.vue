@@ -269,7 +269,13 @@ const makeForecastRequest = async () => {
 			num_samples: state.numSamples,
 			method: state.method
 		},
-		engine: 'ciemss'
+		engine: 'ciemss',
+		metadata: {
+			workflowId: props.node.workflowId,
+			workflowName: useProjects().getAssetName(props.node.workflowId),
+			nodeId: props.node.id,
+			nodeName: props.node.displayName
+		}
 	};
 
 	if (inferredParameters.value) {
