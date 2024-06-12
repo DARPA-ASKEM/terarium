@@ -5,30 +5,30 @@
 			:key="baseInitial.id"
 		>
 			<template v-if="isVirtual">
-				<tera-initial-metadata-entry
-					:initial="baseInitial"
+				<tera-state-metadata-entry
+					:state="baseInitial"
 					is-base
 					:show-stratified-variables="toggleStates[index]"
 					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-initial-metadata="updateBaseInitial(baseInitial.target, $event)"
+					@update-state-metadata="updateBaseInitial(baseInitial.target, $event)"
 				/>
 				<ul v-if="toggleStates[index]" class="stratified">
 					<li v-for="childInitial in childInitials" :key="childInitial.target">
-						<tera-initial-metadata-entry
-							:initial="childInitial"
+						<tera-state-metadata-entry
+							:state="childInitial"
 							is-stratified
-							@update-initial-metadata="
-								$emit('update-initial-metadata', { id: childInitial.target, ...$event })
+							@update-state-metadata="
+								$emit('update-state-metadata', { id: childInitial.target, ...$event })
 							"
 						/>
 					</li>
 				</ul>
 			</template>
-			<tera-initial-metadata-entry
+			<tera-state-metadata-entry
 				v-else
-				:initial="baseInitial"
-				@update-initial-metadata="
-					$emit('update-initial-metadata', { id: baseInitial.target, ...$event })
+				:state="baseInitial"
+				@update-state-metadata="
+					$emit('update-state-metadata', { id: baseInitial.target, ...$event })
 				"
 			/>
 		</li>
@@ -38,19 +38,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Model } from '@/types/Types';
-import { getInitialsAlt } from '@/model-representation/service';
+import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
-import TeraInitialMetadataEntry from '@/components/model/tera-initial-metadata-entry.vue';
+import TeraStateMetadataEntry from '@/components/model/tera-state-metadata-entry.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 }>();
 
-const emit = defineEmits(['update-initial-metadata']);
+const emit = defineEmits(['update-state-metadata']);
 
-const initials = getInitialsAlt(props.model); // could be states, vertices, and stocks type
+const states = getStates(props.model); // could be states, vertices, and stocks type
 
 const collapsedInitials = collapseInitials(props.mmt);
 const initialList = Array.from(collapsedInitials.keys())
@@ -58,14 +58,14 @@ const initialList = Array.from(collapsedInitials.keys())
 	.map((id) => {
 		const childTargets = collapsedInitials.get(id) ?? [];
 		const childInitials = childTargets
-			.map((childTarget) => initials.find((i: any) => i.id === childTarget))
+			.map((childTarget) => states.find((i: any) => i.id === childTarget))
 			.filter(Boolean);
 		const isVirtual = childTargets.length > 1;
 
 		// If the initial is virtual, we need to get it from model.metadata
 		const baseInitial = isVirtual
 			? props.model.metadata?.initials?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
-			: initials.find((i: any) => i.id === id);
+			: states.find((i: any) => i.id === id);
 
 		console.log('baseInitial', baseInitial);
 
@@ -76,10 +76,10 @@ const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => fa
 
 function updateBaseInitial(baseTarget: string, event: any) {
 	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-initial-metadata', { id: baseTarget, isMetadata: true, ...event });
+	emit('update-state-metadata', { id: baseTarget, isMetadata: true, ...event });
 	// Cascade the change to all children
 	const targets = collapsedInitials.get(baseTarget);
-	targets?.forEach((target) => emit('update-initial-metadata', { id: target, ...event }));
+	targets?.forEach((target) => emit('update-state-metadata', { id: target, ...event }));
 }
 </script>
 

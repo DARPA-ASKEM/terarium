@@ -174,21 +174,6 @@ export function getParameters(model: Model): ModelParameter[] {
 	}
 }
 
-// Gets states, vertices, stocks
-export function getInitialsAlt(model: Model): any[] {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			return model.model?.vertices ?? [];
-		case AMRSchemaNames.PETRINET:
-			return model.model?.states ?? [];
-		case AMRSchemaNames.STOCKFLOW:
-			return model.model?.stocks ?? [];
-		default:
-			return [];
-	}
-}
-
 /**
  * Returns the model parameter with the specified ID.
  * @param {Model} model - The model object.
@@ -245,7 +230,22 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 	updateProperty(auxiliary);
 }
 
-export function updateInitial(model: Model, id: string, key: string, value: any) {
+// Gets states, vertices, stocks
+export function getStates(model: Model): any[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
+	}
+}
+
+export function updateState(model: Model, id: string, key: string, value: any) {
 	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
 		// TODO: Add support for editing concept/grounding
 		if (key === 'initial') {
@@ -256,10 +256,10 @@ export function updateInitial(model: Model, id: string, key: string, value: any)
 			obj[key] = value;
 		}
 	}
-	const initials = getInitials(model);
-	const initial = initials.find((i: any) => i.id === id);
-	if (!initial) return;
-	updateProperty(initial);
+	const states = getStates(model);
+	const state = states.find((i: any) => i.id === id);
+	if (!state) return;
+	updateProperty(state);
 }
 
 /**

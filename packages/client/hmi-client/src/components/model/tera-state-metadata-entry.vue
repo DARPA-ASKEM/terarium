@@ -4,14 +4,14 @@
 		<tera-input
 			label="Name"
 			:model-value="name ?? ''"
-			@update:model-value="$emit('update-initial-metadata', { key: 'name', value: $event })"
+			@update:model-value="$emit('update-state-metadata', { key: 'name', value: $event })"
 		/>
-		<!--FIXME: description property should be added to the initial type-->
+		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			label="Description"
 			:model-value="''"
 			@update:model-value="
-				$emit('update-initial-metadata', {
+				$emit('update-state-metadata', {
 					key: 'description',
 					value: $event
 				})
@@ -28,7 +28,7 @@
 			<tera-input
 				label="Unit"
 				:model-value="initial?.expression ?? ''"
-				@update:model-value="$emit('update-initial-metadata', { key: 'units', value: $event })"
+				@update:model-value="$emit('update-state-metadata', { key: 'units', value: $event })"
 			/>
 			<!--TODO: Add support for editing concepts-->
 			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
@@ -42,16 +42,16 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	initial: PetriNetState | RegNetVertex;
+	state: PetriNetState | RegNetVertex;
 	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-initial-metadata', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state-metadata', 'toggle-stratified-variables', 'open-matrix']);
 
-const { id, name, grounding, initial } = props.initial; // description property should be added to the initial type
-console.log(props.initial);
+const { id, name, grounding, initial } = props.state; // description property should be added to the state type
+console.log(props.state);
 </script>
 
 <style scoped>
