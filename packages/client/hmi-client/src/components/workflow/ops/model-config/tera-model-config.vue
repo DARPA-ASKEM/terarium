@@ -20,11 +20,16 @@
 						:disabled="isSaveDisabled"
 						label="Run"
 						icon="pi pi-play"
-						@click="createConfiguration(false)"
+						@click="createConfiguration()"
 					/>
 				</template>
 				<template #header-controls-right>
-					<Button class="mr-3" label="Save" @click="() => createConfiguration(false)" />
+					<Button
+						class="mr-3"
+						:disabled="isSaveDisabled"
+						label="Save"
+						@click="() => createConfiguration()"
+					/>
 				</template>
 				<!-- Suggested configurations -->
 				<div class="box-container mr-2" v-if="model">
@@ -322,9 +327,9 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions
-} from '@/services/model-configurations';
+} from '@/services/model-configurations-legacy';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -361,7 +366,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 interface BasicKnobs {
 	tempConfigId: string;
-	transientModelConfig: ModelConfiguration;
+	transientModelConfig: ModelConfigurationLegacy;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -578,8 +583,8 @@ const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
-	tableData: ModelConfiguration[];
-	modelConfiguration: ModelConfiguration | null;
+	tableData: ModelConfigurationLegacy[];
+	modelConfiguration: ModelConfigurationLegacy | null;
 }>({
 	isOpen: false,
 	tableData: [],
@@ -632,7 +637,7 @@ const downloadConfiguredModel = async () => {
 };
 
 const createConfiguration = async (force: boolean = false) => {
-	if (!model.value) return;
+	if (!model.value || isSaveDisabled) return;
 
 	const state = cloneDeep(props.node.state);
 
@@ -744,7 +749,7 @@ const initialize = async () => {
 	}
 };
 
-const applyConfigValues = (config: ModelConfiguration) => {
+const applyConfigValues = (config: ModelConfigurationLegacy) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
 
@@ -776,7 +781,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
+const onOpenSuggestedConfiguration = (config: ModelConfigurationLegacy) => {
 	suggestedConfigurationContext.value.modelConfiguration = config;
 	suggestedConfigurationContext.value.isOpen = true;
 };
