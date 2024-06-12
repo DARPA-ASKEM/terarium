@@ -73,13 +73,13 @@
 					:context-language="contextLanguage"
 				>
 					<template #toolbar-right-side>
-						<Button label="Setup" @click="setup"></Button>
 						<Button icon="pi pi-play" label="Run" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
 			</Suspense>
 			<v-ace-editor
 				v-model:value="codeText"
+				@init="initializeAceEditor"
 				lang="python"
 				theme="chrome"
 				style="flex-grow: 1; width: 100%"
@@ -183,6 +183,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -190,6 +191,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
@@ -334,26 +336,31 @@ const buildJupyterContext = async () => {
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			kernelManager
+				.sendMessage('get_simulate_request', {})
+				.register('any_get_simulate_reply', (data) => {
+					codeText.value = data.msg.content.return;
+				});
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 };
 
-const setup = async () => {
-	kernelManager.sendMessage('get_simulate_request', {}).register('code_cell', (data) => {
-		codeText.value = data.content.code;
-	});
-};
-
 const runCode = () => {
 	kernelManager
-		.sendMessage('execute_request', { code: codeText.value })
-		.register('execute_reply', () => {
-			kernelManager.sendMessage('save_results_to_hmi_request', {}).register('code_cell', (d) => {
-				console.log(d);
-			});
+		.sendMessage('execute_request', { code: editor?.getValue() })
+		.register('any_execute_reply', () => {
+			// FIXME: save isnt working...but the idea is to save the simulation results to the HMI with this action
+			kernelManager
+				.sendMessage('save_results_to_hmi_request', { project_id: useProjects().activeProjectId })
+				.register('code_cell', (d) => {
+					console.log(d);
+				});
 		});
+};
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
 };
 
 watch(
