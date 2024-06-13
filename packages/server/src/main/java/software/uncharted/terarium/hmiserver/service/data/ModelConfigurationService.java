@@ -1,12 +1,9 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.reflect.Parameter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -38,7 +35,8 @@ public class ModelConfigurationService
 		throw new UnsupportedOperationException("Model Configurations are not stored in S3");
 	}
 
-	public ModelConfiguration modelConfigurationFromAMR(final Model model, final String name, final String description) {
+	public ModelConfiguration modelConfigurationFromAMR(
+			final Model model, final String name, final String description) {
 		ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name == null ? name : "Default Configuration");
 		modelConfiguration.setDescription(description == null ? description : "This is a default configuration.");
@@ -83,7 +81,7 @@ public class ModelConfigurationService
 
 			ModelDistribution distribution = parameter.getDistribution();
 			// constant distribution
-			if(distribution == null || distribution.getType() == null){
+			if (distribution == null || distribution.getType() == null) {
 				distribution = new ModelDistribution();
 				distribution.setType("Constant");
 				distribution.setParameters(Map.of("value", parameter.getValue() == null ? parameter.getValue() : 0));

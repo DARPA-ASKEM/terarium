@@ -413,8 +413,9 @@ public class ModelController {
 			model.setName(model.getHeader().getName());
 			model = modelService.createAsset(model, permission);
 
-			//create default configuration
-			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			// create default configuration
+			final ModelConfiguration modelConfiguration =
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {

@@ -208,7 +208,8 @@ public class MiraController {
 			final Model model = objectMapper.readValue(resp.getOutput(), Model.class);
 
 			// create a default configuration
-			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			final ModelConfiguration modelConfiguration =
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.ok().body(model);
 
