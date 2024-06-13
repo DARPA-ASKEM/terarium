@@ -41,6 +41,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -48,6 +49,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -77,6 +79,8 @@ public class ModelController {
 	final CurrentUserService currentUserService;
 
 	final ProjectAssetService projectAssetService;
+
+	final ModelConfigurationService modelConfigurationService;
 
 	final Messages messages;
 
@@ -408,6 +412,10 @@ public class ModelController {
 			// the front-end.
 			model.setName(model.getHeader().getName());
 			model = modelService.createAsset(model, permission);
+
+			//create default configuration
+			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
