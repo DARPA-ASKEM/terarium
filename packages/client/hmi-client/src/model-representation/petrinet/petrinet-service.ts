@@ -1,5 +1,5 @@
-import { updateModelConfiguration } from '@/services/model-configurations';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { updateModelConfiguration } from '@/services/model-configurations-legacy';
+import { Model, ModelConfigurationLegacy } from '@/types/Types';
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
@@ -94,7 +94,7 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 };
 
 export const updateConfigFields = async (
-	modelConfigs: ModelConfiguration[],
+	modelConfigs: ModelConfigurationLegacy[],
 	id: string,
 	newId: string
 ) => {

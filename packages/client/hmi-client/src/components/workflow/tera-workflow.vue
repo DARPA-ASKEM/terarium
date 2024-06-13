@@ -5,8 +5,6 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="setMouseOverCanvas(false)"
-		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -41,24 +39,6 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button
-						label="Show everything"
-						severity="secondary"
-						outlined
-						@click="resetZoom"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					<Button
-						label="Clean up layout"
-						severity="secondary"
-						outlined
-						@click="cleanUpLayout"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
@@ -188,6 +168,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -294,7 +275,6 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
-let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 let startTime: number = 0;
@@ -322,10 +302,6 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
-
-const setMouseOverCanvas = (val: boolean) => {
-	isMouseOverCanvas = val;
-};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -386,6 +362,7 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
+	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -395,12 +372,17 @@ function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	generateSummary(node, outputPort);
 	workflowDirty = true;
 }
 
-async function generateSummary(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	outputPort.summary = ''; // Indicating that the summary generation is initiated
+function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
+	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
+	if (!registry.getOperation(node.operationType)?.createNotebook) return;
+	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
+}
+
+async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
+	if (!node) return;
 	const result = await workflowService.generateSummary(
 		node,
 		outputPort,
@@ -898,7 +880,6 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -991,16 +972,6 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
 });
-
-function cleanUpLayout() {
-	// TODO: clean up layout of nodes
-	console.log('clean up layout');
-}
-
-function resetZoom() {
-	// TODO: reset zoom level and position
-	console.log('clean up layout');
-}
 </script>
 
 <style scoped>

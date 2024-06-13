@@ -75,7 +75,7 @@ services:
 
   neo4j:
     container_name: neo4j
-    image: neo4j:5.12-community
+    image: neo4j:5.20-community
     healthcheck:
       test: wget http://127.0.0.1:7474 || exit 1
       interval: 1s

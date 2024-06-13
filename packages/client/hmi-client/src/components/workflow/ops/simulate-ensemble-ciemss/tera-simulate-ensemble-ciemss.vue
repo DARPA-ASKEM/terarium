@@ -223,7 +223,7 @@ import {
 	getRunResultCiemss,
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations-legacy';
 import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';

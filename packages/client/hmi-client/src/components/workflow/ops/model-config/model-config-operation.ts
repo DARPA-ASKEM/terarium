@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfigurationLegacy } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
@@ -9,7 +9,7 @@ export interface ModelEditCode {
 }
 
 export interface ModelConfigOperationState extends BaseState {
-	transientModelConfig: ModelConfiguration;
+	transientModelConfig: ModelConfigurationLegacy;
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
 	tempConfigId: string; // This is used for beaker context when there is no output selected. It is a config id that is in TDS and marked as temp

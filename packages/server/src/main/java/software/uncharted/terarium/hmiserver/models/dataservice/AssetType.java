@@ -12,7 +12,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
@@ -42,10 +42,7 @@ public enum AssetType {
 	MODEL_CONFIGURATION,
 
 	@JsonProperty("artifact")
-	ARTIFACT,
-
-	@JsonProperty("publication")
-	PUBLICATION;
+	ARTIFACT;
 
 	public static AssetType getAssetType(final String assetTypeName, final ObjectMapper objectMapper)
 			throws ResponseStatusException {
@@ -72,8 +69,6 @@ public enum AssetType {
 				return Model.class;
 			case MODEL_CONFIGURATION:
 				return ModelConfiguration.class;
-			case PUBLICATION:
-				throw new IllegalArgumentException("Publication assets are not supported");
 			case SIMULATION:
 				return Simulation.class;
 			case WORKFLOW:

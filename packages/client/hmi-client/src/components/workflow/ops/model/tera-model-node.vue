@@ -40,6 +40,7 @@
 import _ from 'lodash';
 import { onMounted, ref, computed } from 'vue';
 import { getModel } from '@/services/model';
+import { canPropagateResource } from '@/services/workflow';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import Button from 'primevue/button';
@@ -74,7 +75,7 @@ async function getModelById(modelId: string) {
 
 	if (model.value && model.value.id) {
 		const outputs = props.node.outputs;
-		if (_.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value)) {
+		if (canPropagateResource(outputs)) {
 			const state = _.cloneDeep(props.node.state);
 			state.modelId = model.value?.id;
 			emit('update-state', state);

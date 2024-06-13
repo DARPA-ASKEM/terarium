@@ -194,7 +194,7 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	State
 } from '@/types/Types';
 import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
@@ -228,7 +228,7 @@ const modelStateOptions = ref<State[] | undefined>();
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const modelConfig = ref<ModelConfiguration>();
+const modelConfig = ref<ModelConfigurationLegacy>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);

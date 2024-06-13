@@ -187,5 +187,6 @@ export enum ProgressState {
 export interface AssetBlock<T> {
 	name: string;
 	includeInProcess: boolean;
+	isCollapsed?: false;
 	asset: T;
 }

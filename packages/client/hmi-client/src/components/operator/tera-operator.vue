@@ -15,7 +15,6 @@
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
-			@bring-to-front="bringToFront"
 			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
@@ -89,13 +88,6 @@ const interactionStatus = ref(0); // States will be added to it thorugh bitmaski
 const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
-
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
 
 function openInNewWindow() {
 	const url = router.resolve({

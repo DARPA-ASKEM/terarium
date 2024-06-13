@@ -19,7 +19,6 @@ import Menu from 'primevue/menu';
 
 const emit = defineEmits([
 	'remove-operator',
-	'bring-to-front',
 	'open-in-new-window',
 	'duplicate-branch',
 	'show-annotation-editor'
@@ -63,8 +62,6 @@ const options = ref([
 		label: 'Open in new window',
 		command: () => emit('open-in-new-window')
 	},
-	{ icon: 'pi pi-arrow-up', label: 'Bring to front', command: () => emit('bring-to-front') },
-	{ icon: 'pi pi-arrow-down', label: 'Send to back', command: () => emit('bring-to-front') },
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove-operator') }
 ]);
 </script>

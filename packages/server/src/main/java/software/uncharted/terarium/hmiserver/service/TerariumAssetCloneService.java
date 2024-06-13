@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -145,6 +147,11 @@ public class TerariumAssetCloneService {
 		return res;
 	}
 
+	private List<String> removeDuplicates(final List<String> list) {
+		final Set<String> set = list.stream().collect(Collectors.toCollection(LinkedHashSet::new));
+		return new ArrayList<>(set);
+	}
+
 	/**
 	 * Given a project, clone all assets and download all related files. Return everything as a singular ProjectExport
 	 * object.
@@ -184,6 +191,9 @@ public class TerariumAssetCloneService {
 			}
 
 			final TerariumAsset currentAsset = currentAssetOptional.get();
+
+			// clean up any duplicate filenames from legacy data
+			currentAsset.setFileNames(removeDuplicates(currentAsset.getFileNames()));
 
 			final Map<String, FileExport> files =
 					terariumAssetService.exportAssetFiles(currentProjectAsset.getAssetId(), Schema.Permission.READ);
@@ -229,11 +239,9 @@ public class TerariumAssetCloneService {
 
 			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
-			// create the asset
-			final TerariumAsset asset =
-					(TerariumAsset) terariumAssetService.createAsset(assetExport.getAsset(), Schema.Permission.WRITE);
+			TerariumAsset asset = assetExport.getAsset();
 
-			// upload the files
+			// upload the files (do this first as the asset creation my use the files)
 			for (final Map.Entry<String, FileExport> entry :
 					assetExport.getFiles().entrySet()) {
 				final String fileName = entry.getKey();
@@ -241,6 +249,9 @@ public class TerariumAssetCloneService {
 				terariumAssetService.uploadFile(
 						asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
 			}
+
+			// create the asset
+			asset = (TerariumAsset) terariumAssetService.createAsset(assetExport.getAsset(), Schema.Permission.WRITE);
 
 			// add the asset to the project
 			final Optional<ProjectAsset> projectAsset =

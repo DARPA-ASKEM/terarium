@@ -20,7 +20,7 @@ Estimated time to completion: [X] minutes
 1. Click `Upload resources`.
 2. Drag and drop `Configured SIR.json` file over the text "Drop resources here".
 3. Click `Upload` and wait for the file upload to finish.
-4. Repeat with the `data-1.csv` file.
+4. Repeat with the [`data-1.csv`](https://drive.google.com/file/d/1o6pSraJdVK8XY13Mj3RvV9th-DbULsEX/view?usp=drive_link) file.
 5. A model named "Configured SIR" and a dataset named "data-1" should appear in the "Resources" panel.
 
 ### 3. Create a new workflow

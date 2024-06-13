@@ -177,8 +177,8 @@ public class ProjectController {
 		}
 
 		projects.forEach(project -> {
-			final List<AssetType> assetTypes = Arrays.asList(
-					AssetType.DATASET, AssetType.MODEL, AssetType.DOCUMENT, AssetType.WORKFLOW, AssetType.PUBLICATION);
+			final List<AssetType> assetTypes =
+					Arrays.asList(AssetType.DATASET, AssetType.MODEL, AssetType.DOCUMENT, AssetType.WORKFLOW);
 
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 			final Schema.Permission permission = projectService.checkPermissionCanRead(
@@ -244,9 +244,6 @@ public class ProjectController {
 				metadata.put(
 						"workflows-count",
 						counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
-				metadata.put(
-						"publications-count",
-						counts.getOrDefault(AssetType.PUBLICATION, 0).toString());
 
 				project.setMetadata(metadata);
 			} catch (final Exception e) {

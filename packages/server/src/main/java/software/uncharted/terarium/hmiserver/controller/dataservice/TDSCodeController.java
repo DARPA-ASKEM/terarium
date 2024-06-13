@@ -86,7 +86,7 @@ public class TDSCodeController {
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "publications found.",
+						description = "code found.",
 						content =
 								@Content(
 										array =
@@ -96,11 +96,11 @@ public class TDSCodeController {
 																		implementation = Code.class)))),
 				@ApiResponse(
 						responseCode = "204",
-						description = "There are no publications found and no errors occurred",
+						description = "There is no code found and no errors occurred",
 						content = @Content),
 				@ApiResponse(
 						responseCode = "500",
-						description = "There was an issue retrieving publications from the data store",
+						description = "There was an issue retrieving code from the data store",
 						content = @Content)
 			})
 	public ResponseEntity<List<Code>> getCodes(

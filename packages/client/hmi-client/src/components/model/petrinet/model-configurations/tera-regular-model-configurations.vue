@@ -104,11 +104,11 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import type { ModelConfiguration } from '@/types/Types';
+import type { ModelConfigurationLegacy } from '@/types/Types';
 
 defineProps<{
 	editValue: string;
-	modelConfigurations: ModelConfiguration[];
+	modelConfigurations: ModelConfigurationLegacy[];
 	calibrationConfig?: boolean;
 	cellEditStates: any[];
 }>();

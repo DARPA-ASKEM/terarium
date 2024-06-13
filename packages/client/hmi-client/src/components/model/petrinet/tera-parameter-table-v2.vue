@@ -136,8 +136,8 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
-import { getParameterDistribution, getParameters } from '@/services/model-configurations';
+import { Model, ModelConfigurationLegacy, ModelDistribution } from '@/types/Types';
+import { getParameterDistribution, getParameters } from '@/services/model-configurations-legacy';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
 import { collapseParameters, isStratifiedModel } from '@/model-representation/mira/mira';
@@ -159,7 +159,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 
 const props = defineProps<{
 	model: Model;
-	modelConfiguration: ModelConfiguration;
+	modelConfiguration: ModelConfigurationLegacy;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 }>();

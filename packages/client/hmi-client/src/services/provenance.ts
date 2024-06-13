@@ -3,7 +3,6 @@
  */
 
 import API from '@/api/api';
-import { logger } from '@/utils/logger';
 import {
 	AssetType,
 	ProvenanceQueryParam,
@@ -12,12 +11,11 @@ import {
 	TerariumAsset
 } from '@/types/Types';
 import { ResultType } from '@/types/common';
+import { logger } from '@/utils/logger';
 import { getBulkDatasets } from './dataset';
 /* eslint-disable-next-line import/no-cycle */
-import { getBulkXDDDocuments } from './data';
-import { getBulkExternalPublications } from './external';
-import { getBulkModels } from './model';
 import { getBulkDocumentAssets } from './document-assets';
+import { getBulkModels } from './model';
 
 // FIXME: currently related artifacts extracted from the provenance graph will be provided
 //        as IDs that needs to be fetched, and since no bulk fetch API exists
@@ -76,7 +74,6 @@ async function getRelatedArtifacts(
 	);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
-		const externalPublicationIds: string[] = [];
 		const datasetIDs: string[] = [];
 		const documentAssetIds: string[] = [];
 
@@ -91,15 +88,6 @@ async function getRelatedArtifacts(
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.nodes.forEach((node) => {
-			if (rootType !== ProvenanceType.Publication) {
-				if (
-					node.type === ProvenanceType.Publication &&
-					externalPublicationIds.length < MAX_RELATED_ARTIFACT_COUNT
-				) {
-					externalPublicationIds.push(node.id.toString());
-				}
-			}
-
 			if (node.type === ProvenanceType.Dataset && datasetIDs.length < MAX_RELATED_ARTIFACT_COUNT) {
 				// FIXME: provenance data return IDs as number(s)
 				// but the fetch service expects IDs as string(s)
@@ -131,11 +119,6 @@ async function getRelatedArtifacts(
 
 		const documentAssets = await getBulkDocumentAssets(documentAssetIds);
 		response.push(...documentAssets);
-
-		const externalPublications = await getBulkExternalPublications(externalPublicationIds);
-		// FIXME: xdd_uri
-		const xDDdocuments = await getBulkXDDDocuments(externalPublications.map((p) => p.xdd_uri));
-		response.push(...xDDdocuments);
 	}
 
 	// NOTE: performing a provenance search returns
@@ -195,8 +178,6 @@ export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceTy
 			return ProvenanceType.Dataset;
 		case AssetType.ModelConfiguration:
 			return ProvenanceType.ModelConfiguration;
-		case AssetType.Publication:
-			return ProvenanceType.Publication;
 		case AssetType.Simulation:
 			return ProvenanceType.Simulation;
 		case AssetType.Artifact:
@@ -211,4 +192,4 @@ export function mapAssetTypeToProvenanceType(assetType: AssetType): ProvenanceTy
 	}
 }
 
-export { getRelatedArtifacts, createProvenance };
+export { createProvenance, getRelatedArtifacts };

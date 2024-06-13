@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -83,7 +83,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 	}
 
 	@Observed(name = "function_profile")
-	public List<ModelConfiguration> getModelConfigurationsByModelId(
+	public List<ModelConfigurationLegacy> getModelConfigurationsByModelId(
 			final UUID id, final Integer page, final Integer pageSize) throws IOException {
 
 		final SearchRequest req = new SearchRequest.Builder()
@@ -101,7 +101,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 						.build())
 				.build();
 
-		return elasticService.search(req, ModelConfiguration.class);
+		return elasticService.search(req, ModelConfigurationLegacy.class);
 	}
 
 	@Override

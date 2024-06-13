@@ -58,7 +58,7 @@ if (GTAG.data) {
 }
 
 app.component('math-field', MathfieldElement);
-app.component(VueFeather.name, VueFeather);
+app.component(VueFeather.name ?? 'vue-feather', VueFeather);
 app.mount('body');
 
 let previousRoute: RouteLocationNormalized | null = null;

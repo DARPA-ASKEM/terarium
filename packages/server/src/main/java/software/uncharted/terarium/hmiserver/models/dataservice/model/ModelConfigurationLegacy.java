@@ -16,7 +16,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 @Data
 @Accessors(chain = true)
 @TSModel
-public class ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
+public class ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Serial
 	private static final long serialVersionUID = -4109896135386019667L;

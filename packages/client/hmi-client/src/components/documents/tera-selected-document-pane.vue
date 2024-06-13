@@ -22,12 +22,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from 'vue';
+import { useProjects } from '@/composables/project';
+import { addDocuments } from '@/services/external';
 import type { Document, ExternalPublication } from '@/types/Types';
 import { AssetType } from '@/types/Types';
-import { addDocuments } from '@/services/external';
 import dropdown from 'primevue/dropdown';
-import { useProjects } from '@/composables/project';
+import { computed, PropType } from 'vue';
 
 const props = defineProps({
 	selectedDocument: {
@@ -55,7 +55,7 @@ const addResourcesToProject = async (projectId: string) => {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetType = AssetType.Publication;
+		const assetType = AssetType.Document;
 		await useProjects().addAsset(assetType, documentId, projectId);
 	}
 };
