@@ -13,7 +13,6 @@ services:
             dockerfile: ./packages/gollm/Dockerfile
             target: gollm_taskrunner_builder
         container_name: gollm-taskrunner
-        image: ghcr.io/darpa-askem/gollm-taskrunner:latest
         networks:
             - terarium
         environment:
@@ -39,7 +38,6 @@ services:
             dockerfile: ../../packages/mira/Dockerfile
             target: mira_taskrunner_builder
         container_name: mira-taskrunner
-        image: ghcr.io/darpa-askem/mira-taskrunner:latest
         networks:
             - terarium
         environment:
@@ -64,7 +62,6 @@ services:
             dockerfile: ../../packages/funman/Dockerfile
             target: funman_taskrunner_builder
         container_name: funman-taskrunner
-        image: ghcr.io/darpa-askem/funman-taskrunner:latest
         networks:
             - terarium
         environment:
