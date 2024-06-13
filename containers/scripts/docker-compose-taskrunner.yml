@@ -25,6 +25,9 @@ services:
         command: /gollm_task/dev.sh
 
     mira-taskrunner:
+        build:
+            dockerfile: ./packages/mira/Dockerfile
+            target: mira_taskrunner_builder
         container_name: mira-taskrunner
         image: ghcr.io/darpa-askem/mira-taskrunner:latest
         networks:
@@ -39,8 +42,15 @@ services:
                 condition: service_healthy
         extra_hosts:
             - "${local_host_name}:host-gateway"
+        volumes:
+            - ../../packages/mira:/mira_task
+            - ../../packages/taskrunner:/taskrunner
+        command: /mira_task/dev.sh
 
     funman-taskrunner:
+        build:
+            dockerfile: ./packages/funman/Dockerfile
+            target: funman_taskrunner_builder
         container_name: funman-taskrunner
         image: ghcr.io/darpa-askem/funman-taskrunner:latest
         networks:
@@ -55,3 +65,7 @@ services:
                 condition: service_healthy
         extra_hosts:
             - "${local_host_name}:host-gateway"
+        volumes:
+            - ../../packages/funman:/funman_task
+            - ../../packages/taskrunner:/taskrunner
+        command: /funman_task/dev.sh
