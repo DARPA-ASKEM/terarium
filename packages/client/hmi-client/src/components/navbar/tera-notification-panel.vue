@@ -98,6 +98,7 @@ import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
 import { getElapsedTimeText } from '@/utils/date';
 import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
+import { cancelCiemssJob } from '@/services/models/simulation-service';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -148,6 +149,7 @@ const getAssetRouteQuery = (item: NotificationItem) =>
 	item.pageType === AssetType.Workflow && item.nodeId ? { operator: item.nodeId } : {};
 
 const cancelTask = (item: NotificationItem) => {
+	if (!item.supportCancel) return;
 	if (
 		[
 			ClientEventType.TaskGollmModelCard,
@@ -157,6 +159,10 @@ const cancelTask = (item: NotificationItem) => {
 		].includes(item.type)
 	) {
 		cancelGoLLMTask(item.notificationGroupId);
+	}
+	if (item.type === ClientEventType.SimulationNotification) {
+		item.status = ProgressState.Cancelling;
+		cancelCiemssJob(item.notificationGroupId);
 	}
 };
 </script>

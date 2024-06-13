@@ -77,7 +77,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private JsonNode sanitizeRequestBody(Object object) {
 		JsonNode jsonNode = convertObjectToSnakeCaseJsonNode(object);
 		// Remove the common metadata field since we don't want to pass it to the simulation services.
-		// When extra field like metadata is passed to the simulation services, it seem to causes errors.
+		// The field isn't required by the simulation services and it seem to cause errors in some cases once included.
 		((ObjectNode) jsonNode).remove("metadata");
 		return jsonNode;
 	}
