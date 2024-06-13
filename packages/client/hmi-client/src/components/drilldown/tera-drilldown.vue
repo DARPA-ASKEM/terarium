@@ -180,21 +180,6 @@ than the main application behind the modal when these render issues come, howeve
 	}
 }
 
-main {
-	flex-grow: 1;
-	padding: 0;
-	gap: var(--gap);
-}
-
-main > :deep(*) {
-	/* display: grid;
-	grid-auto-flow: column; */
-	height: 100%;
-	/* grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); */
-	gap: 0.5rem;
-	overflow: hidden;
-}
-
 footer {
 	padding: 0 1.5rem 1rem 1.5rem;
 	display: flex;
