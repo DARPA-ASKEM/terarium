@@ -187,10 +187,10 @@ main {
 }
 
 main > :deep(*) {
-	display: grid;
-	grid-auto-flow: column;
+	/* display: grid;
+	grid-auto-flow: column; */
 	height: 100%;
-	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+	/* grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); */
 	gap: 0.5rem;
 	overflow: hidden;
 }
