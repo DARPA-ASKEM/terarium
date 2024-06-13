@@ -27,13 +27,13 @@ COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 # Install funman-api
-RUN echo "Cache bust so we can always pull latest Funman" $(date -u)
+RUN echo "Cache bust so we can always pull latest Funman $(date -u)"
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
 
 RUN git clone https://github.com/DARPA-ASKEM/funman-api.git
 
 WORKDIR /funman-api
-RUN COMMIT_SHA=$(cat /funmanVersion.txt) && \
+RUN COMMIT_SHA="$(cat /funmanVersion.txt)" && \
     echo "Using FUNMAN commit $COMMIT_SHA" && \
     git reset --hard $COMMIT_SHA
 RUN pip install --no-cache-dir . && \

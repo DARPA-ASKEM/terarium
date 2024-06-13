@@ -27,11 +27,11 @@ COPY --from=taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 
 # Install GoLLM
-RUN echo "Cache bust so we can always pull latest GoLLM" $(date -u)
+RUN echo "Cache bust so we can always pull latest GoLLM $(date -u)"
 COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
-RUN COMMIT_SHA=$(cat /gollmVersion.txt) && \
+RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
     echo "Using GoLLM commit $COMMIT_SHA" && \
-    wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz
+    wget --progress=dot:giga -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz
 
 RUN tar -zxvf gollm.tar.gz && \
     rm gollm.tar.gz
