@@ -5,16 +5,7 @@ echo "Installing python tasks"
 cd /mira_task
 pip install -e .
 
-# kick of the build server
-echo "Starting taskrunner build server"
-cd /taskrunner
-./gradlew build --continuous --quiet -x test &
-pid=$!
-sleep 1
-
 # run it
 echo "Running taskrunner"
-./gradlew bootRun
-
-kill $pid
-sleep 1
+cd /taskrunner
+./gradlew --project-cache-dir /tmp/.gradle/$$ bootRun

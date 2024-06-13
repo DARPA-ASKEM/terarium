@@ -1,5 +1,13 @@
 ---
 services:
+    taskrunner-dev-builder:
+        build:
+            dockerfile: ../../packages/taskrunner/Dockerfile
+            target: taskrunner_dev_builder
+        container_name: taskrunner-dev-builder
+        volumes:
+            - ../../packages/taskrunner:/taskrunner
+
     gollm-taskrunner:
         build:
             dockerfile: ./packages/gollm/Dockerfile
@@ -15,6 +23,8 @@ services:
             TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
             OPENAI_API_KEY: "${secret_gollm_openai_key}"
         depends_on:
+            taskrunner-dev-builder:
+                condition: service_started
             rabbitmq:
                 condition: service_healthy
         extra_hosts:
@@ -26,7 +36,7 @@ services:
 
     mira-taskrunner:
         build:
-            dockerfile: ./packages/mira/Dockerfile
+            dockerfile: ../../packages/mira/Dockerfile
             target: mira_taskrunner_builder
         container_name: mira-taskrunner
         image: ghcr.io/darpa-askem/mira-taskrunner:latest
@@ -38,6 +48,8 @@ services:
             TERARIUM_MQ_USERNAME: "terarium"
             TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
         depends_on:
+            taskrunner-dev-builder:
+                condition: service_started
             rabbitmq:
                 condition: service_healthy
         extra_hosts:
@@ -49,7 +61,7 @@ services:
 
     funman-taskrunner:
         build:
-            dockerfile: ./packages/funman/Dockerfile
+            dockerfile: ../../packages/funman/Dockerfile
             target: funman_taskrunner_builder
         container_name: funman-taskrunner
         image: ghcr.io/darpa-askem/funman-taskrunner:latest
@@ -61,6 +73,8 @@ services:
             TERARIUM_MQ_USERNAME: "terarium"
             TERARIUM_TASKRUNNER_REQUEST_TYPE: "funman"
         depends_on:
+            taskrunner-dev-builder:
+                condition: service_started
             rabbitmq:
                 condition: service_healthy
         extra_hosts:

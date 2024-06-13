@@ -18,14 +18,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install gollm
 COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
-RUN COMMIT_SHA=$(cat /gollmVersion.txt) && \
+RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
 	echo "Using GoLLM commit $COMMIT_SHA" && \
-	wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz && \
+	wget --progress=dot:giga -O gollm.tar.gz "https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz" && \
 	tar -zxvf gollm.tar.gz && \
 	rm gollm.tar.gz && \
 	mv GoLLM-* GoLLM
 WORKDIR /GoLLM
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -48,30 +48,21 @@ WORKDIR /
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	openjdk-17-jre-headless \
-	wget && \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=gollm_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
 # Install GoLLM
-COPY ./packages/gollm/gollm-version.txt /gollmVersion.txt
-RUN COMMIT_SHA=$(cat /gollmVersion.txt) && \
-	echo "Using GoLLM commit $COMMIT_SHA" && \
-	wget -O gollm.tar.gz https://github.com/DARPA-ASKEM/GoLLM/archive/${COMMIT_SHA}.tar.gz && \
-	tar -zxvf gollm.tar.gz && \
-	rm gollm.tar.gz && \
-	mv GoLLM-* GoLLM
+COPY --from=gollm_taskrunner_builder /GoLLM /GoLLM
 WORKDIR /GoLLM
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 # Install taskrunner
-WORKDIR /
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
-
 WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 

@@ -13,16 +13,19 @@ RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3.10 \
 	wget \
+	git \
 	python3-pip && \
 	rm -rf /var/lib/apt/lists/*
 
 # Install funman-api
 COPY ./packages/funman/funman-version.txt /funmanVersion.txt
-RUN git clone https://github.com/DARPA-ASKEM/funman-api.git
-WORKDIR /funman-api
-RUN COMMIT_SHA=$(cat /funmanVersion.txt) && \
+RUN COMMIT_SHA="$(cat /funmanVersion.txt)" && \
 	echo "Using FUNMAN commit $COMMIT_SHA" && \
-	git reset --hard $COMMIT_SHA
+	wget --progress=dot:giga -O funman.tar.gz "https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz" && \
+	tar -zxvf funman.tar.gz && \
+	rm funman.tar.gz && \
+	mv -v funman-* funman-api
+WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
 	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
 	pip install --no-cache-dir auxiliary_packages/funman_demo
@@ -46,31 +49,23 @@ WORKDIR /
 # Install OpenJDK JRE and wget
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	openjdk-17-jre-headless \
-	wget && \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=funman_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
 # Install funman-api
-COPY ./packages/funman/funman-version.txt /funmanVersion.txt
-RUN COMMIT_SHA=$(cat /funmanVersion.txt) && \
-	echo "Using FUNMAN commit $COMMIT_SHA" && \
-	wget -O funman.tar.gz https://github.com/DARPA-ASKEM/funman-api/archive/${COMMIT_SHA}.tar.gz && \
-	tar -zxvf funman.tar.gz && \
-	rm funman.tar.gz && \
-	mv -v funman-* funman-api
+COPY --from=funman_taskrunner_builder /funman-api /funman-api
+WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
 	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
 	pip install --no-cache-dir auxiliary_packages/funman_demo
 
 # Install taskrunner
-WORKDIR /
 COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
-
 WORKDIR /taskrunner
 RUN pip install --no-cache-dir -e .
 
