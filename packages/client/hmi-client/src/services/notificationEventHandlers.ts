@@ -3,6 +3,7 @@ import {
 	ClientEvent,
 	ClientEventType,
 	ProgressState,
+	SimulationEngine,
 	SimulationNotificationData,
 	StatusUpdate,
 	TaskResponse,
@@ -191,7 +192,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	registerHandler<StatusUpdate<SimulationNotificationData>>(
 		ClientEventType.SimulationNotification,
 		(event, created) => {
-			created.supportCancel = false;
+			created.supportCancel = event.data.data.simulationEngine === SimulationEngine.Ciemss;
 			created.sourceName = event.data.data.metadata?.nodeName || '';
 			created.assetId = event.data.data.metadata?.workflowId || '';
 			created.pageType = AssetType.Workflow;

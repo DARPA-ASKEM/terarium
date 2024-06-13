@@ -34,7 +34,8 @@ public class NotificationGroupInstance<T> {
 			final ClientEventType type,
 			final UUID projectId,
 			final T data,
-			final Double halfTimeSeconds) {
+			final Double halfTimeSeconds,
+			final UUID notificationGroupId) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
 		this.halfTimeSeconds = halfTimeSeconds;
@@ -43,9 +44,8 @@ public class NotificationGroupInstance<T> {
 		this.type = type;
 		this.data = data;
 
-		// create the notification group
 		this.notificationGroup = notificationService.createNotificationGroup(
-				new NotificationGroup().setType(type.name()).setProjectId(projectId));
+			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(type.name()).setProjectId(projectId));
 	}
 
 	public NotificationGroupInstance(
@@ -53,8 +53,9 @@ public class NotificationGroupInstance<T> {
 			final NotificationService notificationService,
 			final ClientEventType type,
 			final UUID projectId,
-			final T data) {
-		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS);
+			final T data,
+			final Double halfTimeSeconds) {
+		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
 	}
 
 	private Double estimateT() {

@@ -132,7 +132,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			projectId,
 			permission,
 			request.getMetadata()
-		).setInterval(3).setThreshold(300).startPolling();
+		).setInterval(2).setThreshold(300).setHalfTimeSeconds(2.0).startPolling();
 
 		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
@@ -205,7 +205,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			projectId,
 			permission,
 			request.getMetadata()
-		).startPolling();
+		).setInterval(2).setThreshold(300).setHalfTimeSeconds(2.0).startPolling();
 
 		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);

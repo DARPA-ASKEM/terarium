@@ -28,16 +28,23 @@ public class SimulationRequestStatusNotifier {
 
 	private final int DEFAULT_POLLING_INTERVAL_SECONDS = 5;
 	private final int DEFAULT_POLLING_THRESHOLD = 500; // 500 * 5 seconds = 2500 seconds = 41 minutes
+	private final Double DEFAULT_HALF_TIME_SECONDS = 2.0;
 
 	private UUID simulationId;
 	private UUID projectId;
 	private Schema.Permission permission;
-	private JsonNode metadata; // Arbitrary metadata to be sent to the client
+	private JsonNode metadata; // Arbitrary metadata to be sent to the client along with the notification event.
 
 	@Setter
 	private int interval = DEFAULT_POLLING_INTERVAL_SECONDS;
 	@Setter
 	private int threshold = DEFAULT_POLLING_THRESHOLD;
+	/*
+	 * Estimated time it takes for the simulation to reach half of its completion.
+	 * This is used to calculate the estimated time remaining for the simulation to complete.
+	 */
+	@Setter
+	private Double halfTimeSeconds = DEFAULT_HALF_TIME_SECONDS;
 
 	private int pollAttempts = 0;
 
@@ -76,10 +83,10 @@ public class SimulationRequestStatusNotifier {
 	}
 
 	private void sendStatusMessage(final NotificationGroupInstance<SimulationNotificationData> notificationInterface, final Simulation simulation) {
-		final String statusMessage = simulation.getStatusMessage();
+		final String statusMessage = simulation.getStatusMessage() != null ? simulation.getStatusMessage() : "";
 		final ProgressState status = simulation.getStatus();
 		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
-			throw new RuntimeException((statusMessage == null || statusMessage.isEmpty()) ? "Failed running simulation " + simulation.getId() : statusMessage);
+			throw new RuntimeException("Failed running simulation " + simulation.getId() + "\n" + statusMessage);
 		} else if (status.equals(ProgressState.CANCELLED)) {
 			notificationInterface.sendFinalMessage("Simulation has been cancelled.", ProgressState.CANCELLED);
 			this.executor.shutdown();
@@ -105,9 +112,11 @@ public class SimulationRequestStatusNotifier {
 			notificationService,
 			ClientEventType.SIMULATION_NOTIFICATION,
 			this.projectId,
-			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata)
+			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
+			this.halfTimeSeconds,
+			sim.getId()
 		);
-		log.debug("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
+		log.info("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);
 
 		final Runnable poller = () -> {
@@ -122,7 +131,7 @@ public class SimulationRequestStatusNotifier {
 				}
 				final Simulation simulation = result.get();
 				this.sendStatusMessage(notificationInterface, simulation);
-				log.debug("Polling attempt {} for simulation {} completed", pollAttempts, this.simulationId);
+				log.info("Polling simulation {} with status {} for the {} time", this.simulationId, simulation.getStatus(), pollAttempts);
 			} catch (final Exception e) {
 				final String errMsg = e instanceof RuntimeException
 					? e.getMessage()
