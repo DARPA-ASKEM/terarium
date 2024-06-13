@@ -185,17 +185,18 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import type {
 	FunmanPostQueriesRequest,
 	Model,
-	ModelConfigurationLegacy,
+	ModelConfiguration,
 	ModelParameter
 } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations-legacy';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
 import TeraCompartmentConstraint from '@/components/workflow/ops/funman/tera-compartment-constraint.vue';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
+import { getModel } from '@/services/model';
 import { FunmanOperationState, ConstraintGroup } from './funman-operation';
 
 const props = defineProps<{
@@ -294,7 +295,7 @@ const requestConstraints = computed(() =>
 
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfigurationLegacy>();
+const modelConfiguration = ref<ModelConfiguration>();
 
 const modelStates = ref<string[]>([]); // Used for form's multiselect.
 const modelParameters = ref<string[]>([]);
@@ -434,7 +435,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = modelConfiguration.value.configuration;
+	model.value = await getModel(modelConfiguration.value?.modelId);
 };
 
 const setModelOptions = async () => {
