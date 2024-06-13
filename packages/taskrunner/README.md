@@ -27,37 +27,7 @@ Use the following as a reference for creating a taskrunner image:
 
 # Local Development:
 
-In the `docker-compose-taskrunner.yml` volume mount your local task code:
-
-GoLLM task volume mounting:
-```
-volumes:
-  - ./packages/gollm:/gollm_task
-```
-
-Mira task volume mounting:
-```
-volumes:
-  - ./packages/mira:/mira_task
-```
-
-Funman task volume mounting:
-```
-volumes:
-  - ./packages/funman:/funman_task
-```
-
-Then exec into the container:
-
-```
-docker exec -it {IMAGE_TAG} /bin/bash
-```
-
-On code changes, re-install the tasks:
-
-```
-pip install -e
-```
+Everything is setup in the `docker-compose-taskrunner.yml` for local development. The docker-compose entries use the *builder* image and volume mounts the taskrunner directories into the running container. Both the java `taskrunner` package and the python repos will automatically pickup and local changes and hotswap accordingly.
 
 # Building docker images:
 
