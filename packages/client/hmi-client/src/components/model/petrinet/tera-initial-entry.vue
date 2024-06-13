@@ -30,8 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfigurationLegacy } from '@/types/Types';
-import { getInitialExpression, getInitialSource } from '@/services/model-configurations-legacy';
+import { Model, ModelConfiguration } from '@/types/Types';
+import { getInitialExpression, getInitialSource } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';
@@ -43,7 +43,7 @@ import {
 
 const props = defineProps<{
 	model: Model;
-	modelConfiguration: ModelConfigurationLegacy;
+	modelConfiguration: ModelConfiguration;
 	initialId: string;
 }>();
 

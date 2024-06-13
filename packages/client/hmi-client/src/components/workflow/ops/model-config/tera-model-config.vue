@@ -149,7 +149,7 @@
 					@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 					@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 				/>
-				<Accordion multiple :active-index="[0]" class="pb-6">
+				<!-- <Accordion multiple :active-index="[0]" class="pb-6">
 					<AccordionTab>
 						<template #header> Interventions </template>
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
@@ -166,7 +166,7 @@
 							@delete="removeIntervention(knobs.transientModelConfig, idx)"
 						/>
 					</AccordionTab>
-				</Accordion>
+				</Accordion> -->
 
 				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
@@ -254,7 +254,7 @@
 				<Button
 					label="Ignore warnings and use configuration"
 					class="p-button-secondary"
-					@click="() => createConfiguration(true)"
+					@click="() => createConfiguration()"
 				/>
 			</template>
 		</tera-modal>
@@ -286,7 +286,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
+// import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
@@ -302,23 +302,20 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations } from '@/services/model';
 import {
-	sanityCheck,
 	createModelConfiguration,
-	setIntervention,
-	removeIntervention,
 	setInitialSource,
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions
-} from '@/services/model-configurations-legacy';
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
+import type { Model, ModelConfiguration, ModelConfigurationLegacy } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { cleanModel, isModelMissingMetadata } from '@/model-representation/service';
+import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
@@ -338,7 +335,7 @@ const menuItems = computed(() => [
 		icon: 'pi pi-download',
 		disabled: isSaveDisabled,
 		command: () => {
-			downloadConfiguredModel();
+			// downloadConfiguredModel();
 		}
 	}
 ]);
@@ -347,7 +344,7 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 interface BasicKnobs {
 	tempConfigId: string;
-	transientModelConfig: ModelConfigurationLegacy;
+	transientModelConfig: ModelConfiguration;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -355,9 +352,11 @@ const knobs = ref<BasicKnobs>({
 	transientModelConfig: {
 		name: '',
 		description: '',
-		model_id: '',
-		configuration: {} as Model,
-		interventions: []
+		modelId: '',
+		calibrationRunId: '',
+		observableSemanticList: [],
+		parameterSemanticList: [],
+		initialSemanticList: []
 	}
 });
 
@@ -546,12 +545,12 @@ const handleModelPreview = (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	knobs.value.transientModelConfig = {
-		name: '',
-		description: '',
-		model_id: model.value.id ?? '',
-		configuration: model.value
-	};
+	// knobs.value.transientModelConfig = {
+	// 	name: '',
+	// 	description: '',
+	// 	modelId: model.value.id ?? '',
+	// 	configuration: model.value
+	// };
 };
 
 const selectedOutputId = ref<string>('');
@@ -590,58 +589,41 @@ const numInitials = computed(() => {
 	return Object.keys(mmt.value.initials).length;
 });
 
-const addIntervention = () => {
-	if (knobs.value.transientModelConfig.interventions) {
-		knobs.value.transientModelConfig.interventions.push({
-			name: '',
-			timestep: 1,
-			value: 1
-		});
-	} else {
-		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
-	}
-};
+// const addIntervention = () => {
+// 	if (knobs.value.transientModelConfig.interventions) {
+// 		knobs.value.transientModelConfig.interventions.push({
+// 			name: '',
+// 			timestep: 1,
+// 			value: 1
+// 		});
+// 	} else {
+// 		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
+// 	}
+// };
 
-const downloadConfiguredModel = async () => {
-	const rawModel = knobs.value?.transientModelConfig?.configuration;
-	if (rawModel) {
-		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
-		const a = document.createElement('a');
-		a.href = `data:${data}`;
-		a.download = `${
-			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
-		}.json`;
-		a.innerHTML = 'download JSON';
-		a.click();
-		a.remove();
-	}
-};
+// const downloadConfiguredModel = async () => {
+// 	const rawModel = knobs.value?.transientModelConfig?.configuration;
+// 	if (rawModel) {
+// 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+// 		const a = document.createElement('a');
+// 		a.href = `data:${data}`;
+// 		a.download = `${
+// 			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
+// 		}.json`;
+// 		a.innerHTML = 'download JSON';
+// 		a.click();
+// 		a.remove();
+// 	}
+// };
 
-const createConfiguration = async (force: boolean = false) => {
+const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
 
 	const state = cloneDeep(props.node.state);
 
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
-	sanityCheckErrors.value = [];
-	if (!force) {
-		const errors = sanityCheck(modelConfig);
-		if (errors.length > 0) {
-			sanityCheckErrors.value = errors;
-			return;
-		}
-	}
 
-	cleanModel(modelConfig.configuration);
-
-	const data = await createModelConfiguration(
-		model.value.id,
-		knobs.value?.transientModelConfig?.name ?? '',
-		knobs.value?.transientModelConfig?.description ?? '',
-		modelConfig.configuration,
-		false,
-		knobs.value.transientModelConfig.interventions ?? []
-	);
+	const data = await createModelConfiguration(modelConfig);
 
 	if (!data) {
 		logger.error('Failed to create model configuration');
@@ -673,17 +655,16 @@ const fetchConfigurations = async (modelId: string) => {
 // Creates a temp config (if it doesn't exist in state)
 // This is used for beaker context when there are no outputs in the node
 const createTempModelConfig = async () => {
-	const state = cloneDeep(props.node.state);
-	if (state.tempConfigId !== '' || !model.value) return;
-	const data = await createModelConfiguration(
-		model.value.id,
-		'Temp_config_name',
-		'Utilized in model config node for beaker purposes',
-		cloneDeep(model.value),
-		true
-	);
-
-	knobs.value.tempConfigId = data.id;
+	// const state = cloneDeep(props.node.state);
+	// if (state.tempConfigId !== '' || !model.value) return;
+	// const data = await createModelConfiguration(
+	// 	model.value.id,
+	// 	'Temp_config_name',
+	// 	'Utilized in model config node for beaker purposes',
+	// 	cloneDeep(model.value),
+	// 	true
+	// );
+	// knobs.value.tempConfigId = data.id;
 };
 
 // Fill the form with the config data
@@ -698,20 +679,19 @@ const initialize = async () => {
 	// State has never been set up:
 	if (knobs.value.tempConfigId === '') {
 		// Grab these values from model to initialize them
-		knobs.value.transientModelConfig = {
-			name: '',
-			description: '',
-			model_id: modelId,
-			configuration: cloneDeep(model.value) ?? ({} as Model),
-			interventions: []
-		};
+		// knobs.value.transientModelConfig = {
+		// 	name: '',
+		// 	description: '',
+		// 	model_id: modelId,
+		// 	configuration: cloneDeep(model.value) ?? ({} as Model),
+		// 	interventions: []
+		// };
 
 		await createTempModelConfig();
 	}
 	// State already been set up use it instead:
 	else {
 		const modelConfig = cloneDeep(state.transientModelConfig);
-		cleanModel(modelConfig.configuration);
 		knobs.value.transientModelConfig = modelConfig;
 	}
 
@@ -730,7 +710,7 @@ const initialize = async () => {
 	}
 };
 
-const applyConfigValues = (config: ModelConfigurationLegacy) => {
+const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
 
@@ -772,12 +752,10 @@ onMounted(async () => {
 });
 
 watch(
-	() => knobs.value.transientModelConfig,
+	() => model.value,
 	async () => {
-		const config = cloneDeep(knobs.value.transientModelConfig);
-		cleanModel(config.configuration);
-		if (isEmpty(config) || isEmpty(config.configuration)) return;
-		const response: any = await getMMT(config.configuration);
+		if (!model.value) return;
+		const response: any = await getMMT(model.value);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	},

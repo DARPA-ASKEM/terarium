@@ -1,8 +1,9 @@
 import * as d3 from 'd3';
 
-import type { ModelConfigurationLegacy, Dataset, CsvAsset, State } from '@/types/Types';
-import { getModelConfigurationById } from '@/services/model-configurations-legacy';
+import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
+import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getModel } from './model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -13,16 +14,13 @@ export interface CalibrateMap {
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfigurationLegacy =
-			await getModelConfigurationById(modelConfigId);
-		const modelOptions: State[] = modelConfiguration.configuration.model.states;
+		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
+		const model = await getModel(modelConfigId);
+		const modelOptions: any[] = model?.model.states;
 
-		// add observables
-		if (modelConfiguration.configuration.semantics?.ode?.observables) {
-			modelConfiguration.configuration.semantics.ode.observables.forEach((o) => {
-				modelOptions.push(o);
-			});
-		}
+		getObservables(modelConfiguration).forEach((o) => {
+			modelOptions.push(o);
+		});
 
 		modelOptions.push({ id: 'timestamp' });
 		return { modelConfiguration, modelOptions };

@@ -90,11 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfigurationLegacy, Model } from '@/types/Types';
-import {
-	getParameterSource,
-	getParameterDistribution
-} from '@/services/model-configurations-legacy';
+import { Model, ModelConfiguration } from '@/types/Types';
+import { getParameterSource, getParameterDistribution } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';
@@ -104,7 +101,7 @@ import { getParameter } from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
-	modelConfiguration: ModelConfigurationLegacy;
+	modelConfiguration: ModelConfiguration;
 	parameterId: string;
 }>();
 

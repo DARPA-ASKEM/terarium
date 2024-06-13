@@ -86,21 +86,22 @@
 
 			<!-- Unstratified -->
 			<ul v-else class="flex-grow">
-				<li v-for="{ id } in getParameters(modelConfiguration)" :key="id">
+				<li v-for="{ referenceId } in getParameters(modelConfiguration)" :key="referenceId">
 					<div class="flex gap-4">
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&
-								getParameterDistribution(modelConfiguration, id).type === DistributionType.Constant
+								getParameterDistribution(modelConfiguration, referenceId).type ===
+									DistributionType.Constant
 							"
 							binary
-							:model-value="selectedParameters.includes(id)"
-							@change="onSelect(id)"
+							:model-value="selectedParameters.includes(referenceId)"
+							@change="onSelect(referenceId)"
 						/>
 						<tera-parameter-entry
 							:model="model"
 							:model-configuration="modelConfiguration"
-							:parameter-id="id"
+							:parameter-id="referenceId"
 							@update-parameter="emit('update-parameters', [$event])"
 							@update-source="emit('update-source', $event)"
 						/>
@@ -136,8 +137,8 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfigurationLegacy, ModelDistribution } from '@/types/Types';
-import { getParameterDistribution, getParameters } from '@/services/model-configurations-legacy';
+import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
+import { getParameterDistribution, getParameters } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
 import { collapseParameters, isStratifiedModel } from '@/model-representation/mira/mira';
@@ -159,7 +160,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 
 const props = defineProps<{
 	model: Model;
-	modelConfiguration: ModelConfigurationLegacy;
+	modelConfiguration: ModelConfiguration;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 }>();
