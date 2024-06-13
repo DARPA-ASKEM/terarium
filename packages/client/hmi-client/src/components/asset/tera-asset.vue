@@ -20,7 +20,6 @@
 				<h4 v-if="!isNamingAsset">{{ name }}</h4>
 				<slot v-if="!overline" name="edit-buttons" />
 			</div>
-
 			<!--put model contributors here too-->
 			<span class="authors" v-if="authors">
 				<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
@@ -213,7 +212,6 @@ header section {
 
 header > button {
 	align-self: flex-start;
-	width: fit-content;
 }
 
 header.overview-banner section {

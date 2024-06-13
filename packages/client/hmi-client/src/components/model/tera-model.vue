@@ -21,7 +21,7 @@
 			</div>
 		</template>
 		<template #edit-buttons>
-			{{ model?.header.schema_name }}
+			<span>{{ model?.header.schema_name }}</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -225,3 +225,9 @@ watch(
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+span {
+	color: var(--text-color-subdued);
+}
+</style>
