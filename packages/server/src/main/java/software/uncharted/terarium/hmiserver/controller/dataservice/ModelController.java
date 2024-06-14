@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +37,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
@@ -461,7 +459,8 @@ public class ModelController {
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
-					modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
+					modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
+							id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
