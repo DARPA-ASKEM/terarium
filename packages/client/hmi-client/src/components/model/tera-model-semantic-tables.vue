@@ -4,7 +4,7 @@
 		:model="transientModel"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
-		@update-initial-metadata="onUpdateInitialMetadata"
+		@update-state="onUpdateState"
 		@update-parameter="onUpdateParameter"
 	/>
 </template>
@@ -19,6 +19,7 @@ import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tab
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType } from '@/services/model';
 import {
+	updateState,
 	updateInitialMetadata,
 	updateParameter,
 	updateParameterMetadata
@@ -48,9 +49,13 @@ const tables = computed(() => {
 	}
 });
 
-function onUpdateInitialMetadata(event: any) {
-	const { target, key, value } = event;
-	updateInitialMetadata(transientModel.value, target, key, value);
+function onUpdateState(event: any) {
+	const { id, key, value, isMetadata } = event;
+	if (isMetadata) {
+		updateInitialMetadata(transientModel.value, id, key, value); // For now we only have metadata for initials so just save it there
+	} else {
+		updateState(transientModel.value, id, key, value);
+	}
 }
 
 function onUpdateParameter(event: any) {
