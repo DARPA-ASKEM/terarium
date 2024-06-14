@@ -51,7 +51,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 
 import { Poller, PollerState } from '@/api/api';
@@ -59,7 +59,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
 import type { CsvAsset, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
-import { useProjects } from '@/composables/project';
 import type { CalibrateEnsembleCiemssOperationState } from './calibrate-ensemble-ciemss-operation';
 
 const props = defineProps<{
@@ -124,15 +123,12 @@ watch(
 				extra: {
 					num_samples: props.node.state.extra.numIterations,
 					inferred_parameters: id
-				},
-				metadata: {
-					workflowId: props.node.workflowId,
-					workflowName: useProjects().getAssetName(props.node.workflowId),
-					nodeId: props.node.id,
-					nodeName: props.node.displayName
 				}
 			};
-			const simulationResponse = await makeEnsembleCiemssSimulation(params);
+			const simulationResponse = await makeEnsembleCiemssSimulation(
+				params,
+				nodeMetadata(props.node)
+			);
 			const forecastId = simulationResponse.simulationId;
 
 			const state = _.cloneDeep(props.node.state);
