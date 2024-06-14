@@ -406,11 +406,7 @@ onMounted(() => {
 	buildJupyterContext();
 });
 
-onUnmounted(() => {
-	if (kernelManager.jupyterSession !== null) {
-		kernelManager.shutdown();
-	}
-});
+onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
