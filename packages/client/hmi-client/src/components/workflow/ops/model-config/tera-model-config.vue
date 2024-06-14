@@ -229,11 +229,8 @@
 		popover
 	>
 		<tera-drilldown-section class="p-2">
-			<tera-model-semantic-tables
-				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
-				readonly
-				:model="suggestedConfigurationContext.modelConfiguration?.configuration"
-			/>
+			<!-- Redo this to show model configs-->
+			<tera-model-semantic-tables v-if="model" readonly :model="model" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 
@@ -309,7 +306,7 @@ import {
 	setParameterDistributions
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, ModelConfigurationLegacy } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -563,8 +560,8 @@ const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
-	tableData: ModelConfigurationLegacy[];
-	modelConfiguration: ModelConfigurationLegacy | null;
+	tableData: ModelConfiguration[];
+	modelConfiguration: ModelConfiguration | null;
 }>({
 	isOpen: false,
 	tableData: [],
@@ -742,7 +739,7 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onOpenSuggestedConfiguration = (config: ModelConfigurationLegacy) => {
+const onOpenSuggestedConfiguration = (config: ModelConfiguration) => {
 	suggestedConfigurationContext.value.modelConfiguration = config;
 	suggestedConfigurationContext.value.isOpen = true;
 };
