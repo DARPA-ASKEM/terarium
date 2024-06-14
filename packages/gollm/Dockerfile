@@ -60,7 +60,6 @@ WORKDIR /GoLLM
 RUN pip install --no-cache-dir .
 
 # Install taskrunner
-COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner
