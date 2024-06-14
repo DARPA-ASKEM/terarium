@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,7 +74,8 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final ObjectMapper objectMapper;
 
-	private class SimulationRequestBody<T> {
+	@Data
+	private static class SimulationRequestBody<T> {
 		private JsonNode metadata;
 		private T payload;
 	}
