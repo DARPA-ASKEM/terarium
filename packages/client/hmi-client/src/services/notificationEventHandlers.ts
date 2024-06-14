@@ -107,8 +107,6 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 		) => void = () => {}
 	) => {
 		handlers[eventType] = (event: ClientEvent<T>) => {
-			console.log('from event handler');
-			console.log(event);
 			if (!event.data) return;
 			const existingItem = notificationItems.value.find(
 				(item) => item.notificationGroupId === event.notificationGroupId
