@@ -63,7 +63,6 @@ RUN pip install --no-cache-dir . && \
 	pip install --no-cache-dir auxiliary_packages/funman_demo
 
 # Install taskrunner
-COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner
