@@ -4,9 +4,11 @@
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
-			<tera-initials-metadata
+			<tera-states-metadata
+				v-if="!isEmpty(mmt.initials)"
 				:model="model"
-				@update-initial-metadata="emit('update-initial-metadata', $event)"
+				:mmt="mmt"
+				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
@@ -14,7 +16,10 @@
 				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 			</template>
 			<tera-parameters-metadata
+				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
 				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>
@@ -142,15 +147,15 @@ import Column from 'primevue/column';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { getMMT } from '@/services/model';
+import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
 import TeraParametersMetadata from '../tera-parameters-metadata.vue';
-import TeraInitialsMetadata from '../tera-initials-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-initial-metadata', 'update-parameter']);
+const emit = defineEmits(['update-state', 'update-parameter']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
