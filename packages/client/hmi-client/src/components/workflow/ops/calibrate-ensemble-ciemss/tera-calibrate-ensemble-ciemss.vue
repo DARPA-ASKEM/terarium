@@ -206,7 +206,12 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 
-import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/components/workflow/util';
+import {
+	chartActionsProxy,
+	drilldownChartSize,
+	getTimespan,
+	nodeMetadata
+} from '@/components/workflow/util';
 import type {
 	CsvAsset,
 	ModelConfigurationLegacy,
@@ -350,15 +355,9 @@ const runEnsemble = async () => {
 			num_particles: knobs.value.extra.numParticles,
 			num_iterations: knobs.value.extra.numIterations,
 			solver_method: knobs.value.extra.solverMethod
-		},
-		metadata: {
-			workflowId: props.node.workflowId,
-			workflowName: useProjects().getAssetName(props.node.workflowId),
-			nodeId: props.node.id,
-			nodeName: props.node.displayName
 		}
 	};
-	const response = await makeEnsembleCiemssCalibration(calibratePayload);
+	const response = await makeEnsembleCiemssCalibration(calibratePayload, nodeMetadata(props.node));
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;

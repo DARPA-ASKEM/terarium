@@ -24,9 +24,6 @@ public class CalibrationRequestJulia implements Serializable {
 	@TSOptional
 	private TimeSpan timespan;
 
-	@TSOptional
-	private JsonNode metadata;
-
 	private DatasetLocation dataset;
 	private String engine;
 }

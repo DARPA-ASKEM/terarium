@@ -149,7 +149,7 @@ import {
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -269,20 +269,14 @@ const makeForecastRequest = async () => {
 			num_samples: state.numSamples,
 			method: state.method
 		},
-		engine: 'ciemss',
-		metadata: {
-			workflowId: props.node.workflowId,
-			workflowName: useProjects().getAssetName(props.node.workflowId),
-			nodeId: props.node.id,
-			nodeName: props.node.displayName
-		}
+		engine: 'ciemss'
 	};
 
 	if (inferredParameters.value) {
 		payload.extra.inferred_parameters = inferredParameters.value[0];
 	}
 
-	const response = await makeForecastJob(payload);
+	const response = await makeForecastJob(payload, nodeMetadata(props.node));
 	return response.id;
 };
 

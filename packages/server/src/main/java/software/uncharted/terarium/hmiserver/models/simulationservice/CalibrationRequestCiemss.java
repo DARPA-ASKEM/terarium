@@ -30,9 +30,6 @@ public class CalibrationRequestCiemss implements Serializable {
 	@TSOptional
 	private List<Intervention> interventions;
 
-	@TSOptional
-	private JsonNode metadata;
-
 	private DatasetLocation dataset;
 	private String engine;
 }

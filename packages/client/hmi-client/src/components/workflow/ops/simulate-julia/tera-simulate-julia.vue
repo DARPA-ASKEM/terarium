@@ -117,7 +117,7 @@ import { getModelConfigurationById } from '@/services/model-configurations-legac
 import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useProjects } from '@/composables/project';
 
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -226,15 +226,9 @@ const makeForecastRequest = async (): Promise<string> => {
 			end: state.currentTimespan.end
 		},
 		extra: {},
-		engine: 'sciml',
-		metadata: {
-			workflowId: props.node.workflowId,
-			workflowName: useProjects().getAssetName(props.node.workflowId),
-			nodeId: props.node.id,
-			nodeName: props.node.displayName
-		}
+		engine: 'sciml'
 	};
-	const response = await makeForecastJob(payload);
+	const response = await makeForecastJob(payload, nodeMetadata(props.node));
 	return response.id;
 };
 

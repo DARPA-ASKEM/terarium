@@ -28,9 +28,6 @@ public class SimulationRequest implements Serializable {
 	private String engine;
 
 	@TSOptional
-	private JsonNode metadata;
-
-	@TSOptional
 	private List<Intervention> interventions;
 
 	@Override

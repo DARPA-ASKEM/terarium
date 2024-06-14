@@ -27,8 +27,5 @@ public class EnsembleCalibrationCiemssRequest implements Serializable {
 
 	private Object extra;
 
-	@TSOptional
-	private JsonNode metadata;
-
 	private String engine;
 }

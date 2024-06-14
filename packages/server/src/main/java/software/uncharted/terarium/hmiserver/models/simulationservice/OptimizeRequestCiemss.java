@@ -52,9 +52,6 @@ public class OptimizeRequestCiemss implements Serializable {
 	private OptimizeExtra extra;
 	private String engine;
 
-	@TSOptional
-	private JsonNode metadata;
-
 	@JsonAlias("user_id")
 	private String userId;
 }
