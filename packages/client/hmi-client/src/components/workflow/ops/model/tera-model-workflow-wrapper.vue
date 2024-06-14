@@ -4,13 +4,12 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section>
-			<tera-model
-				:asset-id="props.node.state.modelId as string"
-				@new-model-configuration="refreshModelNode"
-				@update-model-configuration="refreshModelNode"
-			/>
-		</section>
+		<tera-model
+			v-if="node.state.modelId"
+			:asset-id="node.state.modelId"
+			@new-model-configuration="refreshModelNode"
+			@update-model-configuration="refreshModelNode"
+		/>
 	</tera-drilldown>
 </template>
 
@@ -24,7 +23,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
 import { ModelOperationState } from './model-operation';
 
-const props = defineProps<{
+defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
