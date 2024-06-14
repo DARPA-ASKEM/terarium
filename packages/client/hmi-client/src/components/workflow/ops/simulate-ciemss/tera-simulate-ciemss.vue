@@ -66,17 +66,21 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
-			<Suspense>
+		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+			<div class="toolbar">
 				<tera-notebook-jupyter-input
-					:kernelManager="kernelManager"
-					:context-language="contextLanguage"
+					:kernel-manager="kernelManager"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
 				>
 					<template #toolbar-right-side>
-						<Button icon="pi pi-play" label="Run" @click="runCode" />
+						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
-			</Suspense>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+			</div>
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initializeAceEditor"
@@ -170,6 +174,7 @@ import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/uti
 
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -197,6 +202,8 @@ const codeText = ref('');
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const llmThoughts = ref<any[]>([]);
+const llmQuery = ref('');
 
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -212,6 +219,15 @@ enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+};
 
 const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
@@ -241,7 +257,6 @@ const runResults = ref<{ [runId: string]: RunResults }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 
 const kernelManager = new KernelSessionManager();
-const contextLanguage = ref<string>('python3');
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -399,6 +414,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;
