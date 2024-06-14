@@ -691,7 +691,6 @@ export interface CalibrationRequestCiemss {
     extra: any;
     timespan?: TimeSpan;
     interventions?: Intervention[];
-    metadata?: any;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -700,7 +699,6 @@ export interface CalibrationRequestJulia {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    metadata?: any;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -716,7 +714,6 @@ export interface EnsembleCalibrationCiemssRequest {
     dataset: DatasetLocation;
     timespan: TimeSpan;
     extra: any;
-    metadata?: any;
     engine: string;
 }
 
@@ -724,7 +721,6 @@ export interface EnsembleSimulationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     timespan: TimeSpan;
     extra: any;
-    metadata?: any;
     engine: string;
 }
 
@@ -740,7 +736,6 @@ export interface OptimizeRequestCiemss {
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
-    metadata?: any;
     userId: string;
 }
 
@@ -758,7 +753,6 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    metadata?: any;
     interventions?: Intervention[];
 }
 
