@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -123,14 +120,17 @@ public class SimulationRequestController implements SnakeCaseController {
 
 		// Fire and forget
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			sim.getId(),
-			projectId,
-			permission,
-			request.metadata
-		).setInterval(2).setThreshold(300).setHalfTimeSeconds(2.0).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						sim.getId(),
+						projectId,
+						permission,
+						request.metadata)
+				.setInterval(2)
+				.setThreshold(300)
+				.setHalfTimeSeconds(2.0)
+				.startPolling();
 
 		sim.setExecutionPayload(objectMapper.convertValue(request.payload, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
@@ -196,14 +196,17 @@ public class SimulationRequestController implements SnakeCaseController {
 		sim.setType(SimulationType.SIMULATION);
 
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			sim.getId(),
-			projectId,
-			permission,
-			request.metadata
-		).setInterval(2).setThreshold(300).setHalfTimeSeconds(2.0).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						sim.getId(),
+						projectId,
+						permission,
+						request.metadata)
+				.setInterval(2)
+				.setThreshold(300)
+				.setHalfTimeSeconds(2.0)
+				.startPolling();
 
 		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
@@ -230,22 +233,23 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJob(@RequestBody final SimulationRequestBody<CalibrationRequestJulia> request,
-	@RequestParam(name = "project-id", required = false) final UUID projectId) {
+	public ResponseEntity<JobResponse> makeCalibrateJob(
+			@RequestBody final SimulationRequestBody<CalibrationRequestJulia> request,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		final JobResponse res = simulationServiceProxy
 				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
 
 		return ResponseEntity.ok(res);
 	}
@@ -253,7 +257,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
-			@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request,
+			@RequestParam("project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		// Get model config's interventions and append them to requests:
@@ -283,14 +288,14 @@ public class SimulationRequestController implements SnakeCaseController {
 				.getBody();
 
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
 
 		return ResponseEntity.ok(res);
 	}
@@ -298,7 +303,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
-			@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request,
+			@RequestParam("project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -329,14 +335,14 @@ public class SimulationRequestController implements SnakeCaseController {
 				.getBody();
 
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
 
 		return ResponseEntity.ok(res);
 	}
@@ -344,7 +350,8 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/ensemble-simulate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
-			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -352,21 +359,22 @@ public class SimulationRequestController implements SnakeCaseController {
 				.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
 		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
-			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
+			@RequestParam("project-id") final UUID projectId) {
 		Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -375,14 +383,14 @@ public class SimulationRequestController implements SnakeCaseController {
 				.getBody();
 
 		new SimulationRequestStatusNotifier(
-			notificationService,
-			clientEventService,
-			simulationService,
-			UUID.fromString(res.getSimulationId()),
-			projectId,
-			permission,
-			request.metadata
-		).startPolling();
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
 
 		return ResponseEntity.ok(res);
 	}
