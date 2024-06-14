@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3.10 \
-	gcc python3-dev \
 	wget \
 	git \
 	python3-pip && \
