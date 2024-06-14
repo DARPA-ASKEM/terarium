@@ -696,8 +696,9 @@ const initialize = async () => {
 
 	model.value = await getModel(modelId);
 	if (suggestedConfigurationContext.value.tableData.length === 0 && model.value) {
-		await addDefaultConfiguration(model.value);
-		fetchConfigurations(modelId);
+		addDefaultConfiguration(model.value).then(() => {
+			fetchConfigurations(modelId);
+		});
 	}
 
 	knobs.value.tempConfigId = state.tempConfigId;
