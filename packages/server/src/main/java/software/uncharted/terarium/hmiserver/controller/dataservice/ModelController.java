@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -45,6 +47,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -83,6 +86,8 @@ public class ModelController {
 	final ModelConfigurationService modelConfigurationService;
 
 	final Messages messages;
+
+	final ModelConfigRepository modelConfigRepository;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
@@ -446,7 +451,7 @@ public class ModelController {
 						description = "There was an issue retrieving configurations from the data store",
 						content = @Content)
 			})
-	ResponseEntity<List<ModelConfigurationLegacy>> getModelConfigurationsForModelId(
+	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
 			@PathVariable("id") final UUID id,
 			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
 			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
@@ -455,70 +460,8 @@ public class ModelController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			final List<ModelConfigurationLegacy> modelConfigurations =
-					modelService.getModelConfigurationsByModelId(id, page, pageSize);
-
-			modelConfigurations.forEach(config -> {
-				final Model configuration = config.getConfiguration();
-
-				// check if configuration has a metadata field, if it doesnt make it an empty
-				// object
-				if (configuration.getMetadata() == null) {
-					configuration.setMetadata(new ModelMetadata());
-				}
-
-				// Find the Document Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam documentQueryParams = new ProvenanceQueryParam();
-				documentQueryParams.setRootId(config.getId());
-				documentQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				documentQueryParams.setTypes(List.of(ProvenanceType.DOCUMENT));
-				final Set<String> documentIds = provenanceSearchService.modelConfigFromDocument(documentQueryParams);
-
-				final List<String> documentSourceNames = new ArrayList<>();
-				documentIds.forEach(documentId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<DocumentAsset> document =
-								documentAssetService.getAsset(UUID.fromString(documentId), permission);
-						if (document.isPresent()) {
-							final String name = document.get().getName();
-							documentSourceNames.add(name);
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + documentId, e);
-					}
-				});
-
-				// Find the Dataset Assets linked via provenance to the model configuration
-				final ProvenanceQueryParam datasetQueryParams = new ProvenanceQueryParam();
-				datasetQueryParams.setRootId(config.getId());
-				datasetQueryParams.setRootType(ProvenanceType.MODEL_CONFIGURATION);
-				datasetQueryParams.setTypes(List.of(ProvenanceType.DATASET));
-				final Set<String> datasetIds = provenanceSearchService.modelConfigFromDataset(datasetQueryParams);
-
-				final List<String> datasetSourceNames = new ArrayList<>();
-				datasetIds.forEach(datasetId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<Dataset> dataset =
-								datasetService.getAsset(UUID.fromString(datasetId), permission);
-						if (dataset.isPresent()) {
-							final String name = dataset.get().getName();
-							documentSourceNames.add(name);
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + datasetId, e);
-					}
-				});
-
-				final List<String> sourceNames = new ArrayList<>();
-				sourceNames.addAll(documentSourceNames);
-				sourceNames.addAll(datasetSourceNames);
-
-				configuration.getMetadata().setSource(objectMapper.valueToTree(sourceNames));
-
-				config.setConfiguration(configuration);
-			});
+			final List<ModelConfiguration> modelConfigurations =
+					modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
