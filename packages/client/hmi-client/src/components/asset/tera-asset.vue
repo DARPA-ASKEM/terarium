@@ -45,7 +45,8 @@
 						<span v-html="authors" />
 					</span>
 					<div v-if="doi">
-						DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+						DOI:
+						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 					</div>
 					<div v-if="publisher" v-html="publisher" />
 					<!--created on: date-->
@@ -343,13 +344,6 @@ main:deep(.artifact-amount) {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
-}
-
-/* These styles should probably be moved to the general theme in some form */
-main:deep(input) {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: 0.75rem;
 }
 
 main:deep(.p-button.p-button-outlined) {

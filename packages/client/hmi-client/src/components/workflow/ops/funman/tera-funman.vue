@@ -185,12 +185,12 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import type {
 	FunmanPostQueriesRequest,
 	Model,
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	ModelParameter
 } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations-legacy';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
@@ -294,7 +294,7 @@ const requestConstraints = computed(() =>
 
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfigurationLegacy>();
 
 const modelStates = ref<string[]>([]); // Used for form's multiselect.
 const modelParameters = ref<string[]>([]);
@@ -453,7 +453,8 @@ const setModelOptions = async () => {
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[renameReserved(d.id)] = d.value;
+		// FIXME: may need to sample distributions if value is not available
+		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
 	const massValue = await pythonInstance.evaluateExpression(

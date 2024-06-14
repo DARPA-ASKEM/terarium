@@ -1,3 +1,5 @@
+import { getModel } from '@/services/model';
+import { createNotebookFromCode } from '@/services/notebook';
 import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 
@@ -18,6 +20,8 @@ export interface StratifyGroup {
 }
 
 export interface StratifyCode {
+	llmQuery: string;
+	llmThoughts: any[];
 	code: string;
 	timestamp: number;
 }
@@ -60,7 +64,7 @@ export const StratifyMiraOperation: Operation = {
 	inputs: [
 		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }
 	],
-	outputs: [{ type: 'model' }],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	isRunnable: false,
 	action: () => {},
 	initState: () => {
@@ -70,5 +74,18 @@ export const StratifyMiraOperation: Operation = {
 			hasCodeBeenRun: false
 		};
 		return init;
+	},
+	createNotebook: async (state: StratifyOperationStateMira, value?: any[] | null) => {
+		const modelIdToLoad = value?.[0];
+		const outputModel = await getModel(modelIdToLoad);
+		const { code, llmQuery, llmThoughts } = state.strataCodeHistory?.[0] ?? {};
+		const notebook = createNotebookFromCode(
+			code ?? '',
+			'python3',
+			{ 'application/json': outputModel },
+			llmQuery,
+			llmThoughts
+		);
+		return notebook;
 	}
 };

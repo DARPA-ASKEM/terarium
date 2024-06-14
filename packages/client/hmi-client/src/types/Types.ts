@@ -164,6 +164,7 @@ export interface Dataset extends TerariumAsset {
 
 export interface DatasetColumn extends TerariumEntity {
     name: string;
+    fileName: string;
     dataType: ColumnType;
     formatStr?: string;
     annotations: string[];
@@ -192,6 +193,7 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
+    documentAbstract?: string;
     assets?: DocumentExtraction[];
 }
 
@@ -209,7 +211,7 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfiguration extends TerariumAssetThatSupportsAdditionalProperties {
+export interface ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
     configuration: Model;
     interventions?: Intervention[];
     model_id: string;
@@ -226,6 +228,43 @@ export interface ModelFramework extends TerariumAssetThatSupportsAdditionalPrope
     name: string;
     version: string;
     semantics: string;
+}
+
+export interface InitialSemantic extends Semantic {
+    target: string;
+    expression: string;
+    expressionMathml: string;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface ModelConfiguration extends TerariumAsset {
+    calibrationRunId: string;
+    modelId: string;
+    simulationId?: string;
+    observableSemanticList: ObservableSemantic[];
+    parameterSemanticList: ParameterSemantic[];
+    initialSemanticList: InitialSemantic[];
+}
+
+export interface ObservableSemantic extends Semantic {
+    referenceId: string;
+    states: string[];
+    expression: string;
+    expressionMathml: string;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface ParameterSemantic extends Semantic {
+    referenceId: string;
+    distribution: ModelDistribution;
+    interventions: Intervention[];
+    default: boolean;
+    modelConfiguration: ModelConfiguration;
+}
+
+export interface Semantic extends TerariumEntity {
+    source: string;
+    type: SemanticType;
 }
 
 export interface State {
@@ -651,6 +690,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
+    interventions?: Intervention[];
     dataset: DatasetLocation;
     engine: string;
 }
@@ -687,7 +727,8 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    interventions?: OptimizedIntervention;
+    policyInterventions?: PolicyInterventions;
+    fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -712,7 +753,6 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    projectId: string;
     interventions?: Intervention[];
 }
 
@@ -749,8 +789,8 @@ export interface OptimizeQoi {
     method: string;
 }
 
-export interface OptimizedIntervention {
-    selection: string;
+export interface PolicyInterventions {
+    interventionType: string;
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
@@ -880,6 +920,11 @@ export interface ModelMetadata {
 export interface TerariumAssetThatSupportsAdditionalProperties extends TerariumAsset {
 }
 
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
@@ -922,11 +967,6 @@ export interface ProvenanceEdge {
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;
-}
-
-export interface ModelDistribution {
-    type: string;
-    parameters: { [index: string]: any };
 }
 
 export interface XDDFacetsItemResponse {
@@ -1209,8 +1249,6 @@ export enum AssetType {
     Code = "code",
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
-    Publication = "publication",
-    NotebookSession = "notebook-session",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1291,6 +1329,12 @@ export enum ColumnType {
     Time = "TIME",
 }
 
+export enum SemanticType {
+    Initial = "initial",
+    Parameter = "parameter",
+    Observable = "observable",
+}
+
 export enum ProvenanceRelationType {
     BeginsAt = "BEGINS_AT",
     Cites = "CITES",
@@ -1318,7 +1362,6 @@ export enum ProvenanceType {
     ModelRevision = "ModelRevision",
     ModelConfiguration = "ModelConfiguration",
     Project = "Project",
-    Publication = "Publication",
     Simulation = "Simulation",
     SimulationRun = "SimulationRun",
     Plan = "Plan",

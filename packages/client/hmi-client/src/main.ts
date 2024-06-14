@@ -1,4 +1,3 @@
-import { logger } from '@/utils/logger';
 import { createApp } from 'vue';
 import { RouteLocationNormalized } from 'vue-router';
 import { createPinia } from 'pinia';
@@ -20,23 +19,7 @@ import App from '@/App.vue';
 import { useProjects } from '@/composables/project';
 import { useNotificationManager } from '@/composables/notificationManager';
 import '@/assets/css/style.scss';
-import Keycloak from 'keycloak-js';
 import { init as clientEventServiceInit } from '@/services/ClientEventService';
-
-// Extend the window object to include the Keycloak object
-declare global {
-	interface Window {
-		keycloak_init: Promise<boolean>;
-		keycloak: Keycloak;
-	}
-}
-
-// if keycloak has not been initialized, reload the page
-const initialized = await window.keycloak_init;
-if (!initialized) {
-	logger.error('Authentication Failed, reloading a the page');
-	window.location.assign('/');
-}
 
 // Create the Vue application
 const app = createApp(App);
@@ -45,16 +28,10 @@ app.use(createPinia());
 
 // Set up the Keycloak authentication
 const authStore = useAuthStore();
-authStore.setKeycloak(window.keycloak);
-
-// Initialize user
 await authStore.init();
-logger.info('Authenticated');
+
+// Initialize Client Events
 await clientEventServiceInit();
-// Token Refresh
-setInterval(async () => {
-	await window.keycloak.updateToken(70);
-}, 6000);
 
 // Set the hash value of the window.location to null
 // This is to prevent the Keycloak from redirecting to the hash value
@@ -81,7 +58,7 @@ if (GTAG.data) {
 }
 
 app.component('math-field', MathfieldElement);
-app.component(VueFeather.name, VueFeather);
+app.component(VueFeather.name ?? 'vue-feather', VueFeather);
 app.mount('body');
 
 let previousRoute: RouteLocationNormalized | null = null;

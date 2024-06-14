@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -126,6 +125,52 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanCreateDatasetAndAddColumnsLater() throws Exception {
+
+		final Dataset before = (Dataset) createDataset().setId(UUID.randomUUID());
+		before.setColumns(null); // clear columns
+		final Dataset after = datasetService.createAsset(before, ASSUME_WRITE_PERMISSION);
+
+		Assertions.assertNull(after.getColumns());
+
+		final DatasetColumn column1 = new DatasetColumn()
+				.setName("Title")
+				.setDataType(DatasetColumn.ColumnType.STRING)
+				.setDescription("hello world")
+				.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
+				.setGrounding(createGrounding("test"));
+		final DatasetColumn column2 = new DatasetColumn()
+				.setName("Value")
+				.setDataType(DatasetColumn.ColumnType.FLOAT)
+				.setDescription("3.1415926")
+				.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
+				.setGrounding(createGrounding("another"));
+
+		after.setColumns(new ArrayList<>());
+		after.getColumns().add(column1);
+		after.getColumns().add(column2);
+
+		final Dataset updated =
+				datasetService.updateAsset(after, ASSUME_WRITE_PERMISSION).orElseThrow();
+
+		Assertions.assertEquals(updated.getColumns().size(), 2);
+		for (final DatasetColumn col : updated.getColumns()) {
+			Assertions.assertNotNull(col.getId());
+			Assertions.assertNotNull(col.getCreatedOn());
+			Assertions.assertNotNull(col.getGrounding());
+			Assertions.assertNotNull(col.getGrounding().getId());
+			Assertions.assertNotNull(col.getGrounding().getCreatedOn());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers());
+			Assertions.assertEquals(col.getGrounding().getIdentifiers().size(), 1);
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).curie());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).name());
+			Assertions.assertNotNull(col.getGrounding().getContext());
+			Assertions.assertEquals(col.getGrounding().getContext().size(), 2);
+		}
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCantCreateDuplicates() throws Exception {
 
 		final Dataset dataset = (Dataset) createDataset().setId(UUID.randomUUID());
@@ -205,7 +250,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Dataset dataset = createDataset();
 		dataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
 
-		final Dataset cloned = datasetService.cloneAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
+		final Dataset cloned = dataset.clone();
 
 		Assertions.assertNotEquals(dataset.getId(), cloned.getId());
 		Assertions.assertEquals(
@@ -235,51 +280,6 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 			Assertions.assertEquals(
 					dataset.getColumns().get(i).getGrounding().getContext(),
 					cloned.getColumns().get(i).getGrounding().getContext());
-		}
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanExportAndImportDataset() throws Exception {
-
-		Dataset dataset = createDataset();
-		dataset = datasetService.createAsset(dataset, ASSUME_WRITE_PERMISSION);
-
-		final AssetExport<Dataset> exported = datasetService.exportAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
-
-		final Dataset imported = datasetService.importAsset(exported, ASSUME_WRITE_PERMISSION);
-
-		Assertions.assertNotEquals(dataset.getId(), imported.getId());
-		Assertions.assertEquals(dataset.getName(), imported.getName());
-		Assertions.assertEquals(dataset.getDescription(), imported.getDescription());
-		Assertions.assertEquals(
-				dataset.getGrounding().getIdentifiers(), imported.getGrounding().getIdentifiers());
-		Assertions.assertEquals(
-				dataset.getGrounding().getContext(), imported.getGrounding().getContext());
-		Assertions.assertEquals(
-				dataset.getColumns().size(), imported.getColumns().size());
-		for (int i = 0; i < dataset.getColumns().size(); i++) {
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getName(),
-					imported.getColumns().get(i).getName());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getDescription(),
-					imported.getColumns().get(i).getDescription());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getDataType(),
-					imported.getColumns().get(i).getDataType());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getAnnotations(),
-					imported.getColumns().get(i).getAnnotations());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getMetadata(),
-					imported.getColumns().get(i).getMetadata());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getGrounding().getIdentifiers(),
-					imported.getColumns().get(i).getGrounding().getIdentifiers());
-			Assertions.assertEquals(
-					dataset.getColumns().get(i).getGrounding().getContext(),
-					imported.getColumns().get(i).getGrounding().getContext());
 		}
 	}
 

@@ -59,13 +59,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
+import { ref, onMounted, computed } from 'vue';
 import { AssetType } from '@/types/Types';
 import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { getDataset } from '@/services/dataset';
+import { canPropagateResource } from '@/services/workflow';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import { useProjects } from '@/composables/project';
@@ -78,7 +78,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
 
-const datasets = useProjects().getActiveProjectAssets(AssetType.Dataset);
+const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
 
 /* Hide the CSV preview for now as it is taking too much memory in the hmi-server */
@@ -99,8 +99,8 @@ async function getDatasetById(id: string) {
 
 	if (dataset.value && dataset.value?.id) {
 		// Once a dataset is selected the output is assigned here,
-		// if there is already an output do not reassign
-		if (isEmpty(props.node.outputs)) {
+		const outputs = props.node.outputs;
+		if (canPropagateResource(outputs)) {
 			emit('update-state', {
 				datasetId: dataset.value.id
 			});

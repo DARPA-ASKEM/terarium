@@ -137,4 +137,21 @@ public class ProjectAssetService {
 			final UUID id, final UUID assetId, final Schema.Permission hasReadPermission) {
 		return Optional.ofNullable(projectAssetRepository.findByProjectIdAndAssetId(id, assetId));
 	}
+
+	@Observed(name = "function_profile")
+	public List<ProjectAsset> getProjectAssets(final UUID projectId, final Schema.Permission hasReadPermission) {
+		return projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
+	}
+
+	@Observed(name = "function_profile")
+	public UUID getProjectIdForAsset(final UUID assetId, final Schema.Permission hasReadPermission) {
+		final List<ProjectAsset> assets = projectAssetRepository.findByAssetId(assetId);
+
+		for (final ProjectAsset asset : assets) {
+			if (asset.getProject() != null) {
+				return asset.getProject().getId();
+			}
+		}
+		return null;
+	}
 }

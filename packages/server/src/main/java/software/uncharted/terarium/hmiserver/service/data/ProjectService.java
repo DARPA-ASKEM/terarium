@@ -85,7 +85,7 @@ public class ProjectService {
 		return true;
 	}
 
-	public Schema.Permission checkPermissionCanReadOrNone(String userId, UUID projectId)
+	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
 			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
@@ -93,45 +93,47 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
 				return Schema.Permission.READ;
 			}
-			return Schema.Permission.NONE;
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		return Schema.Permission.NONE;
 	}
 
-	public Schema.Permission checkPermissionCanRead(String userId, UUID projectId) throws ResponseStatusException {
+	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
+			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
 				return Schema.Permission.READ;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
-	public Schema.Permission checkPermissionCanWrite(String userId, UUID projectId) throws ResponseStatusException {
+	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
+			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			if (rebacUser.can(rebacProject, Schema.Permission.WRITE)) {
 				return Schema.Permission.WRITE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
-	public Schema.Permission checkPermissionCanAdministrate(String userId, UUID projectId)
+	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
 			throws ResponseStatusException {
 		try {
 			final RebacUser rebacUser = new RebacUser(userId, reBACService);
@@ -139,11 +141,11 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.ADMINISTRATE)) {
 				return Schema.Permission.ADMINISTRATE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 }

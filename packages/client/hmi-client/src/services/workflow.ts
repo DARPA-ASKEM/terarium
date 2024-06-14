@@ -16,6 +16,7 @@ import type {
 	WorkflowAnnotation
 } from '@/types/workflow';
 import { WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
+import { summarizeNotebook } from './beaker';
 
 /**
  * Captures common actions performed on workflow nodes/edges. The functions here are
@@ -98,17 +99,19 @@ export const addNode = (
 			isOptional: port.isOptional ?? false,
 			acceptMultiple: port.acceptMultiple
 		})),
-		outputs: [],
-		/*
+
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			isOptional: false,
+			acceptMultiple: false,
+			state: {}
 		})),
-	  */
-		status: OperatorStatus.DEFAULT,
+
+		status: OperatorStatus.INVALID,
 
 		width: nodeSize.width,
 		height: nodeSize.height
@@ -145,9 +148,8 @@ export const addEdge = (
 			d.targetPortId === targetPortId
 	);
 	if (existingEdge) return;
-	// Check if type is compatible
-	if (sourceOutputPort.value === null) return;
 
+	// Check if type is compatible
 	const allowedTypes = targetInputPort.type.split('|');
 	if (
 		!allowedTypes.includes(sourceOutputPort.type) ||
@@ -271,6 +273,12 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	if (isOptional) portLabel = portLabel.concat(' (optional)');
 
 	return portLabel;
+}
+
+// Checker for resource-operators (e.g. model, dataset) that automatically create an output
+// without needing to "run" the operator because we can drag them onto the canvas
+export function canPropagateResource(outputs: WorkflowOutput<any>[]) {
+	return _.isEmpty(outputs) || (outputs.length === 1 && !outputs[0].value);
 }
 
 /**
@@ -446,10 +454,42 @@ export function selectOutput(
 	cascadeInvalidateDownstream(operator, nodeCache);
 }
 
+export function getActiveOutput(node: WorkflowNode<any>) {
+	return node.outputs.find((o) => o.id === node.active);
+}
+
+export function getActiveOutputSummary(node: WorkflowNode<any>) {
+	const output = getActiveOutput(node);
+	return output?.summary;
+}
+
 export function updateOutputPort(node: WorkflowNode<any>, updatedOutputPort: WorkflowOutput<any>) {
 	let outputPort = node.outputs.find((port) => port.id === updatedOutputPort.id);
 	if (!outputPort) return;
 	outputPort = Object.assign(outputPort, updatedOutputPort);
+}
+
+// Keep track of the summary generation requests to prevent multiple requests for the same workflow output
+// TODO: Instead of relying on the Ids stored in memory, consider creating a table in the backend to store the summaries to keep track of their status and results.
+const summaryGenerationRequestIds = new Set<string>();
+
+export async function generateSummary(
+	node: WorkflowNode<any>,
+	outputPort: WorkflowOutput<any>,
+	createNotebookFn: ((state: any, value: WorkflowPort['value']) => Promise<any>) | null
+) {
+	if (!node || !createNotebookFn || summaryGenerationRequestIds.has(outputPort.id)) return null;
+	try {
+		summaryGenerationRequestIds.add(outputPort.id);
+		const notebook = await createNotebookFn(outputPort.state, outputPort.value);
+		const result = await summarizeNotebook(notebook);
+		if (!result.summary) throw new Error('AI Generated summary is empty.');
+		return result;
+	} catch {
+		return { title: outputPort.label, summary: 'Generating AI summary has failed.' };
+	} finally {
+		summaryGenerationRequestIds.delete(outputPort.id);
+	}
 }
 
 // Check if the current-state matches that of the output-state.

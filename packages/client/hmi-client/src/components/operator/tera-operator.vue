@@ -15,12 +15,11 @@
 			@open-in-new-window="openInNewWindow"
 			@remove-operator="emit('remove-operator', props.node.id)"
 			@duplicate-branch="emit('duplicate-branch')"
-			@bring-to-front="bringToFront"
 			@show-annotation-editor="if (annotationRef) annotationRef.isEditing = true;"
 		/>
 		<tera-operator-inputs
 			:inputs="node.inputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Input)"
+			@port-mouseover="(event) => mouseoverPort(event, PortType.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -39,7 +38,7 @@
 		</section>
 		<tera-operator-outputs
 			:outputs="node.outputs"
-			@port-mouseover="(event) => mouseoverPort(event, PortDirection.Output)"
+			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
 			@port-selected="
 				(input: WorkflowPort, direction: WorkflowDirection) =>
@@ -79,7 +78,7 @@ const emit = defineEmits([
 	'update-state'
 ]);
 
-enum PortDirection {
+enum PortType {
 	Input,
 	Output
 }
@@ -90,13 +89,6 @@ const annotationRef = ref<typeof TeraOperatorAnnotation | null>(null);
 
 let resizeObserver: ResizeObserver | null = null;
 
-function bringToFront() {
-	// TODO: bring to front
-	// maybe there can be a z-index variable in the parent component
-	// and we can just increment it here, and add a z-index style to the node
-	// console.log('bring to front');
-}
-
 function openInNewWindow() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
@@ -105,12 +97,12 @@ function openInNewWindow() {
 	floatingWindow.open(url);
 }
 
-function mouseoverPort(event: MouseEvent, portType: PortDirection) {
+function mouseoverPort(event: MouseEvent, portType: PortType) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.querySelector('.port') as HTMLElement) ?? el;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
-	const w = portType === PortDirection.Input ? 0 : props.node.width;
+	const w = portType === PortType.Input ? 0 : props.node.width;
 	const portPosition = {
 		x: nodePosition.x + w + portElement.offsetWidth * 0.5,
 		y: nodePosition.y + totalOffsetY

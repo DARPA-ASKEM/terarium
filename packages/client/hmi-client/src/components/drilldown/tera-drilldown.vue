@@ -35,7 +35,18 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
+					<tera-operator-output-summary
+						v-if="outputSummary"
+						:node="node"
+						@generate-output-summary="
+							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
+						"
+						@update-output-port="
+							(output: WorkflowOutput<any>) => emit('update-output-port', output)
+						"
+					/>
 					<tera-operator-annotation
+						v-else
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
@@ -67,8 +78,9 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import { isEmpty } from 'lodash';
@@ -82,9 +94,16 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
+	outputSummary?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
+const emit = defineEmits([
+	'on-close-clicked',
+	'update-state',
+	'update:selection',
+	'generate-output-summary',
+	'update-output-port'
+]);
 const slots = useSlots();
 const menu = ref();
 /**

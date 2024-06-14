@@ -122,7 +122,7 @@
 					<div class="constraint-row">
 						<div class="label-and-input">
 							<label>Target-variable</label>
-							<Dropdown
+							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
 								v-model="knobs.targetVariables"
@@ -221,7 +221,10 @@
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
 							:run-results="simulationRunResults[knobs.forecastRunId]"
-							:chartConfig="{ selectedRun: knobs.forecastRunId, selectedVariable: cfg }"
+							:chartConfig="{
+								selectedRun: knobs.forecastRunId,
+								selectedVariable: cfg
+							}"
 							has-mean-line
 							:size="chartSize"
 							@configuration-change="chartProxy.configurationChange(idx, $event)"
@@ -296,6 +299,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
+import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -309,7 +313,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import {
 	getModelConfigurationById,
 	createModelConfiguration
-} from '@/services/model-configurations';
+} from '@/services/model-configurations-legacy';
 import {
 	makeOptimizeJobCiemss,
 	getRunResultCiemss,
@@ -318,12 +322,12 @@ import {
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
-	ModelConfiguration,
+	ModelConfigurationLegacy,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	OptimizedIntervention
+	PolicyInterventions
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
@@ -332,7 +336,7 @@ import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
-import { isSaveDataSetDisabled } from '@/components/dataset/utils';
+import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -402,7 +406,7 @@ const cancelRunId = computed(
 );
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDataSetDisabled(props.node.state.forecastRunId, !useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
@@ -469,7 +473,7 @@ const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
-const modelConfiguration = ref<ModelConfiguration>();
+const modelConfiguration = ref<ModelConfigurationLegacy>();
 
 const showAdditionalOptions = ref(true);
 
@@ -545,8 +549,8 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.upperBound]);
 	});
 
-	const optimizeInterventions: OptimizedIntervention = {
-		selection: knobs.value.interventionType,
+	const optimizeInterventions: PolicyInterventions = {
+		interventionType: knobs.value.interventionType,
 		paramNames,
 		startTime,
 		paramValues
@@ -560,7 +564,7 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		interventions: optimizeInterventions,
+		policyInterventions: optimizeInterventions,
 		qoi: {
 			contexts: knobs.value.targetVariables,
 			method: knobs.value.qoiMethod
@@ -581,7 +585,6 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-
 	const optResult = await makeOptimizeJobCiemss(optimizePayload);
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

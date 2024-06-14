@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelSemantics;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -92,6 +93,12 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		}
 
 		return clone;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Observable> getObservables() {
+		return this.getSemantics().getOde().getObservables();
 	}
 
 	@JsonIgnore

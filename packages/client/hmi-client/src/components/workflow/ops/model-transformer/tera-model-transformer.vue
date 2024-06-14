@@ -30,7 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { NotebookSession } from '@/types/Types';
 import { cloneDeep } from 'lodash';
 import { getModel } from '@/services/model';
-import { addDefaultConfiguration } from '@/services/model-configurations';
+import { addDefaultConfiguration } from '@/services/model-configurations-legacy';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 
 import { ModelTransformerState } from './model-transformer-operation';
@@ -58,7 +58,6 @@ onMounted(async () => {
 		// create a new notebook session log if it does not exist
 		const response = await createNotebookSession({
 			id: uuidv4(),
-			name: props.node.id,
 			description: '',
 			data: { history: [] }
 		});

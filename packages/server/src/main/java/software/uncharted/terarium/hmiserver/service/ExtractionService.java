@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
@@ -69,6 +70,9 @@ public class ExtractionService {
 	private final TaskService taskService;
 	private final ProvenanceService provenanceService;
 	private final CurrentUserService currentUserService;
+
+	// Used to get the Abstract text from PDF
+	private static final String NODE_CONTENT = "content";
 
 	// time the progress takes to reach each subsequent half
 	final Double HALFTIME_SECONDS = 2.0;
@@ -189,7 +193,7 @@ public class ExtractionService {
 						new ByteArrayEntity(zipFileResp.getBody(), ContentType.APPLICATION_OCTET_STREAM));
 
 				document.getFileNames().add(zipFileName);
-
+				JsonNode abstractJsonNode = null;
 				// Open the zipfile and extract the contents
 				notificationInterface.sendMessage("Extracting COSMOS extraction results...");
 				final Map<String, byte[]> fileMap = new HashMap<>();
@@ -201,7 +205,24 @@ public class ExtractionService {
 					while (entry != null) {
 						log.info("Adding {} to filemap", entry.getName());
 						final String filenameNoExt = removeFileExtension(entry.getName());
-						fileMap.put(filenameNoExt, zipEntryToBytes(zipInputStream));
+						final byte[] bytes = zipEntryToBytes(zipInputStream);
+
+						fileMap.put(filenameNoExt, bytes);
+						if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
+							ObjectMapper objectMapper = new ObjectMapper();
+
+							JsonNode rootNode = objectMapper.readTree(bytes);
+							if (rootNode instanceof ArrayNode) {
+								ArrayNode arrayNode = (ArrayNode) rootNode;
+								for (JsonNode record : arrayNode) {
+									if (record.has("detect_cls")
+											&& record.get("detect_cls").asText().equals("Abstract")) {
+										abstractJsonNode = record;
+										break;
+									}
+								}
+							}
+						}
 						entry = zipInputStream.getNextEntry();
 					}
 
@@ -268,12 +289,17 @@ public class ExtractionService {
 
 				String responseText = "";
 				for (final JsonNode record : textResp.getBody()) {
-					if (record.has("content")) {
-						responseText += record.get("content").asText() + "\n";
+					if (record.has(NODE_CONTENT)) {
+						responseText += record.get(NODE_CONTENT).asText() + "\n";
 						document.setText(responseText);
 					} else {
 						log.warn("No content found in record: {}", record);
 					}
+				}
+
+				if (abstractJsonNode != null) {
+					document.setDocumentAbstract(
+							abstractJsonNode.get(NODE_CONTENT).asText());
 				}
 
 				// update the document
@@ -399,7 +425,7 @@ public class ExtractionService {
 			}
 
 			notificationInterface.sendMessage("Organizing and saving the extractions.");
-			final List<JsonNode> attributes = new ArrayList<>();
+			final ArrayNode attributes = objectMapper.createArrayNode();
 			for (final JsonNode attribute : collection.get("attributes")) {
 				attributes.add(attribute);
 			}

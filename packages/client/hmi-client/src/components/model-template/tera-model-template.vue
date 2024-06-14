@@ -112,6 +112,7 @@ function updateName() {
 
 .card {
 	display: flex;
+	cursor: pointer;
 	background-color: var(--surface-section);
 	border-radius: var(--border-radius-medium);
 	outline: 1px solid var(--surface-border-alt);

@@ -5,8 +5,6 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="setMouseOverCanvas(false)"
-		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -41,24 +39,6 @@
 				</div>
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
-					<Button
-						label="Show everything"
-						severity="secondary"
-						outlined
-						@click="resetZoom"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					<Button
-						label="Clean up layout"
-						severity="secondary"
-						outlined
-						@click="cleanUpLayout"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
 					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
@@ -205,6 +185,7 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -312,7 +293,6 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
-let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 let startTime: number = 0;
@@ -340,10 +320,6 @@ const optionsMenuItems = ref([
 		}
 	}
 ]);
-
-const setMouseOverCanvas = (val: boolean) => {
-	isMouseOverCanvas = val;
-};
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
@@ -378,7 +354,13 @@ function appendInputPort(
  * */
 function appendOutput(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
+	port: {
+		type: string;
+		label?: string;
+		value: any;
+		state?: any;
+		isSelected?: boolean;
+	}
 ) {
 	if (!node) return;
 
@@ -398,14 +380,39 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
+	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
-	selectOutput(node, uuid);
+	// Filter out temporary outputs where value is null
+	node.outputs = node.outputs.filter((d) => d.value);
 
+	selectOutput(node, uuid);
 	workflowDirty = true;
+}
+
+function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
+	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
+	if (!registry.getOperation(node.operationType)?.createNotebook) return;
+	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
+}
+
+async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
+	if (!node) return;
+	const result = await workflowService.generateSummary(
+		node,
+		outputPort,
+		registry.getOperation(node.operationType)?.createNotebook ?? null
+	);
+	if (!result) return;
+	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
+	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
+	if (!updateNode || !updateOutput) return;
+	updateOutput.summary = result.summary;
+	updateOutput.label = result.title;
+	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -749,12 +756,37 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
+
+	// Build a traversal map before we do actual removal
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
+		wf.value.nodes.map((node) => [node.id, node])
+	);
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	wf.value.edges.forEach((edge) => {
+		if (!edge.source || !edge.target) return;
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+	});
+	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
+
+	// Remove edge
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id);
 		});
 		workflowDirty = true;
-	} else logger.error(`Edges with port id:${portId} not found.`);
+	} else {
+		logger.error(`Edges with port id:${portId} not found.`);
+		return;
+	}
+
+	// cascade invalid status to downstream operators
+	if (startingNodeId !== '') {
+		workflowService.cascadeInvalidateDownstream(
+			nodeMap.get(startingNodeId) as WorkflowNode<any>,
+			nodeCache
+		);
+	}
 }
 
 function onCanvasClick() {
@@ -889,7 +921,6 @@ const updateAnnotationPosition = (annotation: WorkflowAnnotation, { x, y }) => {
 };
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas) return;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -982,16 +1013,6 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
 });
-
-function cleanUpLayout() {
-	// TODO: clean up layout of nodes
-	console.log('clean up layout');
-}
-
-function resetZoom() {
-	// TODO: reset zoom level and position
-	console.log('clean up layout');
-}
 </script>
 
 <style scoped>

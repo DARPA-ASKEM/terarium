@@ -11,6 +11,7 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -85,5 +86,22 @@ public class Project extends TerariumAsset {
 			existingProject.setOverviewContent(project.getOverviewContent());
 		}
 		return existingProject;
+	}
+
+	public Project clone() {
+		final Project cloned = new Project();
+		cloneSuperFields(cloned);
+		cloned.userId = userId;
+		cloned.userName = userName;
+		if (authors != null) {
+			cloned.authors = new ArrayList<>(authors);
+		}
+		cloned.overviewContent = overviewContent;
+		if (metadata != null) {
+			cloned.metadata = new HashMap<>(metadata);
+		}
+		cloned.publicProject = publicProject;
+		cloned.userPermission = userPermission;
+		return cloned;
 	}
 }

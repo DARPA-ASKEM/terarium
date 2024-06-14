@@ -20,6 +20,7 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -52,6 +53,7 @@ public class DataMigrationESToPG {
 	private final ArtifactService artifactService;
 	private final DocumentAssetService documentService;
 	private final ModelService modelService;
+	private final NotebookSessionService notebookSessionService;
 
 	@PersistenceContext
 	private EntityManager entityManager;
@@ -72,14 +74,14 @@ public class DataMigrationESToPG {
 			this.index = index;
 		}
 
-		void migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
+		Pair<Integer, Integer> migrateFromEsToPg(final ElasticsearchService elasticService) throws IOException {
 			// check if there is a target index to migrate from
 			if (!elasticService.indexExists(index)) {
-				return;
+				return Pair.of(0, 0);
 			}
 
 			if (elasticService.count(index) == 0) {
-				return;
+				return Pair.of(0, 0);
 			}
 
 			// check if the data has already been migrated
@@ -90,6 +92,9 @@ public class DataMigrationESToPG {
 			log.info("Migrating from ES index {} to SQL...", index);
 
 			final String SORT_FIELD = "createdOn";
+
+			Integer totalSuccess = 0;
+			Integer totalFailed = 0;
 
 			while (true) {
 				final SearchRequest.Builder reqBuilder = new SearchRequest.Builder()
@@ -120,28 +125,32 @@ public class DataMigrationESToPG {
 						continue;
 					}
 					if (asset.getId() == null || !asset.getId().toString().equals(hit.id())) {
-						asset.setId(UUID.fromString(hit.id()));
+						try {
+							asset.setId(UUID.fromString(hit.id()));
+						} catch (final Exception e) {
+							log.warn("Unable to parse id into UUID: {}, discarding doc", hit.id());
+							totalFailed++;
+							continue;
+						}
 					}
 					assets.add(asset);
 				}
 
 				if (!assets.isEmpty()) {
 					log.info("Saving {} rows to SQL...", assets.size());
-					long failed = 0;
 					for (final T asset : assets) {
 						try {
 							service.getRepository().save(asset);
+							totalSuccess++;
 						} catch (final Exception e) {
 							log.warn("Failed to insert id: {}", asset.getId(), e);
-							failed += 1;
+							totalFailed++;
 						}
-					}
-					if (failed == assets.size()) {
-						throw new RuntimeException("All assets faield to insert");
 					}
 				}
 
-				if (Objects.equals(lastId, lastPagesLastId) || assets.size() < PAGE_SIZE) {
+				if (Objects.equals(lastId, lastPagesLastId)
+						|| resp.hits().hits().size() < PAGE_SIZE) {
 					break;
 				}
 
@@ -149,6 +158,8 @@ public class DataMigrationESToPG {
 				// over and over
 				lastPagesLastId = lastId;
 			}
+
+			return Pair.of(totalSuccess, totalFailed);
 		}
 	}
 
@@ -160,8 +171,8 @@ public class DataMigrationESToPG {
 				new MigrationConfig<>(datasetService, elasticConfig.getDatasetIndex()),
 				new MigrationConfig<>(artifactService, elasticConfig.getArtifactIndex()),
 				new MigrationConfig<>(documentService, elasticConfig.getDocumentIndex()),
-				new MigrationConfig<>(modelService, elasticConfig.getModelIndex()));
-		// TODO: Write a script to properly sync the old ProjectAsset to the new PG data
+				new MigrationConfig<>(modelService, elasticConfig.getModelIndex()),
+				new MigrationConfig<>(notebookSessionService, elasticConfig.getNotebookSessionIndex()));
 	}
 
 	@PostConstruct
@@ -179,12 +190,15 @@ public class DataMigrationESToPG {
 					continue;
 				}
 
-				migration.migrateFromEsToPg(elasticService);
+				final Pair<Integer, Integer> res = migration.migrateFromEsToPg(elasticService);
 
 				migrationRecord = new DataMigration();
 				migrationRecord.setTableName(tableName);
 				migrationRecord.setTimestamp(new Timestamp(System.currentTimeMillis()));
 				migrationRecord.setState(MigrationState.SUCCESS);
+				migrationRecord.setTotalDocuments(res.getLeft() + res.getRight());
+				migrationRecord.setSuccessfulDocuments(res.getLeft());
+				migrationRecord.setFailedDocuments(res.getRight());
 				migrationRepository.save(migrationRecord);
 
 				log.info("Migrated ES index {} to PG table {} successfully", migration.getIndex(), tableName);

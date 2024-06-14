@@ -6,6 +6,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import type { Initial, Model, ModelParameter } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -138,6 +139,7 @@ export const getModelRenderer = (
 			el: graphElement,
 			useAStarRouting: false,
 			useStableZoomPan: true,
+			zoomModifier: 'ctrlKey',
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
@@ -149,6 +151,7 @@ export const getModelRenderer = (
 		el: graphElement,
 		useAStarRouting: false,
 		useStableZoomPan: true,
+		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});
@@ -189,14 +192,73 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 	}
 }
 
+export function setParameters(model: Model, parameters: ModelParameter[]) {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			model.model.parameters = parameters;
+			break;
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			if (model.semantics) model.semantics.ode.parameters = parameters;
+			break;
+	}
+}
+
+export function updateParameter(model: Model, parameterId: string, key: string, value: any) {
+	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+		// TODO: Add support for editing concept/grounding
+		if (key === 'units') {
+			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
+			obj.units.expression = value;
+			obj.units.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			obj[key] = value;
+		}
+	}
+
+	const parameters = getParameters(model);
+	const parameter = parameters.find((p: ModelParameter) => p.id === parameterId);
+	if (!parameter) return;
+	updateProperty(parameter);
+
+	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
+	const auxiliaries = model.model?.auxiliaries ?? [];
+	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
+	if (!auxiliary) return;
+	updateProperty(auxiliary);
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
+ * @param {string} target - The target of the initial.
  * @returns {any} - The metadata for the specified initial or undefined if not found.
  */
-export function getInitialMetadata(model: Model, parameterId: string) {
-	return model.metadata?.initials?.[parameterId];
+export function getInitialMetadata(model: Model, target: string) {
+	return model.metadata?.initials?.[target];
+}
+
+export function getInitialName(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.name ?? '';
+}
+
+export function getInitialDescription(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.description ?? '';
+}
+
+export function getInitialUnits(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.units?.expression ?? '';
+}
+
+export function getInitialConcept(model: Model, target: string): string {
+	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
+	if (!identifiers) return '';
+	return getNameOfCurieCached(
+		new Map<string, string>(),
+		getCurieFromGroundingIdentifier(identifiers)
+	);
 }
 
 /**
@@ -229,18 +291,18 @@ export function getInitials(model: Model): Initial[] {
 /**
  * Returns the model initial with the specified ID.
  * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
+ * @param {string} target - The target of the initial.
  * @returns {Initial | null} - The model initial or null if not found.
  */
-export function getInitial(model: Model, initialId: string): Initial | undefined {
+export function getInitial(model: Model, target: string): Initial | undefined {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
-			return model.model?.vertices.find((i) => i.id === initialId);
+			return model.model?.vertices.find((i) => i.id === target);
 		case AMRSchemaNames.PETRINET:
 		case AMRSchemaNames.STOCKFLOW:
 		default:
-			return model.semantics?.ode?.initials?.find((i) => i.target === initialId);
+			return model.semantics?.ode?.initials?.find((i) => i.target === target);
 	}
 }
 
@@ -248,13 +310,13 @@ export function getInitial(model: Model, initialId: string): Initial | undefined
  * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
  * @param {string} parameterId - The ID of the parameter.
- * @param {string} metadataKey - The key of the metadata to update.
+ * @param {string} key - The key of the metadata to update.
  * @param {any} value - The new value for the metadata.
  */
 export function updateParameterMetadata(
 	model: Model,
 	parameterId: string,
-	metadataKey: string,
+	key: string,
 	value: any
 ) {
 	if (!model.metadata?.parameters?.[parameterId]) {
@@ -262,41 +324,31 @@ export function updateParameterMetadata(
 		model.metadata.parameters ??= {};
 		model.metadata.parameters[parameterId] ??= {};
 	}
-	model.metadata.parameters[parameterId][metadataKey] = value;
+	model.metadata.parameters[parameterId][key] = value;
 }
 
 /**
  * Updates the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
- * @param {string} metadataKey - The key of the metadata to update.
+ * @param {string} target - The target of the initial.
+ * @param {string} key - The key of the metadata to update.
  * @param {any} value - The new value for the metadata.
  */
-export function updateInitialMetadata(
-	model: Model,
-	initialId: string,
-	metadataKey: string,
-	value: any
-) {
-	if (!model.metadata?.initials?.[initialId]) {
+export function updateInitialMetadata(model: Model, target: string, key: string, value: any) {
+	if (!model.metadata?.initials?.[target]) {
 		model.metadata ??= {};
 		model.metadata.initials ??= {};
-		model.metadata.initials[initialId] ??= {};
+		model.metadata.initials[target] ??= {};
 	}
-	model.metadata.initials[initialId][metadataKey] = value;
-}
+	const initialMetadata = model.metadata.initials[target];
 
-export function setParameters(model: Model, parameters: ModelParameter[]) {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			model.model.parameters = parameters;
-			break;
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			if (model.semantics) model.semantics.ode.parameters = parameters;
-			break;
+	// TODO: Add support for editing concept metadata
+	if (key === 'units') {
+		if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
+		initialMetadata.units.expression = value;
+		initialMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		initialMetadata[key] = value;
 	}
 }
 
@@ -314,4 +366,18 @@ export function cleanModel(model: Model): void {
 			delete p.distribution;
 		}
 	});
+}
+
+export function isModelMissingMetadata(model: Model): boolean {
+	const parameters: ModelParameter[] = getParameters(model);
+	const initials: Initial[] = getInitials(model);
+
+	const initialsCheck = initials.some((i) => {
+		const initialMetadata = getInitialMetadata(model, i.target);
+		return !initialMetadata?.name || !initialMetadata?.description || !initialMetadata?.units;
+	});
+
+	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
+
+	return initialsCheck || parametersCheck;
 }

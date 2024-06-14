@@ -64,9 +64,7 @@ export async function init(): Promise<void> {
 	eventSource.onopen = async (response: any) => {
 		if (response.status === 401) {
 			// redirect to the login page
-			authStore.keycloak?.login({
-				redirectUri: window.location.href
-			});
+			authStore.login(window.location.href);
 		} else if (response.status >= 500) {
 			throw new RetriableError('Internal server error');
 		} else {

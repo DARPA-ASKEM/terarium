@@ -2,9 +2,13 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
+		:output-summary="true"
 		@update:selection="onSelection"
-		@on-close-clicked="emit('close')"
+		@on-close-clicked="onDrilldownClose"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update-output-port="(output: any) => emit('update-output-port', output)"
+		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
+		v-bind="$attrs"
 	>
 		<div :tabName="ModelEditTabs.Wizard">
 			<tera-model-template-editor
@@ -13,6 +17,8 @@
 				:kernel-manager="kernelManager"
 				@output-code="(data: any) => appendCode(data, 'executed_code')"
 				@sync-with-mira-model="syncWithMiraModel"
+				@save-new-model-output="createOutput"
+				@reset="resetModel"
 			/>
 		</div>
 		<div :tabName="ModelEditTabs.Notebook">
@@ -25,7 +31,7 @@
 							:context-language="contextLanguage"
 							@llm-output="(data: any) => appendCode(data, 'code')"
 							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="llmThoughts = []"
+							@question-asked="updateLlmQuery"
 						>
 							<template #toolbar-right-side>
 								<Button
@@ -76,7 +82,8 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
-		:model="amr"
+		:asset="amr"
+		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -91,7 +98,8 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import { v4 as uuidv4 } from 'uuid';
 import type { Model } from '@/types/Types';
-import { getModel, createModel, updateModel } from '@/services/model';
+import { AssetType } from '@/types/Types';
+import { getModel, createModel } from '@/services/model';
 import { WorkflowNode, WorkflowOutput, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
@@ -104,7 +112,7 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations-legacy';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { ModelEditOperationState } from './model-edit-operation';
@@ -117,6 +125,7 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'select-output',
+	'generate-output-summary',
 	'update-output-port'
 ]);
 
@@ -136,14 +145,20 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const isReadyToCreateDefaultOutput = computed(
+	() =>
+		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
+);
+
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
 const kernelManager = new KernelSessionManager();
 const amr = ref<Model | null>(null);
 let activeModelId: string | null = null;
-const readyToSaveOutputModel = ref(false);
 const showSaveModelModal = ref(false);
+let isDraft = false;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
@@ -164,6 +179,7 @@ const contextLanguage = ref<string>('python3');
 const defaultCodeText =
 	'# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 
 const executeResponse = ref({
@@ -182,6 +198,11 @@ const menuItems = computed(() => [
 		}
 	}
 ]);
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
 
 const appendCode = (data: any, property: string) => {
 	const newCode = data.content[property] as string;
@@ -203,14 +224,8 @@ const syncWithMiraModel = (data: any) => {
 		return;
 	}
 	updatedModel.id = activeModelId;
-	const firstOutputId = outputs.value?.[0].items[0].id;
-	// If the first output is edited, create a new output
-	if (firstOutputId === selectedOutputId.value) {
-		createOutput(updatedModel);
-	} else {
-		amr.value = updatedModel;
-		readyToSaveOutputModel.value = true;
-	}
+	amr.value = updatedModel;
+	isDraft = true;
 };
 
 // Reset model, then execute the code
@@ -269,6 +284,7 @@ const resetModel = () => {
 		.sendMessage('reset_request', {})
 		.register('reset_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
+	isDraft = false;
 };
 
 const handleResetResponse = (data: any) => {
@@ -289,41 +305,33 @@ const initializeAceEditor = (editorInstance: any) => {
 };
 
 function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = true) {
-	const state = saveCodeToState(props.node, code, hasCodeRun);
+	const state = saveCodeToState(props.node, code, hasCodeRun, llmQuery.value, llmThoughts.value);
 	emit('update-state', state);
 }
 
-// FIXME: Output port should not be updated as outputs are read only, this is a temporary fix so that code and model are in sync
-// FIXME: We should create the output once a Save button is clicked, any edits made on an output would be saved as a draft
-// Saves the output model in the backend
-// Not called after every little model edit to avoid too many requests
-// Called when the selected output is changed, component unmounts or before the window is closed
-function updateOutputModel() {
-	if (readyToSaveOutputModel.value && amr.value) {
-		// Save notebook code to output state
-		if (activeOutput.value) {
-			const updatedOutputPort = cloneDeep(activeOutput.value);
-			updatedOutputPort.state = cloneDeep(props.node.state);
-			emit('update-output-port', updatedOutputPort);
-		}
-		// Save model in backend
-		updateModel(amr.value);
-		readyToSaveOutputModel.value = false;
+function onDrilldownClose() {
+	if (isDraft) {
+		// TODO: Prompt user to save draft
 	}
+	emit('close');
 }
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
-	const modelData = isEmpty(outputs.value) ? modelToSave : await createModel(modelToSave);
+	const modelData = isReadyToCreateDefaultOutput.value
+		? modelToSave
+		: await createModel(modelToSave);
 	if (!modelData) return;
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: isEmpty(outputs.value) ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
+		label: isReadyToCreateDefaultOutput.value ? modelData.name : `Output ${Date.now()}`, // Just label the original model with its name
 		type: 'modelId',
 		state: cloneDeep(props.node.state),
 		value: [modelData.id]
 	});
+
+	isDraft = false;
 };
 
 const buildJupyterContext = () => {
@@ -365,7 +373,6 @@ const handleOutputChange = async () => {
 };
 
 const onSelection = (id: string) => {
-	updateOutputModel(); // Save the model before switching to the new one
 	emit('select-output', id);
 };
 
@@ -385,7 +392,7 @@ watch(
 
 onMounted(async () => {
 	// By default the first output option is the original model
-	if (isEmpty(outputs.value)) {
+	if (isReadyToCreateDefaultOutput.value) {
 		const input = props.node.inputs[0];
 		if (!input) return;
 
@@ -405,11 +412,9 @@ onMounted(async () => {
 		// Set default output which is the input (original model)
 		createOutput(originalModel);
 	}
-	window.addEventListener('beforeunload', updateOutputModel);
 });
 
 onUnmounted(() => {
-	updateOutputModel();
 	kernelManager.shutdown();
 });
 </script>

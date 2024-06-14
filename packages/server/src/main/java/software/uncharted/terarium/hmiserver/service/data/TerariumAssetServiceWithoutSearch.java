@@ -31,7 +31,6 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
@@ -196,116 +195,6 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		return Optional.of(updated);
 	}
 
-	/** Clone asset and return it, does not persist it. */
-	@Override
-	@Observed(name = "function_profile")
-	@SuppressWarnings("unchecked")
-	public T cloneAsset(final UUID id, final Schema.Permission hasReadPermission)
-			throws IOException, IllegalArgumentException {
-		final Optional<T> targetAsset = getAsset(id, hasReadPermission);
-		if (targetAsset.isEmpty()) {
-			throw new IllegalArgumentException("Cannot clone non-existent asset: " + id.toString());
-		}
-		return (T) targetAsset.get().clone();
-	}
-
-	/** Clone asset, write it to the db under a new id, and return it. */
-	@Override
-	@Observed(name = "function_profile")
-	public T cloneAndPersistAsset(final UUID id, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-		final T clonedAsset = cloneAsset(id, hasWritePermission);
-
-		final String bucket = config.getFileStorageS3BucketName();
-
-		final List<String> validFileNames = new ArrayList<>();
-		for (final String fileName : clonedAsset.getFileNames()) {
-			final String srcKey = getPath(id, fileName);
-			final String dstKey = getPath(clonedAsset.getId(), fileName);
-			try {
-				s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
-				validFileNames.add(fileName);
-			} catch (final NoSuchKeyException e) {
-				log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-				continue;
-			}
-		}
-
-		clonedAsset.setFileNames(validFileNames);
-		return createAsset(clonedAsset, hasWritePermission);
-	}
-
-	/** Returns the asset as an AssetExport payload */
-	@Observed(name = "function_profile")
-	public AssetExport<T> exportAsset(final UUID id, final Schema.Permission hasReadPermission) {
-		try {
-
-			final T cloned = cloneAsset(id, hasReadPermission);
-
-			final AssetExport<T> export = new AssetExport<>();
-			export.setAsset(cloned);
-
-			final String bucket = config.getFileStorageS3BucketName();
-
-			final Map<String, FileExport> files = new HashMap<>();
-			final List<String> validFileNames = new ArrayList<>();
-			for (final String fileName : cloned.getFileNames()) {
-				final String key = getPath(id, fileName);
-
-				try {
-
-					final ResponseInputStream<GetObjectResponse> stream =
-							s3ClientService.getS3Service().getObject(bucket, key);
-					final byte[] bytes = stream.readAllBytes();
-
-					final String contentType = stream.response().contentType();
-
-					final FileExport fileExport = new FileExport();
-					fileExport.setBytes(bytes);
-					fileExport.setContentType(ContentType.parse(contentType));
-
-					files.put(fileName, fileExport);
-					validFileNames.add(fileName);
-				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
-					continue;
-				}
-			}
-			cloned.setFileNames(validFileNames); // override only valid files
-			export.setFiles(files);
-
-			return export;
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to export asset", e);
-		}
-	}
-
-	/** Imports the asset from a AssetExport payload. */
-	@Observed(name = "function_profile")
-	public T importAsset(final AssetExport<T> payload, final Schema.Permission hasWritePermission) {
-		try {
-			if (payload.getAsset() == null) {
-				throw new RuntimeException("AssetExport is empty");
-			}
-			T asset = payload.getAsset();
-			if (assetExists(asset.getId())) {
-				throw new RuntimeException("Asset already exists for id:" + asset.getId());
-			}
-
-			asset = createAsset(asset, hasWritePermission);
-
-			for (final Map.Entry<String, FileExport> entry : payload.getFiles().entrySet()) {
-				final String fileName = entry.getKey();
-				final FileExport fileExport = entry.getValue();
-				uploadFile(asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
-			}
-
-			return asset;
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to export asset", e);
-		}
-	}
-
 	/**
 	 * Get the path to the asset in S3
 	 *
@@ -418,6 +307,59 @@ public abstract class TerariumAssetServiceWithoutSearch<
 				filename,
 				ContentType.parse(fileEntity.getContentType().getValue()),
 				EntityUtils.toByteArray(fileEntity));
+	}
+
+	@Observed(name = "function_profile")
+	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
+			throws IOException {
+		final String bucket = config.getFileStorageS3BucketName();
+		final List<String> validFileNames = new ArrayList<>();
+		if (oldAsset.getFileNames() != null) {
+			for (final String fileName : oldAsset.getFileNames()) {
+				final String srcKey = getPath(oldAsset.getId(), fileName);
+				final String dstKey = getPath(newAsset.getId(), fileName);
+				try {
+					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
+					validFileNames.add(fileName);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
+			}
+		}
+		newAsset.setFileNames(validFileNames);
+	}
+
+	@Observed(name = "function_profile")
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission)
+			throws IOException {
+		final T asset = getAsset(assetId, Schema.Permission.WRITE).orElseThrow();
+		final String bucket = config.getFileStorageS3BucketName();
+
+		final Map<String, FileExport> files = new HashMap<>();
+		if (asset.getFileNames() != null) {
+			for (final String fileName : asset.getFileNames()) {
+				final String key = getPath(assetId, fileName);
+
+				try {
+					final ResponseInputStream<GetObjectResponse> stream =
+							s3ClientService.getS3Service().getObject(bucket, key);
+					final byte[] bytes = stream.readAllBytes();
+
+					final String contentType = stream.response().contentType();
+
+					final FileExport fileExport = new FileExport();
+					fileExport.setBytes(bytes);
+					fileExport.setContentType(ContentType.parse(contentType));
+
+					files.put(fileName, fileExport);
+				} catch (final NoSuchKeyException e) {
+					log.error("Failed to export fileName {}, no object found, excluding from exported asset", e);
+					continue;
+				}
+			}
+		}
+		return files;
 	}
 
 	private String getPath(final UUID id, final String filename) {
