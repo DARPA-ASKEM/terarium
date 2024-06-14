@@ -2,7 +2,7 @@
 services:
     taskrunner-dev-builder:
         build:
-            context: ../../
+            context: ../..
             dockerfile: ./packages/taskrunner/Dockerfile
             target: taskrunner_dev_builder
         container_name: taskrunner-dev-builder
@@ -11,7 +11,7 @@ services:
 
     gollm-taskrunner:
         build:
-            context: ../../
+            context: ../..
             dockerfile: ./packages/gollm/Dockerfile
             target: gollm_taskrunner_builder
         container_name: gollm-taskrunner
