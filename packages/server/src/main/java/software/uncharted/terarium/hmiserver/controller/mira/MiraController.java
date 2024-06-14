@@ -1,19 +1,9 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +15,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
@@ -155,7 +156,7 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
@@ -233,25 +234,6 @@ public class MiraController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
-	}
-
-	@GetMapping("/{task-id}")
-	@Operation(summary = "Subscribe for updates on a Mira task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Subscribed successfully",
-						content =
-								@Content(
-										mediaType = "text/event-stream",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-			})
-	@IgnoreRequestLogging
-	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
-		return taskService.subscribe(taskId);
 	}
 
 	@GetMapping("/currie/{curies}")

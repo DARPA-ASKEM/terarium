@@ -31,6 +31,7 @@ public class TaskRequest implements Serializable {
 				.setProjectId(projectId)
 				.setAdditionalProperties(additionalProperties)
 				.setStdout(stdout)
-				.setStderr(stderr);
+				.setStderr(stderr)
+				.setRequestSHA256(stderr);
 	}
 }
