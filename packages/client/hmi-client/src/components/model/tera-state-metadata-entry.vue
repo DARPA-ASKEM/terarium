@@ -4,16 +4,22 @@
 		<tera-input
 			label="Name"
 			:model-value="name ?? ''"
-			@update:model-value="$emit('update-parameter', { key: 'name', value: $event })"
+			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
+		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			label="Description"
-			:model-value="description ?? ''"
-			@update:model-value="$emit('update-parameter', { key: 'description', value: $event })"
+			:model-value="''"
+			@update:model-value="
+				$emit('update-state', {
+					key: 'description',
+					value: $event
+				})
+			"
+			disabled
 		/>
 		<template v-if="!isStratified">
 			<Button
-				class="toggle"
 				v-if="isBase"
 				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
 				text
@@ -22,43 +28,30 @@
 			/>
 			<tera-input
 				label="Unit"
-				:model-value="units?.expression ?? ''"
-				@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
+				:model-value="initial?.expression ?? ''"
+				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
 			/>
 			<!--TODO: Add support for editing concepts-->
-			<tera-input
-				label="Concept"
-				disabled
-				:model-value="
-					grounding?.identifiers
-						? getNameOfCurieCached(
-								new Map<string, string>(),
-								getCurieFromGroundingIdentifier(grounding.identifiers)
-							)
-						: ''
-				"
-			/>
-			<Button v-if="isBase" size="small" label="Open matrix" text @click="$emit('open-matrix')" />
+			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
 		</template>
 	</section>
 </template>
 
 <script setup lang="ts">
-import type { ModelParameter } from '@/types/Types';
+import { PetriNetState, RegNetVertex } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import Button from 'primevue/button';
 
 const props = defineProps<{
-	parameter: ModelParameter;
+	state: PetriNetState | RegNetVertex;
 	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-parameter', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
 
-const { id, name, description, grounding, units } = props.parameter;
+const { id, name, grounding, initial } = props.state; // description property should be added to the state type
 </script>
 
 <style scoped>
@@ -75,8 +68,7 @@ section {
 section.has-toggle {
 	grid-template-areas:
 		'symbol name description description'
-		'toggle	unit concept open-matrix';
-	grid-template-columns: max-content 30% auto 8rem;
+		'toggle	unit concept .';
 }
 
 section.no-second-row {
@@ -88,13 +80,8 @@ h6 {
 	justify-self: center;
 }
 
-.toggle {
+button {
 	grid-area: toggle;
-	margin-left: auto;
-}
-
-[label='Open Matrix'] {
-	grid-area: open-matrix;
 }
 
 :deep([label='Name']) {

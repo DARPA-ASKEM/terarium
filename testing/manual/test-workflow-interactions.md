@@ -21,7 +21,7 @@ Estimated time to completion: [X] minutes
 4. __Expected Result__: The Stratify model operator node should appear on the workflow canvas
 
 `[Task 2: Adding a resource to the workflow via drag and drop from resource panel']`
-1. Add a model to the project with Explorer.
+1. Add a model (e.g. [Configured SIR.json](https://github.com/DARPA-ASKEM/terarium/blob/main/testing/data/Configured%20SIR.json)) to the project with Explorer.
 2. Open the workflow created in Task 1.
 3. In the Resources panel - left side of the screen - click "Model (1)" to expand it so that the model you added from Explorer is now visible
 3. Click and drag that model and drag it out onto the workflow canvas.
