@@ -363,9 +363,29 @@ const buildJupyterContext = async () => {
 };
 
 const runCode = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	// TODO: Utilize the output of this request.
 	kernelManager
-		.sendMessage('execute_request', { code: editor?.getValue() })
-		.register('any_execute_reply', () => {
+		.sendMessage('execute_request', { messageContent })
+		.register('execute_input', (data) => {
+			console.log(data.content.code);
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('any_execute_reply', (data) => {
+			console.log(data);
 			// FIXME: save isnt working...but the idea is to save the simulation results to the HMI with this action
 			kernelManager
 				.sendMessage('save_results_to_hmi_request', { project_id: useProjects().activeProjectId })
