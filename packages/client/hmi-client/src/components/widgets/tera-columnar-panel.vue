@@ -14,4 +14,8 @@ main {
 	gap: var(--gap-small);
 	flex-grow: 1;
 }
+
+main > :deep(*) {
+	overflow: hidden;
+}
 </style>
