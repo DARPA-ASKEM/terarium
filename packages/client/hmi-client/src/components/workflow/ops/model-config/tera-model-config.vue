@@ -696,6 +696,7 @@ const initialize = async () => {
 
 	model.value = await getModel(modelId);
 	if (suggestedConfigurationContext.value.tableData.length === 0 && model.value) {
+		// TEMPORARY FIX: If there are no configurations, create a default one.  The plan is to add a default configuration when a model is uploaded
 		addDefaultConfiguration(model.value).then(() => {
 			fetchConfigurations(modelId);
 		});
