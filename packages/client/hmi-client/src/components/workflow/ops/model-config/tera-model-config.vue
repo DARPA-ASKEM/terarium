@@ -127,7 +127,7 @@
 						<template #header>
 							Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 						</template>
-						<tera-initial-table-v2
+						<tera-initial-table
 							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
 							:model="model"
 							:model-configuration="knobs.transientModelConfig"
@@ -140,7 +140,7 @@
 						/>
 					</AccordionTab>
 				</Accordion>
-				<tera-parameter-table-v2
+				<tera-parameter-table
 					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
 					:model="model"
 					:model-configuration="knobs.transientModelConfig"
@@ -291,8 +291,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { FatalError } from '@/api/api';
-import TeraInitialTableV2 from '@/components/model/petrinet/tera-initial-table-v2.vue';
-import TeraParameterTableV2 from '@/components/model/petrinet/tera-parameter-table-v2.vue';
+import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
+import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
 	emptyMiraModel,
 	generateModelDatasetConfigurationContext
