@@ -8,4 +8,5 @@ pip install -e .
 # run it
 echo "Running taskrunner"
 cd /taskrunner
+pip install -e .
 ./gradlew --project-cache-dir /tmp/.gradle/$$ bootRun
