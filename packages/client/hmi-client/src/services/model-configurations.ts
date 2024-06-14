@@ -1,6 +1,7 @@
 import API from '@/api/api';
 import type {
 	InitialSemantic,
+	Intervention,
 	ModelConfiguration,
 	ModelDistribution,
 	ObservableSemantic,
@@ -177,6 +178,15 @@ export function getObservables(config: ModelConfiguration): ObservableSemantic[]
 	return config.observableSemanticList ?? [];
 }
 
+export function setInterventions(config: ModelConfiguration, interventions: Intervention[]): void {
+	const parameters = getParameters(config);
+
+	parameters.forEach((parameter) => {
+		parameter.interventions = interventions.filter(
+			(intervention) => intervention.name === parameter.referenceId
+		);
+	});
+}
 // export function getInterventions(config: ModelConfiguration): Intervention[] {
 // 	const interventions: Intervention[] = [];
 // 	config.parameterSemanticList.forEach(p => {
