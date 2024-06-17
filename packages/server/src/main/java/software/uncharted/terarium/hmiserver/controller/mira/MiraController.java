@@ -129,7 +129,8 @@ public class MiraController {
 		try {
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.BAD_REQUEST, messages.get("generic.io-error.write"));
 		}
 
 		req.setScript(AMRToMMTResponseHandler.NAME);
@@ -189,81 +190,58 @@ public class MiraController {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
-		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
-		if (artifact.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Artifact not found");
-		}
-
-		if (artifact.get().getFileNames().isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Artifact has no files");
-		}
-
-		final String filename = artifact.get().getFileNames().get(0);
-
-		final Optional<String> fileContents;
 		try {
-			fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
-		} catch (final IOException e) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
 
-		if (fileContents.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to fetch file contents");
-		}
+			final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
+			if (artifact.isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST, "Artifact not found");
+			}
 
-		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
-		additionalProperties.setFileName(filename);
+			if (artifact.get().getFileNames().isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST, "Artifact has no files");
+			}
 
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.MIRA);
+			final String filename = artifact.get().getFileNames().get(0);
 
-		try {
+			final Optional<String> fileContents =
+					artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
+			if (fileContents.isEmpty()) {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST, "Unable to fetch file contents");
+			}
+
+			final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+			additionalProperties.setFileName(filename);
+
+			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
 			req.setInput(fileContents.get().getBytes());
+			req.setAdditionalProperties(additionalProperties);
+			req.setUserId(currentUserService.get().getId());
+
+			if (endsWith(filename, List.of(".mdl"))) {
+				req.setScript(MdlToStockflowResponseHandler.NAME);
+			} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
+				req.setScript(StellaToStockflowResponseHandler.NAME);
+			} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
+				req.setScript(SbmlToPetrinetResponseHandler.NAME);
+			} else {
+				throw new ResponseStatusException(
+						org.springframework.http.HttpStatus.BAD_REQUEST, "Unknown model type");
+			}
+
+			// send the request
+			final TaskResponse resp = taskService.runTaskSync(req);
+			final Model model = objectMapper.readValue(resp.getOutput(), Model.class);
+			return ResponseEntity.ok().body(model);
+
 		} catch (final Exception e) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			final String error = "Unable to dispatch task request";
+			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-		req.setAdditionalProperties(additionalProperties);
-		req.setUserId(currentUserService.get().getId());
-
-		if (endsWith(filename, List.of(".mdl"))) {
-			req.setScript(MdlToStockflowResponseHandler.NAME);
-		} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
-			req.setScript(StellaToStockflowResponseHandler.NAME);
-		} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
-			req.setScript(SbmlToPetrinetResponseHandler.NAME);
-		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown model type");
-		}
-
-		// send the request
-		final TaskResponse resp;
-		try {
-			resp = taskService.runTaskSync(req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
-		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
-		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
-		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
-		}
-
-		final Model model;
-		try {
-			model = objectMapper.readValue(resp.getOutput(), Model.class);
-		} catch (final IOException e) {
-			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-
-		return ResponseEntity.ok().body(model);
 	}
 
 	@PutMapping("/{task-id}")
@@ -324,7 +302,7 @@ public class MiraController {
 			final String error = "Unable to fetch DKGs";
 			final int status = e.status() >= 400 ? e.status() : 500;
 			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		} catch (final Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
@@ -347,7 +325,7 @@ public class MiraController {
 			final String error = "An error occurred searching DKGs";
 			final int status = e.status() >= 400 ? e.status() : 500;
 			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		} catch (final Exception e) {
 			log.error("Unable to fetch DKG", e);
 			return ResponseEntity.internalServerError().build();
@@ -367,7 +345,7 @@ public class MiraController {
 			final String error = "Unable to reconstruct ODE semantics";
 			final int status = e.status() >= 400 ? e.status() : 500;
 			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		}
 	}
 
@@ -380,7 +358,7 @@ public class MiraController {
 			final String error = "Unable to fetch entity similarity";
 			final int status = e.status() >= 400 ? e.status() : 500;
 			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
 		}
 	}
 }
