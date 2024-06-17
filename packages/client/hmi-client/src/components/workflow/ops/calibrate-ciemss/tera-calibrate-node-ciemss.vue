@@ -52,7 +52,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -124,19 +124,22 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
-			const forecastResponse = await makeForecastJobCiemss({
-				modelConfigId: modelConfigId.value as string,
-				timespan: {
-					start: 0,
-					end: props.node.state.endTime
+			const forecastResponse = await makeForecastJobCiemss(
+				{
+					modelConfigId: modelConfigId.value as string,
+					timespan: {
+						start: 0,
+						end: props.node.state.endTime
+					},
+					extra: {
+						num_samples: props.node.state.numSamples,
+						method: 'dopri5',
+						inferred_parameters: id
+					},
+					engine: 'ciemss'
 				},
-				extra: {
-					num_samples: props.node.state.numSamples,
-					method: 'dopri5',
-					inferred_parameters: id
-				},
-				engine: 'ciemss'
-			});
+				nodeMetadata(props.node)
+			);
 			const forecastId = forecastResponse.id;
 
 			const state = _.cloneDeep(props.node.state);

@@ -227,7 +227,12 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
-import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import {
+	getTimespan,
+	chartActionsProxy,
+	drilldownChartSize,
+	nodeMetadata
+} from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { getInitials } from '@/services/model-configurations';
 import {
@@ -357,7 +362,7 @@ const makeCalibrateRequest = async () => {
 		engine: 'sciml',
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
-	const response = await makeCalibrateJobJulia(calibrationRequest);
+	const response = await makeCalibrateJobJulia(calibrationRequest, nodeMetadata(props.node));
 	return response.simulationId;
 };
 

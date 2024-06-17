@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +40,13 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.notification.SimulationRequestStatusNotifier;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/simulation-request")
@@ -64,7 +68,16 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final ModelConfigurationLegacyService modelConfigService;
 
+	private final NotificationService notificationService;
+	private final ClientEventService clientEventService;
+
 	private final ObjectMapper objectMapper;
+
+	@Data
+	private static class SimulationRequestBody<T> {
+		private JsonNode metadata;
+		private T payload;
+	}
 
 	@Value("${terarium.sciml-queue}")
 	private String SCIML_QUEUE;
@@ -93,20 +106,35 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRun(
-			@RequestBody final SimulationRequest request,
+			@RequestBody final SimulationRequestBody<SimulationRequest> request,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		request.setEngine(SimulationEngine.SCIML.toString());
+		request.payload.setEngine(SimulationEngine.SCIML.toString());
 		final JobResponse res = simulationServiceProxy
-				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
+				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
 
 		final Simulation sim = new Simulation();
 		sim.setId(UUID.fromString(res.getSimulationId()));
 		sim.setType(SimulationType.SIMULATION);
-		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
+
+		// Fire and forget
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						sim.getId(),
+						projectId,
+						permission,
+						request.metadata)
+				.setInterval(2)
+				.setThreshold(300)
+				.setHalfTimeSeconds(2.0)
+				.startPolling();
+
+		sim.setExecutionPayload(objectMapper.convertValue(request.payload, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 		sim.setEngine(SimulationEngine.SCIML);
 
@@ -132,7 +160,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
-			@RequestBody final SimulationRequest request,
+			@RequestBody final SimulationRequestBody<SimulationRequest> request,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -140,19 +168,19 @@ public class SimulationRequestController implements SnakeCaseController {
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId(), permission);
+					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.getInterventions();
+				List<Intervention> allInterventions = request.payload.getInterventions();
 				if (allInterventions == null) {
 					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
-				request.setInterventions(allInterventions);
+				request.payload.setInterventions(allInterventions);
 			}
 		} catch (final IOException e) {
 			final String error = "Server error has occured while fetching the model configuration";
@@ -160,14 +188,28 @@ public class SimulationRequestController implements SnakeCaseController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
-		request.setEngine(SimulationEngine.CIEMSS.toString());
+		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
 		final JobResponse res = simulationCiemssServiceProxy
-				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request))
+				.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
 
 		final Simulation sim = new Simulation();
 		sim.setId(UUID.fromString(res.getSimulationId()));
 		sim.setType(SimulationType.SIMULATION);
+
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						sim.getId(),
+						projectId,
+						permission,
+						request.metadata)
+				.setInterval(2)
+				.setThreshold(300)
+				.setHalfTimeSeconds(2.0)
+				.startPolling();
+
 		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
 		sim.setStatus(ProgressState.QUEUED);
 		sim.setEngine(SimulationEngine.CIEMSS);
@@ -193,95 +235,166 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("/calibrate")
 	@Secured(Roles.USER)
-	public ResponseEntity<JobResponse> makeCalibrateJob(@RequestBody final CalibrationRequestJulia request) {
-		return ResponseEntity.ok(simulationServiceProxy
-				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request))
-				.getBody());
+	public ResponseEntity<JobResponse> makeCalibrateJob(
+			@RequestBody final SimulationRequestBody<CalibrationRequestJulia> request,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final JobResponse res = simulationServiceProxy
+				.makeCalibrateJob(SCIML_QUEUE, convertObjectToSnakeCaseJsonNode(request.payload))
+				.getBody();
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
+
+		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
-			@RequestBody final CalibrationRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request,
+			@RequestParam("project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId(), permission);
+					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.getInterventions();
+				List<Intervention> allInterventions = request.payload.getInterventions();
 				if (allInterventions == null) {
 					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
-				request.setInterventions(allInterventions);
+				request.payload.setInterventions(allInterventions);
 			}
 		} catch (final IOException e) {
 			final String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request))
-				.getBody());
+		final JobResponse res = simulationCiemssServiceProxy
+				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
+				.getBody();
+
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
+
+		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/optimize")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
-			@RequestBody final OptimizeRequestCiemss request, @RequestParam("project-id") final UUID projectId) {
+			@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request,
+			@RequestParam("project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// Get model config's interventions and append them to requests:
 		try {
 			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.getModelConfigId(), permission);
+					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
 			if (modelConfiguration.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 			final List<Intervention> modelInterventions =
 					modelConfiguration.get().getInterventions();
 			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.getFixedStaticParameterInterventions();
+				List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
 				if (allInterventions == null) {
 					allInterventions = new ArrayList<>();
 				}
 				allInterventions.addAll(modelInterventions);
-				request.setFixedStaticParameterInterventions(allInterventions);
+				request.payload.setFixedStaticParameterInterventions(allInterventions);
 			}
 		} catch (final IOException e) {
 			final String error = "Server error has occured while fetching the model configuration";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request))
-				.getBody());
+		final JobResponse res = simulationCiemssServiceProxy
+				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))
+				.getBody();
+
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
+
+		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
-			@RequestBody final EnsembleSimulationCiemssRequest request) {
-		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request))
-				.getBody());
+			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		final JobResponse res = simulationCiemssServiceProxy
+				.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
+				.getBody();
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
+		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
-			@RequestBody final EnsembleCalibrationCiemssRequest request) {
-		return ResponseEntity.ok(simulationCiemssServiceProxy
-				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request))
-				.getBody());
+			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
+			@RequestParam("project-id") final UUID projectId) {
+		Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		final JobResponse res = simulationCiemssServiceProxy
+				.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
+				.getBody();
+
+		new SimulationRequestStatusNotifier(
+						notificationService,
+						clientEventService,
+						simulationService,
+						UUID.fromString(res.getSimulationId()),
+						projectId,
+						permission,
+						request.metadata)
+				.startPolling();
+
+		return ResponseEntity.ok(res);
 	}
 
 	@GetMapping("ciemss/cancel/{id}")
