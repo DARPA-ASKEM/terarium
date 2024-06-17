@@ -12,7 +12,6 @@ export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
-	tempConfigId: string; // This is used for beaker context when there is no output selected. It is a config id that is in TDS and marked as temp
 }
 
 export const ModelConfigOperation: Operation = {
@@ -32,7 +31,6 @@ export const ModelConfigOperation: Operation = {
 		const init: ModelConfigOperationState = {
 			modelEditCodeHistory: [],
 			hasCodeBeenRun: false,
-			tempConfigId: '',
 			transientModelConfig: {
 				name: '',
 				description: '',

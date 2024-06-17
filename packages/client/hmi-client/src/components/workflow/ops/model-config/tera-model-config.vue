@@ -340,12 +340,10 @@ const menuItems = computed(() => [
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
-	tempConfigId: string;
 	transientModelConfig: ModelConfiguration;
 }
 
 const knobs = ref<BasicKnobs>({
-	tempConfigId: '',
 	transientModelConfig: {
 		name: '',
 		description: '',
@@ -363,7 +361,7 @@ const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 const buildJupyterContext = () => {
-	const contextId = selectedConfigId.value ?? props.node.state.tempConfigId;
+	const contextId = selectedConfigId.value;
 	if (!model.value) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
@@ -649,21 +647,6 @@ const fetchConfigurations = async (modelId: string) => {
 	}
 };
 
-// Creates a temp config (if it doesn't exist in state)
-// This is used for beaker context when there are no outputs in the node
-const createTempModelConfig = async () => {
-	// const state = cloneDeep(props.node.state);
-	// if (state.tempConfigId !== '' || !model.value) return;
-	// const data = await createModelConfiguration(
-	// 	model.value.id,
-	// 	'Temp_config_name',
-	// 	'Utilized in model config node for beaker purposes',
-	// 	cloneDeep(model.value),
-	// 	true
-	// );
-	// knobs.value.tempConfigId = data.id;
-};
-
 // Fill the form with the config data
 const initialize = async () => {
 	const state = props.node.state;
@@ -673,23 +656,10 @@ const initialize = async () => {
 
 	model.value = await getModel(modelId);
 
-	knobs.value.tempConfigId = state.tempConfigId;
-
-	// State has never been set up:
-	if (knobs.value.tempConfigId === '') {
-		// Grab these values from model to initialize them
-		// knobs.value.transientModelConfig = {
-		// 	name: '',
-		// 	description: '',
-		// 	model_id: modelId,
-		// 	configuration: cloneDeep(model.value) ?? ({} as Model),
-		// 	interventions: []
-		// };
-
-		await createTempModelConfig();
-	}
-	// State already been set up use it instead:
-	else {
+	if (!state.transientModelConfig.id) {
+		// apply a configuration if one hasnt been applied yet
+		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
+	} else {
 		const modelConfig = cloneDeep(state.transientModelConfig);
 		knobs.value.transientModelConfig = modelConfig;
 	}
@@ -729,7 +699,6 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	else {
 		// Append this config to the output.
 		state.transientModelConfig = knobs.value.transientModelConfig;
-		state.tempConfigId = knobs.value.tempConfigId;
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
@@ -766,7 +735,6 @@ watch(
 	async () => {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = knobs.value.transientModelConfig;
-		state.tempConfigId = knobs.value.tempConfigId;
 
 		emit('update-state', state);
 	},
