@@ -58,7 +58,6 @@ WORKDIR /mira
 RUN pip install --no-cache-dir .[sbml,biomodels]
 
 # Install taskrunner
-COPY ./packages/taskrunner/src/test/resources/echo.py /echo.py
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner

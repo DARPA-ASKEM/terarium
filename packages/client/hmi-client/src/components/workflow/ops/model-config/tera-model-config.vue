@@ -74,7 +74,7 @@
 								</Column>
 								<Column header="Source" style="width: 30%">
 									<template #body="{ data }">
-										{{ data?.configuration.metadata?.source?.join(',') || '--' }}
+										{{ data?.configuration?.metadata?.source?.join(',') || '--' }}
 									</template>
 								</Column>
 								<Column style="width: 7rem">
@@ -669,8 +669,10 @@ const initialize = async () => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
-	fetchConfigurations(modelId);
+	await fetchConfigurations(modelId);
+
 	model.value = await getModel(modelId);
+
 	knobs.value.tempConfigId = state.tempConfigId;
 
 	// State has never been set up:

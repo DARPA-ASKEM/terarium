@@ -45,6 +45,8 @@ public class Task {
 	private StringBuilder stdout = new StringBuilder();
 	private StringBuilder stderr = new StringBuilder();
 
+	private final String ECHO_SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
+
 	private int PROCESS_KILL_TIMEOUT_SECONDS = 10;
 
 	private int BYTES_PER_READ = 1024 * 1024;
@@ -82,13 +84,27 @@ public class Task {
 	}
 
 	private void setup() throws IOException, InterruptedException {
-		if (getExtension(req.getScript()).equals("py")) {
+		if (req.getScript().equals("echo.py")) {
+
+			// raw python file, execute it through the runtime
+			final boolean fileExists = Files.exists(Paths.get(ECHO_SCRIPT_PATH));
+			if (!fileExists) {
+				throw new FileNotFoundException("Script file: " + ECHO_SCRIPT_PATH + " not found");
+			}
+			processBuilder = new ProcessBuilder("python3", ECHO_SCRIPT_PATH, "--id", req.getId().toString(),
+					"--input_pipe",
+					inputPipeName,
+					"--output_pipe",
+					outputPipeName,
+					"--progress_pipe",
+					progressPipeName);
+		} else if (getExtension(req.getScript()).equals("py")) {
 			// raw python file, execute it through the runtime
 			final boolean fileExists = Files.exists(Paths.get(req.getScript()));
 			if (!fileExists) {
 				throw new FileNotFoundException("Script file: " + req.getScript() + " not found");
 			}
-			processBuilder = new ProcessBuilder("python", req.getScript(), "--id", req.getId().toString(),
+			processBuilder = new ProcessBuilder("python3", req.getScript(), "--id", req.getId().toString(),
 					"--input_pipe",
 					inputPipeName,
 					"--output_pipe",
