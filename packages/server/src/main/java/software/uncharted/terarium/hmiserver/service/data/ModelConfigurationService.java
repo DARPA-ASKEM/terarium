@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelConfigurationService
@@ -35,9 +38,30 @@ public class ModelConfigurationService
 		throw new UnsupportedOperationException("Model Configurations are not stored in S3");
 	}
 
-	public ModelConfiguration modelConfigurationFromAMR(
+	@Override
+	@Observed(name = "function_profile")
+	public ModelConfiguration createAsset(final ModelConfiguration asset, final Schema.Permission hasWritePermission)
+			throws IOException {
+		setSemanticDBRelationships(asset);
+		return super.createAsset(asset, hasWritePermission);
+	}
+
+
+	@Override
+	@Observed(name = "function_profile")
+	@SuppressWarnings("unchecked")
+	public List<ModelConfiguration> createAssets(
+			final List<ModelConfiguration> assets, final Schema.Permission hasWritePermission) throws IOException {
+
+		for (final ModelConfiguration modelConfiguration : assets) {
+			setSemanticDBRelationships(modelConfiguration);
+		}
+		return super.createAssets(assets, hasWritePermission);
+	}
+
+	public static ModelConfiguration modelConfigurationFromAMR(
 			final Model model, final String name, final String description) {
-		ModelConfiguration modelConfiguration = new ModelConfiguration();
+		final ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name == null ? name : "Default Configuration");
 		modelConfiguration.setDescription(description == null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
@@ -47,10 +71,30 @@ public class ModelConfigurationService
 		return modelConfiguration;
 	}
 
-	private List<InitialSemantic> createInitialSemanticList(final Model model) {
-		List<InitialSemantic> initialSemantics = new ArrayList<InitialSemantic>();
-		for (Initial initial : model.getInitials()) {
-			InitialSemantic initialSemantic = new InitialSemantic();
+	private static void setSemanticDBRelationships(final ModelConfiguration modelConfiguration) {
+		if (modelConfiguration.getObservableSemanticList() != null) {
+			for (final ObservableSemantic semantic : modelConfiguration.getObservableSemanticList()) {
+				semantic.setModelConfiguration(modelConfiguration);
+			}
+		}
+
+		if (modelConfiguration.getParameterSemanticList() != null) {
+			for (final ParameterSemantic semantic : modelConfiguration.getParameterSemanticList()) {
+				semantic.setModelConfiguration(modelConfiguration);
+			}
+		}
+
+		if (modelConfiguration.getInitialSemanticList() != null) {
+			for (final InitialSemantic semantic : modelConfiguration.getInitialSemanticList()) {
+				semantic.setModelConfiguration(modelConfiguration);
+			}
+		}
+	}
+
+	private static List<InitialSemantic> createInitialSemanticList(final Model model) {
+		final List<InitialSemantic> initialSemantics = new ArrayList<>();
+		for (final Initial initial : model.getInitials()) {
+			final InitialSemantic initialSemantic = new InitialSemantic();
 			initialSemantic.setTarget(initial.getTarget());
 			initialSemantic.setExpression(initial.getExpression());
 			initialSemantic.setExpressionMathml(initial.getExpressionMathml());
@@ -59,10 +103,10 @@ public class ModelConfigurationService
 		return initialSemantics;
 	}
 
-	private List<ObservableSemantic> createObservableSemanticList(final Model model) {
-		List<ObservableSemantic> observableSemantics = new ArrayList<ObservableSemantic>();
-		for (Observable observable : model.getObservables()) {
-			ObservableSemantic observableSemantic = new ObservableSemantic();
+	private static List<ObservableSemantic> createObservableSemanticList(final Model model) {
+		final List<ObservableSemantic> observableSemantics = new ArrayList<>();
+		for (final Observable observable : model.getObservables()) {
+			final ObservableSemantic observableSemantic = new ObservableSemantic();
 			observableSemantic.setReferenceId(observable.getId());
 			observableSemantic.setStates(observable.getStates());
 			observableSemantic.setExpression(observable.getExpression());
@@ -72,10 +116,10 @@ public class ModelConfigurationService
 		return observableSemantics;
 	}
 
-	private List<ParameterSemantic> createParameterSemanticList(final Model model) {
-		List<ParameterSemantic> parameterSemantics = new ArrayList<ParameterSemantic>();
-		for (ModelParameter parameter : model.getParameters()) {
-			ParameterSemantic parameterSemantic = new ParameterSemantic();
+	private static List<ParameterSemantic> createParameterSemanticList(final Model model) {
+		final List<ParameterSemantic> parameterSemantics = new ArrayList<>();
+		for (final ModelParameter parameter : model.getParameters()) {
+			final ParameterSemantic parameterSemantic = new ParameterSemantic();
 			parameterSemantic.setReferenceId(parameter.getId());
 			parameterSemantic.setDefault(true);
 
