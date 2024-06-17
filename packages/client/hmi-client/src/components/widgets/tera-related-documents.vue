@@ -19,31 +19,21 @@
 			</ul>
 		</template>
 		<footer class="flex gap-2">
-			<template v-if="assetType === AssetType.Dataset">
-				<Button
-					severity="secondary"
-					size="small"
-					label="Enrich description"
-					:loading="isLoading"
-					@click="dialogForEnrichment"
-				/>
-			</template>
-			<template v-if="assetType === AssetType.Model">
-				<Button
-					severity="secondary"
-					size="small"
-					label="Enrich description"
-					:loading="isLoading"
-					@click="dialogForEnrichment"
-				/>
-				<Button
-					severity="secondary"
-					size="small"
-					label="Extract variables"
-					:loading="isLoading"
-					@click="dialogForExtraction"
-				/>
-			</template>
+			<Button
+				severity="secondary"
+				size="small"
+				label="Enrich description"
+				:loading="isLoading"
+				@click="dialogForEnrichment"
+			/>
+			<Button
+				v-if="assetType === AssetType.Model"
+				severity="secondary"
+				size="small"
+				label="Extract variables"
+				:loading="isLoading"
+				@click="dialogForExtraction"
+			/>
 		</footer>
 		<Dialog
 			modal
