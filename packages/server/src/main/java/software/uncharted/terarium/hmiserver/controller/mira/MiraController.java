@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
@@ -9,16 +8,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +45,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowRespons
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/mira")
@@ -68,8 +62,6 @@ public class MiraController {
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
-
-	private final Messages messages;
 
 	@Data
 	public static class ModelConversionRequest {
@@ -123,48 +115,24 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.MIRA);
-
 		try {
+			final TaskRequest req = new TaskRequest();
+			req.setType(TaskType.MIRA);
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
+			req.setScript(AMRToMMTResponseHandler.NAME);
+			req.setUserId(currentUserService.get().getId());
+
+			// send the request
+			final TaskResponse resp = taskService.runTaskSync(req);
+			final JsonNode mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(mmtInfo);
 		} catch (final Exception e) {
+			final String error = "Unable to dispatch task request";
+			log.error("Unable to convert Model to MIRA model template. \n{}: {}", error, e.getMessage());
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.BAD_REQUEST, messages.get("generic.io-error.write"));
+					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+					"Unable to convert Model to MIRA model template.");
 		}
-
-		req.setScript(AMRToMMTResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
-		// send the request
-		final TaskResponse resp;
-		try {
-			resp = taskService.runTaskSync(req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
-		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
-		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
-		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
-		}
-
-		final JsonNode mmtInfo;
-		try {
-			mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-		} catch (final IOException e) {
-			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-
-		return ResponseEntity.ok().body(mmtInfo);
 	}
 
 	@PostMapping("/convert-and-create-model")
@@ -187,7 +155,7 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
+		Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
