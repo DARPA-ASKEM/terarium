@@ -1,8 +1,6 @@
 ## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 
@@ -65,8 +63,3 @@ Estimated time to completion: [X] minutes
 8. Click `Run`.
 9. As the calibration runs, the "Loss function" section on the right panel should have a chart showing a history of the loss. Expect it to be a timeseries that decreases quickly then slowly.
 10. When the calibration is completed successfully, there should be a chart showing the predicted values for each model variable and the dataset values to which it has been mapped.
-
-### 4. End test
-
-1. Click on "QA" on the top right of the screen.
-2. Click "Logout" to log out of the application.

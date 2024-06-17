@@ -7,7 +7,9 @@ assignees: ''
 
 ---
 
-**Name of Scenario and step**
+- Scenario:
+- Step:
+- Link to the project:
 
 **Describe the issue**
 A clear and concise description of what the bug is.
