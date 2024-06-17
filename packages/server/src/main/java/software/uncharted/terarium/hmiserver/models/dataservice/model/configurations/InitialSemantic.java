@@ -31,4 +31,14 @@ public class InitialSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@NotNull private ModelConfiguration modelConfiguration;
+
+	@Override
+	public InitialSemantic clone() {
+		final InitialSemantic clone = new InitialSemantic();
+		super.cloneSuperFields(clone);
+		clone.target = this.target;
+		clone.expression = this.expression;
+		clone.expressionMathml = this.expressionMathml;
+		return clone;
+	}
 }

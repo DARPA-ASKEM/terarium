@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -44,6 +45,14 @@ public class ModelConfigurationService
 			throws IOException {
 		setSemanticDBRelationships(asset);
 		return super.createAsset(asset, hasWritePermission);
+	}
+
+	@Override
+	@Observed(name = "function_profile")
+	public Optional<ModelConfiguration> updateAsset(
+			final ModelConfiguration asset, final Schema.Permission hasWritePermission) throws IOException {
+		setSemanticDBRelationships(asset);
+		return super.updateAsset(asset, hasWritePermission);
 	}
 
 	@Override

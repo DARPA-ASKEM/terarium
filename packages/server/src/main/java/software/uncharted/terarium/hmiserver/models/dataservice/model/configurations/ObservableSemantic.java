@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,4 +38,18 @@ public class ObservableSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@NotNull private ModelConfiguration modelConfiguration;
+
+	@Override
+	public ObservableSemantic clone() {
+		final ObservableSemantic observableSemantic = new ObservableSemantic();
+		super.cloneSuperFields(observableSemantic);
+		observableSemantic.referenceId = this.referenceId;
+		if (this.states != null) {
+			observableSemantic.states = new ArrayList<>();
+			observableSemantic.states.addAll(this.states);
+		}
+		observableSemantic.expression = this.expression;
+		observableSemantic.expressionMathml = this.expressionMathml;
+		return observableSemantic;
+	}
 }
