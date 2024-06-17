@@ -1,6 +1,6 @@
 ---
 name: Quality Assurance Issue
-description: Report an issue found while testing
+about: Report an issue found while testing
 title: "[BUG]: "
 labels: bug, Q&A
 assignees: ''
