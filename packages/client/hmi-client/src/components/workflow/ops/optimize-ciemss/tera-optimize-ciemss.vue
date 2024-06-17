@@ -13,6 +13,22 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
+					<h5>Constraints</h5>
+					<tera-optimize-constraint-group-form
+						v-for="(cfg, index) in node.state.constraintGroups"
+						:key="selectedOutputId + ':' + index"
+						:index="index"
+						:constraint="cfg"
+						:model-state-and-obs-options="modelStateAndObsOptions"
+					/>
+					<Button
+						icon="pi pi-plus"
+						class="p-button-sm p-button-text"
+						label="Add more constraints"
+						@click="addConstraintGroupForm"
+					/>
+				</div>
+				<div class="form-section">
 					<h5>Settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
@@ -51,20 +67,6 @@
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
 								placeholder="Select"
-							/>
-						</div>
-						<div class="label-and-input">
-							<!-- TODO: This could likely be better explained to user -->
-							<label> Minimized </label>
-							<Dropdown
-								class="toolbar-button"
-								v-model="knobs.isMinimized"
-								optionLabel="label"
-								optionValue="value"
-								:options="[
-									{ label: 'true', value: true },
-									{ label: 'false', value: false }
-								]"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -125,43 +127,9 @@
 							<MultiSelect
 								class="p-inputtext-sm"
 								:options="modelStateAndObsOptions"
-								v-model="knobs.targetVariables"
+								v-model="knobs.targetVariable"
 								placeholder="Select"
 								filter
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>QoI Method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="[
-									{ label: 'Max', value: ContextMethods.max },
-									{ label: 'Day average', value: ContextMethods.day_average }
-								]"
-								option-label="label"
-								option-value="value"
-								v-model="knobs.qoiMethod"
-							/>
-						</div>
-					</div>
-					<div class="constraint-row">
-						<div class="label-and-input">
-							<label>Acceptable risk of failure</label>
-							<div>
-								<InputNumber
-									class="p-inputtext-sm"
-									inputId="integeronly"
-									v-model="knobs.riskTolerance"
-								/>
-							</div>
-						</div>
-						<div class="label-and-input">
-							<label>Threshold</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.threshold"
-								:min-fraction-digits="1"
-								:max-fraction-digits="10"
 							/>
 						</div>
 					</div>
@@ -241,9 +209,9 @@
 							:risk-results="riskResults[knobs.forecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.forecastRunId,
-								selectedVariable: knobs.targetVariables
+								selectedVariable: [knobs.targetVariable]
 							}"
-							:target-variable="knobs.targetVariables[0]"
+							:target-variable="knobs.targetVariable[0]"
 							:size="chartSize"
 							:threshold="knobs.threshold"
 						/>
@@ -337,13 +305,15 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
 	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
-	getOptimizedInterventions
+	getOptimizedInterventions,
+	defaultConstraintGroup
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -369,7 +339,7 @@ interface BasicKnobs {
 	maxiter: number;
 	maxfeval: number;
 	qoiMethod: ContextMethods;
-	targetVariables: string[];
+	targetVariable: string;
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
@@ -384,11 +354,11 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
-	qoiMethod: props.node.state.qoiMethod ?? ContextMethods.max,
-	targetVariables: props.node.state.targetVariables ?? [],
-	riskTolerance: props.node.state.riskTolerance ?? 0,
-	threshold: props.node.state.threshold ?? 0, // currently not used.
-	isMinimized: props.node.state.isMinimized ?? true,
+	qoiMethod: props.node.state.constraintGroups[0].qoiMethod ?? ContextMethods.max,
+	targetVariable: props.node.state.constraintGroups[0].targetVariable ?? [],
+	riskTolerance: props.node.state.constraintGroups[0].riskTolerance ?? 0,
+	threshold: props.node.state.constraintGroups[0].threshold ?? 0, // currently not used.
+	isMinimized: props.node.state.constraintGroups[0].isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	interventionType: props.node.state.interventionType ?? ''
@@ -453,7 +423,7 @@ const outputs = computed(() => {
 
 const isRunDisabled = computed(() => {
 	if (
-		knobs.value.targetVariables.length === 0 ||
+		knobs.value.targetVariable.length === 0 ||
 		props.node.state.interventionPolicyGroups.length === 0
 	)
 		return true;
@@ -502,6 +472,14 @@ const addInterventionPolicyGroupForm = () => {
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
+	emit('update-state', state);
+};
+
+const addConstraintGroupForm = () => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups.push(defaultConstraintGroup);
 	emit('update-state', state);
 };
 
@@ -566,7 +544,7 @@ const runOptimize = async () => {
 		},
 		policyInterventions: optimizeInterventions,
 		qoi: {
-			contexts: knobs.value.targetVariables,
+			contexts: [knobs.value.targetVariable],
 			method: knobs.value.qoiMethod
 		},
 		riskBound: knobs.value.threshold,
@@ -650,14 +628,14 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
-		state.targetVariables = knobs.value.targetVariables;
-		state.riskTolerance = knobs.value.riskTolerance;
-		state.threshold = knobs.value.threshold;
+		state.constraintGroups[0].targetVariable = knobs.value.targetVariable[0];
+		state.constraintGroups[0].riskTolerance = knobs.value.riskTolerance;
+		state.constraintGroups[0].threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.interventionType = knobs.value.interventionType;
-		state.isMinimized = knobs.value.isMinimized;
-		state.qoiMethod = knobs.value.qoiMethod;
+		state.constraintGroups[0].isMinimized = knobs.value.isMinimized;
+		state.constraintGroups[0].qoiMethod = knobs.value.qoiMethod;
 		emit('update-state', state);
 	},
 	{ deep: true }

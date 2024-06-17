@@ -27,6 +27,15 @@ export interface InterventionPolicyGroup {
 	paramValue: number;
 }
 
+export interface ConstraintGroup {
+	name: string; // Title of the group
+	targetVariable: string;
+	qoiMethod: ContextMethods;
+	riskTolerance: number;
+	threshold: number;
+	isMinimized: boolean;
+}
+
 export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
 	endTime: number;
@@ -37,12 +46,9 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Intervention policies
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
-	// Constraints
-	qoiMethod: ContextMethods;
-	targetVariables: string[];
-	riskTolerance: number;
-	threshold: number;
-	isMinimized: boolean;
+	// Constraints:
+	constraintGroups: ConstraintGroup[];
+	// Charts + Outputs:
 	chartConfigs: string[][];
 	inProgressOptimizeId: string;
 	inProgressForecastId: string;
@@ -62,6 +68,15 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	initialGuess: 0,
 	isActive: true,
 	paramValue: 0
+};
+
+export const defaultConstraintGroup: ConstraintGroup = {
+	name: 'Constraint',
+	qoiMethod: ContextMethods.max,
+	targetVariable: '',
+	riskTolerance: 5,
+	threshold: 1,
+	isMinimized: true
 };
 
 export const OptimizeCiemssOperation: Operation = {
@@ -85,11 +100,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
-			qoiMethod: ContextMethods.max,
-			targetVariables: [],
-			riskTolerance: 5,
-			threshold: 1,
-			isMinimized: true,
+			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
 			inProgressForecastId: '',
