@@ -221,6 +221,46 @@ public class ModelConfigurationController {
 		}
 	}
 
+	@PostMapping("/as-configured-model/")
+	@Secured(Roles.USER)
+	@Operation(summary = "Creates a new model configuration based on a configured model")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Model configuration created from model.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema = @Schema(implementation = ModelConfiguration.class))),
+				@ApiResponse(
+						responseCode = "503",
+						description = "There was an issue creating the configuration",
+						content = @Content)
+			})
+	public ResponseEntity<ModelConfiguration> createFromConfiguredModel(
+			@RequestBody final Model configuredModel,
+			@RequestParam(name = "name", required = false) final String name,
+			@RequestParam(name = "description", required = false) final String description,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+
+		final Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+
+		final ModelConfiguration modelConfiguration =
+				ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+
+		try {
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(modelConfigurationService.createAsset(modelConfiguration, permission));
+		} catch (final IOException e) {
+			log.error("Unable to get model configuration from postgres db", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
+		}
+	}
+
 	/**
 	 * Creates a new model config and saves it to the DB
 	 *
@@ -349,7 +389,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private void setModelParameters(
+	private static void setModelParameters(
 			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
 		// Create a map from ConfigParameter IDs to ConfigParameter objects
 		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
@@ -377,7 +417,8 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+	private static void setModelInitials(
+			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);
@@ -392,7 +433,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	private void setModelObservables(
+	private static void setModelObservables(
 			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {

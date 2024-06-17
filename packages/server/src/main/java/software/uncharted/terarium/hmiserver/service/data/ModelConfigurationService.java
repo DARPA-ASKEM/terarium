@@ -48,7 +48,6 @@ public class ModelConfigurationService
 
 	@Override
 	@Observed(name = "function_profile")
-	@SuppressWarnings("unchecked")
 	public List<ModelConfiguration> createAssets(
 			final List<ModelConfiguration> assets, final Schema.Permission hasWritePermission) throws IOException {
 

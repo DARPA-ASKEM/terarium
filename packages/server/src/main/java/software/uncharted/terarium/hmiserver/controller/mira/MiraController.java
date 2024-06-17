@@ -158,7 +158,7 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
@@ -209,7 +209,7 @@ public class MiraController {
 
 			// create a default configuration
 			final ModelConfiguration modelConfiguration =
-					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.ok().body(model);
 
