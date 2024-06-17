@@ -34,6 +34,7 @@ export interface ConstraintGroup {
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
+	isActive: boolean; // Denotes whether or not this should be used when user hits run.
 }
 
 export interface OptimizeCiemssOperationState extends BaseState {
@@ -76,7 +77,8 @@ export const defaultConstraintGroup: ConstraintGroup = {
 	targetVariable: '',
 	riskTolerance: 5,
 	threshold: 1,
-	isMinimized: true
+	isMinimized: true,
+	isActive: true
 };
 
 export const OptimizeCiemssOperation: Operation = {

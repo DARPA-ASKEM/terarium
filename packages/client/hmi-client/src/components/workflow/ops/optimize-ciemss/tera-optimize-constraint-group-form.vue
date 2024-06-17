@@ -14,6 +14,10 @@
 				@click="onEdit"
 			/>
 		</div>
+		<div>
+			<label for="active">Active</label>
+			<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
+		</div>
 		<div class="trash-button-align">
 			<i class="trash-button pi pi-trash" @click="emit('delete-self')" />
 		</div>
