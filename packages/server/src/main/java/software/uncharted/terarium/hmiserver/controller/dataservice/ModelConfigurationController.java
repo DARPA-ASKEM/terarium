@@ -261,6 +261,53 @@ public class ModelConfigurationController {
 		}
 	}
 
+	@PutMapping("/as-configured-model/{id}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Creates a new model configuration based on a configured model")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Model configuration created from model.",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema = @Schema(implementation = ModelConfiguration.class))),
+				@ApiResponse(
+						responseCode = "503",
+						description = "There was an issue creating the configuration",
+						content = @Content)
+			})
+	public ResponseEntity<ModelConfiguration> updateFromConfiguredModel(
+			@PathVariable("id") final UUID id,
+			@RequestBody final Model configuredModel,
+			@RequestParam(name = "name", required = false) final String name,
+			@RequestParam(name = "description", required = false) final String description,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+
+		final Permission permission =
+				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+
+		final ModelConfiguration modelConfiguration =
+				ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+
+		modelConfiguration.setId(id);
+
+		try {
+			final Optional<ModelConfiguration> optionalModelConfiguration =
+					modelConfigurationService.updateAsset(modelConfiguration, permission);
+			if (optionalModelConfiguration.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
+			}
+			return ResponseEntity.status(HttpStatus.CREATED).body(optionalModelConfiguration.get());
+		} catch (final IOException e) {
+			log.error("Unable to get model configuration from postgres db", e);
+			throw new ResponseStatusException(
+					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+					messages.get("postgres.service-unavailable"));
+		}
+	}
+
 	/**
 	 * Creates a new model config and saves it to the DB
 	 *
