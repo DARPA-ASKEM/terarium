@@ -252,7 +252,7 @@ public class ModelConfigurationController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(modelConfigurationService.createAsset(modelConfiguration, permission));
+					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), permission));
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
@@ -340,7 +340,7 @@ public class ModelConfigurationController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(modelConfigurationService.createAsset(modelConfiguration, permission));
+					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), permission));
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(

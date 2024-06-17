@@ -47,6 +47,8 @@ public class ModelConfiguration extends TerariumAsset {
 		final ModelConfiguration clone = new ModelConfiguration();
 		super.cloneSuperFields(clone);
 
+		clone.setModelId(this.modelId);
+
 		if (this.observableSemanticList != null) {
 			clone.setObservableSemanticList(new ArrayList<>());
 			for (final ObservableSemantic semantic : observableSemanticList) {

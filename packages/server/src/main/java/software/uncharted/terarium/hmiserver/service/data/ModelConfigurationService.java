@@ -69,8 +69,8 @@ public class ModelConfigurationService
 	public static ModelConfiguration modelConfigurationFromAMR(
 			final Model model, final String name, final String description) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
-		modelConfiguration.setName(name == null ? name : "Default Configuration");
-		modelConfiguration.setDescription(description == null ? description : "This is a default configuration.");
+		modelConfiguration.setName(name != null ? name : "Default Configuration");
+		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
 		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model));
@@ -136,6 +136,11 @@ public class ModelConfigurationService
 				distribution = new ModelDistribution();
 				distribution.setType("Constant");
 				distribution.setParameters(Map.of("value", parameter.getValue() == null ? parameter.getValue() : 0));
+			}
+
+			//NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we are changing it to StandardUniform1 for consistenty sake
+			if (distribution.getType().equals("Uniform1")){
+				distribution.setType("StandardUniform1");
 			}
 
 			parameterSemantic.setDistribution(distribution);
