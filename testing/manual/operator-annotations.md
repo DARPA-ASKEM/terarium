@@ -15,7 +15,7 @@ Estimated time to completion: [X] minutes
 ### 2. Test Scenarios
 
 `[Task 1: Adding a new annotation to an operator's workflow node']`
-1. Add a model to the project with Explorer.
+1. Add a model (e.g. [Configured SIR.json](https://github.com/DARPA-ASKEM/terarium/blob/main/testing/data/Configured%20SIR.json))to the project with Explorer.
 2. Create a new workflow - open it.
 3. Drag the model from the Resources panel onto the workflow canvas
 4. Click the kebab icon to open the model node's menu, click "Add a note"

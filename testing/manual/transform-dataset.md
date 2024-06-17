@@ -10,7 +10,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA Five Grant 240502`
+2. Create, or open, project named `QA <Your Name>`
 
 ### 2. Join datasets
 1. Upload [`sample.csv`](https://drive.google.com/file/d/1ZmDgj4EPcO0I9SQR5LwPl4pvPln5iq-0/view?usp=drive_link).
@@ -20,10 +20,10 @@ Estimated time to completion: [X] minutes
 5. Add Transform Dataset operator.
 6. Attach `sample` and `sample2` as inputs to the new dataset operator.
 7. Click "Edit" button on operator.
-8. Query the agent with "Join the two datasets along the `id` column".
-9. Select new dataframe in dropdown.
-10. Save as `result`.
-11. __Expected Result__: New dataset `result` should exist under "Datasets" and contain 5 columns.
+8. Query the agent with "Join the two datasets along the id column".
+9. After the question has been answered, select the new dataframe (merged_df) in the dropdown located beside the "Save as" button.
+10. Click the "Save as" button to save the dataframe. Name it `result`.
+11. __Expected Result__: New dataset `result` should exist under your project's Datasets and contain 4 columns (id, count, label, level).
 
 ## End test
-1. logout of the application 
+1. logout of the application

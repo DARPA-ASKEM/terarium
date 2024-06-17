@@ -35,20 +35,21 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
+					<tera-operator-output-summary
+						v-if="outputSummary"
+						:node="node"
+						@generate-output-summary="
+							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
+						"
+						@update-output-port="
+							(output: WorkflowOutput<any>) => emit('update-output-port', output)
+						"
+					/>
 					<tera-operator-annotation
+						v-else
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
-					<!-- TODO: Uncomment and enable this when summary UI is ready -->
-					<!-- <tera-operator-annotation
-						v-if="activeOutputSummary === undefined"
-						:state="node.state"
-						@update-state="(state: any) => emit('update-state', state)"
-					/> -->
-					<!-- TODO: Make this as a summary component and render for the operator supporting AI generated summary-->
-					<!-- <div v-else>
-						{{ activeOutputSummary === '' ? 'Generating AI summary...' : activeOutputSummary }}
-					</div> -->
 				</template>
 			</tera-drilldown-header>
 			<tera-columnar-panel>
@@ -77,15 +78,15 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import { isEmpty } from 'lodash';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
-// import { getActiveOutputSummary } from '@/services/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -93,9 +94,16 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
+	outputSummary?: boolean;
 }>();
 
-const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection']);
+const emit = defineEmits([
+	'on-close-clicked',
+	'update-state',
+	'update:selection',
+	'generate-output-summary',
+	'update-output-port'
+]);
 const slots = useSlots();
 const menu = ref();
 /**
@@ -137,7 +145,6 @@ const outputOptions = computed(() => {
 	}
 	return [];
 });
-// const activeOutputSummary = computed(() => getActiveOutputSummary(props.node));
 
 const toggle = (event) => {
 	menu.value.toggle(event);
@@ -171,21 +178,6 @@ than the main application behind the modal when these render issues come, howeve
 	&.popover {
 		margin: 3rem 2.5rem 0rem 2.5rem;
 	}
-}
-
-main {
-	flex-grow: 1;
-	padding: 0;
-	gap: var(--gap);
-}
-
-main > :deep(*) {
-	display: grid;
-	grid-auto-flow: column;
-	height: 100%;
-	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-	gap: 0.5rem;
-	overflow: hidden;
 }
 
 footer {

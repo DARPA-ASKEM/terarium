@@ -30,28 +30,28 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
-import {
-	getInitialName,
-	getInitialDescription,
-	getInitialUnit,
-	getInitialExpression,
-	getInitialSource
-} from '@/services/model-configurations';
+import { Model, ModelConfigurationLegacy } from '@/types/Types';
+import { getInitialExpression, getInitialSource } from '@/services/model-configurations-legacy';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
 import Button from 'primevue/button';
+import {
+	getInitialDescription,
+	getInitialName,
+	getInitialUnits
+} from '@/model-representation/service';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfiguration;
+	model: Model;
+	modelConfiguration: ModelConfigurationLegacy;
 	initialId: string;
 }>();
 
 const emit = defineEmits(['update-expression', 'update-source']);
 
-const name = getInitialName(props.modelConfiguration, props.initialId);
-const unit = getInitialUnit(props.modelConfiguration, props.initialId);
-const description = getInitialDescription(props.modelConfiguration, props.initialId);
+const name = getInitialName(props.model, props.initialId);
+const unit = getInitialUnits(props.model, props.initialId);
+const description = getInitialDescription(props.model, props.initialId);
 
 const sourceOpen = ref(false);
 

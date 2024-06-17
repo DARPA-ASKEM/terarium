@@ -55,10 +55,13 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import { addDefaultConfiguration, updateModelConfiguration } from '@/services/model-configurations';
+import {
+	addDefaultConfiguration,
+	updateModelConfiguration
+} from '@/services/model-configurations-legacy';
 import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
+import { AssetType, type Model, type ModelConfigurationLegacy } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
@@ -84,7 +87,7 @@ const emit = defineEmits([
 ]);
 
 const model = ref<Model | null>(null);
-const modelConfigurations = ref<ModelConfiguration[]>([]);
+const modelConfigurations = ref<ModelConfigurationLegacy[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
@@ -166,7 +169,7 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
+async function updateConfiguration(updatedConfiguration: ModelConfigurationLegacy) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');

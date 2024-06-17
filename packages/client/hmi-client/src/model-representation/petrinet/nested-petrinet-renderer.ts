@@ -74,12 +74,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			d.matrixRows = matrixRowLen;
 			d.matrixCols = matrixColLen;
 
-			// FIXME: Consider rendering 1x1 matrices as a regular transition instead
-			d.data.isStratified = true;
+			if (matrixRowLen > 1 || matrixColLen > 1) d.data.isStratified = true;
 
 			// Initialize aspectRatio to 1 in case the matrix is square or empty
 			d.aspectRatio = 1;
-
 			// Check and set the aspect ratio based on the dimensions of the matrix
 			if (matrixRowLen > matrixColLen) {
 				d.aspectRatio = matrixColLen / matrixRowLen;
@@ -99,22 +97,12 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		});
 
 		const species = selection.filter((d) => d.data.type === NodeType.State);
-		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
-
-		// transitions
-		transitions
-			.append('rect')
-			.classed('shape selectableNode', true)
-			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
-			.attr('height', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.height : d.height))
-			.attr('x', (d) => ((d.aspectRatio ?? 1) >= 1 ? -d.width * 0.5 : -d.width * 0.5))
-			.attr('y', (d) => -d.height * 0.5)
-			// .attr('rx', 6)
-			// .attr('ry', 6)
-			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
-			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1);
+		const stratifiedTransitions = selection.filter(
+			(d) => d.data.type === NodeType.Transition && d.data.isStratified === true
+		);
+		const transitions = selection.filter(
+			(d) => d.data.type === NodeType.Transition && !d.data.isStratified
+		);
 
 		// species
 		species
@@ -127,6 +115,71 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
+
+		// transitions
+		transitions
+			.append('rect')
+			.classed('shape selectableNode', true)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', (d) =>
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
+			)
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
+
+		// transitions label text
+		transitions
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.html((d) => d.id);
+
+		// transitions expression text
+		transitions
+			.append('text')
+			.attr('y', (d) => -d.height / 2 - 8)
+			.classed('latex-fontt', true)
+			.style('font-style', 'italic')
+			.style('font-size', FONT_SIZE_SMALL)
+			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '3px')
+			.style('stroke-linecap', 'butt')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.html((d) => {
+				if (d.data.expression) return d.data.expression;
+				return '';
+			});
+
+		// stratified transitions
+		stratifiedTransitions
+			.append('rect')
+			.classed('shape selectableNode', true)
+			.attr('width', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.width : d.width))
+			.attr('height', (d) => ((d.aspectRatio ?? 1) >= 1 ? d.height : d.height))
+			.attr('x', (d) => ((d.aspectRatio ?? 1) >= 1 ? -d.width * 0.5 : -d.width * 0.5))
+			.attr('y', (d) => -d.height * 0.5)
+			// .attr('rx', 6)
+			// .attr('ry', 6)
+			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
 
 		const renderNestedNodes = (
 			node: { [baseNodeId: string]: any },
@@ -176,7 +229,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			renderNestedNodes(nestedMap, parentRadius, 0, 0, g, idx, 1);
 		});
 
-		transitions.each((d, idx, g) => {
+		stratifiedTransitions.each((d, idx, g) => {
 			const transitionMatrix = this.transitionMatrices?.[d.id] ?? [];
 
 			const matrixRowLen = transitionMatrix.length;
@@ -201,62 +254,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 							.attr('stroke', '#ffffff')
 							.attr('stroke-width', 1);
 					}
-					// Draw label for number of columns
-					// transitionNode
-					// 	.append('text')
-					// 	.attr('x', 0)
-					// 	.attr('y', -d.height * 0.6)
-					// 	.attr('text-anchor', 'middle') // This will center-align the text horizontally
-					// 	.text(matrixColLen)
-					// 	.style('fill', '#cccccc')
-					// 	.style('font-size', '7px');
-
-					// Draw label for number of rows
-					// transitionNode
-					// 	.append('text')
-					// 	.attr('x', (-d.width * d.aspectRatio!) / 2 - 8)
-					// 	.attr('y', (-d.height * d.aspectRatio!) / 2 + 12)
-					// 	.attr('text-anchor', 'right') // This will center-align the text horizontally
-					// 	.text(matrixRowLen)
-					// 	.style('fill', '#cccccc')
-					// 	.style('font-size', '7px');
 				});
 			});
 		});
-
-		/* Don't show transition labels because we're showing matrices here */
-		// transitions label text
-		// transitions
-		// 	.append('text')
-		// 	.attr('y', () => 5)
-		// 	.style('text-anchor', 'middle')
-		// 	.style('paint-order', 'stroke')
-		// 	.style('fill', 'var(--text-color-primary')
-		// 	.style('pointer-events', 'none')
-		// 	.html((d) => d.id);
-
-		// transitions expression text
-		transitions
-			.append('text')
-			.attr('y', (d) => -d.height / 2 - 8)
-			.classed('latex-font', true)
-			.style('font-style', 'italic')
-			.style('font-size', FONT_SIZE_SMALL)
-			.style('text-anchor', 'middle')
-			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
-			.style('stroke-width', '3px')
-			.style('stroke-linecap', 'butt')
-			.style('fill', 'var(--text-color-primary')
-			.style('pointer-events', 'none')
-			.html((d) => {
-				if (!this.graph.amr) return '';
-				const rate = this.graph.amr.semantics.ode?.rates?.find((r) => r.target === d.id);
-				if (rate) {
-					return rate.expression;
-				}
-				return '';
-			});
 
 		// species text
 		species

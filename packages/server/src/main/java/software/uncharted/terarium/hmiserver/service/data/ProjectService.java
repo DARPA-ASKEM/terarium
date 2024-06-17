@@ -93,12 +93,12 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
 				return Schema.Permission.READ;
 			}
-			return Schema.Permission.NONE;
 		} catch (final Exception e) {
 			log.error("Error updating project", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		return Schema.Permission.NONE;
 	}
 
 	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
@@ -109,12 +109,12 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
 				return Schema.Permission.READ;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
 	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
@@ -125,12 +125,12 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.WRITE)) {
 				return Schema.Permission.WRITE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
 	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
@@ -141,11 +141,11 @@ public class ProjectService {
 			if (rebacUser.can(rebacProject, Schema.Permission.ADMINISTRATE)) {
 				return Schema.Permission.ADMINISTRATE;
 			}
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 		} catch (final Exception e) {
 			log.error("Error check project permission", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
+		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 }
