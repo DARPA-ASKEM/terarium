@@ -48,6 +48,7 @@
 				<tera-dataset-description
 					tabName="Description"
 					:dataset="dataset"
+					@fetch-dataset="fetchDataset"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
