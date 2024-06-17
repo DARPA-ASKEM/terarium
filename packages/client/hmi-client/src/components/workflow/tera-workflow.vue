@@ -217,7 +217,6 @@ import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
 import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
 import * as SimulateJuliaOp from '@/components/workflow/ops/simulate-julia/mod';
-import * as ModelTransformerOp from '@/components/workflow/ops/model-transformer/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -228,11 +227,9 @@ import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
 import * as CalibrateJuliaOp from '@/components/workflow/ops/calibrate-julia/mod';
 import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
-import * as ModelCouplingOp from '@/components/workflow/ops/model-coupling/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as DecapodesOp from '@/components/workflow/ops/decapodes/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
@@ -244,7 +241,6 @@ registry.registerOp(StratifyMiraOp);
 registry.registerOp(ModelFromCodeOp);
 registry.registerOp(SimulateEnsembleCiemssOp);
 registry.registerOp(DatasetOp);
-registry.registerOp(ModelTransformerOp);
 registry.registerOp(FunmanOp);
 registry.registerOp(ModelOp);
 registry.registerOp(ModelEditOp);
@@ -256,11 +252,9 @@ registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
-registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
-registry.registerOp(DecapodesOp);
 registry.registerOp(RegriddingOp);
 
 // Will probably be used later to save the workflow in the project
@@ -541,11 +535,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
-			},
-			{
-				label: DecapodesOp.operation.displayName,
-				disabled: true,
-				command: addOperatorToWorkflow(DecapodesOp)
 			}
 		]
 	},
@@ -555,10 +544,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
-			},
-			{
-				label: ModelCouplingOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelCouplingOp)
 			},
 			{ separator: true },
 			{
