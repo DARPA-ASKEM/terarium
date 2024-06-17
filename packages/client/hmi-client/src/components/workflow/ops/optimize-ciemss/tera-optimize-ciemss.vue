@@ -13,13 +13,16 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<h5>Constraints</h5>
+					<span> Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /> </span>
+
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
 						:index="index"
 						:constraint="cfg"
 						:model-state-and-obs-options="modelStateAndObsOptions"
+						@update-self="(config) => updateConstraintGroupForm(index, config)"
+						@delete-self="() => deleteConstraintGroupForm(index)"
 					/>
 					<Button
 						icon="pi pi-plus"
@@ -313,7 +316,8 @@ import {
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
 	getOptimizedInterventions,
-	defaultConstraintGroup
+	defaultConstraintGroup,
+	ConstraintGroup
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -363,6 +367,8 @@ const knobs = ref<BasicKnobs>({
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
+
+const constraintToolTip = 'TODO';
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
@@ -480,6 +486,22 @@ const addConstraintGroupForm = () => {
 	if (!state.constraintGroups) return;
 
 	state.constraintGroups.push(defaultConstraintGroup);
+	emit('update-state', state);
+};
+
+const deleteConstraintGroupForm = (index: number) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups.splice(index, 1);
+	emit('update-state', state);
+};
+
+const updateConstraintGroupForm = (index: number, config: ConstraintGroup) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups[index] = config;
 	emit('update-state', state);
 };
 
@@ -693,6 +715,14 @@ watch(
 }
 
 .form-section {
+	gap: var(--gap-1);
+	background-color: var(--surface-50);
+	flex-grow: 1;
+	padding: var(--gap);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
+	overflow: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;

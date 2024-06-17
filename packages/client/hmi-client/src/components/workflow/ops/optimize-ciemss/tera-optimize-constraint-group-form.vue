@@ -1,11 +1,29 @@
 <template>
 	<div class="container">
+		<div>
+			<InputText
+				v-if="isEditing"
+				v-model="config.name"
+				placeholder="Policy bounds"
+				@focusout="emit('update-self', config)"
+			/>
+			<h6 v-else>{{ props.constraint.name }}</h6>
+			<i
+				:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
+				:style="'cursor: pointer'"
+				@click="onEdit"
+			/>
+		</div>
+		<div class="trash-button-align">
+			<i class="trash-button pi pi-trash" @click="emit('delete-self')" />
+		</div>
 		<p>The average value of</p>
 		<Dropdown
 			class="p-inputtext-sm"
 			:options="modelStateAndObsOptions"
-			v-model="constraint.targetVariable"
+			v-model="config.targetVariable"
 			placeholder="Select"
+			@update:model-value="emit('update-self', config)"
 		/>
 		<p>at</p>
 		<Dropdown
@@ -16,27 +34,35 @@
 			]"
 			option-label="label"
 			option-value="value"
-			v-model="constraint.qoiMethod"
+			v-model="config.qoiMethod"
+			@update:model-value="emit('update-self', config)"
 		/>
 		<p>over the worst</p>
-		<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="constraint.riskTolerance" />
+		<InputNumber
+			class="p-inputtext-sm"
+			inputId="integeronly"
+			v-model="config.riskTolerance"
+			@focusout="emit('update-self', config)"
+		/>
 		<p>% of simulated outcomes</p>
 		<Dropdown
 			class="toolbar-button"
-			v-model="constraint.isMinimized"
+			v-model="config.isMinimized"
 			optionLabel="label"
 			optionValue="value"
 			:options="[
 				{ label: 'less than', value: true },
 				{ label: 'greater than', value: false }
 			]"
+			@update:model-value="emit('update-self', config)"
 		/>
 		<p>a threshold of</p>
 		<InputNumber
 			class="p-inputtext-sm"
-			v-model="constraint.threshold"
+			v-model="config.threshold"
 			:min-fraction-digits="1"
 			:max-fraction-digits="10"
+			@focusout="emit('update-self', config)"
 		/>
 	</div>
 </template>
@@ -53,9 +79,15 @@ const props = defineProps<{
 	modelStateAndObsOptions: string[];
 }>();
 
-// const emit = defineEmits(['update-self', 'delete-self']);
+const emit = defineEmits(['update-self', 'delete-self']);
 
-const constraint = ref<ConstraintGroup>(_.cloneDeep(props.constraint));
+const config = ref<ConstraintGroup>(_.cloneDeep(props.constraint));
+
+const isEditing = ref<boolean>(false);
+
+const onEdit = () => {
+	isEditing.value = !isEditing.value;
+};
 </script>
 
 <style scoped>
