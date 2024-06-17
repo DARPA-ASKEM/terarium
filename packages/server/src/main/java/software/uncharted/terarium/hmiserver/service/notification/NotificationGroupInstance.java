@@ -117,7 +117,7 @@ public class NotificationGroupInstance<T> {
 		sendNotification(msg, null, estimateT(), ProgressState.RUNNING);
 	}
 
-	public void sendMessage(final String msg, ProgressState state) {
+	public void sendMessage(final String msg, final ProgressState state) {
 		sendNotification(msg, null, estimateT(), state);
 	}
 
@@ -125,7 +125,7 @@ public class NotificationGroupInstance<T> {
 		sendNotification(msg, null, 1.0, ProgressState.COMPLETE);
 	}
 
-	public void sendFinalMessage(final String msg, ProgressState state) {
+	public void sendFinalMessage(final String msg, final ProgressState state) {
 		if (state.equals(ProgressState.ERROR) || state.equals(ProgressState.FAILED)) {
 			sendNotification(null, msg, 1.0, state);
 		} else {
