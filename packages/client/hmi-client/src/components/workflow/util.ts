@@ -3,6 +3,7 @@ import { DataseriesConfig, RunType, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
+import { useProjects } from '@/composables/project';
 
 // export const previewChartSize= (element: HTMLElement) => {
 // }
@@ -46,6 +47,13 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 		configurationChange
 	};
 };
+
+export const nodeMetadata = (node: WorkflowNode<any>) => ({
+	workflowId: node.workflowId,
+	workflowName: useProjects().getAssetName(node.workflowId),
+	nodeId: node.id,
+	nodeName: node.displayName
+});
 
 export interface GetTimespanParams {
 	dataset?: CsvAsset;
