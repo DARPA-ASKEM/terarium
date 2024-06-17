@@ -46,7 +46,6 @@ public class ModelConfigurationService
 		return super.createAsset(asset, hasWritePermission);
 	}
 
-
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
