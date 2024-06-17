@@ -86,7 +86,7 @@
 					/>
 					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
-						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
+						<tera-model-semantic-tables :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
