@@ -192,7 +192,7 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
-						<tera-optimize-chart
+						<!-- <tera-optimize-chart
 							:risk-results="riskResults[knobs.forecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.forecastRunId,
@@ -201,7 +201,7 @@
 							:target-variable="knobs.targetVariable[0]"
 							:size="chartSize"
 							:threshold="knobs.threshold"
-						/>
+						/> -->
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
@@ -254,7 +254,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
+// import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -281,7 +281,8 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	PolicyInterventions
+	PolicyInterventions,
+	OptimizeQoi
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -295,7 +296,6 @@ import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-fo
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
-	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
 	getOptimizedInterventions,
@@ -325,11 +325,6 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
-	qoiMethod: ContextMethods;
-	targetVariable: string;
-	riskTolerance: number;
-	threshold: number;
-	isMinimized: boolean;
 	forecastRunId: string;
 	optimizationRunId: string;
 	interventionType: InterventionTypes;
@@ -341,11 +336,6 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
-	qoiMethod: props.node.state.constraintGroups[0].qoiMethod ?? ContextMethods.max,
-	targetVariable: props.node.state.constraintGroups[0].targetVariable ?? [],
-	riskTolerance: props.node.state.constraintGroups[0].riskTolerance ?? 0,
-	threshold: props.node.state.constraintGroups[0].threshold ?? 0, // currently not used.
-	isMinimized: props.node.state.constraintGroups[0].isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	interventionType: props.node.state.interventionType ?? ''
@@ -412,7 +402,7 @@ const outputs = computed(() => {
 
 const isRunDisabled = computed(() => {
 	if (
-		knobs.value.targetVariable.length === 0 ||
+		props.node.state.constraintGroups.length === 0 ||
 		props.node.state.interventionPolicyGroups.length === 0
 	)
 		return true;
@@ -539,6 +529,13 @@ const runOptimize = async () => {
 		paramValues
 	};
 
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3887
+	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
+	const qoi: OptimizeQoi = {
+		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
+		method: props.node.state.constraintGroups[0].qoiMethod
+	};
+
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -548,19 +545,16 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		policyInterventions: optimizeInterventions,
-		qoi: {
-			contexts: [knobs.value.targetVariable],
-			method: knobs.value.qoiMethod
-		},
-		riskBound: knobs.value.threshold,
+		qoi,
+		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3887
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
-			isMinimized: knobs.value.isMinimized,
+			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - knobs.value.riskTolerance) / 100,
+			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
@@ -633,14 +627,9 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
-		state.constraintGroups[0].targetVariable = knobs.value.targetVariable[0];
-		state.constraintGroups[0].riskTolerance = knobs.value.riskTolerance;
-		state.constraintGroups[0].threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.interventionType = knobs.value.interventionType;
-		state.constraintGroups[0].isMinimized = knobs.value.isMinimized;
-		state.constraintGroups[0].qoiMethod = knobs.value.qoiMethod;
 		emit('update-state', state);
 	},
 	{ deep: true }
