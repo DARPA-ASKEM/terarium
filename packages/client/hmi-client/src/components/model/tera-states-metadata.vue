@@ -1,6 +1,6 @@
 <template>
 	<ul>
-		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="baseState.id">
+		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="index">
 			<template v-if="isVirtual">
 				<tera-state-metadata-entry
 					:state="baseState"

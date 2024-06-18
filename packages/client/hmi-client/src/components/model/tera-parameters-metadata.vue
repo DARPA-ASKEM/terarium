@@ -2,7 +2,7 @@
 	<ul>
 		<li
 			v-for="({ baseParameter, childParameters, isVirtual }, index) in parameterList"
-			:key="baseParameter.id"
+			:key="index"
 		>
 			<template v-if="isVirtual">
 				<tera-parameter-metadata-entry
