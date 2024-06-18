@@ -132,12 +132,11 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<InputText
-									disabled
-									class="p-inputtext-sm"
-									inputId="integeronly"
-									value="basinhopping"
-								/>
+								<InputText disabled class="p-inputtext-sm" value="basinhopping" />
+							</div>
+							<div class="label-and-input">
+								<label>Minimizer method</label>
+								<InputText disabled class="p-inputtext-sm" value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
