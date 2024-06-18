@@ -65,7 +65,9 @@ const emit = defineEmits(['update-parameter']);
 
 const parameters = computed(() => getParameters(props.model));
 const collapsedParameters = computed(() => collapseParameters(props.mmt, props.mmtParams));
-const parameterList = computed(() =>
+const parameterList = computed<
+	{ baseParameter: ModelParameter; childParameters: ModelParameter[]; isVirtual: boolean }[]
+>(() =>
 	Array.from(collapsedParameters.value.keys())
 		.flat()
 		.map((id) => {

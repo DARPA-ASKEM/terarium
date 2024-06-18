@@ -20,7 +20,6 @@
 				</ul>
 			</template>
 			<tera-state-metadata-entry
-				v-else
 				:state="baseState"
 				@update-state="$emit('update-state', { id: baseState.id, ...$event })"
 			/>
@@ -30,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { Model } from '@/types/Types';
+import { Model, PetriNetState, RegNetVertex } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
@@ -45,7 +44,13 @@ const emit = defineEmits(['update-state']);
 
 const states = computed(() => getStates(props.model)); // could be states, vertices, and stocks type
 const collapsedInitials = computed(() => collapseInitials(props.mmt));
-const stateList = computed(() =>
+const stateList = computed<
+	{
+		baseState: PetriNetState | RegNetVertex;
+		childStates: (PetriNetState | RegNetVertex)[];
+		isVirtual: boolean;
+	}[]
+>(() =>
 	Array.from(collapsedInitials.value.keys())
 		.flat()
 		.map((id) => {

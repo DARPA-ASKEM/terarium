@@ -48,7 +48,6 @@
 						</template>
 					</Toolbar>
 					<template v-if="model">
-						<tera-model-type-legend class="legend-anchor" :model="model" />
 						<div class="graph-container">
 							<div ref="graphElement" class="graph-element" />
 							<div class="legend">
@@ -122,7 +121,6 @@ import {
 	rawTemplatesSummary
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
-import TeraModelTypeLegend from './tera-model-type-legend.vue';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
@@ -175,6 +173,9 @@ async function renderGraph() {
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
+	} else {
+		graphLegendLabels.value = [];
+		graphLegendColors.value = [];
 	}
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
