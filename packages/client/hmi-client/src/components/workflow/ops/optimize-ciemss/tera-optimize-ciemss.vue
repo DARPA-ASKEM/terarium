@@ -301,7 +301,7 @@ import {
 	PolicyInterventions
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -585,7 +585,7 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-	const optResult = await makeOptimizeJobCiemss(optimizePayload);
+	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
 	state.optimizationRunId = '';

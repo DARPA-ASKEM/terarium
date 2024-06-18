@@ -1,8 +1,6 @@
 ## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -69,6 +67,3 @@ Estimated time to completion: [X] minutes
     2. `Initial variables` should have new stratifications
     3. `Parameters` should not have new stratifications
     4. `Transitions` should have new stratifications
-
-### 4. End test
-1. logout of the application 

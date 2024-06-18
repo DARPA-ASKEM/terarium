@@ -1,6 +1,6 @@
 ## Validate Model Configuration
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -52,7 +52,7 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 7. Verify that a _β:γ pairwise drilldown_ chart appears and selecting each of the rectangular regions (labelled `box<N>`) highlights a trajectory in the _Trajectory State_ chart (both the selected rectangle and highlighted trajectory should shared the same colour)
 8. Verify that the x-axis is labelled `β` with the same range as configured (`[0.4, 0.8]`) and ditto for the y-axis (`γ` and `[0.1, 0.3]`)
 9. Verify that every green rectangular region maps to a green trajectory which is always between `I = 0.0` and `I = 750.0`
-10. Click _X_ on the _drilldown_ chart should close it 
+10. Click _X_ on the _drilldown_ chart should close it
 
 ### 6. Tighten sanity check
 1. Lower the upper bound of the `Infected cap` constraint from `750.0` to `100.0` (this should restrict the regions of parameter space that can satisfy this sanity check)
@@ -69,9 +69,6 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 5. Verify that all parameter space regions are coloured green and map to trajectories that always decrease in value over time, within the simulated time range (i.e. `dS/dt <= 0`)
 
 ### 8. Create an impossible monotonicity constraint
-1. Change the direction of the `Sus` constraint from `Decreasing` to `Increasing` 
+1. Change the direction of the `Sus` constraint from `Decreasing` to `Increasing`
 2. Click _Run_ again
 3. Verify that all parameter space regions are coloured orange and all trajectories do not satisfy the new constraint, i.e. no combination of parameter values as input into the model produces outputs with `S` increasing over time
-
-### 5. End test
-1. Logout of the application 

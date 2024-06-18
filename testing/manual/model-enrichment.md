@@ -1,10 +1,8 @@
 ## Model enrichment with/without a document
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
-### 1. Begin test 
+### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
     email: qa@test.io
@@ -28,6 +26,3 @@ Estimated time to completion: [X] minutes
 1. Re do steps 1-2 from the above test, **3**
 2. Click `Extract variables` -> Select the uploaded document (`SIR.pdf`) -> Click `Use Document to extract variables`
 4. __Expected Result__: The process go through without any error (TODO: add more details on expected results)
-
-### 5. End test
-1. logout of the application 

@@ -1,8 +1,6 @@
 ## Compare Two Models
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -13,7 +11,7 @@ Estimated time to completion: [X] minutes
 2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Load some models to compare
-1. Switch to the Explorer 
+1. Switch to the Explorer
 2. Set the search mode to **Models**
 3. Search for **covid masking**
 4. __There is currently a bug where each model is duplicated and the first of each duplicate is broken. The second Bertozzi2020 model also returns an error message, but oddly it loads anyway__
@@ -31,15 +29,13 @@ Estimated time to completion: [X] minutes
 
 ### 4. Working with the Compare models drilldown: WIZARD
 1. The first thing you'll see is the **Wizard** tab.
-2. The first section `Overview` will probably say: Analyzing models metadata to generate a detailed comparison analysis.... 
+2. The first section `Overview` will probably say: Analyzing models metadata to generate a detailed comparison analysis....
 3. It should change to a full paragraph within ten seconds. If it doesn't there's a problem.
-4. Scroll down the page and confirm there are two columns, one for each model. Do the diagrams display correctly? Is there content in each row? 
+4. Scroll down the page and confirm there are two columns, one for each model. Do the diagrams display correctly? Is there content in each row?
 
 ### 5. Working with the Compare models drilldown: NOTEBOOK
 1. Switch to the **Notebook** tab.
 2. Type "Compare models" into the AI assistant (or try some of the other suggestions in the dropdown) and press the **Send** icon (or enter)
-3. It should generate some Python code. 
+3. It should generate some Python code.
 4. Click **Run**
 5. It should genearte a crazy looking hairball of a graph. Click on it to view it in a full screen image viewer, zoom in and out as required.
-
-
