@@ -95,12 +95,15 @@ onUnmounted(() => {
 	window.removeEventListener('beforeunload', saveChanges);
 });
 
+// Meant to run when we want to view a different model, like when we swtich outputs in the stratify operator
+// This is not to be used a refresh when saving a model
 watch(
 	() => props.model,
 	() => {
 		transientModel.value = cloneDeep(props.model);
 		updateMMT();
-	}
+	},
+	{ deep: true }
 );
 </script>
 
@@ -111,5 +114,11 @@ section {
 
 .clickable-tag:hover {
 	cursor: pointer;
+}
+
+:deep(.artifact-amount) {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
 }
 </style>
