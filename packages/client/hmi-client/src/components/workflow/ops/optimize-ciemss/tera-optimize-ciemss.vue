@@ -231,9 +231,9 @@
 								selectedRun: knobs.forecastRunId,
 								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
 							}"
-							:target-variable="props.node.state.constraintGroups[0].targetVariable"
+							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
 							:size="chartSize"
-							:threshold="props.node.state.constraintGroups[0].threshold"
+							:threshold="props.node.state.constraintGroups?.[0]?.threshold || undefined"
 						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
@@ -438,7 +438,7 @@ const outputs = computed(() => {
 
 const isRunDisabled = computed(() => {
 	if (
-		!props.node.state.constraintGroups[0]?.targetVariable ||
+		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
 		props.node.state.interventionPolicyGroups.length === 0
 	)
 		return true;
