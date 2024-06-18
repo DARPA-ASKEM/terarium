@@ -8,6 +8,7 @@
 		@update-output-port="(output: any) => emit('update-output-port', output)"
 		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		@update:selection="onSelection"
+		v-bind="$attrs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4">

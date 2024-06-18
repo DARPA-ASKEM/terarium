@@ -36,8 +36,8 @@
 		<tera-stratified-matrix-modal
 			v-if="matrixModalId"
 			:id="matrixModalId"
-			:mmt="props.mmt"
-			:mmt-params="props.mmtParams"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			is-read-only
 			@close-modal="matrixModalId = ''"
