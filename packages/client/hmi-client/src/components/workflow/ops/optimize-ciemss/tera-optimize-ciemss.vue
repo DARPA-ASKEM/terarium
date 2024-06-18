@@ -31,7 +31,41 @@
 					/>
 				</div>
 				<div class="form-section">
-					<h5>Settings</h5>
+					<h5>Intervention policy</h5>
+					<div>
+						<label>Intervention Type</label>
+						<Dropdown
+							class="p-inputtext-sm"
+							:options="[
+								{ label: 'parameter value', value: InterventionTypes.paramValue },
+								{ label: 'start time', value: InterventionTypes.startTime }
+							]"
+							option-label="label"
+							option-value="value"
+							v-model="knobs.interventionType"
+							placeholder="Select"
+						/>
+					</div>
+					<tera-intervention-policy-group-form
+						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
+						:key="idx"
+						:config="cfg"
+						:intervention-type="props.node.state.interventionType"
+						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
+						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
+					/>
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more interventions"
+							@click="addInterventionPolicyGroupForm"
+						/>
+					</div>
+				</div>
+				<div class="form-section">
+					<h5>Optimization settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
@@ -86,55 +120,6 @@
 						label="Hide additional options"
 						@click="toggleAdditonalOptions"
 					/>
-				</div>
-				<div class="form-section">
-					<h5>Intervention policy</h5>
-					<div>
-						<label>Intervention Type</label>
-						<Dropdown
-							class="p-inputtext-sm"
-							:options="[
-								{ label: 'parameter value', value: InterventionTypes.paramValue },
-								{ label: 'start time', value: InterventionTypes.startTime }
-							]"
-							option-label="label"
-							option-value="value"
-							v-model="knobs.interventionType"
-							placeholder="Select"
-						/>
-					</div>
-					<tera-intervention-policy-group-form
-						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
-						:key="idx"
-						:config="cfg"
-						:intervention-type="props.node.state.interventionType"
-						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
-						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
-					/>
-					<div>
-						<Button
-							icon="pi pi-plus"
-							class="p-button-sm p-button-text"
-							label="Add more interventions"
-							@click="addInterventionPolicyGroupForm"
-						/>
-					</div>
-				</div>
-				<div class="form-section">
-					<h5>Constraint</h5>
-					<div class="constraint-row">
-						<div class="label-and-input">
-							<label>Target-variable</label>
-							<MultiSelect
-								class="p-inputtext-sm"
-								:options="modelStateAndObsOptions"
-								v-model="knobs.targetVariable"
-								placeholder="Select"
-								filter
-							/>
-						</div>
-					</div>
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -269,7 +254,6 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
