@@ -39,6 +39,11 @@ public class ClientEventService {
 	private static final String CLIENT_USER_EVENT_EXCHANGE = "client-user-event-exchange";
 	private static final String CLIENT_ALL_USERS_EVENT_EXCHANGE = "client-all-users-event-exchange";
 
+	final ClientEvent<Void> HEART_BEAT_EVENT = ClientEvent.<Void>builder()
+			.type(ClientEventType.HEARTBEAT)
+			.data(null)
+			.build();
+
 	/**
 	 * Map of user id to the emitters for that user. Users can have multiple emitters if they have multiple tabs open or
 	 * multiple devices connected
@@ -73,6 +78,11 @@ public class ClientEventService {
 				userIdToEmitters.remove(user.getId());
 			}
 		});
+		try {
+			emitter.send(HEART_BEAT_EVENT);
+		} catch (IOException e) {
+			log.error("Error sending init heartbeat", e);
+		}
 		emitters.add(emitter);
 		userIdToEmitters.put(user.getId(), emitters);
 		return emitter;
@@ -244,10 +254,6 @@ public class ClientEventService {
 	 */
 	@Scheduled(fixedDelay = 5000L)
 	public void sendHeartbeat() {
-		final ClientEvent<Void> event = ClientEvent.<Void>builder()
-				.type(ClientEventType.HEARTBEAT)
-				.data(null)
-				.build();
-		sendToAllUsers(event);
+		sendToAllUsers(HEART_BEAT_EVENT);
 	}
 }
