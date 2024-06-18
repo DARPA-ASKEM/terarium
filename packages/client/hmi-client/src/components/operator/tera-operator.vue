@@ -62,7 +62,7 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import { useProjects } from '@/composables/project';
+import { activeProjectId } from '@/composables/activeProject';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -95,7 +95,7 @@ function openInNewWindow() {
 		name: RouteName.WorkflowNode,
 		params: {
 			nodeId: props.node.id,
-			projectId: useProjects().activeProject.value?.id,
+			projectId: activeProjectId.value,
 			workflowId: props.node.workflowId
 		}
 	}).href;
