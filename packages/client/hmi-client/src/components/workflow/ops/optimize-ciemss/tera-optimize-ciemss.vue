@@ -9,7 +9,9 @@
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-left>
-					<label>The model configuration will be optimized with the following settings</label>
+					<label class="center-label"
+						>The model configuration will be optimized with the following settings</label
+					>
 				</template>
 				<template #header-controls-right>
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
@@ -759,5 +761,9 @@ watch(
 	& > *:not(:first-child) {
 		flex: 1;
 	}
+}
+
+.center-label {
+	align-content: center;
 }
 </style>
