@@ -438,7 +438,7 @@ const outputs = computed(() => {
 
 const isRunDisabled = computed(() => {
 	if (
-		props.node.state.constraintGroups.length === 0 ||
+		!props.node.state.constraintGroups[0]?.targetVariable ||
 		props.node.state.interventionPolicyGroups.length === 0
 	)
 		return true;
