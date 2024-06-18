@@ -62,6 +62,7 @@ import TeraOperatorHeader from '@/components/operator/tera-operator-header.vue';
 import TeraOperatorInputs from '@/components/operator/tera-operator-inputs.vue';
 import TeraOperatorOutputs from '@/components/operator/tera-operator-outputs.vue';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
@@ -92,7 +93,11 @@ let resizeObserver: ResizeObserver | null = null;
 function openInNewWindow() {
 	const url = router.resolve({
 		name: RouteName.WorkflowNode,
-		params: { nodeId: props.node.id, workflowId: props.node.workflowId }
+		params: {
+			nodeId: props.node.id,
+			projectId: useProjects().activeProject.value?.id,
+			workflowId: props.node.workflowId
+		}
 	}).href;
 	floatingWindow.open(url);
 }

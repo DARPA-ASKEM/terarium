@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { watch, ref } from 'vue';
-import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
+import { Workflow, WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
 import TeraModelWorkflowWrapper from '@/components/workflow/ops/model/tera-model-workflow-wrapper.vue';
@@ -44,8 +44,13 @@ import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensem
 import TeraFunman from '@/components/workflow/ops/funman/tera-funman.vue';
 import teraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 import TeraCodeAssetWrapper from '@/components/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
+import { Project } from '@/types/Types';
 
-const props = defineProps<{ nodeId: string; workflowId: string }>();
+const props = defineProps<{
+	nodeId: WorkflowNode<any>['id'];
+	projectId: Project['id'];
+	workflowId: Workflow['id'];
+}>();
 
 const node = ref<WorkflowNode<any>>();
 
@@ -54,7 +59,7 @@ function isNodeType(type: OperationType): boolean {
 }
 
 async function updateNode() {
-	const workflow = await workflowService.getWorkflow(props.workflowId);
+	const workflow = await workflowService.getWorkflow(props.workflowId, props.projectId);
 	const foundNode = workflow.nodes.find((n) => n.id === props.nodeId);
 	if (foundNode) node.value = foundNode;
 }
