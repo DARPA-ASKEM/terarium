@@ -16,7 +16,6 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroup {
-	borderColour: string;
 	name: string;
 	parameter: string;
 	startTime: number;
@@ -60,7 +59,6 @@ export interface OptimizeCiemssOperationState extends BaseState {
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	borderColour: '#cee2a4',
 	name: 'Policy bounds',
 	parameter: '',
 	startTime: 0,
