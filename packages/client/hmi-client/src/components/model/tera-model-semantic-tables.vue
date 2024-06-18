@@ -2,6 +2,8 @@
 	<component
 		:is="tables"
 		:model="transientModel"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
 		@update-state="onUpdateState"
@@ -11,13 +13,15 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelType } from '@/services/model';
+import { getModelType, getMMT } from '@/services/model';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
 import {
 	updateState,
 	updateInitialMetadata,
@@ -32,6 +36,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
@@ -67,17 +73,35 @@ function onUpdateParameter(event: any) {
 	}
 }
 
+function updateMMT() {
+	getMMT(props.model).then((response) => {
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	});
+}
+
 // Apply changes to the model when the component unmounts or the user navigates away
 function saveChanges() {
 	emit('update-model', transientModel.value);
 }
 
-onMounted(() => window.addEventListener('beforeunload', saveChanges));
+onMounted(() => {
+	window.addEventListener('beforeunload', saveChanges);
+	updateMMT();
+});
 
 onUnmounted(() => {
 	saveChanges();
 	window.removeEventListener('beforeunload', saveChanges);
 });
+
+watch(
+	() => props.model,
+	() => {
+		transientModel.value = cloneDeep(props.model);
+		updateMMT();
+	}
+);
 </script>
 
 <style scoped>
