@@ -45,7 +45,7 @@ export async function init(): Promise<void> {
 
 	eventSource = new EventSource('/api/client-event', {
 		headers: {
-			Authorization: `Bearer ${authStore.token}`
+			Authorization: `Bearer ${authStore.getToken()}`
 		},
 		retry: 3000
 	});
