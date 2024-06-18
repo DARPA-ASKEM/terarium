@@ -197,7 +197,12 @@ import {
 	ModelConfigurationLegacy,
 	State
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import {
+	getTimespan,
+	chartActionsProxy,
+	drilldownChartSize,
+	nodeMetadata
+} from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -320,7 +325,7 @@ const runCalibrate = async () => {
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
-	const response = await makeCalibrateJobCiemss(calibrationRequest);
+	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
 
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);

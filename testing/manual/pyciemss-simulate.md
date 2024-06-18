@@ -1,13 +1,11 @@
 ## PyCIEMSS Simulate
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
+### Note
 Note: sampling combinations in PyCIEMSS can result in numerical instability, when this happens, you can:
 - Retry the simulation, or
 - Fiddle with the parameter distribution ranges, make the intervals larger or smaller
-
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -40,6 +38,3 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 1. Verify that you can go back and forth between the two outputs created
 2. Switch from the default solver to something else, rerun the simulation
 3. Verify that there are now three outputs associated with the operator and you can switch between these outputs
-
-### 6. End test
-1. logout of the application 

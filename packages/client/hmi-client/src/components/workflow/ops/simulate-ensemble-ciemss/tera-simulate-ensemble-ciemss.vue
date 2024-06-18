@@ -224,7 +224,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations-legacy';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -323,7 +323,7 @@ const runEnsemble = async () => {
 		engine: 'ciemss',
 		extra: { num_samples: numSamples.value }
 	};
-	const response = await makeEnsembleCiemssSimulation(params);
+	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressSimulationId = response.simulationId;
