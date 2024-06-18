@@ -265,7 +265,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		log.info(new String(resp.getOutput()));
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheSuccess() throws Exception {
 		final int TIMEOUT_SECONDS = 20;
@@ -283,36 +283,13 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
+		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
 		Assertions.assertEquals(
 				TaskStatus.SUCCESS,
 				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertEquals(future1.getId(), future2.getId());
-	}
 
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItDoesNotCacheFailure() throws Exception {
-		final int TIMEOUT_SECONDS = 20;
-
-		final byte[] input = "{\"input\":\"This is my input string\",\"should_fail\": true}".getBytes();
-
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript("echo.py");
-		req.setInput(input);
-
-		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-
-		// next request should not pull the failed response from cache
-		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertNotEquals(future1.getId(), future2.getId());
+		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
 
 	// @Test

@@ -279,7 +279,8 @@ public class TaskService {
 			if (resp.getStatus() == TaskStatus.SUCCESS) {
 				try {
 					// add to the response cache
-					log.info("Writing SUCCESS response for task id {} to cache", resp.getId());
+					log.info("Writing SUCCESS response for task id {} to cache under SHA: {}", resp.getId(),
+							resp.getRequestSHA256());
 					responseCache.put(
 							resp.getRequestSHA256(),
 							resp,
@@ -393,6 +394,8 @@ public class TaskService {
 
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
+
+		log.info("Checking for cached response under SHA: {}", hash);
 
 		// check if there is an existing response for the hash
 		final TaskResponse resp = responseCache.get(hash);
