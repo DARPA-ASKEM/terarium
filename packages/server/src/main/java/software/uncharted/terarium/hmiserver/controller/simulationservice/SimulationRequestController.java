@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -42,7 +42,7 @@ import software.uncharted.terarium.hmiserver.proxies.simulationservice.Simulatio
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
@@ -66,7 +66,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final ProjectService projectService;
 	private final SimulationService simulationService;
 
-	private final ModelConfigurationLegacyService modelConfigService;
+	private final ModelConfigurationService modelConfigService;
 
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
@@ -165,27 +165,20 @@ public class SimulationRequestController implements SnakeCaseController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		// Get model config's interventions and append them to requests:
-		try {
-			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
+		final Optional<ModelConfiguration> modelConfiguration =
+				modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
+		if (modelConfiguration.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		final List<Intervention> modelInterventions =
+				modelConfiguration.get().getInterventions();
+		if (modelInterventions != null) {
+			List<Intervention> allInterventions = request.payload.getInterventions();
+			if (allInterventions == null) {
+				allInterventions = new ArrayList<>();
 			}
-			final List<Intervention> modelInterventions =
-					modelConfiguration.get().getInterventions();
-			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.payload.getInterventions();
-				if (allInterventions == null) {
-					allInterventions = new ArrayList<>();
-				}
-				allInterventions.addAll(modelInterventions);
-				request.payload.setInterventions(allInterventions);
-			}
-		} catch (final IOException e) {
-			final String error = "Server error has occured while fetching the model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			allInterventions.addAll(modelInterventions);
+			request.payload.setInterventions(allInterventions);
 		}
 
 		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
@@ -263,27 +256,20 @@ public class SimulationRequestController implements SnakeCaseController {
 			@RequestParam("project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-		// Get model config's interventions and append them to requests:
-		try {
-			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
+		final Optional<ModelConfiguration> modelConfiguration =
+				modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
+		if (modelConfiguration.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		final List<Intervention> modelInterventions =
+				modelConfiguration.get().getInterventions();
+		if (modelInterventions != null) {
+			List<Intervention> allInterventions = request.payload.getInterventions();
+			if (allInterventions == null) {
+				allInterventions = new ArrayList<>();
 			}
-			final List<Intervention> modelInterventions =
-					modelConfiguration.get().getInterventions();
-			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.payload.getInterventions();
-				if (allInterventions == null) {
-					allInterventions = new ArrayList<>();
-				}
-				allInterventions.addAll(modelInterventions);
-				request.payload.setInterventions(allInterventions);
-			}
-		} catch (final IOException e) {
-			final String error = "Server error has occured while fetching the model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			allInterventions.addAll(modelInterventions);
+			request.payload.setInterventions(allInterventions);
 		}
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
@@ -310,27 +296,20 @@ public class SimulationRequestController implements SnakeCaseController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
-		// Get model config's interventions and append them to requests:
-		try {
-			final Optional<ModelConfigurationLegacy> modelConfiguration =
-					modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
-			if (modelConfiguration.isEmpty()) {
-				return ResponseEntity.notFound().build();
+		final Optional<ModelConfiguration> modelConfiguration =
+				modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
+		if (modelConfiguration.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		}
+		final List<Intervention> modelInterventions =
+				modelConfiguration.get().getInterventions();
+		if (modelInterventions != null) {
+			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
+			if (allInterventions == null) {
+				allInterventions = new ArrayList<>();
 			}
-			final List<Intervention> modelInterventions =
-					modelConfiguration.get().getInterventions();
-			if (modelInterventions != null) {
-				List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
-				if (allInterventions == null) {
-					allInterventions = new ArrayList<>();
-				}
-				allInterventions.addAll(modelInterventions);
-				request.payload.setFixedStaticParameterInterventions(allInterventions);
-			}
-		} catch (final IOException e) {
-			final String error = "Server error has occured while fetching the model configuration";
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			allInterventions.addAll(modelInterventions);
+			request.payload.setFixedStaticParameterInterventions(allInterventions);
 		}
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))

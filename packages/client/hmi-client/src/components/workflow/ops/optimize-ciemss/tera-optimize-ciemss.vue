@@ -313,7 +313,8 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import {
 	getModelConfigurationById,
 	createModelConfiguration,
-	setInterventions
+	setInterventions,
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
@@ -338,7 +339,6 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
-import { getModel } from '@/services/model';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -522,7 +522,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = await getModel(modelConfiguration.value.modelId);
+	const model = await getAsConfiguredModel(modelConfiguration.value);
 
 	modelParameterOptions.value = model?.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id) ?? ([] as State[]);

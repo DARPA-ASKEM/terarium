@@ -39,7 +39,6 @@ watch(
 		if (!modelInputs[0].value) {
 			// Reset previous model cache
 			const state = cloneDeep(props.node.state);
-			state.tempConfigId = '';
 			emit('update-state', state);
 		}
 
