@@ -90,7 +90,7 @@
 						/>
 						<Button
 							v-if="showAdditionalOptions"
-							class="p-button-sm p-button-text w-3"
+							class="p-button-sm p-button-text"
 							label="Hide additional options"
 							@click="toggleAdditonalOptions"
 						/>
@@ -739,7 +739,7 @@ watch(
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-
+	padding-top: var(--gap);
 	& > * {
 		flex: 1;
 	}
