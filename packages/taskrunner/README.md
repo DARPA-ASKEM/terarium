@@ -27,11 +27,9 @@ Use the following as a reference for creating a taskrunner image:
 
 # Local Development:
 
-Everything is setup in the `docker-compose-taskrunner.yml` for local development. The docker-compose entries use the *builder* image and volume mounts the taskrunner directories into the running container. Both the java `taskrunner` package and the python repos will automatically pickup and local changes and hotswap accordingly.
+Everything is setup in the `docker-compose-taskrunner.yml` for local development. The docker-compose entries use the *builder* image and volume mounts the taskrunner directories into the running container. The python repos will automatically pickup and local changes and hotswap accordingly.
 
-This also runs an auxiliary container called `taskrunner-dev-builer` which re-builds the java code on changes.
-
-**NOTE: When starting these local images, it takes about a minute or so to build and start the java taskrunner.**
+**NOTE: When starting these local images, it takes about a minute or so to setup the python code and start the java taskrunner.**
 
 # Building docker images:
 

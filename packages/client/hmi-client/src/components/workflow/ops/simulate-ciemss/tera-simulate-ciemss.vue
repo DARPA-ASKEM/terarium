@@ -66,9 +66,30 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
-			<p>Under construction. Use the wizard for now.</p>
-		</section>
+		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+			<div class="toolbar">
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
+					</template>
+				</tera-notebook-jupyter-input>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+			</div>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initializeAceEditor"
+				lang="python"
+				theme="chrome"
+				style="flex-grow: 1; width: 100%"
+				class="ace-editor"
+			/>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
@@ -137,7 +158,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
@@ -149,10 +170,11 @@ import {
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -162,6 +184,11 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -169,9 +196,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+let editor: VAceEditorInstance['_editor'] | null;
+const codeText = ref('');
+
 const inferredParameters = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const llmThoughts = ref<any[]>([]);
+const llmQuery = ref('');
 
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -187,6 +219,15 @@ enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+};
 
 const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
@@ -214,6 +255,8 @@ const showSpinner = ref(false);
 const runResults = ref<{ [runId: string]: RunResults }>({});
 
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+const kernelManager = new KernelSessionManager();
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -276,7 +319,7 @@ const makeForecastRequest = async () => {
 		payload.extra.inferred_parameters = inferredParameters.value[0];
 	}
 
-	const response = await makeForecastJob(payload);
+	const response = await makeForecastJob(payload, nodeMetadata(props.node));
 	return response.id;
 };
 
@@ -290,6 +333,69 @@ const lazyLoadSimulationData = async (runId: string) => {
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
+};
+
+const buildJupyterContext = async () => {
+	const modelConfigId = props.node.inputs[0].value?.[0];
+	if (!modelConfigId) return;
+	try {
+		const jupyterContext = {
+			context: 'pyciemss',
+			language: 'python3',
+			context_info: {
+				model_config_id: modelConfigId
+			}
+		};
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			kernelManager
+				.sendMessage('get_simulate_request', {})
+				.register('any_get_simulate_reply', (data) => {
+					codeText.value = data.msg.content.return;
+				});
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+};
+
+const runCode = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	// TODO: Utilize the output of this request.
+	kernelManager
+		.sendMessage('execute_request', { messageContent })
+		.register('execute_input', (data) => {
+			console.log(data.content.code);
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('any_execute_reply', (data) => {
+			console.log(data);
+			// FIXME: save isnt working...but the idea is to save the simulation results to the HMI with this action
+			kernelManager
+				.sendMessage('save_results_to_hmi_request', { project_id: useProjects().activeProjectId })
+				.register('code_cell', (d) => {
+					console.log(d);
+				});
+		});
+};
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
 };
 
 watch(
@@ -315,9 +421,24 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onMounted(() => {
+	buildJupyterContext();
+});
+
+onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;

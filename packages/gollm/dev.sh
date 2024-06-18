@@ -9,4 +9,7 @@ pip install -e .
 echo "Running taskrunner"
 cd /taskrunner
 pip install -e .
-./gradlew --project-cache-dir /tmp/.gradle/$$ bootRun
+
+BUILD_DIR=/taskrunner-build-mira
+mkdir -p $BUILD_DIR
+./gradlew --project-cache-dir /tmp/.gradle/$$ -PcustomBuildDir=$BUILD_DIR bootRun
