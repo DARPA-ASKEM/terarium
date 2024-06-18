@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.controller;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.QueryParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;

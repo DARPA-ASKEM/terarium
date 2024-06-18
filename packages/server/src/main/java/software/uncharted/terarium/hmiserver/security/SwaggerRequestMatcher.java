@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.security;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -14,6 +10,11 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+
+import javax.annotation.PostConstruct;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
