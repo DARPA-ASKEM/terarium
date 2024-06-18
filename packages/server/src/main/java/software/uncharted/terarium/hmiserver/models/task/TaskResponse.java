@@ -1,11 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
-import java.io.Serializable;
-import java.util.UUID;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.io.Serializable;
+import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -35,5 +33,4 @@ public class TaskResponse implements Serializable {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
 	}
-
 }
