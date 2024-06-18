@@ -1,8 +1,6 @@
 ## Model edit
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -47,7 +45,7 @@ Estimated time to completion: [X] minutes
 2. In the Notebook tab copy the code.
 3. Select the original model output (first output).
 4. Paste the code into the Notebook view and click the 'Run' button
-5. Verify if your model edits from step 3 are reapplied. 
+5. Verify if your model edits from step 3 are reapplied.
 
 ### 7. Reset
 1. Make any model edits (you can follow step 3a again)
@@ -61,10 +59,7 @@ Estimated time to completion: [X] minutes
 4. Verify that the edit is applied correctly to the model and is reflected in the Wizard tab's decomposed view.
 5. If it didn't work, notify the Beaker developers about the code that was generated. There is also a chance that the prompt that the AI came up with lacked accuracy and couldn't possibly be applied to the model.
 
-### 9. Incompatible port connections 
+### 9. Incompatible port connections
 The following port combos should not connect if...
 - they are from the same template card
 - they are already connected
-
-### 10. End test
-1. Close the operator and logout of the application.

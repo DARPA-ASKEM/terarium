@@ -48,7 +48,7 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { SimulationRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import {
@@ -126,7 +126,7 @@ const startForecast = async (simulationIntervetions) => {
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
-	return makeForecastJobCiemss(simulationPayload);
+	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
 
 watch(

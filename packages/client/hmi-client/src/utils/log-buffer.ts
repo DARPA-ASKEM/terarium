@@ -17,7 +17,7 @@ const LOGS = axios.create({
 LOGS.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
-		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
 		return config;
 	},
 	(error) => {

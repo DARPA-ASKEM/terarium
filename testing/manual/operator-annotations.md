@@ -1,10 +1,8 @@
-## `[Operator Annotations]`
+## Operator Annotations
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
-### 1. Begin test 
+### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
     email: qa@test.io
@@ -23,7 +21,7 @@ Estimated time to completion: [X] minutes
 6. Tap ENTER when finished typing to accept changes.
 7. Click the pencil icon button in the model node to re-enter edit mode.
 8. Click the checkmark icon button to accept changes.
-9. __Expected Result__: The annotation entered via the text field should be added to the operator successfully by clicking Enter and/or by clicking the checkmark icon button. 
+9. __Expected Result__: The annotation entered via the text field should be added to the operator successfully by clicking Enter and/or by clicking the checkmark icon button.
 
 `[Task 2: Editing an annotation in an operator's workflow node]`
 1. Click the pencil icon button located at the end of the annotation text in the model node.
@@ -55,6 +53,3 @@ Estimated time to completion: [X] minutes
 1. Click the pencil icon button located at the end of the annotation text in the drill down header.
 2. Click the trash can icon button.
 3. __Expected Result__: The annotation should no longer be visible in the model operator drill down header. The "Add a note" button should now be visible and functional.
-
-### 3. End test
-1. logout of the application 
