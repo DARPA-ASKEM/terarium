@@ -20,6 +20,7 @@
 				</ul>
 			</template>
 			<tera-state-metadata-entry
+				v-else
 				:state="baseState"
 				@update-state="$emit('update-state', { id: baseState.id, ...$event })"
 			/>
