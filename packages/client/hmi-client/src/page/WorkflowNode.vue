@@ -1,6 +1,4 @@
 <template>
-	Project ID : {{ activeProjectId }}
-
 	<template v-if="node">
 		<tera-model-workflow-wrapper v-if="isNodeOfOperationType(OperationType.MODEL)" :node="node" />
 		<tera-stratify-mira
@@ -42,7 +40,10 @@
 		/>
 		<tera-funman v-else-if="isNodeOfOperationType(OperationType.FUNMAN)" :node="node" />
 		<tera-code-asset-wrapper v-else-if="isNodeOfOperationType(OperationType.CODE)" :node="node" />
-		<template v-else> {{ node }}</template>
+		<template v-else>
+			<p>This OperationType is not know!</p>
+			<pre>{{ node }}</pre>
+		</template>
 	</template>
 	<p v-else>Loading...</p>
 </template>
@@ -50,7 +51,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { Project } from '@/types/Types';
-import { activeProjectId } from '@/composables/activeProject';
 import { Workflow, WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
 import { getWorkflow } from '@/services/workflow';
 
