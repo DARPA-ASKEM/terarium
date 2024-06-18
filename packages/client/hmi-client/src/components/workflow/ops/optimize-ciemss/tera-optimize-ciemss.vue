@@ -14,7 +14,6 @@
 				</template>
 				<div class="form-section">
 					<span> Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /> </span>
-
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
