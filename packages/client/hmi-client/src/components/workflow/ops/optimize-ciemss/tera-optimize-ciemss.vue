@@ -88,57 +88,63 @@
 							label="Show additional options"
 							@click="toggleAdditonalOptions"
 						/>
+						<Button
+							v-if="showAdditionalOptions"
+							class="p-button-sm p-button-text w-3"
+							label="Hide additional options"
+							@click="toggleAdditonalOptions"
+						/>
 					</div>
-					<div v-if="showAdditionalOptions" class="input-row">
-						<div class="label-and-input">
-							<label>Number of samples to simulate model</label>
-							<div>
-								<InputNumber
+					<div v-if="showAdditionalOptions">
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Number of samples to simulate model</label>
+								<div>
+									<InputNumber
+										class="p-inputtext-sm"
+										inputId="integeronly"
+										v-model="knobs.numSamples"
+									/>
+								</div>
+							</div>
+							<div class="label-and-input">
+								<label>Solver method</label>
+								<Dropdown
 									class="p-inputtext-sm"
-									inputId="integeronly"
-									v-model="knobs.numSamples"
+									disabled
+									:options="['dopri5', 'euler']"
+									v-model="knobs.solverMethod"
+									placeholder="Select"
 								/>
 							</div>
 						</div>
-						<div class="label-and-input">
-							<label>Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								disabled
-								:options="['dopri5', 'euler']"
-								v-model="knobs.solverMethod"
-								placeholder="Select"
-							/>
+						<div class="input-row">
+							<h3>Optimizer options</h3>
+						</div>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Algorithm</label>
+								<InputText
+									disabled
+									class="p-inputtext-sm"
+									inputId="integeronly"
+									value="basinhopping"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label>Maxiter</label>
+								<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+							</div>
+							<div class="label-and-input">
+								<label>Maxfeval</label>
+								<InputNumber
+									class="p-inputtext-sm"
+									v-model="knobs.maxfeval"
+									inputId="integeronly"
+								/>
+							</div>
 						</div>
 					</div>
-					<div class="input-row">
-						<h3>Optimizer options</h3>
-					</div>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label>Algorithm</label>
-							<InputText
-								disabled
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								value="basinhopping"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
-						</div>
-					</div>
-					<Button
-						v-if="showAdditionalOptions"
-						class="p-button-sm p-button-text w-3"
-						label="Hide additional options"
-						@click="toggleAdditonalOptions"
-					/>
 				</div>
 			</tera-drilldown-section>
 		</section>
