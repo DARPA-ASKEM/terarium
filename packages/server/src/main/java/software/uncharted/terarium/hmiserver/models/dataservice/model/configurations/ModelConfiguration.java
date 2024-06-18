@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -11,9 +12,11 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -70,5 +73,19 @@ public class ModelConfiguration extends TerariumAsset {
 			}
 		}
 		return clone;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public List<Intervention> getInterventions() {
+		final List<Intervention> interventions = new ArrayList<>();
+		if (this.parameterSemanticList != null) {
+			for (final ParameterSemantic parameterSemantic : this.parameterSemanticList) {
+				if (parameterSemantic.getInterventions() != null) {
+					interventions.addAll(parameterSemantic.getInterventions());
+				}
+			}
+		}
+		return interventions;
 	}
 }

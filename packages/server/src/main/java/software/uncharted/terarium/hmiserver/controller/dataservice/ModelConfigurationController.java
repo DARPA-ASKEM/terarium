@@ -55,9 +55,6 @@ public class ModelConfigurationController {
 	final Messages messages;
 	final ProjectService projectService;
 
-	private static final String CONSTANT_TYPE = "Constant";
-	private static final String VALUE_PARAM = "value";
-
 	/**
 	 * Gets all model configurations (which are visible to this user)
 	 *
@@ -206,11 +203,7 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			setModelParameters(
-					model.get().getParameters(), modelConfiguration.get().getParameterSemanticList());
-			setModelInitials(model.get().getInitials(), modelConfiguration.get().getInitialSemanticList());
-			setModelObservables(
-					model.get().getObservables(), modelConfiguration.get().getObservableSemanticList());
+			ModelConfigurationService.createAMRFromConfiguration(model.get(), modelConfiguration.get());
 			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
@@ -433,67 +426,6 @@ public class ModelConfigurationController {
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 					messages.get("postgres.service-unavailable"));
-		}
-	}
-
-	private static void setModelParameters(
-			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
-		// Create a map from ConfigParameter IDs to ConfigParameter objects
-		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
-		for (final ParameterSemantic configParameter : configParameters) {
-			configParameterMap.put(configParameter.getReferenceId(), configParameter);
-		}
-
-		// Iterate through the list of ModelParameter objects
-		for (final ModelParameter modelParameter : modelParameters) {
-			// Look up the corresponding ConfigParameter in the map
-			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
-			if (matchingConfigParameter != null) {
-				// set distributions
-				if (CONSTANT_TYPE.equals(
-						matchingConfigParameter.getDistribution().getType())) {
-					modelParameter.setValue((Double) matchingConfigParameter
-							.getDistribution()
-							.getParameters()
-							.get(VALUE_PARAM));
-					modelParameter.setDistribution(null);
-				} else {
-					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
-				}
-			}
-		}
-	}
-
-	private static void setModelInitials(
-			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
-		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
-		for (final InitialSemantic configInitial : configInitials) {
-			configInitialMap.put(configInitial.getTarget(), configInitial);
-		}
-
-		for (final Initial modelInitial : modelInitials) {
-			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
-			if (matchingConfigInitial != null) {
-				modelInitial.setExpression(matchingConfigInitial.getExpression());
-				modelInitial.setExpressionMathml(matchingConfigInitial.getExpressionMathml());
-			}
-		}
-	}
-
-	private static void setModelObservables(
-			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
-		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
-		for (final ObservableSemantic configObservable : configObservables) {
-			configObservableMap.put(configObservable.getReferenceId(), configObservable);
-		}
-
-		for (final Observable modelObservable : modelObservables) {
-			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
-			if (matchingConfigObservable != null) {
-				modelObservable.setStates(matchingConfigObservable.getStates());
-				modelObservable.setExpression(matchingConfigObservable.getExpression());
-				modelObservable.setExpressionMathml(matchingConfigObservable.getExpressionMathml());
-			}
 		}
 	}
 }

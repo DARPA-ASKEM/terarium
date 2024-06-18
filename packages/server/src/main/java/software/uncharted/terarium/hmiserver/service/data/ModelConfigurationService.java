@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,9 @@ public class ModelConfigurationService
 			final S3ClientService s3ClientService) {
 		super(objectMapper, config, projectAssetService, repository, s3ClientService, ModelConfiguration.class);
 	}
+
+	private static final String CONSTANT_TYPE = "Constant";
+	private static final String VALUE_PARAM = "value";
 
 	@Override
 	protected String getAssetPath() {
@@ -148,5 +152,73 @@ public class ModelConfigurationService
 			parameterSemantics.add(parameterSemantic);
 		}
 		return parameterSemantics;
+	}
+
+	public static Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
+		setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
+		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
+		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
+		return model.clone();
+	}
+
+	private static void setModelParameters(
+			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
+		// Create a map from ConfigParameter IDs to ConfigParameter objects
+		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
+		for (final ParameterSemantic configParameter : configParameters) {
+			configParameterMap.put(configParameter.getReferenceId(), configParameter);
+		}
+
+		// Iterate through the list of ModelParameter objects
+		for (final ModelParameter modelParameter : modelParameters) {
+			// Look up the corresponding ConfigParameter in the map
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+			if (matchingConfigParameter != null) {
+				// set distributions
+				if (CONSTANT_TYPE.equals(
+						matchingConfigParameter.getDistribution().getType())) {
+					modelParameter.setValue((Double) matchingConfigParameter
+							.getDistribution()
+							.getParameters()
+							.get(VALUE_PARAM));
+					modelParameter.setDistribution(null);
+				} else {
+					modelParameter.setDistribution(matchingConfigParameter.getDistribution());
+				}
+			}
+		}
+	}
+
+	private static void setModelInitials(
+			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
+		for (final InitialSemantic configInitial : configInitials) {
+			configInitialMap.put(configInitial.getTarget(), configInitial);
+		}
+
+		for (final Initial modelInitial : modelInitials) {
+			final InitialSemantic matchingConfigInitial = configInitialMap.get(modelInitial.getTarget());
+			if (matchingConfigInitial != null) {
+				modelInitial.setExpression(matchingConfigInitial.getExpression());
+				modelInitial.setExpressionMathml(matchingConfigInitial.getExpressionMathml());
+			}
+		}
+	}
+
+	private static void setModelObservables(
+			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
+		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
+		for (final ObservableSemantic configObservable : configObservables) {
+			configObservableMap.put(configObservable.getReferenceId(), configObservable);
+		}
+
+		for (final Observable modelObservable : modelObservables) {
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
+			if (matchingConfigObservable != null) {
+				modelObservable.setStates(matchingConfigObservable.getStates());
+				modelObservable.setExpression(matchingConfigObservable.getExpression());
+				modelObservable.setExpressionMathml(matchingConfigObservable.getExpressionMathml());
+			}
+		}
 	}
 }

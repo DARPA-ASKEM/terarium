@@ -2,6 +2,7 @@ import API from '@/api/api';
 import type {
 	InitialSemantic,
 	Intervention,
+	Model,
 	ModelConfiguration,
 	ModelDistribution,
 	ObservableSemantic,
@@ -33,6 +34,15 @@ export const updateModelConfiguration = async (modelConfiguration: ModelConfigur
 	const response = await API.put(
 		`/model-configurations/${modelConfiguration.id}`,
 		modelConfiguration
+	);
+	return response?.data ?? null;
+};
+
+export const getAsConfiguredModel = async (
+	modelConfiguration: ModelConfiguration
+): Promise<Model> => {
+	const response = await API.get<Model>(
+		`model-configurations/as-configured-model/${modelConfiguration.id}`
 	);
 	return response?.data ?? null;
 };
