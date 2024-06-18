@@ -50,15 +50,12 @@
 					<template v-if="model">
 						<div class="graph-container">
 							<div ref="graphElement" class="graph-element" />
-							<div class="legend">
-								<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-									<div
-										class="legend-circle"
-										:style="`background: ${graphLegendColors[index]}`"
-									></div>
+							<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+								<li v-for="(label, index) in graphLegendLabels" :key="index">
+									<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
 									{{ label }}
-								</div>
-							</div>
+								</li>
+							</ul>
 						</div>
 					</template>
 				</section>
@@ -354,7 +351,7 @@ kbd {
 	font-weight: var(--font-weight-semibold);
 }
 
-.legend {
+ul.legend {
 	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
 	padding: var(--gap-xsmall) var(--gap-small);
@@ -367,32 +364,19 @@ kbd {
 	margin-bottom: var(--gap);
 	gap: var(--gap);
 	pointer-events: none;
+
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-xsmall);
+	}
 }
-.legend-item {
-	display: flex;
-	align-items: center;
-	gap: var(--gap-xsmall);
-}
+
 .legend-circle {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
 	border-radius: 50%;
-}
-
-.legend-anchor {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-glass);
-	backdrop-filter: blur(5px);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-	max-width: 95%;
 }
 
 .modal-input-container {
