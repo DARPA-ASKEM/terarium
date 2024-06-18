@@ -38,7 +38,10 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h5>Intervention policy</h5>
+					<h5>
+						Intervention policy
+						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
+					</h5>
 					<div>
 						<label>Intervention Type</label>
 						<Dropdown
@@ -72,7 +75,10 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h5>Optimization settings</h5>
+					<h5>
+						Optimization settings
+						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
@@ -369,7 +375,10 @@ const knobs = ref<BasicKnobs>({
 	interventionType: props.node.state.interventionType ?? ''
 });
 
-const constraintToolTip = 'TODO'; // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
+// TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
+const constraintToolTip = 'TODO';
+const interventionPolicyToolTip = 'TODO';
+const optimizeSettingsToolTip = 'TODO';
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
