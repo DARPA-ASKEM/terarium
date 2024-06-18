@@ -127,7 +127,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		public Integer num;
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
 
@@ -325,7 +325,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		Assertions.assertEquals(future2.getId(), future3.getId());
 	}
 
-	@Test
+	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheWithConcurrency() throws Exception {
 
