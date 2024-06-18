@@ -8,12 +8,15 @@
 	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-left>
+					<label>The model configuration will be optimized with the following settings</label>
+				</template>
 				<template #header-controls-right>
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<span> Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /> </span>
+					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -23,12 +26,14 @@
 						@update-self="(config) => updateConstraintGroupForm(index, config)"
 						@delete-self="() => deleteConstraintGroupForm(index)"
 					/>
-					<Button
-						icon="pi pi-plus"
-						class="p-button-sm p-button-text"
-						label="Add more constraints"
-						@click="addConstraintGroupForm"
-					/>
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more constraints"
+							@click="addConstraintGroupForm"
+						/>
+					</div>
 				</div>
 				<div class="form-section">
 					<h5>Intervention policy</h5>
@@ -86,7 +91,7 @@
 					</div>
 					<div v-if="showAdditionalOptions" class="input-row">
 						<div class="label-and-input">
-							<label>Number of samples</label>
+							<label>Number of samples to simulate model</label>
 							<div>
 								<InputNumber
 									class="p-inputtext-sm"
@@ -103,6 +108,20 @@
 								:options="['dopri5', 'euler']"
 								v-model="knobs.solverMethod"
 								placeholder="Select"
+							/>
+						</div>
+					</div>
+					<div class="input-row">
+						<h3>Optimizer options</h3>
+					</div>
+					<div class="input-row">
+						<div class="label-and-input">
+							<label>Algorithm</label>
+							<InputText
+								disabled
+								class="p-inputtext-sm"
+								inputId="integeronly"
+								value="basinhopping"
 							/>
 						</div>
 						<div class="label-and-input">
@@ -192,16 +211,17 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
-						<!-- <tera-optimize-chart
+						<!-- TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909 -->
+						<tera-optimize-chart
 							:risk-results="riskResults[knobs.forecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.forecastRunId,
-								selectedVariable: [knobs.targetVariable]
+								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
 							}"
-							:target-variable="knobs.targetVariable[0]"
+							:target-variable="props.node.state.constraintGroups[0].targetVariable"
 							:size="chartSize"
-							:threshold="knobs.threshold"
-						/> -->
+							:threshold="props.node.state.constraintGroups[0].threshold"
+						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
@@ -254,7 +274,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-// import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
+import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -341,7 +361,7 @@ const knobs = ref<BasicKnobs>({
 	interventionType: props.node.state.interventionType ?? ''
 });
 
-const constraintToolTip = 'TODO';
+const constraintToolTip = 'TODO'; // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
@@ -529,7 +549,7 @@ const runOptimize = async () => {
 		paramValues
 	};
 
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3887
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
 	const qoi: OptimizeQoi = {
 		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
@@ -546,7 +566,7 @@ const runOptimize = async () => {
 		},
 		policyInterventions: optimizeInterventions,
 		qoi,
-		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3887
+		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {

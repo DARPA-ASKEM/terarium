@@ -5,7 +5,7 @@
 				<InputText
 					v-if="isEditing"
 					v-model="config.name"
-					placeholder="Policy bounds"
+					placeholder="Constraint name"
 					@focusout="emit('update-self', config)"
 				/>
 				<h6 v-else>{{ props.constraint.name }}</h6>
