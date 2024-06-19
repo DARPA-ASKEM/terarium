@@ -222,13 +222,10 @@ public class ProjectController {
 			// Set the metadata for the project. If we are unable to get the metadata, we
 			// default to empty values.
 			try {
-				final List<ProjectAsset> assets =
-						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes, permission);
-
 				final Map<String, String> metadata = new HashMap<>();
 
 				final Map<AssetType, Integer> counts = new EnumMap<>(AssetType.class);
-				for (final ProjectAsset asset : assets) {
+				for (final ProjectAsset asset : project.getProjectAssets()) {
 					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
