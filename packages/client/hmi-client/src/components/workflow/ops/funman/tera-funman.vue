@@ -49,7 +49,7 @@
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number
+								<tera-input
 									class="w-2"
 									:min="0"
 									:max="1"
@@ -170,7 +170,7 @@ import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';

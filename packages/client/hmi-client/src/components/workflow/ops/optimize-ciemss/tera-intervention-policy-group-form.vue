@@ -40,7 +40,7 @@
 			</div>
 			<div class="label-and-input">
 				<label for="initial-guess">Initial guess</label>
-				<tera-input-number
+				<tera-input
 					class="p-inputtext-sm"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
@@ -53,7 +53,7 @@
 		<div class="input-row">
 			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
-				<tera-input-number
+				<tera-input
 					class="p-inputtext-sm"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
@@ -63,7 +63,7 @@
 			</div>
 			<div class="label-and-input">
 				<label for="upper-bound">Upper bound</label>
-				<tera-input-number
+				<tera-input
 					class="p-inputtext-sm"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
@@ -102,7 +102,7 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 import {
 	InterventionPolicyGroup,
