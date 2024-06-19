@@ -14,15 +14,10 @@ import lombok.experimental.Accessors;
 public class TaskFuture implements Serializable {
 
 	protected UUID id;
-	protected TaskResponse latestResponse;
 	protected CompletableFuture<TaskResponse> future;
 
 	public UUID getId() {
 		return id;
-	}
-
-	public synchronized TaskResponse poll() {
-		return latestResponse;
 	}
 
 	public TaskResponse get() throws InterruptedException, ExecutionException {

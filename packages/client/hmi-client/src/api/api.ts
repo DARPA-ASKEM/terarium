@@ -25,7 +25,7 @@ const API = axios.create({
 API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
-		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
 		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
 		const projectId = activeProjectId.value || getProjectIdFromUrl();
 		if (projectId) {
@@ -289,7 +289,7 @@ export class TaskHandler {
 		try {
 			this.eventSource = new EventSource(API.defaults.baseURL + this.url, {
 				headers: {
-					Authorization: `Bearer ${authStore.token}`
+					Authorization: `Bearer ${authStore.getToken()}`
 				},
 				retry: 3000
 			});

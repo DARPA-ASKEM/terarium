@@ -3,6 +3,8 @@ import {
 	ClientEvent,
 	ClientEventType,
 	ProgressState,
+	SimulationEngine,
+	SimulationNotificationData,
 	StatusUpdate,
 	TaskResponse,
 	TaskStatus
@@ -115,6 +117,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 					notificationGroupId: event.notificationGroupId ?? '',
 					projectId: event.projectId,
 					type: event.type,
+					typeDisplayName: snakeToCapitalSentence(event.type),
 					lastUpdated,
 					acknowledged: false,
 					supportCancel: false,
@@ -141,6 +144,7 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
 		created.pageType = AssetType.Document;
+		created.typeDisplayName = 'PDF Extraction';
 		getDocumentAsset(created.assetId, created.projectId).then((document) =>
 			Object.assign(created, { sourceName: document?.name || '' })
 		);
@@ -183,6 +187,18 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			Object.assign(created, { context: workflow?.name || '' })
 		);
 	});
+	registerHandler<StatusUpdate<SimulationNotificationData>>(
+		ClientEventType.SimulationNotification,
+		(event, created) => {
+			created.supportCancel = event.data.data.simulationEngine === SimulationEngine.Ciemss;
+			created.sourceName = event.data.data.metadata?.nodeName || '';
+			created.assetId = event.data.data.metadata?.workflowId || '';
+			created.pageType = AssetType.Workflow;
+			created.nodeId = event.data.data.metadata?.nodeId || '';
+			created.context = event.data.data.metadata?.workflowName || '';
+			created.typeDisplayName = `${snakeToCapitalSentence(event.data.data.simulationType)} (${event.data.data.simulationEngine.toLowerCase()})`;
+		}
+	);
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 
