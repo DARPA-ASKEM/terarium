@@ -117,13 +117,16 @@ const startForecast = async (simulationIntervetions) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
-		interventions: simulationIntervetions,
 		extra: {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod
 		},
 		engine: 'ciemss'
 	};
+	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
+	if (simulationIntervetions) {
+		simulationPayload.interventions = simulationIntervetions;
+	}
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
@@ -139,13 +142,16 @@ watch(
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
 			const simulationIntervetions = await getOptimizedInterventions(optId);
-			const forecastResponse = await startForecast(simulationIntervetions);
-			const forecastId = forecastResponse.id;
+			const preForecastResponce = await startForecast(undefined);
+			const preForecastId = preForecastResponce.id;
+			const postForecastResponce = await startForecast(simulationIntervetions);
+			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
 			state.optimizationRunId = optId;
-			state.inProgressPostForecastId = forecastId;
+			state.inProgressPreForecastId = preForecastId;
+			state.inProgressPostForecastId = postForecastId;
 			emit('update-state', state);
 		}
 	},
@@ -153,22 +159,25 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressPostForecastId,
-	async (simId) => {
-		if (!simId || simId === '') return;
+	() => [props.node.state.inProgressPreForecastId, props.node.state.inProgressPostForecastId],
+	async ([preSimId, postSimId]) => {
+		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
 
-		const response = await pollResult(simId);
-		if (response.state === PollerState.Done) {
+		const preResponse = await pollResult(preSimId);
+		const postResponse = await pollResult(postSimId);
+		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
+			state.inProgressPreForecastId = '';
+			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
-			state.postForecastRunId = simId;
+			state.postForecastRunId = postSimId;
 			emit('update-state', state);
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
 				label: `Simulation output - ${props.node.outputs.length + 1}`,
-				value: [simId],
+				value: [postSimId],
 				isSelected: false,
 				state
 			});
