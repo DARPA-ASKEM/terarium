@@ -4,7 +4,6 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
 				ref="inputField"
-				v-bind="$attrs"
 				:value="getValue()"
 				@input="updateValue"
 				:style="{ 'text-align': textAlign }"
