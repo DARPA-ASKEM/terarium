@@ -303,7 +303,8 @@ import {
 	setInitialSource,
 	setInitialExpression,
 	setParameterSource,
-	setParameterDistributions
+	setParameterDistributions,
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration } from '@/types/Types';
@@ -330,9 +331,9 @@ const menuItems = computed(() => [
 	{
 		label: 'Download',
 		icon: 'pi pi-download',
-		disabled: isSaveDisabled,
+		disabled: isSaveDisabled.value,
 		command: () => {
-			// downloadConfiguredModel();
+			downloadConfiguredModel();
 		}
 	}
 ]);
@@ -596,20 +597,18 @@ const numInitials = computed(() => {
 // 	}
 // };
 
-// const downloadConfiguredModel = async () => {
-// 	const rawModel = knobs.value?.transientModelConfig?.configuration;
-// 	if (rawModel) {
-// 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
-// 		const a = document.createElement('a');
-// 		a.href = `data:${data}`;
-// 		a.download = `${
-// 			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
-// 		}.json`;
-// 		a.innerHTML = 'download JSON';
-// 		a.click();
-// 		a.remove();
-// 	}
-// };
+const downloadConfiguredModel = async () => {
+	const rawModel = await getAsConfiguredModel(knobs.value?.transientModelConfig);
+	if (rawModel) {
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
+		const a = document.createElement('a');
+		a.href = `data:${data}`;
+		a.download = `${knobs.value?.transientModelConfig.name ?? 'configured_model'}.json`;
+		a.innerHTML = 'download JSON';
+		a.click();
+		a.remove();
+	}
+};
 
 const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
