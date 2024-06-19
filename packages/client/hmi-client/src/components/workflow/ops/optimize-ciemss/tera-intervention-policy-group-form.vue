@@ -43,8 +43,6 @@
 				<tera-input
 					class="p-inputtext-sm"
 					type="number"
-					:min-fraction-digits="1"
-					:max-fraction-digits="10"
 					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -57,8 +55,6 @@
 				<tera-input
 					class="p-inputtext-sm"
 					type="number"
-					:min-fraction-digits="1"
-					:max-fraction-digits="10"
 					v-model="config.lowerBound"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -68,8 +64,6 @@
 				<tera-input
 					type="number"
 					class="p-inputtext-sm"
-					:min-fraction-digits="1"
-					:max-fraction-digits="10"
 					v-model="config.upperBound"
 					@update:model-value="emit('update-self', config)"
 				/>
@@ -89,8 +83,6 @@
 				<InputNumber
 					:disabled="props.interventionType == InterventionTypes.paramValue"
 					class="p-inputtext-sm"
-					:min-fraction-digits="1"
-					:max-fraction-digits="10"
 					v-model="config.paramValue"
 					@update:model-value="emit('update-self', config)"
 				/>

@@ -57,8 +57,6 @@
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
-					:min-fraction-digits="3"
-					:max-fraction-digits="3"
 					v-model="weights[index]"
 					@update:model-value="updateChanges()"
 				/>
@@ -117,8 +115,6 @@
 					class="p-inputtext-md"
 					type="number"
 					v-model="lowerBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
@@ -130,8 +126,6 @@
 					class="p-inputtext-md"
 					type="number"
 					v-model="upperBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
 					@update:model-value="updateChanges()"
 				/>
 			</div>
