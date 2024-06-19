@@ -211,12 +211,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
-    configuration: Model;
-    interventions?: Intervention[];
-    model_id: string;
-}
-
 export interface ModelDescription {
     id: string;
     header: ModelHeader;
