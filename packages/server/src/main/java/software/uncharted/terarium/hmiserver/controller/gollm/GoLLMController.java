@@ -537,10 +537,6 @@ public class GoLLMController {
 												@io.swagger.v3.oas.annotations.media.Schema(
 														implementation = TaskResponse.class))),
 				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model arguments are not found",
-						content = @Content),
-				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue dispatching the request",
 						content = @Content)
