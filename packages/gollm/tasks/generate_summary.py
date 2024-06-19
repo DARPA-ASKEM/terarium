@@ -18,7 +18,7 @@ def main():
         taskrunner.log("Generating a response from input")
 
         taskrunner.log("Sending request to OpenAI API")
-        response = generate_response(model_cards=input_str)
+        response = generate_response(instruction=input_str)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

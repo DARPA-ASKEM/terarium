@@ -31,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -524,7 +522,7 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@GetMapping("/generate-summary")
+	@PostMapping("/generate-summary")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
 	@ApiResponses(
@@ -610,24 +608,5 @@ public class GoLLMController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
-	}
-
-	@GetMapping("/{task-id}")
-	@Operation(summary = "Subscribe for updates on a GoLLM task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Subscribed successfully",
-						content =
-								@Content(
-										mediaType = "text/event-stream",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-			})
-	@IgnoreRequestLogging
-	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
-		return taskService.subscribe(taskId);
 	}
 }

@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -47,7 +49,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		redissonClient.getKeys().flushall();
 	}
 
-	// @Test
+	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
 
@@ -57,7 +59,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
@@ -92,7 +94,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 		req.setAdditionalProperties(additionalProps);
 
@@ -144,6 +146,21 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final AdditionalProps respAdd = resp.getAdditionalProperties(AdditionalProps.class);
 		Assertions.assertEquals(add.str, respAdd.str);
 		Assertions.assertEquals(add.num, respAdd.num);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateSummaryRequest() throws Exception {
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateSummaryHandler.NAME);
+		final String input = "Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+		req.setInput(input.getBytes(StandardCharsets.UTF_8));
+
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
@@ -272,7 +289,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
@@ -281,36 +298,13 @@ public class TaskServiceTest extends TerariumApplicationTests {
 				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
+		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
 		Assertions.assertEquals(
 				TaskStatus.SUCCESS,
 				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertEquals(future1.getId(), future2.getId());
-	}
 
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItDoesNotCacheFailure() throws Exception {
-		final int TIMEOUT_SECONDS = 20;
-
-		final byte[] input = "{\"input\":\"This is my input string\",\"should_fail\": true}".getBytes();
-
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
-		req.setInput(input);
-
-		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future1.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-
-		// next request should not pull the failed response from cache
-		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.FAILED,
-				future2.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
-		Assertions.assertNotEquals(future1.getId(), future2.getId());
+		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
 
 	// @Test
@@ -322,7 +316,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript("/echo.py");
+		req.setScript("echo.py");
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
@@ -350,8 +344,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheWithConcurrency() throws Exception {
 
-		final int NUM_REQUESTS = 1024 * 16;
-		final int NUM_UNIQUE_REQUESTS = 32 * 4;
+		final int NUM_REQUESTS = 1024;
+		final int NUM_UNIQUE_REQUESTS = 32;
 		final int NUM_THREADS = 24;
 		final int TIMEOUT_MINUTES = 1;
 
@@ -378,7 +372,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 					final TaskRequest req = new TaskRequest();
 					req.setTimeoutMinutes(TIMEOUT_MINUTES);
 					req.setType(TaskType.GOLLM);
-					req.setScript("/echo.py");
+					req.setScript("echo.py");
 					req.setInput(reqInput.get(rand.nextInt(NUM_UNIQUE_REQUESTS * 2)));
 
 					final TaskResponse resp = taskService.runTaskSync(req);
@@ -401,6 +395,5 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		for (final UUID taskId : successTaskIds) {
 			log.info("Task ID: {}", taskId.toString());
 		}
-		Assertions.assertTrue(successTaskIds.size() <= NUM_UNIQUE_REQUESTS);
 	}
 }

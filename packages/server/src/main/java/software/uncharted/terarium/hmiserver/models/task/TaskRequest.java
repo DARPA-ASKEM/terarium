@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.task;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -66,7 +66,7 @@ public class TaskRequest implements Serializable {
 		return objectMapper.readValue(objectMapper.writeValueAsString(additionalProperties), type);
 	}
 
-	@JsonIgnore
+	@JsonProperty("requestSHA256")
 	public String getSHA256() {
 		try {
 			// NOTE: do not include the task id in this hash, we want to determine if the
