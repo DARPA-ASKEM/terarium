@@ -27,6 +27,7 @@ public class TaskResponse implements Serializable {
 
 	private String stdout;
 	private String stderr;
+	private String requestSHA256;
 
 	public <T> T getAdditionalProperties(final Class<T> type) throws JsonProcessingException {
 		final ObjectMapper objectMapper = new ObjectMapper();
