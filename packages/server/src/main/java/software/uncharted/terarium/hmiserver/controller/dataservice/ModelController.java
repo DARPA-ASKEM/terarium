@@ -417,7 +417,7 @@ public class ModelController {
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {

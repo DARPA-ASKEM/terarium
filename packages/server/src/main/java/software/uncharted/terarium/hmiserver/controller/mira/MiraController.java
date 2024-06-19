@@ -209,7 +209,7 @@ public class MiraController {
 
 			// create a default configuration
 			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 			return ResponseEntity.ok().body(model);
 

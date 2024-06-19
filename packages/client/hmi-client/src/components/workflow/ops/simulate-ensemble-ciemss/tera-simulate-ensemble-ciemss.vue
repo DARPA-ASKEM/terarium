@@ -223,7 +223,11 @@ import {
 	getRunResultCiemss,
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
-import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
+import {
+	getModelConfigurationById,
+	getObservables,
+	getInitials
+} from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
@@ -344,6 +348,7 @@ onMounted(async () => {
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
 		const tempList: string[] = [];
+		getInitials(allModelConfigurations[i]).forEach((element) => tempList.push(element.target));
 		getObservables(allModelConfigurations[i]).forEach((element) =>
 			tempList.push(element.referenceId)
 		);

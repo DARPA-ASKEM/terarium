@@ -70,7 +70,7 @@ public class ModelConfigurationService
 		return super.createAssets(assets, hasWritePermission);
 	}
 
-	public static ModelConfiguration modelConfigurationFromAMR(
+	public ModelConfiguration modelConfigurationFromAMR(
 			final Model model, final String name, final String description) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name != null ? name : "Default Configuration");
@@ -127,7 +127,7 @@ public class ModelConfigurationService
 		return observableSemantics;
 	}
 
-	private static List<ParameterSemantic> createParameterSemanticList(final Model model) {
+	private List<ParameterSemantic> createParameterSemanticList(final Model model) {
 		final List<ParameterSemantic> parameterSemantics = new ArrayList<>();
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
@@ -154,14 +154,14 @@ public class ModelConfigurationService
 		return parameterSemantics;
 	}
 
-	public static Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
+	public Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
 		setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
 		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
 		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
 		return model.clone();
 	}
 
-	private static void setModelParameters(
+	private void setModelParameters(
 			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
 		// Create a map from ConfigParameter IDs to ConfigParameter objects
 		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
@@ -189,7 +189,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private static void setModelInitials(
+	private void setModelInitials(
 			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
@@ -205,7 +205,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private static void setModelObservables(
+	private void setModelObservables(
 			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {
