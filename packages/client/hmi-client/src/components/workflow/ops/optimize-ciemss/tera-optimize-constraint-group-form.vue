@@ -63,8 +63,6 @@
 			<tera-input
 				class="p-inputtext-sm"
 				v-model="config.threshold"
-				:min-fraction-digits="1"
-				:max-fraction-digits="10"
 				@focusout="emit('update-self', config)"
 			/>
 		</div>
