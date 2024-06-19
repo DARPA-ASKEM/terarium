@@ -10,7 +10,7 @@
 		</div>
 		<div class="label-col">
 			<label>Value</label>
-			<tera-input v-model.lazy="value" @blur="updateIntervention" />
+			<tera-input v-model.lazy="value" @blur="updateIntervention" type="number" />
 		</div>
 		<Button label="Delete" icon="pi pi-trash" @click="$emit('delete')" rounded text />
 	</div>

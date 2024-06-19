@@ -31,8 +31,9 @@
 											<td>
 												<tera-input
 													v-model="knobs.ensembleConfigs[i].weight"
-													:min-fraction-digits="0"
-													:max-fraction-digits="7"
+													min-fraction-digits="0"
+													max-fraction-digits="7"
+													type="number"
 												/>
 											</td>
 										</tr>
