@@ -1,9 +1,12 @@
 import * as d3 from 'd3';
 
 import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
-import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
+import {
+	getAsConfiguredModel,
+	getModelConfigurationById,
+	getObservables
+} from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { getModel } from './model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -15,7 +18,7 @@ export interface CalibrateMap {
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		const model = await getModel(modelConfigId);
+		const model = await getAsConfiguredModel(modelConfiguration);
 		const modelOptions: any[] = model?.model.states;
 
 		getObservables(modelConfiguration).forEach((o) => {

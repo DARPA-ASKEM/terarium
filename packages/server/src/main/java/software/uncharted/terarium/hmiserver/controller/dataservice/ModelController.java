@@ -39,7 +39,6 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -443,7 +442,7 @@ public class ModelController {
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
 																		implementation =
-																				ModelConfigurationLegacy.class)))),
+																				ModelConfiguration.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configurations from the data store",
