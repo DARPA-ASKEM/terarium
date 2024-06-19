@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="form-header">
 			<div>
-				<InputText
+				<tera-input
 					v-if="isEditing"
 					v-model="config.name"
 					placeholder="Constraint name"
@@ -41,7 +41,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>over the worst</p>
-			<InputNumber
+			<tera-input
 				class="p-inputtext-sm"
 				inputId="integeronly"
 				v-model="config.riskTolerance"
@@ -60,7 +60,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>a threshold of</p>
-			<InputNumber
+			<tera-input
 				class="p-inputtext-sm"
 				v-model="config.threshold"
 				:min-fraction-digits="1"
@@ -75,8 +75,7 @@
 import _ from 'lodash';
 import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
-import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
+import teraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { ConstraintGroup, ContextMethods } from './optimize-ciemss-operation';
 
