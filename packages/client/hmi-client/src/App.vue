@@ -4,16 +4,16 @@
 	<Toast position="top-center" group="warn" />
 	<Toast position="top-center" group="info" />
 	<Toast position="top-center" group="success" />
-	<header>
+	<header v-if="!isStandalone">
 		<tera-navbar :active="displayNavBar" />
 	</header>
-	<main>
+	<main :class="{ standalone: isStandalone }">
 		<router-view v-slot="{ Component }">
 			<component class="page" :is="Component" />
 		</router-view>
 		<ConfirmDialog class="w-4" />
 	</main>
-	<footer>
+	<footer v-if="!isStandalone">
 		<tera-footer />
 	</footer>
 	<tera-common-modal-dialogs />
@@ -31,6 +31,7 @@ import TeraFooter from '@/components/navbar/tera-footer.vue';
 import { useProjects } from '@/composables/project';
 import { Project } from '@/types/Types';
 import ConfirmDialog from 'primevue/confirmdialog';
+import { RouteName } from '@/router/routes';
 import TeraCommonModalDialogs from './components/widgets/tera-common-modal-dialogs.vue';
 import { useCurrentRoute } from './router/index';
 
@@ -39,8 +40,11 @@ const toast = useToastService();
 /* Router */
 const route = useRoute();
 const router = useRouter();
-const currentRoute = useCurrentRoute();
-const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
+const currentRoute = (useCurrentRoute().value.name ?? '').toString();
+const displayNavBar = computed(
+	() => !['unauthorized', RouteName.WorkflowNode.toString()].includes(currentRoute)
+);
+const isStandalone = computed(() => [RouteName.WorkflowNode.toString()].includes(currentRoute));
 
 /* Project */
 API.interceptors.response.use(
