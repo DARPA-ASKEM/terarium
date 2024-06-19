@@ -107,7 +107,10 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
-				final ModelConfiguration configuration = modelConfigurationService.modelConfigurationFromAMR(model, condition.get("name").asText(), condition.get("description").asText());
+				final ModelConfiguration configuration = modelConfigurationService.modelConfigurationFromAMR(
+						model,
+						condition.get("name").asText(),
+						condition.get("description").asText());
 
 				final ModelConfiguration newConfig =
 						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);

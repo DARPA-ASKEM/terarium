@@ -189,8 +189,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private void setModelInitials(
-			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+	private void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);

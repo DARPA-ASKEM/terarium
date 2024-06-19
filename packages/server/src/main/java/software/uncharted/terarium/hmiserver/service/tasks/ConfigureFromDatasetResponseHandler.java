@@ -11,9 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ParameterSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -88,12 +86,13 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			}
 
 			// Create the new configuration
-			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(modelCopy, "New configuration from dataset", "");
+			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(
+					modelCopy, "New configuration from dataset", "");
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
 					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-						modelConfiguration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+							modelConfiguration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 					// add provenance
 					provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())
