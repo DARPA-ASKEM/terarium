@@ -47,6 +47,11 @@ export const getAsConfiguredModel = async (
 	return response?.data ?? null;
 };
 
+export const getModelIdFromModelConfigurationId = async (id: string) => {
+	const modelConfiguration = await getModelConfigurationById(id);
+	return modelConfiguration?.modelId ?? null;
+};
+
 export function getParameters(config: ModelConfiguration): ParameterSemantic[] {
 	return config.parameterSemanticList ?? [];
 }

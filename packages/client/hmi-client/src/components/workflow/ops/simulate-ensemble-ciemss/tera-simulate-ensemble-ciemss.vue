@@ -223,7 +223,7 @@ import {
 	getRunResultCiemss,
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
-import { getModelConfigurationById } from '@/services/model-configurations-legacy';
+import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
@@ -344,11 +344,9 @@ onMounted(async () => {
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
 		const tempList: string[] = [];
-		const amr = allModelConfigurations[i].configuration;
-		amr.model.states?.forEach((element) => {
-			tempList.push(element.id);
-		});
-		amr.semantics?.ode.observables?.forEach((element) => tempList.push(element.id));
+		getObservables(allModelConfigurations[i]).forEach((element) =>
+			tempList.push(element.referenceId)
+		);
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name ?? '');
