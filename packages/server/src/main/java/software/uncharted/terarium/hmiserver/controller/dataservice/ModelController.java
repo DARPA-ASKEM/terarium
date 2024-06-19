@@ -441,8 +441,7 @@ public class ModelController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation =
-																				ModelConfiguration.class)))),
+																		implementation = ModelConfiguration.class)))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving configurations from the data store",
