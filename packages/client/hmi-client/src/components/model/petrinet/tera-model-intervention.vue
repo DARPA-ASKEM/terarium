@@ -6,7 +6,7 @@
 		</div>
 		<div class="label-col">
 			<label>Timestep</label>
-			<tera-input v-model.lazy="timestep" @blur="updateIntervention" />
+			<tera-input v-model.lazy="timestep" @blur="updateIntervention" type="number" />
 		</div>
 		<div class="label-col">
 			<label>Value</label>
