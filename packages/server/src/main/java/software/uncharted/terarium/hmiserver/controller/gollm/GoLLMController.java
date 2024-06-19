@@ -525,9 +525,6 @@ public class GoLLMController {
 	@PostMapping("/generate-summary")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
-	@io.swagger.v3.oas.annotations.parameters.RequestBody(
-		description = "A plain text instruction for generating the summary",
-		content = @Content(mediaType = "text/plain"))
 	@ApiResponses(
 			value = {
 				@ApiResponse(
