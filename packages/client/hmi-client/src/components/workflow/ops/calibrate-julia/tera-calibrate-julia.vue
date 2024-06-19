@@ -33,7 +33,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.id)"
+									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 								/>
 							</template>
 						</Column>
@@ -202,8 +202,7 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	ScimlStatusUpdate,
-	State
+	ScimlStatusUpdate
 } from '@/types/Types';
 import {
 	setupModelInput,
@@ -253,7 +252,7 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<State[] | undefined>();
+const modelStateOptions = ref<any[] | undefined>();
 const datasetColumns = ref<DatasetColumn[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
