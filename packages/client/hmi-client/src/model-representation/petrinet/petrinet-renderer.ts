@@ -18,7 +18,8 @@ export interface EdgeData {
 
 export enum NodeType {
 	State = 'state',
-	Transition = 'transition'
+	Transition = 'transition',
+	Observable = 'observable'
 }
 
 const FONT_SIZE_SMALL = 18;
@@ -91,6 +92,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
+		console.log(selection.data());
+
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 

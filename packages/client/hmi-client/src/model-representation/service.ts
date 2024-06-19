@@ -100,11 +100,12 @@ export const getModelRenderer = (
 ): PetrinetRenderer | NestedPetrinetRenderer => {
 	const isStratified = isStratifiedModel(miraModel);
 	// Debug start
-	// console.group('mmt info');
-	// console.log('# templates: ', miraModel.templates.length);
-	// console.log('# parameters: ', Object.keys(miraModel.parameters).length);
-	// console.log('stratified model: ', isStratified);
-	// console.groupEnd();
+	console.group('mmt info');
+	console.log('# templates: ', miraModel.templates.length);
+	console.log('# parameters: ', Object.keys(miraModel.parameters).length);
+	console.log('stratified model: ', isStratified);
+	console.log(miraModel);
+	console.groupEnd();
 	// Debug end
 
 	if (useNestedRenderer && isStratified) {
