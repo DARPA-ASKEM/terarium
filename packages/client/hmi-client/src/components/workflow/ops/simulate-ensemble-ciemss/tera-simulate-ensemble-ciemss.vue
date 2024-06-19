@@ -28,6 +28,7 @@
 										</td>
 										<td>
 											<tera-input
+												type="decimal"
 												class="ml-3"
 												v-model="ensembleConfigs[i].weight"
 												:min-fraction-digits="0"

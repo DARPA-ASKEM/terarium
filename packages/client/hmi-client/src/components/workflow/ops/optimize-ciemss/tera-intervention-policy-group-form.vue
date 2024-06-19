@@ -42,6 +42,7 @@
 				<label for="initial-guess">Initial guess</label>
 				<tera-input
 					class="p-inputtext-sm"
+					type="number"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.initialGuess"
@@ -55,6 +56,7 @@
 				<label for="lower-bound">Lower bound</label>
 				<tera-input
 					class="p-inputtext-sm"
+					type="number"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
 					v-model="config.lowerBound"
@@ -64,6 +66,7 @@
 			<div class="label-and-input">
 				<label for="upper-bound">Upper bound</label>
 				<tera-input
+					type="number"
 					class="p-inputtext-sm"
 					:min-fraction-digits="1"
 					:max-fraction-digits="10"
