@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -170,8 +169,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		final List<Intervention> modelInterventions =
-				modelConfiguration.get().getInterventions();
+		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
 			if (allInterventions == null) {
@@ -261,8 +259,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		final List<Intervention> modelInterventions =
-				modelConfiguration.get().getInterventions();
+		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
 			if (allInterventions == null) {
@@ -301,8 +298,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		final List<Intervention> modelInterventions =
-				modelConfiguration.get().getInterventions();
+		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
 			if (allInterventions == null) {
