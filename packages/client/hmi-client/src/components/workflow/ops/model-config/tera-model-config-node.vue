@@ -39,6 +39,13 @@ watch(
 		if (!modelInputs[0].value) {
 			// Reset previous model cache
 			const state = cloneDeep(props.node.state);
+			state.transientModelConfig = {
+				id: '',
+				modelId: '',
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
+			};
 			emit('update-state', state);
 		}
 
