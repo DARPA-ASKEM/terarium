@@ -100,8 +100,8 @@ const onEdit = () => {
 .container {
 	width: 100%;
 	display: flex;
-	margin-top: 1rem;
-	padding: 1rem 1rem 1rem 1.5rem;
+	margin-top: var(--gap);
+	padding: var(--gap) var(--gap) var(--gap) var(--gap-medium);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
