@@ -1,5 +1,5 @@
 <template>
-	<div class="policy-group" :style="`border-left: 9px solid ${props.config.borderColour}`">
+	<div class="policy-group">
 		<div class="form-header">
 			<div>
 				<InputText

@@ -4,6 +4,7 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
 				ref="inputField"
+				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
 				:style="{ 'text-align': textAlign }"
@@ -23,6 +24,7 @@ const props = defineProps<{
 	modelValue: string | number | undefined;
 	label?: string;
 	errorMessage?: string;
+	disabled?: boolean;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -34,6 +36,7 @@ const maskedValue = ref('');
 const isNistType = attrs.type === 'nist';
 const textAlign = attrs.type === 'number' || isNistType ? 'right' : 'left';
 const getType = isNistType ? 'text' : (attrs.type as InputTypeHTMLAttribute);
+const getDisabled = props.disabled ?? false;
 
 const focusInput = () => {
 	inputField.value?.focus();
