@@ -13,7 +13,7 @@
 					v-for="(cfg, idx) in node.state.chartConfigs"
 					:key="idx"
 					:run-results="runResults"
-					:chartConfig="{ selectedRun: props.node.state.forecastRunId, selectedVariable: cfg }"
+					:chartConfig="{ selectedRun: props.node.state.postForecastRunId, selectedVariable: cfg }"
 					has-mean-line
 					:size="{ width: 190, height: 120 }"
 					@configuration-change="chartProxy.configurationChange(idx, $event)"
@@ -67,7 +67,8 @@ const runResults = ref<RunResults>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
-	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() =>
+		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
 	emit('update-state', state);
@@ -84,7 +85,7 @@ const pollResult = async (runId: string) => {
 	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressForecastId = '';
+		state.inProgressPostForecastId = '';
 		state.inProgressOptimizeId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
@@ -144,7 +145,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
 			state.optimizationRunId = optId;
-			state.inProgressForecastId = forecastId;
+			state.inProgressPostForecastId = forecastId;
 			emit('update-state', state);
 		}
 	},
@@ -152,7 +153,7 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressPostForecastId,
 	async (simId) => {
 		if (!simId || simId === '') return;
 
@@ -160,8 +161,8 @@ watch(
 		if (response.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
-			state.inProgressForecastId = '';
-			state.forecastRunId = simId;
+			state.inProgressPostForecastId = '';
+			state.postForecastRunId = simId;
 			emit('update-state', state);
 
 			emit('append-output', {
@@ -182,12 +183,12 @@ watch(
 		const active = props.node.active;
 		const state = props.node.state;
 		if (!active) return;
-		if (!state.forecastRunId) return;
+		if (!state.postForecastRunId) return;
 
-		const forecastRunId = state.forecastRunId;
+		const postForecastRunId = state.postForecastRunId;
 
 		// Simulate
-		const result = await getRunResultCiemss(forecastRunId, 'result.csv');
+		const result = await getRunResultCiemss(postForecastRunId, 'result.csv');
 		runResults.value = result.runResults;
 	},
 	{ immediate: true }

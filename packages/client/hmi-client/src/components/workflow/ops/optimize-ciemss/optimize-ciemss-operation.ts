@@ -51,8 +51,10 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Charts + Outputs:
 	chartConfigs: string[][];
 	inProgressOptimizeId: string;
-	inProgressForecastId: string;
-	forecastRunId: string;
+	inProgressPreForecastId: string;
+	preForecastRunId: string;
+	inProgressPostForecastId: string;
+	postForecastRunId: string;
 	optimizationRunId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
@@ -103,8 +105,10 @@ export const OptimizeCiemssOperation: Operation = {
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
-			inProgressForecastId: '',
-			forecastRunId: '',
+			inProgressPostForecastId: '',
+			inProgressPreForecastId: '',
+			preForecastRunId: '',
+			postForecastRunId: '',
 			optimizationRunId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
