@@ -3218,7 +3218,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/estree@npm:1.0.5":
+"@types/estree@npm:1.0.5, @types/estree@npm:^1.0.0":
   version: 1.0.5
   resolution: "@types/estree@npm:1.0.5"
   checksum: 7de6d928dd4010b0e20c6919e1a6c27b61f8d4567befa89252055fad503d587ecb9a1e3eab1b1901f923964d7019796db810b7fd6430acb26c32866d126fd408
@@ -8667,6 +8667,7 @@ __metadata:
     sass: "npm:1.56.1"
     typescript: "npm:5.4.5"
     uuid: "npm:9.0.1"
+    vega-lite: "npm:^5.19.0"
     vite: "npm:5.2.13"
     vite-svg-loader: "npm:4.0.0"
     vitest: "npm:0.24.5"
@@ -10273,6 +10274,13 @@ __metadata:
   version: 1.0.1
   resolution: "json-stable-stringify-without-jsonify@npm:1.0.1"
   checksum: 12786c2e2f22c27439e6db0532ba321f1d0617c27ad8cb1c352a0e9249a50182fd1ba8b52a18899291604b0c32eafa8afd09e51203f19109a0537f68db2b652d
+  languageName: node
+  linkType: hard
+
+"json-stringify-pretty-compact@npm:~3.0.0":
+  version: 3.0.0
+  resolution: "json-stringify-pretty-compact@npm:3.0.0"
+  checksum: bf2cfb77e5eedb38c2a3c5ff2b8680e05a6073209bd54176640e90c2bc49c9eb798c8c6a3267216981291f8e3a6b82c996bfae71c155cbfd51eb3f998eeea482
   languageName: node
   linkType: hard
 
@@ -14035,6 +14043,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:~2.6.3":
+  version: 2.6.3
+  resolution: "tslib@npm:2.6.3"
+  checksum: 52109bb681f8133a2e58142f11a50e05476de4f075ca906d13b596ae5f7f12d30c482feb0bff167ae01cfc84c5803e575a307d47938999246f5a49d174fc558c
+  languageName: node
+  linkType: hard
+
 "tsutils@npm:^3.21.0":
   version: 3.21.0
   resolution: "tsutils@npm:3.21.0"
@@ -14459,6 +14474,51 @@ __metadata:
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: 31389debef15a480849b8331b220782230b9815a8e0dbb7b9a8369559aed2e9a7800cd904d4371ea74f4c3527db456dc8e7ac5befce5f0d289014dbdf47b2242
+  languageName: node
+  linkType: hard
+
+"vega-event-selector@npm:~3.0.1":
+  version: 3.0.1
+  resolution: "vega-event-selector@npm:3.0.1"
+  checksum: fe02aa5942cc410bab11f6c5e61882b9215c4b26728d1979db292c8434dc1516f500714cff1db81413ba63c6d7b2e40acc1cb2473bd779312116236df8a5c03b
+  languageName: node
+  linkType: hard
+
+"vega-expression@npm:~5.1.0":
+  version: 5.1.1
+  resolution: "vega-expression@npm:5.1.1"
+  dependencies:
+    "@types/estree": "npm:^1.0.0"
+    vega-util: "npm:^1.17.2"
+  checksum: 64921f5430dd3dcda850899386a3ed58c3c3f7d6003abe89785caae4cab5654026c70b70506ca0290b69dc170408ee8a073cf8685ca4cb981785351b19a3cf58
+  languageName: node
+  linkType: hard
+
+"vega-lite@npm:^5.19.0":
+  version: 5.19.0
+  resolution: "vega-lite@npm:5.19.0"
+  dependencies:
+    json-stringify-pretty-compact: "npm:~3.0.0"
+    tslib: "npm:~2.6.3"
+    vega-event-selector: "npm:~3.0.1"
+    vega-expression: "npm:~5.1.0"
+    vega-util: "npm:~1.17.2"
+    yargs: "npm:~17.7.2"
+  peerDependencies:
+    vega: ^5.24.0
+  bin:
+    vl2pdf: bin/vl2pdf
+    vl2png: bin/vl2png
+    vl2svg: bin/vl2svg
+    vl2vg: bin/vl2vg
+  checksum: be70cd3bf59f4f1394dc696e7ebd3e93d117bab7a041e0ff3f0449d37def1f77d18aba80f30be469ac61f1d36c28a274da68ba6b9dbf43789b5d16b25b782176
+  languageName: node
+  linkType: hard
+
+"vega-util@npm:^1.17.2, vega-util@npm:~1.17.2":
+  version: 1.17.2
+  resolution: "vega-util@npm:1.17.2"
+  checksum: dc8e93b85dbe132d83f5979364bbe5fb42a771cc93ac63e09ce7e49e98c384b0f46da3df2ad86b2e2d180ac395add57d8c85d61e1660d4a8143ad7364d6a1da1
   languageName: node
   linkType: hard
 
@@ -15255,7 +15315,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:17.7.2, yargs@npm:^17.3.1":
+"yargs@npm:17.7.2, yargs@npm:^17.3.1, yargs@npm:~17.7.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:
