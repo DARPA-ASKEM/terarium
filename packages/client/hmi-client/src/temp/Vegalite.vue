@@ -1,10 +1,16 @@
 <template>
-	<vega-chart :visualization-spec="spec" />
+	<div style="padding: 2rem">
+		<vega-chart :visualization-spec="spec" @chart-click="handleChartClick($event)" />
+	</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import VegaChart from './VegaChart.vue';
+
+const handleChartClick = (event: any) => {
+	console.log('!!', event);
+};
 
 const spec = ref<any>({
 	$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
@@ -36,6 +42,7 @@ const spec = ref<any>({
 			encoding: {
 				color: { value: '#a52' },
 				x: {
+					title: '',
 					field: 'count',
 					type: 'quantitative',
 					scale: { zero: false }
@@ -50,8 +57,8 @@ const spec = ref<any>({
 				color: { value: '#f80' },
 				opacity: { value: 0.4 },
 				size: { value: 5 },
-				x: { field: 'count', type: 'quantitative' },
-				y: { field: 'jitter', type: 'quantitative' }
+				x: { field: 'count', type: 'quantitative', title: '' },
+				y: { field: 'jitter', type: 'quantitative', title: '' }
 			}
 		}
 	]
