@@ -12,6 +12,7 @@ setup(
             "gollm_task:embedding=tasks.embedding:main",
             "gollm_task:compare_models=tasks.compare_models:main",
             "gollm_task:dataset_configure=tasks.dataset_configure:main",
+            "gollm_task:generate_summary=tasks.generate_summary:main",
         ],
     },
     python_requires=">=3.8",
