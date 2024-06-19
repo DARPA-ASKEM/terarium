@@ -82,11 +82,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled class="p-inputtext-sm" type="number" model-value="0" />
+							<tera-input disabled type="number" model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input class="p-inputtext-sm" type="number" v-model="knobs.endTime" />
+							<tera-input type="number" v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -108,7 +108,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input class="p-inputtext-sm" type="number" v-model="knobs.numSamples" />
+									<tera-input type="number" v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
@@ -128,19 +128,19 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<tera-input disabled class="p-inputtext-sm" model-value="basinhopping" />
+								<tera-input disabled model-value="basinhopping" />
 							</div>
 							<div class="label-and-input">
 								<label>Minimizer method</label>
-								<tera-input disabled class="p-inputtext-sm" model-value="COBYLA" />
+								<tera-input disabled model-value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<tera-input class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+								<tera-input v-model="knobs.maxiter" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<tera-input class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+								<tera-input v-model="knobs.maxfeval" />
 							</div>
 						</div>
 					</div>
@@ -225,7 +225,7 @@
 							}"
 							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
 							:size="chartSize"
-							:threshold="props.node.state.constraintGroups?.[0]?.threshold || undefined"
+							:threshold="props.node.state.constraintGroups?.[0]?.threshold"
 						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
