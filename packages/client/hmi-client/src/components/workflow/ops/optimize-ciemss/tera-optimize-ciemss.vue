@@ -82,11 +82,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<InputText disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
+							<tera-input disabled class="p-inputtext-sm" type="number" model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
+							<tera-input class="p-inputtext-sm" type="number" v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -108,11 +108,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<InputNumber
-										class="p-inputtext-sm"
-										inputId="integeronly"
-										v-model="knobs.numSamples"
-									/>
+									<tera-input class="p-inputtext-sm" type="number" v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
@@ -132,23 +128,19 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<InputText disabled class="p-inputtext-sm" value="basinhopping" />
+								<tera-input disabled class="p-inputtext-sm" model-value="basinhopping" />
 							</div>
 							<div class="label-and-input">
 								<label>Minimizer method</label>
-								<InputText disabled class="p-inputtext-sm" value="COBYLA" />
+								<tera-input disabled class="p-inputtext-sm" model-value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+								<tera-input class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<InputNumber
-									class="p-inputtext-sm"
-									v-model="knobs.maxfeval"
-									inputId="integeronly"
-								/>
+								<tera-input class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
 							</div>
 						</div>
 					</div>
@@ -262,11 +254,11 @@
 	>
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<InputText v-model="modelConfigName" />
+			<tera-input v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<InputText v-model="modelConfigDesc" />
+			<tera-input v-model="modelConfigDesc" />
 		</div>
 		<Button
 			:disabled="modelConfigName === ''"
@@ -283,8 +275,7 @@ import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
+import teraInput from '@/components/widgets/tera-input.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
