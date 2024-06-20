@@ -9,6 +9,12 @@ import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
 
+export enum NodeType {
+	State = 'state',
+	Transition = 'transition',
+	Observable = 'observable'
+}
+
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
@@ -37,6 +43,11 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 				g.setParent(child.id, node.id);
 			}
 		}
+
+		// Collect observables and states/transitions
+		// if (node.data?.type === NodeType.Observable) {
+		// 	observables.push(node);
+		// }
 	});
 
 	// eslint-disable-next-line
@@ -52,17 +63,34 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 	dagre.layout(g);
 
+	let farthestNodeX = 0;
+	let currentObservableY = 0;
+	// Observables are added to the end graphData.nodes array in convertToIGraph so assume that's the case
 	graphScaffolder.traverseGraph(graphData, (node) => {
-		const n = g.node(node.id);
-		node.width = n.width;
-		node.height = n.height;
-		node.x = n.x;
-		node.y = n.y;
+		// Place observables
+		if (node.data?.type === NodeType.Observable) {
+			const n = g.node(node.id);
+			node.width = n.width;
+			node.height = n.height;
+			node.x = farthestNodeX + 150;
+			node.y = currentObservableY;
+			currentObservableY += 100;
+		}
+		// Place states/transitions all of these should be placed before observables in order for farthestNodeX to be correct
+		else {
+			const n = g.node(node.id);
+			node.width = n.width;
+			node.height = n.height;
+			node.x = n.x;
+			node.y = n.y;
 
-		const pid = g.parent(node.id);
-		if (pid) {
-			node.x -= g.node(pid).x;
-			node.y -= g.node(pid).y;
+			if (node.x > farthestNodeX) farthestNodeX = node.x;
+
+			const pid = g.parent(node.id);
+			if (pid) {
+				node.x -= g.node(pid).x;
+				node.y -= g.node(pid).y;
+			}
 		}
 	});
 

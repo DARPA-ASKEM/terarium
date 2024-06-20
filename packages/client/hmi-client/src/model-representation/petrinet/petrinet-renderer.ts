@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
-import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import type { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { NodeType } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
@@ -14,12 +15,6 @@ export interface NodeData {
 export interface EdgeData {
 	numEdges: number;
 	isController?: boolean;
-}
-
-export enum NodeType {
-	State = 'state',
-	Transition = 'transition',
-	Observable = 'observable'
 }
 
 const FONT_SIZE_SMALL = 18;
@@ -92,10 +87,38 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		console.log(selection.data());
-
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
+		const observables = selection.filter((d) => d.data.type === NodeType.Observable);
+
+		// observables
+		observables
+			.append('rect')
+			.classed('shape selectableNode', true)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', 'var(--petri-nodeFill)')
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
+
+		// observables text
+		observables
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.text((d) => d.id);
 
 		// transitions
 		transitions

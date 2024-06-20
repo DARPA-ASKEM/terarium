@@ -1,5 +1,6 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
+import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
@@ -393,7 +394,10 @@ export const createParameterMatrix = (
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-export const convertToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (
+	templates: TemplateSummary[],
+	observables?: { [key: string]: any }
+) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -419,7 +423,7 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'state' },
+			data: { type: NodeType.State },
 			nodes: []
 		});
 	});
@@ -427,7 +431,7 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 	// templates
 	templates.forEach((t) => {
 		const nodeData: any = {
-			type: 'transition',
+			type: NodeType.Transition,
 			expression: t.expression
 		};
 
@@ -442,6 +446,23 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			nodes: []
 		});
 	});
+
+	// observables
+	if (!isEmpty(observables)) {
+		Object.keys(observables).forEach((key) => {
+			const observable = observables[key];
+			graph.nodes.push({
+				id: key,
+				label: observable.name,
+				x: 0,
+				y: 0,
+				width: 50,
+				height: 50,
+				data: { type: NodeType.Observable, value: observable },
+				nodes: []
+			});
+		});
+	}
 
 	// edges
 	templates.forEach((t) => {
@@ -480,6 +501,8 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			});
 		}
 	});
+
+	console.log(graph, templates);
 
 	return graph;
 };
