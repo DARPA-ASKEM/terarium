@@ -228,7 +228,6 @@ export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
     expressionMathml: string;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface ModelConfiguration extends TerariumAsset {
@@ -245,7 +244,6 @@ export interface ObservableSemantic extends Semantic {
     states: string[];
     expression: string;
     expressionMathml: string;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface ParameterSemantic extends Semantic {
@@ -253,7 +251,6 @@ export interface ParameterSemantic extends Semantic {
     distribution: ModelDistribution;
     interventions: Intervention[];
     default: boolean;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface Semantic extends TerariumEntity {

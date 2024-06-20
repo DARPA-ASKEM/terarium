@@ -132,7 +132,6 @@ public class ModelConfigurationService
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
 			parameterSemantic.setReferenceId(parameter.getId());
-			parameterSemantic.setDefault(true);
 
 			ModelDistribution distribution = parameter.getDistribution();
 			// constant distribution
