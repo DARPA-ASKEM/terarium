@@ -25,6 +25,7 @@ const props = defineProps<{
 	label?: string;
 	errorMessage?: string;
 	disabled?: boolean;
+	type?: InputTypeHTMLAttribute | 'nist';
 }>();
 
 const emit = defineEmits(['update:modelValue']);
