@@ -41,12 +41,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>over the worst</p>
-			<tera-input
-				class="p-inputtext-sm"
-				inputId="integeronly"
-				v-model="config.riskTolerance"
-				@focusout="emit('update-self', config)"
-			/>
+			<tera-input v-model="config.riskTolerance" @focusout="emit('update-self', config)" />
 			<p>% of simulated outcomes</p>
 			<Dropdown
 				class="toolbar-button"
@@ -60,13 +55,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>a threshold of</p>
-			<tera-input
-				class="p-inputtext-sm"
-				v-model="config.threshold"
-				:min-fraction-digits="1"
-				:max-fraction-digits="10"
-				@focusout="emit('update-self', config)"
-			/>
+			<tera-input v-model="config.threshold" @focusout="emit('update-self', config)" />
 		</div>
 	</div>
 </template>
