@@ -759,7 +759,7 @@ export interface EnsembleModelConfigs {
     weight: number;
 }
 
-export interface Intervention {
+export interface Intervention extends TerariumAsset {
     name: string;
     timestep: number;
     value: number;
