@@ -538,11 +538,11 @@ public class GoLLMController {
 														implementation = TaskResponse.class))),
 				@ApiResponse(
 						responseCode = "422",
-						description = "Task was interrupted while waiting for a response",
+						description = "Summary generation was interrupted while waiting for a response",
 						content = @Content),
 				@ApiResponse(
 						responseCode = "503",
-						description = "Task was timed out while waiting for a response",
+						description = "Summary generation was timed out while waiting for a response",
 						content = @Content),
 				@ApiResponse(
 						responseCode = "500",
