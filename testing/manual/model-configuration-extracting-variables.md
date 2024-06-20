@@ -9,9 +9,9 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
-3. Upload model `input_model.json`
-4. Upload or reuse document `41591_2020_Article_883.pdf`, if extraction are not working use `sidarthe_test.txt`
-5. Upload or resuse dataset `sirdata.csv`
+3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
+4. Upload or reuse document [41591_2020_Article_883.pdf](https://drive.google.com/file/d/1RrCxj__qqFSRHk5uIi_JJsFo8iC8dgYk/view?usp=drive_link), if extraction are not working use [sidarthe_test.txt](https://drive.google.com/file/d/1IyWJmE-v4o5ebJonwMc_nqNj9j96C8BE/view?usp=drive_link)
+5. Upload or resuse dataset [sirdata.csv](https://drive.google.com/file/d/1y1THGHIu8ebb9JdN3ZG12NwWcZtHPxzD/view?usp=drive_link)
 
 ### 2. Extracting configurations
 1. Wait for extractions to finish for uploaded document
