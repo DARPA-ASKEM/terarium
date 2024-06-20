@@ -128,7 +128,10 @@ const stats = computed(() => {
 	};
 });
 
-const image = computed(() => undefined);
+const image = computed(() => {
+	const number = props.project?.metadata?.image ?? 'default';
+	return `src/assets/images/project-thumbnails/${number}.png`;
+});
 </script>
 
 <style scoped>
