@@ -156,7 +156,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
 		req.setScript(GenerateSummaryHandler.NAME);
-		final String input = "Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+		final String input =
+				"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
 		req.setInput(input.getBytes(StandardCharsets.UTF_8));
 
 		final TaskResponse resp = taskService.runTaskSync(req);
