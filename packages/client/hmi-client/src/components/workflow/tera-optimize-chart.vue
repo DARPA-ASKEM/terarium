@@ -36,10 +36,10 @@ const renderChart = () => {
 
 const props = defineProps<{
 	riskResults: any;
-	targetVariable: string;
+	targetVariable?: string;
 	chartConfig: ChartConfig;
 	size?: { width: number; height: number };
-	threshold: number;
+	threshold?: number;
 }>();
 
 const chartSize = computed(() => {
@@ -53,6 +53,8 @@ const binCount = 6;
 
 const setChartOptions = () => {
 	if (!props.riskResults) return {};
+	if (!props.threshold) return {};
+
 	const { toBinIndex } = getBinData(qoiData.value);
 	return {
 		indexAxis: 'y',

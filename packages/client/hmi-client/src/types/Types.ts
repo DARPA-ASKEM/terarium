@@ -811,6 +811,7 @@ export interface TaskResponse {
     additionalProperties: any;
     stdout: string;
     stderr: string;
+    requestSHA256: string;
 }
 
 export interface Annotation {
