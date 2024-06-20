@@ -40,7 +40,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
-import { Poller, PollerState } from '@/api/api';
+import { Poller, PollerResult, PollerState } from '@/api/api';
 import {
 	pollAction,
 	getRunResultCiemss,
@@ -162,9 +162,10 @@ watch(
 	() => [props.node.state.inProgressPreForecastId, props.node.state.inProgressPostForecastId],
 	async ([preSimId, postSimId]) => {
 		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
-
-		const preResponse = await pollResult(preSimId);
-		const postResponse = await pollResult(postSimId);
+		const responseList: Promise<PollerResult<any>>[] = [];
+		responseList.push(pollResult(preSimId));
+		responseList.push(pollResult(postSimId));
+		const [preResponse, postResponse] = await Promise.all(responseList);
 		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
