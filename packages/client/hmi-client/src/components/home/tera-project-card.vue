@@ -95,7 +95,6 @@ import { ref, computed } from 'vue';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
-import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
 import TeraProjectMenu from './tera-project-menu.vue';
@@ -129,7 +128,7 @@ const stats = computed(() => {
 	};
 });
 
-const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
+const image = computed(() => undefined);
 </script>
 
 <style scoped>
