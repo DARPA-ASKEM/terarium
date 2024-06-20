@@ -1,6 +1,6 @@
 import _, { isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
-import { NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { NodeType } from '@/services/graph';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,

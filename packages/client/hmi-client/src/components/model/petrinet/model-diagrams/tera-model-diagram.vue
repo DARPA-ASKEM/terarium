@@ -100,7 +100,7 @@ import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfigurationLegacy } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
@@ -118,6 +118,7 @@ import {
 	rawTemplatesSummary
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
+import { NodeType } from '@/services/graph';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 

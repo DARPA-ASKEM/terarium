@@ -1,12 +1,8 @@
 import { select } from 'd3';
 import { D3SelectionINode, Options } from '@graph-scaffolder/types';
 import { useNodeTypeColorPalette, useNestedTypeColorPalette } from '@/utils/petrinet-color-palette';
-
-import {
-	NodeType,
-	PetrinetRenderer,
-	NodeData
-} from '@/model-representation/petrinet/petrinet-renderer';
+import { NodeType } from '@/services/graph';
+import { PetrinetRenderer, NodeData } from '@/model-representation/petrinet/petrinet-renderer';
 
 // packing data sourced from https://hydra.nat.uni-magdeburg.de/packing/cci for up to n=200
 import CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS from '@/model-representation/petrinet/circle-packing-vectors.json';
