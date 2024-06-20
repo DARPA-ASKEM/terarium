@@ -109,7 +109,11 @@ import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
@@ -139,6 +143,7 @@ const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+const observableSummary = ref<ObservableSummary>({});
 
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
@@ -245,6 +250,8 @@ watch(
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
+		observableSummary.value = response.observable_summary;
+		console.log(response);
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
