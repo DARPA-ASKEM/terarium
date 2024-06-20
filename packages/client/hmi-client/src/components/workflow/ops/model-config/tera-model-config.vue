@@ -306,7 +306,8 @@ import {
 	setParameterDistributions,
 	getAsConfiguredModel,
 	getInterventions,
-	setInterventions
+	setInterventions,
+	amrToModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
@@ -542,16 +543,13 @@ const extractConfigurationsFromInputs = async () => {
 	console.groupEnd();
 };
 
-const handleModelPreview = (data: any) => {
+const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	// knobs.value.transientModelConfig = {
-	// 	name: '',
-	// 	description: '',
-	// 	modelId: model.value.id ?? '',
-	// 	configuration: model.value
-	// };
+	const modelConfig = await amrToModelConfiguration(model.value);
+	setInterventions(modelConfig, interventions.value);
+	knobs.value.transientModelConfig = modelConfig;
 };
 
 const selectedOutputId = ref<string>('');

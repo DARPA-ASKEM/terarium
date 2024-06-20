@@ -138,7 +138,7 @@ public class ModelConfigurationService
 			if (distribution == null || distribution.getType() == null) {
 				distribution = new ModelDistribution();
 				distribution.setType("Constant");
-				distribution.setParameters(Map.of("value", parameter.getValue() == null ? parameter.getValue() : 0));
+				distribution.setParameters(Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0));
 			}
 
 			// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we are changing it to

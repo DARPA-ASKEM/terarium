@@ -467,4 +467,37 @@ public class ModelController {
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
+
+	@PostMapping("/amr-to-model-configuration")
+	@Secured(Roles.USER)
+	@Operation(summary = "Formats a model configuration from an AMR")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Model configurations found.",
+						content =
+								@Content(
+										array =
+												@ArraySchema(
+														schema =
+																@io.swagger.v3.oas.annotations.media.Schema(
+																		implementation = ModelConfiguration.class)))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving configurations from the data store",
+						content = @Content)
+			})
+	ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
+		@RequestBody Model model,
+		@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		try {
+			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(model, model.getName(), model.getDescription());
+			return ResponseEntity.ok(modelConfiguration);
+		} catch (final Exception e) {
+			final String error = "Unable to get model configurations";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
 }
