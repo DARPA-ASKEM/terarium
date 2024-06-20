@@ -537,6 +537,14 @@ public class GoLLMController {
 												@io.swagger.v3.oas.annotations.media.Schema(
 														implementation = TaskResponse.class))),
 				@ApiResponse(
+						responseCode = "422",
+						description = "Task was interrupted while waiting for a response",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "Task was timed out while waiting for a response",
+						content = @Content),
+				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue dispatching the request",
 						content = @Content)
