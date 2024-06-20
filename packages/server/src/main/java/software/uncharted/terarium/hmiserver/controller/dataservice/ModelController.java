@@ -489,10 +489,10 @@ public class ModelController {
 						content = @Content)
 			})
 	ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
-		@RequestBody Model model,
-		@RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		try {
-			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(model, model.getName(), model.getDescription());
+			final ModelConfiguration modelConfiguration =
+					modelConfigurationService.modelConfigurationFromAMR(model, model.getName(), model.getDescription());
 			return ResponseEntity.ok(modelConfiguration);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
