@@ -7,6 +7,7 @@
 				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
+				@onFocusOut="emit('onFocusOut')"
 				:style="{ 'text-align': textAlign }"
 				@blur="unmask"
 				:type="getType"
@@ -28,7 +29,7 @@ const props = defineProps<{
 	type?: InputTypeHTMLAttribute | 'nist';
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'onFocusOut']);
 const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
