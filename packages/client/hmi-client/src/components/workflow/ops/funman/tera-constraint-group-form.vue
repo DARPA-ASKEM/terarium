@@ -57,8 +57,6 @@
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
-					:min-fraction-digits="3"
-					:max-fraction-digits="3"
 					v-model="weights[index]"
 					@update:model-value="updateChanges()"
 				/>
@@ -112,26 +110,12 @@
 
 			<div class="input-container">
 				<label for="input3" class="label label-padding">Lower bound</label>
-				<tera-input-number
-					id="input3"
-					class="p-inputtext-md"
-					v-model="lowerBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
+				<tera-input type="number" v-model="lowerBound" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input4" class="label label-padding">Upper bound</label>
-				<tera-input-number
-					id="input4"
-					class="p-inputtext-md"
-					v-model="upperBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
+				<tera-input type="number" v-model="upperBound" @update:model-value="updateChanges()" />
 			</div>
 		</div>
 	</div>
@@ -145,7 +129,7 @@ import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/components/workflow/ops/funman/funman-operation';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
 	modelStates: string[];

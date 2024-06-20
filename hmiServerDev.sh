@@ -53,7 +53,6 @@ function deploy_local_lean() {
   docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml up --detach --wait
 }
 
-
 function stop_local() {
   echo "Stopping local dev containers"
   cat containers/common.env containers/secrets.env > containers/.env
@@ -71,7 +70,6 @@ function stop_local_lean() {
   cat containers/common.env containers/secrets.env > containers/.env
   docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml down
 }
-
 
 function start_local() {
   echo "Starting local server"
