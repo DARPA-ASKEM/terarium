@@ -90,14 +90,13 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			const n = g.node(node.id);
 
 			if (!isAddingObservables) {
-				const midPointY = (highestNodeY + lowestNodeY) / 2;
-				const observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * n.height;
 				isAddingObservables = true;
 				mostRightNodeX += 150;
-				currentObservableY = midPointY - observablesHeight / 2;
-				console.log(observablesHeight);
-			}
 
+				const midPointY = (highestNodeY + lowestNodeY) / 2;
+				const observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * n.height;
+				currentObservableY = midPointY - observablesHeight / 2;
+			}
 			node.width = n.width;
 			node.height = n.height;
 			node.x = mostRightNodeX;
