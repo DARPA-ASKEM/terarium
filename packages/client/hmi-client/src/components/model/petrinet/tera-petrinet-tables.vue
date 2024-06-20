@@ -121,26 +121,23 @@ import type { Model } from '@/types/Types';
 import { groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
-import { getMMT } from '@/services/model';
 import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
 import TeraParametersMetadata from '@/components/model//tera-parameters-metadata.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	readonly?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'update-state', 'update-parameter']);
-
-const mmt = ref<MiraModel>(emptyMiraModel());
-const mmtParams = ref<MiraTemplateParams>({});
 
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
@@ -194,15 +191,6 @@ const otherConcepts = computed(() => {
 
 	return unalignedExtractions ?? [];
 });
-
-function updateMMT() {
-	getMMT(props.model).then((response) => {
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	});
-}
-
-onMounted(() => updateMMT());
 </script>
 
 <style scoped>
