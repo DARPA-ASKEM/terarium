@@ -41,7 +41,6 @@
 			<div class="label-and-input">
 				<label for="initial-guess">Initial guess</label>
 				<tera-input
-					class="p-inputtext-sm"
 					type="number"
 					v-model="config.initialGuess"
 					@update:model-value="emit('update-self', config)"
@@ -53,7 +52,6 @@
 			<div class="label-and-input">
 				<label for="lower-bound">Lower bound</label>
 				<tera-input
-					class="p-inputtext-sm"
 					type="number"
 					v-model="config.lowerBound"
 					@update:model-value="emit('update-self', config)"
@@ -63,7 +61,6 @@
 				<label for="upper-bound">Upper bound</label>
 				<tera-input
 					type="number"
-					class="p-inputtext-sm"
 					v-model="config.upperBound"
 					@update:model-value="emit('update-self', config)"
 				/>

@@ -49,13 +49,7 @@
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input
-									class="w-2"
-									type="decimal"
-									:min="0"
-									:max="1"
-									v-model="knobs.tolerance"
-								/>
+								<tera-input type="decimal" :min="0" :max="1" v-model="knobs.tolerance" />
 								<Slider
 									v-model="knobs.tolerance"
 									:min="0"
