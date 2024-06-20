@@ -149,24 +149,24 @@
 					@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 					@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 				/>
-				<!-- <Accordion multiple :active-index="[0]" class="pb-6">
+				<Accordion multiple :active-index="[0]" class="pb-6">
 					<AccordionTab>
 						<template #header> Interventions </template>
 						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
 						<tera-model-intervention
-							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
+							v-for="(intervention, idx) of interventions"
 							:key="intervention.name + intervention.timestep + intervention.value"
 							:intervention="intervention"
 							:parameter-options="Object.keys(mmt.parameters)"
 							@update-value="
 								(data: Intervention) => {
-									setIntervention(knobs.transientModelConfig, idx, data);
+									interventions[idx] = data;
 								}
 							"
-							@delete="removeIntervention(knobs.transientModelConfig, idx)"
+							@delete="interventions.splice(idx, 1)"
 						/>
 					</AccordionTab>
-				</Accordion> -->
+				</Accordion>
 
 				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
@@ -304,10 +304,12 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	getAsConfiguredModel
+	getAsConfiguredModel,
+	getInterventions,
+	setInterventions
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -316,6 +318,7 @@ import { logger } from '@/utils/logger';
 import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
+import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -356,6 +359,7 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
+const interventions = ref<Intervention[]>([]);
 const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
 
@@ -585,17 +589,13 @@ const numInitials = computed(() => {
 	return Object.keys(mmt.value.initials).length;
 });
 
-// const addIntervention = () => {
-// 	if (knobs.value.transientModelConfig.interventions) {
-// 		knobs.value.transientModelConfig.interventions.push({
-// 			name: '',
-// 			timestep: 1,
-// 			value: 1
-// 		});
-// 	} else {
-// 		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
-// 	}
-// };
+const addIntervention = () => {
+	interventions.value.push({
+		name: '',
+		timestep: 1,
+		value: 1
+	});
+};
 
 const downloadConfiguredModel = async () => {
 	const rawModel = await getAsConfiguredModel(knobs.value?.transientModelConfig);
@@ -659,8 +659,8 @@ const initialize = async () => {
 		// apply a configuration if one hasnt been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
-		const modelConfig = cloneDeep(state.transientModelConfig);
-		knobs.value.transientModelConfig = modelConfig;
+		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		interventions.value = getInterventions(knobs.value.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -681,6 +681,7 @@ const initialize = async () => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
+	interventions.value = getInterventions(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -729,12 +730,21 @@ watch(
 	{ immediate: true, deep: true }
 );
 
+// A very temporary way of doing interventions until we do a redesign
+watch(
+	() => interventions.value,
+	() => {
+		if (!isEmpty(interventions.value))
+			setInterventions(knobs.value.transientModelConfig, interventions.value);
+	},
+	{ deep: true }
+);
+
 watch(
 	() => knobs.value,
 	async () => {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = knobs.value.transientModelConfig;
-
 		emit('update-state', state);
 	},
 	{ deep: true }

@@ -202,14 +202,14 @@ export function setInterventions(config: ModelConfiguration, interventions: Inte
 		);
 	});
 }
-// export function getInterventions(config: ModelConfiguration): Intervention[] {
-// 	const interventions: Intervention[] = [];
-// 	config.parameterSemanticList.forEach(p => {
-// 		p.interventions.forEach(i => interventions.push(i));
-// 	});
+export function getInterventions(config: ModelConfiguration): Intervention[] {
+	const interventions: Intervention[] = [];
+	config.parameterSemanticList.forEach((p) => {
+		p.interventions?.forEach((i) => interventions.push(i));
+	});
 
-// 	return interventions
-// }
+	return interventions;
+}
 
 // export function setIntervention(
 // 	config: ModelConfiguration,
