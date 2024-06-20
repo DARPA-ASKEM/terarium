@@ -21,7 +21,7 @@ import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
 import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number;
+	modelValue: string | number | undefined;
 	label?: string;
 	errorMessage?: string;
 	disabled?: boolean;
