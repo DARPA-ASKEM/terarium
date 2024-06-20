@@ -13,7 +13,8 @@ import type {
 	MiraModel,
 	MiraTemplate,
 	MiraTemplateParams,
-	TemplateSummary
+	TemplateSummary,
+	ObservableSummary
 } from './mira-common';
 
 export const emptyMiraModel = () => {
@@ -396,7 +397,7 @@ export const createParameterMatrix = (
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
 	templates: TemplateSummary[],
-	observables?: { [key: string]: any }
+	observableSummary?: ObservableSummary
 ) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
@@ -448,9 +449,9 @@ export const convertToIGraph = (
 	});
 
 	// observables
-	if (!isEmpty(observables)) {
-		Object.keys(observables).forEach((key) => {
-			const observable = observables[key];
+	if (!isEmpty(observableSummary)) {
+		Object.keys(observableSummary).forEach((key) => {
+			const observable = observableSummary[key];
 			graph.nodes.push({
 				id: key,
 				label: observable.name,
@@ -501,8 +502,6 @@ export const convertToIGraph = (
 			});
 		}
 	});
-
-	console.log(graph, templates);
 
 	return graph;
 };

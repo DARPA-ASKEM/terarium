@@ -227,8 +227,8 @@ async function renderGraph() {
 	// Render graph
 	const graphData =
 		isCollapsed.value && isStratified.value
-			? convertToIGraph(templatesSummary, mmt.value.observables)
-			: convertToIGraph(rawTemplates, mmt.value.observables);
+			? convertToIGraph(templatesSummary, observableSummary.value)
+			: convertToIGraph(rawTemplates, observableSummary.value);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -251,7 +251,6 @@ watch(
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 		observableSummary.value = response.observable_summary;
-		console.log(response);
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }

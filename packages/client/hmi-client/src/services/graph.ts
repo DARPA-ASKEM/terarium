@@ -88,8 +88,8 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 				isAddingObservables = true;
 				farthestNodeX += 150;
 				observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * 300;
+				console.log(observablesHeight);
 			}
-			console.log(observablesHeight);
 
 			const n = g.node(node.id);
 			node.width = n.width;
