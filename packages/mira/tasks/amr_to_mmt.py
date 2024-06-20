@@ -48,8 +48,22 @@ def main():
             }
             template_params[tm.name] = entry
 
+        # Summarize observables, extract out states
+        concept_names = list(map(lambda x: x.name, mmt.get_concepts_map().values()))
+        observable_summary = {}
+        for ob in mmt.observables.items():
+            obKey = ob[0]
+            obValue = ob[1]
+            observable_summary[obKey] = {
+                "name": obKey,
+                "display_name": obValue.display_name,
+                "expression": str(obValue.expression),
+                "states": list(obValue.get_parameter_names(concept_names))
+            }
+
         result = {
             "template_params": template_params,
+            "observable_summary": observable_summary,
             "mmt": json.loads(mmt.json())
         }
         taskrunner.write_output_dict_with_timeout({"response": result})
