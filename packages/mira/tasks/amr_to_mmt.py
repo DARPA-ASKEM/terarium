@@ -49,7 +49,9 @@ def main():
             template_params[tm.name] = entry
 
         # Summarize observables, extract out concepts
+
         # concept_names = list(map(lambda x: x.name, mmt.get_concepts_map().values()))
+        # FIXME: get_concept_map seems to be unreliable, need better/model-agnostic way to parse
         concept_names = list(map(lambda x: x["id"], amr["model"]["states"]))
 
         observable_summary = {}
