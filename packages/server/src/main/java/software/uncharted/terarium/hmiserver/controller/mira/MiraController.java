@@ -127,6 +127,7 @@ public class MiraController {
 		try {
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -189,11 +190,14 @@ public class MiraController {
 
 		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
 		if (artifact.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Artifact not found");
+			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
 		}
 
 		if (artifact.get().getFileNames().isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Artifact has no files");
+			log.error(
+					String.format("The files associated with artifact %s are missing.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.files.not-found"));
 		}
 
 		final String filename = artifact.get().getFileNames().get(0);
@@ -202,11 +206,14 @@ public class MiraController {
 		try {
 			fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
 		} catch (final IOException e) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+			log.error(String.format("Unable to read file contents for artifact %s.", conversionRequest.artifactId), e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.file.unable-to-read"));
 		}
 
 		if (fileContents.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to fetch file contents");
+			log.error(String.format("The file contents for artifact %s is empty.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file.content.empty"));
 		}
 
 		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
@@ -218,6 +225,7 @@ public class MiraController {
 		try {
 			req.setInput(fileContents.get().getBytes());
 		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 		req.setAdditionalProperties(additionalProperties);
@@ -230,7 +238,8 @@ public class MiraController {
 		} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
 			req.setScript(SbmlToPetrinetResponseHandler.NAME);
 		} else {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown model type");
+			log.error(String.format("Unable to determine the artifact type from the supplied filename: %s", filename));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file-type"));
 		}
 
 		// send the request
@@ -290,24 +299,14 @@ public class MiraController {
 	@GetMapping("/currie/{curies}")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(@PathVariable("curies") final String curies) {
+		final ResponseEntity<List<DKG>> response;
 		try {
-			final ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
-			if (response.getStatusCode().is2xxSuccessful()) {
-				return ResponseEntity.ok(response.getBody());
-			}
-			return ResponseEntity.internalServerError().build();
-		} catch (final FeignException.NotFound e) { // Handle 404 errors
-			log.info("Could not find resource in the DKG", e);
-			return ResponseEntity.noContent().build();
+			response = proxy.getEntities(curies);
 		} catch (final FeignException e) {
-			final String error = "Unable to fetch DKGs";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
-		} catch (final Exception e) {
-			log.error("Unable to fetch DKG", e);
-			return ResponseEntity.internalServerError().build();
+			throw handleMiraFeignException(e, "concepts", "curies", curies, "mira.concepts.bad-curies");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	@GetMapping("/search")
@@ -316,21 +315,14 @@ public class MiraController {
 			@RequestParam("q") final String q,
 			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
 			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
+		final ResponseEntity<List<DKG>> response;
 		try {
-			final ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
-			if (response.getStatusCode().is2xxSuccessful()) {
-				return ResponseEntity.ok(response.getBody());
-			}
-			return ResponseEntity.internalServerError().build();
+			response = proxy.search(q, limit, offset);
 		} catch (final FeignException e) {
-			final String error = "An error occurred searching DKGs";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
-		} catch (final Exception e) {
-			log.error("Unable to fetch DKG", e);
-			return ResponseEntity.internalServerError().build();
+			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concepts.bad-query");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	// This rebuilds the semantics ODE via MIRA
@@ -340,26 +332,51 @@ public class MiraController {
 	@PostMapping("/reconstruct-ode-semantics")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(final Object amr) {
+		final ResponseEntity<JsonNode> response;
 		try {
-			return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
+			response = proxy.reconstructODESemantics(amr);
 		} catch (final FeignException e) {
-			final String error = "Unable to reconstruct ODE semantics";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
+		final ResponseEntity<List<EntitySimilarityResult>> response;
 		try {
-			return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
+			response = proxy.entitySimilarity(obj);
 		} catch (final FeignException e) {
-			final String error = "Unable to fetch entity similarity";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(HttpStatus.valueOf(status), error);
+			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
+	}
+
+	private ResponseStatusException handleMiraFeignException(
+			final FeignException e,
+			final String returnType,
+			final String inputType,
+			final String input,
+			final String errorMessageCode) {
+		final HttpStatus statusCode = HttpStatus.resolve(e.status());
+		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn(String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input));
+			return new ResponseStatusException(statusCode, messages.get(errorMessageCode));
+		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIRA is currently unavailable");
+			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
+		} else if (statusCode != null && statusCode.is5xxServerError()) {
+			log.error(String.format(
+					"An error occurred while MIRA was trying to determine %s based on %s: %s",
+					returnType, inputType, input));
+			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
+		}
+		log.error(String.format(
+				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
+				returnType, inputType, input));
+		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }
