@@ -58,14 +58,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 	dagre.layout(g);
 
-	let farthestNodeX = 0;
+	let mostRightNodeX = 0;
+	let lowestNodeY = 0;
+	let highestNodeY = 0;
 	let currentObservableY = 0;
 	let isAddingObservables = false;
 	let statesAndTransitionsAmount = 0;
-	let observablesHeight = 0;
 	// Observables are added to the end graphData.nodes array in convertToIGraph so assume that's the case
 	graphScaffolder.traverseGraph(graphData, (node) => {
-		// Place states/transitions all of these should be placed before observables in order for farthestNodeX to be correct
+		// Place states/transitions all of these should be placed before observables in order for mostRightNodeX to be correct
 		if (node.data?.type !== NodeType.Observable) {
 			const n = g.node(node.id);
 			node.width = n.width;
@@ -73,7 +74,9 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			node.x = n.x;
 			node.y = n.y;
 
-			if (node.x > farthestNodeX) farthestNodeX = node.x;
+			if (node.x > mostRightNodeX) mostRightNodeX = node.x;
+			if (node.y < lowestNodeY) lowestNodeY = node.y;
+			if (node.y > highestNodeY) highestNodeY = node.y;
 
 			const pid = g.parent(node.id);
 			if (pid) {
@@ -84,17 +87,20 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		}
 		// Place observables
 		else {
+			const n = g.node(node.id);
+
 			if (!isAddingObservables) {
+				const midPointY = (highestNodeY + lowestNodeY) / 2;
+				const observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * n.height;
 				isAddingObservables = true;
-				farthestNodeX += 150;
-				observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * 300;
+				mostRightNodeX += 150;
+				currentObservableY = midPointY - observablesHeight / 2;
 				console.log(observablesHeight);
 			}
 
-			const n = g.node(node.id);
 			node.width = n.width;
 			node.height = n.height;
-			node.x = farthestNodeX;
+			node.x = mostRightNodeX;
 			node.y = currentObservableY;
 
 			currentObservableY += 100;
