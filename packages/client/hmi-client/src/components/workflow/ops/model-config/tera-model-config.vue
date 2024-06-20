@@ -175,7 +175,7 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="ConfigTabs.Notebook">
+		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
 				<div class="toolbar-right-side"></div>
 				<div class="toolbar">
@@ -219,7 +219,7 @@
 				/>
 				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
-		</section>
+		</tera-columnar-panel>
 	</tera-drilldown>
 	<tera-drilldown
 		v-if="suggestedConfigurationContext.isOpen"
@@ -319,6 +319,7 @@ import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {

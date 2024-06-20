@@ -27,12 +27,7 @@
 											{{ id }}
 										</td>
 										<td>
-											<tera-input-number
-												class="ml-3"
-												v-model="ensembleConfigs[i].weight"
-												:min-fraction-digits="0"
-												:max-fraction-digits="7"
-											/>
+											<tera-input type="decimal" v-model="ensembleConfigs[i].weight" />
 										</td>
 									</tr>
 								</tbody>
@@ -208,7 +203,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';

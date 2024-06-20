@@ -18,24 +18,24 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
+import { InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number;
+	modelValue: string | number | undefined;
 	label?: string;
 	errorMessage?: string;
 	disabled?: boolean;
+	type?: InputTypeHTMLAttribute | 'nist';
 }>();
 
 const emit = defineEmits(['update:modelValue']);
 const inputField = ref<HTMLInputElement | null>(null);
-const attrs = useAttrs();
 const error = ref('');
 const maskedValue = ref('');
 
-const isNistType = attrs.type === 'nist';
-const textAlign = attrs.type === 'number' || isNistType ? 'right' : 'left';
-const getType = isNistType ? 'text' : (attrs.type as InputTypeHTMLAttribute);
+const isNistType = props.type === 'nist';
+const textAlign = props.type === 'number' || isNistType ? 'right' : 'left';
+const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
 const focusInput = () => {
