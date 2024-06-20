@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -68,6 +70,7 @@ public class GoLLMController {
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+	private final GenerateSummaryHandler generateSummaryHandler;
 
 	private final Messages messages;
 
@@ -77,6 +80,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(configureModelResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureFromDatasetResponseHandler);
+		taskService.addResponseHandler(generateSummaryHandler);
 	}
 
 	@PostMapping("/model-card")
@@ -494,6 +498,75 @@ public class GoLLMController {
 		props.setWorkflowId(workflowId);
 		props.setNodeId(nodeId);
 		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
+	}
+
+	@PostMapping("/generate-summary")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "422",
+						description = "The request was interrupted while waiting for a response",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "The request was timed out while waiting for a response",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
+	public ResponseEntity<TaskResponse> createGenerateResponseTask(
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestBody final String instruction) {
+
+		// create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateSummaryHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(instruction.getBytes(StandardCharsets.UTF_8));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
 
 		final TaskResponse resp;
 		try {
