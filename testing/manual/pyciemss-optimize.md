@@ -19,7 +19,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
 2. Connect the model to a Model Configuration operation, create a configuration
 3. Ensure that the model parameters (e.g. beta, gamma) have distribution ranges
-4. Connect the model-configuration to a Optimize with Pyciemss operator
+4. Connect the model-configuration to a `PyCIEMSS Optimize` operator
 
 ### 3. Run with minimal effort:
 1. Select a state in the constraint box. This will be done via a dropdown. You should be able to select any that you wish. 
