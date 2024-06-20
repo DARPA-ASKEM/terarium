@@ -43,11 +43,6 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 				g.setParent(child.id, node.id);
 			}
 		}
-
-		// Collect observables and states/transitions
-		// if (node.data?.type === NodeType.Observable) {
-		// 	observables.push(node);
-		// }
 	});
 
 	// eslint-disable-next-line
@@ -65,19 +60,13 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 	let farthestNodeX = 0;
 	let currentObservableY = 0;
+	let isAddingObservables = false;
+	let statesAndTransitionsAmount = 0;
+	let observablesHeight = 0;
 	// Observables are added to the end graphData.nodes array in convertToIGraph so assume that's the case
 	graphScaffolder.traverseGraph(graphData, (node) => {
-		// Place observables
-		if (node.data?.type === NodeType.Observable) {
-			const n = g.node(node.id);
-			node.width = n.width;
-			node.height = n.height;
-			node.x = farthestNodeX + 150;
-			node.y = currentObservableY;
-			currentObservableY += 100;
-		}
 		// Place states/transitions all of these should be placed before observables in order for farthestNodeX to be correct
-		else {
+		if (node.data?.type !== NodeType.Observable) {
 			const n = g.node(node.id);
 			node.width = n.width;
 			node.height = n.height;
@@ -91,6 +80,24 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 				node.x -= g.node(pid).x;
 				node.y -= g.node(pid).y;
 			}
+			statesAndTransitionsAmount++;
+		}
+		// Place observables
+		else {
+			if (!isAddingObservables) {
+				isAddingObservables = true;
+				farthestNodeX += 150;
+				observablesHeight = (graphData.nodes.length - statesAndTransitionsAmount) * 300;
+			}
+			console.log(observablesHeight);
+
+			const n = g.node(node.id);
+			node.width = n.width;
+			node.height = n.height;
+			node.x = farthestNodeX;
+			node.y = currentObservableY;
+
+			currentObservableY += 100;
 		}
 	});
 
