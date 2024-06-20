@@ -74,18 +74,4 @@ public class ModelConfiguration extends TerariumAsset {
 		}
 		return clone;
 	}
-
-	@JsonIgnore
-	@TSIgnore
-	public List<Intervention> getInterventions() {
-		final List<Intervention> interventions = new ArrayList<>();
-		if (this.parameterSemanticList != null) {
-			for (final ParameterSemantic parameterSemantic : this.parameterSemanticList) {
-				if (parameterSemantic.getInterventions() != null) {
-					interventions.addAll(parameterSemantic.getInterventions());
-				}
-			}
-		}
-		return interventions;
-	}
 }
