@@ -29,11 +29,7 @@
 												{{ id }}
 											</td>
 											<td>
-												<tera-input-number
-													v-model="knobs.ensembleConfigs[i].weight"
-													:min-fraction-digits="0"
-													:max-fraction-digits="7"
-												/>
+												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
 											</td>
 										</tr>
 									</tbody>
@@ -194,7 +190,7 @@ import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { useProjects } from '@/composables/project';
@@ -206,7 +202,12 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 
-import { chartActionsProxy, drilldownChartSize, getTimespan } from '@/components/workflow/util';
+import {
+	chartActionsProxy,
+	drilldownChartSize,
+	getTimespan,
+	nodeMetadata
+} from '@/components/workflow/util';
 import type {
 	CsvAsset,
 	ModelConfigurationLegacy,
@@ -352,7 +353,7 @@ const runEnsemble = async () => {
 			solver_method: knobs.value.extra.solverMethod
 		}
 	};
-	const response = await makeEnsembleCiemssCalibration(calibratePayload);
+	const response = await makeEnsembleCiemssCalibration(calibratePayload, nodeMetadata(props.node));
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;

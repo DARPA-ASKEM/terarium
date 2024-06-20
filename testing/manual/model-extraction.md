@@ -1,10 +1,8 @@
 ## Model extraction
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
-### 1. Begin test 
+### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
     email: qa@test.io
@@ -30,6 +28,3 @@ Estimated time to completion: [X] minutes
 2. Is the TA1 _model card_, extracted with `mit-tr` available?
 3. Is the TA4 _model card_, extracted from `gollm-taskrunner` available?
 4. Are the _variables extractions_ available in the `Other` accordion?
-
-### 5. End test
-1. logout of the application 

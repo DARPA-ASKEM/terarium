@@ -811,6 +811,7 @@ export interface TaskResponse {
     additionalProperties: any;
     stdout: string;
     stderr: string;
+    requestSHA256: string;
 }
 
 export interface Annotation {
@@ -838,6 +839,13 @@ export interface UserEvent {
     user: UserOld;
     id: string;
     message: any;
+}
+
+export interface SimulationNotificationData {
+    simulationId: string;
+    simulationType: SimulationType;
+    simulationEngine: SimulationEngine;
+    metadata: any;
 }
 
 export interface Role {
@@ -1270,6 +1278,7 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
@@ -1278,6 +1287,7 @@ export enum ClientEventType {
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
     TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
 }
 

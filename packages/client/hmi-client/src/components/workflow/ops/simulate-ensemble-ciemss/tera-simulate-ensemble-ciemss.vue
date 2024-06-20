@@ -27,12 +27,7 @@
 											{{ id }}
 										</td>
 										<td>
-											<tera-input-number
-												class="ml-3"
-												v-model="ensembleConfigs[i].weight"
-												:min-fraction-digits="0"
-												:max-fraction-digits="7"
-											/>
+											<tera-input type="decimal" v-model="ensembleConfigs[i].weight" />
 										</td>
 									</tr>
 								</tbody>
@@ -208,7 +203,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
@@ -224,7 +219,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations-legacy';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type {
@@ -323,7 +318,7 @@ const runEnsemble = async () => {
 		engine: 'ciemss',
 		extra: { num_samples: numSamples.value }
 	};
-	const response = await makeEnsembleCiemssSimulation(params);
+	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressSimulationId = response.simulationId;

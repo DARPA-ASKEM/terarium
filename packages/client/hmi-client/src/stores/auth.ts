@@ -28,26 +28,26 @@ const useAuthStore = defineStore('auth', () => {
 		}
 	};
 
-	const token = computed(() => {
+	const getToken = () => {
 		if (oidc.value?.isUserLoggedIn) {
 			return oidc.value?.getTokens().accessToken;
 		}
 		// no token available
 		return null;
-	});
+	};
 
 	// user
 	const user = ref<User | null>(null);
 	const updateUser = async (updatedUser: User) => {
 		const response = await axios.put('/api/user/me', updatedUser, {
-			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
+			headers: new AxiosHeaders().setAuthorization(`Bearer ${getToken()}`)
 		});
 		user.value = response.data;
 	};
 
 	const loadUserModel = async () => {
 		const response = await axios.get('/api/user/me', {
-			headers: new AxiosHeaders().setAuthorization(`Bearer ${token.value}`)
+			headers: new AxiosHeaders().setAuthorization(`Bearer ${getToken()}`)
 		});
 		user.value = response.data;
 	};
@@ -75,7 +75,7 @@ const useAuthStore = defineStore('auth', () => {
 	return {
 		login,
 		logout,
-		token,
+		getToken,
 		user,
 		updateUser,
 		loadUserModel,

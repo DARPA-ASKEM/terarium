@@ -8,83 +8,40 @@
 	>
 		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-left>
+					<label class="center-label"
+						>The model configuration will be optimized with the following settings</label
+					>
+				</template>
 				<template #header-controls-right>
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<h5>Settings</h5>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label>Start time</label>
-							<InputText disabled class="p-inputtext-sm" inputId="integeronly" value="0" />
-						</div>
-						<div class="label-and-input">
-							<label>End time</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
-						</div>
-					</div>
+					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
+					<tera-optimize-constraint-group-form
+						v-for="(cfg, index) in node.state.constraintGroups"
+						:key="selectedOutputId + ':' + index"
+						:index="index"
+						:constraint="cfg"
+						:model-state-and-obs-options="modelStateAndObsOptions"
+						@update-self="(config) => updateConstraintGroupForm(index, config)"
+						@delete-self="() => deleteConstraintGroupForm(index)"
+					/>
 					<div>
 						<Button
-							v-if="!showAdditionalOptions"
+							icon="pi pi-plus"
 							class="p-button-sm p-button-text"
-							label="Show additional options"
-							@click="toggleAdditonalOptions"
+							label="Add more constraints"
+							@click="addConstraintGroupForm"
 						/>
 					</div>
-					<div v-if="showAdditionalOptions" class="input-row">
-						<div class="label-and-input">
-							<label>Number of samples</label>
-							<div>
-								<InputNumber
-									class="p-inputtext-sm"
-									inputId="integeronly"
-									v-model="knobs.numSamples"
-								/>
-							</div>
-						</div>
-						<div class="label-and-input">
-							<label>Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								disabled
-								:options="['dopri5', 'euler']"
-								v-model="knobs.solverMethod"
-								placeholder="Select"
-							/>
-						</div>
-						<div class="label-and-input">
-							<!-- TODO: This could likely be better explained to user -->
-							<label> Minimized </label>
-							<Dropdown
-								class="toolbar-button"
-								v-model="knobs.isMinimized"
-								optionLabel="label"
-								optionValue="value"
-								:options="[
-									{ label: 'true', value: true },
-									{ label: 'false', value: false }
-								]"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<InputNumber class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
-						</div>
-					</div>
-					<Button
-						v-if="showAdditionalOptions"
-						class="p-button-sm p-button-text w-3"
-						label="Hide additional options"
-						@click="toggleAdditonalOptions"
-					/>
 				</div>
 				<div class="form-section">
-					<h5>Intervention policy</h5>
+					<h5>
+						Intervention policy
+						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
+					</h5>
 					<div>
 						<label>Intervention Type</label>
 						<Dropdown
@@ -118,51 +75,73 @@
 					</div>
 				</div>
 				<div class="form-section">
-					<h5>Constraint</h5>
-					<div class="constraint-row">
+					<h5>
+						Optimization settings
+						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
+					<div class="input-row">
 						<div class="label-and-input">
-							<label>Target-variable</label>
-							<MultiSelect
-								class="p-inputtext-sm"
-								:options="modelStateAndObsOptions"
-								v-model="knobs.targetVariables"
-								placeholder="Select"
-								filter
-							/>
+							<label>Start time</label>
+							<tera-input disabled class="p-inputtext-sm" type="number" model-value="0" />
 						</div>
 						<div class="label-and-input">
-							<label>QoI Method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								:options="[
-									{ label: 'Max', value: ContextMethods.max },
-									{ label: 'Day average', value: ContextMethods.day_average }
-								]"
-								option-label="label"
-								option-value="value"
-								v-model="knobs.qoiMethod"
-							/>
+							<label>End time</label>
+							<tera-input class="p-inputtext-sm" type="number" v-model="knobs.endTime" />
 						</div>
 					</div>
-					<div class="constraint-row">
-						<div class="label-and-input">
-							<label>Acceptable risk of failure</label>
-							<div>
-								<InputNumber
+					<div>
+						<Button
+							v-if="!showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Show additional options"
+							@click="toggleAdditonalOptions"
+						/>
+						<Button
+							v-if="showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Hide additional options"
+							@click="toggleAdditonalOptions"
+						/>
+					</div>
+					<div v-if="showAdditionalOptions">
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Number of samples to simulate model</label>
+								<div>
+									<tera-input class="p-inputtext-sm" type="number" v-model="knobs.numSamples" />
+								</div>
+							</div>
+							<div class="label-and-input">
+								<label>Solver method</label>
+								<Dropdown
 									class="p-inputtext-sm"
-									inputId="integeronly"
-									v-model="knobs.riskTolerance"
+									disabled
+									:options="['dopri5', 'euler']"
+									v-model="knobs.solverMethod"
+									placeholder="Select"
 								/>
 							</div>
 						</div>
-						<div class="label-and-input">
-							<label>Threshold</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								v-model="knobs.threshold"
-								:min-fraction-digits="1"
-								:max-fraction-digits="10"
-							/>
+						<div class="input-row">
+							<h3>Optimizer options</h3>
+						</div>
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Algorithm</label>
+								<tera-input disabled class="p-inputtext-sm" model-value="basinhopping" />
+							</div>
+							<div class="label-and-input">
+								<label>Minimizer method</label>
+								<tera-input disabled class="p-inputtext-sm" model-value="COBYLA" />
+							</div>
+							<div class="label-and-input">
+								<label>Maxiter</label>
+								<tera-input class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+							</div>
+							<div class="label-and-input">
+								<label>Maxfeval</label>
+								<tera-input class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -237,15 +216,16 @@
 							label="Add chart"
 							icon="pi pi-plus"
 						/>
+						<!-- TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909 -->
 						<tera-optimize-chart
 							:risk-results="riskResults[knobs.forecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.forecastRunId,
-								selectedVariable: knobs.targetVariables
+								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
 							}"
-							:target-variable="knobs.targetVariables[0]"
+							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
 							:size="chartSize"
-							:threshold="knobs.threshold"
+							:threshold="props.node.state.constraintGroups?.[0]?.threshold || undefined"
 						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
@@ -274,11 +254,11 @@
 	>
 		<div class="label-and-input">
 			<label> Model config name</label>
-			<InputText v-model="modelConfigName" />
+			<tera-input v-model="modelConfigName" />
 		</div>
 		<div class="label-and-input">
 			<label> Model config description</label>
-			<InputText v-model="modelConfigDesc" />
+			<tera-input v-model="modelConfigDesc" />
 		</div>
 		<Button
 			:disabled="modelConfigName === ''"
@@ -295,11 +275,9 @@ import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
+import teraInput from '@/components/widgets/tera-input.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import MultiSelect from 'primevue/multiselect';
 import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -327,23 +305,26 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	PolicyInterventions
+	PolicyInterventions,
+	OptimizeQoi
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
-	ContextMethods,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
-	getOptimizedInterventions
+	getOptimizedInterventions,
+	defaultConstraintGroup,
+	ConstraintGroup
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -368,11 +349,6 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
-	qoiMethod: ContextMethods;
-	targetVariables: string[];
-	riskTolerance: number;
-	threshold: number;
-	isMinimized: boolean;
 	forecastRunId: string;
 	optimizationRunId: string;
 	interventionType: InterventionTypes;
@@ -384,15 +360,15 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
-	qoiMethod: props.node.state.qoiMethod ?? ContextMethods.max,
-	targetVariables: props.node.state.targetVariables ?? [],
-	riskTolerance: props.node.state.riskTolerance ?? 0,
-	threshold: props.node.state.threshold ?? 0, // currently not used.
-	isMinimized: props.node.state.isMinimized ?? true,
 	forecastRunId: props.node.state.forecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
+
+// TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
+const constraintToolTip = 'TODO';
+const interventionPolicyToolTip = 'TODO';
+const optimizeSettingsToolTip = 'TODO';
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
@@ -453,7 +429,7 @@ const outputs = computed(() => {
 
 const isRunDisabled = computed(() => {
 	if (
-		knobs.value.targetVariables.length === 0 ||
+		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
 		props.node.state.interventionPolicyGroups.length === 0
 	)
 		return true;
@@ -502,6 +478,30 @@ const addInterventionPolicyGroupForm = () => {
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
+	emit('update-state', state);
+};
+
+const addConstraintGroupForm = () => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups.push(defaultConstraintGroup);
+	emit('update-state', state);
+};
+
+const deleteConstraintGroupForm = (index: number) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups.splice(index, 1);
+	emit('update-state', state);
+};
+
+const updateConstraintGroupForm = (index: number, config: ConstraintGroup) => {
+	const state = _.cloneDeep(props.node.state);
+	if (!state.constraintGroups) return;
+
+	state.constraintGroups[index] = config;
 	emit('update-state', state);
 };
 
@@ -556,6 +556,13 @@ const runOptimize = async () => {
 		paramValues
 	};
 
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
+	const qoi: OptimizeQoi = {
+		contexts: props.node.state.constraintGroups.map((ele) => ele.targetVariable),
+		method: props.node.state.constraintGroups[0].qoiMethod
+	};
+
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -565,19 +572,16 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		policyInterventions: optimizeInterventions,
-		qoi: {
-			contexts: knobs.value.targetVariables,
-			method: knobs.value.qoiMethod
-		},
-		riskBound: knobs.value.threshold,
+		qoi,
+		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
-			isMinimized: knobs.value.isMinimized,
+			isMinimized: props.node.state.constraintGroups[0].isMinimized,
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - knobs.value.riskTolerance) / 100,
+			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
@@ -585,7 +589,7 @@ const runOptimize = async () => {
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
-	const optResult = await makeOptimizeJobCiemss(optimizePayload);
+	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
 	state.optimizationRunId = '';
@@ -650,14 +654,9 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
-		state.targetVariables = knobs.value.targetVariables;
-		state.riskTolerance = knobs.value.riskTolerance;
-		state.threshold = knobs.value.threshold;
 		state.forecastRunId = knobs.value.forecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.interventionType = knobs.value.interventionType;
-		state.isMinimized = knobs.value.isMinimized;
-		state.qoiMethod = knobs.value.qoiMethod;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -715,6 +714,14 @@ watch(
 }
 
 .form-section {
+	gap: var(--gap-1);
+	background-color: var(--surface-50);
+	flex-grow: 1;
+	padding: var(--gap);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
+	overflow: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -733,7 +740,7 @@ watch(
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-
+	padding-top: var(--gap);
 	& > * {
 		flex: 1;
 	}
@@ -753,5 +760,9 @@ watch(
 	& > *:not(:first-child) {
 		flex: 1;
 	}
+}
+
+.center-label {
+	align-content: center;
 }
 </style>

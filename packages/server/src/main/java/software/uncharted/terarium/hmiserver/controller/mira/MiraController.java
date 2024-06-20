@@ -25,8 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import software.uncharted.terarium.hmiserver.annotations.IgnoreRequestLogging;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
@@ -155,7 +153,7 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		Schema.Permission permission = projectService.checkPermissionCanRead(
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
 		try {
@@ -233,25 +231,6 @@ public class MiraController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
-	}
-
-	@GetMapping("/{task-id}")
-	@Operation(summary = "Subscribe for updates on a Mira task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Subscribed successfully",
-						content =
-								@Content(
-										mediaType = "text/event-stream",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-			})
-	@IgnoreRequestLogging
-	public SseEmitter subscribe(@PathVariable("task-id") final UUID taskId) {
-		return taskService.subscribe(taskId);
 	}
 
 	@GetMapping("/currie/{curies}")

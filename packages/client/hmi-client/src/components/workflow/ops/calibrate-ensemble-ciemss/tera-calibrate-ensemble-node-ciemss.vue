@@ -51,7 +51,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 
 import { Poller, PollerState } from '@/api/api';
@@ -125,7 +125,10 @@ watch(
 					inferred_parameters: id
 				}
 			};
-			const simulationResponse = await makeEnsembleCiemssSimulation(params);
+			const simulationResponse = await makeEnsembleCiemssSimulation(
+				params,
+				nodeMetadata(props.node)
+			);
 			const forecastId = simulationResponse.simulationId;
 
 			const state = _.cloneDeep(props.node.state);

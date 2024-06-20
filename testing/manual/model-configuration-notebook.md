@@ -1,8 +1,6 @@
 ## Model Configuration Notebook
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -24,12 +22,9 @@ Estimated time to completion: [X] minutes
 3. At the top, use the AI assistant to ask a question: `What are the model parameters?`
 4. Ensure that code is generated (a `get_params`) function.
 5. Execute the code and validate the output prints the various parameters.
-6. Ask the AI: `Update R0 to 0.2` 
+6. Ask the AI: `Update R0 to 0.2`
 7. Run the code
 
 ### 4. Validation
 1. Go back to the wizard view
 2. Verify that the value of `R0` is 0.2
-  
-### 5. End test
-1. logout of the application 

@@ -1,8 +1,6 @@
 ## Search and Sort
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -59,8 +57,3 @@ Estimated time to completion: [X] minutes
    - the order should switch between `(2,3,1) & (1,3,2)`
 7. Click the `Last updated` a few times keeping an on the 3 projects order
    - the order should switch between `(3,1,2) & (2,1,3)`
-
-### 6. End test
-1. In the browser with the other account remove the share access to the `Quality Assurance` account
-2. Open the project card menu and remove your 3 projects
-3. logout of the application 

@@ -66,7 +66,7 @@
 				</div>
 			</tera-drilldown-section>
 		</div>
-		<div :tabName="Tabs.Notebook">
+		<tera-columnar-panel :tabName="Tabs.Notebook">
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
@@ -136,7 +136,7 @@
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</div>
+		</tera-columnar-panel>
 	</tera-drilldown>
 </template>
 
@@ -167,6 +167,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{

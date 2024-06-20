@@ -12,16 +12,17 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
+import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { computed, watch } from 'vue';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['open-drilldown', 'append-input-port']);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -30,8 +31,17 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 watch(
 	() => props.node.inputs,
 	() => {
-		const documentInputs = props.node.inputs.filter((input) => input.type === 'documentId');
-		const datasetInputs = props.node.inputs.filter((input) => input.type === 'datasetId');
+		const inputs = props.node.inputs;
+		const documentInputs = inputs.filter((input) => input.type === 'documentId');
+		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
+
+		const modelInputs = inputs.filter((input) => input.type === 'modelId');
+		if (!modelInputs[0].value) {
+			// Reset previous model cache
+			const state = cloneDeep(props.node.state);
+			state.tempConfigId = '';
+			emit('update-state', state);
+		}
 
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
