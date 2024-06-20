@@ -210,19 +210,3 @@ export function getInterventions(config: ModelConfiguration): Intervention[] {
 
 	return interventions;
 }
-
-// export function setIntervention(
-// 	config: ModelConfiguration,
-// 	parameterId: string,
-// 	index: number,
-// 	intervention: Intervention
-// ): void {
-// 	const interventions = getInterventions(config);
-// 	const parameter = getParameter(config, parameterId);
-
-// }
-
-// export function removeIntervention(config: ModelConfiguration, parameterId: string, index: number): void {
-// 	const interventions = getInterventions(config);
-// 	interventions.splice(index, 1);
-// }
