@@ -21,7 +21,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Inte
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
-@Accessors
+@Accessors(chain = true)
 @Entity
 public class ModelConfiguration extends TerariumAsset {
 	@TSOptional
