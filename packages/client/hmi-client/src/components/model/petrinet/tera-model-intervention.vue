@@ -6,11 +6,11 @@
 		</div>
 		<div class="label-col">
 			<label>Timestep</label>
-			<tera-input-number v-model.lazy="timestep" @blur="updateIntervention" />
+			<tera-input v-model.lazy="timestep" @blur="updateIntervention" type="number" />
 		</div>
 		<div class="label-col">
 			<label>Value</label>
-			<tera-input-number v-model.lazy="value" @blur="updateIntervention" />
+			<tera-input v-model.lazy="value" @blur="updateIntervention" type="number" />
 		</div>
 		<Button label="Delete" icon="pi pi-trash" @click="$emit('delete')" rounded text />
 	</div>
@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Intervention } from '@/types/Types';
-import teraInputNumber from '@/components/widgets/tera-input-number.vue';
+import teraInput from '@/components/widgets/tera-input.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
