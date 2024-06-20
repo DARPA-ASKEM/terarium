@@ -37,4 +37,4 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 5. create multiple policy bounds
 6. create multiple contraints ** Will be meaningless at the moment.
 7. utilize the `active` toggle in constraint and/or policy boxes.
-8. plug in a calibration into this box and rerun
+8. plug in a calibration into this node and rerun
