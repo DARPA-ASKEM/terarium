@@ -14,6 +14,7 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
+3. Create a workflow named `Optimize Test`
 
 ### 2. Model setup
 1. Use/upload a model from [google drive](https://drive.google.com/drive/folders/1bllvuKt6ZA1vc36AW3Xet4y6ZAnwnaVN)
