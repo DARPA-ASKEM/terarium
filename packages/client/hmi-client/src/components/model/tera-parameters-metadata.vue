@@ -2,7 +2,7 @@
 	<ul>
 		<li
 			v-for="({ baseParameter, childParameters, isVirtual }, index) in parameterList"
-			:key="baseParameter.id"
+			:key="index"
 		>
 			<template v-if="isVirtual">
 				<tera-parameter-metadata-entry
@@ -36,8 +36,8 @@
 		<tera-stratified-matrix-modal
 			v-if="matrixModalId"
 			:id="matrixModalId"
-			:mmt="props.mmt"
-			:mmt-params="props.mmtParams"
+			:mmt="mmt"
+			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Parameters"
 			is-read-only
 			@close-modal="matrixModalId = ''"
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Model, ModelParameter } from '@/types/Types';
 import { StratifiedMatrix } from '@/types/Model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
@@ -63,35 +63,46 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter']);
 
-const parameters = getParameters(props.model);
-const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-const parameterList = Array.from(collapsedParameters.keys())
-	.flat()
-	.map((id) => {
-		const childIds = collapsedParameters.get(id) ?? [];
-		const childParameters = childIds
-			.map((childId) => parameters.find((p) => p.id === childId))
-			.filter(Boolean) as ModelParameter[];
-		const isVirtual = childIds.length > 1;
+const parameters = computed(() => getParameters(props.model));
+const collapsedParameters = computed(() => collapseParameters(props.mmt, props.mmtParams));
+const parameterList = computed<
+	{ baseParameter: ModelParameter; childParameters: ModelParameter[]; isVirtual: boolean }[]
+>(() =>
+	Array.from(collapsedParameters.value.keys())
+		.flat()
+		.map((id) => {
+			const childIds = collapsedParameters.value.get(id) ?? [];
+			const childParameters = childIds
+				.map((childId) => parameters.value.find((p) => p.id === childId))
+				.filter(Boolean) as ModelParameter[];
+			const isVirtual = childIds.length > 1;
 
-		// If the parameter is virtual, we need to get the parameter data from model.metadata
-		const baseParameter = isVirtual
-			? props.model.metadata?.parameters?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
-			: parameters.find((p) => p.id === id);
+			// If the parameter is virtual, we need to get the parameter data from model.metadata
+			const baseParameter = isVirtual
+				? props.model.metadata?.parameters?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
+				: parameters.value.find((p) => p.id === id);
 
-		return { baseParameter, childParameters, isVirtual };
-	});
+			return { baseParameter, childParameters, isVirtual };
+		})
+);
 
-const toggleStates = ref(Array.from({ length: collapsedParameters.size }, () => false));
 const matrixModalId = ref('');
 
 function updateBaseParameter(baseParameter: string, event: any) {
 	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
 	emit('update-parameter', { parameterId: baseParameter, isMetadata: true, ...event });
 	// Cascade the change to all children
-	const ids = collapsedParameters.get(baseParameter);
+	const ids = collapsedParameters.value.get(baseParameter);
 	ids?.forEach((id) => emit('update-parameter', { parameterId: id, ...event }));
 }
+
+const toggleStates = ref<boolean[]>([]);
+watch(
+	() => collapsedParameters.value.size,
+	() => {
+		toggleStates.value = Array.from({ length: collapsedParameters.value.size }, () => false);
+	}
+);
 </script>
 
 <style scoped>

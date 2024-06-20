@@ -79,7 +79,7 @@ import type { DKG, Model } from '@/types/Types';
 import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
@@ -90,20 +90,18 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import { getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
 import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
 	readonly?: boolean;
 }>();
 
 const emit = defineEmits(['update-model', 'update-parameter']);
 
-const mmt = ref<MiraModel>(emptyMiraModel());
-const mmtParams = ref<MiraTemplateParams>({});
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
 const nameOfCurieCache = ref(new Map<string, string>());
@@ -127,15 +125,6 @@ async function onSearch(event: AutoCompleteCompleteEvent) {
 function onCellEditComplete() {
 	conceptSearchTerm.value = '';
 }
-
-function updateMMT() {
-	getMMT(props.model).then((response) => {
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	});
-}
-
-onMounted(() => updateMMT());
 </script>
 
 <style scoped>

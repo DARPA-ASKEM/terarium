@@ -2,6 +2,8 @@
 	<component
 		:is="tables"
 		:model="transientModel"
+		:mmt="mmt"
+		:mmt-params="mmtParams"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
 		@update-state="onUpdateState"
@@ -11,13 +13,15 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelType } from '@/services/model';
+import { getModelType, getMMT } from '@/services/model';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { emptyMiraModel } from '@/model-representation/mira/mira';
 import {
 	updateState,
 	updateInitialMetadata,
@@ -32,6 +36,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
+const mmt = ref<MiraModel>(emptyMiraModel());
+const mmtParams = ref<MiraTemplateParams>({});
 const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
@@ -67,17 +73,38 @@ function onUpdateParameter(event: any) {
 	}
 }
 
+function updateMMT() {
+	getMMT(props.model).then((response) => {
+		mmt.value = response.mmt;
+		mmtParams.value = response.template_params;
+	});
+}
+
 // Apply changes to the model when the component unmounts or the user navigates away
 function saveChanges() {
 	emit('update-model', transientModel.value);
 }
 
-onMounted(() => window.addEventListener('beforeunload', saveChanges));
+onMounted(() => {
+	window.addEventListener('beforeunload', saveChanges);
+	updateMMT();
+});
 
 onUnmounted(() => {
 	saveChanges();
 	window.removeEventListener('beforeunload', saveChanges);
 });
+
+// Meant to run when we want to view a different model, like when we swtich outputs in the stratify operator
+// This is not to be used a refresh when saving a model
+watch(
+	() => props.model,
+	() => {
+		transientModel.value = cloneDeep(props.model);
+		updateMMT();
+	},
+	{ deep: true }
+);
 </script>
 
 <style scoped>
@@ -87,5 +114,11 @@ section {
 
 .clickable-tag:hover {
 	cursor: pointer;
+}
+
+:deep(.artifact-amount) {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
 }
 </style>
