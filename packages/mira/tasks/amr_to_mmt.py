@@ -48,8 +48,10 @@ def main():
             }
             template_params[tm.name] = entry
 
-        # Summarize observables, extract out states
-        concept_names = list(map(lambda x: x.name, mmt.get_concepts_map().values()))
+        # Summarize observables, extract out concepts
+        # concept_names = list(map(lambda x: x.name, mmt.get_concepts_map().values()))
+        concept_names = list(map(lambda x: x["id"], amr["model"]["states"]))
+
         observable_summary = {}
         for ob in mmt.observables.items():
             obKey = ob[0]
@@ -58,7 +60,7 @@ def main():
                 "name": obKey,
                 "display_name": obValue.display_name,
                 "expression": str(obValue.expression),
-                "states": list(obValue.get_parameter_names(concept_names))
+                "references": list(obValue.get_parameter_names(concept_names))
             }
 
         result = {

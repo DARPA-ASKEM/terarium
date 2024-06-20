@@ -81,7 +81,7 @@ export interface ObservableSummary {
 		display_name: string;
 		description: string;
 		expression: string;
-		states: string[];
+		references: string[];
 	};
 }
 
