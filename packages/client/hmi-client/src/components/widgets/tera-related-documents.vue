@@ -74,12 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-	extractPDF,
-	extractVariables,
-	profileDataset,
-	profileModel
-} from '@/services/knowledge';
+import { extractPDF, extractVariables, profileDataset, profileModel } from '@/services/knowledge';
 import {
 	RelationshipType,
 	createProvenance,
