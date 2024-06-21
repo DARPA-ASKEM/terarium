@@ -4,28 +4,21 @@
 			:interval-selection-signal-names="['brush']"
 			:visualization-spec="spec"
 			@chart-click="handleChartClick($event)"
-			@update-interval-selection="handleIntervalSelect"
+			@update-interval-selection="debounceHandleIntervalSelect"
 		/>
 		<vega-chart :visualization-spec="spec2" />
 	</div>
 </template>
 
 <script setup lang="ts">
+import { debounce } from 'lodash';
 import { ref } from 'vue';
 import VegaChart from './VegaChart.vue';
 
 const rand = (v: number) => Math.round(Math.random() * v);
 
-const handleChartClick = (event: any) => {
-	console.log('!!', event);
-};
-
-const handleIntervalSelect = (name: any, valueRange: any) => {
-	console.log(name, valueRange);
-};
-
 const numPoints = 10;
-const numSamples = 20;
+const numSamples = 40;
 const valueRange = 20;
 const trueValues: any[] = [];
 const dataChart1: any[] = [];
@@ -45,6 +38,36 @@ for (let i = 0; i < numSamples; i++) {
 	dataChart1.push({ sample: i, error: error });
 }
 
+const makeLineChart = (data: any[]) => {
+	return {
+		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		description: 'Stock prices of 5 Tech Companies over Time.',
+		// data: { url: 'https://vega.github.io/vega-lite/data/stocks.csv' },
+		data: { values: data },
+		mark: {
+			type: 'line',
+			strokeWidth: 0.5
+		},
+		encoding: {
+			x: {
+				field: 'timestep',
+				type: 'quantitative'
+			},
+			y: {
+				field: 'value',
+				type: 'quantitative',
+				scale: { domain: [-20, 40] }
+			},
+			color: {
+				field: 'sample',
+				type: 'nominal',
+				// scale: { range: ['#f00'] },
+				legend: null
+			}
+		}
+	};
+};
+
 const spec = ref<any>({
 	$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
 	data: { values: dataChart1 },
@@ -58,10 +81,13 @@ const spec = ref<any>({
 	vconcat: [
 		{
 			mark: 'area',
+			width: 500,
+			height: 100,
 			encoding: {
 				x: {
 					field: 'error',
-					type: 'quantitative'
+					type: 'quantitative',
+					scale: { domain: [0, 120] }
 				},
 				y: {
 					field: 'count',
@@ -71,35 +97,63 @@ const spec = ref<any>({
 		},
 		{
 			mark: 'point',
+			width: 500,
+			height: 80,
 			encoding: {
 				data: { value: dataChart1 },
 				color: { value: '#f80' },
 				opacity: { value: 0.8 },
 				size: { value: 15 },
-				x: { field: 'error', type: 'quantitative', title: '' },
-				y: { field: 'jitter', type: 'quantitative', title: '' }
+				x: {
+					field: 'error',
+					type: 'quantitative',
+					title: '',
+					scale: { domain: [0, 120] }
+				},
+				y: {
+					field: 'jitter',
+					type: 'quantitative',
+					title: '',
+					axis: null
+				}
 			},
-			params: [{ name: 'brush', select: 'interval' }]
+			params: [
+				{
+					name: 'brush',
+					select: { type: 'interval', encodings: ['x'] }
+				}
+			]
 		}
 	]
 });
 
-const spec2 = ref<any>({
-	$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-	description: 'Stock prices of 5 Tech Companies over Time.',
-	// data: { url: 'https://vega.github.io/vega-lite/data/stocks.csv' },
-	data: { values: dataChart2 },
-	mark: 'line',
-	encoding: {
-		x: { field: 'timestep', type: 'quantitative' },
-		y: { field: 'value', type: 'quantitative' },
-		color: {
-			field: 'sample',
-			type: 'nominal',
-			legend: null
-		}
+const spec2 = ref<any>(makeLineChart(dataChart2));
+
+const handleChartClick = (event: any) => {
+	console.log('!!');
+};
+
+const handleIntervalSelect = (name: any, valueRange: any) => {
+	console.log('>>', name, valueRange);
+	let samples = dataChart1
+		.filter((d) => {
+			return d.error >= valueRange.error[0] && d.error <= valueRange.error[1];
+		})
+		.map((d) => d.sample);
+
+	if (!samples || samples.length === 0) {
+		spec2.value = makeLineChart(dataChart2);
+		return;
 	}
-});
+
+	spec2.value = makeLineChart(
+		dataChart2.filter((d) => {
+			return samples.includes(d.sample);
+		})
+	);
+};
+
+const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
 
 /*
 const spec = ref<any>({
