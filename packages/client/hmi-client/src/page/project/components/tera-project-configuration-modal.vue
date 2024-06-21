@@ -155,8 +155,7 @@ function updateProjectConfiguration() {
 		const updatedProject = cloneDeep(props.project);
 		updatedProject.name = title.value;
 		updatedProject.description = description.value;
-		if (!updatedProject.metadata) updatedProject.metadata = {};
-		updatedProject.metadata.thumbnail = thumbnail.value;
+		updatedProject.thumbnail = thumbnail.value;
 		isApplyingConfiguration.value = true;
 		useProjects().update(updatedProject);
 		emit('close-modal');

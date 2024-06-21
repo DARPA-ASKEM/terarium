@@ -42,7 +42,10 @@
 				</div>
 			</header>
 			<div class="img">
-				<img :src="image" alt="Artistic representation of the Project statistics" />
+				<img
+					:src="`src/assets/images/project-thumbnails/${project.thumbnail ?? 'default'}.png`"
+					alt="Artistic representation of the Project statistics"
+				/>
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
@@ -123,11 +126,6 @@ const stats = computed(() => {
 		models: parseInt(metadata['models-count'] ?? '0', 10),
 		workflows: parseInt(metadata['workflows-count'] ?? '0', 10)
 	};
-});
-
-const image = computed(() => {
-	const number = props.project?.metadata?.thumbnail ?? 'default';
-	return `src/assets/images/project-thumbnails/${number}.png`;
 });
 </script>
 
