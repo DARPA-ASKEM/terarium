@@ -9,8 +9,12 @@
 
 <script setup lang="ts">
 import embed, { Result, VisualizationSpec } from 'vega-embed';
+import { Config as VgConfig } from 'vega';
+import { Config as VlConfig } from 'vega-lite';
+
 import { ref, watch, toRaw, isRef, isReactive, isProxy } from 'vue';
-import unchartedVegaTheme from './vega-theme';
+
+export type Config = VgConfig | VlConfig;
 
 const props = withDefaults(
 	defineProps<{
@@ -24,10 +28,12 @@ const props = withDefaults(
 		 * See https://vega.github.io/vega/docs/api/view/#view_signal for more information.
 		 */
 		intervalSelectionSignalNames?: string[];
+		config?: Config | null;
 	}>(),
 	{
 		areEmbedActionsVisible: true,
-		intervalSelectionSignalNames: () => []
+		intervalSelectionSignalNames: () => [],
+		config: null
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -87,7 +93,7 @@ async function updateVegaVisualization(
 			container,
 			{ ...visualizationSpec },
 			{
-				config: unchartedVegaTheme,
+				config: props.config || {},
 				actions: props.areEmbedActionsVisible === false ? false : undefined
 			}
 		);
