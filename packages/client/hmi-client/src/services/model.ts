@@ -7,6 +7,7 @@ import { AMRSchemaNames, ModelServiceType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import { modelCard } from './goLLM';
 import { profileModel } from './knowledge';
 
@@ -51,7 +52,7 @@ export async function getMMT(model: Model) {
 	const miraModel = response?.data?.response;
 	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
 
-	return response?.data?.response ?? null;
+	return (response?.data?.response as MMT) ?? null;
 }
 
 /**

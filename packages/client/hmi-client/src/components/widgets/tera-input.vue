@@ -7,6 +7,7 @@
 				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
+				@onFocusOut="emit('on-focus-out')"
 				:style="{ 'text-align': textAlign }"
 				@blur="unmask"
 				:type="getType"
@@ -28,7 +29,7 @@ const props = defineProps<{
 	type?: InputTypeHTMLAttribute | 'nist';
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:model-value', 'on-focus-out']);
 const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
@@ -60,7 +61,7 @@ const updateValue = (event: Event) => {
 			error.value = 'Invalid number';
 		}
 	} else {
-		emit('update:modelValue', value);
+		emit('update:model-value', value);
 	}
 };
 
@@ -82,7 +83,7 @@ onMounted(() => {
 const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
-		emit('update:modelValue', nistToNumber(maskedValue.value));
+		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 };
 </script>
