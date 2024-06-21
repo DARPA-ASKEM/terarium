@@ -451,7 +451,7 @@ public class ProjectController {
 	public ResponseEntity<Project> createProject(
 			@RequestParam("name") final String name,
 			@RequestParam("description") final String description,
-			@RequestParam(name = "image", defaultValue = "default") final String image) {
+			@RequestParam(name = "thumbnail", defaultValue = "default") final String thumbnail) {
 
 		if (name == null || name.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.name-required"));
@@ -462,7 +462,7 @@ public class ProjectController {
 		Project project = (Project) new Project()
 				.setOverviewContent(WELCOME_MESSAGE.getBytes())
 			// Add the image to the metadata
-				.setMetadata(Collections.singletonMap("image", image))
+				.setMetadata(Collections.singletonMap("thumbnail", thumbnail))
 				.setUserId(userId)
 				.setName(name)
 				.setDescription(description);

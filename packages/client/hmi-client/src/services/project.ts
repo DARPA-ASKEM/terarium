@@ -18,11 +18,12 @@ import { Component } from 'vue';
  */
 async function create(
 	name: Project['name'] = 'Unnamed Project',
-	description: Project['description'] = ''
+	description: Project['description'] = '',
+	thumbnail: string = 'default'
 ): Promise<Project | null> {
 	try {
 		const response = await API.post(
-			`/projects?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`
+			`/projects?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}&thumbnail=${encodeURIComponent(thumbnail)}`
 		);
 		const { status, data } = response;
 		if (status !== 201) return null;

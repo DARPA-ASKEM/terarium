@@ -126,7 +126,7 @@ const stats = computed(() => {
 });
 
 const image = computed(() => {
-	const number = props.project?.metadata?.image ?? 'default';
+	const number = props.project?.metadata?.thumbnail ?? 'default';
 	return `src/assets/images/project-thumbnails/${number}.png`;
 });
 </script>

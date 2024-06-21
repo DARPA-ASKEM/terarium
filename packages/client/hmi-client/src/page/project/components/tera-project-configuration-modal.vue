@@ -141,29 +141,31 @@ const description = ref(props.project?.description ?? '');
 const isApplyingConfiguration = ref(false);
 const thumbnail = ref('default');
 
-async function createProject(name: string, desc: string) {
+async function createProject() {
 	isApplyingConfiguration.value = true;
-	const project = await useProjects().create(name, desc);
+	const project = await useProjects().create(title.value, description.value, thumbnail.value);
 	if (project?.id) {
 		emit('close-modal');
 		await router.push({ name: RouteName.Project, params: { projectId: project.id } });
 	}
 }
 
-async function updateProjectConfiguration() {
+function updateProjectConfiguration() {
 	if (props.project) {
 		const updatedProject = cloneDeep(props.project);
 		updatedProject.name = title.value;
 		updatedProject.description = description.value;
+		if (!updatedProject.metadata) updatedProject.metadata = {};
+		updatedProject.metadata.thumbnail = thumbnail.value;
 		isApplyingConfiguration.value = true;
-		await useProjects().update(updatedProject);
+		useProjects().update(updatedProject);
 		emit('close-modal');
 	}
 }
 
 function applyConfiguration() {
 	if (props.project) updateProjectConfiguration();
-	else createProject(title.value, description.value);
+	else createProject();
 }
 </script>
 
