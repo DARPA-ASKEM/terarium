@@ -25,14 +25,14 @@
         .p-inputtext {
             @include filled-input-float-label();
         }
-    
+
         input:focus ~ label,
         input.p-filled ~ label,
         textarea:focus ~ label,
         textarea.p-filled ~ label,
         .p-inputwrapper-focus ~ label,
         .p-inputwrapper-filled ~ label {
-            top: .25rem !important;
+            top: var(--gap-1) !important;
             margin-top: 0;
             background: transparent;
         }
