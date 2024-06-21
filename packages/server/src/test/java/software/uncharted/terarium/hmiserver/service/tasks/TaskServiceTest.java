@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,6 +145,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final AdditionalProps respAdd = resp.getAdditionalProperties(AdditionalProps.class);
 		Assertions.assertEquals(add.str, respAdd.str);
 		Assertions.assertEquals(add.num, respAdd.num);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendGoLLMGenerateSummaryRequest() throws Exception {
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateSummaryHandler.NAME);
+		final String input =
+				"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+		req.setInput(input.getBytes(StandardCharsets.UTF_8));
+
+		final TaskResponse resp = taskService.runTaskSync(req);
 
 		log.info(new String(resp.getOutput()));
 	}
