@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +108,7 @@ public class SummaryController {
 						description = "There was an issue retrieving the summary from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<List<Summary>> getSummary(
+	public ResponseEntity<Map<UUID, Summary>> getSummary(
 			@RequestParam("ids") final List<UUID> ids,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
@@ -117,7 +119,13 @@ public class SummaryController {
 		if (summaries.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
-		return ResponseEntity.ok(summaries);
+
+		Map<UUID, Summary> summaryMap = new HashMap<>();
+		for (Summary summary : summaries) {
+			summaryMap.put(summary.getId(), summary);
+		}
+
+		return ResponseEntity.ok(summaryMap);
 	}
 
 	@GetMapping("/{id}")
