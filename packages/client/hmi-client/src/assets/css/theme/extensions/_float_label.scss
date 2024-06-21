@@ -32,7 +32,7 @@
         textarea.p-filled ~ label,
         .p-inputwrapper-focus ~ label,
         .p-inputwrapper-filled ~ label {
-            top:  var(--gap-1) !important;
+            top: var(--gap-1) !important;
             margin-top: 0;
             background: transparent;
         }

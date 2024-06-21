@@ -108,6 +108,6 @@
     }
     @else if (nth($inputPadding, 1) == .75rem) {
         padding-top: var(--gap-5);
-        padding-bottom:  var(--gap-1);
+        padding-bottom: var(--gap-1);
     }
 }
