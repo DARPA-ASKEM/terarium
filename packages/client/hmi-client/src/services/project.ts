@@ -36,11 +36,12 @@ async function create(
 
 async function update(project: Project): Promise<Project | null> {
 	try {
-		const { id, name, description, overviewContent } = project;
+		const { id, name, description, overviewContent, thumbnail } = project;
 		const response = await API.put(`/projects/${id}`, {
 			id,
 			name,
 			description,
+			thumbnail,
 			overviewContent: b64EncodeUnicode(overviewContent)
 		});
 		const { status, data } = response;
