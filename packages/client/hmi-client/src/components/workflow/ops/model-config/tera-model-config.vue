@@ -12,169 +12,191 @@
 				@update-state="(state: any) => emit('update-state', state)"
 			/>
 		</template>
-		<section :tabName="ConfigTabs.Wizard">
-			<tera-drilldown-section class="pl-3 pr-3">
-				<template #header-controls>
-					<Button
-						size="small"
-						:disabled="isSaveDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="createConfiguration()"
-					/>
+		<template #sidebar>
+			<tera-slider-panel
+				v-model:is-open="isSidebarOpen"
+				header="Configurations"
+				content-width="360px"
+			>
+				<template #content>
+					<ul class="m-2">
+						<li
+							v-for="configuration in suggestedConfigurationContext.tableData"
+							:key="configuration.id"
+						>
+							<span class="flex align-items-center"
+								><h6>{{ configuration.name }}</h6>
+								<Button class="ml-auto" text icon="pi pi-ellipsis-v"></Button
+							></span>
+							<p>{{ configuration.description }}</p>
+							<p>{{ formatTimestamp(configuration.createdOn) }}</p>
+						</li>
+					</ul>
 				</template>
-				<template #header-controls-right>
-					<Button
-						class="mr-3"
-						:disabled="isSaveDisabled"
-						label="Save"
-						@click="() => createConfiguration()"
-					/>
-				</template>
-				<!-- Suggested configurations -->
-				<div class="box-container mr-2" v-if="model">
-					<Accordion multiple :active-index="[0]">
-						<AccordionTab>
-							<template #header>
-								Suggested configurations
-								<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
-									({{ suggestedConfigurationContext.tableData.length }})
-								</span>
-								<Button
-									class="ml-auto"
-									icon="pi pi-sign-out"
-									label="Extract configurations from inputs"
-									outlined
-									severity="secondary"
-									:loading="isLoading"
-									@click.stop="extractConfigurationsFromInputs"
-								/>
-							</template>
-							<DataTable
-								v-if="suggestedConfigurationContext.tableData"
-								:value="suggestedConfigurationContext.tableData"
-								size="small"
-								data-key="id"
-								:paginator="suggestedConfigurationContext.tableData.length > 5"
-								:rows="5"
-								sort-field="createdOn"
-								:sort-order="-1"
-								:loading="isLoading"
-							>
-								<Column field="name" header="Name" style="width: 15%">
-									<template #body="{ data }">
-										<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
-									</template>
-								</Column>
-								<Column field="description" header="Description" style="width: 30%" />
-								<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
-									<template #body="{ data }">
-										{{ formatTimestamp(data?.createdOn) }}
-									</template>
-								</Column>
-								<Column header="Source" style="width: 30%">
-									<template #body="{ data }">
-										{{ data?.configuration?.metadata?.source?.join(',') || '--' }}
-									</template>
-								</Column>
-								<Column style="width: 7rem">
-									<template #body="{ data }">
-										<Button
-											class="use-button"
-											label="Apply configuration values"
-											@click="applyConfigValues(data)"
-											text
-										/>
-									</template>
-								</Column>
-								<template #loading>
-									<tera-progress-spinner :font-size="2" is-centered
-										>Fetching suggested configurations...</tera-progress-spinner
-									>
-								</template>
-								<template #empty>
-									<p class="empty-section m-3">No configurations found.</p>
-								</template>
-							</DataTable>
-						</AccordionTab>
-					</Accordion>
-				</div>
-				<Accordion multiple :active-index="[0, 1, 2, 3]">
-					<AccordionTab header="Context">
-						<p class="text-sm mb-1">Name</p>
-						<InputText
-							class="context-item"
-							placeholder="Enter a name for this configuration"
-							v-model="knobs.transientModelConfig.name"
-						/>
-						<p class="text-sm mb-1 mt-3">Description</p>
-						<Textarea
-							class="context-item"
-							placeholder="Enter a description"
-							v-model="knobs.transientModelConfig.description"
-						/>
-					</AccordionTab>
-					<AccordionTab header="Diagram">
-						<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
-					</AccordionTab>
-				</Accordion>
-				<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
-					>Some metadata is missing from these values. This information can be added manually to the
-					attached model.</Message
-				>
+			</tera-slider-panel>
+		</template>
+
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
+			<template #header-controls>
+				<Button
+					size="small"
+					:disabled="isSaveDisabled"
+					label="Run"
+					icon="pi pi-play"
+					@click="createConfiguration()"
+				/>
+			</template>
+			<template #header-controls-right>
+				<Button
+					class="mr-3"
+					:disabled="isSaveDisabled"
+					label="Save"
+					@click="() => createConfiguration()"
+				/>
+			</template>
+			<!-- Suggested configurations -->
+			<div class="box-container mr-2" v-if="model">
 				<Accordion multiple :active-index="[0]">
 					<AccordionTab>
 						<template #header>
-							Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
+							Suggested configurations
+							<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
+								({{ suggestedConfigurationContext.tableData.length }})
+							</span>
+							<Button
+								class="ml-auto"
+								icon="pi pi-sign-out"
+								label="Extract configurations from inputs"
+								outlined
+								severity="secondary"
+								:loading="isLoading"
+								@click.stop="extractConfigurationsFromInputs"
+							/>
 						</template>
-						<tera-initial-table
-							v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
-							:model="model"
-							:model-configuration="knobs.transientModelConfig"
-							:mmt="mmt"
-							:mmt-params="mmtParams"
-							@update-expression="
-								setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
-							"
-							@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
-						/>
+						<DataTable
+							v-if="suggestedConfigurationContext.tableData"
+							:value="suggestedConfigurationContext.tableData"
+							size="small"
+							data-key="id"
+							:paginator="suggestedConfigurationContext.tableData.length > 5"
+							:rows="5"
+							sort-field="createdOn"
+							:sort-order="-1"
+							:loading="isLoading"
+						>
+							<Column field="name" header="Name" style="width: 15%">
+								<template #body="{ data }">
+									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
+								</template>
+							</Column>
+							<Column field="description" header="Description" style="width: 30%" />
+							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
+								<template #body="{ data }">
+									{{ formatTimestamp(data?.createdOn) }}
+								</template>
+							</Column>
+							<Column header="Source" style="width: 30%">
+								<template #body="{ data }">
+									{{ data?.configuration?.metadata?.source?.join(',') || '--' }}
+								</template>
+							</Column>
+							<Column style="width: 7rem">
+								<template #body="{ data }">
+									<Button
+										class="use-button"
+										label="Apply configuration values"
+										@click="applyConfigValues(data)"
+										text
+									/>
+								</template>
+							</Column>
+							<template #loading>
+								<tera-progress-spinner :font-size="2" is-centered
+									>Fetching suggested configurations...</tera-progress-spinner
+								>
+							</template>
+							<template #empty>
+								<p class="empty-section m-3">No configurations found.</p>
+							</template>
+						</DataTable>
 					</AccordionTab>
 				</Accordion>
-				<tera-parameter-table
-					v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
-					:model="model"
-					:model-configuration="knobs.transientModelConfig"
-					:mmt="mmt"
-					:mmt-params="mmtParams"
-					@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
-					@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
-				/>
-				<Accordion multiple :active-index="[0]" class="pb-6">
-					<AccordionTab>
-						<template #header> Interventions </template>
-						<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
-						<tera-model-intervention
-							v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
-							:key="intervention.name + intervention.timestep + intervention.value"
-							:intervention="intervention"
-							:parameter-options="Object.keys(mmt.parameters)"
-							@update-value="
-								(data: Intervention) => {
-									setIntervention(knobs.transientModelConfig, idx, data);
-								}
-							"
-							@delete="removeIntervention(knobs.transientModelConfig, idx)"
-						/>
-					</AccordionTab>
-				</Accordion>
+			</div>
+			<Accordion multiple :active-index="[0, 1, 2, 3]">
+				<AccordionTab header="Context">
+					<p class="text-sm mb-1">Name</p>
+					<InputText
+						class="context-item"
+						placeholder="Enter a name for this configuration"
+						v-model="knobs.transientModelConfig.name"
+					/>
+					<p class="text-sm mb-1 mt-3">Description</p>
+					<Textarea
+						class="context-item"
+						placeholder="Enter a description"
+						v-model="knobs.transientModelConfig.description"
+					/>
+				</AccordionTab>
+				<AccordionTab header="Diagram">
+					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
+				</AccordionTab>
+			</Accordion>
+			<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
+				>Some metadata is missing from these values. This information can be added manually to the
+				attached model.</Message
+			>
+			<Accordion multiple :active-index="[0]">
+				<AccordionTab>
+					<template #header>
+						Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
+					</template>
+					<tera-initial-table
+						v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
+						:model="model"
+						:model-configuration="knobs.transientModelConfig"
+						:mmt="mmt"
+						:mmt-params="mmtParams"
+						@update-expression="
+							setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
+						"
+						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
+					/>
+				</AccordionTab>
+			</Accordion>
+			<tera-parameter-table
+				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
+				:model="model"
+				:model-configuration="knobs.transientModelConfig"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
+				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
+			/>
+			<Accordion multiple :active-index="[0]" class="pb-6">
+				<AccordionTab>
+					<template #header> Interventions </template>
+					<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
+					<tera-model-intervention
+						v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
+						:key="intervention.name + intervention.timestep + intervention.value"
+						:intervention="intervention"
+						:parameter-options="Object.keys(mmt.parameters)"
+						@update-value="
+							(data: Intervention) => {
+								setIntervention(knobs.transientModelConfig, idx, data);
+							}
+						"
+						@delete="removeIntervention(knobs.transientModelConfig, idx)"
+					/>
+				</AccordionTab>
+			</Accordion>
 
-				<!-- TODO - For Nelson eval debug, remove in April 2024 -->
-				<div style="padding-left: 1rem; font-size: 90%; color: #555555">
-					<div>Model config id: {{ selectedConfigId }}</div>
-					<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
-				</div>
-			</tera-drilldown-section>
-		</section>
+			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
+			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
+				<div>Model config id: {{ selectedConfigId }}</div>
+				<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
+			</div>
+		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
 				<div class="toolbar-right-side"></div>
@@ -323,6 +345,7 @@ import { cleanModel, isModelMissingMetadata } from '@/model-representation/servi
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -333,6 +356,8 @@ enum ConfigTabs {
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+const isSidebarOpen = ref(true);
 
 const menuItems = computed(() => [
 	{
