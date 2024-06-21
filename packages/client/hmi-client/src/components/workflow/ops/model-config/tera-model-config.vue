@@ -323,6 +323,7 @@ import { cleanModel, isModelMissingMetadata } from '@/model-representation/servi
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
@@ -696,11 +697,13 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
-	if (suggestedConfigurationContext.value.tableData.length === 0 && model.value) {
-		// TEMPORARY FIX: If there are no configurations, create a default one.  The plan is to add a default configuration when a model is uploaded
-		addDefaultConfiguration(model.value).then(() => {
-			fetchConfigurations(modelId);
-		});
+	if (useProjects().hasEditPermission()) {
+		if (suggestedConfigurationContext.value.tableData.length === 0 && model.value) {
+			// TEMPORARY FIX: If there are no configurations, create a default one.  The plan is to add a default configuration when a model is uploaded
+			addDefaultConfiguration(model.value).then(() => {
+				fetchConfigurations(modelId);
+			});
+		}
 	}
 
 	knobs.value.tempConfigId = state.tempConfigId;
