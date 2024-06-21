@@ -229,12 +229,12 @@ function endDrag() {
 nav {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap-4);
 }
 
 header {
-	padding-left: 0.5rem;
-	padding-right: 0.5rem;
+	padding-left: var(--gap-2);
+	padding-right: var(--gap-2);
 	display: flex;
 	flex-direction: row;
 
@@ -253,10 +253,10 @@ header {
 	position: absolute;
 	right: 48px;
 	margin-top: 0.65rem;
-	height: 0.5rem;
+	height: var(--gap-2);
 }
 .clear-icon .pi-times {
-	font-size: 0.75rem;
+	font-size: var(--gap-3);
 	color: var(--text-color-subdued);
 	cursor: pointer;
 	z-index: 100;
@@ -268,7 +268,7 @@ header {
 
 .removeResourceButton {
 	color: var(--text-color-subdued);
-	margin-right: 0.75rem;
+	margin-right: var(--gap-3);
 	font-size: 0.75rem;
 }
 
@@ -294,18 +294,18 @@ header {
 :deep(.p-accordion .p-accordion-content) {
 	display: flex;
 	flex-direction: column;
-	padding: 0 0 1rem;
+	padding: 0 0 var(--gap-4);
 }
 
 :deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-small);
-	padding: 0.5rem 1rem;
+	padding: var(--gap-2) var(--gap-4);
 }
 
 :deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
 :deep(.asset-button.p-button) {
@@ -319,7 +319,7 @@ header {
 :deep(.asset-button.p-button > span) {
 	display: inline-flex;
 	width: 100%;
-	padding: 0.375rem 1rem;
+	padding: var(--gap-1-5) var(--gap-4);
 	overflow: hidden;
 }
 
@@ -370,7 +370,7 @@ header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .resource-panel-search {
@@ -378,7 +378,7 @@ header {
 }
 
 :deep(.p-button-icon-left.icon) {
-	margin-right: 0.5rem;
+	margin-right: var(--gap-2);
 }
 
 .skeleton-container {

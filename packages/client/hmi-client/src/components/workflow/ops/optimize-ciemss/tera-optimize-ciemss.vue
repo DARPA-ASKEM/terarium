@@ -82,11 +82,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled class="p-inputtext-sm" type="number" model-value="0" />
+							<tera-input disabled type="number" model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input class="p-inputtext-sm" type="number" v-model="knobs.endTime" />
+							<tera-input type="number" v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -108,7 +108,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input class="p-inputtext-sm" type="number" v-model="knobs.numSamples" />
+									<tera-input type="number" v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">
@@ -128,19 +128,19 @@
 						<div class="input-row">
 							<div class="label-and-input">
 								<label>Algorithm</label>
-								<tera-input disabled class="p-inputtext-sm" model-value="basinhopping" />
+								<tera-input disabled model-value="basinhopping" />
 							</div>
 							<div class="label-and-input">
 								<label>Minimizer method</label>
-								<tera-input disabled class="p-inputtext-sm" model-value="COBYLA" />
+								<tera-input disabled model-value="COBYLA" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxiter</label>
-								<tera-input class="p-inputtext-sm" v-model="knobs.maxiter" inputId="integeronly" />
+								<tera-input v-model="knobs.maxiter" />
 							</div>
 							<div class="label-and-input">
 								<label>Maxfeval</label>
-								<tera-input class="p-inputtext-sm" v-model="knobs.maxfeval" inputId="integeronly" />
+								<tera-input v-model="knobs.maxfeval" />
 							</div>
 						</div>
 					</div>
@@ -194,14 +194,14 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="simulationRunResults[knobs.forecastRunId]">
+				<template v-if="simulationRunResults[knobs.postForecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
-							:run-results="simulationRunResults[knobs.forecastRunId]"
+							:run-results="simulationRunResults[knobs.postForecastRunId]"
 							:chartConfig="{
-								selectedRun: knobs.forecastRunId,
+								selectedRun: knobs.postForecastRunId,
 								selectedVariable: cfg
 							}"
 							has-mean-line
@@ -218,21 +218,21 @@
 						/>
 						<!-- TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909 -->
 						<tera-optimize-chart
-							:risk-results="riskResults[knobs.forecastRunId]"
+							:risk-results="riskResults[knobs.postForecastRunId]"
 							:chartConfig="{
-								selectedRun: knobs.forecastRunId,
+								selectedRun: knobs.postForecastRunId,
 								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
 							}"
 							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
 							:size="chartSize"
-							:threshold="props.node.state.constraintGroups?.[0]?.threshold || undefined"
+							:threshold="props.node.state.constraintGroups?.[0]?.threshold"
 						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
-							v-if="simulationRawContent[knobs.forecastRunId]"
+							v-if="simulationRawContent[knobs.postForecastRunId]"
 							:rows="10"
-							:raw-content="simulationRawContent[knobs.forecastRunId]"
+							:raw-content="simulationRawContent[knobs.postForecastRunId]"
 						/>
 					</div>
 				</template>
@@ -240,7 +240,7 @@
 		</template>
 		<template #footer>
 			<tera-save-dataset-from-simulation
-				:simulation-run-id="knobs.forecastRunId"
+				:simulation-run-id="knobs.postForecastRunId"
 				:showDialog="showSaveDataDialog"
 				@dialog-hide="showSaveDataDialog = false"
 			/>
@@ -349,7 +349,7 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
-	forecastRunId: string;
+	postForecastRunId: string;
 	optimizationRunId: string;
 	interventionType: InterventionTypes;
 }
@@ -360,7 +360,7 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
-	forecastRunId: props.node.state.forecastRunId ?? '',
+	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	interventionType: props.node.state.interventionType ?? ''
 });
@@ -378,11 +378,11 @@ const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const cancelRunId = computed(
-	() => props.node.state.inProgressForecastId || props.node.state.inProgressOptimizeId
+	() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId
 );
 
 const isSaveDisabled = computed<boolean>(() =>
-	isSaveDatasetDisabled(props.node.state.forecastRunId, useProjects().activeProject.value?.id)
+	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
 );
 
 const menuItems = computed(() => [
@@ -409,7 +409,8 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 });
 
 const showSpinner = computed<boolean>(
-	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() =>
+		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 
 const showModelModal = ref(false);
@@ -593,7 +594,7 @@ const runOptimize = async () => {
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
 	state.optimizationRunId = '';
-	state.inProgressForecastId = '';
+	state.inProgressPostForecastId = '';
 	emit('update-state', state);
 };
 
@@ -623,15 +624,15 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
-	const output = await getRunResultCiemss(knobs.value.forecastRunId);
-	simulationRunResults.value[knobs.value.forecastRunId] = output.runResults;
-	riskResults.value[knobs.value.forecastRunId] = await getRunResult(
-		knobs.value.forecastRunId,
+	const output = await getRunResultCiemss(knobs.value.postForecastRunId);
+	simulationRunResults.value[knobs.value.postForecastRunId] = output.runResults;
+	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(
+		knobs.value.postForecastRunId,
 		'risk.json'
 	);
 
-	simulationRawContent.value[knobs.value.forecastRunId] = createCsvAssetFromRunResults(
-		simulationRunResults.value[knobs.value.forecastRunId]
+	simulationRawContent.value[knobs.value.postForecastRunId] = createCsvAssetFromRunResults(
+		simulationRunResults.value[knobs.value.postForecastRunId]
 	);
 
 	const optimzationResult = await getRunResult(
@@ -654,7 +655,7 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
-		state.forecastRunId = knobs.value.forecastRunId;
+		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.interventionType = knobs.value.interventionType;
 		emit('update-state', state);
@@ -669,10 +670,10 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			initialize();
-			if (props.node.state.forecastRunId !== '') {
+			if (props.node.state.postForecastRunId !== '') {
 				// The run has finished
 				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
-				knobs.value.forecastRunId = props.node.state.forecastRunId;
+				knobs.value.postForecastRunId = props.node.state.postForecastRunId;
 				setOutputValues();
 			}
 		}

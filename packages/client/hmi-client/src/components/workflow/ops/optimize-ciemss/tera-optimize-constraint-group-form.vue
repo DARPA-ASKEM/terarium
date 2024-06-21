@@ -6,7 +6,7 @@
 					v-if="isEditing"
 					v-model="config.name"
 					placeholder="Constraint name"
-					@focusout="emit('update-self', config)"
+					@on-focus-out="emit('update-self', config)"
 				/>
 				<h6 v-else>{{ props.constraint.name }}</h6>
 				<i
@@ -41,7 +41,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>over the worst</p>
-			<tera-input v-model="config.riskTolerance" @focusout="emit('update-self', config)" />
+			<tera-input v-model="config.riskTolerance" @on-focus-out="emit('update-self', config)" />
 			<p>% of simulated outcomes</p>
 			<Dropdown
 				class="toolbar-button"
@@ -55,7 +55,7 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			<p>a threshold of</p>
-			<tera-input v-model="config.threshold" @focusout="emit('update-self', config)" />
+			<tera-input v-model="config.threshold" @on-focus-out="emit('update-self', config)" />
 		</div>
 	</div>
 </template>

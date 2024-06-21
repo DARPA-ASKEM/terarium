@@ -294,7 +294,7 @@ footer {
 	display: flex;
 	justify-content: space-between;
 	gap: 0.5rem;
-	padding-top: 0.25rem;
+	padding-top: var(--gap-1);
 }
 
 .p-inputtext {
