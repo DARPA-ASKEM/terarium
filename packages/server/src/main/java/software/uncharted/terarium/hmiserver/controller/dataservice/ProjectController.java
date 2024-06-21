@@ -242,7 +242,12 @@ public class ProjectController {
 						"workflows-count",
 						counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
 
+				// Merge the new metadata with the existing metadata
+				if (project.getMetadata() != null) {
+					metadata.putAll(project.getMetadata());
+				}
 				project.setMetadata(metadata);
+
 			} catch (final Exception e) {
 				log.error(
 						"Failed to get project assets from postgres db for project {}. Setting Default Metadata.",
