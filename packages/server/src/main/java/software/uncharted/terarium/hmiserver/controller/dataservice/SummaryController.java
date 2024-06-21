@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -54,42 +53,6 @@ public class SummaryController {
 
 	@GetMapping
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets all summaries")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "summaries found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Summary.class)))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no summaries found and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving summaries from the data store",
-						content = @Content)
-			})
-	public ResponseEntity<List<Summary>> getSummaries(
-			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
-
-		final List<Summary> summaries = summaryService.getPublicNotTemporaryAssets(page, pageSize);
-		if (summaries.isEmpty()) {
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.ok(summaries);
-	}
-
-	@GetMapping
-	@Secured(Roles.USER)
 	@Operation(summary = "Gets summary by ID")
 	@ApiResponses(
 			value = {
@@ -108,7 +71,7 @@ public class SummaryController {
 						description = "There was an issue retrieving the summary from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Map<UUID, Summary>> getSummary(
+	public ResponseEntity<Map<UUID, Summary>> getSummaryMap(
 			@RequestParam("ids") final List<UUID> ids,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
@@ -120,8 +83,8 @@ public class SummaryController {
 			return ResponseEntity.noContent().build();
 		}
 
-		Map<UUID, Summary> summaryMap = new HashMap<>();
-		for (Summary summary : summaries) {
+		final Map<UUID, Summary> summaryMap = new HashMap<>();
+		for (final Summary summary : summaries) {
 			summaryMap.put(summary.getId(), summary);
 		}
 
