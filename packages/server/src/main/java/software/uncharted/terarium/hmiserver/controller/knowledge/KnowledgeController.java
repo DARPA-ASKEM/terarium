@@ -661,7 +661,6 @@ public class KnowledgeController {
 		final JsonNode card = resp.getBody();
 		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
 
-		final List<DatasetColumn> columns = new ArrayList<>();
 		for (final DatasetColumn col : dataset.getColumns()) {
 
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -693,19 +692,10 @@ public class KnowledgeController {
 			// remove groundings from annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
-			final DatasetColumn newCol = new DatasetColumn();
-			newCol.setName(col.getName());
-			newCol.setDataType(col.getDataType());
-			newCol.setFormatStr(col.getFormatStr());
-			newCol.setGrounding(groundings);
-			newCol.setAnnotations(col.getAnnotations());
-			newCol.setDescription(annotation.get("description").asText());
-			newCol.setMetadata(col.getMetadata());
-			newCol.updateMetadata(annotation);
-			columns.add(newCol);
+			col.setGrounding(groundings);
+			col.setDescription(annotation.get("description").asText());
+			col.updateMetadata(annotation);
 		}
-
-		dataset.setColumns(columns);
 
 		// add card to metadata
 		if (dataset.getMetadata() == null) {
