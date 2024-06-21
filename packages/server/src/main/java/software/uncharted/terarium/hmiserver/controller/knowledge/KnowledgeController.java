@@ -8,20 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -73,6 +59,21 @@ import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 @RequestMapping("/knowledge")
 @RestController
 @Slf4j
@@ -99,8 +100,8 @@ public class KnowledgeController {
 
 	final Messages messages;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -536,7 +537,7 @@ public class KnowledgeController {
 
 		final ResponseEntity<JsonNode> resp;
 		try {
-			resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
+			resp = mitProxy.modelCard(OPENAI_API_KEY, textFile, codeFile);
 		} catch (final FeignException e) {
 			final String error = "Unable to get model card";
 			log.error(error, e);
@@ -648,7 +649,7 @@ public class KnowledgeController {
 
 		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
-		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
+		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
