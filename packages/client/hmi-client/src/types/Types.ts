@@ -132,6 +132,14 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
+export interface Summary extends TerariumAsset {
+    generatedSummary?: string;
+    generatedUpdatedOn?: Date;
+    humanSummary?: string;
+    humanUpdatedOn?: Date;
+    previousSummary?: string;
+}
+
 export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
