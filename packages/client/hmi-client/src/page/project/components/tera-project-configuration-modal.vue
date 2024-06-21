@@ -59,16 +59,37 @@
 					The concepts mentioned in your project title and description will be used to suggest
 					relevant thumbnail images.
 				</p> -->
+
 				<ul>
-					<li v-for="i in 12" :key="i">
-						<div class="thumbnail-image">
-							<span class="pi pi-image text-3xl"></span>
-						</div>
-						<!-- <img
-							src="@assets/svg/terarium-icon-transparent.svg"
-							:alt="`Thumbnail ${i}`"
-							class="thumbnail-image"
-						/> -->
+					<li>
+						<input
+							type="radio"
+							name="thumbnail"
+							id="thumbnail-default"
+							v-model="thumbnail"
+							value="default"
+						/>
+						<label for="thumbnail-default">
+							<img
+								src="@assets/images/project-thumbnails/default.png"
+								alt="Default thumbnail image"
+							/>
+						</label>
+					</li>
+					<li v-for="i in 5" :key="i">
+						<input
+							type="radio"
+							name="thumbnail"
+							:id="`thumbnail-0${i}`"
+							v-model="thumbnail"
+							:value="`0${i}`"
+						/>
+						<label :for="`thumbnail-0${i}`">
+							<img
+								:src="`src/assets/images/project-thumbnails/0${i}.png`"
+								:alt="`Thumbnail image 0{$i}`"
+							/>
+						</label>
 					</li>
 				</ul>
 			</section>
@@ -118,6 +139,7 @@ const title = ref(props.project?.name ?? '');
 const isTitleInvalid = computed(() => isEmpty(title.value));
 const description = ref(props.project?.description ?? '');
 const isApplyingConfiguration = ref(false);
+const thumbnail = ref('default');
 
 async function createProject(name: string, desc: string) {
 	isApplyingConfiguration.value = true;
@@ -176,35 +198,38 @@ p {
 
 ul {
 	margin-top: 1rem;
-	display: grid;
-	grid-template-columns: auto auto auto;
-	gap: 0.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gap-small);
 	list-style: none;
 }
 
 li {
-	outline: 1px solid var(--surface-border-light);
-	cursor: pointer;
-}
+	flex: 10rem;
+	border: 2px solid transparent;
 
-img {
-	height: 6.5rem;
-	width: 100%;
-}
+	input {
+		display: none;
+	}
+	&:has(input:checked) {
+		border-color: var(--primary-color);
+	}
 
-.thumbnail-image {
-	background-color: var(--surface-300);
-	height: 5rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--gray-400);
+	label {
+		cursor: pointer;
+		margin: 0;
+	}
+
+	img {
+		aspect-ratio: 208/133;
+		width: 100%;
+	}
 }
 
 /*
-		Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
-		Should probably switch everything to use gap (like here) at some point
-		*/
+	Doesn't rely on the margin-bottom: 1rem rule in tera-modal.vue
+	Should probably switch everything to use gap (like here) at some point
+ */
 :deep(.content input),
 :deep(.content textarea) {
 	margin-bottom: 0;
