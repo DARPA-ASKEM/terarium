@@ -107,11 +107,8 @@ const emit = defineEmits(['forked-project']);
 const titleRef = ref();
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
-	for (let i = 1; i < 3; i++) {
-		if (titleHeight === 17 * i) {
-			return 10 - i;
-		}
-	}
+	if (titleHeight === 17) return 9;
+	if (titleHeight === 34) return 8;
 	return 7;
 });
 
