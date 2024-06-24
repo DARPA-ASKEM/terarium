@@ -99,8 +99,8 @@ public class KnowledgeController {
 
 	final Messages messages;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -540,7 +540,7 @@ public class KnowledgeController {
 
 		final ResponseEntity<JsonNode> resp;
 		try {
-			resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
+			resp = mitProxy.modelCard(OPENAI_API_KEY, textFile, codeFile);
 		} catch (final FeignException e) {
 			final String error = "Unable to get model card";
 			log.error(error, e);
@@ -658,7 +658,7 @@ public class KnowledgeController {
 
 		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
-		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
+		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
 			log.warn("MIT Text-reading did not return a valid dataset card because a provided resource was not valid");
@@ -675,7 +675,6 @@ public class KnowledgeController {
 		final JsonNode card = resp.getBody();
 		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
 
-		final List<DatasetColumn> columns = new ArrayList<>();
 		for (final DatasetColumn col : dataset.getColumns()) {
 
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -707,19 +706,10 @@ public class KnowledgeController {
 			// remove groundings from annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
-			final DatasetColumn newCol = new DatasetColumn();
-			newCol.setName(col.getName());
-			newCol.setDataType(col.getDataType());
-			newCol.setFormatStr(col.getFormatStr());
-			newCol.setGrounding(groundings);
-			newCol.setAnnotations(col.getAnnotations());
-			newCol.setDescription(annotation.get("description").asText());
-			newCol.setMetadata(col.getMetadata());
-			newCol.updateMetadata(annotation);
-			columns.add(newCol);
+			col.setGrounding(groundings);
+			col.setDescription(annotation.get("description").asText());
+			col.updateMetadata(annotation);
 		}
-
-		dataset.setColumns(columns);
 
 		// add card to metadata
 		if (dataset.getMetadata() == null) {
