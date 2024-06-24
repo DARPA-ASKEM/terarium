@@ -197,7 +197,7 @@ const sortOptions = [
 	'Alphabetical'
 ];
 
-const view = ref(ProjectsView.Table);
+const view = ref(ProjectsView.Cards);
 const viewOptions = ref([
 	{ value: ProjectsView.Cards, icon: 'pi pi-credit-card' },
 	{ value: ProjectsView.Table, icon: 'pi pi-list' }

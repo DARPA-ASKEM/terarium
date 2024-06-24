@@ -80,8 +80,8 @@ public class ExtractionService {
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	private ExecutorService executor;
 
