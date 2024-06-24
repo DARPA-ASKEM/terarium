@@ -16,9 +16,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
@@ -27,7 +26,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	private ModelConfigurationLegacyService modelConfigurationService;
+	private ModelConfigurationService modelConfigurationService;
 
 	@Autowired
 	private ElasticsearchService elasticService;
@@ -49,15 +48,14 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
 
-		final ModelConfigurationLegacy modelConfiguration = modelConfigurationService.createAsset(
-				(ModelConfigurationLegacy) new ModelConfigurationLegacy()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
-						.setConfiguration(new Model())
 						.setName("test-framework")
 						.setDescription("test-desc"),
 				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations-legacy/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
@@ -67,13 +65,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
 
-		final ModelConfigurationLegacy modelConfiguration = (ModelConfigurationLegacy) new ModelConfigurationLegacy()
+		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
-				.setConfiguration(new Model())
 				.setDescription("test-desc")
 				.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations-legacy")
+		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
@@ -85,15 +82,14 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
 
-		final ModelConfigurationLegacy modelConfiguration = modelConfigurationService.createAsset(
-				(ModelConfigurationLegacy) new ModelConfigurationLegacy()
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+				(ModelConfiguration) new ModelConfiguration()
 						.setModelId(UUID.randomUUID())
-						.setConfiguration(new Model())
 						.setDescription("test-desc")
 						.setName("test-framework"),
 				ASSUME_WRITE_PERMISSION);
 
-		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations-legacy/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf())
 						.contentType("application/json")
@@ -105,13 +101,12 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
 
-		final ModelConfigurationLegacy modelConfiguration = (ModelConfigurationLegacy) new ModelConfigurationLegacy()
+		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
 				.setModelId(UUID.randomUUID())
-				.setConfiguration(new Model())
 				.setDescription("test-desc")
 				.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations-legacy/" + modelConfiguration.getId())
+		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
 						.param("project-id", PROJECT_ID.toString())
 						.with(csrf()))
 				.andExpect(status().isOk());
