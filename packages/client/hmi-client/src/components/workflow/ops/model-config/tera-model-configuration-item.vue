@@ -55,6 +55,7 @@ const contextMenuItems = ref([
 	{
 		label: 'Delete',
 		icon: 'pi pi-trash',
+		disabled: true,
 		command() {
 			onDeleteConfiguration();
 		}
