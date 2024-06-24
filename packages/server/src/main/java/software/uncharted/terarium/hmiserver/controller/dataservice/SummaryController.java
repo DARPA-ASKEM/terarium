@@ -53,12 +53,12 @@ public class SummaryController {
 
 	@GetMapping
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets summary by ID")
+	@Operation(summary = "Gets summaries by IDs")
 	@ApiResponses(
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "Summary found.",
+						description = "Summaries found.",
 						content =
 								@Content(
 										mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -68,12 +68,12 @@ public class SummaryController {
 				@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
-						description = "There was an issue retrieving the summary from the data store",
+						description = "There was an issue retrieving the summaries from the data store",
 						content = @Content)
 			})
 	public ResponseEntity<Map<UUID, Summary>> getSummaryMap(
-			@RequestParam("ids") final List<UUID> ids,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestBody final List<UUID> ids) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
@@ -204,7 +204,7 @@ public class SummaryController {
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "Delete summary",
+						description = "Summary deleted",
 						content = {
 							@Content(
 									mediaType = "application/json",

@@ -134,9 +134,7 @@ export interface ResponseSuccess {
 
 export interface Summary extends TerariumAsset {
     generatedSummary?: string;
-    generatedUpdatedOn?: Date;
     humanSummary?: string;
-    humanUpdatedOn?: Date;
     previousSummary?: string;
 }
 
