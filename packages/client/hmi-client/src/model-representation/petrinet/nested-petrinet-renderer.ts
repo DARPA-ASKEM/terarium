@@ -99,6 +99,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		const transitions = selection.filter(
 			(d) => d.data.type === NodeType.Transition && !d.data.isStratified
 		);
+		const observables = selection.filter((d) => d.data.type === NodeType.Observable);
 
 		// species
 		species
@@ -268,6 +269,35 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('fill', 'var(--text-color-primary)')
 			.style('pointer-events', 'none')
 			.style('text-shadow', '1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff, 0 1px 0 #fff')
+			.text((d) => d.id);
+
+		// observables
+		observables
+			.append('rect')
+			.classed('shape selectableNode', true)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', 'var(--petri-nodeFill)')
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
+
+		// observables text
+		observables
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
 			.text((d) => d.id);
 	}
 }

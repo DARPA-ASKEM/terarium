@@ -100,12 +100,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	graphData.edges.forEach((edge: IEdge<any>) => {
 		// Set observable (custom) edges here
 		if (edge.data?.isObservable) {
+			const sourceNode = g.node(edge.source);
+			const targetNode = g.node(edge.target);
+			if (!sourceNode || !targetNode) return;
 			g.setEdge(edge.source, edge.target, {
-				points: interpolatePointsForCurve(g.node(edge.source), g.node(edge.target))
+				points: interpolatePointsForCurve(sourceNode, targetNode)
 			});
 		}
 		const e = g.edge(edge.source, edge.target);
-		edge.points = _.cloneDeep(e.points);
+		if (e?.points) edge.points = _.cloneDeep(e.points);
 	});
 
 	// HACK: multi-edges
@@ -144,6 +147,5 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		graphData.width = Math.abs(maxX - minX);
 		graphData.height = Math.abs(maxY - minY);
 	}
-
 	return graphData;
 };

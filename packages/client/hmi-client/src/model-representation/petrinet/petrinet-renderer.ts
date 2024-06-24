@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { isEmpty } from 'lodash';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import type { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { NodeType } from '@/services/graph';
@@ -93,23 +94,20 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
 		const observables = selection.filter((d) => d.data.type === NodeType.Observable);
 
-		// observables
-		observables
-			.append('rect')
+		// species
+		species
+			.append('circle')
 			.classed('shape selectableNode', true)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
-			.attr('y', (d) => -d.height * 0.5)
-			.attr('x', (d) => -d.width * 0.5)
-			.attr('rx', '6')
-			.attr('ry', '6')
-			.style('fill', 'var(--petri-nodeFill)')
-			.style('cursor', 'pointer')
+			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
+			.attr('fill', (d) =>
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
+			)
 			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1);
+			.attr('stroke-width', 1)
+			.style('cursor', 'pointer');
 
-		// observables text
-		observables
+		// species text
+		species
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
@@ -172,20 +170,23 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				return '';
 			});
 
-		// species
-		species
-			.append('circle')
+		// observables
+		observables
+			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
-			)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', 'var(--petri-nodeFill)')
+			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1)
-			.style('cursor', 'pointer');
+			.attr('stroke-width', 1);
 
-		// species text
-		species
+		// observables text
+		observables
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
@@ -221,7 +222,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			});
 
 		selection.append('text').each(function (d) {
-			if (d.data?.isObservable && d.id) {
+			if (d.id && !isEmpty(d.points) && d.data?.isObservable) {
 				d3.select(this)
 					.classed('latex-font', true)
 					.attr('x', (d.points[1].x + d.points[2].x) / 2)

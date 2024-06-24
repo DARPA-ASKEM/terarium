@@ -506,6 +506,7 @@ export const convertToIGraph = (
 				nodes: []
 			});
 
+			// FIXME: The observableSummary references need to support when the model is stratified
 			observable.references.forEach((reference: string) => {
 				graph.edges.push({
 					id: observable.expression,
