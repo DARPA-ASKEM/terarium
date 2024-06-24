@@ -8693,7 +8693,6 @@ __metadata:
     mathlive: "npm:0.89.2"
     mathml-to-latex: "npm:1.2.0"
     oidc-spa: "npm:4.6.2"
-    p5: "npm:1.6.0"
     path-browserify: "npm:1.0.1"
     pinia: "npm:2.1.7"
     pixi-viewport: "npm:4.37.0"
@@ -11805,13 +11804,6 @@ __metadata:
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
   checksum: f8a8e9a7693659383f06aec604ad5ead237c7a261c18048a6e1b5b85a5f8a067e469aa24f5bc009b991ea3b058a87f5065ef4176793a200d4917349881216cae
-  languageName: node
-  linkType: hard
-
-"p5@npm:1.6.0":
-  version: 1.6.0
-  resolution: "p5@npm:1.6.0"
-  checksum: 3fad782e55fcac93c03b9b7cc48797a679f91dbbbece594a7a7d5e6397638e2b102a53caa14406bc2bf9f82c32dd802f98d2cd3fa0562f444c21f3fff008d3a3
   languageName: node
   linkType: hard
 

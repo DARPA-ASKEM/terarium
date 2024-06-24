@@ -99,8 +99,8 @@ public class KnowledgeController {
 
 	final Messages messages;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -536,7 +536,7 @@ public class KnowledgeController {
 
 		final ResponseEntity<JsonNode> resp;
 		try {
-			resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
+			resp = mitProxy.modelCard(OPENAI_API_KEY, textFile, codeFile);
 		} catch (final FeignException e) {
 			final String error = "Unable to get model card";
 			log.error(error, e);
@@ -648,7 +648,7 @@ public class KnowledgeController {
 
 		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
-		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
+		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
