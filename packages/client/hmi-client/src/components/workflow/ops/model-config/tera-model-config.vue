@@ -19,19 +19,29 @@
 				content-width="360px"
 			>
 				<template #content>
-					<ul class="m-2">
-						<li
-							v-for="configuration in suggestedConfigurationContext.tableData"
-							:key="configuration.id"
-						>
-							<span class="flex align-items-center"
-								><h6>{{ configuration.name }}</h6>
-								<Button class="ml-auto" text icon="pi pi-ellipsis-v"></Button
-							></span>
-							<p>{{ configuration.description }}</p>
-							<p>{{ formatTimestamp(configuration.createdOn) }}</p>
-						</li>
-					</ul>
+					<div class="m-3">
+						<Button
+							outlined
+							icon="pi pi-plus"
+							label="Extract from inputs"
+							@click="extractConfigurationsFromInputs"
+							severity="secondary"
+							:loading="isLoading"
+						/>
+						<ul v-if="!isLoading">
+							<li
+								v-for="configuration in suggestedConfigurationContext.tableData"
+								:key="configuration.id"
+							>
+								<tera-model-configuration-item
+									:configuration="configuration"
+									@click="applyConfigValues(configuration)"
+									:selected="selectedConfigId === configuration.id"
+								/>
+							</li>
+						</ul>
+						<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+					</div>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -54,74 +64,6 @@
 					@click="() => createConfiguration()"
 				/>
 			</template>
-			<!-- Suggested configurations -->
-			<div class="box-container mr-2" v-if="model">
-				<Accordion multiple :active-index="[0]">
-					<AccordionTab>
-						<template #header>
-							Suggested configurations
-							<span v-if="suggestedConfigurationContext.tableData" class="artifact-amount">
-								({{ suggestedConfigurationContext.tableData.length }})
-							</span>
-							<Button
-								class="ml-auto"
-								icon="pi pi-sign-out"
-								label="Extract configurations from inputs"
-								outlined
-								severity="secondary"
-								:loading="isLoading"
-								@click.stop="extractConfigurationsFromInputs"
-							/>
-						</template>
-						<DataTable
-							v-if="suggestedConfigurationContext.tableData"
-							:value="suggestedConfigurationContext.tableData"
-							size="small"
-							data-key="id"
-							:paginator="suggestedConfigurationContext.tableData.length > 5"
-							:rows="5"
-							sort-field="createdOn"
-							:sort-order="-1"
-							:loading="isLoading"
-						>
-							<Column field="name" header="Name" style="width: 15%">
-								<template #body="{ data }">
-									<Button :label="data.name" text @click="onOpenSuggestedConfiguration(data)" />
-								</template>
-							</Column>
-							<Column field="description" header="Description" style="width: 30%" />
-							<Column field="createdOn" header="Created On" :sortable="true" style="width: 25%">
-								<template #body="{ data }">
-									{{ formatTimestamp(data?.createdOn) }}
-								</template>
-							</Column>
-							<Column header="Source" style="width: 30%">
-								<template #body="{ data }">
-									{{ data?.configuration?.metadata?.source?.join(',') || '--' }}
-								</template>
-							</Column>
-							<Column style="width: 7rem">
-								<template #body="{ data }">
-									<Button
-										class="use-button"
-										label="Apply configuration values"
-										@click="applyConfigValues(data)"
-										text
-									/>
-								</template>
-							</Column>
-							<template #loading>
-								<tera-progress-spinner :font-size="2" is-centered
-									>Fetching suggested configurations...</tera-progress-spinner
-								>
-							</template>
-							<template #empty>
-								<p class="empty-section m-3">No configurations found.</p>
-							</template>
-						</DataTable>
-					</AccordionTab>
-				</Accordion>
-			</div>
 			<Accordion multiple :active-index="[0, 1, 2, 3]">
 				<AccordionTab header="Context">
 					<p class="text-sm mb-1">Name</p>
@@ -177,16 +119,16 @@
 					<template #header> Interventions </template>
 					<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
 					<tera-model-intervention
-						v-for="(intervention, idx) of knobs.transientModelConfig.interventions"
+						v-for="(intervention, idx) of interventions"
 						:key="intervention.name + intervention.timestep + intervention.value"
 						:intervention="intervention"
 						:parameter-options="Object.keys(mmt.parameters)"
 						@update-value="
 							(data: Intervention) => {
-								setIntervention(knobs.transientModelConfig, idx, data);
+								interventions[idx] = data;
 							}
 						"
-						@delete="removeIntervention(knobs.transientModelConfig, idx)"
+						@delete="interventions.splice(idx, 1)"
 					/>
 				</AccordionTab>
 			</Accordion>
@@ -251,11 +193,8 @@
 		popover
 	>
 		<tera-drilldown-section class="p-2">
-			<tera-model-semantic-tables
-				v-if="suggestedConfigurationContext.modelConfiguration?.configuration"
-				readonly
-				:model="suggestedConfigurationContext.modelConfiguration?.configuration"
-			/>
+			<!-- Redo this to show model configs-->
+			<tera-model-semantic-tables v-if="model" readonly :model="model" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 
@@ -276,7 +215,7 @@
 				<Button
 					label="Ignore warnings and use configuration"
 					class="p-button-secondary"
-					@click="() => createConfiguration(true)"
+					@click="() => createConfiguration()"
 				/>
 			</template>
 		</tera-modal>
@@ -292,8 +231,6 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -308,7 +245,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
+// import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
@@ -324,29 +261,30 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurations } from '@/services/model';
 import {
-	sanityCheck,
 	createModelConfiguration,
-	setIntervention,
-	removeIntervention,
 	setInitialSource,
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	addDefaultConfiguration
-} from '@/services/model-configurations-legacy';
+	getAsConfiguredModel,
+	getInterventions,
+	setInterventions,
+	amrToModelConfiguration
+} from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfigurationLegacy } from '@/types/Types';
+import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
-import { formatTimestamp } from '@/utils/date';
 import { logger } from '@/utils/logger';
-import { cleanModel, isModelMissingMetadata } from '@/model-representation/service';
+import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
+import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -363,7 +301,7 @@ const menuItems = computed(() => [
 	{
 		label: 'Download',
 		icon: 'pi pi-download',
-		disabled: isSaveDisabled,
+		disabled: isSaveDisabled.value,
 		command: () => {
 			downloadConfiguredModel();
 		}
@@ -373,28 +311,29 @@ const menuItems = computed(() => [
 const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 interface BasicKnobs {
-	tempConfigId: string;
-	transientModelConfig: ModelConfigurationLegacy;
+	transientModelConfig: ModelConfiguration;
 }
 
 const knobs = ref<BasicKnobs>({
-	tempConfigId: '',
 	transientModelConfig: {
 		name: '',
 		description: '',
-		model_id: '',
-		configuration: {} as Model,
-		interventions: []
+		modelId: '',
+		calibrationRunId: '',
+		observableSemanticList: [],
+		parameterSemanticList: [],
+		initialSemanticList: []
 	}
 });
 
+const interventions = ref<Intervention[]>([]);
 const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
 
 const kernelManager = new KernelSessionManager();
 let editor: VAceEditorInstance['_editor'] | null;
 const buildJupyterContext = () => {
-	const contextId = selectedConfigId.value ?? props.node.state.tempConfigId;
+	const contextId = selectedConfigId.value;
 	if (!model.value) {
 		logger.warn('Cannot build Jupyter context without a model');
 		return null;
@@ -569,16 +508,13 @@ const extractConfigurationsFromInputs = async () => {
 	console.groupEnd();
 };
 
-const handleModelPreview = (data: any) => {
+const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	knobs.value.transientModelConfig = {
-		name: '',
-		description: '',
-		model_id: model.value.id ?? '',
-		configuration: model.value
-	};
+	const modelConfig = await amrToModelConfiguration(model.value);
+	setInterventions(modelConfig, interventions.value);
+	knobs.value.transientModelConfig = modelConfig;
 };
 
 const selectedOutputId = ref<string>('');
@@ -591,8 +527,8 @@ const datasetIds = computed(() => props.node.inputs?.[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
-	tableData: ModelConfigurationLegacy[];
-	modelConfiguration: ModelConfigurationLegacy | null;
+	tableData: ModelConfiguration[];
+	modelConfiguration: ModelConfiguration | null;
 }>({
 	isOpen: false,
 	tableData: [],
@@ -618,57 +554,34 @@ const numInitials = computed(() => {
 });
 
 const addIntervention = () => {
-	if (knobs.value.transientModelConfig.interventions) {
-		knobs.value.transientModelConfig.interventions.push({
-			name: '',
-			timestep: 1,
-			value: 1
-		});
-	} else {
-		knobs.value.transientModelConfig.interventions = [{ name: '', timestep: 1, value: 1 }];
-	}
+	interventions.value.push({
+		name: '',
+		timestep: 1,
+		value: 1
+	});
 };
 
 const downloadConfiguredModel = async () => {
-	const rawModel = knobs.value?.transientModelConfig?.configuration;
+	const rawModel = await getAsConfiguredModel(knobs.value?.transientModelConfig);
 	if (rawModel) {
 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
 		const a = document.createElement('a');
 		a.href = `data:${data}`;
-		a.download = `${
-			knobs.value?.transientModelConfig?.configuration?.header?.name ?? 'configured_model'
-		}.json`;
+		a.download = `${knobs.value?.transientModelConfig.name ?? 'configured_model'}.json`;
 		a.innerHTML = 'download JSON';
 		a.click();
 		a.remove();
 	}
 };
 
-const createConfiguration = async (force: boolean = false) => {
+const createConfiguration = async () => {
 	if (!model.value || isSaveDisabled.value) return;
 
 	const state = cloneDeep(props.node.state);
 
 	const modelConfig = cloneDeep(knobs.value.transientModelConfig);
-	sanityCheckErrors.value = [];
-	if (!force) {
-		const errors = sanityCheck(modelConfig);
-		if (errors.length > 0) {
-			sanityCheckErrors.value = errors;
-			return;
-		}
-	}
 
-	cleanModel(modelConfig.configuration);
-
-	const data = await createModelConfiguration(
-		model.value.id,
-		knobs.value?.transientModelConfig?.name ?? '',
-		knobs.value?.transientModelConfig?.description ?? '',
-		modelConfig.configuration,
-		false,
-		knobs.value.transientModelConfig.interventions ?? []
-	);
+	const data = await createModelConfiguration(modelConfig);
 
 	if (!data) {
 		logger.error('Failed to create model configuration');
@@ -697,22 +610,6 @@ const fetchConfigurations = async (modelId: string) => {
 	}
 };
 
-// Creates a temp config (if it doesn't exist in state)
-// This is used for beaker context when there are no outputs in the node
-const createTempModelConfig = async () => {
-	const state = cloneDeep(props.node.state);
-	if (state.tempConfigId !== '' || !model.value) return;
-	const data = await createModelConfiguration(
-		model.value.id,
-		'Temp_config_name',
-		'Utilized in model config node for beaker purposes',
-		cloneDeep(model.value),
-		true
-	);
-
-	knobs.value.tempConfigId = data.id;
-};
-
 // Fill the form with the config data
 const initialize = async () => {
 	const state = props.node.state;
@@ -721,33 +618,13 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
-	if (suggestedConfigurationContext.value.tableData.length === 0 && model.value) {
-		// TEMPORARY FIX: If there are no configurations, create a default one.  The plan is to add a default configuration when a model is uploaded
-		addDefaultConfiguration(model.value).then(() => {
-			fetchConfigurations(modelId);
-		});
-	}
 
-	knobs.value.tempConfigId = state.tempConfigId;
-
-	// State has never been set up:
-	if (knobs.value.tempConfigId === '') {
-		// Grab these values from model to initialize them
-		knobs.value.transientModelConfig = {
-			name: '',
-			description: '',
-			model_id: modelId,
-			configuration: cloneDeep(model.value) ?? ({} as Model),
-			interventions: []
-		};
-
-		await createTempModelConfig();
-	}
-	// State already been set up use it instead:
-	else {
-		const modelConfig = cloneDeep(state.transientModelConfig);
-		cleanModel(modelConfig.configuration);
-		knobs.value.transientModelConfig = modelConfig;
+	if (!state.transientModelConfig.id) {
+		// apply a configuration if one hasnt been applied yet
+		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
+	} else {
+		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		interventions.value = getInterventions(knobs.value.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -765,9 +642,10 @@ const initialize = async () => {
 	}
 };
 
-const applyConfigValues = (config: ModelConfigurationLegacy) => {
+const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
+	interventions.value = getInterventions(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -785,7 +663,6 @@ const applyConfigValues = (config: ModelConfigurationLegacy) => {
 	else {
 		// Append this config to the output.
 		state.transientModelConfig = knobs.value.transientModelConfig;
-		state.tempConfigId = knobs.value.tempConfigId;
 		emit('append-output', {
 			type: ModelConfigOperation.outputs[0].type,
 			label: config.name,
@@ -797,26 +674,29 @@ const applyConfigValues = (config: ModelConfigurationLegacy) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onOpenSuggestedConfiguration = (config: ModelConfigurationLegacy) => {
-	suggestedConfigurationContext.value.modelConfiguration = config;
-	suggestedConfigurationContext.value.isOpen = true;
-};
-
 onMounted(async () => {
 	await initialize();
 });
 
 watch(
-	() => knobs.value.transientModelConfig,
+	() => model.value,
 	async () => {
-		const config = cloneDeep(knobs.value.transientModelConfig);
-		cleanModel(config.configuration);
-		if (isEmpty(config) || isEmpty(config.configuration)) return;
-		const response: any = await getMMT(config.configuration);
+		if (!model.value) return;
+		const response: any = await getMMT(model.value);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 	},
 	{ immediate: true, deep: true }
+);
+
+// A very temporary way of doing interventions until we do a redesign
+watch(
+	() => interventions.value,
+	() => {
+		if (!isEmpty(interventions.value))
+			setInterventions(knobs.value.transientModelConfig, interventions.value);
+	},
+	{ deep: true }
 );
 
 watch(
@@ -824,8 +704,6 @@ watch(
 	async () => {
 		const state = cloneDeep(props.node.state);
 		state.transientModelConfig = knobs.value.transientModelConfig;
-		state.tempConfigId = knobs.value.tempConfigId;
-
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -958,5 +836,9 @@ onUnmounted(() => {
 	padding-top: var(--gap-small);
 	padding-bottom: var(--gap-small);
 	border-top: 1px solid var(--surface-border-light);
+}
+
+ul {
+	list-style: none;
 }
 </style>

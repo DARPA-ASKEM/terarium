@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @EqualsAndHashCode(callSuper = true)
@@ -30,5 +31,16 @@ public class InitialSemantic extends Semantic {
 	@ManyToOne
 	@JsonBackReference
 	@Schema(hidden = true)
+	@TSIgnore
 	@NotNull private ModelConfiguration modelConfiguration;
+
+	@Override
+	public InitialSemantic clone() {
+		final InitialSemantic clone = new InitialSemantic();
+		super.cloneSuperFields(clone);
+		clone.target = this.target;
+		clone.expression = this.expression;
+		clone.expressionMathml = this.expressionMathml;
+		return clone;
+	}
 }

@@ -35,6 +35,9 @@ public class Project extends TerariumAsset {
 
 	private String userId;
 
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "default")
+	private String thumbnail;
+
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -84,6 +87,9 @@ public class Project extends TerariumAsset {
 		}
 		if (project.getOverviewContent() != null) {
 			existingProject.setOverviewContent(project.getOverviewContent());
+		}
+		if (project.getThumbnail() != null) {
+			existingProject.setThumbnail(project.getThumbnail());
 		}
 		return existingProject;
 	}

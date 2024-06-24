@@ -2,8 +2,7 @@
 services:
   beaker:
     container_name: beaker
-    image: ghcr.io/darpa-askem/beaker-kernel:latest
-    platform: linux/amd64
+    image: ghcr.io/darpa-askem/beaker-kernel:local
     networks:
       - terarium
     ports:
@@ -16,6 +15,6 @@ services:
       JUPYTER_TOKEN: "89f73481102c46c0bc13b2998f9a4fce"
       AUTH_USERNAME: "${secret_service_account_username}"
       AUTH_PASSWORD: "${secret_service_account_password}"
-      OPENAI_API_KEY: "${secret_mit_openai_key}"
+      OPENAI_API_KEY: "${secret_openai_key}"
     extra_hosts:
       - "${local_host_name}:host-gateway"

@@ -1,8 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch._types.FieldSort;
-import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
@@ -16,7 +13,6 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
@@ -80,28 +76,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		return Optional.empty();
-	}
-
-	@Observed(name = "function_profile")
-	public List<ModelConfigurationLegacy> getModelConfigurationsByModelId(
-			final UUID id, final Integer page, final Integer pageSize) throws IOException {
-
-		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getModelConfigurationIndex())
-				.from(page)
-				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-						.must(m -> m.term(e -> e.field("model_id").value(id.toString())))))
-				.sort(new SortOptions.Builder()
-						.field(new FieldSort.Builder()
-								.field("updatedOn")
-								.order(SortOrder.Asc)
-								.build())
-						.build())
-				.build();
-
-		return elasticService.search(req, ModelConfigurationLegacy.class);
 	}
 
 	@Override

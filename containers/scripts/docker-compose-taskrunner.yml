@@ -13,7 +13,7 @@ services:
             TERARIUM_MQ_PASSWORD: "terarium123"
             TERARIUM_MQ_USERNAME: "terarium"
             TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
-            OPENAI_API_KEY: "${secret_gollm_openai_key}"
+            OPENAI_API_KEY: "${secret_openai_key}"
         depends_on:
             rabbitmq:
                 condition: service_healthy
