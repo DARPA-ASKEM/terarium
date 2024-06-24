@@ -20,22 +20,45 @@
 			>
 				<template #content>
 					<div class="m-3">
-						<Button
-							outlined
-							icon="pi pi-plus"
-							label="Extract from inputs"
-							@click="extractConfigurationsFromInputs"
-							severity="secondary"
-							:loading="isLoading"
-						/>
+						<div class="flex flex-column gap-1">
+							<Button
+								outlined
+								icon="pi pi-plus"
+								label="Extract from inputs"
+								@click="extractConfigurationsFromInputs"
+								severity="secondary"
+								:loading="isLoading"
+							/>
+
+							<span class="flex gap-1">
+								<Dropdown
+									class="flex-1"
+									v-model="selectedSortOption"
+									:options="sortByOptions"
+									option-label="label"
+									option-value="value"
+								>
+									<template #value="{ value }">
+										<label class="sort-by-label">Sort by</label
+										>{{ sortByOptions.find((option) => option.value === value)?.label }}
+									</template>
+								</Dropdown>
+								<Dropdown
+									class="flex-1"
+									v-model="selectedShownOption"
+									:options="shownOptionsList"
+									option-label="label"
+									option-value="value"
+								></Dropdown>
+							</span>
+
+							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
+						</div>
 						<ul v-if="!isLoading">
-							<li
-								v-for="configuration in suggestedConfigurationContext.tableData"
-								:key="configuration.id"
-							>
+							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
-									@click="applyConfigValues(configuration)"
+									@click="onSelectConfiguration(configuration)"
 									:selected="selectedConfigId === configuration.id"
 								/>
 							</li>
@@ -227,7 +250,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, orderBy } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -283,8 +306,11 @@ import Message from 'primevue/message';
 import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import { useConfirm } from 'primevue/useconfirm';
+import TeraInput from '@/components/widgets/tera-input.vue';
+import Dropdown from 'primevue/dropdown';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
+import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -367,6 +393,25 @@ const appendCode = (data: any, property: string, runUpdatedCode = false) => {
 	codeText.value = codeText.value.concat(' \n', data.content[property] as string);
 	if (runUpdatedCode) runFromCode();
 };
+
+const confirm = useConfirm();
+const filterModelConfigurationsText = ref('');
+const filteredModelConfigurations = computed(() => {
+	const searchTerm = filterModelConfigurationsText.value.toLowerCase();
+	const filteredConfigurations = suggestedConfigurationContext.value.tableData.filter(
+		(config) =>
+			config.name?.toLowerCase().includes(searchTerm) ||
+			config.description?.toLowerCase().includes(searchTerm)
+	);
+
+	return orderBy(filteredConfigurations, [selectedSortOption.value], ['desc']);
+});
+
+const selectedSortOption = ref('createdOn');
+const sortByOptions = [{ label: 'Created On', value: 'createdOn' }];
+
+const selectedShownOption = ref('all');
+const shownOptionsList = [{ label: 'Show all', value: 'all' }];
 
 const runFromCode = () => {
 	const code = editor?.getValue();
@@ -642,6 +687,18 @@ const initialize = async () => {
 	}
 };
 
+const onSelectConfiguration = (configuration: ModelConfiguration) => {
+	confirm.require({
+		header: 'Are you sure you want to select this configuration?',
+		message: `This will apply the configuration "${configuration.name}" to the model.  All current values will be replaced.`,
+		accept: () => {
+			applyConfigValues(configuration);
+		},
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel'
+	});
+};
+
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
@@ -838,7 +895,13 @@ onUnmounted(() => {
 	border-top: 1px solid var(--surface-border-light);
 }
 
+.sort-by-label {
+	color: var(--text-color-subdued);
+	padding-right: var(--gap-small);
+}
+
 ul {
 	list-style: none;
+	padding-top: var(--gap-small);
 }
 </style>
