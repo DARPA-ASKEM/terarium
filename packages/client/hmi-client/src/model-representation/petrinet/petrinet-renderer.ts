@@ -15,6 +15,7 @@ export interface NodeData {
 export interface EdgeData {
 	numEdges: number;
 	isController?: boolean;
+	isObservable?: boolean;
 }
 
 const FONT_SIZE_SMALL = 18;
@@ -203,16 +204,15 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
-			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
 			.style('stroke-dasharray', (d) => {
-				if (d.data && d.data.isController === true) {
+				if (d.data?.isController || d.data?.isObservable) {
 					return 4;
 				}
 				return null;
 			})
 			.attr('marker-end', (d) => {
-				if (d.data && d.data.isController) return null;
+				if (d.data?.isController || d.data?.isObservable) return null;
 				return 'url(#arrowhead)';
 			});
 
@@ -349,6 +349,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
 				sourceData = null;
 				targetData = null;
+			}
+		});
+
+		this.on('node-mouse-enter', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			const { data } = selection.datum();
+			if (data.type === NodeType.Observable) {
+				console.log(data);
 			}
 		});
 

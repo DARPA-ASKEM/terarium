@@ -448,23 +448,6 @@ export const convertToIGraph = (
 		});
 	});
 
-	// observables
-	if (!isEmpty(observableSummary)) {
-		Object.keys(observableSummary).forEach((key) => {
-			const observable = observableSummary[key];
-			graph.nodes.push({
-				id: key,
-				label: observable.name,
-				x: 0,
-				y: 0,
-				width: 50,
-				height: 50,
-				data: { type: NodeType.Observable, value: observable },
-				nodes: []
-			});
-		});
-	}
-
 	// edges
 	templates.forEach((t) => {
 		if (t.subject !== '') {
@@ -502,6 +485,32 @@ export const convertToIGraph = (
 			});
 		}
 	});
+
+	// observables
+	if (!isEmpty(observableSummary)) {
+		Object.keys(observableSummary).forEach((key) => {
+			const observable = observableSummary[key];
+			graph.nodes.push({
+				id: key,
+				label: observable.name,
+				x: 0,
+				y: 0,
+				width: 50,
+				height: 50,
+				data: { type: NodeType.Observable, value: observable },
+				nodes: []
+			});
+
+			observable.references.forEach((reference: string) => {
+				graph.edges.push({
+					source: reference,
+					target: key,
+					points: [],
+					data: { isObservable: true }
+				});
+			});
+		});
+	}
 
 	return graph;
 };
