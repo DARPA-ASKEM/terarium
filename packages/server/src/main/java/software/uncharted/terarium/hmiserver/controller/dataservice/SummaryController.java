@@ -68,7 +68,7 @@ public class SummaryController {
 				@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
-						description = "There was an issue retrieving the summary from the data store",
+						description = "There was an issue retrieving the summaries from the data store",
 						content = @Content)
 			})
 	public ResponseEntity<Map<UUID, Summary>> getSummaryMap(
