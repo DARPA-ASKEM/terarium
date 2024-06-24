@@ -270,7 +270,7 @@ public class MiraController {
 			model = objectMapper.readValue(resp.getOutput(), Model.class);
 			// create a default configuration
 			final ModelConfiguration modelConfiguration =
-				modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
