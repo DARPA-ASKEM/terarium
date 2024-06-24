@@ -80,8 +80,8 @@ public class ExtractionService {
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	private ExecutorService executor;
 
@@ -209,12 +209,11 @@ public class ExtractionService {
 
 						fileMap.put(filenameNoExt, bytes);
 						if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
-							ObjectMapper objectMapper = new ObjectMapper();
+							final ObjectMapper objectMapper = new ObjectMapper();
 
-							JsonNode rootNode = objectMapper.readTree(bytes);
-							if (rootNode instanceof ArrayNode) {
-								ArrayNode arrayNode = (ArrayNode) rootNode;
-								for (JsonNode record : arrayNode) {
+							final JsonNode rootNode = objectMapper.readTree(bytes);
+							if (rootNode instanceof final ArrayNode arrayNode) {
+								for (final JsonNode record : arrayNode) {
 									if (record.has("detect_cls")
 											&& record.get("detect_cls").asText().equals("Abstract")) {
 										abstractJsonNode = record;
