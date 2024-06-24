@@ -10,7 +10,7 @@ export interface NodeData {
 	expression?: string;
 	strataType?: string;
 	isStratified?: boolean;
-	value?: any;
+	references?: string[];
 }
 
 export interface EdgeData {
@@ -382,8 +382,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// Observable edge appears on observable node hover
 		this.on('node-mouse-enter', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			const { data } = selection.datum();
-			const references = data?.value?.references;
-			if (data.type === NodeType.Observable && data.expression && references) {
+			const { type, expression, references } = data;
+			if (type === NodeType.Observable && expression && references) {
 				this.castTransparency();
 				// Only show nodes and edges related to the observable
 				this?.chart
@@ -392,7 +392,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.style('opacity', 1);
 				this?.chart
 					?.selectAll('.edge')
-					.filter((d: any) => d.id === data.expression)
+					.filter((d: any) => d.id === expression)
 					.style('display', 'block')
 					.style('opacity', 1);
 				selection.style('opacity', 1);

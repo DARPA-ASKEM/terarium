@@ -498,7 +498,11 @@ export const convertToIGraph = (
 				y: 0,
 				width: 50,
 				height: 50,
-				data: { type: NodeType.Observable, expression: observable.expression, value: observable },
+				data: {
+					type: NodeType.Observable,
+					expression: observable.expression,
+					references: observable.references
+				},
 				nodes: []
 			});
 
