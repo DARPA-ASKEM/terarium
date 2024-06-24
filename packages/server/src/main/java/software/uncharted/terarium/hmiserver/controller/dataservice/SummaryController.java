@@ -53,7 +53,7 @@ public class SummaryController {
 
 	@GetMapping
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets summary by ID")
+	@Operation(summary = "Gets summaries by IDs")
 	@ApiResponses(
 			value = {
 				@ApiResponse(
