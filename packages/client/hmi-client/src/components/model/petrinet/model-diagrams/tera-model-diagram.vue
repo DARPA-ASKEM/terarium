@@ -75,8 +75,7 @@
 					:stratified-matrix-type="StratifiedMatrix.Rates"
 					@close-modal="selectedTransitionId = ''"
 					@update-configuration="
-						(configToUpdate: ModelConfigurationLegacy) =>
-							emit('update-configuration', configToUpdate)
+						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
 					"
 				/>
 			</Teleport>
@@ -102,7 +101,7 @@ import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfigurationLegacy } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
@@ -124,7 +123,6 @@ import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfiguration?: ModelConfigurationLegacy;
 	isPreview?: boolean;
 }>();
 

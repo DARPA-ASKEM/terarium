@@ -270,7 +270,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
@@ -290,8 +290,10 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 // Services:
 import {
 	getModelConfigurationById,
-	createModelConfiguration
-} from '@/services/model-configurations-legacy';
+	createModelConfiguration,
+	setInterventions,
+	getAsConfiguredModel
+} from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
 	getRunResultCiemss,
@@ -300,7 +302,7 @@ import {
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
-	ModelConfigurationLegacy,
+	ModelConfiguration,
 	State,
 	ModelParameter,
 	OptimizeRequestCiemss,
@@ -450,7 +452,7 @@ const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
-const modelConfiguration = ref<ModelConfigurationLegacy>();
+const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
 
@@ -521,11 +523,11 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = modelConfiguration.value.configuration;
+	const model = await getAsConfiguredModel(modelConfiguration.value);
 
-	modelParameterOptions.value = model.semantics?.ode.parameters ?? ([] as ModelParameter[]);
-	modelStateAndObsOptions.value = model.model.states.map((ele) => ele.id) ?? ([] as State[]);
-	model.semantics?.ode.observables
+	modelParameterOptions.value = model?.semantics?.ode.parameters ?? ([] as ModelParameter[]);
+	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id) ?? ([] as State[]);
+	model?.semantics?.ode.observables
 		?.map((ele) => ele.id)
 		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
@@ -606,14 +608,11 @@ const saveModelConfiguration = async () => {
 	}
 	const optRunId = knobs.value.optimizationRunId;
 	const interventions = await getOptimizedInterventions(optRunId);
-	const data = await createModelConfiguration(
-		modelConfiguration.value.model_id,
-		modelConfigName.value,
-		modelConfigDesc.value,
-		modelConfiguration.value.configuration,
-		false,
-		interventions
-	);
+	const configClone = cloneDeep(modelConfiguration.value);
+	setInterventions(configClone, interventions);
+	configClone.name = modelConfigName.value;
+	configClone.description = modelConfigDesc.value;
+	const data = await createModelConfiguration(configClone);
 	if (!data) {
 		logger.error('Failed to create model configuration');
 		return;

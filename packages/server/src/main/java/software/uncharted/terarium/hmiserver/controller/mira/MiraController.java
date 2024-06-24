@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
@@ -8,12 +9,16 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
@@ -37,12 +43,14 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/mira")
@@ -60,6 +68,9 @@ public class MiraController {
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final ModelConfigurationService modelConfigurationService;
+
+	private final Messages messages;
 
 	@Data
 	public static class ModelConversionRequest {
@@ -113,24 +124,48 @@ public class MiraController {
 						content = @Content)
 			})
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
-		try {
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.MIRA);
-			req.setInput(objectMapper.writeValueAsString(model).getBytes());
-			req.setScript(AMRToMMTResponseHandler.NAME);
-			req.setUserId(currentUserService.get().getId());
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
 
-			// send the request
-			final TaskResponse resp = taskService.runTaskSync(req);
-			final JsonNode mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-			return ResponseEntity.ok().body(mmtInfo);
+		try {
+			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to convert Model to MIRA model template. \n{}: {}", error, e.getMessage());
-			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to convert Model to MIRA model template.");
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
+
+		req.setScript(AMRToMMTResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final JsonNode mmtInfo;
+		try {
+			mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		return ResponseEntity.ok().body(mmtInfo);
 	}
 
 	@PostMapping("/convert-and-create-model")
@@ -156,58 +191,93 @@ public class MiraController {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
 
-		try {
-
-			final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
-			if (artifact.isEmpty()) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.BAD_REQUEST, "Artifact not found");
-			}
-
-			if (artifact.get().getFileNames().isEmpty()) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.BAD_REQUEST, "Artifact has no files");
-			}
-
-			final String filename = artifact.get().getFileNames().get(0);
-
-			final Optional<String> fileContents =
-					artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
-			if (fileContents.isEmpty()) {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.BAD_REQUEST, "Unable to fetch file contents");
-			}
-
-			final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
-			additionalProperties.setFileName(filename);
-
-			final TaskRequest req = new TaskRequest();
-			req.setType(TaskType.MIRA);
-			req.setInput(fileContents.get().getBytes());
-			req.setAdditionalProperties(additionalProperties);
-			req.setUserId(currentUserService.get().getId());
-
-			if (endsWith(filename, List.of(".mdl"))) {
-				req.setScript(MdlToStockflowResponseHandler.NAME);
-			} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
-				req.setScript(StellaToStockflowResponseHandler.NAME);
-			} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
-				req.setScript(SbmlToPetrinetResponseHandler.NAME);
-			} else {
-				throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.BAD_REQUEST, "Unknown model type");
-			}
-
-			// send the request
-			final TaskResponse resp = taskService.runTaskSync(req);
-			final Model model = objectMapper.readValue(resp.getOutput(), Model.class);
-			return ResponseEntity.ok().body(model);
-
-		} catch (final Exception e) {
-			final String error = "Unable to dispatch task request";
-			log.error("Unable to dispatch task request {}: {}", error, e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
+		if (artifact.isEmpty()) {
+			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
 		}
+
+		if (artifact.get().getFileNames().isEmpty()) {
+			log.error(
+					String.format("The files associated with artifact %s are missing.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.files.not-found"));
+		}
+
+		final String filename = artifact.get().getFileNames().get(0);
+
+		final Optional<String> fileContents;
+		try {
+			fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
+		} catch (final IOException e) {
+			log.error(String.format("Unable to read file contents for artifact %s.", conversionRequest.artifactId), e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.file.unable-to-read"));
+		}
+
+		if (fileContents.isEmpty()) {
+			log.error(String.format("The file contents for artifact %s is empty.", conversionRequest.artifactId));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file.content.empty"));
+		}
+
+		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+		additionalProperties.setFileName(filename);
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+
+		try {
+			req.setInput(fileContents.get().getBytes());
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+		req.setAdditionalProperties(additionalProperties);
+		req.setUserId(currentUserService.get().getId());
+
+		if (endsWith(filename, List.of(".mdl"))) {
+			req.setScript(MdlToStockflowResponseHandler.NAME);
+		} else if (endsWith(filename, List.of(".xmile", ".itmx", ".stmx"))) {
+			req.setScript(StellaToStockflowResponseHandler.NAME);
+		} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
+			req.setScript(SbmlToPetrinetResponseHandler.NAME);
+		} else {
+			log.error(String.format("Unable to determine the artifact type from the supplied filename: %s", filename));
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file-type"));
+		}
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final Model model;
+		try {
+			model = objectMapper.readValue(resp.getOutput(), Model.class);
+			// create a default configuration
+			final ModelConfiguration modelConfiguration =
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			modelConfigurationService.createAsset(modelConfiguration, permission);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		return ResponseEntity.ok().body(model);
 	}
 
 	@PutMapping("/{task-id}")
@@ -236,24 +306,14 @@ public class MiraController {
 	@GetMapping("/currie/{curies}")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> searchConcept(@PathVariable("curies") final String curies) {
+		final ResponseEntity<List<DKG>> response;
 		try {
-			final ResponseEntity<List<DKG>> response = proxy.getEntities(curies);
-			if (response.getStatusCode().is2xxSuccessful()) {
-				return ResponseEntity.ok(response.getBody());
-			}
-			return ResponseEntity.internalServerError().build();
-		} catch (final FeignException.NotFound e) { // Handle 404 errors
-			log.info("Could not find resource in the DKG", e);
-			return ResponseEntity.noContent().build();
+			response = proxy.getEntities(curies);
 		} catch (final FeignException e) {
-			final String error = "Unable to fetch DKGs";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-		} catch (final Exception e) {
-			log.error("Unable to fetch DKG", e);
-			return ResponseEntity.internalServerError().build();
+			throw handleMiraFeignException(e, "concepts", "curies", curies, "mira.concepts.bad-curies");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	@GetMapping("/search")
@@ -262,21 +322,14 @@ public class MiraController {
 			@RequestParam("q") final String q,
 			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
 			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
+		final ResponseEntity<List<DKG>> response;
 		try {
-			final ResponseEntity<List<DKG>> response = proxy.search(q, limit, offset);
-			if (response.getStatusCode().is2xxSuccessful()) {
-				return ResponseEntity.ok(response.getBody());
-			}
-			return ResponseEntity.internalServerError().build();
+			response = proxy.search(q, limit, offset);
 		} catch (final FeignException e) {
-			final String error = "An error occurred searching DKGs";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
-		} catch (final Exception e) {
-			log.error("Unable to fetch DKG", e);
-			return ResponseEntity.internalServerError().build();
+			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concepts.bad-query");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	// This rebuilds the semantics ODE via MIRA
@@ -286,26 +339,51 @@ public class MiraController {
 	@PostMapping("/reconstruct-ode-semantics")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> reconstructODESemantics(final Object amr) {
+		final ResponseEntity<JsonNode> response;
 		try {
-			return ResponseEntity.ok(proxy.reconstructODESemantics(amr).getBody());
+			response = proxy.reconstructODESemantics(amr);
 		} catch (final FeignException e) {
-			final String error = "Unable to reconstruct ODE semantics";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
+		final ResponseEntity<List<EntitySimilarityResult>> response;
 		try {
-			return ResponseEntity.ok(proxy.entitySimilarity(obj).getBody());
+			response = proxy.entitySimilarity(obj);
 		} catch (final FeignException e) {
-			final String error = "Unable to fetch entity similarity";
-			final int status = e.status() >= 400 ? e.status() : 500;
-			log.error(error, e);
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.valueOf(status), error);
+			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
 		}
+
+		return new ResponseEntity(response.getBody(), response.getStatusCode());
+	}
+
+	private ResponseStatusException handleMiraFeignException(
+			final FeignException e,
+			final String returnType,
+			final String inputType,
+			final String input,
+			final String errorMessageCode) {
+		final HttpStatus statusCode = HttpStatus.resolve(e.status());
+		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn(String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input));
+			return new ResponseStatusException(statusCode, messages.get(errorMessageCode));
+		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIRA is currently unavailable");
+			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
+		} else if (statusCode != null && statusCode.is5xxServerError()) {
+			log.error(String.format(
+					"An error occurred while MIRA was trying to determine %s based on %s: %s",
+					returnType, inputType, input));
+			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
+		}
+		log.error(String.format(
+				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
+				returnType, inputType, input));
+		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }

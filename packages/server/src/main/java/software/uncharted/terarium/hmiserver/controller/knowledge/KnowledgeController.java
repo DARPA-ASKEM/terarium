@@ -126,6 +126,7 @@ public class KnowledgeController {
 				// Get the model id if it is a valid UUID
 				modelId = UUID.fromString(modelIdString);
 			} catch (final IllegalArgumentException e) {
+				log.warn(String.format("Invalid model UUID supplied: %s", modelIdString), e);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
 			}
 		}
@@ -134,16 +135,18 @@ public class KnowledgeController {
 		try {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 			if (responseAMR == null) {
+				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
 			}
 		} catch (final FeignException e) {
-			final String error = "Skema Unified Service did not return a valid AMR based on the provided Equations";
-			log.error(error, e);
-
+			log.error(
+					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e);
 			throw handleSkemaFeignException(e);
 		} catch (final Exception e) {
-			final String error = "An unhandled error occurred while processing the AMR from equations.";
-			log.error(error, e);
+			log.error(
+					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
@@ -153,7 +156,7 @@ public class KnowledgeController {
 				final Model model = modelService.createAsset(responseAMR, permission);
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
-				log.error("Unable to create a model", e);
+				log.error("An error occurred while trying to create a Model asset.", e);
 				throw new ResponseStatusException(
 						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
@@ -164,8 +167,7 @@ public class KnowledgeController {
 
 		model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
-			final String errorMessage = String.format("The model id %s does not exist.", modelId);
-			log.error(errorMessage);
+			log.error(String.format("The model id %s does not exist.", modelId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
@@ -174,7 +176,7 @@ public class KnowledgeController {
 			modelService.updateAsset(responseAMR, permission);
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
-			log.error("Unable to update the model with id {}.", modelId, e);
+			log.error(String.format("Unable to update the model with id %s.", modelId), e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
@@ -186,9 +188,7 @@ public class KnowledgeController {
 		try {
 			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToAMR(req).getBody());
 		} catch (final FeignException e) {
-			final String error = "Error with Skema Unified Service while converting base64 equations to AMR";
-			log.error(error, e);
-
+			log.error("Error with Skema Unified Service while converting base64 equations to AMR", e);
 			throw handleSkemaFeignException(e);
 		}
 	}
@@ -200,9 +200,7 @@ public class KnowledgeController {
 			return ResponseEntity.ok(
 					skemaUnifiedProxy.base64EquationsToLatex(req).getBody());
 		} catch (final FeignException e) {
-			final String error = "Error with Skema Unified Service while converting base64 equations to Latex";
-			log.error(error, e);
-
+			log.error("Error with Skema Unified Service while converting base64 equations to Latex", e);
 			throw handleSkemaFeignException(e);
 		}
 	}
@@ -230,7 +228,7 @@ public class KnowledgeController {
 
 		final Optional<Code> code = codeService.getAsset(codeId, permission);
 		if (code.isEmpty()) {
-			log.error("Unable to fetch the requested code asset with codeId: {}", codeId);
+			log.error(String.format("Unable to fetch the requested code asset with codeId: %s", codeId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
 		}
 
@@ -320,10 +318,14 @@ public class KnowledgeController {
 		}
 
 		if (resp.getStatusCode().is4xxClientError()) {
+			log.warn("Skema Unified Service did not return a valid AMR because the provided code was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.bad-code"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("Skema Unified Service is currently unavailable");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			log.error(
+					"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided code");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.internal-error"));
 		}
 
@@ -442,6 +444,7 @@ public class KnowledgeController {
 		final String filename = input.getOriginalFilename();
 
 		if (filename == null) {
+			log.warn("Filename is missing from the file");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("code.filename-needed"));
 		}
 
@@ -504,6 +507,7 @@ public class KnowledgeController {
 					documentText = document.getText()
 							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
 				} else {
+					log.warn("Document text is empty");
 					throw new ResponseStatusException(
 							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
 				}
@@ -544,10 +548,14 @@ public class KnowledgeController {
 		}
 
 		if (resp.getStatusCode().is4xxClientError()) {
+			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIT Text-reading is currently unavailable");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			log.error(
+					"An error occurred while MIT Text-reading was trying to produce a model card based on the provided resource");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
@@ -576,12 +584,13 @@ public class KnowledgeController {
 		try {
 			updatedModel = modelService.updateAsset(model, permission);
 		} catch (final IOException e) {
-			log.error("Unable to update model", e);
+			log.warn("Unable to update model", e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		if (updatedModel.isEmpty()) {
+			log.error("An error occurred while updating the model asset, resulting in an empty model");
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
 		}
 
@@ -633,6 +642,7 @@ public class KnowledgeController {
 		final Dataset dataset = datasetService.getAsset(datasetId, permission).orElseThrow();
 
 		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+			log.warn("There are no files associated with this dataset");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("dataset.files.not-found"));
 		}
 		final String filename = dataset.getFileNames().get(0);
@@ -651,10 +661,14 @@ public class KnowledgeController {
 		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
+			log.warn("MIT Text-reading did not return a valid dataset card because a provided resource was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIT Text-reading is currently unavailable");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			log.error(
+					"An error occurred while MIT Text-reading was trying to produce a dataset card based on the provided resource");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
@@ -713,6 +727,7 @@ public class KnowledgeController {
 		}
 
 		if (updatedDataset.isEmpty()) {
+			log.error("An error occurred while updating the dataset asset, resulting in an empty dataset");
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
 		}
@@ -798,24 +813,36 @@ public class KnowledgeController {
 	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn("Skema Unified Service did not return a valid AMR based on the provided resources");
 			return new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("Skema Unified Service is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
+			log.error(
+					"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources");
 			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
+		log.error(
+				"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources");
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 
 	private ResponseStatusException handleMitFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
 			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIT Text-reading is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
+			log.error(
+					"An error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
+			return new ResponseStatusException(statusCode, messages.get("mit.internal-error"));
 		}
+		log.error(
+				"An unknown error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }

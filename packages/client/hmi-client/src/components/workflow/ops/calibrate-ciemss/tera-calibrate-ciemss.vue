@@ -33,7 +33,7 @@
 									class="w-full"
 									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.id)"
+									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 								/>
 							</template>
 						</Column>
@@ -194,8 +194,7 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfigurationLegacy,
-	State
+	ModelConfiguration
 } from '@/types/Types';
 import {
 	getTimespan,
@@ -228,12 +227,12 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<State[] | undefined>();
+const modelStateOptions = ref<any[] | undefined>();
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const modelConfig = ref<ModelConfigurationLegacy>();
+const modelConfig = ref<ModelConfiguration>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
