@@ -69,7 +69,7 @@
 
     .p-tree-filter-container {
         margin-bottom: $inlineSpacing;
-        padding: 0.5rem;
+        padding: var(--gap-2);
 
         .p-tree-filter {
             width: 100%;

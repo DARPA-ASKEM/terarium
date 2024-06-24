@@ -281,7 +281,7 @@ watch(
 }
 
 .p-datatable.p-datatable-sm:deep(.p-datatable-tbody > tr > td) {
-	padding: 0.25rem 0.5rem;
+	padding: var(--gap-1) 0.5rem;
 }
 /* Histograms & Charts  */
 .column-summary {

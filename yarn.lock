@@ -3290,10 +3290,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.17.4":
-  version: 4.17.4
-  resolution: "@types/lodash@npm:4.17.4"
-  checksum: 3ec19f9fc48200006e71733e08bcb1478b0398673657fcfb21a8643d41a80bcce09a01000077c3b23a3c6d86b9b314abe0672a8fdfc0fd66b893bd41955cfab8
+"@types/lodash@npm:4.17.5":
+  version: 4.17.5
+  resolution: "@types/lodash@npm:4.17.5"
+  checksum: 10e2e9cbeb16998026f4071f9f5f2a38b651eba15302f512e0b8ab904c07c197ca0282d2821f64e53c2b692d7046af0a1ce3ead190fb077cbe4036948fce1924
   languageName: node
   linkType: hard
 
@@ -8435,7 +8435,7 @@ __metadata:
   dependencies:
     "@types/d3": "npm:7.4.3"
     "@types/jest": "npm:29.5.12"
-    "@types/lodash": "npm:4.17.4"
+    "@types/lodash": "npm:4.17.5"
     "@typescript-eslint/eslint-plugin": "npm:5.62.0"
     "@typescript-eslint/parser": "npm:5.62.0"
     copy: "npm:0.3.2"
@@ -8626,7 +8626,7 @@ __metadata:
     "@playwright/test": "npm:1.31.2"
     "@rushstack/eslint-patch": "npm:1.10.3"
     "@types/d3": "npm:7.4.3"
-    "@types/lodash": "npm:4.17.4"
+    "@types/lodash": "npm:4.17.5"
     "@types/node": "npm:18.19.3"
     "@types/p5": "npm:1.6.2"
     "@uncharted.software/design-tokens": "npm:1.1.0"
@@ -8655,7 +8655,6 @@ __metadata:
     mathlive: "npm:0.89.2"
     mathml-to-latex: "npm:1.2.0"
     oidc-spa: "npm:4.6.2"
-    p5: "npm:1.6.0"
     path-browserify: "npm:1.0.1"
     pinia: "npm:2.1.7"
     pixi-viewport: "npm:4.37.0"
@@ -11757,13 +11756,6 @@ __metadata:
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
   checksum: f8a8e9a7693659383f06aec604ad5ead237c7a261c18048a6e1b5b85a5f8a067e469aa24f5bc009b991ea3b058a87f5065ef4176793a200d4917349881216cae
-  languageName: node
-  linkType: hard
-
-"p5@npm:1.6.0":
-  version: 1.6.0
-  resolution: "p5@npm:1.6.0"
-  checksum: 3fad782e55fcac93c03b9b7cc48797a679f91dbbbece594a7a7d5e6397638e2b102a53caa14406bc2bf9f82c32dd802f98d2cd3fa0562f444c21f3fff008d3a3
   languageName: node
   linkType: hard
 

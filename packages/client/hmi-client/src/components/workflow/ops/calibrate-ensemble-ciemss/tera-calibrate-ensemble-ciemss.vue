@@ -77,7 +77,7 @@
 										>
 											<Dropdown
 												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-												:options="allModelOptions[i - 1]?.map((ele) => ele.id)"
+												:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
 												class="w-full mb-2 mt-2"
 											/>
 										</template>
@@ -210,10 +210,9 @@ import {
 } from '@/components/workflow/util';
 import type {
 	CsvAsset,
-	ModelConfigurationLegacy,
 	EnsembleModelConfigs,
 	EnsembleCalibrationCiemssRequest,
-	State
+	ModelConfiguration
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
@@ -288,9 +287,9 @@ const currentDatasetFileName = ref<string>();
 const datasetColumnNames = ref<string[]>();
 
 const listModelLabels = ref<string[]>([]);
-const allModelConfigurations = ref<ModelConfigurationLegacy[]>([]);
+const allModelConfigurations = ref<ModelConfiguration[]>([]);
 // List of each observible + state for each model.
-const allModelOptions = ref<State[][]>([]);
+const allModelOptions = ref<any[][]>([]);
 
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<RunResults>({});
