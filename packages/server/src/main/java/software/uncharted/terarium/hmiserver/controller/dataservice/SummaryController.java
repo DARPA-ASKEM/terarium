@@ -72,8 +72,8 @@ public class SummaryController {
 						content = @Content)
 			})
 	public ResponseEntity<Map<UUID, Summary>> getSummaryMap(
-			@RequestParam("ids") final List<UUID> ids,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestBody final List<UUID> ids) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
