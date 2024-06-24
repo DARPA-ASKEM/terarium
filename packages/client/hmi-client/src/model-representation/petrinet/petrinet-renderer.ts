@@ -204,6 +204,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
+			// .style('stroke-opacity', (d) => (d.data?.isObservable ? 0 : EDGE_OPACITY))
 			.style('stroke-width', 3)
 			.style('stroke-dasharray', (d) => {
 				if (d.data?.isController || d.data?.isObservable) {
@@ -215,6 +216,23 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				if (d.data?.isController || d.data?.isObservable) return null;
 				return 'url(#arrowhead)';
 			});
+
+		selection.append('text').each(function (d) {
+			if (d.data?.isObservable) {
+				d3.select(this)
+					.classed('latex-font', true)
+					.attr('x', (d.points[1].x + d.points[2].x) / 2)
+					.attr('y', (d.points[1].y + d.points[2].y) / 2 - 30)
+					.style('font-style', 'italic')
+					.style('font-size', FONT_SIZE_REGULAR)
+					.style('paint-order', 'stroke')
+					.style('stroke', 'var(--gray-50)')
+					.style('stroke-width', '6px')
+					.style('stroke-linecap', 'butt')
+					.style('fill', 'var(--text-color-primary)')
+					.text(d.id ?? '');
+			}
+		});
 
 		this.updateMultiEdgeLabels();
 	}

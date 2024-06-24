@@ -503,6 +503,7 @@ export const convertToIGraph = (
 
 			observable.references.forEach((reference: string) => {
 				graph.edges.push({
+					id: observable.expression,
 					source: reference,
 					target: key,
 					points: [],
