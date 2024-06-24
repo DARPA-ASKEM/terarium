@@ -51,9 +51,9 @@ public class SummaryController {
 
 	final CurrentUserService currentUserService;
 
-	@GetMapping
+	@PostMapping("/search")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets summaries by IDs")
+	@Operation(summary = "Gets a map of summaries by list of IDs")
 	@ApiResponses(
 			value = {
 				@ApiResponse(
@@ -204,7 +204,7 @@ public class SummaryController {
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "Summary deleted",
+						description = "Delete summary",
 						content = {
 							@Content(
 									mediaType = "application/json",
