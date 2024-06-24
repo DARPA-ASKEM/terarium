@@ -204,7 +204,7 @@ public class SummaryController {
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "Delete summary",
+						description = "Summary deleted",
 						content = {
 							@Content(
 									mediaType = "application/json",
