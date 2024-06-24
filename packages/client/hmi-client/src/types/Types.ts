@@ -420,6 +420,7 @@ export interface PetriNetModel {
 
 export interface Project extends TerariumAsset {
     userId: string;
+    thumbnail: string;
     userName?: string;
     authors?: string[];
     overviewContent?: any;
