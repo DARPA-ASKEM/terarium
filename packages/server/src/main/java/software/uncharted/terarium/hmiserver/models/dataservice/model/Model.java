@@ -8,6 +8,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public List<Observable> getObservables() {
+		if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+			return new ArrayList<Observable>();
+		}
 		return this.getSemantics().getOde().getObservables();
 	}
 
@@ -108,6 +112,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		} else {
+			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+				return new ArrayList<ModelParameter>();
+			}
 			return this.getSemantics().getOde().getParameters();
 		}
 	}
@@ -119,6 +126,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
+			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+				return new ArrayList<Initial>();
+			}
 			return this.getSemantics().getOde().getInitials();
 		}
 	}
