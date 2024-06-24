@@ -1,8 +1,8 @@
 <template>
 	<div class="vega-chart-container">
-		<div v-if="renderErrorMessage" class="p-error">
+		<p v-if="renderErrorMessage" class="p-error">
 			{{ renderErrorMessage }}
-		</div>
+		</p>
 		<div ref="vegaContainer"></div>
 	</div>
 </template>
