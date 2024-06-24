@@ -587,7 +587,7 @@ const onDownloadResponse = (payload) => {
 }
 
 .variables-table div {
-	padding: 0.25rem;
+	padding: var(--gap-1);
 }
 
 .variables-header {

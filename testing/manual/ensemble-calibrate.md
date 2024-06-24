@@ -14,19 +14,23 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 
 ### 2. Workflow
 1. Create a new workflow named `Ensemble Calibrate`
-2. Upload `Ensemble Calibrate Test Dataset` and `Giordano2020 - SIDARTHE model of COVID-19 spread in Italy` into your project
-3. Drag and drop the model into your workflow
-4. Link both models to individual  _Configure Model_ operators
-6. Save each configuration by giving it a name and clicking `Run`
-7. drag and drop the dataset into the workflow.
+2. Upload `Ensemble Calibrate Test Dataset.csv` and `Giordano2020 - SIDARTHE model of COVID-19 spread in Italy.json` and `SIR.json` into your project
+3. Drag and drop the models into your workflow
+4. Link each model to their own _Configure Model_ operators
+6. Create a new configuration from the default one by simply giving what is already shown a name and clicking `Run`
+7. Drag and drop the dataset into the workflow
 
 ### 3. Ensemble Calibrate Operator setup
-1. Link the configuration into the node twice and add the dataset into a new `Calibrate ensemble` node
-2. Open the `Calibrate ensemble` node by clicking on edit
-3. Set the mapping `Dataset timestamp column` to the `timepoint_id` column
-4. Set the other mappings as follows:
+1. Create a Calibrate Ensemble operator by right-clicking on the workflow canvas and clicking `Work with multiple models/Calibrate ensemble`
+2. Link the dataset to the "Dataset" port of the operator configuration
+3. Link the Giordano model configuration into the "Model configuration" port of the operator
+4. Repeat for the SIR model configuration
+5. Open the `Calibrate ensemble` node by clicking on edit
+6. Set the mapping `Dataset timestamp column` to the `timepoint_id` column
+7. Set the other mappings as follows:
     Find the `Susceptible_state` in the ensemble variables dropdown, select it and hit add mapping.
       Link the `Susceptible` for both of your identical configurations
+8. Click "Run" to start the calibration.
 
 ### Misc:
 You should be able to add mapping as well as delete mapping. close and open the drilldown and see saved changes.

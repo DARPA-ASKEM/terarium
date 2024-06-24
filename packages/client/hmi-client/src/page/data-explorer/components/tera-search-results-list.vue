@@ -296,7 +296,7 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	gap: 0.25rem;
+	gap: var(--gap-1);
 	align-items: center;
 	margin-bottom: 8rem;
 	flex-grow: 1;
@@ -313,7 +313,7 @@ ul {
 
 .no-results-found {
 	font-weight: var(--font-weight);
-	margin-top: 0.25rem;
+	margin-top: var(--gap-1);
 	font-size: 1.5rem;
 }
 
@@ -340,7 +340,7 @@ ul {
 
 .p-chip span {
 	color: var(--text-color-primary);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
 .search-container {
