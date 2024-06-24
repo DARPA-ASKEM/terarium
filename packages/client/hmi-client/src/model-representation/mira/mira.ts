@@ -16,6 +16,7 @@ import type {
 	TemplateSummary,
 	ObservableSummary
 } from './mira-common';
+import type { NodeData } from '../petrinet/petrinet-renderer';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -431,7 +432,7 @@ export const convertToIGraph = (
 
 	// templates
 	templates.forEach((t) => {
-		const nodeData: any = {
+		const nodeData: NodeData = {
 			type: NodeType.Transition,
 			expression: t.expression
 		};

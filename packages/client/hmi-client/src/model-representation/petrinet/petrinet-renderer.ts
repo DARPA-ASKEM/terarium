@@ -10,6 +10,7 @@ export interface NodeData {
 	expression?: string;
 	strataType?: string;
 	isStratified?: boolean;
+	value?: any;
 }
 
 export interface EdgeData {
@@ -199,12 +200,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+		selection.style('display', (d) => (d.data?.isObservable ? 'none' : 'block'));
+
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
-			.style('display', (d) => (d.data?.isObservable ? 'none' : 'block'))
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
 			.style('stroke-dasharray', (d) => {
@@ -216,13 +218,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('marker-end', (d) => {
 				if (d.data?.isController || d.data?.isObservable) return null;
 				return 'url(#arrowhead)';
-			})
-			.attr('class', (d) => d.id ?? '');
+			});
 
 		selection.append('text').each(function (d) {
 			if (d.data?.isObservable && d.id) {
 				d3.select(this)
-					.classed(d.id, true)
 					.classed('latex-font', true)
 					.attr('x', (d.points[1].x + d.points[2].x) / 2)
 					.attr('y', (d.points[1].y + d.points[2].y) / 2 - 30)
@@ -233,7 +233,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.style('stroke-width', '6px')
 					.style('stroke-linecap', 'butt')
 					.style('fill', 'var(--text-color-primary)')
-					.style('display', 'none')
 					.text(d.id);
 			}
 		});
@@ -383,15 +382,20 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// Observable edge appears on observable node hover
 		this.on('node-mouse-enter', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			const { data } = selection.datum();
-			if (data.type === NodeType.Observable && data.expression) {
+			const references = data?.value?.references;
+			if (data.type === NodeType.Observable && data.expression && references) {
 				this.castTransparency();
-				const edgeAndLabel = this?.chart
+				// Only show nodes and edges related to the observable
+				this?.chart
+					?.selectAll('.node-ui')
+					.filter((d: any) => references.includes(d.id))
+					.style('opacity', 1);
+				this?.chart
 					?.selectAll('.edge')
-					.filter((d: any) => d.id === data.expression);
-				console.log(edgeAndLabel);
-				// edgeAndLabel?.style('display', 'block').style('opacity', 1);
-				// console.log(edgeAndLabel?.datum());
-				// selection.style('opacity', 1);
+					.filter((d: any) => d.id === data.expression)
+					.style('display', 'block')
+					.style('opacity', 1);
+				selection.style('opacity', 1);
 			}
 		});
 
@@ -399,7 +403,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			const { data } = selection.datum();
 			if (data.type === NodeType.Observable && data.expression) {
 				this.resetOpacity();
-				this?.chart?.selectAll(`.${data.expression}`).style('display', 'none');
+				this?.chart
+					?.selectAll('.edge')
+					.filter((d: any) => d.id === data.expression)
+					.style('display', 'none');
 			}
 		});
 
