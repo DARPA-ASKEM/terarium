@@ -204,7 +204,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
-			// .style('stroke-opacity', (d) => (d.data?.isObservable ? 0 : EDGE_OPACITY))
+			.style('display', (d) => (d.data?.isObservable ? 'none' : 'block'))
+			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
 			.style('stroke-dasharray', (d) => {
 				if (d.data?.isController || d.data?.isObservable) {
@@ -215,11 +216,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('marker-end', (d) => {
 				if (d.data?.isController || d.data?.isObservable) return null;
 				return 'url(#arrowhead)';
-			});
+			})
+			.attr('class', (d) => d.id ?? '');
 
 		selection.append('text').each(function (d) {
-			if (d.data?.isObservable) {
+			if (d.data?.isObservable && d.id) {
 				d3.select(this)
+					.classed(d.id, true)
 					.classed('latex-font', true)
 					.attr('x', (d.points[1].x + d.points[2].x) / 2)
 					.attr('y', (d.points[1].y + d.points[2].y) / 2 - 30)
@@ -230,7 +233,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.style('stroke-width', '6px')
 					.style('stroke-linecap', 'butt')
 					.style('fill', 'var(--text-color-primary)')
-					.text(d.id ?? '');
+					.style('display', 'none')
+					.text(d.id);
 			}
 		});
 
@@ -270,22 +274,28 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection.selectAll('path').style('stroke-width', 2);
 	}
 
+	resetOpacity() {
+		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 1);
+	}
+
+	castTransparency() {
+		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 0.3);
+	}
+
 	toggleNodeSelectionByLabel(label: string) {
 		const selection = this.chart?.selectAll('.node-ui').filter((d: any) => d.label === label);
-		if (selection && selection.size() === 1) {
+		if (selection?.size() === 1) {
 			this.toggleNodeSelection(selection as D3SelectionINode<NodeData>);
 		}
 	}
 
 	toggleNodeSelection(selection: D3SelectionINode<NodeData>) {
 		if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) {
-			this?.chart?.selectAll('.node-ui').style('opacity', 1);
-			this?.chart?.selectAll('.edge').style('opacity', 1);
+			this.resetOpacity();
 			this.nodeSelection = null;
 		} else {
 			// Set focus on node:
-			this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
-			this?.chart?.selectAll('.edge').style('opacity', 0.3);
+			this.castTransparency();
 			selection.style('opacity', 1);
 			this.nodeSelection = selection;
 		}
@@ -370,10 +380,26 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		});
 
+		// Observable edge appears on observable node hover
 		this.on('node-mouse-enter', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			const { data } = selection.datum();
-			if (data.type === NodeType.Observable) {
-				console.log(data);
+			if (data.type === NodeType.Observable && data.expression) {
+				this.castTransparency();
+				const edgeAndLabel = this?.chart
+					?.selectAll('.edge')
+					.filter((d: any) => d.id === data.expression);
+				console.log(edgeAndLabel);
+				// edgeAndLabel?.style('display', 'block').style('opacity', 1);
+				// console.log(edgeAndLabel?.datum());
+				// selection.style('opacity', 1);
+			}
+		});
+
+		this.on('node-mouse-leave', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			const { data } = selection.datum();
+			if (data.type === NodeType.Observable && data.expression) {
+				this.resetOpacity();
+				this?.chart?.selectAll(`.${data.expression}`).style('display', 'none');
 			}
 		});
 
@@ -394,9 +420,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('background-click', () => {
-			// Reset opacity from focus:
-			this?.chart?.selectAll('.node-ui').style('opacity', 1);
-			this?.chart?.selectAll('.edge').style('opacity', 1);
+			this.resetOpacity();
 
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
