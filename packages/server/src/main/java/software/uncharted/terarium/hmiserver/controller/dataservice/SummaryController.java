@@ -58,7 +58,7 @@ public class SummaryController {
 			value = {
 				@ApiResponse(
 						responseCode = "200",
-						description = "Summary found.",
+						description = "Summaries found.",
 						content =
 								@Content(
 										mediaType = MediaType.APPLICATION_JSON_VALUE,
