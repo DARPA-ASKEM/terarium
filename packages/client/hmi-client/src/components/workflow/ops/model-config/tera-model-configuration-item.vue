@@ -3,8 +3,14 @@
 		<div>
 			<span class="flex align-items-center"
 				><h6>{{ configuration.name }}</h6>
-				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop></Button
+				<Button
+					class="ml-auto"
+					text
+					icon="pi pi-ellipsis-v"
+					@click.stop="toggleContextMenu"
+				></Button
 			></span>
+			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
 			<p>{{ configuration.description }}</p>
 			<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 		</div>
@@ -17,11 +23,61 @@ import { ModelConfiguration } from '@/types/Types';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
+import ContextMenu from 'primevue/contextmenu';
+import { ref } from 'vue';
+import { useConfirm } from 'primevue/useconfirm';
+import { deleteModelConfiguration } from '@/services/model-configurations';
 
-defineProps<{
+const emit = defineEmits(['delete', 'use', 'download']);
+const props = defineProps<{
 	configuration: ModelConfiguration;
 	selected?: boolean;
 }>();
+
+const confirm = useConfirm();
+
+const contextMenu = ref();
+const contextMenuItems = ref([
+	{
+		label: 'Use',
+		icon: 'pi pi-arrow-right',
+		command() {
+			emit('use');
+		}
+	},
+	{
+		label: 'Download',
+		icon: 'pi pi-download',
+		command() {
+			emit('download');
+		}
+	},
+	{
+		label: 'Delete',
+		icon: 'pi pi-trash',
+		command() {
+			onDeleteConfiguration();
+		}
+	}
+]);
+
+const toggleContextMenu = (event) => {
+	contextMenu.value.toggle(event);
+};
+
+const onDeleteConfiguration = () => {
+	confirm.require({
+		message: 'Are you sure you want to delete this configuration?',
+		header: 'Delete Confirmation',
+		icon: 'pi pi-exclamation-triangle',
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel',
+		accept: async () => {
+			if (props.configuration.id) await deleteModelConfiguration(props.configuration.id);
+			emit('delete');
+		}
+	});
+};
 </script>
 
 <style scoped>
@@ -38,6 +94,10 @@ defineProps<{
 	> div {
 		padding-left: var(--gap-small);
 	}
+}
+
+p {
+	color: var(--text-color-subdued);
 }
 :deep(.p-divider) {
 	&.p-divider-horizontal {

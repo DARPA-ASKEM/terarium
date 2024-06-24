@@ -54,12 +54,15 @@
 
 							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
-						<ul v-if="!isLoading">
+						<ul v-if="!isLoading && model?.id">
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
 									@click="onSelectConfiguration(configuration)"
 									:selected="selectedConfigId === configuration.id"
+									@use="onSelectConfiguration(configuration)"
+									@delete="fetchConfigurations(model.id)"
+									@download="downloadConfiguredModel(configuration)"
 								/>
 							</li>
 						</ul>
@@ -606,13 +609,15 @@ const addIntervention = () => {
 	});
 };
 
-const downloadConfiguredModel = async () => {
-	const rawModel = await getAsConfiguredModel(knobs.value?.transientModelConfig);
+const downloadConfiguredModel = async (
+	configuration: ModelConfiguration = knobs.value.transientModelConfig
+) => {
+	const rawModel = await getAsConfiguredModel(configuration);
 	if (rawModel) {
 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
 		const a = document.createElement('a');
 		a.href = `data:${data}`;
-		a.download = `${knobs.value?.transientModelConfig.name ?? 'configured_model'}.json`;
+		a.download = `${configuration.name ?? 'configured_model'}.json`;
 		a.innerHTML = 'download JSON';
 		a.click();
 		a.remove();
