@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
@@ -42,6 +43,7 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
@@ -66,6 +68,7 @@ public class MiraController {
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final ModelConfigurationService modelConfigurationService;
 
 	private final Messages messages;
 
@@ -265,6 +268,10 @@ public class MiraController {
 		final Model model;
 		try {
 			model = objectMapper.readValue(resp.getOutput(), Model.class);
+			// create a default configuration
+			final ModelConfiguration modelConfiguration =
+					modelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			modelConfigurationService.createAsset(modelConfiguration, permission);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));

@@ -45,6 +45,7 @@
 			:mmt="mmt"
 			:mmt-params="mmtParams"
 			:stratified-matrix-type="StratifiedMatrix.Initials"
+			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
 			@update-cell-value="
 				emit('update-expression', { id: $event.variableName, value: $event.newValue })
@@ -54,8 +55,8 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfigurationLegacy } from '@/types/Types';
-import { getInitials } from '@/services/model-configurations-legacy';
+import { Model, ModelConfiguration } from '@/types/Types';
+import { getInitials } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { ref } from 'vue';
 import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
@@ -68,7 +69,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 import TeraInitialEntry from './tera-initial-entry.vue';
 
 const props = defineProps<{
-	modelConfiguration: ModelConfigurationLegacy;
+	modelConfiguration: ModelConfiguration;
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
