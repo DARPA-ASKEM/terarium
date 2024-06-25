@@ -86,7 +86,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			}
 
 			// Create the new configuration
-			final ModelConfiguration modelConfiguration = modelConfigurationService.modelConfigurationFromAMR(
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 					modelCopy, "New configuration from dataset", "");
 
 			try {
