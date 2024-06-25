@@ -74,13 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-	alignModel,
-	extractPDF,
-	extractVariables,
-	profileDataset,
-	profileModel
-} from '@/services/knowledge';
+import { extractPDF, extractVariables, profileDataset, profileModel } from '@/services/knowledge';
 import {
 	RelationshipType,
 	createProvenance,
@@ -201,13 +195,7 @@ const sendForExtractions = async () => {
 	// Model extraction
 	if (props.assetType === AssetType.Model && selectedResourceId) {
 		await extractVariables(selectedResourceId, [props.assetId]);
-		const isAligned = await alignModel(props.assetId, selectedResourceId);
-		if (isAligned) {
-			logger.success('Model aligned after variable extraction.');
-			emit('enriched');
-		} else {
-			logger.warn('Model was not aligned after variable extraction. Please try again.');
-		}
+		emit('enriched');
 	}
 
 	isLoading.value = false;
