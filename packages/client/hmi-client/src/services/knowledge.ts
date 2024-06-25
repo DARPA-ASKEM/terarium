@@ -49,18 +49,6 @@ export const profileModel = async (modelId: Model['id'], documentId: string | nu
 	}
 };
 
-export const alignModel = async (
-	modelId: Model['id'],
-	documentId: DocumentAsset['id']
-): Promise<boolean> => {
-	if (!modelId || !documentId) {
-		return false;
-	}
-	const url = `/knowledge/align-model?document-id=${documentId}&model-id=${modelId}`;
-	const response = await API.post(url);
-	return response?.status === 204;
-};
-
 /**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
