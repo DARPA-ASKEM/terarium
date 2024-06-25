@@ -1,6 +1,6 @@
 <template>
 	<div class="flex" :label="label">
-		<label @click.self.stop="focusInput">{{ label }}</label>
+		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
 				ref="inputField"
@@ -11,6 +11,7 @@
 				:style="{ 'text-align': textAlign }"
 				@blur="unmask"
 				:type="getType"
+				:placeholder="placeholder"
 			/>
 		</main>
 	</div>
@@ -27,6 +28,7 @@ const props = defineProps<{
 	errorMessage?: string;
 	disabled?: boolean;
 	type?: InputTypeHTMLAttribute | 'nist';
+	placeholder?: string;
 }>();
 
 const emit = defineEmits(['update:model-value', 'on-focus-out']);

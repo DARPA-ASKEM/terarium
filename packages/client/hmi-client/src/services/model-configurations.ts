@@ -38,6 +38,11 @@ export const updateModelConfiguration = async (modelConfiguration: ModelConfigur
 	return response?.data ?? null;
 };
 
+export const deleteModelConfiguration = async (id: string) => {
+	const response = await API.delete(`/model-configurations/${id}`);
+	return response?.data ?? null;
+};
+
 export const getAsConfiguredModel = async (
 	modelConfiguration: ModelConfiguration
 ): Promise<Model> => {
