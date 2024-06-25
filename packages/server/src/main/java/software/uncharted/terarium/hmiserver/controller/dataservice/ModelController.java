@@ -489,7 +489,7 @@ public class ModelController {
 						content = @Content)
 			})
 	static ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
-		@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		try {
 			final ModelConfiguration modelConfiguration =
 					ModelConfigurationService.modelConfigurationFromAMR(model, model.getName(), model.getDescription());
