@@ -1,4 +1,4 @@
-import _, { isEmpty, uniq } from 'lodash';
+import _, { isEmpty, cloneDeep, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import { NodeType } from '@/services/graph';
 import {
@@ -406,10 +406,11 @@ export const createParameterMatrix = (
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
 	miraModel: MiraModel,
-	observableSummary: ObservableSummary,
+	initObservableSummary: ObservableSummary,
 	isStratified: boolean
 ) => {
 	const templates: TemplateSummary[] = [];
+	const observableSummary = cloneDeep(initObservableSummary); // Clone to avoid mutation of the original
 
 	if (isStratified) {
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
