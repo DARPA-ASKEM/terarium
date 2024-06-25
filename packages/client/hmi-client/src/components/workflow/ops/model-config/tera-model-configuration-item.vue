@@ -68,7 +68,7 @@ const toggleContextMenu = (event) => {
 
 const onDeleteConfiguration = () => {
 	confirm.require({
-		message: 'Are you sure you want to delete this configuration?',
+		message: `Are you sure you want to delete the configuration ${props.configuration.name}?`,
 		header: 'Delete Confirmation',
 		icon: 'pi pi-exclamation-triangle',
 		acceptLabel: 'Confirm',
