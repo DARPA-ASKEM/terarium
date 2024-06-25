@@ -69,6 +69,7 @@ export interface Operation {
 	inputs: OperationData[];
 	outputs: OperationData[];
 
+	// @deprecated
 	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }
 
@@ -92,6 +93,11 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 	state?: Partial<S>;
 	timestamp?: Date;
 	summaryId?: string;
+
+	// @deprecated
+	summary?: string;
+	// @deprecated
+	summaryHasBeenEdited?: boolean;
 }
 
 // Common state properties for all operators
