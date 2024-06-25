@@ -1,5 +1,6 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
+import { NodeType } from '@/services/graph';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
@@ -12,8 +13,10 @@ import type {
 	MiraModel,
 	MiraTemplate,
 	MiraTemplateParams,
-	TemplateSummary
+	TemplateSummary,
+	ObservableSummary
 } from './mira-common';
+import type { NodeData } from '../petrinet/petrinet-renderer';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -393,7 +396,10 @@ export const createParameterMatrix = (
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-export const convertToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (
+	templates: TemplateSummary[],
+	observableSummary?: ObservableSummary
+) => {
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -419,15 +425,15 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'state' },
+			data: { type: NodeType.State },
 			nodes: []
 		});
 	});
 
 	// templates
 	templates.forEach((t) => {
-		const nodeData: any = {
-			type: 'transition',
+		const nodeData: NodeData = {
+			type: NodeType.Transition,
 			expression: t.expression
 		};
 
@@ -480,6 +486,38 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			});
 		}
 	});
+
+	// observables
+	if (!isEmpty(observableSummary)) {
+		Object.keys(observableSummary).forEach((key) => {
+			const observable = observableSummary[key];
+			graph.nodes.push({
+				id: key,
+				label: observable.name,
+				x: 0,
+				y: 0,
+				width: 50,
+				height: 50,
+				data: {
+					type: NodeType.Observable,
+					expression: observable.expression,
+					references: observable.references
+				},
+				nodes: []
+			});
+
+			// FIXME: The observableSummary references need to support when the model is stratified
+			observable.references.forEach((reference: string) => {
+				graph.edges.push({
+					id: observable.expression,
+					source: reference,
+					target: key,
+					points: [],
+					data: { isObservable: true }
+				});
+			});
+		});
+	}
 
 	return graph;
 };

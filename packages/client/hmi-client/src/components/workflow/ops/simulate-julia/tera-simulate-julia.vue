@@ -113,7 +113,7 @@ import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations-legacy';
+import { getModelConfigurationById, getParameters } from '@/services/model-configurations';
 import { getRunResult, makeForecastJob } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { csvParse } from 'd3';
@@ -243,7 +243,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const csvData = csvParse(resultCsv);
 
 	if (modelConfiguration) {
-		const parameters = modelConfiguration.configuration?.semantics?.ode?.parameters;
+		const parameters = getParameters(modelConfiguration);
 		if (parameters) {
 			csvData.forEach((row) =>
 				parameters.forEach((parameter: any) => {

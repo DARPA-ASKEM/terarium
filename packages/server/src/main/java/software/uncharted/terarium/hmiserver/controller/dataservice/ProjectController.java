@@ -146,6 +146,7 @@ public class ProjectController {
 			@RequestParam(name = "include-inactive", defaultValue = "false") final Boolean includeInactive) {
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 
+		log.info("[getAllProject] Before rebacUser.lookupProjects {}", System.currentTimeMillis());
 		List<UUID> projectIds = null;
 		try {
 			projectIds = rebacUser.lookupProjects();
@@ -159,6 +160,7 @@ public class ProjectController {
 			return ResponseEntity.noContent().build();
 		}
 
+		log.info("[getAllProject] Before getProjects {}", System.currentTimeMillis());
 		// Get projects from the project repository associated with the list of ids.
 		// Filter the list of projects to only include active projects.
 		final List<Project> projects;
@@ -176,10 +178,12 @@ public class ProjectController {
 			return ResponseEntity.noContent().build();
 		}
 
+		log.info("[getAllProject] Before forEach {}", System.currentTimeMillis());
 		projects.forEach(project -> {
 			final List<AssetType> assetTypes =
 					Arrays.asList(AssetType.DATASET, AssetType.MODEL, AssetType.DOCUMENT, AssetType.WORKFLOW);
 
+			log.info("[getAllProject] Start one project {}", System.currentTimeMillis());
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 			final Schema.Permission permission = projectService.checkPermissionCanRead(
 					currentUserService.get().getId(), project.getId());
@@ -209,6 +213,7 @@ public class ProjectController {
 				project.setPublicProject(false);
 			}
 
+			log.info("[getAllProject] Before getContributors {}", System.currentTimeMillis());
 			// Set the contributors for the project. If we are unable to get the
 			// contributors, we default to an empty
 			// list.
@@ -219,6 +224,7 @@ public class ProjectController {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
 			}
 
+			log.info("[getAllProject] Before Setting projectAssets counts {}", System.currentTimeMillis());
 			// Set the metadata for the project. If we are unable to get the metadata, we
 			// default to empty values.
 			try {
@@ -250,6 +256,7 @@ public class ProjectController {
 						e);
 			}
 
+			log.info("[getAllProject] Before setting authorname {}", System.currentTimeMillis());
 			// Set the author name for the project. If we are unable to get the author name,
 			// we don't set a value.
 			try {
@@ -265,6 +272,7 @@ public class ProjectController {
 			}
 		});
 
+		log.info("[getAllProject] End {}", System.currentTimeMillis());
 		return ResponseEntity.ok(projects);
 	}
 
@@ -435,7 +443,9 @@ public class ProjectController {
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
-			@RequestParam("name") final String name, @RequestParam("description") final String description) {
+			@RequestParam("name") final String name,
+			@RequestParam("description") final String description,
+			@RequestParam(name = "thumbnail", defaultValue = "default") final String thumbnail) {
 
 		if (name == null || name.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.name-required"));
@@ -445,6 +455,7 @@ public class ProjectController {
 
 		Project project = (Project) new Project()
 				.setOverviewContent(WELCOME_MESSAGE.getBytes())
+				.setThumbnail(thumbnail)
 				.setUserId(userId)
 				.setName(name)
 				.setDescription(description);
