@@ -195,7 +195,7 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			modelConfigurationService.createAMRFromConfiguration(model.get(), modelConfiguration.get());
+			ModelConfigurationService.createAMRFromConfiguration(model.get(), modelConfiguration.get());
 			return ResponseEntity.ok(model.get());
 
 		} catch (final Exception e) {
@@ -233,7 +233,7 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+				ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
@@ -274,7 +274,7 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+				ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
 
 		modelConfiguration.setId(id);
 
