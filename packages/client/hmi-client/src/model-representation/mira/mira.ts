@@ -397,9 +397,16 @@ export const createParameterMatrix = (
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
-	templates: TemplateSummary[],
-	observableSummary?: ObservableSummary
+	miraModel: MiraModel,
+	observableSummary: ObservableSummary,
+	isStratified: boolean
 ) => {
+	const templates = isStratified
+		? collapseTemplates(miraModel).templatesSummary
+		: rawTemplatesSummary(miraModel);
+
+	console.log(templates, observableSummary);
+
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -518,6 +525,8 @@ export const convertToIGraph = (
 			});
 		});
 	}
+
+	console.log(templates, observableSummary);
 
 	return graph;
 };

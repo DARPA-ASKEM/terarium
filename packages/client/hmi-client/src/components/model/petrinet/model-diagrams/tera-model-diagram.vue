@@ -30,12 +30,7 @@
 									v-if="model && isStratified"
 									class="p-button-sm"
 									:model-value="stratifiedView"
-									@change="
-										if ($event.value) {
-											stratifiedView = $event.value;
-											toggleCollapsedView();
-										}
-									"
+									@change="$event.value && toggleCollapsedView($event.value)"
 									:options="stratifiedViewOptions"
 									option-value="value"
 								>
@@ -116,9 +111,7 @@ import {
 import {
 	isStratifiedModel,
 	emptyMiraModel,
-	convertToIGraph,
-	collapseTemplates,
-	rawTemplatesSummary
+	convertToIGraph
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
@@ -133,7 +126,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-configuration']);
 
-const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
@@ -167,10 +159,11 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
-	const { templatesSummary } = collapseTemplates(mmt.value);
-	const rawTemplates = rawTemplatesSummary(mmt.value);
-
-	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	renderer = getModelRenderer(
+		mmt.value,
+		graphElement.value as HTMLDivElement,
+		stratifiedView.value === StratifiedView.Collapsed
+	);
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
@@ -223,10 +216,11 @@ async function renderGraph() {
 	});
 
 	// Render graph
-	const graphData =
-		isCollapsed.value && isStratified.value
-			? convertToIGraph(templatesSummary, observableSummary.value)
-			: convertToIGraph(rawTemplates, observableSummary.value);
+	const graphData = convertToIGraph(
+		mmt.value,
+		observableSummary.value,
+		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
+	);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -235,8 +229,8 @@ async function renderGraph() {
 	}
 }
 
-async function toggleCollapsedView() {
-	isCollapsed.value = !isCollapsed.value;
+async function toggleCollapsedView(view: StratifiedView) {
+	stratifiedView.value = view;
 	renderGraph();
 }
 
@@ -249,6 +243,7 @@ watch(
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
 		observableSummary.value = response.observable_summary;
+		console.log(mmt.value.templates, observableSummary.value);
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
