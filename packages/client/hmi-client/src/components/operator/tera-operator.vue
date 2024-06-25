@@ -54,7 +54,7 @@ import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
 import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch, computed } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -68,6 +68,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits([
+	'editing-note',
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
@@ -126,6 +127,12 @@ onBeforeUnmount(() => {
 		resizeObserver.disconnect();
 		resizeObserver = null;
 	}
+});
+
+const isEditing = computed(() => annotationRef.value?.isEditing);
+
+watch(isEditing, (newVal) => {
+	emit('editing-note', newVal);
 });
 </script>
 

@@ -85,6 +85,7 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
+					@editing-note="editingNote"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
@@ -299,6 +300,11 @@ const optionsMenuItems = ref([
 
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
+};
+
+const isEditingNote = ref(false);
+const editingNote = (isEditing) => {
+	isEditingNote.value = isEditingNote.value ? isEditing : false;
 };
 
 async function updateWorkflowName() {
@@ -865,6 +871,9 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	if (isEditingNote.value) {
+		return;
+	}
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
