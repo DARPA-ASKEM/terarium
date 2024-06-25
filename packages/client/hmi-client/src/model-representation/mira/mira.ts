@@ -1,4 +1,4 @@
-import _, { isEmpty } from 'lodash';
+import _, { isEmpty, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import { NodeType } from '@/services/graph';
 import {
@@ -284,6 +284,14 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
+// Mutates observable references to reference base ids
+export const collapseObservableReferences = (observableSummary: ObservableSummary) => {
+	Object.values(observableSummary).forEach((observable) => {
+		// Extract the first part of the reference before the first underscore
+		observable.references = uniq(observable.references.map((r) => r.split('_')[0]));
+	});
+};
+
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 	const initialsMap = collapseInitials(miraModel);
 	const childrenInitials = initialsMap.get(key);
@@ -401,11 +409,14 @@ export const convertToIGraph = (
 	observableSummary: ObservableSummary,
 	isStratified: boolean
 ) => {
-	const templates = isStratified
-		? collapseTemplates(miraModel).templatesSummary
-		: rawTemplatesSummary(miraModel);
+	const templates: TemplateSummary[] = [];
 
-	console.log(templates, observableSummary);
+	if (isStratified) {
+		templates.push(...collapseTemplates(miraModel).templatesSummary);
+		collapseObservableReferences(observableSummary);
+	} else {
+		templates.push(...rawTemplatesSummary(miraModel));
+	}
 
 	const graph: IGraph<any, any> = {
 		nodes: [],
@@ -513,7 +524,6 @@ export const convertToIGraph = (
 				nodes: []
 			});
 
-			// FIXME: The observableSummary references need to support when the model is stratified
 			observable.references.forEach((reference: string) => {
 				graph.edges.push({
 					id: observable.expression,
@@ -525,8 +535,6 @@ export const convertToIGraph = (
 			});
 		});
 	}
-
-	console.log(templates, observableSummary);
 
 	return graph;
 };

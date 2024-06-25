@@ -133,8 +133,8 @@ const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-const observableSummary = ref<ObservableSummary>({});
 
+let observableSummary: ObservableSummary = {};
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
 const tooltipContentRef = ref();
@@ -218,7 +218,7 @@ async function renderGraph() {
 	// Render graph
 	const graphData = convertToIGraph(
 		mmt.value,
-		observableSummary.value,
+		observableSummary,
 		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
 	);
 
@@ -242,8 +242,7 @@ watch(
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-		observableSummary.value = response.observable_summary;
-		console.log(mmt.value.templates, observableSummary.value);
+		observableSummary = response.observable_summary;
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
