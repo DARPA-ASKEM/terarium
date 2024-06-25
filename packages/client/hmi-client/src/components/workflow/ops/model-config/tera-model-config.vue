@@ -308,7 +308,6 @@ import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { useProjects } from '@/composables/project';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
