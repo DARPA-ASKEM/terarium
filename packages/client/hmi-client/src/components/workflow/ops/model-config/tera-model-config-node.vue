@@ -49,7 +49,7 @@ watch(
 // Update the node with the new input ports
 watch(
 	() => props.node.inputs,
-	async () => {
+	() => {
 		const inputs = props.node.inputs;
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
