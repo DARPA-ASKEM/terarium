@@ -99,7 +99,7 @@ import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
 import type { Model, ModelConfiguration } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
@@ -108,7 +108,11 @@ import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
@@ -117,6 +121,7 @@ import {
 	rawTemplatesSummary
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
+import { NodeType } from '@/services/graph';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
@@ -136,6 +141,7 @@ const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+const observableSummary = ref<ObservableSummary>({});
 
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
@@ -219,8 +225,8 @@ async function renderGraph() {
 	// Render graph
 	const graphData =
 		isCollapsed.value && isStratified.value
-			? convertToIGraph(templatesSummary)
-			: convertToIGraph(rawTemplates);
+			? convertToIGraph(templatesSummary, observableSummary.value)
+			: convertToIGraph(rawTemplates, observableSummary.value);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -242,6 +248,7 @@ watch(
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
+		observableSummary.value = response.observable_summary;
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
