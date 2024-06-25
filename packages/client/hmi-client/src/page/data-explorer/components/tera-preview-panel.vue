@@ -1,10 +1,5 @@
 <template>
-	<tera-slider
-		:content-width="contentWidth"
-		tab-width="0"
-		direction="right"
-		:is-open="Boolean(previewItem)"
-	>
+	<tera-slider content-width="100%" tab-width="0" direction="right" :is-open="Boolean(previewItem)">
 		<template v-slot:content>
 			<template v-if="previewItemResourceType === ResourceType.XDD">
 				<tera-external-publication
