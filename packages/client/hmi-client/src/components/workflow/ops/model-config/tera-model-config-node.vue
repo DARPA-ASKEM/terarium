@@ -29,6 +29,23 @@ const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
 
+watch(
+	() => modelInput?.value,
+	async () => {
+		if (modelInput?.value) {
+			const modelId = modelInput.value[0];
+			const modelConfigurations = await getModelConfigurations(modelId);
+			if (isEmpty(modelConfigurations)) {
+				// Create a model configuration if it does not exist
+				const model = await getModel(modelId);
+				if (model) {
+					postAsConfiguredModel(model);
+				}
+			}
+		}
+	}
+);
+
 // Update the node with the new input ports
 watch(
 	() => props.node.inputs,
@@ -49,17 +66,6 @@ watch(
 				initialSemanticList: []
 			};
 			emit('update-state', state);
-		} else {
-			// Check if it has a model configuration
-			const modelId = modelInputs[0].value[0];
-			const modelConfigurations = await getModelConfigurations(modelId);
-			if (isEmpty(modelConfigurations)) {
-				// Create a model configuration if it does not exist
-				const model = await getModel(modelId);
-				if (model) {
-					postAsConfiguredModel(model);
-				}
-			}
 		}
 
 		// If all document inputs are connected, add a new document input port
