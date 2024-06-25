@@ -70,7 +70,7 @@ public class ModelConfigurationService
 		return super.createAssets(assets, hasWritePermission);
 	}
 
-	public ModelConfiguration modelConfigurationFromAMR(
+	public static ModelConfiguration modelConfigurationFromAMR(
 			final Model model, final String name, final String description) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name != null ? name : "Default Configuration");
@@ -104,6 +104,9 @@ public class ModelConfigurationService
 
 	private static List<InitialSemantic> createInitialSemanticList(final Model model) {
 		final List<InitialSemantic> initialSemantics = new ArrayList<>();
+
+		if (model == null || model.getInitials() == null) return initialSemantics;
+
 		for (final Initial initial : model.getInitials()) {
 			final InitialSemantic initialSemantic = new InitialSemantic();
 			initialSemantic.setTarget(initial.getTarget());
@@ -116,6 +119,9 @@ public class ModelConfigurationService
 
 	private static List<ObservableSemantic> createObservableSemanticList(final Model model) {
 		final List<ObservableSemantic> observableSemantics = new ArrayList<>();
+
+		if (model == null || model.getObservables() == null) return observableSemantics;
+
 		for (final Observable observable : model.getObservables()) {
 			final ObservableSemantic observableSemantic = new ObservableSemantic();
 			observableSemantic.setReferenceId(observable.getId());
@@ -127,25 +133,16 @@ public class ModelConfigurationService
 		return observableSemantics;
 	}
 
-	private List<ParameterSemantic> createParameterSemanticList(final Model model) {
+	private static List<ParameterSemantic> createParameterSemanticList(final Model model) {
 		final List<ParameterSemantic> parameterSemantics = new ArrayList<>();
+
+		if (model == null || model.getParameters() == null) return parameterSemantics;
+
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
 			parameterSemantic.setReferenceId(parameter.getId());
 
-			ModelDistribution distribution = parameter.getDistribution();
-			// constant distribution
-			if (distribution == null || distribution.getType() == null) {
-				distribution = new ModelDistribution();
-				distribution.setType("Constant");
-				distribution.setParameters(Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0));
-			}
-
-			// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we are changing it to
-			// StandardUniform1 for consistenty sake
-			if (distribution.getType().equals("Uniform1")) {
-				distribution.setType("StandardUniform1");
-			}
+			final ModelDistribution distribution = getModelDistribution(parameter);
 
 			parameterSemantic.setDistribution(distribution);
 			parameterSemantics.add(parameterSemantic);
@@ -153,14 +150,31 @@ public class ModelConfigurationService
 		return parameterSemantics;
 	}
 
-	public Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
+	private static ModelDistribution getModelDistribution(final ModelParameter parameter) {
+		ModelDistribution distribution = parameter.getDistribution();
+		// constant distribution
+		if (distribution == null || distribution.getType() == null) {
+			distribution = new ModelDistribution();
+			distribution.setType("Constant");
+			distribution.setParameters(Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0));
+		}
+
+		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we are changing it to
+		// StandardUniform1 for consistenty sake
+		if (distribution.getType().equals("Uniform1")) {
+			distribution.setType("StandardUniform1");
+		}
+		return distribution;
+	}
+
+	public static Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
 		setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
 		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
 		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
 		return model.clone();
 	}
 
-	private void setModelParameters(
+	private static void setModelParameters(
 			final List<ModelParameter> modelParameters, final List<ParameterSemantic> configParameters) {
 		// Create a map from ConfigParameter IDs to ConfigParameter objects
 		final Map<String, ParameterSemantic> configParameterMap = new HashMap<>();
@@ -188,7 +202,8 @@ public class ModelConfigurationService
 		}
 	}
 
-	private void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
+	private static void setModelInitials(
+			final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);
@@ -203,7 +218,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private void setModelObservables(
+	private static void setModelObservables(
 			final List<Observable> modelObservables, final List<ObservableSemantic> configObservables) {
 		final Map<String, ObservableSemantic> configObservableMap = new HashMap<>();
 		for (final ObservableSemantic configObservable : configObservables) {
