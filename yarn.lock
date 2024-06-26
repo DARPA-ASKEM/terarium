@@ -3336,13 +3336,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/p5@npm:1.6.2":
-  version: 1.6.2
-  resolution: "@types/p5@npm:1.6.2"
-  checksum: 8d93c1b597699d33904f05cffc6fcfd70fd6213381f5357454e3353a97bcaff5d3dd679cb9c44079b5fc4dd8bb72f90bd69f715a77120a8dbfb17fd5ead3e559
-  languageName: node
-  linkType: hard
-
 "@types/prop-types@npm:*":
   version: 15.7.12
   resolution: "@types/prop-types@npm:15.7.12"
@@ -8666,7 +8659,6 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.5"
     "@types/node": "npm:18.19.3"
-    "@types/p5": "npm:1.6.2"
     "@uncharted.software/design-tokens": "npm:1.1.0"
     "@uncharted.software/facets-core": "npm:3.2.6"
     "@uncharted.software/facets-plugins": "npm:3.2.5"
