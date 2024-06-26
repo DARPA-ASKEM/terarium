@@ -251,6 +251,15 @@ export function useProjects() {
 		return created;
 	}
 
+	function hasEditPermission() {
+		const project = useProjects().activeProject.value;
+		if (project != null && ['creator', 'writer'].includes(project.userPermission ?? '')) {
+			return true;
+		}
+		console.warn('User has no edit permissions');
+		return false;
+	}
+
 	return {
 		activeProject,
 		activeProjectId,
@@ -270,6 +279,7 @@ export function useProjects() {
 		refresh,
 		setAccessibility,
 		getPermissions,
+		hasEditPermission,
 		setPermissions,
 		removePermissions,
 		updatePermissions,
