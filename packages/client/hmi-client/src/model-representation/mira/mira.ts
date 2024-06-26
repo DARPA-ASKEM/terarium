@@ -411,13 +411,14 @@ export const convertToIGraph = (
 	isStratified: boolean
 ) => {
 	const templates: TemplateSummary[] = [];
-	let observableSummary = cloneDeep(initObservableSummary);
+	let observableSummary: ObservableSummary = {};
 
 	if (isStratified) {
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
-		observableSummary = collapseObservableReferences(observableSummary);
+		observableSummary = collapseObservableReferences(initObservableSummary);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
+		observableSummary = cloneDeep(initObservableSummary);
 	}
 
 	const graph: IGraph<any, any> = {
