@@ -150,6 +150,9 @@ const optionsMenuItems = computed(() => [
 ]);
 
 async function updateModelContent(updatedModel: Model) {
+	if (!useProjects().hasEditPermission()) {
+		return;
+	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
 	setTimeout(async () => {
@@ -183,18 +186,20 @@ async function fetchConfigurations() {
 		let tempConfigurations = await getModelConfigurations(model.value.id);
 
 		// Ensure that we always have a "default config" model configuration
-		if (
-			(isEmpty(tempConfigurations) ||
-				!tempConfigurations.find((d) => d.name === 'Default config')) &&
-			!isModelEmpty(model.value)
-		) {
-			// await addDefaultConfiguration(model.value);
-			setTimeout(async () => {
-				// elastic search might still not update in time
-				tempConfigurations = await getModelConfigurations(model.value?.id!);
-				modelConfigurations.value = tempConfigurations;
-			}, 800);
-			return;
+		if (useProjects().hasEditPermission()) {
+			if (
+				(isEmpty(tempConfigurations) ||
+					!tempConfigurations.find((d) => d.name === 'Default config')) &&
+				!isModelEmpty(model.value)
+			) {
+				// await addDefaultConfiguration(model.value);
+				setTimeout(async () => {
+					// elastic search might still not update in time
+					tempConfigurations = await getModelConfigurations(model.value?.id!);
+					modelConfigurations.value = tempConfigurations;
+				}, 800);
+				return;
+			}
 		}
 		modelConfigurations.value = tempConfigurations;
 	}

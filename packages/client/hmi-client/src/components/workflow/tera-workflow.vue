@@ -74,6 +74,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
+					ref="teraOperatorRef"
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="
@@ -300,6 +301,7 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+const teraOperatorRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -865,6 +867,10 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	const teraNode = teraOperatorRef.value.find((operatorNode) => operatorNode.id === node.id);
+	if (teraNode.isEditing ?? false) {
+		return;
+	}
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -937,7 +943,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
-		if (workflowDirty) {
+		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}
