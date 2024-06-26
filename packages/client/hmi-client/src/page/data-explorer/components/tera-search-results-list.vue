@@ -149,15 +149,17 @@ const projectOptions = computed(() => {
 				} else if (isDataset(selectedAsset.value)) {
 					let datasetId = selectedAsset.value.id;
 
-					if (!datasetId && selectedAsset.value.esgfId) {
-						// The selectedAsset is a light asset for front end and we need the whole thing.
-						const climateDataset: Dataset | null = await getClimateDataset(
-							selectedAsset.value.esgfId
-						);
-						if (climateDataset) {
-							const dataset: Dataset | null = await createDataset(climateDataset);
-							if (dataset) {
-								datasetId = dataset.id;
+					if (useProjects().hasEditPermission()) {
+						if (!datasetId && selectedAsset.value.esgfId) {
+							// The selectedAsset is a light asset for front end and we need the whole thing.
+							const climateDataset: Dataset | null = await getClimateDataset(
+								selectedAsset.value.esgfId
+							);
+							if (climateDataset) {
+								const dataset: Dataset | null = await createDataset(climateDataset);
+								if (dataset) {
+									datasetId = dataset.id;
+								}
 							}
 						}
 					}
