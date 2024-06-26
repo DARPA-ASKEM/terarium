@@ -116,7 +116,7 @@
 						v-else
 						class="context-item"
 						placeholder="Enter a description"
-						v-model="newDesciption"
+						v-model="newDescription"
 					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
@@ -342,7 +342,7 @@ const isSidebarOpen = ref(true);
 const isEditingName = ref(false);
 const isEditingDescription = ref(false);
 const newName = ref('');
-const newDesciption = ref('');
+const newDescription = ref('');
 
 const menuItems = computed(() => [
 	{
@@ -761,7 +761,7 @@ const onEditName = () => {
 
 const onEditDescription = () => {
 	isEditingDescription.value = true;
-	newDesciption.value = knobs.value.transientModelConfig.description ?? '';
+	newDescription.value = knobs.value.transientModelConfig.description ?? '';
 };
 
 const onConfirmEditName = () => {
@@ -770,7 +770,7 @@ const onConfirmEditName = () => {
 };
 
 const onConfirmEditDescription = () => {
-	knobs.value.transientModelConfig.description = newDesciption.value;
+	knobs.value.transientModelConfig.description = newDescription.value;
 	isEditingDescription.value = false;
 };
 
