@@ -147,6 +147,8 @@ const isReadyToCreateDefaultOutput = computed(
 		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
 );
 
+const outputHasSummary = computed(() => isEmpty(activeOutput.value?.summary));
+
 const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
@@ -375,7 +377,7 @@ const onSelection = (id: string) => {
 
 // Updates output selection
 watch(
-	() => props.node.active,
+	() => [props.node.active, outputHasSummary.value],
 	async () => {
 		// Update selected output
 		if (props.node.active) {
