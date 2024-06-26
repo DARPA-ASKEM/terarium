@@ -317,10 +317,7 @@ public class ArtifactController {
 		try {
 
 			final Optional<String> textFileAsString = artifactService.fetchFileAsString(artifactId, filename);
-			if (textFileAsString.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(textFileAsString.get());
+			return textFileAsString.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -350,10 +347,7 @@ public class ArtifactController {
 
 		try {
 			final Optional<byte[]> bytes = artifactService.fetchFileAsBytes(artifactId, filename);
-			if (bytes.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(bytes.get());
+			return bytes.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
