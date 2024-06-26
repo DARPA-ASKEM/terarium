@@ -1,10 +1,21 @@
 <template>
 	<div class="flex flex-column flex-1">
 		<header>
-			<strong>{{ parameterId }}</strong>
-			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-			<span v-if="units" class="ml-2">({{ units }})</span>
-			<span v-if="description" class="ml-4">{{ description }}</span>
+			<div>
+				<strong>{{ parameterId }}</strong>
+				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+				<template v-if="units">
+					<label class="ml-2">Units</label>
+					<span class="ml-1">{{ units }}</span>
+				</template>
+
+				<template v-if="concept">
+					<label class="ml-auto">Concept</label>
+					<span class="ml-1">{{ concept }}</span>
+				</template>
+			</div>
+
+			<span v-if="description">{{ description }}</span>
 		</header>
 		<main>
 			<span class="flex gap-2">
@@ -81,7 +92,7 @@
 		</main>
 		<footer v-if="isSourceOpen">
 			<tera-input
-				label="Source / notes / etc"
+				placeholder="Add a source"
 				:model-value="getParameterSource(modelConfiguration, parameterId)"
 				@update:model-value="emit('update-source', { id: parameterId, value: $event })"
 			/>
@@ -110,6 +121,7 @@ const emit = defineEmits(['update-parameter', 'update-source']);
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
+const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
 
 const isSourceOpen = ref(false);
 
@@ -143,6 +155,8 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 <style scoped>
 header {
 	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
 	padding-bottom: var(--gap-small);
 }
 main {
@@ -153,5 +167,9 @@ main {
 
 :deep(.p-dropdown-label) {
 	min-width: 10rem;
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 </style>

@@ -1,8 +1,14 @@
 <template>
 	<header>
-		<strong>{{ initialId }}</strong>
-		<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-		<span v-if="unit" class="ml-2">({{ unit }})</span>
+		<div>
+			<strong>{{ initialId }}</strong>
+			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+			<span v-if="unit" class="ml-2">({{ unit }})</span>
+			<template v-if="unit">
+				<label class="ml-2">Units</label>
+				<span class="ml-1">{{ unit }}</span>
+			</template>
+		</div>
 		<span v-if="description" class="ml-4">{{ description }}</span>
 	</header>
 	<main>
@@ -22,7 +28,7 @@
 	</main>
 	<footer v-if="sourceOpen">
 		<tera-input
-			label="Source / notes / etc"
+			placeholder="Add a source"
 			:model-value="getInitialSource(modelConfiguration, initialId)"
 			@update:model-value="emit('update-source', { id: initialId, value: $event })"
 		/>
@@ -65,6 +71,7 @@ function getSourceLabel(initialId) {
 <style scoped>
 header {
 	display: flex;
+	flex-direction: column;
 	padding-bottom: var(--gap-small);
 }
 .expression {
@@ -74,5 +81,9 @@ main {
 	display: flex;
 	justify-content: space-between;
 	padding-bottom: var(--gap-small);
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 </style>
