@@ -131,6 +131,9 @@ const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
 
+const selectedTab = computed(() => views.value[selectedViewIndex.value]);
+defineExpose({ selectedTab });
+
 const selectedOutputId = computed(() => {
 	if (props.node.active) {
 		return props.node.active;

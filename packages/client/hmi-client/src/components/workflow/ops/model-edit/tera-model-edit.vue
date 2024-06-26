@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		ref="drilldownRef"
 		:node="node"
 		:menu-items="menuItems"
 		:output-summary="true"
@@ -10,7 +11,7 @@
 		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		v-bind="$attrs"
 	>
-		<div :tabName="ModelEditTabs.Wizard">
+		<div :tabName="DrilldownTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr"
 				:model="amr"
@@ -21,7 +22,7 @@
 				@reset="resetModel"
 			/>
 		</div>
-		<div :tabName="ModelEditTabs.Notebook">
+		<div :tabName="DrilldownTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
@@ -57,6 +58,8 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
+		</div>
+		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
 				title="Preview"
 				v-model:output="selectedOutputId"
@@ -75,7 +78,7 @@
 					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
 				</div>
 			</tera-drilldown-preview>
-		</div>
+		</template>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
@@ -112,6 +115,7 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
+import { DrilldownTabs } from '@/types/common';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -125,11 +129,6 @@ const emit = defineEmits([
 	'generate-output-summary',
 	'update-output-port'
 ]);
-
-enum ModelEditTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -148,6 +147,7 @@ const isReadyToCreateDefaultOutput = computed(
 		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
 );
 
+const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
@@ -432,15 +432,14 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-/* .notebook-section:deep(main) {
-	gap: var(--gap-small);
-	position: relative;
-	width: 20rem;
-}
-
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
-} */
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
 
 :deep(.diagram-container) {
 	height: calc(100vh - 270px) !important;
