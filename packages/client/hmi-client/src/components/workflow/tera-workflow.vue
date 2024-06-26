@@ -946,7 +946,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
-		if (workflowDirty) {
+		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}
