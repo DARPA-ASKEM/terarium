@@ -180,7 +180,7 @@ than the main application behind the modal when these render issues come, howeve
 	border-radius: var(--modal-border-radius) var(--modal-border-radius) 0 0;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
+	/* overflow: hidden; */
 	&.popover {
 		margin: 3rem 2.5rem 0rem 2.5rem;
 	}
