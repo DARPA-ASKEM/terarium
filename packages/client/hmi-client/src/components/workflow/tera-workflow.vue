@@ -74,6 +74,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
+					ref="teraOperatorRef"
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="
@@ -85,7 +86,6 @@
 					@remove-operator="(event) => removeNode(event)"
 					@duplicate-branch="duplicateBranch(node.id)"
 					@remove-edges="removeEdges"
-					@editing-note="editingNote"
 					@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 				>
 					<template #body>
@@ -301,11 +301,7 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
-
-const isEditingNote = ref(false);
-const editingNote = (isEditing) => {
-	isEditingNote.value = isEditingNote.value ? isEditing : false;
-};
+const teraOperatorRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -871,7 +867,8 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (isEditingNote.value) {
+	const teraNode = teraOperatorRef.value.find((operatorNode) => operatorNode.id === node.id);
+	if (teraNode.isEditing ?? false) {
 		return;
 	}
 	node.x += x / canvasTransform.k;
