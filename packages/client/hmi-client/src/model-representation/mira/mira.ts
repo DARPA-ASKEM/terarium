@@ -284,12 +284,13 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
-// Mutates observable references to reference base ids
 export const collapseObservableReferences = (observableSummary: ObservableSummary) => {
-	Object.values(observableSummary).forEach((observable) => {
+	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
+	Object.values(collapsedObservableSummary).forEach((observable) => {
 		// Extract the first part of the reference before the first underscore
 		observable.references = uniq(observable.references.map((r) => r.split('_')[0]));
 	});
+	return collapsedObservableSummary;
 };
 
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
@@ -410,11 +411,11 @@ export const convertToIGraph = (
 	isStratified: boolean
 ) => {
 	const templates: TemplateSummary[] = [];
-	const observableSummary = cloneDeep(initObservableSummary); // Clone to avoid mutation of the original
+	let observableSummary = cloneDeep(initObservableSummary);
 
 	if (isStratified) {
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
-		collapseObservableReferences(observableSummary);
+		observableSummary = collapseObservableReferences(observableSummary);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
 	}
