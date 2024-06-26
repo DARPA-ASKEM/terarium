@@ -569,9 +569,6 @@ public class GoLLMController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody final String instruction) {
 
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		// create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -592,18 +589,6 @@ public class GoLLMController {
 		props.setPreviousSummaryId(previousSummaryId);
 		req.setAdditionalProperties(props);
 
-		// create a new summary
-		final Summary newSummary = new Summary();
-		newSummary.setId(props.getSummaryId());
-		newSummary.setPreviousSummary(props.getPreviousSummaryId());
-		try {
-			summaryService.createAsset(newSummary, permission);
-		} catch (final IOException e) {
-			log.error("Failed to create a summary: {}", e.getMessage());
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		// Run task for generating summary content
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);

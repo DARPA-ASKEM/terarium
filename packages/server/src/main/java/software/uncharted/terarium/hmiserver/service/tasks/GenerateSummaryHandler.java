@@ -7,10 +7,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 
-import java.util.Base64;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 @RequiredArgsConstructor
@@ -27,34 +28,39 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
-		UUID previousSummaryId;
-		UUID summaryId;
+		private UUID previousSummaryId;
+		private UUID summaryId;
 	}
 
-	// @Override
-	// public TaskResponse onRunning(final TaskResponse resp) {
-	// 	try {
-	// 		final Properties props = resp.getAdditionalProperties(Properties.class);
-	// 		final Summary newSummary = new Summary();
-	// 		newSummary.setPreviousSummary(props.previousSummaryId);
-	// 		newSummary.setId(props.summaryId);
-	// 		summaryService.createAsset(newSummary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
-	// 	} catch (final Exception e) {
-	// 		log.error("Failed to create a summary", e);
-	// 		throw new RuntimeException(e);
-	// 	}
-	// 	return resp;
-	// }
+	@Data
+	private static class ResponseOutput {
+		private String response;
+	}
+
+	@Override
+	public TaskResponse onQueued(final TaskResponse resp) {
+		try {
+			// create a new summary
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final Summary newSummary = new Summary();
+			newSummary.setId(props.getSummaryId());
+			newSummary.setPreviousSummary(props.getPreviousSummaryId());
+			summaryService.createAsset(newSummary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+		} catch (final Exception e) {
+			log.error("Failed to create a summary: {}", e.getMessage());
+		}
+		return resp;
+	}
 
 	@Override
 	public TaskResponse onFailure(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Summary summary = summaryService.getAsset(props.summaryId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
+			final Summary summary = summaryService.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
 			summary.setGeneratedSummary("Generating AI summary has failed.");
 			summaryService.updateAsset(summary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
-			log.error("Failed to update a summary", e);
+			log.error("Failed to update the summary: {}", e.getMessage());
 			throw new RuntimeException(e);
 		}
 		return resp;
@@ -64,33 +70,16 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final String output = new String(Base64.getDecoder().decode(resp.getOutput().toString()));
-
-			final Summary summary = summaryService.getAsset(props.summaryId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
-			summary.setGeneratedSummary(output);
+			final String output = new String(resp.getOutput());
+			ObjectMapper mapper = new ObjectMapper();
+			GenerateSummaryHandler.ResponseOutput resOutput = mapper.readValue(output, GenerateSummaryHandler.ResponseOutput.class);
+			final Summary summary = summaryService.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
+			summary.setGeneratedSummary(resOutput.response);
 			summaryService.updateAsset(summary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
-			log.error("Failed to update the summary", e);
+			log.error("Failed to update the summary: ", e.getMessage());
 			throw new RuntimeException(e);
 		}
 		return resp;
 	}
-
-
-	// @Override
-	// public TaskResponse onSuccess(final TaskResponse resp) {
-	// 	try {
-	// 		final Properties props = resp.getAdditionalProperties(Properties.class);
-	// 		final String output = new String(Base64.getDecoder().decode(resp.getOutput().toString()));
-
-	// 		final Summary newSummary = new Summary();
-	// 		newSummary.setPreviousSummary(props.previousSummaryId);
-	// 		newSummary.setId(props.summaryId);
-	// 		newSummary.setGeneratedSummary(output);
-	// 		summaryService.createAsset(newSummary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
-	// 	} catch (final Exception e) {
-	// 		log.error("Failed to save the summary", e);
-	// 	}
-	// 	return resp;
-	// }
 }
