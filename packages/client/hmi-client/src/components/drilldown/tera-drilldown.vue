@@ -36,7 +36,7 @@
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-output-summary
-						v-if="outputSummary"
+						v-if="!isEmpty(outputSummary)"
 						:node="node"
 						@generate-output-summary="
 							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
