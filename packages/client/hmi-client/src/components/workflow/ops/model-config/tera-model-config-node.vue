@@ -17,7 +17,7 @@ import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { getModel, getModelConfigurations } from '@/services/model';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { ModelConfigOperationState } from './model-config-operation';
 
@@ -34,7 +34,7 @@ watch(
 	async () => {
 		if (modelInput?.value) {
 			const modelId = modelInput.value[0];
-			const modelConfigurations = await getModelConfigurations(modelId);
+			const modelConfigurations = await getModelConfigurationsForModel(modelId);
 			if (isEmpty(modelConfigurations)) {
 				// Create a model configuration if it does not exist
 				const model = await getModel(modelId);
