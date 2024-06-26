@@ -317,7 +317,8 @@ public class ArtifactController {
 		try {
 
 			final Optional<String> textFileAsString = artifactService.fetchFileAsString(artifactId, filename);
-			return textFileAsString.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return textFileAsString.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound()
+					.build());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -347,7 +348,8 @@ public class ArtifactController {
 
 		try {
 			final Optional<byte[]> bytes = artifactService.fetchFileAsBytes(artifactId, filename);
-			return bytes.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return bytes.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
 
 		} catch (final Exception e) {
 			log.error("Unable to GET artifact data", e);
