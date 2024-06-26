@@ -150,6 +150,9 @@ const optionsMenuItems = computed(() => [
 ]);
 
 async function updateModelContent(updatedModel: Model) {
+	if (!useProjects().hasEditPermission()) {
+		return;
+	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
 	setTimeout(async () => {
