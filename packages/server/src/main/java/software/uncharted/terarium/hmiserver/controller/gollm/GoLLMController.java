@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -42,6 +46,7 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
@@ -65,6 +70,7 @@ public class GoLLMController {
 	private final ModelService modelService;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final SummaryService summaryService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
@@ -558,9 +564,13 @@ public class GoLLMController {
 						content = @Content)
 			})
 	public ResponseEntity<TaskResponse> createGenerateResponseTask(
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
+			@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody final String instruction) {
+
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
@@ -577,6 +587,23 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
+		final GenerateSummaryHandler.Properties props = new GenerateSummaryHandler.Properties();
+		props.setSummaryId(UUID.randomUUID());
+		props.setPreviousSummaryId(previousSummaryId);
+		req.setAdditionalProperties(props);
+
+		// create a new summary
+		final Summary newSummary = new Summary();
+		newSummary.setId(props.getSummaryId());
+		newSummary.setPreviousSummary(props.getPreviousSummaryId());
+		try {
+			summaryService.createAsset(newSummary, permission);
+		} catch (final IOException e) {
+			log.error("Failed to create a summary: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		// Run task for generating summary content
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
