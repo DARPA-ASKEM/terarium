@@ -57,27 +57,24 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
-			<div class="preview-container">
-				<tera-drilldown-preview
-					title="Preview"
-					v-model:output="selectedOutputId"
-					@update:selection="onSelection"
-					:options="outputs"
-					is-selectable
-					class="h-full"
-				>
-					<tera-notebook-error
-						v-if="executeResponse.status === OperatorStatus.ERROR"
-						:name="executeResponse.name"
-						:value="executeResponse.value"
-						:traceback="executeResponse.traceback"
-					/>
-					<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					</div>
-				</tera-drilldown-preview>
-			</div>
+			<tera-drilldown-preview
+				title="Preview"
+				v-model:output="selectedOutputId"
+				@update:selection="onSelection"
+				:options="outputs"
+				is-selectable
+			>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+				</div>
+			</tera-drilldown-preview>
 		</div>
 	</tera-drilldown>
 	<tera-save-asset-modal
@@ -435,19 +432,15 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-.notebook-section:deep(main) {
+/* .notebook-section:deep(main) {
 	gap: var(--gap-small);
 	position: relative;
+	width: 20rem;
 }
 
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
-}
-
-.preview-container {
-	display: flex;
-	flex-direction: column;
-}
+} */
 
 :deep(.diagram-container) {
 	height: calc(100vh - 270px) !important;
