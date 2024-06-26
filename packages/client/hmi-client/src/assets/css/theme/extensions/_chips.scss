@@ -15,7 +15,7 @@
 .p-float-label {
     .p-chips-multiple-container {
         .p-chips-token {
-            padding: .25rem 1rem;
+            padding: var(--gap-1) 1rem;
         }
     }
 }

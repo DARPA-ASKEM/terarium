@@ -60,6 +60,9 @@ const sidePanelTabStyle = computed(
 </script>
 
 <style scoped>
+aside {
+	position: relative;
+}
 .slider,
 .slider-content,
 .slider-tab,

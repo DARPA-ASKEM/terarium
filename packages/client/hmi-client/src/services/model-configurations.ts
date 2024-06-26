@@ -38,12 +38,22 @@ export const updateModelConfiguration = async (modelConfiguration: ModelConfigur
 	return response?.data ?? null;
 };
 
+export const deleteModelConfiguration = async (id: string) => {
+	const response = await API.delete(`/model-configurations/${id}`);
+	return response?.data ?? null;
+};
+
 export const getAsConfiguredModel = async (
 	modelConfiguration: ModelConfiguration
 ): Promise<Model> => {
 	const response = await API.get<Model>(
 		`model-configurations/as-configured-model/${modelConfiguration.id}`
 	);
+	return response?.data ?? null;
+};
+
+export const amrToModelConfiguration = async (model: Model): Promise<ModelConfiguration> => {
+	const response = await API.post<ModelConfiguration>(`/models/amr-to-model-configuration`, model);
 	return response?.data ?? null;
 };
 

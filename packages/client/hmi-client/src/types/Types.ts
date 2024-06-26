@@ -132,6 +132,12 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
+export interface Summary extends TerariumAsset {
+    generatedSummary?: string;
+    humanSummary?: string;
+    previousSummary?: string;
+}
+
 export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
@@ -249,7 +255,6 @@ export interface ObservableSemantic extends Semantic {
 export interface ParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
-    interventions: Intervention[];
     default: boolean;
 }
 
@@ -420,6 +425,7 @@ export interface PetriNetModel {
 
 export interface Project extends TerariumAsset {
     userId: string;
+    thumbnail: string;
     userName?: string;
     authors?: string[];
     overviewContent?: any;
@@ -760,9 +766,9 @@ export interface EnsembleModelConfigs {
 }
 
 export interface Intervention extends TerariumAsset {
-    name: string;
     timestep: number;
     value: number;
+    modelId: string;
 }
 
 export interface OptimizeExtra {
@@ -1278,6 +1284,7 @@ export enum ClientEventType {
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
     TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
 }
 

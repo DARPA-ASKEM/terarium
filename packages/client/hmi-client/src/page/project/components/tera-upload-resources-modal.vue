@@ -270,12 +270,12 @@ async function upload() {
 .supported-resources {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: 0.25rem;
+	margin-bottom: var(--gap-1);
 
 	div {
 		display: flex;
 		align-items: end;
-		gap: 0.25rem;
+		gap: var(--gap-1);
 		font-size: 0.75rem;
 	}
 	span:first-of-type {

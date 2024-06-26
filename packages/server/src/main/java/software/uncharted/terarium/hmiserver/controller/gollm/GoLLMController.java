@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -68,6 +70,7 @@ public class GoLLMController {
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureFromDatasetResponseHandler configureFromDatasetResponseHandler;
+	private final GenerateSummaryHandler generateSummaryHandler;
 
 	private final Messages messages;
 
@@ -77,6 +80,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(configureModelResponseHandler);
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureFromDatasetResponseHandler);
+		taskService.addResponseHandler(generateSummaryHandler);
 	}
 
 	@PostMapping("/model-card")
@@ -116,18 +120,19 @@ public class GoLLMController {
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 		if (document.isEmpty()) {
+			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
 		// make sure there is text in the document
 		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn("Document {} has no text to send", documentId);
+			log.warn(String.format("Document %s has no text to send", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		// check for input length
 		if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-			log.warn("Document {} text too long for GoLLM model card task", documentId);
+			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
 		}
 
@@ -143,7 +148,7 @@ public class GoLLMController {
 		try {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -157,17 +162,17 @@ public class GoLLMController {
 		try {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
-			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		} catch (final InterruptedException e) {
-			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			log.warn("Interrupted while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response: {}", e.getMessage());
+			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
@@ -212,18 +217,20 @@ public class GoLLMController {
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 		if (document.isEmpty()) {
+			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
 		// make sure there is text in the document
 		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn("Document {} has no text to send", documentId);
+			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		// Grab the model
 		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
@@ -243,7 +250,7 @@ public class GoLLMController {
 		try {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -260,17 +267,17 @@ public class GoLLMController {
 		try {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
-			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		} catch (final InterruptedException e) {
-			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			log.warn("Interrupted while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response: {}", e.getMessage());
+			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
@@ -326,13 +333,14 @@ public class GoLLMController {
 		for (final UUID datasetId : datasetIds) {
 			final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
 			if (dataset.isEmpty()) {
+				log.warn(String.format("Dataset %s not found", datasetId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
 			}
 
 			// make sure there is text in the document
 			if (dataset.get().getFileNames() == null
 					|| dataset.get().getFileNames().isEmpty()) {
-				log.error("Dataset {} has no source files to send", datasetId);
+				log.warn(String.format("Dataset %s has no source files to send", datasetId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
 			}
 
@@ -344,18 +352,21 @@ public class GoLLMController {
 						datasets.add(datasetText.get().replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")));
 					}
 				} catch (final Exception e) {
+					log.warn("Unable to fetch dataset files", e);
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
 				}
 			}
 		}
 
 		if (datasets.isEmpty()) {
+			log.warn("No datasets found");
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
 		}
 
 		// Grab the model
 		final Optional<Model> model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 		}
 
@@ -380,7 +391,7 @@ public class GoLLMController {
 		try {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -398,17 +409,17 @@ public class GoLLMController {
 		try {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
-			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		} catch (final InterruptedException e) {
-			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			log.warn("Interrupted while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response: {}", e.getMessage());
+			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
@@ -453,6 +464,7 @@ public class GoLLMController {
 			// Grab the model
 			final Optional<Model> model = modelService.getAsset(modelId, permission);
 			if (model.isEmpty()) {
+				log.warn(String.format("Model %s not found", modelId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
 			if (model.get().getMetadata().getGollmCard() != null) {
@@ -460,7 +472,7 @@ public class GoLLMController {
 					modelCards.add(objectMapper.writeValueAsString(
 							model.get().getMetadata().getGollmCard()));
 				} catch (final JsonProcessingException e) {
-					log.error("Unable to serialize model card: {}", e.getMessage());
+					log.error("Unable to serialize model card", e);
 					throw new ResponseStatusException(
 							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 				}
@@ -469,6 +481,7 @@ public class GoLLMController {
 
 		// if the number of models is less than 2, return an error
 		if (modelCards.size() < 2) {
+			log.warn("Less than 2 models provided for comparison");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("task.gollm.model-card.bad-number"));
 		}
 
@@ -484,7 +497,7 @@ public class GoLLMController {
 		try {
 			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -494,6 +507,75 @@ public class GoLLMController {
 		props.setWorkflowId(workflowId);
 		props.setNodeId(nodeId);
 		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
+	}
+
+	@PostMapping("/generate-summary")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "422",
+						description = "The request was interrupted while waiting for a response",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "503",
+						description = "The request was timed out while waiting for a response",
+						content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
+	public ResponseEntity<TaskResponse> createGenerateResponseTask(
+			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "project-id", required = false) final UUID projectId,
+			@RequestBody final String instruction) {
+
+		// create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(GenerateSummaryHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		try {
+			req.setInput(instruction.getBytes(StandardCharsets.UTF_8));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
 
 		final TaskResponse resp;
 		try {

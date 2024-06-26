@@ -36,6 +36,6 @@
     }
 
     .p-button.p-button-sm {
-        padding: 0.5rem 0.75rem;
+        padding: var(--gap-2) var(--gap-3);
     }
 }
