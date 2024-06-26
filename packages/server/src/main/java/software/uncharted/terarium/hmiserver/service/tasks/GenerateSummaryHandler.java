@@ -72,7 +72,7 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final String output = new String(resp.getOutput());
 			ObjectMapper mapper = new ObjectMapper();
-			GenerateSummaryHandler.ResponseOutput resOutput = mapper.readValue(output, GenerateSummaryHandler.ResponseOutput.class);
+			ResponseOutput resOutput = mapper.readValue(output, ResponseOutput.class);
 			final Summary summary = summaryService.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
 			summary.setGeneratedSummary(resOutput.response);
 			summaryService.updateAsset(summary, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
