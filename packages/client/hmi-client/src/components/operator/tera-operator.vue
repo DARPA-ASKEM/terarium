@@ -68,7 +68,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits([
-	'editing-note',
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
