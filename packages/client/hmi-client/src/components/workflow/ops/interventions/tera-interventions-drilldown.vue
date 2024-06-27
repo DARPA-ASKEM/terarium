@@ -93,3 +93,9 @@ const emit = defineEmits(['close']);
 const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 </script>
+
+<style scoped>
+ul {
+	list-style: none;
+}
+</style>

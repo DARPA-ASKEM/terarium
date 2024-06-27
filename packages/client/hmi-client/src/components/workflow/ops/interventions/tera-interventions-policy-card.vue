@@ -75,8 +75,4 @@ p {
 		color: var(--gray-300);
 	}
 }
-
-ul {
-	list-style: none;
-}
 </style>
