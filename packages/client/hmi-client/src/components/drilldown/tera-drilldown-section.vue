@@ -46,6 +46,7 @@ header {
 header > div {
 	display: inline-flex;
 	gap: var(--gap-small);
+	align-items: center;
 }
 
 section {

@@ -112,10 +112,12 @@ public class TaskService {
 			this.id = id;
 			this.future = new CompletableFuture<>();
 			this.future.complete(resp);
+			this.latestResponse = resp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
-			future.complete(resp);
+			this.latestResponse = resp;
+			this.future.complete(resp);
 		}
 	}
 
@@ -268,6 +270,12 @@ public class TaskService {
 
 				} else {
 					log.info("Did not find promise for task id: {}", resp.getId());
+				}
+			} else {
+				final CompletableTaskFuture future = futures.get(resp.getId());
+				if (future != null) {
+					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
+					future.setLatest(resp);
 				}
 			}
 
@@ -505,6 +513,7 @@ public class TaskService {
 
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
+			future.setLatest(queuedResponse);
 			log.info("Adding future for task id: {} to the futures map", req.getId());
 			futures.put(req.getId(), future);
 			return future;
@@ -525,7 +534,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
+			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -556,8 +565,7 @@ public class TaskService {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
-			// return the latest received response held in the future
-			return runTaskAsync(req).get();
+			return runTaskAsync(req).getLatest();
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}
