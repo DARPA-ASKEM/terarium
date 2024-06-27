@@ -1,15 +1,17 @@
+import { TerariumAsset } from '@/types/Types';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 
-export interface DummyIntervention {
-	id: string;
-	name: string;
-	description: string;
+export interface DummyInterventionPolicy extends TerariumAsset {
 	modelId: string;
+	values: DummyIntervention[];
+}
+
+export interface DummyIntervention {
+	name: string;
+	description?: string;
 	parameterId: string;
-	staticValues: DummyInterventionSetting[];
-	dynamicValues: DummyInterventionSetting[];
-	createdOn: Date;
+	setting: DummyInterventionSetting[];
 }
 
 export interface DummyInterventionSetting {
@@ -19,7 +21,7 @@ export interface DummyInterventionSetting {
 }
 
 export interface InterventionsState extends BaseState {
-	interventionsId: string | null;
+	transientInterventionPolicy: DummyInterventionPolicy;
 }
 
 export const InterventionsOperation: Operation = {
@@ -33,7 +35,10 @@ export const InterventionsOperation: Operation = {
 
 	initState: () => {
 		const init: InterventionsState = {
-			interventionsId: null
+			transientInterventionPolicy: {
+				modelId: '',
+				values: []
+			}
 		};
 		return init;
 	}
