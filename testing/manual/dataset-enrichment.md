@@ -14,7 +14,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 2. Test dataset enrichment without a document
 1. Upload _the dataset_ [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
 2. Go to SIR dataset (uploaded and created dataset) from the resource panel
-3. Click `Enrich description` -> Click `Enrich description` from the modal
+3. Click `Enrich description` -> Click `Generate descriptions` from the modal
 4. __Expected Result__: The process go through without any error
 5. __Expected Result__: the rows should be enriched as:
 

@@ -42,6 +42,7 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
@@ -65,6 +66,7 @@ public class GoLLMController {
 	private final ModelService modelService;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final SummaryService summaryService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
@@ -558,7 +560,8 @@ public class GoLLMController {
 						content = @Content)
 			})
 	public ResponseEntity<TaskResponse> createGenerateResponseTask(
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+			@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
+			@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody final String instruction) {
 
@@ -576,6 +579,11 @@ public class GoLLMController {
 		}
 
 		req.setProjectId(projectId);
+
+		final GenerateSummaryHandler.Properties props = new GenerateSummaryHandler.Properties();
+		props.setSummaryId(UUID.randomUUID());
+		props.setPreviousSummaryId(previousSummaryId);
+		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;
 		try {
