@@ -36,7 +36,7 @@
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-output-summary
-						v-if="outputSummary"
+						v-if="!isEmpty(outputSummary)"
 						:node="node"
 						@generate-output-summary="
 							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
@@ -130,6 +130,9 @@ const selectedViewIndex = ref<number>(0);
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
+
+const selectedTab = computed(() => views.value[selectedViewIndex.value]);
+defineExpose({ selectedTab });
 
 const selectedOutputId = computed(() => {
 	if (props.node.active) {

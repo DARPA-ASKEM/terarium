@@ -1,4 +1,4 @@
-import _, { isEmpty } from 'lodash';
+import _, { isEmpty, cloneDeep, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import { NodeType } from '@/services/graph';
 import {
@@ -284,6 +284,15 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
+export const collapseObservableReferences = (observableSummary: ObservableSummary) => {
+	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
+	Object.values(collapsedObservableSummary).forEach((observable) => {
+		// Extract the first part of the reference before the first underscore
+		observable.references = uniq(observable.references.map((r) => r.split('_')[0]));
+	});
+	return collapsedObservableSummary;
+};
+
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 	const initialsMap = collapseInitials(miraModel);
 	const childrenInitials = initialsMap.get(key);
@@ -397,9 +406,21 @@ export const createParameterMatrix = (
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
-	templates: TemplateSummary[],
-	observableSummary?: ObservableSummary
+	miraModel: MiraModel,
+	initObservableSummary: ObservableSummary,
+	isStratified: boolean
 ) => {
+	const templates: TemplateSummary[] = [];
+	let observableSummary: ObservableSummary = {};
+
+	if (isStratified) {
+		templates.push(...collapseTemplates(miraModel).templatesSummary);
+		observableSummary = collapseObservableReferences(initObservableSummary);
+	} else {
+		templates.push(...rawTemplatesSummary(miraModel));
+		observableSummary = cloneDeep(initObservableSummary);
+	}
+
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -506,7 +527,6 @@ export const convertToIGraph = (
 				nodes: []
 			});
 
-			// FIXME: The observableSummary references need to support when the model is stratified
 			observable.references.forEach((reference: string) => {
 				graph.edges.push({
 					id: observable.expression,

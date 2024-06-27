@@ -282,9 +282,6 @@ public class DocumentController {
 			}
 		});
 
-		// Update data-service with the updated metadata
-		// documentAssetService.updateAsset(document.get()); // Why?
-
 		// Return the updated document
 		return ResponseEntity.ok(document.get());
 	}
@@ -662,10 +659,7 @@ public class DocumentController {
 
 		try {
 			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
-			if (bytes.isEmpty()) {
-				return null;
-			}
-			return ResponseEntity.ok(bytes.get());
+			return bytes.map(ResponseEntity::ok).orElse(null);
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
@@ -699,10 +693,7 @@ public class DocumentController {
 
 		try {
 			final Optional<String> file = documentAssetService.fetchFileAsString(documentId, filename);
-			if (file.isEmpty()) {
-				return null;
-			}
-			return ResponseEntity.ok(file.get());
+			return file.map(ResponseEntity::ok).orElse(null);
 		} catch (final Exception e) {
 
 			final String error = "Unable to download document as text";

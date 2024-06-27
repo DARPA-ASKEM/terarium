@@ -195,7 +195,7 @@ main {
 main > section {
 	display: flex;
 	flex: 1;
-	& > :deep(*:not(nav)) {
+	& > :deep(*:not(nav, i)) {
 		flex: 1;
 	}
 
