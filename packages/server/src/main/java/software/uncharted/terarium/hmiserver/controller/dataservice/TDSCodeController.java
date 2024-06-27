@@ -322,10 +322,8 @@ public class TDSCodeController {
 
 		try {
 			final Optional<String> results = codeService.fetchFileAsString(codeId, filename);
-			if (results.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(results.get());
+			return results.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
