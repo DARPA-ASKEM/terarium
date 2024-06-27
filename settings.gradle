@@ -8,5 +8,6 @@ pluginManagement {
 
 rootProject.name = "terarium"
 
+include ":packages:ingest"
 include ":packages:server"
 include ":packages:taskrunner"

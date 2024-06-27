@@ -1,11 +1,6 @@
 # Build the Spring Boot application
 FROM eclipse-temurin:17.0.11_9-jdk-focal AS funman_taskrunner_builder
 
-###### DEV ONLY ######
-#VVVVVVVVVVVVVVVVVVVVV
-
-# These deps are installed only for use during local development
-
 # Install Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
@@ -31,9 +26,6 @@ WORKDIR /funman-api
 RUN pip install --no-cache-dir . && \
 	pip install --no-cache-dir auxiliary_packages/funman_dreal && \
 	pip install --no-cache-dir auxiliary_packages/funman_demo
-
-#^^^^^^^^^^^^^^^^^^^^
-######################
 
 WORKDIR /taskrunner
 

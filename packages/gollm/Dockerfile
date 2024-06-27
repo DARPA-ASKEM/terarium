@@ -1,11 +1,6 @@
 # Build the Spring Boot application
 FROM eclipse-temurin:17.0.11_9-jdk-focal AS gollm_taskrunner_builder
 
-###### DEV ONLY ######
-#VVVVVVVVVVVVVVVVVVVVV
-
-# These deps are installed only for use during local development
-
 # Install Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	software-properties-common
@@ -26,9 +21,6 @@ RUN COMMIT_SHA="$(cat /gollmVersion.txt)" && \
 	mv GoLLM-* GoLLM
 WORKDIR /GoLLM
 RUN pip install --no-cache-dir .
-
-#^^^^^^^^^^^^^^^^^^^^
-######################
 
 WORKDIR /taskrunner
 
