@@ -280,6 +280,7 @@ export class KernelSessionManager {
 				console.log('waiting...', this.jupyterSession?.session?.kernel);
 				counter++;
 				if (this.jupyterSession?.session?.kernel) {
+					window.addEventListener('beforeunload', this.shutdown.bind(this));
 					clearInterval(id);
 					resolve(true);
 				}
@@ -318,6 +319,7 @@ export class KernelSessionManager {
 	}
 
 	shutdown() {
+		window.removeEventListener('beforeunload', this.shutdown.bind(this));
 		this.jupyterSession?.shutdown();
 	}
 }
