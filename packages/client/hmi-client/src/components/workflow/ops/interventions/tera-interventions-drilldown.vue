@@ -20,12 +20,18 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section>
-			<tera-columnar-panel>
-				<div>test1</div>
-				<div>test2</div>
-			</tera-columnar-panel>
-		</tera-drilldown-section>
+		<tera-columnar-panel>
+			<tera-drilldown-section class="pl-3 pr-3">
+				<template #header-controls-left>
+					<span>Select an intervention policy or create a new one here.</span>
+				</template>
+				<template #header-controls-right>
+					<Button outlined severity="secondary" label="Reset"></Button>
+					<Button @click="console.log('run')" label="Run" />
+				</template>
+			</tera-drilldown-section>
+			<div>test2</div>
+		</tera-columnar-panel>
 	</tera-drilldown>
 </template>
 
@@ -37,6 +43,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { ref } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { uniqueId } from 'lodash';
+import Button from 'primevue/button';
 import { DummyIntervention, InterventionsState } from './tera-interventions-operation';
 import TeraInterventionsPolicyCard from './tera-interventions-policy-card.vue';
 

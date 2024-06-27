@@ -74,15 +74,11 @@
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
 			<template #header-controls-left>
-				<template v-if="!isEditingName">
-					<h4>{{ knobs.transientModelConfig.name }}</h4>
-					<Button v-if="!isEditingName" icon="pi pi-pencil" text @click.stop="onEditName" />
-				</template>
-				<template v-else>
-					<tera-input v-model="newName" />
-					<Button icon="pi pi-times" text @click.stop="isEditingName = false" />
-					<Button icon="pi pi-check" text @click.stop="onConfirmEditName" />
-				</template>
+				<tera-edit-value
+					v-if="knobs.transientModelConfig.name"
+					v-model="knobs.transientModelConfig.name"
+					tag="h4"
+				/>
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
@@ -326,6 +322,7 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
+import TeraEditValue from '@/components/widgets/tera-edit-value.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -339,9 +336,7 @@ const props = defineProps<{
 }>();
 
 const isSidebarOpen = ref(true);
-const isEditingName = ref(false);
 const isEditingDescription = ref(false);
-const newName = ref('');
 const newDescription = ref('');
 
 const menuItems = computed(() => [
@@ -754,19 +749,9 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onEditName = () => {
-	isEditingName.value = true;
-	newName.value = knobs.value.transientModelConfig.name ?? '';
-};
-
 const onEditDescription = () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
-};
-
-const onConfirmEditName = () => {
-	knobs.value.transientModelConfig.name = newName.value;
-	isEditingName.value = false;
 };
 
 const onConfirmEditDescription = () => {
