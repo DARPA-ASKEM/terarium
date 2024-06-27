@@ -1,10 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -12,11 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Binding;
@@ -33,6 +24,18 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -112,10 +115,12 @@ public class TaskService {
 			this.id = id;
 			this.future = new CompletableFuture<>();
 			this.future.complete(resp);
+			this.latestResponse = resp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
-			future.complete(resp);
+			this.latestResponse = resp;
+			this.future.complete(resp);
 		}
 	}
 
@@ -228,22 +233,7 @@ public class TaskService {
 	// This is an anonymous queue, every instance the hmi-server will receive a
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
-	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											autoDelete = "true",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.taskrunner.response-broadcast-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-broadcast-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
 	private void onTaskResponseAllInstanceReceive(final Message message) {
 		try {
 			final TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -269,6 +259,12 @@ public class TaskService {
 				} else {
 					log.info("Did not find promise for task id: {}", resp.getId());
 				}
+			} else {
+				final CompletableTaskFuture future = futures.get(resp.getId());
+				if (future != null) {
+					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
+					future.setLatest(resp);
+				}
 			}
 
 		} catch (final Exception e) {
@@ -279,23 +275,7 @@ public class TaskService {
 	// This is a shared queue, messages will round robin between every instance of
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
-	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											value = "${terarium.taskrunner.response-queue}",
-											autoDelete = "false",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.taskrunner.response-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "false", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -473,8 +453,7 @@ public class TaskService {
 		}
 
 		// now send request
-		final String requestQueue =
-				String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
+		final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
 		log.info(
 				"Readying task: {} with SHA: {} to send on queue: {}",
@@ -505,6 +484,7 @@ public class TaskService {
 
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
+			future.setLatest(queuedResponse);
 			log.info("Adding future for task id: {} to the futures map", req.getId());
 			futures.put(req.getId(), future);
 			return future;
@@ -525,7 +505,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
+			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -556,8 +536,7 @@ public class TaskService {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
-			// return the latest received response held in the future
-			return runTaskAsync(req).get();
+			return runTaskAsync(req).getLatest();
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}
