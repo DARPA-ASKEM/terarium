@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,18 +17,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.controller.mira.MiraController.ConversionAdditionalProperties;
@@ -91,8 +88,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final int STRING_LENGTH = 1048576;
 
-		final byte[] input = ("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}")
-				.getBytes();
+		final byte[] input =
+				("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}").getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -159,7 +156,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
 		req.setScript(GenerateSummaryHandler.NAME);
-		final String input = "Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+		final String input =
+				"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
 		req.setInput(input.getBytes(StandardCharsets.UTF_8));
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -233,9 +231,11 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final UUID taskId = UUID.randomUUID();
 
 		final ClassPathResource datasetResource1 = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
-		final String dataset1 = new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
+		final String dataset1 =
+				new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
 		final ClassPathResource datasetResource2 = new ClassPathResource("gollm/other-dataset.csv");
-		final String dataset2 = new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
+		final String dataset2 =
+				new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
 
 		final ClassPathResource amrResource = new ClassPathResource("gollm/scenario4_4spec_regnet_empty.json");
 		final String amr = new String(Files.readAllBytes(amrResource.getFile().toPath()));
