@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -7,7 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Binding;
@@ -24,18 +33,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.annotation.PostConstruct;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -233,7 +230,22 @@ public class TaskService {
 	// This is an anonymous queue, every instance the hmi-server will receive a
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(autoDelete = "true", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-broadcast-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											autoDelete = "true",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.taskrunner.response-broadcast-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onTaskResponseAllInstanceReceive(final Message message) {
 		try {
 			final TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -275,7 +287,23 @@ public class TaskService {
 	// This is a shared queue, messages will round robin between every instance of
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
-	@RabbitListener(bindings = @QueueBinding(value = @org.springframework.amqp.rabbit.annotation.Queue(value = "${terarium.taskrunner.response-queue}", autoDelete = "false", exclusive = "false", durable = "${terarium.taskrunner.durable-queues}"), exchange = @Exchange(value = "${terarium.taskrunner.response-exchange}", durable = "${terarium.taskrunner.durable-queues}", autoDelete = "false", type = ExchangeTypes.DIRECT), key = ""), concurrency = "1")
+	@RabbitListener(
+			bindings =
+					@QueueBinding(
+							value =
+									@org.springframework.amqp.rabbit.annotation.Queue(
+											value = "${terarium.taskrunner.response-queue}",
+											autoDelete = "false",
+											exclusive = "false",
+											durable = "${terarium.taskrunner.durable-queues}"),
+							exchange =
+									@Exchange(
+											value = "${terarium.taskrunner.response-exchange}",
+											durable = "${terarium.taskrunner.durable-queues}",
+											autoDelete = "false",
+											type = ExchangeTypes.DIRECT),
+							key = ""),
+			concurrency = "1")
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -453,7 +481,8 @@ public class TaskService {
 		}
 
 		// now send request
-		final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
+		final String requestQueue =
+				String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
 		log.info(
 				"Readying task: {} with SHA: {} to send on queue: {}",
