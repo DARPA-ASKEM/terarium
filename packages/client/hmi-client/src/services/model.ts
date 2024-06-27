@@ -1,12 +1,13 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import * as EventService from '@/services/event';
-import type { Initial, Model, ModelConfigurationLegacy, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, AssetType, EventType } from '@/types/Types';
 import { AMRSchemaNames, ModelServiceType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import type { MMT } from '@/model-representation/mira/mira-common';
 import { modelCard } from './goLLM';
 import { profileModel } from './knowledge';
 
@@ -51,7 +52,7 @@ export async function getMMT(model: Model) {
 	const miraModel = response?.data?.response;
 	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
 
-	return response?.data?.response ?? null;
+	return (response?.data?.response as MMT) ?? null;
 }
 
 /**
@@ -75,11 +76,9 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function getModelConfigurations(
-	modelId: Model['id']
-): Promise<ModelConfigurationLegacy[]> {
-	const response = await API.get(`/models/${modelId}/model-configurations-legacy`);
-	return response?.data ?? ([] as ModelConfigurationLegacy[]);
+export async function getModelConfigurations(modelId: Model['id']): Promise<ModelConfiguration[]> {
+	const response = await API.get(`/models/${modelId}/model-configurations`);
+	return response?.data ?? ([] as ModelConfiguration[]);
 }
 
 export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {

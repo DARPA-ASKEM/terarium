@@ -22,10 +22,10 @@
 				@click="clearFinishedItems"
 			/>
 		</header>
-		<ul class="notification-items-container" v-if="notificationItems.length > 0">
+		<ul class="notification-items-container" v-if="sortedNotificationItems.length > 0">
 			<li
 				class="notification-item"
-				v-for="item in notificationItems"
+				v-for="item in sortedNotificationItems"
 				:key="item.notificationGroupId"
 			>
 				<p class="heading">
@@ -42,13 +42,21 @@
 					</p>
 					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
-				<div v-if="isRunning(item) || isCancelling(item)" class="progressbar-container">
+				<div
+					v-if="isRunning(item) || isCancelling(item) || isQueued(item)"
+					class="progressbar-container"
+				>
 					<p class="action">
 						{{ getActionText(item) }}
-						<span v-if="item.progress !== undefined"> {{ Math.round(item.progress * 100) }}%</span>
+						<span v-if="item.progress !== undefined && isRunning(item)">
+							{{ Math.round(item.progress * 100) }}%</span
+						>
 					</p>
 
-					<ProgressBar v-if="item.progress !== undefined" :value="item.progress * 100" />
+					<ProgressBar
+						v-if="item.progress !== undefined"
+						:value="isRunning(item) ? item.progress * 100 : 0"
+					/>
 					<ProgressBar v-else mode="indeterminate" />
 					<Button
 						v-if="item.supportCancel"
@@ -56,7 +64,6 @@
 						label="Cancel"
 						text
 						aria-label="Cancel"
-						:disabled="isCancelling(item)"
 						@click="cancelTask(item)"
 					/>
 				</div>
@@ -86,12 +93,13 @@ import OverlayPanel from 'primevue/overlaypanel';
 import { NotificationItem } from '@/types/common';
 import { AssetType, ClientEventType, ProgressState } from '@/types/Types';
 import ProgressBar from 'primevue/progressbar';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import { useProjects } from '@/composables/project';
 import { getElapsedTimeText } from '@/utils/date';
-import { snakeToCapitalSentence } from '@/utils/text';
 import { cancelTask as cancelGoLLMTask } from '@/services/goLLM';
+import { cancelCiemssJob } from '@/services/models/simulation-service';
+import { orderBy } from 'lodash';
 import TeraAssetLink from '../widgets/tera-asset-link.vue';
 
 const {
@@ -106,16 +114,14 @@ const panel = ref();
 
 const togglePanel = (event) => panel.value.toggle(event);
 
-const getTitleText = (item: NotificationItem) => {
-	switch (item.type) {
-		case ClientEventType.ExtractionPdf:
-			return 'PDF extraction from';
-		default:
-			return `${snakeToCapitalSentence(item.type)} from`;
-	}
-};
+const getTitleText = (item: NotificationItem) => `${item.typeDisplayName} from`;
+
+const sortedNotificationItems = computed(() =>
+	orderBy(notificationItems.value, (item) => item.lastUpdated, ['desc'])
+);
 
 const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
+const isQueued = (item: NotificationItem) => item.status === ProgressState.Queued;
 const isFailed = (item: NotificationItem) => item.status === ProgressState.Failed;
 const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
 const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
@@ -127,6 +133,9 @@ const getProjectName = (item: NotificationItem) =>
 const getActionText = (item: NotificationItem) => {
 	if (isCancelling(item)) {
 		return 'Cancelling...';
+	}
+	if (isQueued(item)) {
+		return 'Queued...';
 	}
 	switch (item.type) {
 		case ClientEventType.ExtractionPdf:
@@ -145,6 +154,7 @@ const getAssetRouteQuery = (item: NotificationItem) =>
 	item.pageType === AssetType.Workflow && item.nodeId ? { operator: item.nodeId } : {};
 
 const cancelTask = (item: NotificationItem) => {
+	if (!item.supportCancel) return;
 	if (
 		[
 			ClientEventType.TaskGollmModelCard,
@@ -154,6 +164,10 @@ const cancelTask = (item: NotificationItem) => {
 		].includes(item.type)
 	) {
 		cancelGoLLMTask(item.notificationGroupId);
+	}
+	if (item.type === ClientEventType.SimulationNotification) {
+		item.status = ProgressState.Cancelling;
+		cancelCiemssJob(item.notificationGroupId);
 	}
 };
 </script>

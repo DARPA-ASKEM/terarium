@@ -1,10 +1,9 @@
 ## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
-Note: sampling combinations in PyCIEMSS can result in numerical instability, when this happens, you can:
+### Note
+sampling combinations in PyCIEMSS can result in numerical instability, when this happens, you can:
 - Retry the simulation, or
 - Fiddle with the parameter distribution ranges, make the intervals larger or smaller
 
@@ -40,7 +39,3 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
 1. Verify that there is a loss chart available, showing the loss value as a function of solver iterations
 2. Verify that there is a Variables chart available, showing time-series plots for each model variable based on a Simulate run with the calibrate parameter values.
 3. Should be able to add/remove Variables charts
-
-
-### 5. End test
-1. Logout of the application 

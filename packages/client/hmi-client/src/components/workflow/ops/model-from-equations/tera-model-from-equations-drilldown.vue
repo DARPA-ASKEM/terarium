@@ -374,7 +374,9 @@ async function fetchModel() {
 			model.metadata.gollmCard = goLLMCard.value;
 		}
 
-		model = await updateModel(model);
+		if (useProjects().hasEditPermission()) {
+			model = await updateModel(model);
+		}
 	}
 	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;

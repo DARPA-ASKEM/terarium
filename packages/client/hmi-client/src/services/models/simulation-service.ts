@@ -30,9 +30,12 @@ export async function cancelCiemssJob(runId: String) {
 	}
 }
 
-export async function makeForecastJob(simulationParam: SimulationRequest) {
+export async function makeForecastJob(simulationParam: SimulationRequest, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/forecast', simulationParam);
+		const resp = await API.post('simulation-request/forecast', {
+			payload: simulationParam,
+			metadata
+		});
 		EventService.create(
 			EventType.TransformPrompt,
 			useProjects().activeProject.value?.id,
@@ -49,9 +52,12 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 	}
 }
 
-export async function makeForecastJobCiemss(simulationParam: SimulationRequest) {
+export async function makeForecastJobCiemss(simulationParam: SimulationRequest, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/forecast', simulationParam);
+		const resp = await API.post('simulation-request/ciemss/forecast', {
+			payload: simulationParam,
+			metadata
+		});
 		EventService.create(
 			EventType.TransformPrompt,
 			useProjects().activeProject.value?.id,
@@ -180,14 +186,20 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 	}
 }
 
-export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia) {
+export async function makeCalibrateJobJulia(
+	calibrationParams: CalibrationRequestJulia,
+	metadata?: any
+) {
 	try {
 		EventService.create(
 			EventType.RunCalibrate,
 			useProjects().activeProject.value?.id,
 			JSON.stringify(calibrationParams)
 		);
-		const resp = await API.post('simulation-request/calibrate', calibrationParams);
+		const resp = await API.post('simulation-request/calibrate', {
+			payload: calibrationParams,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -196,9 +208,15 @@ export async function makeCalibrateJobJulia(calibrationParams: CalibrationReques
 	}
 }
 
-export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss) {
+export async function makeCalibrateJobCiemss(
+	calibrationParams: CalibrationRequestCiemss,
+	metadata?: any
+) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/calibrate', calibrationParams);
+		const resp = await API.post('simulation-request/ciemss/calibrate', {
+			payload: calibrationParams,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -207,9 +225,12 @@ export async function makeCalibrateJobCiemss(calibrationParams: CalibrationReque
 	}
 }
 
-export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss) {
+export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiemss, metadata?: any) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/optimize', optimizeParams);
+		const resp = await API.post('simulation-request/ciemss/optimize', {
+			payload: optimizeParams,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -218,9 +239,15 @@ export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiems
 	}
 }
 
-export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest) {
+export async function makeEnsembleCiemssSimulation(
+	params: EnsembleSimulationCiemssRequest,
+	metadata?: any
+) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', params);
+		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', {
+			payload: params,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -229,9 +256,15 @@ export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCie
 	}
 }
 
-export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest) {
+export async function makeEnsembleCiemssCalibration(
+	params: EnsembleCalibrationCiemssRequest,
+	metadata?: any
+) {
 	try {
-		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', params);
+		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', {
+			payload: params,
+			metadata
+		});
 		const output = resp.data;
 		return output;
 	} catch (err) {

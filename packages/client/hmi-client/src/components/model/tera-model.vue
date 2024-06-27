@@ -54,13 +54,10 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import {
-	addDefaultConfiguration,
-	updateModelConfiguration
-} from '@/services/model-configurations-legacy';
+import { updateModelConfiguration } from '@/services/model-configurations';
 import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { AssetType, type Model, type ModelConfigurationLegacy } from '@/types/Types';
+import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
@@ -86,7 +83,7 @@ const emit = defineEmits([
 ]);
 
 const model = ref<Model | null>(null);
-const modelConfigurations = ref<ModelConfigurationLegacy[]>([]);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
@@ -152,6 +149,9 @@ const optionsMenuItems = computed(() => [
 ]);
 
 async function updateModelContent(updatedModel: Model) {
+	if (!useProjects().hasEditPermission()) {
+		return;
+	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
 	setTimeout(async () => {
@@ -168,7 +168,7 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfigurationLegacy) {
+async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	await updateModelConfiguration(updatedConfiguration);
 	setTimeout(async () => {
 		emit('update-model-configuration');
@@ -185,18 +185,20 @@ async function fetchConfigurations() {
 		let tempConfigurations = await getModelConfigurations(model.value.id);
 
 		// Ensure that we always have a "default config" model configuration
-		if (
-			(isEmpty(tempConfigurations) ||
-				!tempConfigurations.find((d) => d.name === 'Default config')) &&
-			!isModelEmpty(model.value)
-		) {
-			await addDefaultConfiguration(model.value);
-			setTimeout(async () => {
-				// elastic search might still not update in time
-				tempConfigurations = await getModelConfigurations(model.value?.id!);
-				modelConfigurations.value = tempConfigurations;
-			}, 800);
-			return;
+		if (useProjects().hasEditPermission()) {
+			if (
+				(isEmpty(tempConfigurations) ||
+					!tempConfigurations.find((d) => d.name === 'Default config')) &&
+				!isModelEmpty(model.value)
+			) {
+				// await addDefaultConfiguration(model.value);
+				setTimeout(async () => {
+					// elastic search might still not update in time
+					tempConfigurations = await getModelConfigurations(model.value?.id!);
+					modelConfigurations.value = tempConfigurations;
+				}, 800);
+				return;
+			}
 		}
 		modelConfigurations.value = tempConfigurations;
 	}

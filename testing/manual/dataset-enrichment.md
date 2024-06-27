@@ -1,10 +1,8 @@
 ## Dataset enrichment with/without a document
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
-Estimated time to completion: [X] minutes
-
-### 1. Begin test 
+### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
     ```
     email: qa@test.io
@@ -16,7 +14,7 @@ Estimated time to completion: [X] minutes
 ### 2. Test dataset enrichment without a document
 1. Upload _the dataset_ [SIR_Dataset](https://drive.google.com/file/d/1wdCLKKznHaoCg1gWI7q7OO8W4F7zOjpc/view?usp=drive_link)
 2. Go to SIR dataset (uploaded and created dataset) from the resource panel
-3. Click `Enrich description` -> Click `Enrich description` from the modal
+3. Click `Enrich description` -> Click `Generate descriptions` from the modal
 4. __Expected Result__: The process go through without any error
 5. __Expected Result__: the rows should be enriched as:
 
@@ -42,7 +40,3 @@ Estimated time to completion: [X] minutes
 | s  | S    | The proportion of the population that is susceptible to the infection but not yet infected at time t                                                   | susceptible to infection of    | Proportion | numeric  | 0.143079518218444 - 0.68 - 0.99995 |
 | i  | I    | The proportion of the population that is currently infected and can spread the infection at time t                                                     | infection incidence proportion | Proportion | numeric  | 0.00005 - 0.08 - 0.218551123932438 |
 | r  | R    | The proportion of the population that has been removed from the spread of infection, including recovered, deceased, and isolated individuals at time t | recovered population           | Proportion | numeric  | 0 - 0.24 - 0.810127005400101       |
-
-
-### 5. End test
-1. logout of the application 

@@ -1,6 +1,6 @@
 ## Stratify model via the notebook interface
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -13,8 +13,8 @@ When blocked, an error, or a UI/UX anomaly occurs, please report which scenario 
 ### 2. Setup workflow
 1. Make sure you have a model in your project.
 2. Create a workflow
-3. Drop in your model in the workflow 
-4. Create a Stratify node 
+3. Drop in your model in the workflow
+4. Create a Stratify node
 5. Connect the model to the stratify node
 6. Drill down into the Stratify node and go to the notebook section.
 
@@ -35,7 +35,7 @@ model = stratify(
 ```
 
 2. Stratify my model by the ages young and old where young can transition to old
-``` 
+```
 model = stratify(
     template_model=model,
     key= "Age",
@@ -48,7 +48,7 @@ model = stratify(
 ```
 
 3. Stratify my model by the ages young and old where young and old can become old, but old cannot become young
-``` 
+```
 model = stratify(
     template_model=model,
     key= "Age",
@@ -59,7 +59,7 @@ model = stratify(
     modify_names=True
 )
 ```
-4. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact 
+4. Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact
 ```
 model = stratify(
     template_model=model,
@@ -98,9 +98,5 @@ model = stratify(
 )
 ```
 
-6. What is cartesian_control in stratify? 
+6. What is cartesian_control in stratify?
 - This should have no code response, just a message in the thought section.
-
-
-### 4. End test
-1. logout of the application 

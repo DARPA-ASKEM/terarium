@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
+import { isEmpty } from 'lodash';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
-import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import type { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { NodeType } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
@@ -9,16 +11,13 @@ export interface NodeData {
 	expression?: string;
 	strataType?: string;
 	isStratified?: boolean;
+	references?: string[];
 }
 
 export interface EdgeData {
 	numEdges: number;
 	isController?: boolean;
-}
-
-export enum NodeType {
-	State = 'state',
-	Transition = 'transition'
+	isObservable?: boolean;
 }
 
 const FONT_SIZE_SMALL = 18;
@@ -93,6 +92,33 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
+		const observables = selection.filter((d) => d.data.type === NodeType.Observable);
+
+		// species
+		species
+			.append('circle')
+			.classed('shape selectableNode', true)
+			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
+			.attr('fill', (d) =>
+				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
+			)
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1)
+			.style('cursor', 'pointer');
+
+		// species text
+		species
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
+			.text((d) => d.id);
 
 		// transitions
 		transitions
@@ -144,20 +170,23 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				return '';
 			});
 
-		// species
-		species
-			.append('circle')
+		// observables
+		observables
+			.append('rect')
 			.classed('shape selectableNode', true)
-			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'
-			)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
+			.style('fill', 'var(--petri-nodeFill)')
+			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1)
-			.style('cursor', 'pointer');
+			.attr('stroke-width', 1);
 
-		// species text
-		species
+		// observables text
+		observables
 			.append('text')
 			.attr('y', (d) => setFontSize(d.id) / 4)
 			.style('text-anchor', 'middle')
@@ -172,6 +201,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+		selection.style('display', (d) => (d.data?.isObservable ? 'none' : 'block'));
+
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
@@ -180,15 +211,32 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 3)
 			.style('stroke-dasharray', (d) => {
-				if (d.data && d.data.isController === true) {
+				if (d.data?.isController || d.data?.isObservable) {
 					return 4;
 				}
 				return null;
 			})
 			.attr('marker-end', (d) => {
-				if (d.data && d.data.isController) return null;
+				if (d.data?.isController || d.data?.isObservable) return null;
 				return 'url(#arrowhead)';
 			});
+
+		selection.append('text').each(function (d) {
+			if (d.id && !isEmpty(d.points) && d.data?.isObservable) {
+				d3.select(this)
+					.classed('latex-font', true)
+					.attr('x', (d.points[1].x + d.points[2].x) / 2)
+					.attr('y', (d.points[1].y + d.points[2].y) / 2 - 30)
+					.style('font-style', 'italic')
+					.style('font-size', FONT_SIZE_REGULAR)
+					.style('paint-order', 'stroke')
+					.style('stroke', 'var(--gray-50)')
+					.style('stroke-width', '6px')
+					.style('stroke-linecap', 'butt')
+					.style('fill', 'var(--text-color-primary)')
+					.text(d.id);
+			}
+		});
 
 		this.updateMultiEdgeLabels();
 	}
@@ -226,22 +274,28 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection.selectAll('path').style('stroke-width', 2);
 	}
 
+	resetOpacity() {
+		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 1);
+	}
+
+	castTransparency() {
+		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 0.3);
+	}
+
 	toggleNodeSelectionByLabel(label: string) {
 		const selection = this.chart?.selectAll('.node-ui').filter((d: any) => d.label === label);
-		if (selection && selection.size() === 1) {
+		if (selection?.size() === 1) {
 			this.toggleNodeSelection(selection as D3SelectionINode<NodeData>);
 		}
 	}
 
 	toggleNodeSelection(selection: D3SelectionINode<NodeData>) {
 		if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) {
-			this?.chart?.selectAll('.node-ui').style('opacity', 1);
-			this?.chart?.selectAll('.edge').style('opacity', 1);
+			this.resetOpacity();
 			this.nodeSelection = null;
 		} else {
 			// Set focus on node:
-			this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
-			this?.chart?.selectAll('.edge').style('opacity', 0.3);
+			this.castTransparency();
 			selection.style('opacity', 1);
 			this.nodeSelection = selection;
 		}
@@ -326,6 +380,37 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		});
 
+		// Observable edge appears on observable node hover
+		this.on('node-mouse-enter', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			const { data } = selection.datum();
+			const { type, expression, references } = data;
+			if (type === NodeType.Observable && expression && references) {
+				this.castTransparency();
+				// Only show nodes and edges related to the observable
+				this?.chart
+					?.selectAll('.node-ui')
+					.filter((d: any) => references.includes(d.id))
+					.style('opacity', 1);
+				this?.chart
+					?.selectAll('.edge')
+					.filter((d: any) => d.id === expression)
+					.style('display', 'block')
+					.style('opacity', 1);
+				selection.style('opacity', 1);
+			}
+		});
+
+		this.on('node-mouse-leave', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			const { data } = selection.datum();
+			if (data.type === NodeType.Observable && data.expression) {
+				this.resetOpacity();
+				this?.chart
+					?.selectAll('.edge')
+					.filter((d: any) => d.id === data.expression)
+					.style('display', 'none');
+			}
+		});
+
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			this.toggleNodeSelection(selection);
 		});
@@ -343,9 +428,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('background-click', () => {
-			// Reset opacity from focus:
-			this?.chart?.selectAll('.node-ui').style('opacity', 1);
-			this?.chart?.selectAll('.edge').style('opacity', 1);
+			this.resetOpacity();
 
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);

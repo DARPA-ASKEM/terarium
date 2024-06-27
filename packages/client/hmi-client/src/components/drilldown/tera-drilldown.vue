@@ -36,7 +36,7 @@
 				<template #actions>
 					<slot name="header-actions" />
 					<tera-operator-output-summary
-						v-if="outputSummary"
+						v-if="!isEmpty(outputSummary)"
 						:node="node"
 						@generate-output-summary="
 							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
@@ -52,20 +52,23 @@
 					/>
 				</template>
 			</tera-drilldown-header>
-			<tera-columnar-panel>
-				<template v-for="(tab, index) in tabs" :key="index">
-					<!--
+			<div class="flex overflow-hidden h-full">
+				<slot name="sidebar" />
+				<tera-columnar-panel class="flex-1">
+					<template v-for="(tab, index) in tabs" :key="index">
+						<!--
 						TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
 						if it was in the unselected tab. For now we are using v-if but we may want to
 						use css to hide the unselected tab content instead.
 					-->
-					<component :is="tab" v-if="selectedViewIndex === index" />
-				</template>
+						<component :is="tab" v-if="selectedViewIndex === index" />
+					</template>
 
-				<section v-if="slots.preview">
-					<slot name="preview" />
-				</section>
-			</tera-columnar-panel>
+					<section v-if="slots.preview">
+						<slot name="preview" />
+					</section>
+				</tera-columnar-panel>
+			</div>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
@@ -127,6 +130,9 @@ const selectedViewIndex = ref<number>(0);
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
+
+const selectedTab = computed(() => views.value[selectedViewIndex.value]);
+defineExpose({ selectedTab });
 
 const selectedOutputId = computed(() => {
 	if (props.node.active) {

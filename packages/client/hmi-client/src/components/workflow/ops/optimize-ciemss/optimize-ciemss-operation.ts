@@ -16,7 +16,6 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroup {
-	borderColour: string;
 	name: string;
 	parameter: string;
 	startTime: number;
@@ -25,6 +24,16 @@ export interface InterventionPolicyGroup {
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
+}
+
+export interface ConstraintGroup {
+	name: string; // Title of the group
+	targetVariable: string;
+	qoiMethod: ContextMethods;
+	riskTolerance: number;
+	threshold: number;
+	isMinimized: boolean;
+	isActive: boolean; // Denotes whether or not this should be used when user hits run.
 }
 
 export interface OptimizeCiemssOperationState extends BaseState {
@@ -37,23 +46,21 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Intervention policies
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
-	// Constraints
-	qoiMethod: ContextMethods;
-	targetVariables: string[];
-	riskTolerance: number;
-	threshold: number;
-	isMinimized: boolean;
+	// Constraints:
+	constraintGroups: ConstraintGroup[];
+	// Charts + Outputs:
 	chartConfigs: string[][];
 	inProgressOptimizeId: string;
-	inProgressForecastId: string;
-	forecastRunId: string;
+	inProgressPreForecastId: string;
+	preForecastRunId: string;
+	inProgressPostForecastId: string;
+	postForecastRunId: string;
 	optimizationRunId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	borderColour: '#cee2a4',
 	name: 'Policy bounds',
 	parameter: '',
 	startTime: 0,
@@ -62,6 +69,16 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	initialGuess: 0,
 	isActive: true,
 	paramValue: 0
+};
+
+export const defaultConstraintGroup: ConstraintGroup = {
+	name: 'Constraint',
+	qoiMethod: ContextMethods.max,
+	targetVariable: '',
+	riskTolerance: 5,
+	threshold: 1,
+	isMinimized: true,
+	isActive: true
 };
 
 export const OptimizeCiemssOperation: Operation = {
@@ -85,15 +102,13 @@ export const OptimizeCiemssOperation: Operation = {
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [blankInterventionPolicyGroup],
-			qoiMethod: ContextMethods.max,
-			targetVariables: [],
-			riskTolerance: 5,
-			threshold: 1,
-			isMinimized: true,
+			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
-			inProgressForecastId: '',
-			forecastRunId: '',
+			inProgressPostForecastId: '',
+			inProgressPreForecastId: '',
+			preForecastRunId: '',
+			postForecastRunId: '',
 			optimizationRunId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }

@@ -175,7 +175,7 @@ main {
 main > section {
 	display: flex;
 	flex: 1;
-	& > :deep(*:not(nav)) {
+	& > :deep(*:not(nav, i)) {
 		flex: 1;
 	}
 }
@@ -294,7 +294,7 @@ main:deep(.p-accordion-content > textarea) {
 main:deep(.artifact-amount) {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
 main:deep(.p-button.p-button-outlined) {

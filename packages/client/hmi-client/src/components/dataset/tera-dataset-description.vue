@@ -21,7 +21,7 @@
 				:documents="documents"
 				:asset-type="AssetType.Dataset"
 				:assetId="dataset?.id ?? ''"
-				@enriched="fetchAsset"
+				@enriched="emit('fetch-dataset')"
 			/>
 		</AccordionTab>
 		<AccordionTab header="Column information" v-if="!isClimateData && !isClimateSubset">
@@ -141,10 +141,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-function fetchAsset() {
-	emit('fetch-dataset');
 }
 
 onMounted(async () => {

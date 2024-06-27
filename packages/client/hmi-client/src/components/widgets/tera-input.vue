@@ -1,14 +1,17 @@
 <template>
 	<div class="flex" :label="label">
-		<label @click.self.stop="focusInput">{{ label }}</label>
+		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
 				ref="inputField"
+				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
+				@onFocusOut="emit('on-focus-out')"
 				:style="{ 'text-align': textAlign }"
 				@blur="unmask"
 				:type="getType"
+				:placeholder="placeholder"
 			/>
 		</main>
 	</div>
@@ -17,23 +20,26 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
+import { InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number;
+	modelValue: string | number | undefined;
 	label?: string;
 	errorMessage?: string;
+	disabled?: boolean;
+	type?: InputTypeHTMLAttribute | 'nist';
+	placeholder?: string;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:model-value', 'on-focus-out']);
 const inputField = ref<HTMLInputElement | null>(null);
-const attrs = useAttrs();
 const error = ref('');
 const maskedValue = ref('');
 
-const isNistType = attrs.type === 'nist';
-const textAlign = attrs.type === 'number' || isNistType ? 'right' : 'left';
-const getType = isNistType ? 'text' : (attrs.type as InputTypeHTMLAttribute);
+const isNistType = props.type === 'nist';
+const textAlign = props.type === 'number' || isNistType ? 'right' : 'left';
+const getType = isNistType ? 'text' : props.type;
+const getDisabled = props.disabled ?? false;
 
 const focusInput = () => {
 	inputField.value?.focus();
@@ -57,7 +63,7 @@ const updateValue = (event: Event) => {
 			error.value = 'Invalid number';
 		}
 	} else {
-		emit('update:modelValue', value);
+		emit('update:model-value', value);
 	}
 };
 
@@ -79,7 +85,7 @@ onMounted(() => {
 const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
-		emit('update:modelValue', nistToNumber(maskedValue.value));
+		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 };
 </script>

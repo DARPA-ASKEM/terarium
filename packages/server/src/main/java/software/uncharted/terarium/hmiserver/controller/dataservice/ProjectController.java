@@ -222,13 +222,10 @@ public class ProjectController {
 			// Set the metadata for the project. If we are unable to get the metadata, we
 			// default to empty values.
 			try {
-				final List<ProjectAsset> assets =
-						projectAssetService.findActiveAssetsForProject(project.getId(), assetTypes, permission);
-
 				final Map<String, String> metadata = new HashMap<>();
 
 				final Map<AssetType, Integer> counts = new EnumMap<>(AssetType.class);
-				for (final ProjectAsset asset : assets) {
+				for (final ProjectAsset asset : project.getProjectAssets()) {
 					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
 				}
 
@@ -438,7 +435,9 @@ public class ProjectController {
 	@PostMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> createProject(
-			@RequestParam("name") final String name, @RequestParam("description") final String description) {
+			@RequestParam("name") final String name,
+			@RequestParam("description") final String description,
+			@RequestParam(name = "thumbnail", defaultValue = "default") final String thumbnail) {
 
 		if (name == null || name.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.name-required"));
@@ -448,6 +447,7 @@ public class ProjectController {
 
 		Project project = (Project) new Project()
 				.setOverviewContent(WELCOME_MESSAGE.getBytes())
+				.setThumbnail(thumbnail)
 				.setUserId(userId)
 				.setName(name)
 				.setDescription(description);

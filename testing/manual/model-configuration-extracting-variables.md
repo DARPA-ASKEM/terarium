@@ -1,8 +1,6 @@
 ## Extract configuations from document and dataset
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -11,9 +9,9 @@ Estimated time to completion: [X] minutes
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
-3. Upload model `input_model.json`
-4. Upload or reuse document `41591_2020_Article_883.pdf`, if extraction are not working use `sidarthe_test.txt`
-5. Upload or resuse dataset `sirdata.csv`
+3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link)
+4. Upload or reuse document [41591_2020_Article_883.pdf](https://drive.google.com/file/d/1RrCxj__qqFSRHk5uIi_JJsFo8iC8dgYk/view?usp=drive_link), if extraction are not working use [sidarthe_test.txt](https://drive.google.com/file/d/1IyWJmE-v4o5ebJonwMc_nqNj9j96C8BE/view?usp=drive_link)
+5. Upload or resuse dataset [sirdata.csv](https://drive.google.com/file/d/1y1THGHIu8ebb9JdN3ZG12NwWcZtHPxzD/view?usp=drive_link)
 
 ### 2. Extracting configurations
 1. Wait for extractions to finish for uploaded document
@@ -25,6 +23,3 @@ Estimated time to completion: [X] minutes
 ### 3. Apply configuration values
 1. Under the suggested configurations table click the "apply configurations values" button
 2. Ensure that the configuration has been populated with the selected configuration's values
-
-### 4. End test
-1. logout of the application 

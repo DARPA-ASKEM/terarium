@@ -70,7 +70,7 @@ public class FrameworkController {
 
 		final Optional<ModelFramework> framework = frameworkService.getFramework(id);
 		if (framework.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Document %s not found", id));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Framework %s not found", id));
 		}
 		return ResponseEntity.ok(framework.get());
 	}

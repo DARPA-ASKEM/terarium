@@ -5,6 +5,6 @@
             background: $emphasis-lower;
         }
 
-        padding: 0.25rem 0.5rem;
+        padding: var(--gap-1) var(--gap-2);
     }
 }
