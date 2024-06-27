@@ -1,6 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { NotebookHistory, createNotebookFromCode } from '@/services/notebook';
-import { getModel } from '@/services/model';
+import { NotebookHistory } from '@/services/notebook';
 
 const DOCUMENTATION_URL =
 	'https://github.com/DARPA-ASKEM/beaker-kernel/blob/main/docs/contexts_mira_model_edit.md';
@@ -27,18 +26,5 @@ export const ModelEditOperation: Operation = {
 			hasCodeRun: false
 		};
 		return init;
-	},
-	createNotebook: async (state: ModelEditOperationState, value?: any[] | null) => {
-		const modelIdToLoad = value?.[0];
-		const outputModel = await getModel(modelIdToLoad);
-		const { code, llmQuery, llmThoughts } = state.notebookHistory?.[0] ?? {};
-		const notebook = createNotebookFromCode(
-			code ?? '',
-			'python3',
-			{ 'application/json': outputModel },
-			llmQuery,
-			llmThoughts
-		);
-		return notebook;
 	}
 };
