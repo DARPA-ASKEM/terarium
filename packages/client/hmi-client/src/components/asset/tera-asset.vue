@@ -6,50 +6,58 @@
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
 			'with-tabs': tabs.length > 1
 		}"
-		ref="headerRef"
 	>
-		<section>
-			<!-- put the buttons above the title if there is an overline -->
-			<div v-if="overline" class="vertically-center">
-				<span class="overline">{{ overline }}</span>
-				<slot name="edit-buttons" />
-			</div>
-			<!--For naming asset such as model or code file-->
-			<div class="vertically-center">
-				<slot name="name-input" />
-				<h4 v-if="!isNamingAsset">{{ name }}</h4>
-				<slot v-if="!overline" name="edit-buttons" />
-			</div>
-			<!--put model contributors here too-->
-			<span class="authors" v-if="authors">
-				<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-				<span v-html="authors" />
-			</span>
-			<div v-if="doi">
-				DOI:
-				<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
-			</div>
-			<div v-if="publisher" v-html="publisher" />
-			<!--created on: date-->
-			<div class="header-buttons">
-				<slot name="bottom-header-buttons" />
-			</div>
-			<slot name="summary" />
-			<TabView
-				v-if="tabs.length > 1"
-				:active-index="selectedTabIndex"
-				@tab-change="(e) => emit('tab-change', e)"
-			>
-				<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
-			</TabView>
-		</section>
-		<Button
-			v-if="featureConfig.isPreview"
-			icon="pi pi-times"
-			rounded
-			text
-			@click="emit('close-preview')"
-		/>
+		<!-- put the buttons above the title if there is an overline -->
+		<div v-if="overline" class="row">
+			<span class="overline">{{ overline }}</span>
+			<slot name="edit-buttons" />
+			<Button
+				v-if="featureConfig.isPreview"
+				class="close"
+				icon="pi pi-times"
+				rounded
+				text
+				@click="emit('close-preview')"
+			/>
+		</div>
+		<!--For naming asset such as model or code file-->
+		<div class="row">
+			<slot name="name-input" />
+			<h4 v-if="!isNamingAsset" :class="{ shrink: shrinkHeader }">
+				{{ name }}
+			</h4>
+			<slot v-if="!overline" name="edit-buttons" />
+			<Button
+				v-if="!overline && featureConfig.isPreview"
+				class="close"
+				icon="pi pi-times"
+				rounded
+				text
+				@click="emit('close-preview')"
+			/>
+		</div>
+		<!--put model contributors here too-->
+		<span v-if="authors" class="authors">
+			<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
+			<span v-html="authors" />
+		</span>
+		<div v-if="doi">
+			DOI:
+			<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+		</div>
+		<div v-if="publisher" v-html="publisher" />
+		<!--created on: date-->
+		<div class="header-buttons">
+			<slot name="bottom-header-buttons" />
+		</div>
+		<slot name="summary" />
+		<TabView
+			v-if="tabs.length > 1"
+			:active-index="selectedTabIndex"
+			@tab-change="(e) => emit('tab-change', e)"
+		>
+			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
+		</TabView>
 	</header>
 	<main v-if="!isLoading" @scroll="updateScrollPosition">
 		<section :class="overflowHiddenClass" ref="assetElementRef">
@@ -119,19 +127,10 @@ const props = defineProps({
 const emit = defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
-const headerRef = ref();
 const assetElementRef = ref();
 const scrollPosition = ref(0);
 
-// The header should be able to shrink and grow based on the scroll position
-// const shrinkHeader = computed(() => {
-// 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
-// 	return (
-// 		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
-// 		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
-// 		!props.isNamingAsset // Don't appear while creating an asset eg. a model
-// 	);
-// });
+const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
@@ -182,12 +181,11 @@ main > section {
 
 header {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	justify-content: space-between;
 	height: fit-content;
-	padding: var(--gap-small);
-	padding-left: var(--gap);
-	gap: var(--gap);
-	align-items: center;
+	padding: var(--gap-small) var(--gap);
+	gap: var(--gap-small);
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
 	border-bottom: 1px solid var(--surface-border-light);
@@ -198,16 +196,13 @@ header h4 {
 	align-self: center;
 	overflow: hidden;
 	text-align: left;
-	text-overflow: ellipsis;
-	/* white-space: nowrap; */
-	/* max-width: fit-content; */
 }
 
-header section {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-small);
-	align-self: center;
+header h4.shrink {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 60rem;
 }
 
 header > button {
@@ -230,11 +225,15 @@ header.with-tabs {
 	background-size: 25%, 100%;
 }
 
-.vertically-center {
+.row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--gap);
+}
+
+.close {
+	margin-left: auto;
 }
 
 main:deep(.p-inputtext.p-inputtext-sm) {
