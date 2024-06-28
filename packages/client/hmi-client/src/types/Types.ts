@@ -687,7 +687,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: Intervention[];
+    interventions?: InterventionPolicy[];
     dataset: DatasetLocation;
     engine: string;
 }
@@ -725,7 +725,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedStaticParameterInterventions?: InterventionPolicy[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -750,7 +750,30 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: Intervention[];
+    interventions?: InterventionPolicy[];
+}
+
+export interface DynamicIntervention {
+    parameter: string;
+    threshold: number;
+    value: number;
+}
+
+export interface Intervention {
+    name: string;
+    appliedTo: string;
+    staticInterventions: StaticIntervention[];
+    dynamicInterventions: DynamicIntervention[];
+}
+
+export interface InterventionPolicy extends TerariumAsset {
+    modelId: string;
+    interventions: Intervention[];
+}
+
+export interface StaticIntervention {
+    threshold: number;
+    value: number;
 }
 
 export interface DatasetLocation {
@@ -763,12 +786,6 @@ export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
     weight: number;
-}
-
-export interface Intervention extends TerariumAsset {
-    timestep: number;
-    value: number;
-    modelId: string;
 }
 
 export interface OptimizeExtra {
