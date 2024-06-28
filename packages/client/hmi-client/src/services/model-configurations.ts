@@ -52,6 +52,14 @@ export const getAsConfiguredModel = async (
 	return response?.data ?? null;
 };
 
+export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
+	const response = await API.post<ModelConfiguration>(
+		`model-configurations/as-configured-model/`,
+		model
+	);
+	return response?.data ?? null;
+};
+
 export const amrToModelConfiguration = async (model: Model): Promise<ModelConfiguration> => {
 	const response = await API.post<ModelConfiguration>(`/models/amr-to-model-configuration`, model);
 	return response?.data ?? null;

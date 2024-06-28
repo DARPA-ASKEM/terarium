@@ -73,16 +73,19 @@
 		</template>
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
-			<template #header-controls>
-				<Button
-					size="small"
-					:disabled="isSaveDisabled"
-					label="Run"
-					icon="pi pi-play"
-					@click="createConfiguration()"
-				/>
+			<template #header-controls-left>
+				<template v-if="!isEditingName">
+					<h4>{{ knobs.transientModelConfig.name }}</h4>
+					<Button v-if="!isEditingName" icon="pi pi-pencil" text @click.stop="onEditName" />
+				</template>
+				<template v-else>
+					<tera-input v-model="newName" />
+					<Button icon="pi pi-times" text @click.stop="isEditingName = false" />
+					<Button icon="pi pi-check" text @click.stop="onConfirmEditName" />
+				</template>
 			</template>
 			<template #header-controls-right>
+				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
 				<Button
 					class="mr-3"
 					:disabled="isSaveDisabled"
@@ -90,19 +93,30 @@
 					@click="() => createConfiguration()"
 				/>
 			</template>
+
 			<Accordion multiple :active-index="[0, 1, 2, 3]">
-				<AccordionTab header="Context">
-					<p class="text-sm mb-1">Name</p>
-					<InputText
-						class="context-item"
-						placeholder="Enter a name for this configuration"
-						v-model="knobs.transientModelConfig.name"
-					/>
-					<p class="text-sm mb-1 mt-3">Description</p>
+				<AccordionTab>
+					<template #header>
+						Description
+						<Button
+							v-if="!isEditingDescription"
+							icon="pi pi-pencil"
+							text
+							@click.stop="onEditDescription"
+						/>
+						<template v-else>
+							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
+							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
+						</template>
+					</template>
+					<p class="description text" v-if="!isEditingDescription">
+						{{ knobs.transientModelConfig.description }}
+					</p>
 					<Textarea
+						v-else
 						class="context-item"
 						placeholder="Enter a description"
-						v-model="knobs.transientModelConfig.description"
+						v-model="newDescription"
 					/>
 				</AccordionTab>
 				<AccordionTab header="Diagram">
@@ -285,7 +299,7 @@ import {
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getMMT, getModel, getModelConfigurations } from '@/services/model';
+import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
 	setInitialSource,
@@ -325,6 +339,10 @@ const props = defineProps<{
 }>();
 
 const isSidebarOpen = ref(true);
+const isEditingName = ref(false);
+const isEditingDescription = ref(false);
+const newName = ref('');
+const newDescription = ref('');
 
 const menuItems = computed(() => [
 	{
@@ -655,7 +673,7 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfigurationContext.value.tableData = await getModelConfigurations(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
 		isFetching.value = false;
 	}
 };
@@ -734,6 +752,43 @@ const applyConfigValues = (config: ModelConfiguration) => {
 		});
 	}
 	logger.success(`Configuration applied ${config.name}`);
+};
+
+const onEditName = () => {
+	isEditingName.value = true;
+	newName.value = knobs.value.transientModelConfig.name ?? '';
+};
+
+const onEditDescription = () => {
+	isEditingDescription.value = true;
+	newDescription.value = knobs.value.transientModelConfig.description ?? '';
+};
+
+const onConfirmEditName = () => {
+	knobs.value.transientModelConfig.name = newName.value;
+	isEditingName.value = false;
+};
+
+const onConfirmEditDescription = () => {
+	knobs.value.transientModelConfig.description = newDescription.value;
+	isEditingDescription.value = false;
+};
+
+const resetConfiguration = () => {
+	confirm.require({
+		header: 'Are you sure you want to reset the configuration?',
+		message: 'This will reset all values original values of the configuration.',
+		accept: () => {
+			const originalConfig = suggestedConfigurationContext.value.tableData.find(
+				(c) => c.id === selectedConfigId.value
+			);
+			if (originalConfig) {
+				applyConfigValues(originalConfig);
+			}
+		},
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel'
+	});
 };
 
 onMounted(async () => {
