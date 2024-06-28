@@ -1,21 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -99,7 +102,8 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public List<Observable> getObservables() {
-		if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+		if (this.getSemantics() == null || this.getSemantics().getOde() == null
+				|| this.getSemantics().getOde().getObservables() == null) {
 			return new ArrayList<Observable>();
 		}
 		return this.getSemantics().getOde().getObservables();
@@ -110,13 +114,14 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<ModelParameter> getParameters() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
-		} else {
-			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
-				return new ArrayList<ModelParameter>();
-			}
-			return this.getSemantics().getOde().getParameters();
+			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {
+			});
 		}
+		if (this.getSemantics() == null || this.getSemantics().getOde() == null
+				|| this.getSemantics().getOde().getParameters() == null) {
+			return new ArrayList<ModelParameter>();
+		}
+		return this.getSemantics().getOde().getParameters();
 	}
 
 	@JsonIgnore
@@ -124,9 +129,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public List<Initial> getInitials() {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
-			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
+			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {
+			});
 		} else {
-			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+			if (this.getSemantics() == null || this.getSemantics().getOde() == null
+					|| this.getSemantics().getOde().getInitials() == null) {
 				return new ArrayList<Initial>();
 			}
 			return this.getSemantics().getOde().getInitials();
