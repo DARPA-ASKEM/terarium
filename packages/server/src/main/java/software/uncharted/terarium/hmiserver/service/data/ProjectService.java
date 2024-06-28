@@ -43,7 +43,7 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getActiveProjects(final List<UUID> ids) {
-		return projectRepository.findAllByIdInAndDeletedOnIsNull(ids);
+		return projectRepository.findByIdsWithAssets(ids);
 	}
 
 	@Observed(name = "function_profile")
