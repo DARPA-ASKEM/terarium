@@ -59,13 +59,16 @@
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
-	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<section :class="overflowHiddenClass" ref="assetElementRef">
+	<main v-if="!isLoading" ref="assetElementRef" @scroll="updateScrollPosition">
+		<section :class="overflowHiddenClass">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav v-if="showTableOfContents" :element-with-nav-ids="assetElementRef" />
+			<tera-asset-nav
+				v-if="showTableOfContents && assetElementRef"
+				:element-with-nav-ids="assetElementRef"
+			/>
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />

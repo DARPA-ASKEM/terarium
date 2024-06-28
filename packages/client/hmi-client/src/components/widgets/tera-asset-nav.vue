@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
 const props = defineProps<{
 	elementWithNavIds: HTMLElement;
@@ -25,7 +25,29 @@ async function scrollTo(id: string) {
 	const element = props.elementWithNavIds.querySelector(`#${id}`);
 	if (!element) return;
 	element.scrollIntoView({ behavior: 'smooth' });
-	chosenItem.value = id;
+}
+
+function updateChosenItem() {
+	let closestItem: string | null = null;
+	let smallestDistance = props.elementWithNavIds.scrollHeight;
+	const containerTop = props.elementWithNavIds.getBoundingClientRect().top;
+
+	navIds.value.forEach((_, id) => {
+		const element = props.elementWithNavIds.querySelector(`#${id}`)?.parentElement?.parentElement; // Gets accordion panel
+		if (!element) return;
+
+		const elementTop = Math.abs(element.getBoundingClientRect().top);
+		const elementBottom = element.getBoundingClientRect().bottom - 10; // Extend the bottom slightly
+
+		if (
+			elementBottom >= containerTop && // Make sure element is below the scrollbar
+			elementTop < smallestDistance // Update closestItem if this element is closer than the previous closest
+		) {
+			smallestDistance = elementTop;
+			closestItem = id;
+		}
+	});
+	chosenItem.value = closestItem;
 }
 
 onMounted(async () => {
@@ -49,6 +71,11 @@ onMounted(async () => {
 		// Add to map (HTML id -> navigation option/header name)
 		navIds.value.set(id, text);
 	});
+	props.elementWithNavIds.addEventListener('scroll', updateChosenItem);
+});
+
+onUnmounted(() => {
+	props.elementWithNavIds.removeEventListener('scroll', updateChosenItem);
 });
 </script>
 
