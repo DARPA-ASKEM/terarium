@@ -11,4 +11,12 @@ public class DynamicIntervention {
 	private Number threshold;
 	private Number value;
 
+	@Override
+	public DynamicIntervention clone() {
+		DynamicIntervention clone = new DynamicIntervention();
+		clone.parameter = this.parameter;
+		clone.threshold = this.threshold;
+		clone.value = this.value;
+		return clone;
+	}
 }

@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.simulationservice.intervent
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -31,6 +32,12 @@ public class InterventionPolicy extends TerariumAsset {
 		final InterventionPolicy clone = new InterventionPolicy();
 		super.cloneSuperFields(clone);
 		clone.setModelId(this.modelId);
+		if (interventions != null) {
+			clone.setInterventions(new ArrayList<>());
+			for (final Intervention intervention : interventions) {
+				clone.getInterventions().add(intervention.clone());
+			}
+		}
 		return clone;
 	}
 }
