@@ -202,7 +202,9 @@ header h4.shrink {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 60rem;
+	flex-grow: 1;
+	flex-shrink: 1;
+	max-width: fit-content;
 }
 
 header > button {
