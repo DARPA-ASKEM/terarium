@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
@@ -65,7 +65,7 @@ public class InterventionController {
 												@ArraySchema(
 														schema =
 																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Intervention.class)))),
+																		implementation = InterventionPolicy.class)))),
 				@ApiResponse(
 						responseCode = "204",
 						description = "There are no interventions found and no errors occurred",
@@ -75,11 +75,11 @@ public class InterventionController {
 						description = "There was an issue retrieving interventions from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<List<Intervention>> getInterventions(
+	public ResponseEntity<List<InterventionPolicy>> getInterventions(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
 
-		final List<Intervention> interventions = interventionService.getPublicNotTemporaryAssets(page, pageSize);
+		final List<InterventionPolicy> interventions = interventionService.getPublicNotTemporaryAssets(page, pageSize);
 		if (interventions.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
@@ -99,20 +99,20 @@ public class InterventionController {
 										mediaType = MediaType.APPLICATION_JSON_VALUE,
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Intervention.class))),
+														implementation = InterventionPolicy.class))),
 				@ApiResponse(responseCode = "204", description = "There was no intervention found", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue retrieving the intervention from the data store",
 						content = @Content)
 			})
-	public ResponseEntity<Intervention> getIntervention(
+	public ResponseEntity<InterventionPolicy> getIntervention(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		final Optional<Intervention> intervention = interventionService.getAsset(id, permission);
+		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id, permission);
 		return intervention.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent()
 				.build());
 	}
@@ -130,14 +130,14 @@ public class InterventionController {
 										mediaType = MediaType.APPLICATION_JSON_VALUE,
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Intervention.class))),
+														implementation = InterventionPolicy.class))),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue creating the intervention",
 						content = @Content)
 			})
-	public ResponseEntity<Intervention> createIntervention(
-			@RequestBody final Intervention item,
+	public ResponseEntity<InterventionPolicy> createIntervention(
+			@RequestBody final InterventionPolicy item,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
@@ -163,22 +163,22 @@ public class InterventionController {
 										mediaType = MediaType.APPLICATION_JSON_VALUE,
 										schema =
 												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Intervention.class))),
+														implementation = InterventionPolicy.class))),
 				@ApiResponse(responseCode = "404", description = "Intervention could not be found", content = @Content),
 				@ApiResponse(
 						responseCode = "500",
 						description = "There was an issue updating the intervention",
 						content = @Content)
 			})
-	public ResponseEntity<Intervention> updateIntervention(
+	public ResponseEntity<InterventionPolicy> updateIntervention(
 			@PathVariable("id") final UUID id,
-			@RequestBody final Intervention intervention,
+			@RequestBody final InterventionPolicy intervention,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			intervention.setId(id);
-			final Optional<Intervention> updated = interventionService.updateAsset(intervention, permission);
+			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {

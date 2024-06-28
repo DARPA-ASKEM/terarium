@@ -1,13 +1,16 @@
-package software.uncharted.terarium.hmiserver.models.simulationservice.parts;
+package software.uncharted.terarium.hmiserver.models.simulationservice.interventions;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-
-import java.util.UUID;
 
 /** Used to specify any interventions provided by the AMR and given to the simulation-service. */
 @EqualsAndHashCode(callSuper = true)
@@ -15,24 +18,19 @@ import java.util.UUID;
 @TSModel
 @Accessors(chain = true)
 @Entity
-public class Intervention extends TerariumAsset {
-	private Integer timestep;
-	private Double value;
+public class InterventionPolicy extends TerariumAsset {
 
 	private UUID modelId;
 
-	@Override
-	public String toString() {
-		return " { name: " + this.getName() + " timestep: " + timestep.toString() + " value: " + value.toString() + " } ";
-	}
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private List<Intervention> interventions;
 
 	@Override
-	public Intervention clone() {
-		final Intervention clone = new Intervention();
+	public InterventionPolicy clone() {
+		final InterventionPolicy clone = new InterventionPolicy();
 		super.cloneSuperFields(clone);
 		clone.setModelId(this.modelId);
-		clone.setTimestep(this.timestep);
-		clone.setValue(this.value);
 		return clone;
 	}
 }

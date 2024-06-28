@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -28,7 +28,7 @@ public class SimulationRequest implements Serializable {
 	private String engine;
 
 	@TSOptional
-	private List<Intervention> interventions;
+	private List<InterventionPolicy> interventions;
 
 	@Override
 	public SimulationRequest clone() {
@@ -43,7 +43,7 @@ public class SimulationRequest implements Serializable {
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);
 		clone.setInterventions(new ArrayList<>());
-		for (final Intervention intervention : this.interventions) {
+		for (final InterventionPolicy intervention : this.interventions) {
 			clone.getInterventions()
 					.add(intervention.clone());
 		}
