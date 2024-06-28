@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
