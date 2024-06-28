@@ -150,24 +150,6 @@
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-			<Accordion multiple :active-index="[0]" class="pb-6">
-				<AccordionTab>
-					<template #header> Interventions </template>
-					<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
-					<tera-model-intervention
-						v-for="(intervention, idx) of interventions"
-						:key="intervention.name + intervention.timestep + intervention.value"
-						:intervention="intervention"
-						:parameter-options="Object.keys(mmt.parameters)"
-						@update-value="
-							(data: Intervention) => {
-								interventions[idx] = data;
-							}
-						"
-						@delete="interventions.splice(idx, 1)"
-					/>
-				</AccordionTab>
-			</Accordion>
 
 			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
@@ -303,12 +285,10 @@ import {
 	setParameterSource,
 	setParameterDistributions,
 	getAsConfiguredModel,
-	getInterventions,
-	setInterventions,
 	amrToModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -316,7 +296,6 @@ import { logger } from '@/utils/logger';
 import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
-import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -368,7 +347,6 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-const interventions = ref<Intervention[]>([]);
 const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
 
@@ -574,7 +552,6 @@ const handleModelPreview = async (data: any) => {
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
 	const modelConfig = await amrToModelConfiguration(model.value);
-	setInterventions(modelConfig, interventions.value);
 	knobs.value.transientModelConfig = modelConfig;
 };
 
@@ -613,14 +590,6 @@ const numInitials = computed(() => {
 	if (!mmt.value) return 0;
 	return Object.keys(mmt.value.initials).length;
 });
-
-const addIntervention = () => {
-	interventions.value.push({
-		name: '',
-		timestep: 1,
-		value: 1
-	});
-};
 
 const downloadConfiguredModel = async (
 	configuration: ModelConfiguration = knobs.value.transientModelConfig
@@ -687,7 +656,6 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		interventions.value = getInterventions(knobs.value.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -720,7 +688,6 @@ const onSelectConfiguration = (configuration: ModelConfiguration) => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
-	interventions.value = getInterventions(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -789,16 +756,6 @@ watch(
 		mmtParams.value = response.template_params;
 	},
 	{ immediate: true, deep: true }
-);
-
-// A very temporary way of doing interventions until we do a redesign
-watch(
-	() => interventions.value,
-	() => {
-		if (!isEmpty(interventions.value))
-			setInterventions(knobs.value.transientModelConfig, interventions.value);
-	},
-	{ deep: true }
 );
 
 watch(
