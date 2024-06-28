@@ -295,7 +295,7 @@ import {
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getMMT, getModel, getModelConfigurations } from '@/services/model';
+import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	createModelConfiguration,
 	setInitialSource,
@@ -668,7 +668,7 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfigurationContext.value.tableData = await getModelConfigurations(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
 		isFetching.value = false;
 	}
 };
