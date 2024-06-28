@@ -35,7 +35,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSi
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 import software.uncharted.terarium.hmiserver.models.simulationservice.OptimizeRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -169,6 +168,9 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
@@ -177,7 +179,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			}
 			allInterventions.addAll(modelInterventions);
 			request.payload.setInterventions(allInterventions);
-		}
+		}*/
 
 		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
 		final JobResponse res = simulationCiemssServiceProxy
@@ -259,6 +261,9 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
@@ -268,6 +273,8 @@ public class SimulationRequestController implements SnakeCaseController {
 			allInterventions.addAll(modelInterventions);
 			request.payload.setInterventions(allInterventions);
 		}
+		*/
+
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
@@ -298,6 +305,8 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
@@ -307,6 +316,8 @@ public class SimulationRequestController implements SnakeCaseController {
 			allInterventions.addAll(modelInterventions);
 			request.payload.setFixedStaticParameterInterventions(allInterventions);
 		}
+
+		 */
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
@@ -329,7 +340,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy
@@ -352,7 +363,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy
