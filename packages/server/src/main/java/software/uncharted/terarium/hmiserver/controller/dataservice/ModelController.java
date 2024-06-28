@@ -295,12 +295,14 @@ public class ModelController {
 
 			final Model updatedModel = updated.get();
 
-			try {
-				final String amr = objectMapper.writeValueAsString(updatedModel);
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
-				modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-			} catch (final Exception e) {
-				log.warn("Unable to update embeddings for model " + model.getId(), e);
+			if (updatedModel.getPublicAsset() && !updatedModel.getTemporary()) {
+				try {
+					final String amr = objectMapper.writeValueAsString(updatedModel);
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
+					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
+				} catch (final Exception e) {
+					log.warn("Unable to update embeddings for model " + model.getId(), e);
+				}
 			}
 
 			return ResponseEntity.ok(updatedModel);
@@ -360,12 +362,14 @@ public class ModelController {
 					null, null);
 			modelConfigurationService.createAsset(modelConfiguration, permission);
 
-			try {
-				final String amr = objectMapper.writeValueAsString(model);
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
-				modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-			} catch (final Exception e) {
-				log.warn("Unable to generate embeddings for model " + model.getId(), e);
+			if (model.getPublicAsset() && !model.getTemporary()) {
+				try {
+					final String amr = objectMapper.writeValueAsString(model);
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
+					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
+				} catch (final Exception e) {
+					log.warn("Unable to generate embeddings for model " + model.getId(), e);
+				}
 			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);

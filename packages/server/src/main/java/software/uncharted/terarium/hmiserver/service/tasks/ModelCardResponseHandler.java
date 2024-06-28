@@ -69,7 +69,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			documentAssetService.updateAsset(document, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 
 			// if marked to update embeddings, do so
-			if (props.updateEmbeddings) {
+			if (props.updateEmbeddings && document.getPublicAsset() && !document.getTemporary()) {
 				final String cardText = objectMapper.writeValueAsString(card.response);
 				try {
 					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
