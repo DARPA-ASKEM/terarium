@@ -1,12 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.gollm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +8,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -30,6 +21,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -88,58 +91,42 @@ public class GoLLMController {
 	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "400",
-						description = "The provided document text is too long",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createModelCardTask(
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-		if (document.isEmpty()) {
+		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+		if (documentOpt.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
+		final DocumentAsset document = documentOpt.get();
+
 		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+		if (document.getText() == null || document.getText().isEmpty()) {
 			log.warn(String.format("Document %s has no text to send", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		// check for input length
-		if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+		if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
 			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
 		}
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+		input.setResearchPaper(document.getText());
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -158,6 +145,7 @@ public class GoLLMController {
 
 		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 		props.setDocumentId(documentId);
+		props.setUpdateEmbeddings(document.getPublicAsset() && !document.getTemporary()); // update search embeddings
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;
@@ -186,26 +174,11 @@ public class GoLLMController {
 	@GetMapping("/configure-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Configure Model` task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "document-id", required = true) final UUID documentId,
@@ -213,8 +186,8 @@ public class GoLLMController {
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
@@ -295,30 +268,12 @@ public class GoLLMController {
 	@PostMapping("/configure-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "400",
-						description = "The provided document text is too long",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
+			@ApiResponse(responseCode = "404", description = "The provided model or document arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
 			@RequestParam(name = "model-id", required = true) final UUID modelId,
 			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
@@ -327,8 +282,8 @@ public class GoLLMController {
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId,
 			@RequestBody(required = false) final ConfigFromDatasetBody body) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		// Grab the datasets
 		final List<String> datasets = new ArrayList<>();
@@ -399,8 +354,7 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
-		final ConfigureFromDatasetResponseHandler.Properties props =
-				new ConfigureFromDatasetResponseHandler.Properties();
+		final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
 		props.setDatasetIds(datasetIds);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
@@ -432,34 +386,19 @@ public class GoLLMController {
 	@GetMapping("/compare-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Compare Models` task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "404", description = "The provided model arguments are not found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
 			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
 			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 			@RequestParam(name = "node-id", required = false) final UUID nodeId,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		final List<String> modelCards = new ArrayList<>();
 		for (final UUID modelId : modelIds) {
@@ -535,30 +474,12 @@ public class GoLLMController {
 	@PostMapping("/generate-summary")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "422",
-						description = "The request was interrupted while waiting for a response",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "The request was timed out while waiting for a response",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
+			@ApiResponse(responseCode = "422", description = "The request was interrupted while waiting for a response", content = @Content),
+			@ApiResponse(responseCode = "503", description = "The request was timed out while waiting for a response", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+	})
 	public ResponseEntity<TaskResponse> createGenerateResponseTask(
 			@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 			@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
@@ -609,22 +530,10 @@ public class GoLLMController {
 
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a GoLLM task")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched cancellation successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Void.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the cancellation",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Dispatched cancellation successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the cancellation", content = @Content)
+	})
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
