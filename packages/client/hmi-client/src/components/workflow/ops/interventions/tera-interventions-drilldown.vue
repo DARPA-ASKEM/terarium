@@ -1,5 +1,10 @@
 <template>
-	<tera-drilldown :node="node" @on-close-clicked="emit('close')">
+	<tera-drilldown
+		:node="node"
+		@on-close-clicked="emit('close')"
+		@update-state="(state: any) => emit('update-state', state)"
+		@update:selection="onSelection"
+	>
 		<template #sidebar>
 			<tera-slider-panel
 				v-model:is-open="isSidebarOpen"
@@ -13,7 +18,12 @@
 						</div>
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
-								<tera-interventions-policy-card :interventionPolicy="policy" :selected="true" />
+								<tera-interventions-policy-card
+									:interventionPolicy="policy"
+									:selected="selectedPolicyId === policy.id"
+									@click="onUsePolicy(policy)"
+									@use="onUsePolicy(policy)"
+								/>
 							</li>
 						</ul>
 						<tera-progress-spinner v-else is-centered />
@@ -41,6 +51,15 @@
 						/>
 					</li>
 				</ul>
+				<span>
+					<Button
+						text
+						label="Add intervention"
+						@click="console.log('add')"
+						icon="pi pi-plus"
+						size="small"
+					/>
+				</span>
 			</tera-drilldown-section>
 			<div>test2</div>
 		</tera-columnar-panel>
@@ -61,6 +80,7 @@ import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { useConfirm } from 'primevue/useconfirm';
 import TeraInterventionsPolicyCard from './tera-interventions-policy-card.vue';
 import {
 	DummyIntervention,
@@ -78,7 +98,8 @@ const interventionPolicies: DummyInterventionPolicy[] = [
 		createdOn: new Date(),
 		modelId: 'model1',
 		values: [
-			{ name: 'Start masking', parameterId: 'beta', setting: [{ threshold: 0.1, timestep: 1 }] }
+			{ name: 'Start masking', parameterId: 'beta', setting: [{ threshold: 0.1, timestep: 1 }] },
+			{ name: 'End masking', parameterId: 'beta', setting: [{ threshold: 0.1, timestep: 1 }] }
 		]
 	},
 	{
@@ -102,6 +123,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output']);
 
+const confirm = useConfirm();
 interface BasicKnobs {
 	transientInterventionPolicy: DummyInterventionPolicy;
 }
@@ -124,6 +146,10 @@ const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value.filter((policy) =>
 		policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
 	)
+);
+const selectedOutputId = ref<string>('');
+const selectedPolicyId = computed(
+	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
 const initialize = async () => {
@@ -185,6 +211,19 @@ const onUpdate = (intervention: DummyIntervention, index: number) => {
 	knobs.value.transientInterventionPolicy.values[index] = cloneDeep(intervention);
 };
 
+const onSelection = (id: string) => {
+	emit('select-output', id);
+};
+
+const onUsePolicy = (policy: DummyInterventionPolicy) => {
+	confirm.require({
+		header: 'Are you sure you want to use this intervention policy?',
+		message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
+		accept: () => applyInterventionPolicy(policy),
+		acceptLabel: 'Confirm',
+		rejectLabel: 'Cancel'
+	});
+};
 watch(
 	() => knobs.value,
 	async () => {
@@ -193,6 +232,16 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.active,
+	() => {
+		if (props.node.active) {
+			selectedOutputId.value = props.node.active;
+		}
+	},
+	{ immediate: true }
 );
 
 onMounted(() => {
