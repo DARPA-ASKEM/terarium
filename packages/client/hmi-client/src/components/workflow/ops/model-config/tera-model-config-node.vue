@@ -12,11 +12,13 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
+import { postAsConfiguredModel } from '@/services/model-configurations';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
@@ -47,6 +49,20 @@ watch(
 				initialSemanticList: []
 			};
 			emit('update-state', state);
+		}
+
+		if (modelInputs?.[0]?.value?.[0]) {
+			const modelId = modelInputs?.[0]?.value?.[0];
+			getModelConfigurationsForModel(modelId).then((modelConfigurations) => {
+				if (isEmpty(modelConfigurations)) {
+					// Create a model configuration if it does not exist
+					getModel(modelId).then((model) => {
+						if (model) {
+							postAsConfiguredModel(model);
+						}
+					});
+				}
+			});
 		}
 
 		// If all document inputs are connected, add a new document input port
