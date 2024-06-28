@@ -213,7 +213,7 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else if (obj[key]) {
+		} else {
 			obj[key] = value;
 		}
 	}
