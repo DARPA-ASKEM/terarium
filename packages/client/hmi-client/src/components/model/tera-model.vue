@@ -56,7 +56,12 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import { updateModelConfiguration } from '@/services/model-configurations';
-import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
+import {
+	getModel,
+	getModelConfigurationsForModel,
+	isModelEmpty,
+	updateModel
+} from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -183,7 +188,7 @@ async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 
 async function fetchConfigurations() {
 	if (model.value) {
-		let tempConfigurations = await getModelConfigurations(model.value.id);
+		let tempConfigurations = await getModelConfigurationsForModel(model.value.id);
 
 		// Ensure that we always have a "default config" model configuration
 		if (useProjects().hasEditPermission()) {
@@ -195,7 +200,7 @@ async function fetchConfigurations() {
 				// await addDefaultConfiguration(model.value);
 				setTimeout(async () => {
 					// elastic search might still not update in time
-					tempConfigurations = await getModelConfigurations(model.value?.id!);
+					tempConfigurations = await getModelConfigurationsForModel(model.value?.id!);
 					modelConfigurations.value = tempConfigurations;
 				}, 800);
 				return;
