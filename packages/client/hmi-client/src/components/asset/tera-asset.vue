@@ -64,7 +64,6 @@
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-
 			<nav v-if="showTableOfContents">
 				<a
 					v-for="[id, navOption] in navIds"
@@ -81,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType, useSlots } from 'vue';
+import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
@@ -158,7 +157,7 @@ const tabs = computed(() => {
 	return [];
 });
 
-async function scrollTo(id: string) {
+function scrollTo(id: string) {
 	const element = assetElementRef.value?.querySelector(`#${id}`);
 	if (!element) return;
 	element.scrollIntoView({ behavior: 'smooth' });
@@ -194,8 +193,9 @@ function onScroll(event: Event) {
 
 watch(
 	() => assetElementRef.value,
-	() => {
+	async () => {
 		if (!assetElementRef.value || !props.showTableOfContents) return;
+		await nextTick();
 
 		// Find all the headers to navigate to and assign them an id
 		const headers = assetElementRef.value.querySelectorAll('.p-accordion-header > a');
@@ -256,11 +256,11 @@ nav {
 	position: sticky;
 	top: 0;
 	height: fit-content;
-}
 
-.chosen-item {
-	font-weight: var(--font-weight-semibold);
-	color: var(--primary-color);
+	& a.chosen-item {
+		font-weight: var(--font-weight-semibold);
+		color: var(--primary-color);
+	}
 }
 
 header {
