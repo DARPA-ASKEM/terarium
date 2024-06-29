@@ -4,6 +4,7 @@
   -->
 <template>
 	<tera-asset
+		:id="assetId"
 		:feature-config="featureConfig"
 		:name="document?.name ?? ''"
 		:overline="document?.source ?? ''"

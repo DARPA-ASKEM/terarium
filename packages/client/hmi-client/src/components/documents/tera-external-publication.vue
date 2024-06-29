@@ -1,6 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
+		:id="doc.gddId"
 		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"

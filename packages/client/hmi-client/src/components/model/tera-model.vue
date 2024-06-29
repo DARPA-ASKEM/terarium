@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"

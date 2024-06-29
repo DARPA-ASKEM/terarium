@@ -1,7 +1,6 @@
 <template>
 	<header
 		v-if="showHeader"
-		id="asset-top"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
 			'with-tabs': tabs.length > 1
@@ -59,16 +58,23 @@
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
-	<main v-if="!isLoading" ref="assetElementRef" @scroll="updateScrollPosition">
-		<section :class="overflowHiddenClass">
+	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll">
+		<section :class="{ 'overflow-hidden': overflowHidden }">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav
-				v-if="showTableOfContents && assetElementRef"
-				:element-with-nav-ids="assetElementRef"
-			/>
+
+			<nav v-if="showTableOfContents">
+				<a
+					v-for="[id, navOption] in navIds"
+					:class="{ 'chosen-item': id === chosenItem }"
+					:key="id"
+					@click="scrollTo(id)"
+				>
+					{{ navOption }}
+				</a>
+			</nav>
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
@@ -84,9 +90,12 @@ import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
-import TeraAssetNav from '../widgets/tera-asset-nav.vue';
 
 const props = defineProps({
+	id: {
+		type: String,
+		default: ''
+	},
 	name: {
 		type: String,
 		default: ''
@@ -130,37 +139,92 @@ const props = defineProps({
 const emit = defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
-const assetElementRef = ref();
-const scrollPosition = ref(0);
-
-const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
-
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
-const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
+const assetElementRef = ref<HTMLElement | null>(null);
+const scrollPosition = ref(0);
+const navIds = ref<Map<string, string>>(new Map());
+const chosenItem = ref<string | null>(null);
 
-function updateScrollPosition(event) {
-	scrollPosition.value = event?.currentTarget.scrollTop;
-}
-
+const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 const tabs = computed(() => {
 	if (slots.tabs?.()) {
 		if (slots.tabs().length === 1) {
 			// if there is only 1 component we don't need to know the tab name and we can render it.
 			return slots.tabs();
 		}
-
 		return slots.tabs().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
 });
 
+async function scrollTo(id: string) {
+	const element = assetElementRef.value?.querySelector(`#${id}`);
+	if (!element) return;
+	element.scrollIntoView({ behavior: 'smooth' });
+}
+
+function onScroll(event: Event) {
+	// Update scroll position
+	scrollPosition.value = (event?.currentTarget as HTMLElement).scrollTop;
+
+	// Update current nav item
+	if (!assetElementRef.value) return;
+	let closestItem: string | null = null;
+	let smallestDistance = assetElementRef.value.scrollHeight;
+	const containerTop = assetElementRef.value.getBoundingClientRect().top;
+
+	navIds.value.forEach((_, id) => {
+		const element = assetElementRef.value?.querySelector(`#${id}`)?.parentElement?.parentElement; // Gets accordion panel
+		if (!element) return;
+
+		const elementTop = Math.abs(element.getBoundingClientRect().top);
+		const elementBottom = element.getBoundingClientRect().bottom - 10; // Extend the bottom slightly
+
+		if (
+			elementBottom >= containerTop && // Make sure element is below the scrollbar
+			elementTop < smallestDistance // Update closestItem if this element is closer than the previous closest
+		) {
+			smallestDistance = elementTop;
+			closestItem = id;
+		}
+	});
+	chosenItem.value = closestItem;
+}
+
+watch(
+	() => assetElementRef.value,
+	() => {
+		if (!assetElementRef.value || !props.showTableOfContents) return;
+
+		// Find all the headers to navigate to and assign them an id
+		const headers = assetElementRef.value.querySelectorAll('.p-accordion-header > a');
+		if (!headers) return;
+
+		headers.forEach((header) => {
+			// Extract header name
+			const textNodes = Array.from(header.childNodes).filter(
+				(node) => node.nodeType === Node.TEXT_NODE
+			);
+			let text = textNodes.map((node) => node.textContent).join('');
+			if (!text) {
+				const span = header.querySelector('span');
+				if (span?.textContent) text = span.textContent;
+			}
+			if (!text) return;
+			// Inject id into header based on header name
+			const id = `header-nav-${text.replaceAll(' ', '-').trim()}`;
+			header.setAttribute('id', id);
+			// Add to map (HTML id -> navigation option/header name)
+			navIds.value.set(id, text);
+		});
+	}
+);
+
 // Reset the scroll position to the top on asset change
 watch(
-	() => props.name,
-	() => {
-		document.getElementById('asset-top')?.scrollIntoView();
-	}
+	() => props.id,
+	() => assetElementRef.value?.scrollIntoView()
 );
 </script>
 
@@ -180,6 +244,23 @@ main > section {
 	& > :deep(*:not(nav, i)) {
 		flex: 1;
 	}
+}
+
+nav {
+	display: flex;
+	flex-direction: column;
+	width: fit-content;
+	gap: 1rem;
+	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
+	/* Responsible for stickiness */
+	position: sticky;
+	top: 0;
+	height: fit-content;
+}
+
+.chosen-item {
+	font-weight: var(--font-weight-semibold);
+	color: var(--primary-color);
 }
 
 header {

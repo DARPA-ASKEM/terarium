@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"

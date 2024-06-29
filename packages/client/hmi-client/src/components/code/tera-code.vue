@@ -1,5 +1,5 @@
 <template>
-	<tera-asset :is-loading="isLoading" overflow-hidden :show-header="false">
+	<tera-asset :id="assetId" :is-loading="isLoading" overflow-hidden :show-header="false">
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
 			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
 			<div class="code-asset-editor">

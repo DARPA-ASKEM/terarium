@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="useProjects().activeProject.value?.id"
 		:name="useProjects().activeProject.value?.name"
 		:authors="useProjects().activeProject.value?.authors?.sort().join(', ')"
 		:is-naming-asset="isRenamingProject"
