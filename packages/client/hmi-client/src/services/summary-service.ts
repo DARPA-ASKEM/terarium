@@ -3,7 +3,11 @@ import type { Summary } from '@/types/Types';
 
 type SummarizationMode = 'ASYNC' | 'SYNC';
 export const createLLMSummary = async (prompt: string, mode: SummarizationMode = 'ASYNC') => {
-	const response = API.post(`/gollm/generate-summary?mode=${mode}`, prompt);
+	const response = API.post(`/gollm/generate-summary?mode=${mode}`, prompt, {
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
 	return response;
 };
 
