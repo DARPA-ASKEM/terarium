@@ -152,7 +152,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import type { Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -168,6 +168,8 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { b64DecodeUnicode } from '@/utils/binary';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -191,12 +193,20 @@ const sampleAgentQuestions = [
 
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
-const llmAnswer = ref('');
+const compareModelsTaskId = ref<string>('');
+const compareModelsTaskOutput = ref<string>('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
+
+const llmAnswer = computed(() => {
+	if (!compareModelsTaskOutput.value) return '';
+	const str = b64DecodeUnicode(compareModelsTaskOutput.value);
+	const parsedValue = JSON.parse(str);
+	return parsedValue.response;
+});
 
 const modelCardsToCompare = computed(() =>
 	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
@@ -292,12 +302,6 @@ function appendCode(data: any) {
 	else logger.error('No code to append');
 }
 
-function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
-	compareModels(modelIds, workflowId, nodeId).then((response) => {
-		llmAnswer.value = response.response;
-	});
-}
-
 async function buildJupyterContext() {
 	if (modelsToCompare.value.length < 2) {
 		logger.warn('Cannot build Jupyter context without models');
@@ -325,6 +329,20 @@ async function buildJupyterContext() {
 		logger.error(`Error initializing Jupyter session: ${error}`);
 	}
 }
+
+async function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
+	const taskRes = await compareModels(modelIds, workflowId, nodeId);
+	compareModelsTaskId.value = taskRes.id;
+	if (taskRes.status === TaskStatus.Success) {
+		compareModelsTaskOutput.value = taskRes.output;
+	}
+}
+
+useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
+	if (!event.data || event.data.id !== compareModelsTaskId.value) return;
+	if (event.data.status !== TaskStatus.Success) return;
+	compareModelsTaskOutput.value = event.data.output;
+});
 
 onMounted(async () => {
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
