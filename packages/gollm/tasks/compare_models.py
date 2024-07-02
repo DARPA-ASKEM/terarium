@@ -20,7 +20,7 @@ def main():
         input_model = ModelCompareModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = compare_models(model_cards=input_model.model_cards)
+        response = compare_models(model_cards=input_model.cards)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

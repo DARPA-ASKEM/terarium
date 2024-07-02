@@ -1,9 +1,7 @@
 import API, { FatalError, TaskEventHandlers, TaskHandler } from '@/api/api';
 import type { TaskResponse } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
-import { CompareModelsResponseType } from '@/types/common';
 import { logger } from '@/utils/logger';
-import { b64DecodeUnicode } from '@/utils/binary';
 
 /**
  * Fetches model card data from the server and wait for task to finish.
@@ -100,47 +98,15 @@ export async function compareModels(
 	modelIds: string[],
 	workflowId?: string,
 	nodeId?: string
-): Promise<CompareModelsResponseType> {
-	let resolve;
-	let reject;
-
-	const promise = new Promise<CompareModelsResponseType>((res, rej) => {
-		resolve = res;
-		reject = rej;
+): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/compare-models', {
+		params: {
+			'model-ids': modelIds.join(','),
+			'workflow-id': workflowId,
+			'node-id': nodeId
+		}
 	});
-
-	try {
-		const response = await API.get<TaskResponse>('/gollm/compare-models', {
-			params: {
-				'model-ids': modelIds.join(','),
-				'workflow-id': workflowId,
-				'node-id': nodeId
-			}
-		});
-
-		const taskId = response.data.id;
-
-		await handleTaskById(taskId, {
-			ondata(data, closeConnection) {
-				if (data?.status === TaskStatus.Failed) {
-					closeConnection();
-					logger.warn(`Failed to Compare Models with ids: ${modelIds.join(',')}`);
-					reject({ response: '' });
-				}
-				if (data.status === TaskStatus.Success) {
-					closeConnection();
-
-					// data.output is a base64 encoded json object. We decode it and return the json object.
-					const str = b64DecodeUnicode(data.output);
-					resolve(JSON.parse(str));
-				}
-			}
-		});
-	} catch (err) {
-		logger.error(`An issue occurred while comparing models. ${err}`);
-	}
-
-	return promise;
+	return data;
 }
 
 export async function cancelTask(taskId: string): Promise<void> {
