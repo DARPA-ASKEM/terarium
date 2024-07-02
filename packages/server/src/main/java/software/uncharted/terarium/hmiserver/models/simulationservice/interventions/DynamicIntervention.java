@@ -10,6 +10,7 @@ public class DynamicIntervention {
 	private String parameter;
 	private Number threshold;
 	private Number value;
+	private Boolean isGreaterThan;
 
 	@Override
 	public DynamicIntervention clone() {
@@ -17,6 +18,7 @@ public class DynamicIntervention {
 		clone.parameter = this.parameter;
 		clone.threshold = this.threshold;
 		clone.value = this.value;
+		clone.isGreaterThan = this.isGreaterThan;
 		return clone;
 	}
 }
