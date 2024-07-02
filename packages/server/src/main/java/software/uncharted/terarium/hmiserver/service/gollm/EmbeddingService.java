@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
-import java.io.IOException;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embeddings;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -72,7 +69,7 @@ public class EmbeddingService {
 		final Embeddings embeddingChunk = new Embeddings();
 		embeddingChunk.setVector(embeddingResp.response);
 		embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
-		embeddingChunk.setSpans(new long[] { 0, input.length() });
+		embeddingChunk.setSpans(new long[] {0, input.length()});
 
 		final TerariumAssetEmbeddings embeddings = new TerariumAssetEmbeddings();
 		embeddings.getEmbeddings().add(embeddingChunk);
