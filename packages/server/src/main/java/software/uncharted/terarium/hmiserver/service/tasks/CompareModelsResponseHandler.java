@@ -20,8 +20,8 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Input {
-		@JsonProperty("model_cards")
-		List<String> modelCards;
+		@JsonProperty("cards")
+		List<String> cards;
 	}
 
 	@Data

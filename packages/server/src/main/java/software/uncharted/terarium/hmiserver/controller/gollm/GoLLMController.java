@@ -488,7 +488,7 @@ public class GoLLMController {
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-		input.setModelCards(modelCards);
+		input.setCards(modelCards);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
