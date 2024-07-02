@@ -112,7 +112,13 @@
 					option-value="value"
 				/>
 				<span>is</span>
-				<!-- <Dropdown :model-value="intervention.dynamicInterventions[0].comparisonOperator" @change="onComparisonOperatorChange" :options="comparisonOperations" option-label="label" option-value="value"/> -->
+				<Dropdown
+					:model-value="intervention.dynamicInterventions[0].isGreaterThan"
+					@change="onComparisonOperatorChange"
+					:options="comparisonOperations"
+					option-label="label"
+					option-value="value"
+				/>
 				<span>the threshold value</span>
 				<tera-input
 					type="number"
@@ -163,10 +169,10 @@ const interventionType = computed(() => {
 	return 'static';
 });
 
-// const comparisonOperations = [
-// 	{label: 'greater than', value: 'gt'},
-// 	{label: 'less than', value: 'lt'}
-// ];
+const comparisonOperations = [
+	{ label: 'greater than', value: true },
+	{ label: 'less than', value: false }
+];
 
 const onUpdateName = (name: string) => {
 	const intervention = cloneDeep(props.intervention);
@@ -231,8 +237,8 @@ const onInterventionTypeChange = (value: string) => {
 			{
 				threshold: 0,
 				value: 0,
-				parameter: props.parameterOptions[0].value
-				// comparisonOperator: 'gt'
+				parameter: props.parameterOptions[0].value,
+				isGreaterThan: true
 			}
 		];
 	}
@@ -246,11 +252,11 @@ const onTargetParameterChange = (event: DropdownChangeEvent) => {
 	emit('update', intervention);
 };
 
-// const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
-// 	const intervention = cloneDeep(props.intervention);
-// 	intervention.dynamicInterventions[0].comparisonOperator = event.value;
-// 	emit('update', intervention);
-// };
+const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
+	const intervention = cloneDeep(props.intervention);
+	intervention.dynamicInterventions[0].isGreaterThan = event.value;
+	emit('update', intervention);
+};
 </script>
 
 <style scoped>

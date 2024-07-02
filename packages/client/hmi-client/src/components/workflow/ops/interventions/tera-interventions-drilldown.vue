@@ -91,7 +91,7 @@
 							</p>
 							<Textarea
 								v-else
-								class="context-item"
+								class="w-full"
 								placeholder="Enter a description"
 								v-model="newDescription"
 							/>
@@ -118,8 +118,13 @@
 											<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
 												Set parameter {{ appliedTo }} to
 												{{ intervention.dynamicInterventions[0].threshold }} when the
-												{{ intervention.dynamicInterventions[0].parameter }} is the threshold value
-												{{ intervention.dynamicInterventions[0].value }}.
+												{{ intervention.dynamicInterventions[0].parameter }} is
+												{{
+													intervention.dynamicInterventions[0].isGreaterThan
+														? 'greater than'
+														: 'less than'
+												}}
+												the threshold value {{ intervention.dynamicInterventions[0].value }}.
 											</p>
 										</li>
 									</ul>
@@ -217,7 +222,7 @@ const parameterOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() =>
-	groupBy(knobs.value.transientInterventionPolicy.interventions, 'appliedTo')
+	groupBy(selectedPolicy.value?.interventions, 'appliedTo')
 );
 
 const initialize = async () => {
