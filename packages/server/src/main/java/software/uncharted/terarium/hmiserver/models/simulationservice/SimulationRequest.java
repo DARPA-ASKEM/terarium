@@ -44,8 +44,7 @@ public class SimulationRequest implements Serializable {
 		clone.setEngine(this.engine);
 		clone.setInterventions(new ArrayList<>());
 		for (final InterventionPolicy intervention : this.interventions) {
-			clone.getInterventions()
-					.add(intervention.clone());
+			clone.getInterventions().add(intervention.clone());
 		}
 
 		return clone;
