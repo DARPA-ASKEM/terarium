@@ -1,7 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -9,15 +18,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -115,6 +118,11 @@ public class DocumentAsset extends TerariumAsset {
 			clone.assets = new ArrayList<>();
 			for (final DocumentExtraction asset : this.assets) {
 				clone.assets.add(asset.clone());
+
+				// ensure the asset filename is added
+				if (!clone.getFileNames().contains(asset.getFileName())) {
+					clone.getFileNames().add(asset.getFileName());
+				}
 			}
 		}
 
