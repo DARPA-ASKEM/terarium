@@ -40,14 +40,16 @@
 					<Button outlined severity="secondary" label="Reset"></Button>
 					<Button @click="console.log('run')" label="Run" />
 				</template>
-				<ul>
+				<ul class="flex flex-column gap-2">
 					<li
-						v-for="(intervention, index) in knobs.transientInterventionPolicy.values"
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
 						:key="index"
 					>
 						<tera-intervention-card
 							:intervention="intervention"
+							:parameterOptions="parameterOptions"
 							@update="onUpdate($event, index)"
+							@delete="onDeleteIntervention(index)"
 						/>
 					</li>
 				</ul>
@@ -55,7 +57,7 @@
 					<Button
 						text
 						label="Add intervention"
-						@click="console.log('add')"
+						@click="onAddIntervention"
 						icon="pi pi-plus"
 						size="small"
 					/>
@@ -73,50 +75,18 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { cloneDeep, uniqueId } from 'lodash';
+import { cloneDeep } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { getModel } from '@/services/model';
-import { Model } from '@/types/Types';
+import { getInterventionPoliciesForModel, getModel } from '@/services/model';
+import { Intervention, InterventionPolicy, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
+import { getParameters } from '@/model-representation/service';
 import TeraInterventionsPolicyCard from './tera-interventions-policy-card.vue';
-import {
-	DummyIntervention,
-	DummyInterventionPolicy,
-	InterventionsOperation,
-	InterventionsState
-} from './tera-interventions-operation';
+import { InterventionsOperation, InterventionsState } from './tera-interventions-operation';
 import TeraInterventionCard from './tera-intervention-card.vue';
-
-const interventionPolicies: DummyInterventionPolicy[] = [
-	{
-		id: uniqueId(),
-		name: 'Policy 1',
-		description: 'Policy 1',
-		createdOn: new Date(),
-		modelId: 'model1',
-		values: [
-			{ name: 'Start masking', parameterId: 'beta', setting: [{ threshold: 0.1, timestep: 1 }] },
-			{ name: 'End masking', parameterId: 'beta', setting: [{ threshold: 0.1, timestep: 1 }] }
-		]
-	},
-	{
-		id: uniqueId(),
-		name: 'Policy 2',
-		description: 'Policy 2',
-		createdOn: new Date(),
-		modelId: 'model1',
-		values: [
-			{
-				name: 'End masking',
-				parameterId: 'beta',
-				setting: [{ parameterId: 'Infected_Old', threshold: 1050, timestep: 0.75 }]
-			}
-		]
-	}
-];
 
 const props = defineProps<{
 	node: WorkflowNode<InterventionsState>;
@@ -125,7 +95,7 @@ const emit = defineEmits(['close', 'update-state', 'select-output', 'append-outp
 
 const confirm = useConfirm();
 interface BasicKnobs {
-	transientInterventionPolicy: DummyInterventionPolicy;
+	transientInterventionPolicy: InterventionPolicy;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -133,7 +103,7 @@ const knobs = ref<BasicKnobs>({
 		name: '',
 		description: '',
 		modelId: '',
-		values: []
+		interventions: []
 	}
 });
 
@@ -141,7 +111,7 @@ const isSidebarOpen = ref(true);
 const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
-const interventionsPolicyList = ref<DummyInterventionPolicy[]>([]);
+const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value.filter((policy) =>
 		policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
@@ -152,6 +122,14 @@ const selectedPolicyId = computed(
 	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
 );
 
+const parameterOptions = computed(() => {
+	if (!model.value) return [];
+	return getParameters(model.value).map((parameter) => ({
+		label: parameter.name ?? parameter.id,
+		value: parameter.id
+	}));
+});
+
 const initialize = async () => {
 	const state = props.node.state;
 	const modelId = props.node.inputs[0].value?.[0];
@@ -161,21 +139,22 @@ const initialize = async () => {
 	await fetchInterventionPolicies(modelId);
 
 	model.value = await getModel(modelId);
-	if (state.transientInterventionPolicy.id) {
+	if (state.transientInterventionPolicy?.id) {
 		// copy the state into the knobs if it exists
 		knobs.value.transientInterventionPolicy = cloneDeep(state.transientInterventionPolicy);
 	} else {
-		applyInterventionPolicy(interventionPolicies[0]);
+		const policies = await getInterventionPoliciesForModel(modelId);
+		applyInterventionPolicy(policies[0]);
 	}
 };
 
-const applyInterventionPolicy = (interventionPolicy: DummyInterventionPolicy) => {
+const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientInterventionPolicy = cloneDeep(interventionPolicy);
 
 	const listOfPolicyIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
 	// Update output port:
-	if (!interventionPolicy.id) {
+	if (!interventionPolicy?.id) {
 		logger.error('Policy not found');
 		return;
 	}
@@ -202,20 +181,19 @@ const applyInterventionPolicy = (interventionPolicy: DummyInterventionPolicy) =>
 const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = true;
 	console.log(modelId);
-	// const response = await getInterventionPolicies(model.value?.id);
-	interventionsPolicyList.value = interventionPolicies;
+	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
 };
 
-const onUpdate = (intervention: DummyIntervention, index: number) => {
-	knobs.value.transientInterventionPolicy.values[index] = cloneDeep(intervention);
+const onUpdate = (intervention: Intervention, index: number) => {
+	knobs.value.transientInterventionPolicy.interventions[index] = cloneDeep(intervention);
 };
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const onUsePolicy = (policy: DummyInterventionPolicy) => {
+const onUsePolicy = (policy: InterventionPolicy) => {
 	confirm.require({
 		header: 'Are you sure you want to use this intervention policy?',
 		message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
@@ -224,6 +202,22 @@ const onUsePolicy = (policy: DummyInterventionPolicy) => {
 		rejectLabel: 'Cancel'
 	});
 };
+
+const onAddIntervention = () => {
+	// by default add the first parameter with a static intervention
+	const intervention: Intervention = {
+		name: 'New Intervention',
+		appliedTo: parameterOptions.value[0].value,
+		staticInterventions: [{ threshold: 0, value: 0 }],
+		dynamicInterventions: []
+	};
+	knobs.value.transientInterventionPolicy.interventions.push(intervention);
+};
+
+const onDeleteIntervention = (index: number) => {
+	knobs.value.transientInterventionPolicy.interventions.splice(index, 1);
+};
+
 watch(
 	() => knobs.value,
 	async () => {

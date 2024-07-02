@@ -24,10 +24,10 @@ import ContextMenu from 'primevue/contextmenu';
 import { ref } from 'vue';
 import Divider from 'primevue/divider';
 import Button from 'primevue/button';
-import { DummyInterventionPolicy } from './tera-interventions-operation';
+import { InterventionPolicy } from '@/types/Types';
 
 defineProps<{
-	interventionPolicy: DummyInterventionPolicy;
+	interventionPolicy: InterventionPolicy;
 	selected?: boolean;
 }>();
 

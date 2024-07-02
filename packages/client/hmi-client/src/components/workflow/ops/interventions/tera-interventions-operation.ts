@@ -1,4 +1,4 @@
-import { TerariumAsset } from '@/types/Types';
+import { InterventionPolicy, TerariumAsset } from '@/types/Types';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 
@@ -21,7 +21,7 @@ export interface DummyInterventionSetting {
 }
 
 export interface InterventionsState extends BaseState {
-	transientInterventionPolicy: DummyInterventionPolicy;
+	transientInterventionPolicy: InterventionPolicy;
 }
 
 export const InterventionsOperation: Operation = {
@@ -37,7 +37,7 @@ export const InterventionsOperation: Operation = {
 		const init: InterventionsState = {
 			transientInterventionPolicy: {
 				modelId: '',
-				values: []
+				interventions: []
 			}
 		};
 		return init;
