@@ -148,6 +148,9 @@ public class TerariumAssetCloneService {
 	}
 
 	private List<String> removeDuplicates(final List<String> list) {
+		if (list == null) {
+			return new ArrayList<>();
+		}
 		final Set<String> set = list.stream().collect(Collectors.toCollection(LinkedHashSet::new));
 		return new ArrayList<>(set);
 	}
