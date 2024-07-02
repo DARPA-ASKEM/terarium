@@ -834,7 +834,7 @@ public class DocumentController {
 		try {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
-			// if this service fails, return ok with errors
+			// if this service fails, return ok with errors.
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
 				log.debug("Document has not data, empty bytes, exit early.");
 				return;
