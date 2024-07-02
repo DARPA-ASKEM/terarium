@@ -291,7 +291,6 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import {
 	getModelConfigurationById,
 	createModelConfiguration,
-	setInterventions,
 	getAsConfiguredModel
 } from '@/services/model-configurations';
 import {
@@ -324,7 +323,6 @@ import {
 	InterventionTypes,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
-	getOptimizedInterventions,
 	defaultConstraintGroup,
 	ConstraintGroup
 } from './optimize-ciemss-operation';
@@ -606,10 +604,13 @@ const saveModelConfiguration = async () => {
 	if (!knobs.value.optimizationRunId) {
 		logger.error('No optimization run to create model configuration from');
 	}
-	const optRunId = knobs.value.optimizationRunId;
-	const interventions = await getOptimizedInterventions(optRunId);
+
+	// TODO: use new interventions
+	// const optRunId = knobs.value.optimizationRunId;
+	// const interventions = await getOptimizedInterventions(optRunId);
 	const configClone = cloneDeep(modelConfiguration.value);
-	setInterventions(configClone, interventions);
+
+	// setInterventions(configClone, interventions);
 	configClone.name = modelConfigName.value;
 	configClone.description = modelConfigDesc.value;
 	const data = await createModelConfiguration(configClone);
