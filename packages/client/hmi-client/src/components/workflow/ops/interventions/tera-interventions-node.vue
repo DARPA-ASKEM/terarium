@@ -16,10 +16,7 @@ import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { getInterventionPoliciesForModel } from '@/services/model';
-import { cloneDeep, isEmpty } from 'lodash';
-import { createInterventionPolicy } from '@/services/intervention-policy';
-import { InterventionPolicy } from '@/types/Types';
+import { cloneDeep } from 'lodash';
 import { InterventionsState } from './tera-interventions-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -35,10 +32,10 @@ watch(
 	() => {
 		const inputs = props.node.inputs;
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
+		const state = cloneDeep(props.node.state);
 
 		if (!modelInputs[0].value) {
 			// Reset previous model cache
-			const state = cloneDeep(props.node.state);
 			state.transientInterventionPolicy = {
 				modelId: '',
 				interventions: []
@@ -47,18 +44,12 @@ watch(
 		}
 
 		if (modelInputs?.[0]?.value?.[0]) {
-			const modelId = modelInputs?.[0]?.value?.[0];
-			getInterventionPoliciesForModel(modelId).then((policies) => {
-				if (isEmpty(policies)) {
-					const policy: InterventionPolicy = {
-						modelId,
-						name: 'New Policy',
-						description: 'This is a new intervention policy.',
-						interventions: []
-					};
-					createInterventionPolicy(policy);
-				}
-			});
+			const modelId = modelInputs[0]?.value?.[0];
+			state.transientInterventionPolicy = {
+				modelId,
+				interventions: []
+			};
+			emit('update-state', state);
 		}
 	},
 	{ deep: true }

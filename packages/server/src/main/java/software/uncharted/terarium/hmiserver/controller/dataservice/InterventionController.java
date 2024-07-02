@@ -142,7 +142,7 @@ public class InterventionController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(interventionService.createAsset(item, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(interventionService.createAsset(item.clone(), permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
 			log.error(error, e);
