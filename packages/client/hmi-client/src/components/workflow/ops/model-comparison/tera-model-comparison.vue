@@ -170,6 +170,7 @@ import { getImages, addImage, deleteImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
+import { CompareModelsResponseType } from '@/types/common';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -204,7 +205,7 @@ const contextLanguage = ref<string>('python3');
 const llmAnswer = computed(() => {
 	if (!compareModelsTaskOutput.value) return '';
 	const str = b64DecodeUnicode(compareModelsTaskOutput.value);
-	const parsedValue = JSON.parse(str);
+	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
 	return parsedValue.response;
 });
 
