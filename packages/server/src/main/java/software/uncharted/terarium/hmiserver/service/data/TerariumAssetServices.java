@@ -1,8 +1,9 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import org.springframework.stereotype.Service;
+
 import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 
@@ -16,7 +17,6 @@ public class TerariumAssetServices {
 	private final DocumentAssetService documentAssetService;
 	private final ModelConfigurationService modelConfigurationService;
 	private final ModelService modelService;
-	private final NotebookSessionService notebookSessionService;
 	private final WorkflowService workflowService;
 
 	/**
