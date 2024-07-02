@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
@@ -16,13 +17,12 @@
 				@keyup.esc="updateModelName"
 				v-focus
 			/>
-
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
 			</div>
 		</template>
 		<template #edit-buttons>
-			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
+			<span>{{ model?.header.schema_name }}</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -233,3 +233,9 @@ watch(
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+span {
+	color: var(--text-color-subdued);
+}
+</style>

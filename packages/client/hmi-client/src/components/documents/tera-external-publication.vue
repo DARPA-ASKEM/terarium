@@ -1,6 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
+		:id="doc.gddId"
 		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
@@ -9,13 +10,13 @@
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
-		:stretch-content="view === DocumentView.PDF"
-		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
 				v-if="featureConfig.isPreview"
-				class="p-button-sm p-button-outlined"
+				size="small"
+				severity="secondary"
+				outlined
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
