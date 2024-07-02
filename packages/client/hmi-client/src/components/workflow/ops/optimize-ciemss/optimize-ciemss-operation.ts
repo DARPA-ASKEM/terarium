@@ -134,22 +134,25 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 
 	if (interventionType === InterventionTypes.paramValue && startTime.length !== 0) {
 		// intervention type == parameter value
+		console.log(policyResult);
 		for (let i = 0; i < paramNames.length; i++) {
 			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-			simulationIntervetions.push({
-				name: paramNames[i],
-				timestep: startTime[i],
-				value: policyResult[i]
-			});
+			// TODO: We will need to fix this for the interventions refactor
+			// simulationIntervetions.push({
+			// 	name: paramNames[i],
+			// 	timestep: startTime[i],
+			// 	value: policyResult[i]
+			// });
 		}
 	} else if (interventionType === InterventionTypes.startTime && paramValue.length !== 0) {
 		for (let i = 0; i < paramNames.length; i++) {
 			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-			simulationIntervetions.push({
-				name: paramNames[i],
-				timestep: policyResult[i],
-				value: paramValue[i]
-			});
+			// TODO: We will need to fix this for the interventions refactor
+			// simulationIntervetions.push({
+			// 	name: paramNames[i],
+			// 	timestep: policyResult[i],
+			// 	value: paramValue[i]
+			// });
 		}
 	} else {
 		// Should realistically not be hit unless we change the interface and do not update
