@@ -251,7 +251,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 			throw new IllegalArgumentException("Asset not found");
 		}
 
-		if (!asset.get().getTemporary() && asset.get().getPublicAsset()) {
+		if (!asset.get().getPublicAsset() || asset.get().getTemporary()) {
 			throw new IllegalArgumentException("Asset is not searchable");
 		}
 
