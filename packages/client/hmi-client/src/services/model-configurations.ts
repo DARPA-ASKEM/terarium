@@ -1,7 +1,6 @@
 import API from '@/api/api';
 import type {
 	InitialSemantic,
-	Intervention,
 	Model,
 	ModelConfiguration,
 	ModelDistribution,
@@ -61,7 +60,10 @@ export const postAsConfiguredModel = async (model: Model): Promise<ModelConfigur
 };
 
 export const amrToModelConfiguration = async (model: Model): Promise<ModelConfiguration> => {
-	const response = await API.post<ModelConfiguration>(`/models/amr-to-model-configuration`, model);
+	const response = await API.post<ModelConfiguration>(
+		`/models/amr-to-model-configuration`,
+		model
+	);
 	return response?.data ?? null;
 };
 
@@ -209,22 +211,4 @@ export function getInitialExpression(config: ModelConfiguration, initialId: stri
 
 export function getObservables(config: ModelConfiguration): ObservableSemantic[] {
 	return config.observableSemanticList ?? [];
-}
-
-export function setInterventions(config: ModelConfiguration, interventions: Intervention[]): void {
-	const parameters = getParameters(config);
-
-	parameters.forEach((parameter) => {
-		parameter.interventions = interventions.filter(
-			(intervention) => intervention.name === parameter.referenceId
-		);
-	});
-}
-export function getInterventions(config: ModelConfiguration): Intervention[] {
-	const interventions: Intervention[] = [];
-	config.parameterSemanticList.forEach((p) => {
-		p.interventions?.forEach((i) => interventions.push(i));
-	});
-
-	return interventions;
 }

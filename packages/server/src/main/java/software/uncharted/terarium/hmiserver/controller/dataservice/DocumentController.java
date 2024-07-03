@@ -71,6 +71,7 @@ import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -104,6 +105,7 @@ public class DocumentController {
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
+	final EmbeddingService embeddingService;
 
 	@Value("${xdd.api-key}")
 	String apikey;

@@ -240,6 +240,10 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
 		}
 
+		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
+			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
+		}
+
 		return updated;
 	}
 

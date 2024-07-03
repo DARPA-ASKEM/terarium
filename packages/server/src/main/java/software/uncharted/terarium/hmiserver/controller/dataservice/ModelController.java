@@ -282,6 +282,12 @@ public class ModelController {
 				projectId);
 
 		try {
+
+			final Optional<Model> originalModel = modelService.getAsset(id, permission);
+			if (originalModel.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
 			model.setId(id);
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
