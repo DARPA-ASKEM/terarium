@@ -200,6 +200,7 @@ let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
 const inferredParameters = computed(() => props.node.inputs[1].value);
+const policyInterventions = computed(() => props.node.inputs[2].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -317,6 +318,9 @@ const makeForecastRequest = async () => {
 
 	if (inferredParameters.value) {
 		payload.extra.inferred_parameters = inferredParameters.value[0];
+	}
+	if (policyInterventions.value) {
+		payload.policyInterventionId = policyInterventions.value[0];
 	}
 
 	const response = await makeForecastJob(payload, nodeMetadata(props.node));

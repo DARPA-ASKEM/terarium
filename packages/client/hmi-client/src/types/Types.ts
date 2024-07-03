@@ -750,7 +750,7 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: string;
+    policyInterventionId?: string;
 }
 
 export interface DynamicIntervention {
