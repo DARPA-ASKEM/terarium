@@ -16,7 +16,7 @@
 				/>
 			</div>
 			<div>
-				<label for="active">Active</label>
+				<label for="active">{{ config.isActive ? 'Active' : 'Inactive' }}</label>
 				<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			</div>
 			<div>
@@ -27,64 +27,122 @@
 				/>
 			</div>
 		</div>
+
 		<div class="input-row">
-			<div class="label-and-input">
-				<label for="parameter">Parameter</label>
-				<Dropdown
-					class="p-inputtext-sm"
-					:options="props.parameterOptions"
-					v-model="config.parameter"
-					placeholder="Select"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="initial-guess">Initial guess</label>
-				<tera-input
-					type="number"
-					v-model="config.initialGuess"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input"></div>
+			<p v-if="isStartTime">
+				Find the <b>[new value]</b> for the parameter <b>[name]</b> at start time <b>[value]</b>.
+			</p>
+			<p v-else>
+				Find the <b>[new value]</b> for the parameter <b>[name]</b> when the variable
+				<b>[name]</b> exceeds <b>[value]</b>.
+			</p>
 		</div>
-		<div class="input-row">
-			<div class="label-and-input">
-				<label for="lower-bound">Lower bound</label>
-				<tera-input
-					type="number"
-					v-model="config.lowerBound"
-					@update:model-value="emit('update-self', config)"
-				/>
+		<div v-if="config.isActive">
+			<div class="input-row">
+				<p>
+					The objective is the value closet to the
+					<Dropdown
+						class="toolbar-button"
+						v-model="objective"
+						optionLabel="label"
+						optionValue="value"
+						:options="[
+							{ label: 'lower Bound', value: config.lowerBound },
+							{ label: 'upper Bound', value: config.upperBound },
+							{ label: 'start Time', value: config.startTime }
+						]"
+						@update:model-value="emit('update-self', config)"
+					/>
+				</p>
 			</div>
-			<div class="label-and-input">
-				<label for="upper-bound">Upper bound</label>
-				<tera-input
-					type="number"
-					v-model="config.upperBound"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="start-time">Start time</label>
-				<InputNumber
-					:disabled="props.interventionType == InterventionTypes.startTime"
-					class="p-inputtext-sm"
-					inputId="integeronly"
-					v-model="config.startTime"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="start-time">Param value</label>
-				<InputNumber
-					:disabled="props.interventionType == InterventionTypes.paramValue"
-					class="p-inputtext-sm"
-					v-model="config.paramValue"
-					@update:model-value="emit('update-self', config)"
-				/>
+			<div class="input-row">
+				<div class="label-and-input">
+					<label for="lower-bound">Lower bound</label>
+					<tera-input
+						type="number"
+						v-model="config.lowerBound"
+						@update:model-value="emit('update-self', config)"
+					/>
+				</div>
+				<div class="label-and-input">
+					<label for="upper-bound">Upper bound</label>
+					<tera-input
+						type="number"
+						v-model="config.upperBound"
+						@update:model-value="emit('update-self', config)"
+					/>
+				</div>
+				<div class="label-and-input">
+					<label for="start-time">Start time</label>
+					<InputNumber
+						:disabled="props.interventionType == InterventionTypes.startTime"
+						class="p-inputtext-sm"
+						inputId="integeronly"
+						v-model="config.startTime"
+						@update:model-value="emit('update-self', config)"
+					/>
+				</div>
 			</div>
 		</div>
+
+		<!--		<div class="input-row">-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="parameter">Parameter</label>-->
+		<!--				<Dropdown-->
+		<!--					class="p-inputtext-sm"-->
+		<!--					:options="props.parameterOptions"-->
+		<!--					v-model="config.parameter"-->
+		<!--					placeholder="Select"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="initial-guess">Initial guess</label>-->
+		<!--				<tera-input-->
+		<!--					type="number"-->
+		<!--					v-model="config.initialGuess"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--			<div class="label-and-input"></div>-->
+		<!--		</div>-->
+		<!--		<div class="input-row">-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="lower-bound">Lower bound</label>-->
+		<!--				<tera-input-->
+		<!--					type="number"-->
+		<!--					v-model="config.lowerBound"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="upper-bound">Upper bound</label>-->
+		<!--				<tera-input-->
+		<!--					type="number"-->
+		<!--					v-model="config.upperBound"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="start-time">Start time</label>-->
+		<!--				<InputNumber-->
+		<!--					:disabled="props.interventionType == InterventionTypes.startTime"-->
+		<!--					class="p-inputtext-sm"-->
+		<!--					inputId="integeronly"-->
+		<!--					v-model="config.startTime"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--			<div class="label-and-input">-->
+		<!--				<label for="start-time">Param value</label>-->
+		<!--				<InputNumber-->
+		<!--					:disabled="props.interventionType == InterventionTypes.paramValue"-->
+		<!--					class="p-inputtext-sm"-->
+		<!--					v-model="config.paramValue"-->
+		<!--					@update:model-value="emit('update-self', config)"-->
+		<!--				/>-->
+		<!--			</div>-->
+		<!--		</div>-->
 	</div>
 </template>
 
@@ -109,8 +167,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
+const isStartTime = ref(false);
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
+
+const objective = ref(0);
 
 const onEdit = () => {
 	isEditing.value = !isEditing.value;
@@ -163,6 +224,7 @@ const onEdit = () => {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
+	padding-bottom: 0.5rem;
 
 	& > *:first-child {
 		flex: 2;

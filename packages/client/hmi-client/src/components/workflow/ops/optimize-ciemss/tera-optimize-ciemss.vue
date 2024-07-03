@@ -18,7 +18,7 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
+					<h5>Success criteria <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -720,7 +720,6 @@ watch(
 	margin: 0 var(--gap) var(--gap) var(--gap);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
-	overflow: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
