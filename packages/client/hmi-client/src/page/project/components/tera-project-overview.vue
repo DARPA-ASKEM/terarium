@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="useProjects().activeProject.value?.id"
 		:name="useProjects().activeProject.value?.name"
 		:authors="useProjects().activeProject.value?.authors?.sort().join(', ')"
 		:is-naming-asset="isRenamingProject"
@@ -11,15 +12,13 @@
 		<template #edit-buttons>
 			<tera-project-menu :project="useProjects().activeProject.value" />
 		</template>
-		<template #overview-summary>
+		<template #summary>
 			<!-- Description & Contributors -->
 			<p class="overview-description">
 				{{ useProjects().activeProject.value?.description }}
 			</p>
 		</template>
-		<template #default>
-			<tera-project-overview-editor />
-		</template>
+		<tera-project-overview-editor />
 	</tera-asset>
 </template>
 

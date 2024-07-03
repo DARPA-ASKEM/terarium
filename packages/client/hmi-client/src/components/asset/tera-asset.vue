@@ -1,90 +1,86 @@
 <template>
-	<main v-if="!isLoading" @scroll="updateScrollPosition">
-		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
-			<h4 v-html="name" />
-			<aside class="flex align-items-center">
-				<slot name="edit-buttons" />
-				<Button
-					v-if="featureConfig.isPreview"
-					icon="pi pi-times"
-					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-					@click="emit('close-preview')"
-				/>
-			</aside>
-		</header>
-		<template v-if="!hideIntro && name">
-			<header
-				id="asset-top"
-				:class="{
-					'overview-banner': pageType === ProjectPages.OVERVIEW,
-					'with-tabs': tabs.length > 1
-				}"
-				ref="headerRef"
-			>
-				<section>
-					<!-- put the buttons above the title if there is an overline -->
-					<div v-if="overline" class="vertically-center">
-						<span class="overline">{{ overline }}</span>
-						<slot name="edit-buttons" />
-					</div>
-					<slot name="info-bar" />
-
-					<!--For naming asset such as model or code file-->
-					<div class="vertically-center">
-						<slot name="name-input" />
-						<h4 v-if="!isNamingAsset" v-html="name" />
-
-						<div v-if="!overline" class="vertically-center">
-							<slot name="edit-buttons" />
-						</div>
-					</div>
-
-					<!--put model contributors here too-->
-					<span class="authors" v-if="authors">
-						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-						<span v-html="authors" />
-					</span>
-					<div v-if="doi">
-						DOI:
-						<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
-					</div>
-					<div v-if="publisher" v-html="publisher" />
-					<!--created on: date-->
-					<div class="header-buttons">
-						<slot name="bottom-header-buttons" />
-					</div>
-					<slot name="overview-summary" />
-					<TabView
-						v-if="tabs.length > 1"
-						:active-index="selectedTabIndex"
-						@tab-change="(e) => emit('tab-change', e)"
-					>
-						<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
-					</TabView>
-				</section>
-				<aside v-if="pageType !== ProjectPages.OVERVIEW" class="spread-out">
-					<Button
-						v-if="featureConfig.isPreview"
-						icon="pi pi-times"
-						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-						@click="emit('close-preview')"
-					/>
-				</aside>
-			</header>
-		</template>
-		<section :class="overflowHiddenClass" ref="assetElementRef">
+	<header
+		v-if="showHeader"
+		:class="{
+			'overview-banner': pageType === ProjectPages.OVERVIEW,
+			'with-tabs': tabs.length > 1
+		}"
+	>
+		<!-- put the buttons above the title if there is an overline -->
+		<div v-if="overline" class="row">
+			<span class="overline">{{ overline }}</span>
+			<slot name="edit-buttons" />
+			<Button
+				v-if="featureConfig.isPreview"
+				class="close"
+				icon="pi pi-times"
+				rounded
+				text
+				@click="emit('close-preview')"
+			/>
+		</div>
+		<!--For naming asset such as model or code file-->
+		<div class="row">
+			<slot name="name-input" />
+			<h4 v-if="!isNamingAsset" :class="{ shrink: shrinkHeader }">
+				{{ name }}
+			</h4>
+			<slot v-if="!overline" name="edit-buttons" />
+			<Button
+				v-if="!overline && featureConfig.isPreview"
+				class="close"
+				icon="pi pi-times"
+				rounded
+				text
+				@click="emit('close-preview')"
+			/>
+		</div>
+		<!--put model contributors here too-->
+		<span v-if="authors" class="authors">
+			<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
+			<span v-html="authors" />
+		</span>
+		<div v-if="doi">
+			DOI:
+			<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+		</div>
+		<div v-if="publisher" v-html="publisher" />
+		<!--created on: date-->
+		<div class="header-buttons">
+			<slot name="bottom-header-buttons" />
+		</div>
+		<slot name="summary" />
+		<TabView
+			v-if="tabs.length > 1"
+			:active-index="selectedTabIndex"
+			@tab-change="(e) => emit('tab-change', e)"
+		>
+			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
+		</TabView>
+	</header>
+	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll">
+		<section :class="{ 'overflow-hidden': overflowHidden }">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
 			<slot name="default" />
-			<tera-asset-nav v-if="showTableOfContents" :element-with-nav-ids="assetElementRef" />
+			<nav v-if="showTableOfContents">
+				<a
+					v-for="[id, navOption] in navIds"
+					:class="{ 'chosen-item': id === chosenItem }"
+					:key="id"
+					@click="scrollTo(id)"
+				>
+					{{ navOption }}
+				</a>
+			</nav>
 		</section>
 	</main>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType, useSlots } from 'vue';
+import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import { FeatureConfig } from '@/types/common';
@@ -93,9 +89,12 @@ import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
-import TeraAssetNav from '../widgets/tera-asset-nav.vue';
 
 const props = defineProps({
+	id: {
+		type: String,
+		default: ''
+	},
 	name: {
 		type: String,
 		default: ''
@@ -120,12 +119,14 @@ const props = defineProps({
 		type: Object as PropType<FeatureConfig>,
 		default: { isPreview: false } as FeatureConfig
 	},
+	showHeader: {
+		type: Boolean,
+		default: true
+	},
 	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
 	isNamingAsset: Boolean,
 	hideIntro: Boolean,
-	showStickyHeader: Boolean,
-	stretchContent: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
 	selectedTabIndex: {
@@ -137,48 +138,93 @@ const props = defineProps({
 const emit = defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
-const headerRef = ref();
-const assetElementRef = ref();
-const scrollPosition = ref(0);
-
-const shrinkHeader = computed(() => {
-	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
-	return (
-		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
-		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
-		!props.isNamingAsset // Don't appear while creating an asset eg. a model
-	);
-});
-
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
 
-// Scroll padding for anchors are adjusted depending on the header (inserted in css)
-const scrollPaddingTop = computed(() => (shrinkHeader.value ? '3.5rem' : '1rem'));
+const assetElementRef = ref<HTMLElement | null>(null);
+const scrollPosition = ref(0);
+const navIds = ref<Map<string, string>>(new Map());
+const chosenItem = ref<string | null>(null);
 
-const overflowHiddenClass = computed(() => (props.overflowHidden ? 'overflow-hidden' : ''));
-
-function updateScrollPosition(event) {
-	scrollPosition.value = event?.currentTarget.scrollTop;
-}
-
+const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 const tabs = computed(() => {
 	if (slots.tabs?.()) {
 		if (slots.tabs().length === 1) {
 			// if there is only 1 component we don't need to know the tab name and we can render it.
 			return slots.tabs();
 		}
-
 		return slots.tabs().filter((vnode) => vnode.props?.tabName);
 	}
 	return [];
 });
 
+function scrollTo(id: string) {
+	const element = assetElementRef.value?.querySelector(`#${id}`);
+	if (!element) return;
+	element.scrollIntoView({ behavior: 'smooth' });
+}
+
+function onScroll(event: Event) {
+	// Update scroll position
+	scrollPosition.value = (event?.currentTarget as HTMLElement).scrollTop;
+
+	// Update current nav item
+	if (!assetElementRef.value) return;
+	let closestItem: string | null = null;
+	let smallestDistance = assetElementRef.value.scrollHeight;
+	const containerTop = assetElementRef.value.getBoundingClientRect().top;
+
+	navIds.value.forEach((_, id) => {
+		const element = assetElementRef.value?.querySelector(`#${id}`)?.parentElement?.parentElement; // Gets accordion panel
+		if (!element) return;
+
+		const elementTop = Math.abs(element.getBoundingClientRect().top);
+		const elementBottom = element.getBoundingClientRect().bottom - 10; // Extend the bottom slightly
+
+		if (
+			elementBottom >= containerTop && // Make sure element is below the scrollbar
+			elementTop < smallestDistance // Update closestItem if this element is closer than the previous closest
+		) {
+			smallestDistance = elementTop;
+			closestItem = id;
+		}
+	});
+	chosenItem.value = closestItem;
+}
+
+watch(
+	() => assetElementRef.value,
+	async () => {
+		if (!assetElementRef.value || !props.showTableOfContents) return;
+		await nextTick();
+
+		// Find all the headers to navigate to and assign them an id
+		const headers = assetElementRef.value.querySelectorAll('.p-accordion-header > a');
+		if (!headers) return;
+
+		headers.forEach((header) => {
+			// Extract header name
+			const textNodes = Array.from(header.childNodes).filter(
+				(node) => node.nodeType === Node.TEXT_NODE
+			);
+			let text = textNodes.map((node) => node.textContent).join('');
+			if (!text) {
+				const span = header.querySelector('span');
+				if (span?.textContent) text = span.textContent;
+			}
+			if (!text) return;
+			// Inject id into header based on header name
+			const id = `header-nav-${text.replaceAll(' ', '-').trim()}`;
+			header.setAttribute('id', id);
+			// Add to map (HTML id -> navigation option/header name)
+			navIds.value.set(id, text);
+		});
+	}
+);
+
 // Reset the scroll position to the top on asset change
 watch(
-	() => props.name,
-	() => {
-		document.getElementById('asset-top')?.scrollIntoView();
-	}
+	() => props.id,
+	() => assetElementRef.value?.scrollIntoView()
 );
 </script>
 
@@ -198,64 +244,57 @@ main > section {
 	& > :deep(*:not(nav, i)) {
 		flex: 1;
 	}
+}
 
-	& > :deep(nav) {
-		padding-top: v-bind(scrollPaddingTop);
+nav {
+	display: flex;
+	flex-direction: column;
+	width: fit-content;
+	gap: 1rem;
+	padding: var(--gap) var(--gap-large) 0 var(--gap-small);
+	/* Responsible for stickiness */
+	position: sticky;
+	top: 0;
+	height: fit-content;
+
+	& a.chosen-item {
+		font-weight: var(--font-weight-semibold);
+		color: var(--primary-color);
 	}
 }
 
 header {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	justify-content: space-between;
 	height: fit-content;
-	color: var(--text-color-subdued);
-	padding: var(--gap-small) var(--gap-medium);
-	display: flex;
-	gap: var(--gap);
-	align-items: center;
-	background: var(--surface-ground);
-}
-
-header.shrinked {
-	position: sticky;
-	top: 0px;
-	z-index: 100;
-	isolation: isolate;
+	padding: var(--gap-small) var(--gap);
+	gap: var(--gap-small);
 	background-color: var(--surface-ground-transparent);
 	backdrop-filter: blur(6px);
 	border-bottom: 1px solid var(--surface-border-light);
+	overflow: hidden;
 }
 
-header.shrinked h4 {
+header h4 {
 	align-self: center;
 	overflow: hidden;
 	text-align: left;
-	text-overflow: ellipsis;
+}
+
+header h4.shrink {
 	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex-grow: 1;
+	flex-shrink: 1;
 	max-width: fit-content;
 }
 
-h4,
-header section p {
-	color: var(--text-color-primary);
-}
-
-header section,
-header aside {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap-small);
-}
-
-header aside {
+header > button {
 	align-self: flex-start;
-	/* Prevent button stretch */
-	max-height: 2.5rem;
 }
 
-header.shrinked aside {
-	align-self: center;
-}
 header.overview-banner section {
 	width: 100%;
 	max-width: 100%;
@@ -272,11 +311,15 @@ header.with-tabs {
 	background-size: 25%, 100%;
 }
 
-.vertically-center {
+.row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--gap);
+}
+
+.close {
+	margin-left: auto;
 }
 
 main:deep(.p-inputtext.p-inputtext-sm) {
@@ -289,14 +332,12 @@ header section:deep(> input) {
 	font-size: var(--font-body-medium);
 }
 
-.overline,
-.authors {
-	color: var(--text-color-primary);
+.authors i {
+	margin-right: var(--gap-small);
 }
 
-.authors i {
-	color: var(--text-color-primary);
-	margin-right: var(--gap-small);
+.authors ~ * {
+	color: var(--text-color-subdued);
 }
 
 .header-buttons:empty {
@@ -313,11 +354,6 @@ header aside {
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
 	margin: var(--gap-small);
-}
-
-/*  Gives some top padding when you auto-scroll to an anchor */
-main:deep(.p-accordion-header > a > header) {
-	scroll-padding-top: v-bind('scrollPaddingTop');
 }
 
 main:deep(.p-accordion-content) {
@@ -353,11 +389,6 @@ main:deep(.p-button.p-button-outlined) {
 
 .overflow-hidden {
 	overflow: hidden;
-}
-
-.spread-out {
-	align-items: center;
-	flex-grow: 1;
 }
 
 :deep(.p-tabview .p-tabview-panels) {
