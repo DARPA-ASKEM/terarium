@@ -229,6 +229,10 @@ public abstract class TerariumAssetServiceWithSearch<
 			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
 		}
 
+		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
+			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
+		}
+
 		return updated;
 	}
 
