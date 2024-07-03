@@ -88,12 +88,7 @@ export const OptimizeCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		}
+		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,

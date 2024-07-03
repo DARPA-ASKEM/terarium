@@ -202,9 +202,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<div v-if="executeResponse.status !== OperatorStatus.ERROR">
-					{{ notebookResponse }}
-				</div>
+				<div v-if="executeResponse.status !== OperatorStatus.ERROR">{{ notebookResponse }}</div>
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 	</tera-drilldown>
