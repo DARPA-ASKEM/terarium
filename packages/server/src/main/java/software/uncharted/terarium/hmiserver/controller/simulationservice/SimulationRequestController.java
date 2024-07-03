@@ -88,7 +88,6 @@ public class SimulationRequestController implements SnakeCaseController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
-
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
 			if (sim.isEmpty()) {
@@ -329,7 +328,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy
@@ -352,7 +351,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy
