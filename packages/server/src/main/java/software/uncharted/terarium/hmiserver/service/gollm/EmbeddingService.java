@@ -1,17 +1,20 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embeddings;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -28,7 +31,7 @@ public class EmbeddingService {
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
 
-	private static final int REQUEST_TIMEOUT_MINUTES = 1;
+	private static final int REQUEST_TIMEOUT_MINUTES = 3;
 	public static final String EMBEDDING_MODEL = "text-embedding-ada-002";
 
 	@Data
@@ -57,7 +60,11 @@ public class EmbeddingService {
 		req.setType(TaskType.GOLLM);
 		req.setInput(embeddingRequest);
 		req.setScript("gollm_task:embedding");
-		req.setUserId(currentUserService.get().getId());
+		try {
+			req.setUserId(currentUserService.get().getId());
+		} catch (final Exception e) {
+			log.warn("No user id to associate with embedding request");
+		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
@@ -69,7 +76,7 @@ public class EmbeddingService {
 		final Embeddings embeddingChunk = new Embeddings();
 		embeddingChunk.setVector(embeddingResp.response);
 		embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
-		embeddingChunk.setSpans(new long[] {0, input.length()});
+		embeddingChunk.setSpans(new long[] { 0, input.length() });
 
 		final TerariumAssetEmbeddings embeddings = new TerariumAssetEmbeddings();
 		embeddings.getEmbeddings().add(embeddingChunk);
