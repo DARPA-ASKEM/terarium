@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
@@ -68,6 +70,7 @@ import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -101,6 +104,7 @@ public class DocumentController {
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
+	final EmbeddingService embeddingService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -217,8 +221,33 @@ public class DocumentController {
 			document.setUserId(originalDocument.get().getUserId());
 
 			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, permission);
-			return updated.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+
+			if (updated.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			final DocumentAsset updatedDocument = updated.get();
+
+			if (originalDocument.get().getPublicAsset() != updatedDocument.getPublicAsset()) {
+				if (updatedDocument.getPublicAsset() && !updatedDocument.getTemporary()) {
+					if (updatedDocument.getMetadata() != null
+							&& updatedDocument.getMetadata().containsKey("gollmCard")) {
+						// update embeddings
+						final JsonNode card = document.getMetadata().get("gollmCard");
+						final String cardText = objectMapper.writeValueAsString(card);
+						try {
+							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+
+							documentAssetService.uploadEmbeddings(updatedDocument.getId(), embeddings, permission);
+
+						} catch (final Exception e) {
+							log.error("Failed to update embeddings for document {}", updatedDocument.getId(), e);
+						}
+					}
+				}
+			}
+
+			return ResponseEntity.ok(updatedDocument);
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -834,7 +863,7 @@ public class DocumentController {
 		try {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
-			// if this service fails, return ok with errors
+			// if this service fails, return ok with errors.
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
 				log.debug("Document has not data, empty bytes, exit early.");
 				return;

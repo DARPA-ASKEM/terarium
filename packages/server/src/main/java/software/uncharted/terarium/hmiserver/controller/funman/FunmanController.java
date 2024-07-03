@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.funman;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,12 +9,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
@@ -27,6 +34,7 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.ValidateModelConfigHandler;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RestController
@@ -42,6 +50,7 @@ public class FunmanController {
 
 	private final ValidateModelConfigHandler validateModelConfigHandler;
 	private final SimulationService simulationService;
+	private final Messages messages;
 
 	@PostConstruct
 	void init() {
@@ -71,39 +80,60 @@ public class FunmanController {
 	public ResponseEntity<Simulation> createValidationRequest(
 			@RequestBody final JsonNode input,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
+		final TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setTimeoutMinutes(30);
+		taskRequest.setType(TaskType.FUNMAN);
+		taskRequest.setScript(ValidateModelConfigHandler.NAME);
+		taskRequest.setUserId(currentUserService.get().getId());
+
 		try {
-			final TaskRequest taskRequest = new TaskRequest();
-			taskRequest.setTimeoutMinutes(30);
-			taskRequest.setType(TaskType.FUNMAN);
-			taskRequest.setScript(ValidateModelConfigHandler.NAME);
-			taskRequest.setUserId(currentUserService.get().getId());
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
-
-			final Simulation sim = new Simulation();
-			sim.setType(SimulationType.VALIDATION);
-			sim.setStatus(ProgressState.RUNNING);
-			sim.setDescription("funman model configuration validation");
-			sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
-
-			// Create new simulatin object to proxy the funman validation process
-			final Simulation newSimulation = simulationService.createAsset(sim, permission);
-
-			final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
-			props.setSimulationId(newSimulation.getId());
-			taskRequest.setAdditionalProperties(props);
-			taskService.runTask(TaskMode.ASYNC, taskRequest);
-
-			return ResponseEntity.ok(newSimulation);
-		} catch (final ResponseStatusException e) {
-			e.printStackTrace();
-			throw e;
 		} catch (final Exception e) {
-			e.printStackTrace();
-			final String error = "Unable to dispatch task request";
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
+
+		final Simulation sim = new Simulation();
+		sim.setType(SimulationType.VALIDATION);
+		sim.setStatus(ProgressState.RUNNING);
+		sim.setDescription("funman model configuration validation");
+		sim.setExecutionPayload(objectMapper.convertValue(input, JsonNode.class));
+
+		// Create new simulation object to proxy the funman validation process
+		final Simulation newSimulation;
+		try {
+			newSimulation = simulationService.createAsset(sim, permission);
+		} catch (final Exception e) {
+			log.error("An error occurred while trying to create a simulation asset.", e);
+			throw new ResponseStatusException(
+					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
+		props.setSimulationId(newSimulation.getId());
+		taskRequest.setAdditionalProperties(props);
+
+		try {
+			taskService.runTask(TaskMode.ASYNC, taskRequest);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.funman.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.funman.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(
+					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.execution-failure"));
+		}
+
+		return ResponseEntity.ok(newSimulation);
 	}
 }
