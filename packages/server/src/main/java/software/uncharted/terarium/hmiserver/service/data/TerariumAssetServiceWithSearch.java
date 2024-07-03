@@ -1,24 +1,21 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import io.micrometer.observation.annotation.Observed;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -29,15 +26,15 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
- * Base class for services that manage TerariumAssets with syncing to
- * Elasticsearch.
+ * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
  *
  * @param <T> The type of asset this service manages
  * @param <R> The respository of the asset this service manages.
  */
 @Service
 @Slf4j
-public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
+public abstract class TerariumAssetServiceWithSearch<
+				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 		extends TerariumAssetServiceWithoutSearch<T, R> {
 
 	public TerariumAssetServiceWithSearch(
@@ -78,8 +75,7 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	public abstract String getAssetAlias();
 
 	/**
-	 * Setup the index and alias for the asset this service manages and ensure it is
-	 * empty
+	 * Setup the index and alias for the asset this service manages and ensure it is empty
 	 *
 	 * @throws IOException If there is an error setting up the index and alias
 	 */
@@ -110,12 +106,11 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	}
 
 	/**
-	 * Get a list of assets based on a search query. Only searchable assets wil be
-	 * returned.
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
-	 * @param query    The query to filter the assets
+	 * @param query The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -125,12 +120,11 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	}
 
 	/**
-	 * Get a list of assets based on a search query. Only searchable assets wil be
-	 * returned.
+	 * Get a list of assets based on a search query. Only searchable assets wil be returned.
 	 *
-	 * @param page     The page number
+	 * @param page The page number
 	 * @param pageSize The number of assets per page
-	 * @param query    The query to filter the assets
+	 * @param query The query to filter the assets
 	 * @return The list of assets
 	 * @throws IOException If there is an error retrieving the assets
 	 */
@@ -138,7 +132,8 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	public List<T> searchAssets(
 			final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
 			throws IOException {
-		final SearchRequest.Builder builder = new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
+		final SearchRequest.Builder builder =
+				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
@@ -219,9 +214,8 @@ public abstract class TerariumAssetServiceWithSearch<T extends TerariumAsset, R 
 	 *
 	 * @param asset The asset to update
 	 * @return The updated asset
-	 * @throws IOException              If there is an error updating the asset
-	 * @throws IllegalArgumentException If the asset tries to move from permanent to
-	 *                                  temporary
+	 * @throws IOException If there is an error updating the asset
+	 * @throws IllegalArgumentException If the asset tries to move from permanent to temporary
 	 */
 	@Override
 	@Observed(name = "function_profile")
