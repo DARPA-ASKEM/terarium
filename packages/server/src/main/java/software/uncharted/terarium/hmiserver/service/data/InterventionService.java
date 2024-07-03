@@ -13,10 +13,18 @@ public class InterventionService extends TerariumAssetServiceWithoutSearch<Inter
 	public InterventionService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final InterventionRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, InterventionPolicy.class);
+		super(
+				objectMapper,
+				config,
+				projectService,
+				projectAssetService,
+				repository,
+				s3ClientService,
+				InterventionPolicy.class);
 	}
 
 	@Override

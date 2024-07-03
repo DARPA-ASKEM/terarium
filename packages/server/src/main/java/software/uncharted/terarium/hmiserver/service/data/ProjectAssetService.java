@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import io.micrometer.observation.annotation.Observed;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
@@ -153,5 +154,33 @@ public class ProjectAssetService {
 			}
 		}
 		return null;
+	}
+
+	@Observed(name = "function_profile")
+	public void togglePublicForAssets(
+			final TerariumAssetServices terariumAssetServices,
+			final UUID projectId,
+			final boolean isPublic,
+			final Schema.Permission hasWritePermission)
+			throws IOException {
+
+		final List<ProjectAsset> projectAssets =
+				projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
+
+		for (final ProjectAsset projectAsset : projectAssets) {
+
+			final ITerariumAssetService<? extends TerariumAsset> terariumAssetService =
+					terariumAssetServices.getServiceByType(projectAsset.getAssetType());
+
+			final Optional<? extends TerariumAsset> asset =
+					terariumAssetService.getAsset(projectAsset.getAssetId(), hasWritePermission);
+
+			if (asset.isPresent()) {
+				asset.get().setPublicAsset(isPublic);
+
+				terariumAssetServices.updateAsset(
+						(TerariumAsset) asset.get(), projectId, projectAsset.getAssetType(), hasWritePermission);
+			}
+		}
 	}
 }
