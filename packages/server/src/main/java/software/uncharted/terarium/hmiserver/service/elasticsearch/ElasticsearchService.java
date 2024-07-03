@@ -17,6 +17,7 @@ import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
@@ -83,6 +84,7 @@ public class ElasticsearchService {
 		if (restTemplate == null) {
 			initRestTemplate();
 		}
+
 		return restTemplate;
 	}
 
@@ -450,6 +452,28 @@ public class ElasticsearchService {
 	}
 
 	/**
+	 * Update a document from an index.
+	 *
+	 * @param index The index to remove the document from
+	 * @param id The id of the document to remove
+	 */
+	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
+		try {
+			log.info("Updating: {} from {}", id, index);
+
+			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
+					.index(index)
+					.id(id)
+					.refresh(Refresh.WaitFor)
+					.build();
+
+			client.update(req, Void.class);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
 	 * Remove an index.
 	 *
 	 * @param index The index to remove
@@ -578,7 +602,7 @@ public class ElasticsearchService {
 				if (doc.getId() == null) {
 					throw new RuntimeException("Document id cannot be null");
 				}
-				final UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<Object, Object>()
+				final UpdateOperation<Object, Object> updateOperation = new UpdateOperation.Builder<>()
 						.index(index)
 						.id(doc.getId().toString())
 						.action(a -> a.doc(doc))
