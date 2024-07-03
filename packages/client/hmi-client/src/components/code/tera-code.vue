@@ -1,5 +1,5 @@
 <template>
-	<tera-asset :is-loading="isLoading" stretch-content overflow-hidden>
+	<tera-asset :id="assetId" :is-loading="isLoading" overflow-hidden :show-header="false">
 		<div v-if="programmingLanguage !== ProgrammingLanguage.Zip" class="code-asset-content">
 			<tera-directory v-if="fileNames.length > 1" :files="fileNames" @fileClicked="onFileSelect" />
 			<div class="code-asset-editor">
@@ -547,11 +547,6 @@ header > section {
 	z-index: 20;
 }
 
-.header {
-	display: flex;
-	gap: 1rem;
-}
-
 .name {
 	flex-grow: 2;
 	display: flex;
@@ -624,10 +619,5 @@ header > section {
 
 .toolbar-button {
 	height: 2.25rem;
-}
-
-/* hide the unnecessary top bar */
-:deep(#asset-top) {
-	display: contents !important;
 }
 </style>
