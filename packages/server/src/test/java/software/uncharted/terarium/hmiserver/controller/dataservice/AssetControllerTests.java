@@ -3,16 +3,19 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.transaction.Transactional;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -66,8 +69,8 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		// Test that we get a 404 if we provide a project id that doesn't exist
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_UNUSED + "?project-id=" + UUID.randomUUID())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_UNUSED + "?project-id=" + UUID.randomUUID())
+				.with(csrf()))
 				.andExpect(status().isNotFound());
 	}
 
@@ -77,27 +80,27 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		// Test that we get a 204 if the asset name is available
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_UNUSED)
-						.with(csrf()))
+				+ TEST_ASSET_NAME_UNUSED)
+				.with(csrf()))
 				.andExpect(status().isNoContent());
 
 		// Test that we get a 409 if the asset name is not available
 		mockMvc.perform(MockMvcRequestBuilders.get(
-								"/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_1)
-						.with(csrf()))
+				"/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_1)
+				.with(csrf()))
 				.andExpect(status().isConflict());
 
 		// Test that we get a 409 if the asset name is not available
 		mockMvc.perform(MockMvcRequestBuilders.get(
-								"/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2)
-						.with(csrf()))
+				"/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/" + TEST_ASSET_NAME_2)
+				.with(csrf()))
 				.andExpect(status().isConflict());
 
 		// Test that we get a 204 if the asset name is available because of different
 		// asset type
 		mockMvc.perform(MockMvcRequestBuilders.get(
-								"/assets/asset-name-available/" + AssetType.CODE.name() + "/" + TEST_ASSET_NAME_1)
-						.with(csrf()))
+				"/assets/asset-name-available/" + AssetType.CODE.name() + "/" + TEST_ASSET_NAME_1)
+				.with(csrf()))
 				.andExpect(status().isNoContent());
 	}
 
@@ -105,33 +108,34 @@ public class AssetControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.ADAM)
 	public void testItCanVerifyAssetNameAvailabilityInProjects() throws Exception {
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_UNUSED + "?project-id=" + project.getId())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_UNUSED + "?project-id=" + project.getId())
+				.with(csrf()))
 				.andExpect(status().isNoContent());
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
+				.with(csrf()))
 				.andExpect(status().isConflict());
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_2 + "?project-id=" + project.getId())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_2 + "?project-id=" + project.getId())
+				.with(csrf()))
 				.andExpect(status().isNoContent());
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.CODE.name() + "/"
-								+ TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_1 + "?project-id=" + project.getId())
+				.with(csrf()))
 				.andExpect(status().isNoContent());
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/assets/asset-name-available/" + AssetType.DOCUMENT.name() + "/"
-								+ TEST_ASSET_NAME_2 + "?project-id=" + project2.getId())
-						.with(csrf()))
+				+ TEST_ASSET_NAME_2 + "?project-id=" + project2.getId())
+				.with(csrf()))
 				.andExpect(status().isConflict());
 	}
 
 	/**
-	 * Helper method to set up a scenario where we have two projects each with one document asset.
+	 * Helper method to set up a scenario where we have two projects each with one
+	 * document asset.
 	 *
 	 * @throws Exception
 	 */
@@ -141,6 +145,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -149,16 +154,17 @@ public class AssetControllerTests extends TerariumApplicationTests {
 				.setAssetType(AssetType.DOCUMENT);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/projects/" + project.getId() + "/assets/"
-								+ AssetType.DOCUMENT.name() + "/" + documentAsset.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(projectAsset)))
+				+ AssetType.DOCUMENT.name() + "/" + documentAsset.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(projectAsset)))
 				.andExpect(status().isOk());
 
 		project2 = projectService.createProject((Project) new Project().setName("test-proj-2"));
 
 		final DocumentAsset documentAsset2 = documentAssetService.createAsset(
 				(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset2 = new ProjectAsset()
@@ -167,10 +173,10 @@ public class AssetControllerTests extends TerariumApplicationTests {
 				.setAssetType(AssetType.DOCUMENT);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/projects/" + project2.getId() + "/assets/"
-								+ AssetType.DOCUMENT.name() + "/" + documentAsset2.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(projectAsset2)))
+				+ AssetType.DOCUMENT.name() + "/" + documentAsset2.getId())
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(projectAsset2)))
 				.andExpect(status().isOk());
 	}
 }

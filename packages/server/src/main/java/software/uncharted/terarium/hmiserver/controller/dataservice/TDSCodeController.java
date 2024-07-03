@@ -1,20 +1,12 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -39,6 +31,16 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -75,34 +77,20 @@ public class TDSCodeController {
 	/**
 	 * Retrieves a list of codes.
 	 *
-	 * @param pageSize The number of codes to retrieve per page (optional, default value is 100).
-	 * @param page The page number to retrieve (optional, default value is 0).
-	 * @return A ResponseEntity containing a list of Code objects if successful, or an empty list if no codes are found.
+	 * @param pageSize The number of codes to retrieve per page (optional, default
+	 *                 value is 100).
+	 * @param page     The page number to retrieve (optional, default value is 0).
+	 * @return A ResponseEntity containing a list of Code objects if successful, or
+	 *         an empty list if no codes are found.
 	 */
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all code resources")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "code found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Code.class)))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There is no code found and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving code from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "code found.", content = @Content(array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class)))),
+			@ApiResponse(responseCode = "204", description = "There is no code found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving code from the data store", content = @Content)
+	})
 	public ResponseEntity<List<Code>> getCodes(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page) {
@@ -124,29 +112,17 @@ public class TDSCodeController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new code resource")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Code resource created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Code.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the code resource",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Code resource created.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the code resource", content = @Content)
+	})
 	public ResponseEntity<Code> createCode(
 			@RequestBody Code code, @RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
-			code = codeService.createAsset(code, permission);
+			code = codeService.createAsset(code, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
@@ -160,36 +136,22 @@ public class TDSCodeController {
 	 *
 	 * @param id the ID of the code to be retrieved
 	 * @return a ResponseEntity containing the code
-	 * @throws ResponseStatusException if the code is not found with the specified ID
+	 * @throws ResponseStatusException if the code is not found with the specified
+	 *                                 ID
 	 */
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets code resource by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Code resource found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Code.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "There was no code resource found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the code resource from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Code resource found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code resource from the data store", content = @Content)
+	})
 	public ResponseEntity<Code> getCode(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			final Optional<Code> code = codeService.getAsset(id, permission);
@@ -206,42 +168,28 @@ public class TDSCodeController {
 	 * Updates the code with the specified ID.
 	 *
 	 * @param codeId The ID of the code to update.
-	 * @param code The updated code information.
-	 * @return The HTTP response entity containing a JSON node with the updated code ID.
+	 * @param code   The updated code information.
+	 * @return The HTTP response entity containing a JSON node with the updated code
+	 *         ID.
 	 */
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a code resource")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Code resource updated.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Code.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "Code resource could not be found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the code resource",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Code resource updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))),
+			@ApiResponse(responseCode = "404", description = "Code resource could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the code resource", content = @Content)
+	})
 	public ResponseEntity<Code> updateCode(
 			@PathVariable("id") final UUID codeId,
 			@RequestBody final Code code,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateAsset(code, permission);
+			final Optional<Code> updated = codeService.updateAsset(code, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final NotFoundException e) {
@@ -263,30 +211,18 @@ public class TDSCodeController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a code resource by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Code resource deleted.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ResponseDeleted.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue deleting the code resource",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Code resource deleted.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the code resource", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteCode(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
-			codeService.deleteAsset(id, permission);
+			codeService.deleteAsset(id, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
@@ -299,24 +235,18 @@ public class TDSCodeController {
 	/**
 	 * Retrieves the content of a code file as text.
 	 *
-	 * @param codeId the ID of the code file to be retrieved
+	 * @param codeId   the ID of the code file to be retrieved
 	 * @param filename the name of the code file
-	 * @return a ResponseEntity object containing the content of the code file as text
+	 * @return a ResponseEntity object containing the content of the code file as
+	 *         text
 	 */
 	@GetMapping("/{id}/download-code-as-text")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets code file as text")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Code file found.",
-						content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the code file from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Code file found.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the code file from the data store", content = @Content)
+	})
 	public ResponseEntity<String> getCodeFileAsText(
 			@PathVariable("id") final UUID codeId, @RequestParam("filename") final String filename) {
 
@@ -334,26 +264,11 @@ public class TDSCodeController {
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the code file")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "There was no code resource found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getDownloadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 		try {
@@ -372,22 +287,10 @@ public class TDSCodeController {
 	@GetMapping("/{id}/upload-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to upload the code file")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Presigned url generated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = PresignedURL.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the presigned url",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Presigned url generated.", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the presigned url", content = @Content)
+	})
 	public ResponseEntity<PresignedURL> getUploadURL(
 			@PathVariable("id") final UUID id, @RequestParam("filename") final String filename) {
 
@@ -403,63 +306,46 @@ public class TDSCodeController {
 	/**
 	 * Uploads a file to the specified codeId.
 	 *
-	 * @param codeId the code ID to upload the file to
+	 * @param codeId   the code ID to upload the file to
 	 * @param filename the name of the file to be uploaded
-	 * @param input the file to be uploaded
-	 * @return a ResponseEntity object with an Integer indicating the result of the upload
+	 * @param input    the file to be uploaded
+	 * @return a ResponseEntity object with an Integer indicating the result of the
+	 *         upload
 	 * @throws IOException if an I/O error occurs while reading the file
 	 */
 	@PutMapping(value = "/{id}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File uploaded.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Integer.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue uploading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadFile(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("filename") final String filename,
 			@RequestPart("file") final MultipartFile input,
 			@RequestParam(name = "project-id", required = false) final UUID projectId)
 			throws IOException {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		log.debug("Uploading code {} to project", codeId);
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCodeHelper(codeId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
 	}
 
-	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
+	/**
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
+	 */
 	@PutMapping("/{id}/upload-code-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File uploaded.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Integer.class)))
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)))
+	})
 	public ResponseEntity<Integer> uploadCodeFromGithub(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("path") final String path,
@@ -467,54 +353,42 @@ public class TDSCodeController {
 			@RequestParam("filename") final String filename,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		// download file from GitHub
-		final String fileString =
-				jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
+		final String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
 		if (fileString == null) {
 			throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get file as string data");
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadCodeHelper(codeId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
 	}
 
 	/**
-	 * Downloads a file from GitHub given the path and owner name, then uploads it to the project.
+	 * Downloads a file from GitHub given the path and owner name, then uploads it
+	 * to the project.
 	 *
-	 * @param codeId The ID of the code to upload to
+	 * @param codeId           The ID of the code to upload to
 	 * @param repoOwnerAndName The owner and name of the repo to upload from
-	 * @param repoName The name of the repo to upload from
+	 * @param repoName         The name of the repo to upload from
 	 * @return A response containing the status of the upload
 	 */
 	@PutMapping("/{id}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "File uploaded.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Integer.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue uploading the file",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "File uploaded.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
+	})
 	public ResponseEntity<Integer> uploadCodeFromGithubRepo(
 			@PathVariable("id") final UUID codeId,
 			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
 			@RequestParam("repo-name") final String repoName,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
 
@@ -527,7 +401,7 @@ public class TDSCodeController {
 
 			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-			return uploadCodeHelper(codeId, repoName, fileEntity, permission);
+			return uploadCodeHelper(codeId, projectId, repoName, fileEntity, permission);
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -539,13 +413,14 @@ public class TDSCodeController {
 	/**
 	 * Uploads an code inside the entity to TDS via a presigned URL
 	 *
-	 * @param codeId The ID of the code to upload to
-	 * @param fileName The name of the file to upload
+	 * @param codeId         The ID of the code to upload to
+	 * @param fileName       The name of the file to upload
 	 * @param codeHttpEntity The entity containing the code to upload
 	 * @return A response containing the status of the upload
 	 */
 	private ResponseEntity<Integer> uploadCodeHelper(
 			final UUID codeId,
+			final UUID projectId,
 			final String fileName,
 			final HttpEntity codeHttpEntity,
 			final Schema.Permission hasWritePermission) {
@@ -569,7 +444,7 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateAsset(code.get(), hasWritePermission);
+			codeService.updateAsset(code.get(), projectId, hasWritePermission);
 
 			code.get().getFileNames().add(fileName);
 

@@ -36,6 +36,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final ModelRepository repository,
@@ -45,6 +46,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				config,
 				elasticConfig,
 				elasticService,
+				projectService,
 				projectAssetService,
 				s3ClientService,
 				repository,
@@ -107,7 +109,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset, final Schema.Permission hasWritePermission) throws IOException {
+	public Model createAsset(final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
@@ -123,7 +126,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			});
 		}
 
-		final Model created = super.createAsset(asset, hasWritePermission);
+		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
 			try {
@@ -145,10 +148,11 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Model> updateAsset(final Model asset, final Schema.Permission hasWritePermission)
+	public Optional<Model> updateAsset(final Model asset, final UUID projectId,
+			final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
-		final Optional<Model> updatedOptional = super.updateAsset(asset, hasWritePermission);
+		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();
 		}

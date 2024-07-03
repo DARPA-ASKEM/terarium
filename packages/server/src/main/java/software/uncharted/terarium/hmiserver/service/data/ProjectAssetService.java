@@ -178,7 +178,7 @@ public class ProjectAssetService {
 			if (asset.isPresent()) {
 				asset.get().setPublicAsset(isPublic);
 
-				terariumAssetServices.updateAsset((TerariumAsset) asset.get(), projectAsset.getAssetType(),
+				terariumAssetServices.updateAsset((TerariumAsset) asset.get(), projectId, projectAsset.getAssetType(),
 						hasWritePermission);
 			}
 		}

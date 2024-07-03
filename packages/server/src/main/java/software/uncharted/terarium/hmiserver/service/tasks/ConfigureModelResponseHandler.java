@@ -1,15 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import java.util.List;
-import java.util.UUID;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -55,6 +58,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+		UUID projectId;
 		UUID documentId;
 		UUID modelId;
 		UUID workflowId;
@@ -78,8 +82,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Map the parameters values to the model
 				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters =
-							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
+					final List<ModelParameter> modelParameters = ScenarioExtraction
+							.getModelParameters(condition.get("parameters"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy
 								.getModel()
@@ -92,8 +96,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Map the initials values to the model
 				final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials =
-							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"),
+							modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
@@ -112,8 +116,9 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 						condition.get("name").asText(),
 						condition.get("description").asText());
 
-				final ModelConfiguration newConfig =
-						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration,
+						props.projectId,
+						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()
 						.setLeft(newConfig.getId())

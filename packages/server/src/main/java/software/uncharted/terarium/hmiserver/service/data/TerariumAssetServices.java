@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -50,25 +51,26 @@ public class TerariumAssetServices {
 		};
 	}
 
-	public Optional<? extends TerariumAsset> updateAsset(final TerariumAsset asset, final AssetType type,
+	public Optional<? extends TerariumAsset> updateAsset(final TerariumAsset asset, final UUID projectId,
+			final AssetType type,
 			final Permission permission) throws IOException {
 
 		switch (type) {
 			case ARTIFACT:
-				return artifactService.updateAsset((Artifact) asset, permission);
+				return artifactService.updateAsset((Artifact) asset, projectId, permission);
 			case CODE:
-				return codeService.updateAsset((Code) asset, permission);
+				return codeService.updateAsset((Code) asset, projectId, permission);
 			case DATASET:
-				return datasetService.updateAsset((Dataset) asset, permission);
+				return datasetService.updateAsset((Dataset) asset, projectId, permission);
 			case DOCUMENT:
-				return documentAssetService.updateAsset((DocumentAsset) asset, permission);
+				return documentAssetService.updateAsset((DocumentAsset) asset, projectId, permission);
 			case MODEL_CONFIGURATION:
 				return modelConfigurationService.updateAsset((ModelConfiguration) asset,
-						permission);
+						projectId, permission);
 			case MODEL:
-				return modelService.updateAsset((Model) asset, permission);
+				return modelService.updateAsset((Model) asset, projectId, permission);
 			case WORKFLOW:
-				return workflowService.updateAsset((Workflow) asset, permission);
+				return workflowService.updateAsset((Workflow) asset, projectId, permission);
 			default:
 				throw new IllegalArgumentException("Invalid asset type: " + type);
 		}

@@ -1,12 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
@@ -21,10 +24,12 @@ public class NotebookSessionService
 	public NotebookSessionService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final NotebookSessionRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, NotebookSession.class);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService,
+				NotebookSession.class);
 	}
 
 	@Override

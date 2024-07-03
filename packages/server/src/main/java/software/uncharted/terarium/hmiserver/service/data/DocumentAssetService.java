@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final DocumentRepository repository,
@@ -40,6 +42,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				config,
 				elasticConfig,
 				elasticService,
+				projectService,
 				projectAssetService,
 				s3ClientService,
 				repository,
@@ -65,15 +68,17 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 
 	@Override
 	@Observed(name = "function_profile")
-	public DocumentAsset createAsset(final DocumentAsset asset, final Schema.Permission hasWritePermission)
+	public DocumentAsset createAsset(final DocumentAsset asset, final UUID projectId,
+			final Schema.Permission hasWritePermission)
 			throws IOException {
 
-		return super.createAsset(asset, hasWritePermission);
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<DocumentAsset> updateAsset(final DocumentAsset asset, final Schema.Permission hasWritePermission)
+	public Optional<DocumentAsset> updateAsset(final DocumentAsset asset, final UUID projectId,
+			final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
 		final Optional<DocumentAsset> originalOptional = getAsset(asset.getId(), hasWritePermission);
@@ -87,7 +92,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 		// awareness of who owned this document.
 		asset.setUserId(original.getUserId());
 
-		final Optional<DocumentAsset> updatedOptional = super.updateAsset(asset, hasWritePermission);
+		final Optional<DocumentAsset> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();
 		}

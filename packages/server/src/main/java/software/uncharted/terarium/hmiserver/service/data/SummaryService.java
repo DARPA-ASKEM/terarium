@@ -1,10 +1,13 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.util.List;
 import java.util.UUID;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.repository.data.SummaryRepository;
@@ -16,10 +19,11 @@ public class SummaryService extends TerariumAssetServiceWithoutSearch<Summary, S
 	public SummaryService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final SummaryRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, Summary.class);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Summary.class);
 	}
 
 	public List<Summary> getSummaries(final List<UUID> ids, final Schema.Permission hasReadPermission) {

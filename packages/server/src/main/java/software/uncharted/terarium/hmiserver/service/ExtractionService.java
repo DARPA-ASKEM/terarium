@@ -1,12 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import feign.FeignException;
-import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,9 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +21,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import feign.FeignException;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -124,8 +127,7 @@ public class ExtractionService {
 			try {
 				notificationInterface.sendMessage("Starting extraction...");
 
-				DocumentAsset document =
-						documentService.getAsset(documentId, hasWritePermission).get();
+				DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
 				notificationInterface.sendMessage("Document found, fetching file...");
 
 				if (document.getFileNames().isEmpty()) {
@@ -134,17 +136,16 @@ public class ExtractionService {
 
 				final String filename = document.getFileNames().get(0);
 
-				final byte[] documentContents =
-						documentService.fetchFileAsBytes(documentId, filename).get();
+				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 				notificationInterface.sendMessage("File fetched, processing PDF extraction...");
 
-				final ByteMultipartFile documentFile =
-						new ByteMultipartFile(documentContents, filename, "application/pdf");
+				final ByteMultipartFile documentFile = new ByteMultipartFile(documentContents, filename,
+						"application/pdf");
 
 				final boolean compressImages = false;
 				final boolean useCache = false;
-				final ResponseEntity<JsonNode> extractionResp =
-						extractionProxy.processPdfExtraction(compressImages, useCache, documentFile);
+				final ResponseEntity<JsonNode> extractionResp = extractionProxy.processPdfExtraction(compressImages,
+						useCache, documentFile);
 
 				final JsonNode body = extractionResp.getBody();
 				final UUID jobId = UUID.fromString(body.get("job_id").asText());
@@ -245,8 +246,8 @@ public class ExtractionService {
 				int totalUploads = 0;
 
 				for (final ExtractionAssetType extractionType : ExtractionAssetType.values()) {
-					final ResponseEntity<JsonNode> response =
-							extractionProxy.extraction(jobId, extractionType.toStringPlural());
+					final ResponseEntity<JsonNode> response = extractionProxy.extraction(jobId,
+							extractionType.toStringPlural());
 					log.info("Extraction type {} response status: {}", extractionType, response.getStatusCode());
 					if (!response.getStatusCode().is2xxSuccessful()) {
 						log.warn("Unable to fetch the {} extractions", extractionType);
@@ -278,7 +279,8 @@ public class ExtractionService {
 						final DocumentExtraction extraction = new DocumentExtraction();
 						extraction.setFileName(assetFileName);
 						extraction.setAssetType(extractionType);
-						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
+						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {
+						}));
 
 						document.getAssets().add(extraction);
 						document.getFileNames().add(assetFileName);
@@ -306,7 +308,7 @@ public class ExtractionService {
 
 				// update the document
 				document = documentService
-						.updateAsset(document, hasWritePermission)
+						.updateAsset(document, projectId, hasWritePermission)
 						.orElseThrow();
 
 				// if there is text, run variable extraction
@@ -316,7 +318,8 @@ public class ExtractionService {
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
 						document = runVariableExtraction(
-								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
+								notificationInterface, projectId, documentId, new ArrayList<>(), domain,
+								hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -341,6 +344,7 @@ public class ExtractionService {
 						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+						props.setProjectId(projectId);
 						props.setDocumentId(documentId);
 						props.setUpdateEmbeddings(true); // update the embeddings using the card
 						req.setAdditionalProperties(props);
@@ -378,6 +382,7 @@ public class ExtractionService {
 
 	private DocumentAsset runVariableExtraction(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -386,8 +391,7 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Starting variable extraction.");
 		try {
 			// Fetch the text from the document
-			final DocumentAsset document =
-					documentService.getAsset(documentId, hasWritePermission).orElseThrow();
+			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 			notificationInterface.sendMessage("Document found, fetching text.");
 			if (document.getText() == null || document.getText().isEmpty()) {
 				throw new RuntimeException("No text found in paper document");
@@ -442,7 +446,7 @@ public class ExtractionService {
 				for (final UUID modelId : modelIds) {
 					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
 					try {
-						runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+						runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
@@ -451,7 +455,7 @@ public class ExtractionService {
 			}
 
 			// update the document
-			return documentService.updateAsset(document, hasWritePermission).orElseThrow();
+			return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
 			log.error(error, e.contentUTF8(), e);
@@ -459,15 +463,15 @@ public class ExtractionService {
 					e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 					error + ": " + e.getMessage());
 		} catch (final Exception e) {
-			final String error =
-					"SKEMA unified integrated-text-extractions request from document: " + documentId + " failed.";
+			final String error = "SKEMA unified integrated-text-extractions request from document: " + documentId
+					+ " failed.";
 			log.error(error, e);
 			notificationInterface.sendError(error + " — " + e.getMessage());
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
-	public Future<DocumentAsset> extractVariables(
+	public Future<DocumentAsset> extractVariables(final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -483,15 +487,16 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc =
-					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
+			final DocumentAsset doc = runVariableExtraction(notificationInterface, projectId, documentId, modelIds,
+					domain,
+					hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
-	public Future<Model> alignAMR(
-			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
+	public Future<Model> alignAMR(final UUID projectId, final UUID documentId, final UUID modelId,
+			final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
@@ -504,7 +509,7 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Model alignment task submitted...");
 
 		return executor.submit(() -> {
-			final Model model = runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+			final Model model = runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 			notificationInterface.sendFinalMessage("Alignment complete");
 			return model;
 		});
@@ -512,6 +517,7 @@ public class ExtractionService {
 
 	public Model runAlignAMR(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final UUID modelId,
 			final Schema.Permission hasWritePermission) {
@@ -519,11 +525,9 @@ public class ExtractionService {
 		try {
 			notificationInterface.sendMessage("Starting model alignment...");
 
-			final DocumentAsset document =
-					documentService.getAsset(documentId, hasWritePermission).orElseThrow();
+			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).orElseThrow();
 
-			final Model model =
-					modelService.getAsset(modelId, hasWritePermission).orElseThrow();
+			final Model model = modelService.getAsset(modelId, hasWritePermission).orElseThrow();
 
 			final String modelString = objectMapper.writeValueAsString(model);
 
@@ -534,8 +538,7 @@ public class ExtractionService {
 				throw new RuntimeException("No attributes found in document");
 			}
 
-			final JsonNode attributes =
-					objectMapper.valueToTree(document.getMetadata().get("attributes"));
+			final JsonNode attributes = objectMapper.valueToTree(document.getMetadata().get("attributes"));
 
 			final ObjectNode extractions = objectMapper.createObjectNode();
 			extractions.set("attributes", attributes);
@@ -543,8 +546,8 @@ public class ExtractionService {
 			final String extractionsString = objectMapper.writeValueAsString(extractions);
 
 			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json", "application/json");
-			final StringMultipartFile extractionFile =
-					new StringMultipartFile(extractionsString, "extractions.json", "application/json");
+			final StringMultipartFile extractionFile = new StringMultipartFile(extractionsString, "extractions.json",
+					"application/json");
 
 			final ResponseEntity<JsonNode> res;
 			try {
@@ -566,7 +569,7 @@ public class ExtractionService {
 			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
 			// update the model
-			modelService.updateAsset(model, hasWritePermission);
+			modelService.updateAsset(model, projectId, hasWritePermission);
 
 			// create provenance
 			final Provenance provenance = new Provenance(

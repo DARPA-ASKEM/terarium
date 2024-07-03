@@ -1,27 +1,37 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.ProgrammingLanguage;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 public class CodeServiceTests extends TerariumApplicationTests {
 
 	@Autowired
 	CodeService codeService;
+
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
 
 	static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -30,6 +40,12 @@ public class CodeServiceTests extends TerariumApplicationTests {
 				.setFileName(name)
 				.setLanguage(ProgrammingLanguage.PYTHON)
 				.setDynamics(new Dynamics().setName("hello").setDescription("world"));
+	}
+
+	@BeforeEach
+	public void setup() throws IOException {
+		project = projectService.createProject(
+				(Project) new Project().setName("test-project-name").setDescription("my description"));
 	}
 
 	Code createCode(final String key) {
@@ -66,7 +82,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateCode() {
 		final Code before = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			final Code after = codeService.createAsset(before, ASSUME_WRITE_PERMISSION);
+			final Code after = codeService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -82,8 +98,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCantCreateDuplicates() {
 		final Code code = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
-			codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
+			codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
+			codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
 			Assertions.fail("Should have thrown an exception");
 
 		} catch (final Exception e) {
@@ -94,9 +110,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodes() throws IOException {
-		codeService.createAsset(createCode("0"), ASSUME_WRITE_PERMISSION);
-		codeService.createAsset(createCode("1"), ASSUME_WRITE_PERMISSION);
-		codeService.createAsset(createCode("2"), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("1"), project.getId(), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("2"), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final List<Code> sims = codeService.getPublicNotTemporaryAssets(0, 10);
 
@@ -106,9 +122,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
-		final Code code = codeService.createAsset(createCode("0"), ASSUME_WRITE_PERMISSION);
-		final Code fetchedCode =
-				codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Code code = codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
+		final Code fetchedCode = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -126,11 +141,10 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateCode() throws Exception {
 
-		final Code code = codeService.createAsset(createCode("A"), ASSUME_WRITE_PERMISSION);
+		final Code code = codeService.createAsset(createCode("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		code.setName("new name");
 
-		final Code updatedCode =
-				codeService.updateAsset(code, ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Code updatedCode = codeService.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());
@@ -140,9 +154,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteCode() throws Exception {
 
-		final Code code = codeService.createAsset(createCode("B"), ASSUME_WRITE_PERMISSION);
+		final Code code = codeService.createAsset(createCode("B"), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		codeService.deleteAsset(code.getId(), ASSUME_WRITE_PERMISSION);
+		codeService.deleteAsset(code.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Optional<Code> deleted = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION);
 
@@ -155,7 +169,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		Code code = createCode("A");
 
-		code = codeService.createAsset(code, ASSUME_WRITE_PERMISSION);
+		code = codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Code cloned = code.clone();
 

@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,11 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -34,6 +37,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final DatasetRepository repository) {
@@ -42,6 +46,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 				config,
 				elasticConfig,
 				elasticService,
+				projectService,
 				projectAssetService,
 				s3ClientService,
 				repository,
@@ -67,7 +72,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 	@Override
 	@Observed(name = "function_profile")
-	public Dataset createAsset(final Dataset asset, final Schema.Permission hasWritePermission) throws IOException {
+	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 
 		extractColumnsForFreshCreate(asset);
 
@@ -76,12 +82,13 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 				column.setDataset(asset);
 			}
 		}
-		return super.createAsset(asset, hasWritePermission);
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<Dataset> createAssets(final List<Dataset> assets, final Schema.Permission hasWritePermission)
+	public List<Dataset> createAssets(final List<Dataset> assets, final UUID projectId,
+			final Schema.Permission hasWritePermission)
 			throws IOException {
 		for (final Dataset asset : assets) {
 			if (asset.getColumns() != null) {
@@ -91,19 +98,20 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			}
 		}
 
-		return super.createAssets(assets, hasWritePermission);
+		return super.createAssets(assets, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Dataset> updateAsset(final Dataset asset, final Schema.Permission hasWritePermission)
+	public Optional<Dataset> updateAsset(final Dataset asset, final UUID projectId,
+			final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 		if (asset.getColumns() != null) {
 			for (final DatasetColumn column : asset.getColumns()) {
 				column.setDataset(asset);
 			}
 		}
-		return super.updateAsset(asset, hasWritePermission);
+		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
 
 	// This method throws if it can't get the files
@@ -163,8 +171,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			dataset.setColumns(new ArrayList<>());
 		}
 		for (final String header : headers) {
-			final DatasetColumn column =
-					new DatasetColumn().setName(header).setFileName(fileName).setAnnotations(new ArrayList<>());
+			final DatasetColumn column = new DatasetColumn().setName(header).setFileName(fileName)
+					.setAnnotations(new ArrayList<>());
 			column.setDataset(dataset);
 			dataset.getColumns().add(column);
 		}

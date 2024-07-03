@@ -144,7 +144,7 @@ public class DocumentController {
 				projectId);
 
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -174,7 +174,7 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, permission);
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -291,7 +291,7 @@ public class DocumentController {
 				projectId);
 
 		try {
-			documentAssetService.deleteAsset(id, permission);
+			documentAssetService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
@@ -329,7 +329,7 @@ public class DocumentController {
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 
-				documentAssetService.updateAsset(document.get(), permission);
+				documentAssetService.updateAsset(document.get(), projectId, permission);
 			}
 
 			return ResponseEntity.status(status).build();
@@ -433,13 +433,13 @@ public class DocumentController {
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(
-					document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
+					document, projectId, userId, extractionResponse.getSuccess().getData(), summaries, permission);
 			if (filename != null) {
 				if (!documentAsset.getFileNames().contains(filename)) {
 					documentAsset.getFileNames().add(filename);
 				}
 				documentAsset = documentAssetService
-						.updateAsset(documentAsset, permission)
+						.updateAsset(documentAsset, projectId, permission)
 						.orElseThrow();
 			}
 
@@ -614,6 +614,7 @@ public class DocumentController {
 	 */
 	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
+			final UUID projectId,
 			final String userId,
 			final List<Extraction> extractions,
 			final String summary,
@@ -657,7 +658,7 @@ public class DocumentController {
 			documentAsset.getMetadata().put("github_urls", githubUrls);
 		}
 
-		return documentAssetService.createAsset(documentAsset, permission);
+		return documentAssetService.createAsset(documentAsset, projectId, permission);
 	}
 
 	/**

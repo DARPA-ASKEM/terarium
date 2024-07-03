@@ -286,7 +286,7 @@ public class ModelController {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			final Optional<Model> updated = modelService.updateAsset(model, permission);
+			final Optional<Model> updated = modelService.updateAsset(model, projectId, permission);
 
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -316,7 +316,7 @@ public class ModelController {
 				projectId);
 
 		try {
-			modelService.deleteAsset(id, permission);
+			modelService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Model", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete model";
@@ -342,12 +342,12 @@ public class ModelController {
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
 			model.setName(model.getHeader().getName());
-			final Model created = modelService.createAsset(model, permission);
+			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(created,
 					null, null);
-			modelConfigurationService.createAsset(modelConfiguration, permission);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {

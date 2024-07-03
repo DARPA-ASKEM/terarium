@@ -43,6 +43,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+		UUID projectId;
 		UUID documentId;
 		boolean updateEmbeddings = false;
 	}
@@ -61,7 +62,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 				document.setMetadata(new java.util.HashMap<>());
 			}
 			document.getMetadata().put("gollmCard", card.response);
-			documentAssetService.updateAsset(document, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			documentAssetService.updateAsset(document, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);

@@ -1,15 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -59,6 +62,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Properties {
 		List<UUID> datasetIds;
+		UUID projectId;
 		UUID modelId;
 		UUID workflowId;
 		UUID nodeId;
@@ -92,7 +96,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			try {
 				for (final UUID datasetId : props.datasetIds) {
 					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-							modelConfiguration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+							modelConfiguration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 					// add provenance
 					provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())

@@ -1,8 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.repository.data.CodeRepository;
@@ -14,10 +16,11 @@ public class CodeService extends TerariumAssetServiceWithoutSearch<Code, CodeRep
 	public CodeService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final CodeRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, Code.class);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Code.class);
 	}
 
 	@Override

@@ -3,16 +3,23 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class FrameworkControllerTests extends TerariumApplicationTests {
 	@Autowired
@@ -20,6 +27,18 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private FrameworkService frameworkService;
+
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
+	@BeforeEach
+	public void setup() throws IOException {
+
+		project = projectService.createProject(
+				(Project) new Project().setName("test-project-name").setDescription("my description"));
+	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
@@ -31,9 +50,9 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setSemantics("test-semantics");
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models/frameworks")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(framework)))
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(framework)))
 				.andExpect(status().isCreated());
 	}
 
@@ -47,9 +66,9 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/frameworks/" + framework.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(framework)))
+				.with(csrf())
+				.contentType("application/json")
+				.content(objectMapper.writeValueAsString(framework)))
 				.andExpect(status().isOk());
 	}
 
@@ -63,7 +82,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getId())
-						.with(csrf()))
+				.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -77,7 +96,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 				.setSemantics("test-semantics"));
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId())
-						.with(csrf()))
+				.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(frameworkService.getFramework(framework.getId()).isEmpty());
