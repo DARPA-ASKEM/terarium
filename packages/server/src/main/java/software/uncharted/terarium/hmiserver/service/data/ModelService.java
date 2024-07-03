@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -26,7 +29,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
-	private EmbeddingService embeddingService;
+	private final EmbeddingService embeddingService;
 
 	public ModelService(
 			final ObjectMapper objectMapper,
@@ -48,6 +51,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				s3ClientService,
 				repository,
 				Model.class);
+		this.embeddingService = embeddingService;
 	}
 
 	@Observed(name = "function_profile")

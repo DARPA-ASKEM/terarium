@@ -1,13 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -22,7 +25,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class DocumentAssetService extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
 
-	private EmbeddingService embeddingService;
+	private final EmbeddingService embeddingService;
 
 	public DocumentAssetService(
 			final ObjectMapper objectMapper,
@@ -44,6 +47,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				s3ClientService,
 				repository,
 				DocumentAsset.class);
+		this.embeddingService = embeddingService;
 	}
 
 	@Override
