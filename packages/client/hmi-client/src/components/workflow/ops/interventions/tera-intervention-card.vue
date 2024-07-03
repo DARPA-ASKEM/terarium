@@ -119,7 +119,7 @@
 					option-label="label"
 					option-value="value"
 				/>
-				<span>the threshold value</span>
+				<span>than the threshold value</span>
 				<tera-input
 					type="number"
 					:model-value="intervention.dynamicInterventions[0].value"
@@ -170,8 +170,8 @@ const interventionType = computed(() => {
 });
 
 const comparisonOperations = [
-	{ label: 'greater than', value: true },
-	{ label: 'less than', value: false }
+	{ label: 'greater', value: true },
+	{ label: 'less', value: false }
 ];
 
 const onUpdateName = (name: string) => {
