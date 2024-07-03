@@ -94,6 +94,7 @@ public class MiraController {
 
 	@Data
 	public static class ConversionAdditionalProperties {
+		UUID projectId;
 		String fileName;
 	}
 
@@ -220,6 +221,7 @@ public class MiraController {
 		}
 
 		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+		additionalProperties.setProjectId(conversionRequest.projectId);
 		additionalProperties.setFileName(filename);
 
 		final TaskRequest req = new TaskRequest();
@@ -271,7 +273,7 @@ public class MiraController {
 			// create a default configuration
 			final ModelConfiguration modelConfiguration =
 					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
-			modelConfigurationService.createAsset(modelConfiguration, permission);
+			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));

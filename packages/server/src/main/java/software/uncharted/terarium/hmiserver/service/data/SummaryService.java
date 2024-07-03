@@ -16,10 +16,11 @@ public class SummaryService extends TerariumAssetServiceWithoutSearch<Summary, S
 	public SummaryService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final SummaryRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, Summary.class);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Summary.class);
 	}
 
 	public List<Summary> getSummaries(final List<UUID> ids, final Schema.Permission hasReadPermission) {

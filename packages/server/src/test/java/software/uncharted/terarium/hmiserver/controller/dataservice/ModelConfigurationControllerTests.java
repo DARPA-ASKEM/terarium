@@ -17,7 +17,9 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
@@ -34,9 +36,17 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelConfigurationIndex());
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -53,6 +63,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setModelId(UUID.randomUUID())
 						.setName("test-framework")
 						.setDescription("test-desc"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
@@ -87,6 +98,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 						.setModelId(UUID.randomUUID())
 						.setDescription("test-desc")
 						.setName("test-framework"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())

@@ -140,7 +140,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -167,16 +167,18 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		/*
-		TODO: Use new interventions
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setInterventions(allInterventions);
-		}*/
+		 * TODO: Use new interventions
+		 * final List<Intervention> modelInterventions =
+		 * modelConfiguration.get().getInterventions();
+		 * if (modelInterventions != null) {
+		 * List<Intervention> allInterventions = request.payload.getInterventions();
+		 * if (allInterventions == null) {
+		 * allInterventions = new ArrayList<>();
+		 * }
+		 * allInterventions.addAll(modelInterventions);
+		 * request.payload.setInterventions(allInterventions);
+		 * }
+		 */
 
 		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
 		final JobResponse res = simulationCiemssServiceProxy
@@ -211,7 +213,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -260,17 +262,18 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		/*
-		TODO: Use new interventions
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setInterventions(allInterventions);
-		}
-		*/
+		 * TODO: Use new interventions
+		 * final List<Intervention> modelInterventions =
+		 * modelConfiguration.get().getInterventions();
+		 * if (modelInterventions != null) {
+		 * List<Intervention> allInterventions = request.payload.getInterventions();
+		 * if (allInterventions == null) {
+		 * allInterventions = new ArrayList<>();
+		 * }
+		 * allInterventions.addAll(modelInterventions);
+		 * request.payload.setInterventions(allInterventions);
+		 * }
+		 */
 
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
@@ -303,17 +306,19 @@ public class SimulationRequestController implements SnakeCaseController {
 			return ResponseEntity.notFound().build();
 		}
 		/*
-		TODO: Use new interventions
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setFixedStaticParameterInterventions(allInterventions);
-		}
-
+		 * TODO: Use new interventions
+		 * final List<Intervention> modelInterventions =
+		 * modelConfiguration.get().getInterventions();
+		 * if (modelInterventions != null) {
+		 * List<Intervention> allInterventions =
+		 * request.payload.getFixedStaticParameterInterventions();
+		 * if (allInterventions == null) {
+		 * allInterventions = new ArrayList<>();
+		 * }
+		 * allInterventions.addAll(modelInterventions);
+		 * request.payload.setFixedStaticParameterInterventions(allInterventions);
+		 * }
+		 *
 		 */
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))

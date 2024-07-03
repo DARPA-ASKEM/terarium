@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -24,7 +23,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectA
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 @Transactional
 public class ProjectControllerTests extends TerariumApplicationTests {
@@ -40,11 +38,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DocumentAssetService documentAssetService;
 
-	@Autowired
-	private ElasticsearchService elasticService;
-
-	@Autowired
-	private ElasticsearchConfiguration elasticConfig;
+	Project project;
 
 	@BeforeEach
 	public void setup() throws IOException {
@@ -112,6 +106,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -148,6 +143,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);

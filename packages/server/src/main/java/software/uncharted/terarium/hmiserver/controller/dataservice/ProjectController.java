@@ -513,6 +513,11 @@ public class ProjectController {
 			@PathVariable("id") final UUID id, @RequestBody final Project project) {
 		projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
 
+		final Optional<Project> originalProject = projectService.getProject(id);
+		if (originalProject.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+		}
+
 		project.setId(id);
 		final Optional<Project> updatedProject;
 		try {
@@ -526,6 +531,17 @@ public class ProjectController {
 		if (!updatedProject.isPresent()) {
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-update"));
+		}
+
+		if (originalProject.get().getPublicAsset() != updatedProject.get().getPublicAsset()) {
+			try {
+				projectAssetService.togglePublicForAssets(
+						terariumAssetServices, id, updatedProject.get().getPublicAsset(), Schema.Permission.WRITE);
+			} catch (final Exception e) {
+				log.error("Error updating project", e);
+				throw new ResponseStatusException(
+						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			}
 		}
 
 		return ResponseEntity.ok(updatedProject.get());
@@ -1048,6 +1064,16 @@ public class ProjectController {
 			// Setting the relationship to be of a reader
 			final String relationship = Schema.Relationship.READER.toString();
 
+			final Optional<Project> p = projectService.getProject(id);
+			if (p.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+
+			// Update the project and child assets
+			p.get().setPublicAsset(isPublic);
+			projectAssetService.togglePublicForAssets(terariumAssetServices, id, isPublic, Schema.Permission.WRITE);
+			projectService.updateProject(p.get());
+
 			if (isPublic) {
 				// Set the Public Group permissions to READ the Project
 				return setProjectPermissions(project, who, relationship);
@@ -1055,6 +1081,7 @@ public class ProjectController {
 				// Remove the Public Group permissions to READ the Project
 				return removeProjectPermissions(project, who, relationship);
 			}
+
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
