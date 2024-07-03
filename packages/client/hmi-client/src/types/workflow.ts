@@ -69,6 +69,9 @@ export interface Operation {
 	inputs: OperationData[];
 	outputs: OperationData[];
 
+	// Returns an id of the created summary
+	createOutputSummary?: (state: any) => Promise<string>;
+
 	// @deprecated
 	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }

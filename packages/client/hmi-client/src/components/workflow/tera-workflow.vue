@@ -349,9 +349,11 @@ async function appendOutput(
 	const summaryCall = registry.getOperation(node.operationType)?.createOutputSummary ?? null;
 	if (summaryCall) {
 		const summaryId = await summaryCall(node.state);
+		console.log('debug 0', summaryId);
 		if (port.state) {
 			port.state.summaryId = summaryId;
 		}
+		// port.state.summaryId = uuidv4();
 	}
 
 	const uuid = uuidv4();
@@ -374,6 +376,8 @@ async function appendOutput(
 
 	// Filter out temporary outputs where value is null
 	node.outputs = node.outputs.filter((d) => d.value);
+
+	console.log('debug 1 ..............................');
 
 	selectOutput(node, uuid);
 	workflowDirty = true;

@@ -100,7 +100,7 @@
 				is-selectable
 			>
 				<tera-operator-output-summary
-					v-if="node.state.summaryId"
+					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
