@@ -8,12 +8,12 @@
 				autoResize
 				rows="1"
 				@click.stop
-				@keydown.enter.prevent="updateSummary"
-				@keydown.esc.prevent="updateSummary"
+				@keydown.enter.prevent="updateSummaryText"
+				@keydown.esc.prevent="updateSummaryText"
 			/>
 			<div class="btn-group">
 				<Button icon="pi pi-times" rounded text @click="cancelEdit" />
-				<Button icon="pi pi-check" rounded text @click="updateSummary" />
+				<Button icon="pi pi-check" rounded text @click="updateSummaryText" />
 			</div>
 		</template>
 		<div v-else class="summary">
@@ -37,7 +37,7 @@
 import { ref, onMounted } from 'vue';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-import { getSummaries } from '@/services/summary-service';
+import { updateSummary, getSummaries } from '@/services/summary-service';
 import { Summary } from '@/types/Types';
 
 const MAX_LENGTH = 400;
@@ -71,8 +71,12 @@ function updateSummary() {
 }
 */
 
-function updateSummary() {
-	console.log('hihi');
+function updateSummaryText() {
+	console.log('new text value', summaryText.value);
+	if (!summary.value) return;
+	summary.value.humanSummary = summaryText.value;
+	updateSummary(summary.value);
+	isEditing.value = false;
 }
 
 function getSummaryText(s: Summary) {
@@ -101,7 +105,7 @@ onMounted(async () => {
 <style scoped>
 section {
 	display: flex;
-	flex: 1;
+	/* flex: 1; */
 	&:empty {
 		display: none;
 	}

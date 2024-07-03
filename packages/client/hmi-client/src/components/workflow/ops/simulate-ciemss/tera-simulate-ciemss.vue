@@ -99,7 +99,6 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
-				<!-- Testing -->
 				<tera-operator-output-summary
 					v-if="node.state.summaryId"
 					:summary-id="node.state.summaryId"
