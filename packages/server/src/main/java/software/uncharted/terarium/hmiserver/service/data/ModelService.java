@@ -9,36 +9,46 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+@Slf4j
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
+
+	private final EmbeddingService embeddingService;
 
 	public ModelService(
 			final ObjectMapper objectMapper,
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
-			final ModelRepository repository) {
+			final ModelRepository repository,
+			final EmbeddingService embeddingService) {
 		super(
 				objectMapper,
 				config,
 				elasticConfig,
 				elasticService,
+				projectService,
 				projectAssetService,
 				s3ClientService,
 				repository,
 				Model.class);
+		this.embeddingService = embeddingService;
 	}
 
 	@Observed(name = "function_profile")
@@ -97,7 +107,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset, final Schema.Permission hasWritePermission) throws IOException {
+	public Model createAsset(final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null)
 			asset.getHeader().setSchemaName(asset.getHeader().getSchemaName().toLowerCase());
@@ -112,6 +123,55 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				}
 			});
 		}
-		return super.createAsset(asset, hasWritePermission);
+
+		final Model created = super.createAsset(asset, projectId, hasWritePermission);
+
+		if (created.getPublicAsset() && !created.getTemporary()) {
+			try {
+				String text;
+				if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
+					text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
+				} else {
+					text = objectMapper.writeValueAsString(created);
+				}
+				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+				uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
+			} catch (final Exception e) {
+				log.warn("Unable to generate embeddings for model " + created.getId(), e);
+			}
+		}
+
+		return created;
+	}
+
+	@Override
+	@Observed(name = "function_profile")
+	public Optional<Model> updateAsset(
+			final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException, IllegalArgumentException {
+
+		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
+		if (updatedOptional.isEmpty()) {
+			return Optional.empty();
+		}
+
+		final Model updated = updatedOptional.get();
+
+		if (updated.getPublicAsset() && !updated.getTemporary()) {
+			try {
+				String text;
+				if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
+					text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
+				} else {
+					text = objectMapper.writeValueAsString(updated);
+				}
+				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+				uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+			} catch (final Exception e) {
+				log.warn("Unable to update embeddings for model " + updated.getId(), e);
+			}
+		}
+
+		return updatedOptional;
 	}
 }

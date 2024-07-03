@@ -19,7 +19,9 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ArtifactControllerTests extends TerariumApplicationTests {
@@ -36,9 +38,17 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getArtifactIndex());
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -67,6 +77,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
@@ -81,12 +92,15 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 		artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 		artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf()))
@@ -100,6 +114,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
@@ -118,6 +133,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
@@ -147,6 +163,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
@@ -164,6 +181,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
@@ -206,6 +224,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		final Artifact artifact = artifactService.createAsset(
 				(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";

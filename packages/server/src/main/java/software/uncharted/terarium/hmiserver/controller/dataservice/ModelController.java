@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -355,33 +354,13 @@ public class ModelController {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			final Optional<Model> updated = modelService.updateAsset(model, permission);
+			final Optional<Model> updated = modelService.updateAsset(model, projectId, permission);
 
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
-			final Model updatedModel = updated.get();
-
-			if (originalModel.get().getPublicAsset() != updatedModel.getPublicAsset()) {
-				if (updatedModel.getPublicAsset() && !updatedModel.getTemporary()) {
-					try {
-						String text;
-						if (model.getMetadata() != null && model.getMetadata().getGollmCard() != null) {
-							text = objectMapper.writeValueAsString(
-									model.getMetadata().getGollmCard());
-						} else {
-							text = objectMapper.writeValueAsString(model);
-						}
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-						modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-					} catch (final Exception e) {
-						log.warn("Unable to update embeddings for model " + model.getId(), e);
-					}
-				}
-			}
-
-			return ResponseEntity.ok(updatedModel);
+			return ResponseEntity.ok(updated.get());
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
@@ -413,7 +392,7 @@ public class ModelController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelService.deleteAsset(id, permission);
+			modelService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Model", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete model";
@@ -442,7 +421,7 @@ public class ModelController {
 						content = @Content)
 			})
 	ResponseEntity<Model> createModel(
-			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -451,30 +430,14 @@ public class ModelController {
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
 			model.setName(model.getHeader().getName());
-			model = modelService.createAsset(model, permission);
+			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
-			modelConfigurationService.createAsset(modelConfiguration, permission);
+					ModelConfigurationService.modelConfigurationFromAMR(created, null, null);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
-			if (model.getPublicAsset() && !model.getTemporary()) {
-				try {
-					String text;
-					if (model.getMetadata() != null && model.getMetadata().getGollmCard() != null) {
-						text = objectMapper.writeValueAsString(
-								model.getMetadata().getGollmCard());
-					} else {
-						text = objectMapper.writeValueAsString(model);
-					}
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-				} catch (final Exception e) {
-					log.warn("Unable to generate embeddings for model " + model.getId(), e);
-				}
-			}
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(model);
+			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
