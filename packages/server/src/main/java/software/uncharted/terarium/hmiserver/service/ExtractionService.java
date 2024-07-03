@@ -281,6 +281,7 @@ public class ExtractionService {
 						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
 
 						document.getAssets().add(extraction);
+						document.getFileNames().add(assetFileName);
 						notificationInterface.sendMessage(
 								String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
