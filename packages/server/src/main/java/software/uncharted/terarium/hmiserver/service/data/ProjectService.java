@@ -1,16 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import io.micrometer.observation.annotation.Observed;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
@@ -67,8 +69,7 @@ public class ProjectService {
 			return Optional.empty();
 		}
 
-		final Project existingProject =
-				projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
+		final Project existingProject = projectRepository.getByIdAndDeletedOnIsNull(project.getId()).orElseThrow();
 
 		// merge the existing project with values from the new project
 		final Project mergedProject = Project.mergeProjectFields(existingProject, project);
@@ -79,14 +80,19 @@ public class ProjectService {
 	@Observed(name = "function_profile")
 	public boolean delete(final UUID id) {
 		final Optional<Project> project = getProject(id);
-		if (project.isEmpty()) return false;
+		if (project.isEmpty())
+			return false;
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
 		return true;
 	}
 
 	public boolean isProjectPublic(final UUID id) {
-		return projectRepository.isPublicAssetById(id);
+		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
+		if (isPublic.isEmpty()) {
+			return false;
+		}
+		return isPublic.get();
 	}
 
 	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
