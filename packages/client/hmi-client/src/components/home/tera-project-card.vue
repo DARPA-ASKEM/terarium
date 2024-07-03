@@ -106,7 +106,6 @@ const props = defineProps<{
 const emit = defineEmits(['forked-project']);
 
 const titleRef = ref();
-const thumbnail = computed(() => getImage(`${props.project?.thumbnail ?? 'default'}.png`));
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
 	if (titleHeight === 17) return 9;
@@ -127,7 +126,8 @@ const stats = computed(() => {
 	};
 });
 
-function getImage(fileName: string) {
+const thumbnail = computed(() => getImage(`${props.project?.thumbnail ?? 'default'}.png`));
+function getImage(fileName: string): string {
 	try {
 		const modules = import.meta.glob('@/assets/images/**/*.{png,svg}', {
 			eager: true,
@@ -135,7 +135,7 @@ function getImage(fileName: string) {
 		});
 		const moduleKeys = Object.keys(modules);
 		const fileSrc = moduleKeys.find((key) => key.endsWith(fileName));
-		return fileSrc ? modules[fileSrc] : '';
+		return fileSrc ? (modules[fileSrc] as string) : '';
 	} catch (err) {
 		console.debug('getImage', err);
 		return DefaultThumbnail;
