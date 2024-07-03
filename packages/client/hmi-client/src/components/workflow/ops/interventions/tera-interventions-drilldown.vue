@@ -316,7 +316,9 @@ const onChangeName = async (name: string) => {
 	selectedPolicy.value.name = name;
 	await updateInterventionPolicy(selectedPolicy.value);
 	updateNodeLabel(selectedOutputId.value, name);
-	initialize();
+	if (selectedPolicy.value.id)
+		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
+	fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
 const onEditDescription = () => {
@@ -329,7 +331,9 @@ const onConfirmEditDescription = async () => {
 	selectedPolicy.value.description = newDescription.value;
 	isEditingDescription.value = false;
 	await updateInterventionPolicy(selectedPolicy.value);
-	initialize();
+	if (selectedPolicy.value.id)
+		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
+	fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
 const onRunInterventions = async () => {
