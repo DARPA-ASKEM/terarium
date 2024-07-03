@@ -10,23 +10,15 @@
 			<tera-drilldown-section>
 				<template #header-controls-left>
 					<label class="center-label"
-						>The model configuration will be optimized with the following
-						settings</label
+						>The model configuration will be optimized with the following settings</label
 					>
 				</template>
 				<template #header-controls-right>
-					<Button
-						:disabled="isRunDisabled"
-						label="Run"
-						icon="pi pi-play"
-						@click="runOptimize"
-					/>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<h5>
-						Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" />
-					</h5>
+					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -181,16 +173,10 @@
 							rounded
 							size="small"
 							class="ml-auto p-button-text"
-							@click="
-								displayOptimizationResultMessage = !displayOptimizationResultMessage
-							"
+							@click="displayOptimizationResultMessage = !displayOptimizationResultMessage"
 						/>
 					</span>
-					<div
-						v-for="(value, key) in optimizationResult"
-						:key="key"
-						class="result-message-row"
-					>
+					<div v-for="(value, key) in optimizationResult" :key="key" class="result-message-row">
 						<div class="label">{{ key }}:</div>
 						<div class="value">{{ formatJsonValue(value) }}</div>
 					</div>
@@ -235,13 +221,9 @@
 							:risk-results="riskResults[knobs.postForecastRunId]"
 							:chartConfig="{
 								selectedRun: knobs.postForecastRunId,
-								selectedVariable: props.node.state.constraintGroups.map(
-									(ele) => ele.targetVariable
-								)
+								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
 							}"
-							:target-variable="
-								props.node.state.constraintGroups?.[0]?.targetVariable || undefined
-							"
+							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
 							:size="chartSize"
 							:threshold="props.node.state.constraintGroups?.[0]?.threshold"
 						/>
@@ -428,8 +410,7 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 
 const showSpinner = computed<boolean>(
 	() =>
-		props.node.state.inProgressOptimizeId !== '' ||
-		props.node.state.inProgressPostForecastId !== ''
+		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 
 const showModelModal = ref(false);

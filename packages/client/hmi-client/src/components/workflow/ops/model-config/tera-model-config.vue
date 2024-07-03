@@ -40,10 +40,7 @@
 								>
 									<template #value="{ value }">
 										<label class="sort-by-label">Sort by</label
-										>{{
-											sortByOptions.find((option) => option.value === value)
-												?.label
-										}}
+										>{{ sortByOptions.find((option) => option.value === value)?.label }}
 									</template>
 								</Dropdown>
 								<Dropdown
@@ -55,16 +52,10 @@
 								></Dropdown>
 							</span>
 
-							<tera-input
-								v-model="filterModelConfigurationsText"
-								placeholder="Filter"
-							/>
+							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
-							<li
-								v-for="configuration in filteredModelConfigurations"
-								:key="configuration.id"
-							>
+							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
 									@click="onSelectConfiguration(configuration)"
@@ -85,12 +76,7 @@
 			<template #header-controls-left>
 				<template v-if="!isEditingName">
 					<h4>{{ knobs.transientModelConfig.name }}</h4>
-					<Button
-						v-if="!isEditingName"
-						icon="pi pi-pencil"
-						text
-						@click.stop="onEditName"
-					/>
+					<Button v-if="!isEditingName" icon="pi pi-pencil" text @click.stop="onEditName" />
 				</template>
 				<template v-else>
 					<tera-input v-model="newName" />
@@ -119,16 +105,8 @@
 							@click.stop="onEditDescription"
 						/>
 						<template v-else>
-							<Button
-								icon="pi pi-times"
-								text
-								@click.stop="isEditingDescription = false"
-							/>
-							<Button
-								icon="pi pi-check"
-								text
-								@click.stop="onConfirmEditDescription"
-							/>
+							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
+							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
 						</template>
 					</template>
 					<p class="description text" v-if="!isEditingDescription">
@@ -146,34 +124,24 @@
 				</AccordionTab>
 			</Accordion>
 			<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
-				>Some metadata is missing from these values. This information can be added manually
-				to the attached model.</Message
+				>Some metadata is missing from these values. This information can be added manually to the
+				attached model.</Message
 			>
 			<Accordion multiple :active-index="[0]">
 				<AccordionTab>
 					<template #header>
-						Initial variable values<span class="artifact-amount"
-							>({{ numInitials }})</span
-						>
+						Initial variable values<span class="artifact-amount">({{ numInitials }})</span>
 					</template>
 					<tera-initial-table
-						v-if="
-							!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model
-						"
+						v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
 						:model="model"
 						:model-configuration="knobs.transientModelConfig"
 						:mmt="mmt"
 						:mmt-params="mmtParams"
 						@update-expression="
-							setInitialExpression(
-								knobs.transientModelConfig,
-								$event.id,
-								$event.value
-							)
+							setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
 						"
-						@update-source="
-							setInitialSource(knobs.transientModelConfig, $event.id, $event.value)
-						"
+						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 				</AccordionTab>
 			</Accordion>
@@ -184,9 +152,7 @@
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
-				@update-source="
-					setParameterSource(knobs.transientModelConfig, $event.id, $event.value)
-				"
+				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
 			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
@@ -677,8 +643,7 @@ const onSelection = (id: string) => {
 const fetchConfigurations = async (modelId: string) => {
 	if (modelId) {
 		isFetching.value = true;
-		suggestedConfigurationContext.value.tableData =
-			await getModelConfigurationsForModel(modelId);
+		suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
 		isFetching.value = false;
 	}
 };

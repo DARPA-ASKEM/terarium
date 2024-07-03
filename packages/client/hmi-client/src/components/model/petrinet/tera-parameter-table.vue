@@ -21,9 +21,7 @@
 					option-label="name"
 					option-value="value"
 					:options="
-						distributionTypeOptions().filter(
-							(type) => type.value !== DistributionType.Constant
-						)
+						distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)
 					"
 				>
 					<template #value>
@@ -49,20 +47,12 @@
 			<!-- Stratified -->
 			<Accordion v-if="isStratified" multiple>
 				<AccordionTab
-					v-for="[key, values] in collapseParameters(
-						props.mmt,
-						props.mmtParams
-					).entries()"
+					v-for="[key, values] in collapseParameters(props.mmt, props.mmtParams).entries()"
 					:key="key"
 				>
 					<template #header>
 						<span>{{ key }}</span>
-						<Button
-							label="Open Matrix"
-							text
-							size="small"
-							@click.stop="matrixModalId = key"
-						/>
+						<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = key" />
 					</template>
 					<div class="flex">
 						<Divider layout="vertical" type="solid" />
@@ -72,10 +62,8 @@
 									<Checkbox
 										v-if="
 											isAddingUncertainty &&
-											getParameterDistribution(
-												modelConfiguration,
-												parameterId
-											).type === DistributionType.Constant
+											getParameterDistribution(modelConfiguration, parameterId).type ===
+												DistributionType.Constant
 										"
 										binary
 										:model-value="selectedParameters.includes(parameterId)"
@@ -193,8 +181,7 @@ const matrixModalId = ref('');
 const onAddUncertainty = () => {
 	const selected = Object.keys(props.mmt.parameters).filter(
 		(paramId) =>
-			getParameterDistribution(props.modelConfiguration, paramId).type ===
-			DistributionType.Constant
+			getParameterDistribution(props.modelConfiguration, paramId).type === DistributionType.Constant
 	);
 	selectedParameters.value = selected;
 	isAddingUncertainty.value = true;

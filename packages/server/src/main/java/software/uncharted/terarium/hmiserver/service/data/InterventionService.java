@@ -1,9 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.repository.data.InterventionRepository;
@@ -19,7 +17,13 @@ public class InterventionService extends TerariumAssetServiceWithoutSearch<Inter
 			final ProjectAssetService projectAssetService,
 			final InterventionRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService,
+		super(
+				objectMapper,
+				config,
+				projectService,
+				projectAssetService,
+				repository,
+				s3ClientService,
 				InterventionPolicy.class);
 	}
 
