@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -53,8 +50,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(simulationId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			final Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
 				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
@@ -73,8 +70,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(simulationId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			final Optional<Simulation> sim =
+					simulationService.getAsset(simulationId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());

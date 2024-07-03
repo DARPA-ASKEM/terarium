@@ -1,16 +1,13 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -68,8 +65,8 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 
 	@Override
 	@Observed(name = "function_profile")
-	public DocumentAsset createAsset(final DocumentAsset asset, final UUID projectId,
-			final Schema.Permission hasWritePermission)
+	public DocumentAsset createAsset(
+			final DocumentAsset asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException {
 
 		return super.createAsset(asset, projectId, hasWritePermission);
@@ -77,8 +74,8 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<DocumentAsset> updateAsset(final DocumentAsset asset, final UUID projectId,
-			final Schema.Permission hasWritePermission)
+	public Optional<DocumentAsset> updateAsset(
+			final DocumentAsset asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
 		final Optional<DocumentAsset> originalOptional = getAsset(asset.getId(), hasWritePermission);
@@ -107,8 +104,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				try {
 					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					uploadEmbeddings(
-							updated.getId(), embeddings, hasWritePermission);
+					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
 
 				} catch (final Exception e) {
 					log.error("Failed to update embeddings for document {}", updated.getId(), e);

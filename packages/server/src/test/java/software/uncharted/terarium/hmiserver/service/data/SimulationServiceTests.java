@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -116,8 +113,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetSimulationById() throws IOException {
-		final Simulation simulation = simulationService.createAsset(createSimulation("0"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Simulation simulation =
+				simulationService.createAsset(createSimulation("0"), project.getId(), ASSUME_WRITE_PERMISSION);
 		final Simulation fetchedSimulation = simulationService
 				.getAsset(simulation.getId(), ASSUME_WRITE_PERMISSION)
 				.get();
@@ -135,8 +132,8 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateSimulation() throws Exception {
 
-		final Simulation simulation = simulationService.createAsset(createSimulation("A"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Simulation simulation =
+				simulationService.createAsset(createSimulation("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		simulation.setName("new name");
 
 		final Simulation updatedSimulation = simulationService
@@ -151,13 +148,12 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteSimulation() throws Exception {
 
-		final Simulation simulation = simulationService.createAsset(createSimulation("B"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Simulation simulation =
+				simulationService.createAsset(createSimulation("B"), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		simulationService.deleteAsset(simulation.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Simulation> deleted = simulationService.getAsset(simulation.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Optional<Simulation> deleted = simulationService.getAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -192,12 +188,10 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 			final JsonNode data = objectMapper.readTree(jsonString);
 
 			final SimulationUpdate update0 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update0,
-					ASSUME_WRITE_PERMISSION);
+			simulationService.appendUpdateToSimulation(after.getId(), update0, ASSUME_WRITE_PERMISSION);
 
 			final SimulationUpdate update1 = createSimulationUpdate(data);
-			simulationService.appendUpdateToSimulation(after.getId(), update1,
-					ASSUME_WRITE_PERMISSION);
+			simulationService.appendUpdateToSimulation(after.getId(), update1, ASSUME_WRITE_PERMISSION);
 
 			after = simulationService
 					.getAsset(after.getId(), ASSUME_WRITE_PERMISSION)

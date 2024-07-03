@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -13,10 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -78,8 +75,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi",
-						ASSUME_WRITE_PERMISSION)
+				.extractVariables(
+						project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 	}
 
@@ -104,8 +101,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(project.getId(), documentAsset.getId(), List.of(model.getId()), "epi",
-						ASSUME_WRITE_PERMISSION)
+				.extractVariables(
+						project.getId(), documentAsset.getId(), List.of(model.getId()), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 	}
 
@@ -121,8 +118,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-				.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi",
-						ASSUME_WRITE_PERMISSION)
+				.extractVariables(
+						project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 				.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");

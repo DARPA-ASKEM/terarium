@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
@@ -102,8 +99,8 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifactById() throws IOException {
-		final Artifact artifact = artifactService.createAsset(createArtifact("0"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Artifact artifact =
+				artifactService.createAsset(createArtifact("0"), project.getId(), ASSUME_WRITE_PERMISSION);
 		final Artifact fetchedArtifact = artifactService
 				.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION)
 				.get();
@@ -119,11 +116,12 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(createArtifact("A"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Artifact artifact =
+				artifactService.createAsset(createArtifact("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		artifact.setName("new name");
 
-		final Artifact updatedArtifact = artifactService.updateAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION)
+		final Artifact updatedArtifact = artifactService
+				.updateAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
 		Assertions.assertEquals(artifact, updatedArtifact);
@@ -134,13 +132,12 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteArtifact() throws Exception {
 
-		final Artifact artifact = artifactService.createAsset(createArtifact("B"), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Artifact artifact =
+				artifactService.createAsset(createArtifact("B"), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		artifactService.deleteAsset(artifact.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Artifact> deleted = artifactService.getAsset(artifact.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Optional<Artifact> deleted = artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}

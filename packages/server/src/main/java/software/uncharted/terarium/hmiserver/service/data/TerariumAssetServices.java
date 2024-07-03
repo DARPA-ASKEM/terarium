@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -51,9 +49,9 @@ public class TerariumAssetServices {
 		};
 	}
 
-	public Optional<? extends TerariumAsset> updateAsset(final TerariumAsset asset, final UUID projectId,
-			final AssetType type,
-			final Permission permission) throws IOException {
+	public Optional<? extends TerariumAsset> updateAsset(
+			final TerariumAsset asset, final UUID projectId, final AssetType type, final Permission permission)
+			throws IOException {
 
 		switch (type) {
 			case ARTIFACT:
@@ -65,8 +63,7 @@ public class TerariumAssetServices {
 			case DOCUMENT:
 				return documentAssetService.updateAsset((DocumentAsset) asset, projectId, permission);
 			case MODEL_CONFIGURATION:
-				return modelConfigurationService.updateAsset((ModelConfiguration) asset,
-						projectId, permission);
+				return modelConfigurationService.updateAsset((ModelConfiguration) asset, projectId, permission);
 			case MODEL:
 				return modelService.updateAsset((Model) asset, projectId, permission);
 			case WORKFLOW:

@@ -1,21 +1,18 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -162,7 +159,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		after.getColumns().add(column1);
 		after.getColumns().add(column2);
 
-		final Dataset updated = datasetService.updateAsset(after, project.getId(), ASSUME_WRITE_PERMISSION)
+		final Dataset updated = datasetService
+				.updateAsset(after, project.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
 		Assertions.assertEquals(updated.getColumns().size(), 2);
@@ -235,7 +233,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Dataset dataset = datasetService.createAsset(createDataset(), project.getId(), ASSUME_WRITE_PERMISSION);
 		dataset.setName("new name");
 
-		final Dataset updatedDataset = datasetService.updateAsset(dataset, project.getId(), ASSUME_WRITE_PERMISSION)
+		final Dataset updatedDataset = datasetService
+				.updateAsset(dataset, project.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
 		Assertions.assertEquals(dataset, updatedDataset);
@@ -250,8 +249,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		datasetService.deleteAsset(dataset.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Optional<Dataset> deleted = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}

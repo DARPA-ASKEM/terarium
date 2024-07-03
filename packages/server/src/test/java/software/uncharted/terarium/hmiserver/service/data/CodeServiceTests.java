@@ -1,20 +1,17 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
@@ -123,7 +120,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
 		final Code code = codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
-		final Code fetchedCode = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Code fetchedCode =
+				codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -144,7 +142,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		final Code code = codeService.createAsset(createCode("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		code.setName("new name");
 
-		final Code updatedCode = codeService.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Code updatedCode = codeService
+				.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION)
+				.orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());

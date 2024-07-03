@@ -1,12 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.controller.mira.MiraController.ConversionAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -43,10 +41,10 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 				}
 			});
 
-			final ConversionAdditionalProperties props = resp
-					.getAdditionalProperties(ConversionAdditionalProperties.class);
-			model = modelService.createAsset(modelResp.getResponse(), props.getProjectId(),
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			final ConversionAdditionalProperties props =
+					resp.getAdditionalProperties(ConversionAdditionalProperties.class);
+			model = modelService.createAsset(
+					modelResp.getResponse(), props.getProjectId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

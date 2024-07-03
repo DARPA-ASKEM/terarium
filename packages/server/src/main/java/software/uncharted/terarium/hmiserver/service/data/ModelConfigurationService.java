@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,12 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micrometer.observation.annotation.Observed;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
@@ -37,7 +34,13 @@ public class ModelConfigurationService
 			final ProjectAssetService projectAssetService,
 			final ModelConfigRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService,
+		super(
+				objectMapper,
+				config,
+				projectService,
+				projectAssetService,
+				repository,
+				s3ClientService,
 				ModelConfiguration.class);
 	}
 
@@ -51,8 +54,8 @@ public class ModelConfigurationService
 
 	@Override
 	@Observed(name = "function_profile")
-	public ModelConfiguration createAsset(final ModelConfiguration asset, final UUID projectId,
-			final Schema.Permission hasWritePermission)
+	public ModelConfiguration createAsset(
+			final ModelConfiguration asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException {
 		setSemanticDBRelationships(asset);
 		return super.createAsset(asset, projectId, hasWritePermission);
@@ -114,8 +117,7 @@ public class ModelConfigurationService
 	private static List<InitialSemantic> createInitialSemanticList(final Model model) {
 		final List<InitialSemantic> initialSemantics = new ArrayList<>();
 
-		if (model == null || model.getInitials() == null)
-			return initialSemantics;
+		if (model == null || model.getInitials() == null) return initialSemantics;
 
 		for (final Initial initial : model.getInitials()) {
 			final InitialSemantic initialSemantic = new InitialSemantic();
@@ -130,8 +132,7 @@ public class ModelConfigurationService
 	private static List<ObservableSemantic> createObservableSemanticList(final Model model) {
 		final List<ObservableSemantic> observableSemantics = new ArrayList<>();
 
-		if (model == null || model.getObservables() == null)
-			return observableSemantics;
+		if (model == null || model.getObservables() == null) return observableSemantics;
 
 		for (final Observable observable : model.getObservables()) {
 			final ObservableSemantic observableSemantic = new ObservableSemantic();
@@ -147,8 +148,7 @@ public class ModelConfigurationService
 	private static List<ParameterSemantic> createParameterSemanticList(final Model model) {
 		final List<ParameterSemantic> parameterSemantics = new ArrayList<>();
 
-		if (model == null || model.getParameters() == null)
-			return parameterSemantics;
+		if (model == null || model.getParameters() == null) return parameterSemantics;
 
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();

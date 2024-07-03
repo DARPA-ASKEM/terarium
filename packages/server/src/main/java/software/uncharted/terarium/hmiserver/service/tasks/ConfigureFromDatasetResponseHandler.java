@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;

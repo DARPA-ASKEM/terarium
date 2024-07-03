@@ -1,22 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -147,8 +144,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Workflow workflow =
+				workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Workflow fetchedWorkflow = workflowService
 				.getAsset(workflow.getId(), Schema.Permission.READ)
@@ -166,11 +163,12 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Workflow workflow =
+				workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 		workflow.setName("new name");
 
-		final Workflow updatedWorkflow = workflowService.updateAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION)
+		final Workflow updatedWorkflow = workflowService
+				.updateAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
 		Assertions.assertEquals(workflow, updatedWorkflow);
@@ -181,8 +179,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
 
-		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(),
-				ASSUME_WRITE_PERMISSION);
+		final Workflow workflow =
+				workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		workflowService.deleteAsset(workflow.getId(), project.getId(), Schema.Permission.WRITE);
 
@@ -244,8 +242,8 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testWorkflowsAreOpaque() throws Exception {
 
-		final WorkflowNode a = mapper.readValue("{\"id\":\"" + UUID.randomUUID() + "\", \"otherField\": 123 }",
-				WorkflowNode.class);
+		final WorkflowNode a =
+				mapper.readValue("{\"id\":\"" + UUID.randomUUID() + "\", \"otherField\": 123 }", WorkflowNode.class);
 
 		final WorkflowNode b = mapper.readValue(
 				"{\"id\":\"" + UUID.randomUUID() + "\", \"anotherField\": \"text value\" }", WorkflowNode.class);

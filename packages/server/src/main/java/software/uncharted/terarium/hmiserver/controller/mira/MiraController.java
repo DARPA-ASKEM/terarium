@@ -1,12 +1,23 @@
 package software.uncharted.terarium.hmiserver.controller.mira;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -19,20 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import feign.FeignException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.annotation.PostConstruct;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -111,10 +108,22 @@ public class MiraController {
 	@PostMapping("/amr-to-mmt")
 	@Secured(Roles.USER)
 	@Operation(summary = "convert AMR to MIRA model template")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
@@ -163,10 +172,22 @@ public class MiraController {
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class))),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = TaskResponse.class))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 				currentUserService.get().getId(), conversionRequest.getProjectId());
@@ -250,8 +271,8 @@ public class MiraController {
 		try {
 			model = objectMapper.readValue(resp.getOutput(), Model.class);
 			// create a default configuration
-			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(model,
-					null, null);
+			final ModelConfiguration modelConfiguration =
+					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
 			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
@@ -263,10 +284,22 @@ public class MiraController {
 
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a Mira task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched cancellation successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class))),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the cancellation", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched cancellation successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Void.class))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the cancellation",
+						content = @Content)
+			})
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();

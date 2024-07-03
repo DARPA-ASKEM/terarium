@@ -1,14 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.SummaryService;

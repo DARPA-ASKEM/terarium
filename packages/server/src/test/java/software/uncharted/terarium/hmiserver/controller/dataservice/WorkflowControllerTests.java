@@ -3,8 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -58,10 +55,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow.setPublicAsset(true);
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/workflows")
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(workflow)))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(workflow)))
 				.andExpect(status().isCreated());
 	}
 
@@ -103,8 +100,8 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -118,10 +115,10 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(workflow)))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(workflow)))
 				.andExpect(status().isOk());
 	}
 
@@ -134,8 +131,8 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(workflowService

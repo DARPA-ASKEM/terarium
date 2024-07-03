@@ -1,19 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import io.micrometer.observation.annotation.Observed;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -148,8 +145,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Model> updateAsset(final Model asset, final UUID projectId,
-			final Schema.Permission hasWritePermission)
+	public Optional<Model> updateAsset(
+			final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
@@ -176,5 +173,4 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		return updatedOptional;
 	}
-
 }

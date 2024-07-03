@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -86,7 +84,8 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelById() throws IOException {
 		final Model model = modelService.createAsset(createModel("0"), project.getId(), ASSUME_WRITE_PERMISSION);
-		final Model fetchedModel = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Model fetchedModel =
+				modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(model, fetchedModel);
 		Assertions.assertEquals(model.getId(), fetchedModel.getId());
@@ -102,7 +101,8 @@ public class ModelServiceTests extends TerariumApplicationTests {
 		final Model model = modelService.createAsset(createModel("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		model.setName("new name");
 
-		final Model updatedModel = modelService.updateAsset(model, project.getId(), ASSUME_WRITE_PERMISSION)
+		final Model updatedModel = modelService
+				.updateAsset(model, project.getId(), ASSUME_WRITE_PERMISSION)
 				.orElseThrow();
 
 		Assertions.assertEquals(model, updatedModel);

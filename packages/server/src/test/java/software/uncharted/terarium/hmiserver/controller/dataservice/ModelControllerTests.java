@@ -3,8 +3,8 @@ package software.uncharted.terarium.hmiserver.controller.dataservice;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -61,10 +58,10 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(model)))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(model)))
 				.andExpect(status().isCreated());
 	}
 
@@ -80,11 +77,12 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				project.getId(), ASSUME_WRITE_PERMISSION);
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -100,13 +98,14 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				project.getId(), ASSUME_WRITE_PERMISSION);
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/models/" + model.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf())
-				.contentType("application/json")
-				.content(objectMapper.writeValueAsString(model)))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf())
+						.contentType("application/json")
+						.content(objectMapper.writeValueAsString(model)))
 				.andExpect(status().isOk());
 	}
 
@@ -122,11 +121,12 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				project.getId(), ASSUME_WRITE_PERMISSION);
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/models/" + model.getId())
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 
 		Assertions.assertTrue(
@@ -145,11 +145,12 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				project.getId(), ASSUME_WRITE_PERMISSION);
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
-				.param("project-id", PROJECT_ID.toString())
-				.with(csrf()))
+						.param("project-id", PROJECT_ID.toString())
+						.with(csrf()))
 				.andExpect(status().isOk());
 	}
 
@@ -165,7 +166,8 @@ public class ModelControllerTests extends TerariumApplicationTests {
 								.setModelVersion("0.1.2")
 								.setDescription("test-description")
 								.setSchemaName("petrinet")),
-				project.getId(), ASSUME_WRITE_PERMISSION);
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
 				.andExpect(status().isOk());
@@ -212,26 +214,26 @@ public class ModelControllerTests extends TerariumApplicationTests {
 				.setPublicAsset(false)
 				.setTemporary(false);
 
-		final Model createdModel_not_public_not_temp = modelService.createAsset(model_not_public_not_temp,
-				project.getId(), ASSUME_WRITE_PERMISSION);
-		final Model createdModel_public_not_temp = modelService.createAsset(model_public_not_temp,
-				project.getId(), ASSUME_WRITE_PERMISSION);
-		final Model createdModel_public_temp = modelService.createAsset(model_public_temp, project.getId(),
-				ASSUME_WRITE_PERMISSION);
-		final Model createdModel_not_public_temp = modelService.createAsset(model_not_public_temp,
-				project.getId(), ASSUME_WRITE_PERMISSION);
+		final Model createdModel_not_public_not_temp =
+				modelService.createAsset(model_not_public_not_temp, project.getId(), ASSUME_WRITE_PERMISSION);
+		final Model createdModel_public_not_temp =
+				modelService.createAsset(model_public_not_temp, project.getId(), ASSUME_WRITE_PERMISSION);
+		final Model createdModel_public_temp =
+				modelService.createAsset(model_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
+		final Model createdModel_not_public_temp =
+				modelService.createAsset(model_not_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_not_temp.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().is5xxServerError());
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().is5xxServerError());
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_not_temp.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().isOk());
 		mockMvc.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_temp.getId())
-				.with(csrf()))
+						.with(csrf()))
 				.andExpect(status().is5xxServerError());
 	}
 }

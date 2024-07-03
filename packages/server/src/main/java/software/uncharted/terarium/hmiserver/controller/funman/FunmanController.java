@@ -1,9 +1,18 @@
 package software.uncharted.terarium.hmiserver.controller.funman;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.annotation.PostConstruct;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -13,18 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
@@ -63,16 +60,28 @@ public class FunmanController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a model configuration validation task")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Dispatched successfully", content = @Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class))),
-			@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-	})
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Dispatched successfully",
+						content =
+								@Content(
+										mediaType = "application/json",
+										schema =
+												@io.swagger.v3.oas.annotations.media.Schema(
+														implementation = Simulation.class))),
+				@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue dispatching the request",
+						content = @Content)
+			})
 	public ResponseEntity<Simulation> createValidationRequest(
 			@RequestBody final JsonNode input,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
-				projectId);
+		final Schema.Permission permission =
+				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final TaskRequest taskRequest = new TaskRequest();
 		taskRequest.setTimeoutMinutes(30);
