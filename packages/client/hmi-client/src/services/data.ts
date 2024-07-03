@@ -11,7 +11,6 @@ import {
 	XDDFacetsItemResponse
 } from '@/types/Types';
 import {
-	XDDDictionary,
 	XDDExtractionType,
 	XDDResult,
 	XDDSearchParams,
@@ -61,24 +60,6 @@ const getXDDArtifacts = async (
 	}
 
 	return [] as Extraction[];
-};
-
-const getXDDSets = async () => {
-	const res = await API.get('/document/sets');
-	const response: XDDResult = res.data;
-	return response.availableSets || ([] as string[]);
-};
-
-const getXDDDictionaries = async () => {
-	const res = await API.get('/dictionaries');
-	if (res) {
-		const rawdata: XDDResult = res.data;
-		if (rawdata && rawdata.success) {
-			const { data } = rawdata.success;
-			return data;
-		}
-	}
-	return [] as XDDDictionary[];
 };
 
 const searchXDDDocuments = async (
@@ -562,7 +543,5 @@ export {
 	getRelatedDocuments,
 	getRelatedTerms,
 	getXDDArtifacts,
-	getXDDDictionaries,
-	getXDDSets,
 	searchXDDDocuments
 };

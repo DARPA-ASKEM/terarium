@@ -209,6 +209,7 @@ async function getBulkDocumentAssets(docIDs: string[]) {
 	return result;
 }
 
+// todo remove
 async function createDocumentFromXDD(document: Document, projectId: string) {
 	console.group('Document Asset Service: createDocumentFromXDD');
 	if (!document || !projectId) {
