@@ -330,7 +330,7 @@ function appendInputPort(
  * output as selected, and revert the selection status of
  * existing outputs
  * */
-function appendOutput(
+async function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: {
 		type: string;
@@ -342,8 +342,17 @@ function appendOutput(
 ) {
 	if (!node) return;
 
-	// we assume that if we can produce an output, the status is okay
+	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
+
+	// Generate summary
+	const summaryCall = registry.getOperation(node.operationType)?.createOutputSummary ?? null;
+	if (summaryCall) {
+		const summaryId = await summaryCall(node.state);
+		if (port.state) {
+			port.state.summaryId = summaryId;
+		}
+	}
 
 	const uuid = uuidv4();
 	const outputPort: WorkflowOutput<any> = {
@@ -358,7 +367,6 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
-	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -371,14 +379,10 @@ function appendOutput(
 	workflowDirty = true;
 }
 
-function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
-	if (!registry.getOperation(node.operationType)?.createNotebook) return;
-	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
-}
-
+// @deprecated
 async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
 	if (!node) return;
+
 	const result = await workflowService.generateSummary(
 		node,
 		outputPort,
