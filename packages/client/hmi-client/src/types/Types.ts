@@ -687,7 +687,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: InterventionPolicy[];
+    interventions?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -725,7 +725,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: InterventionPolicy[];
+    fixedStaticParameterInterventions?: string;
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -750,7 +750,7 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: InterventionPolicy[];
+    interventions?: string;
 }
 
 export interface DynamicIntervention {

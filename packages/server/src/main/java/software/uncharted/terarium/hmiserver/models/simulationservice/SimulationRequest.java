@@ -3,14 +3,11 @@ package software.uncharted.terarium.hmiserver.models.simulationservice;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -28,7 +25,7 @@ public class SimulationRequest implements Serializable {
 	private String engine;
 
 	@TSOptional
-	private List<InterventionPolicy> interventions;
+	private UUID interventions;
 
 	@Override
 	public SimulationRequest clone() {
@@ -42,10 +39,7 @@ public class SimulationRequest implements Serializable {
 						: null);
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);
-		clone.setInterventions(new ArrayList<>());
-		for (final InterventionPolicy intervention : this.interventions) {
-			clone.getInterventions().add(intervention.clone());
-		}
+		clone.setInterventions(this.interventions);
 
 		return clone;
 	}
