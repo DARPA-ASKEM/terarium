@@ -31,7 +31,7 @@ defineProps<{
 	selected?: boolean;
 }>();
 
-const emit = defineEmits(['use']);
+const emit = defineEmits(['use-intervention']);
 
 const contextMenu = ref();
 const contextMenuItems = [
@@ -39,7 +39,7 @@ const contextMenuItems = [
 		label: 'Use',
 		icon: 'pi pi-arrow-right',
 		command() {
-			emit('use');
+			emit('use-intervention');
 		}
 	}
 ];

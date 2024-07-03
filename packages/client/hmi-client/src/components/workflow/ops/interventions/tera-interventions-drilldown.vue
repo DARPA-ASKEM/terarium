@@ -21,8 +21,8 @@
 								<tera-interventions-policy-card
 									:interventionPolicy="policy"
 									:selected="selectedPolicy?.id === policy.id"
-									@click="onUsePolicy(policy)"
-									@use="onUsePolicy(policy)"
+									@click="onReplacePolicy(policy)"
+									@use-intervention="onReplacePolicy(policy)"
 								/>
 							</li>
 						</ul>
@@ -286,7 +286,7 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const onUsePolicy = (policy: InterventionPolicy) => {
+const onReplacePolicy = (policy: InterventionPolicy) => {
 	confirm.require({
 		header: 'Are you sure you want to use this intervention policy?',
 		message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
