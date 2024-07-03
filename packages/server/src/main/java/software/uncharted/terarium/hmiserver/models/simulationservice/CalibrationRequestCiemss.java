@@ -2,14 +2,12 @@ package software.uncharted.terarium.hmiserver.models.simulationservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.DatasetLocation;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -26,7 +24,7 @@ public class CalibrationRequestCiemss implements Serializable {
 	private TimeSpan timespan;
 
 	@TSOptional
-	private List<Intervention> interventions;
+	private UUID interventions;
 
 	private DatasetLocation dataset;
 	private String engine;

@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
@@ -35,7 +33,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSi
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 import software.uncharted.terarium.hmiserver.models.simulationservice.OptimizeRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -168,6 +165,9 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
@@ -176,7 +176,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			}
 			allInterventions.addAll(modelInterventions);
 			request.payload.setInterventions(allInterventions);
-		}
+		}*/
 
 		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
 		final JobResponse res = simulationCiemssServiceProxy
@@ -258,6 +258,9 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getInterventions();
@@ -267,6 +270,8 @@ public class SimulationRequestController implements SnakeCaseController {
 			allInterventions.addAll(modelInterventions);
 			request.payload.setInterventions(allInterventions);
 		}
+		*/
+
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
@@ -297,6 +302,8 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
+		/*
+		TODO: Use new interventions
 		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
 		if (modelInterventions != null) {
 			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
@@ -306,6 +313,8 @@ public class SimulationRequestController implements SnakeCaseController {
 			allInterventions.addAll(modelInterventions);
 			request.payload.setFixedStaticParameterInterventions(allInterventions);
 		}
+
+		 */
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
