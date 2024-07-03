@@ -9,6 +9,7 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 export const createInterventionPolicy = async (
 	policy: InterventionPolicy
 ): Promise<InterventionPolicy> => {
+	delete policy.id;
 	const response = await API.post<InterventionPolicy>(`/interventions`, policy);
 	return response?.data ?? null;
 };
