@@ -1,17 +1,10 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +19,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -53,28 +55,11 @@ public class InterventionController {
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all interventions")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Interventions found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = InterventionPolicy.class)))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There are no interventions found and no errors occurred",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving interventions from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Interventions found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)))),
+			@ApiResponse(responseCode = "204", description = "There are no interventions found and no errors occurred", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving interventions from the data store", content = @Content)
+	})
 	public ResponseEntity<List<InterventionPolicy>> getInterventions(
 			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
@@ -89,28 +74,16 @@ public class InterventionController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets intervention by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Intervention found.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = InterventionPolicy.class))),
-				@ApiResponse(responseCode = "204", description = "There was no intervention found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the intervention from the data store",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Intervention found.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class))),
+			@ApiResponse(responseCode = "204", description = "There was no intervention found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the intervention from the data store", content = @Content)
+	})
 	public ResponseEntity<InterventionPolicy> getIntervention(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(),
+				projectId);
 
 		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id, permission);
 		return intervention.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent()
@@ -120,29 +93,18 @@ public class InterventionController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new intervention")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Intervention created.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = InterventionPolicy.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the intervention",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "201", description = "Intervention created.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class))),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the intervention", content = @Content)
+	})
 	public ResponseEntity<InterventionPolicy> createIntervention(
 			@RequestBody final InterventionPolicy item,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(interventionService.createAsset(item, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(interventionService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
 			log.error(error, e);
@@ -153,32 +115,21 @@ public class InterventionController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a intervention")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Intervention updated.",
-						content =
-								@Content(
-										mediaType = MediaType.APPLICATION_JSON_VALUE,
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = InterventionPolicy.class))),
-				@ApiResponse(responseCode = "404", description = "Intervention could not be found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the intervention",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Intervention updated.", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class))),
+			@ApiResponse(responseCode = "404", description = "Intervention could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the intervention", content = @Content)
+	})
 	public ResponseEntity<InterventionPolicy> updateIntervention(
 			@PathVariable("id") final UUID id,
 			@RequestBody final InterventionPolicy intervention,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 		try {
 			intervention.setId(id);
-			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, permission);
+			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId,
+					permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -195,31 +146,20 @@ public class InterventionController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a intervention by ID")
-	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Delete intervention",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ResponseDeleted.class))
-						}),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue deleting the intervention",
-						content = @Content)
-			})
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Delete intervention", content = {
+					@Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class))
+			}),
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the intervention", content = @Content)
+	})
 	public ResponseEntity<ResponseDeleted> deleteIntervention(
 			@PathVariable("id") final UUID id,
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(),
+				projectId);
 
 		try {
-			interventionService.deleteAsset(id, permission);
+			interventionService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Intervention", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete intervention %s", id);
