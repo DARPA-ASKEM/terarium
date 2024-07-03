@@ -22,7 +22,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class DocumentAssetService extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
 
-	private EmbeddingService embeddingService;
+	private final EmbeddingService embeddingService;
 
 	public DocumentAssetService(
 			final ObjectMapper objectMapper,
@@ -44,6 +44,7 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				s3ClientService,
 				repository,
 				DocumentAsset.class);
+		this.embeddingService = embeddingService;
 	}
 
 	@Override

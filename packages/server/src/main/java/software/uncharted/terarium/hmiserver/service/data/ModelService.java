@@ -26,7 +26,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
 
-	private EmbeddingService embeddingService;
+	private final EmbeddingService embeddingService;
 
 	public ModelService(
 			final ObjectMapper objectMapper,
@@ -48,6 +48,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				s3ClientService,
 				repository,
 				Model.class);
+		this.embeddingService = embeddingService;
 	}
 
 	@Observed(name = "function_profile")
