@@ -29,28 +29,23 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 
 watch(
 	() => props.node.inputs,
-	() => {
-		const inputs = props.node.inputs;
-		const modelInputs = inputs.filter((input) => input.type === 'modelId');
+	(inputs) => {
+		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
 		const state = cloneDeep(props.node.state);
 
-		if (!modelInputs[0].value) {
+		if (!modelId) {
 			// Reset previous model cache
-			state.transientInterventionPolicy = {
+			state.interventionPolicy = {
 				modelId: '',
 				interventions: []
 			};
-			emit('update-state', state);
-		}
-
-		if (modelInputs?.[0]?.value?.[0]) {
-			const modelId = modelInputs[0]?.value?.[0];
-			state.transientInterventionPolicy = {
+		} else {
+			state.interventionPolicy = {
 				modelId,
 				interventions: []
 			};
-			emit('update-state', state);
 		}
+		emit('update-state', state);
 	},
 	{ deep: true }
 );

@@ -3,7 +3,7 @@ import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 
 export interface InterventionsState extends BaseState {
-	transientInterventionPolicy: InterventionPolicy;
+	interventionPolicy: InterventionPolicy;
 }
 
 export const InterventionsOperation: Operation = {
@@ -17,7 +17,7 @@ export const InterventionsOperation: Operation = {
 
 	initState: () => {
 		const init: InterventionsState = {
-			transientInterventionPolicy: {
+			interventionPolicy: {
 				modelId: '',
 				interventions: []
 			}

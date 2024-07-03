@@ -34,7 +34,7 @@ defineProps<{
 const emit = defineEmits(['use']);
 
 const contextMenu = ref();
-const contextMenuItems = ref([
+const contextMenuItems = [
 	{
 		label: 'Use',
 		icon: 'pi pi-arrow-right',
@@ -42,7 +42,7 @@ const contextMenuItems = ref([
 			emit('use');
 		}
 	}
-]);
+];
 
 const toggleContextMenu = (event) => {
 	contextMenu.value.toggle(event);

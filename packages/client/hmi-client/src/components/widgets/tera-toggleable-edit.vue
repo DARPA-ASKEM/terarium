@@ -37,6 +37,7 @@ const onEdit = () => {
 	isEditing.value = !isEditing.value;
 	newValue.value = props.modelValue;
 };
+
 const onConfirm = () => {
 	emit('update:model-value', newValue.value);
 	isEditing.value = false;

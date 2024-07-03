@@ -1,7 +1,7 @@
 <template>
 	<div class="intervention-card">
 		<header class="flex align-items-center">
-			<tera-edit-value
+			<tera-toggleable-edit
 				class="mr-auto"
 				:model-value="intervention.name"
 				@update:model-value="onUpdateName($event)"
@@ -30,7 +30,7 @@
 			<!-- Static -->
 			<template v-if="interventionType === 'static'">
 				<div class="flex align-items-center flex-wrap gap-2">
-					<span>Set Parameter</span>
+					Set Parameter
 					<Dropdown
 						:model-value="intervention.appliedTo"
 						@change="onAppliedToParameterChange"
@@ -46,14 +46,14 @@
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
 							placeholder="value"
 						/>
-						<span>starting at</span>
+						starting at
 						<tera-input
 							type="number"
 							:model-value="intervention.staticInterventions[0].value"
 							@update:model-value="(val) => onUpdateTimestep(val, 0)"
 							placeholder="time step"
 						/>
-						<span>.</span>
+						.
 					</template>
 				</div>
 
@@ -66,14 +66,14 @@
 								@update:model-value="(val) => onUpdateThreshold(val, index)"
 								placeholder="value"
 							/>
-							<span>starting at</span>
+							starting at
 							<tera-input
 								type="number"
 								:model-value="i.value"
 								@update:model-value="(val) => onUpdateTimestep(val, index)"
 								placeholder="time step"
 							/>
-							<span>.</span>
+							.
 							<Button
 								class="ml-auto"
 								icon="pi pi-times"
@@ -88,7 +88,7 @@
 
 			<!-- Dynamic -->
 			<div v-else class="flex align-items-center flex-wrap gap-2">
-				<span>Set Parameter</span>
+				Set Parameter
 				<Dropdown
 					:model-value="intervention.appliedTo"
 					@change="onAppliedToParameterChange"
@@ -96,14 +96,14 @@
 					option-label="label"
 					option-value="value"
 				/>
-				<span>to</span>
+				to
 				<tera-input
 					type="number"
 					:model-value="intervention.dynamicInterventions[0].threshold"
 					@update:model-value="(val) => onUpdateThreshold(val, 0)"
 					placeholder="value"
 				/>
-				<span>when</span>
+				when
 				<Dropdown
 					:model-value="intervention.dynamicInterventions[0].parameter"
 					@change="onTargetParameterChange"
@@ -111,7 +111,7 @@
 					option-label="label"
 					option-value="value"
 				/>
-				<span>is</span>
+				is
 				<Dropdown
 					:model-value="intervention.dynamicInterventions[0].isGreaterThan"
 					@change="onComparisonOperatorChange"
@@ -119,14 +119,14 @@
 					option-label="label"
 					option-value="value"
 				/>
-				<span>than the threshold value</span>
+				than the threshold value
 				<tera-input
 					type="number"
 					:model-value="intervention.dynamicInterventions[0].value"
 					@update:model-value="(val) => onUpdateTimestep(val, 0)"
 					placeholder="time step"
 				/>
-				<span>.</span>
+				.
 			</div>
 		</section>
 		<footer>
@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import TeraEditValue from '@/components/widgets/tera-edit-value.vue';
+import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';

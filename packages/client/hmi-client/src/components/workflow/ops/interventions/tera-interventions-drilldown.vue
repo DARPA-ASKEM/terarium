@@ -48,7 +48,7 @@
 						<tera-intervention-card
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
-							@update="onUpdate($event, index)"
+							@update="onUpdateInterventionCard($event, index)"
 							@delete="onDeleteIntervention(index)"
 						/>
 					</li>
@@ -65,7 +65,7 @@
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
-					<tera-edit-value
+					<tera-toggleable-edit
 						v-if="selectedPolicy?.name"
 						:model-value="selectedPolicy.name"
 						@update:model-value="onChangeName"
@@ -157,7 +157,7 @@ import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { getParameters } from '@/model-representation/service';
-import TeraEditValue from '@/components/widgets/tera-edit-value.vue';
+import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import {
 	createInterventionPolicy,
 	getInterventionPolicyById,
@@ -234,25 +234,24 @@ const initialize = async () => {
 	await fetchInterventionPolicies(modelId);
 
 	model.value = await getModel(modelId);
-	if (state.transientInterventionPolicy?.id) {
+	if (state.interventionPolicy?.id) {
 		// copy the state into the knobs if it exists
-		selectedPolicy.value = await getInterventionPolicyById(state.transientInterventionPolicy.id);
-		knobs.value.transientInterventionPolicy = cloneDeep(state.transientInterventionPolicy);
+		selectedPolicy.value = await getInterventionPolicyById(state.interventionPolicy.id);
+		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	} else {
-		knobs.value.transientInterventionPolicy = cloneDeep(state.transientInterventionPolicy);
+		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	const state = cloneDeep(props.node.state);
-	knobs.value.transientInterventionPolicy = cloneDeep(interventionPolicy);
-
-	const listOfPolicyIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
-	// Update output port:
 	if (!interventionPolicy?.id) {
 		logger.error('Policy not found');
 		return;
 	}
+	knobs.value.transientInterventionPolicy = cloneDeep(interventionPolicy);
+
+	const listOfPolicyIds: string[] = props.node.outputs.map((output) => output.value?.[0]);
 	// Check if this output already exists
 	if (listOfPolicyIds.includes(interventionPolicy.id)) {
 		// Select the existing output
@@ -262,7 +261,7 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	// If the output does not already exist
 	else {
 		// Append this config to the output.
-		state.transientInterventionPolicy = interventionPolicy;
+		state.interventionPolicy = interventionPolicy;
 		emit('append-output', {
 			type: InterventionsOperation.outputs[0].type,
 			label: interventionPolicy.name,
@@ -279,7 +278,7 @@ const fetchInterventionPolicies = async (modelId: string) => {
 	isFetchingPolicies.value = false;
 };
 
-const onUpdate = (intervention: Intervention, index: number) => {
+const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
 	knobs.value.transientInterventionPolicy.interventions[index] = cloneDeep(intervention);
 };
 
@@ -366,7 +365,7 @@ watch(
 	() => knobs.value,
 	async () => {
 		const state = cloneDeep(props.node.state);
-		state.transientInterventionPolicy = knobs.value.transientInterventionPolicy;
+		state.interventionPolicy = knobs.value.transientInterventionPolicy;
 		emit('update-state', state);
 	},
 	{ deep: true }
