@@ -36,6 +36,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -281,6 +282,7 @@ public class ExtractionService {
 						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
 
 						document.getAssets().add(extraction);
+						document.getFileNames().add(assetFileName);
 						notificationInterface.sendMessage(
 								String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
@@ -564,6 +566,18 @@ public class ExtractionService {
 			// overwrite all updated fields
 			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
+			final Model updatedModel = objectMapper.treeToValue(modelJson, Model.class);
+
+			if (updatedModel.getMetadata() == null) {
+				updatedModel.setMetadata(new ModelMetadata());
+			}
+
+			// add document gollm card to model
+			final JsonNode card = document.getMetadata().get("gollmCard");
+			if (card != null) {
+				updatedModel.getMetadata().setGollmCard(card);
+			}
+
 			// update the model
 			modelService.updateAsset(model, hasWritePermission);
 
@@ -577,21 +591,17 @@ public class ExtractionService {
 			provenanceService.createProvenance(provenance);
 
 			// update model embeddings
-			if (model.getPublicAsset() && !model.getTemporary()) {
+			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
 
-				final JsonNode card = document.getMetadata().get("gollmCard");
-				if (card != null) {
+				final String cardText = objectMapper.writeValueAsString(card);
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					final String cardText = objectMapper.writeValueAsString(card);
-					try {
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
+					notificationInterface.sendMessage("Embeddings created");
 
-						modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
-						notificationInterface.sendMessage("Embeddings created");
-
-					} catch (final Exception e) {
-						log.warn("Unable to generate embedding vectors for model");
-					}
+				} catch (final Exception e) {
+					log.warn("Unable to generate embedding vectors for model");
 				}
 			}
 

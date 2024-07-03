@@ -345,6 +345,12 @@ public class ModelController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
+
+			final Optional<Model> originalModel = modelService.getAsset(id, permission);
+			if (originalModel.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
 			model.setId(id);
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
@@ -357,13 +363,21 @@ public class ModelController {
 
 			final Model updatedModel = updated.get();
 
-			if (updatedModel.getPublicAsset() && !updatedModel.getTemporary()) {
-				try {
-					final String amr = objectMapper.writeValueAsString(updatedModel);
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
-					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-				} catch (final Exception e) {
-					log.warn("Unable to update embeddings for model " + model.getId(), e);
+			if (originalModel.get().getPublicAsset() != updatedModel.getPublicAsset()) {
+				if (updatedModel.getPublicAsset() && !updatedModel.getTemporary()) {
+					try {
+						String text;
+						if (model.getMetadata() != null && model.getMetadata().getGollmCard() != null) {
+							text = objectMapper.writeValueAsString(
+									model.getMetadata().getGollmCard());
+						} else {
+							text = objectMapper.writeValueAsString(model);
+						}
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+						modelService.uploadEmbeddings(model.getId(), embeddings, permission);
+					} catch (final Exception e) {
+						log.warn("Unable to update embeddings for model " + model.getId(), e);
+					}
 				}
 			}
 
@@ -446,8 +460,14 @@ public class ModelController {
 
 			if (model.getPublicAsset() && !model.getTemporary()) {
 				try {
-					final String amr = objectMapper.writeValueAsString(model);
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
+					String text;
+					if (model.getMetadata() != null && model.getMetadata().getGollmCard() != null) {
+						text = objectMapper.writeValueAsString(
+								model.getMetadata().getGollmCard());
+					} else {
+						text = objectMapper.writeValueAsString(model);
+					}
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
 				} catch (final Exception e) {
 					log.warn("Unable to generate embeddings for model " + model.getId(), e);

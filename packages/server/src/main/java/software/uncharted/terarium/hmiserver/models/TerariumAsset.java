@@ -65,7 +65,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 
 		asset.name = name;
 		asset.description = description;
-		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : null;
+		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : new ArrayList<>();
 		asset.deletedOn = deletedOn != null ? new Timestamp(deletedOn.getTime()) : null;
 		asset.temporary = temporary;
 		asset.publicAsset = publicAsset;
