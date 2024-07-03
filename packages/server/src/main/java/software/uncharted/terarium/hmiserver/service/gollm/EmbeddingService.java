@@ -31,7 +31,7 @@ public class EmbeddingService {
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
 
-	private static final int REQUEST_TIMEOUT_MINUTES = 3;
+	private static final int REQUEST_TIMEOUT_MINUTES = 1;
 	public static final String EMBEDDING_MODEL = "text-embedding-ada-002";
 
 	@Data
@@ -62,7 +62,7 @@ public class EmbeddingService {
 		req.setScript("gollm_task:embedding");
 		try {
 			req.setUserId(currentUserService.get().getId());
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			log.warn("No user id to associate with embedding request");
 		}
 

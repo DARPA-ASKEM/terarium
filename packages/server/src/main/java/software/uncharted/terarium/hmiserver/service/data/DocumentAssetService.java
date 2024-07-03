@@ -1,13 +1,16 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -102,14 +105,17 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				// update embeddings
 				final JsonNode card = updated.getMetadata().get("gollmCard");
 				final String cardText = objectMapper.writeValueAsString(card);
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+				new Thread(() -> {
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for document {}", updated.getId(), e);
-				}
+						// Execute the update request
+						uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+					} catch (final Exception e) {
+						log.error("Failed to update embeddings for document {}", updated.getId(), e);
+					}
+				}).start();
 			}
 		}
 		return updatedOptional;

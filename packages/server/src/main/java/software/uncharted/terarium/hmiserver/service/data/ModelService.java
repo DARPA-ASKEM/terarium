@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -127,18 +130,25 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
-			try {
-				String text;
-				if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
-					text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
-				} else {
-					text = objectMapper.writeValueAsString(created);
-				}
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-				uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-			} catch (final Exception e) {
-				log.warn("Unable to generate embeddings for model " + created.getId(), e);
+
+			String text;
+			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
+				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
+			} else {
+				text = objectMapper.writeValueAsString(created);
 			}
+
+			new Thread(() -> {
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+
+					// Execute the update request
+					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
+				} catch (final Exception e) {
+					log.error("Failed to update embeddings for document {}", created.getId(), e);
+				}
+			}).start();
+			;
 		}
 
 		return created;
@@ -158,18 +168,25 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model updated = updatedOptional.get();
 
 		if (updated.getPublicAsset() && !updated.getTemporary()) {
-			try {
-				String text;
-				if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
-					text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
-				} else {
-					text = objectMapper.writeValueAsString(updated);
-				}
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-				uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-			} catch (final Exception e) {
-				log.warn("Unable to update embeddings for model " + updated.getId(), e);
+
+			String text;
+			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
+				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
+			} else {
+				text = objectMapper.writeValueAsString(updated);
 			}
+
+			new Thread(() -> {
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+
+					// Execute the update request
+					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+				} catch (final Exception e) {
+					log.error("Failed to update embeddings for document {}", updated.getId(), e);
+				}
+			}).start();
+			;
 		}
 
 		return updatedOptional;
