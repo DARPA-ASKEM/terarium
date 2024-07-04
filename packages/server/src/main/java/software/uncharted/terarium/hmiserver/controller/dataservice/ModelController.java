@@ -44,6 +44,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
+import software.uncharted.terarium.hmiserver.repository.data.InterventionRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -86,6 +88,8 @@ public class ModelController {
 	final Messages messages;
 
 	final ModelConfigRepository modelConfigRepository;
+
+	final InterventionRepository interventionRepository;
 
 	final EmbeddingService embeddingService;
 
@@ -477,6 +481,45 @@ public class ModelController {
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	@GetMapping("/{id}/intervention-policies")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets all intervention policies for a model")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Interventions policies found.",
+						content =
+								@Content(
+										array =
+												@ArraySchema(
+														schema =
+																@io.swagger.v3.oas.annotations.media.Schema(
+																		implementation = InterventionPolicy.class)))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving policies from the data store",
+						content = @Content)
+			})
+	ResponseEntity<List<InterventionPolicy>> getInterventionsForModelId(
+			@PathVariable("id") final UUID id,
+			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+
+		try {
+			final List<InterventionPolicy> interventionPolicies =
+					interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
+							id, PageRequest.of(page, pageSize));
+
+			return ResponseEntity.ok(interventionPolicies);
+		} catch (final Exception e) {
+			final String error = "Unable to get intervention policies";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
