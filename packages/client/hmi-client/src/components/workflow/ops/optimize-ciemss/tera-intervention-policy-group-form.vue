@@ -16,7 +16,7 @@
 				/>
 			</div>
 			<div>
-				<label for="active">{{ config.isActive ? 'Active' : 'Inactive' }}</label>
+				<label for="active">Optimize</label>
 				<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			</div>
 			<div>
@@ -29,130 +29,90 @@
 		</div>
 
 		<div class="input-row">
-			<p v-if="isStartTime">
-				Find the <b>[new value]</b> for the parameter <b>[name]</b> at start time <b>[value]</b>.
+			<p v-if="config.isActive">
+				Find the
+				<Dropdown
+					class="toolbar-button"
+					v-model="optimizeOption"
+					option-label="label"
+					option-value="value"
+					:options="optimizeOptions"
+				/>
+				for the parameter <b>[name]</b>.
 			</p>
 			<p v-else>
-				Find the <b>[new value]</b> for the parameter <b>[name]</b> when the variable
-				<b>[name]</b> exceeds <b>[value]</b>.
+				Set the parameter <b>[name]</b> to <b>{{ OPTIONS[optimizeOption] }}</b> day.
 			</p>
 		</div>
 		<div v-if="config.isActive">
 			<div class="input-row">
 				<p>
-					The objective is the value closet to the
+					The objective is the
+					<span v-if="showNewValueOptions">value closet to the</span>
 					<Dropdown
-						class="toolbar-button"
-						v-model="objective"
+						v-if="showNewValueOptions"
+						class="toolbar-button ml-1 mr-1"
+						v-model="newValueOption"
 						optionLabel="label"
 						optionValue="value"
-						:options="[
-							{ label: 'lower Bound', value: config.lowerBound },
-							{ label: 'upper Bound', value: config.upperBound },
-							{ label: 'start Time', value: config.startTime }
-						]"
+						:options="objectiveOptions"
 						@update:model-value="emit('update-self', config)"
 					/>
+					<span v-if="showNewValueOptions && showStartTimeOptions">and at the</span>
+					<Dropdown
+						v-if="showStartTimeOptions"
+						class="toolbar-button ml-1 mr-1"
+						v-model="startTimeOption"
+						optionLabel="label"
+						optionValue="value"
+						:options="objectiveOptions"
+						@update:model-value="emit('update-self', config)"
+					/>
+					<span v-if="showStartTimeOptions">start time</span>
+					<span>.</span>
 				</p>
 			</div>
-			<div class="input-row">
-				<div class="label-and-input">
-					<label for="lower-bound">Lower bound</label>
-					<tera-input
-						type="number"
-						v-model="config.lowerBound"
-						@update:model-value="emit('update-self', config)"
-					/>
+			<div v-if="showStartTimeOptions">
+				<h6 class="pt-4, pb-3">Start Time</h6>
+				<div class="input-row">
+					<div v-for="objective in objectiveOptions" :key="objective.value" class="label-and-input">
+						<div class="label-and-input">
+							<label :for="objective.value">{{ objective.label }}</label>
+							<InputNumber
+								type="number"
+								v-model="startTimeObjectives[objective.value]"
+								@update:model-value="emit('update-self', config)"
+							/>
+						</div>
+					</div>
 				</div>
-				<div class="label-and-input">
-					<label for="upper-bound">Upper bound</label>
-					<tera-input
-						type="number"
-						v-model="config.upperBound"
-						@update:model-value="emit('update-self', config)"
-					/>
-				</div>
-				<div class="label-and-input">
-					<label for="start-time">Start time</label>
-					<InputNumber
-						:disabled="props.interventionType == InterventionTypes.startTime"
-						class="p-inputtext-sm"
-						inputId="integeronly"
-						v-model="config.startTime"
-						@update:model-value="emit('update-self', config)"
-					/>
+			</div>
+
+			<div v-if="showNewValueOptions">
+				<h6 class="pt-4, pb-3">New Value</h6>
+				<div class="input-row">
+					<div v-for="objective in objectiveOptions" :key="objective.value" class="label-and-input">
+						<div class="label-and-input">
+							<label :for="objective.value">{{ objective.label }}</label>
+							<InputNumber
+								type="number"
+								v-model="newValueObjectives[objective.value]"
+								@update:model-value="emit('update-self', config)"
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
-
-		<!--		<div class="input-row">-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="parameter">Parameter</label>-->
-		<!--				<Dropdown-->
-		<!--					class="p-inputtext-sm"-->
-		<!--					:options="props.parameterOptions"-->
-		<!--					v-model="config.parameter"-->
-		<!--					placeholder="Select"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="initial-guess">Initial guess</label>-->
-		<!--				<tera-input-->
-		<!--					type="number"-->
-		<!--					v-model="config.initialGuess"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--			<div class="label-and-input"></div>-->
-		<!--		</div>-->
-		<!--		<div class="input-row">-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="lower-bound">Lower bound</label>-->
-		<!--				<tera-input-->
-		<!--					type="number"-->
-		<!--					v-model="config.lowerBound"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="upper-bound">Upper bound</label>-->
-		<!--				<tera-input-->
-		<!--					type="number"-->
-		<!--					v-model="config.upperBound"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="start-time">Start time</label>-->
-		<!--				<InputNumber-->
-		<!--					:disabled="props.interventionType == InterventionTypes.startTime"-->
-		<!--					class="p-inputtext-sm"-->
-		<!--					inputId="integeronly"-->
-		<!--					v-model="config.startTime"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--			<div class="label-and-input">-->
-		<!--				<label for="start-time">Param value</label>-->
-		<!--				<InputNumber-->
-		<!--					:disabled="props.interventionType == InterventionTypes.paramValue"-->
-		<!--					class="p-inputtext-sm"-->
-		<!--					v-model="config.paramValue"-->
-		<!--					@update:model-value="emit('update-self', config)"-->
-		<!--				/>-->
-		<!--			</div>-->
-		<!--		</div>-->
 	</div>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import TeraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 import {
 	InterventionPolicyGroup,
@@ -167,15 +127,63 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const isStartTime = ref(false);
 const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
-
-const objective = ref(0);
 
 const onEdit = () => {
 	isEditing.value = !isEditing.value;
 };
+
+const LOWER_BOUND = 'LOWER_BOUND';
+const UPPER_BOUND = 'UPPER_BOUND';
+const INITIAL_GUESS = 'INITIAL_GUESS';
+const VALUE = 'VALUE';
+const START_TIME = 'START_TIME';
+const VALUE_START_TIME = 'VALUE_START_TIME';
+
+const OPTIONS = {
+	[LOWER_BOUND]: 'Lower bound',
+	[UPPER_BOUND]: 'Upper bound',
+	[INITIAL_GUESS]: 'Initial guess',
+	[VALUE]: 'new value',
+	[START_TIME]: 'new start time',
+	[VALUE_START_TIME]: 'new value and start time'
+};
+
+const optimizeOption = ref(VALUE);
+const startTimeOption = ref(LOWER_BOUND);
+const newValueOption = ref(INITIAL_GUESS);
+
+const startTimeObjectives = ref({
+	[LOWER_BOUND]: 0,
+	[UPPER_BOUND]: 0,
+	[INITIAL_GUESS]: 0
+});
+
+const newValueObjectives = ref({
+	[LOWER_BOUND]: 0,
+	[UPPER_BOUND]: 1,
+	[INITIAL_GUESS]: 0.5
+});
+
+const optimizeOptions = [
+	{ label: OPTIONS[VALUE], value: VALUE },
+	{ label: OPTIONS[START_TIME], value: START_TIME },
+	{ label: OPTIONS[VALUE_START_TIME], value: VALUE_START_TIME }
+];
+
+const objectiveOptions = [
+	{ label: OPTIONS[LOWER_BOUND], value: LOWER_BOUND },
+	{ label: OPTIONS[UPPER_BOUND], value: UPPER_BOUND },
+	{ label: OPTIONS[INITIAL_GUESS], value: INITIAL_GUESS }
+];
+
+const showStartTimeOptions = computed(
+	() => optimizeOption.value === START_TIME || optimizeOption.value === VALUE_START_TIME
+);
+const showNewValueOptions = computed(
+	() => optimizeOption.value === VALUE || optimizeOption.value === VALUE_START_TIME
+);
 </script>
 
 <style scoped>
