@@ -4,7 +4,6 @@
 			<div>
 				<strong>{{ initialId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-				<span v-if="unit" class="ml-2">({{ unit }})</span>
 				<template v-if="unit">
 					<label class="ml-2">Unit</label>
 					<span class="ml-1">{{ unit }}</span>
