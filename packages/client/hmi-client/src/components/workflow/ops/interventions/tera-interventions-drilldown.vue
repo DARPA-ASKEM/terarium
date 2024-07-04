@@ -111,13 +111,14 @@
 													:key="staticIntervention.threshold"
 												>
 													<p>
-														Set parameter {{ appliedTo }} to {{ staticIntervention.value }} at time
-														step {{ staticIntervention.threshold }}.
+														Set {{ intervention.type }} {{ appliedTo }} to
+														{{ staticIntervention.value }} at time step
+														{{ staticIntervention.threshold }}.
 													</p>
 												</li>
 											</ul>
 											<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-												Set parameter {{ appliedTo }} to
+												Set {{ intervention.type }} {{ appliedTo }} to
 												{{ intervention.dynamicInterventions[0].value }} when the
 												{{ intervention.dynamicInterventions[0].parameter }} is
 												{{
@@ -153,7 +154,7 @@ import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model } from '@/types/Types';
+import { Intervention, InterventionPolicy, InterventionSemanticType, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -310,7 +311,8 @@ const onAddIntervention = () => {
 	const intervention: Intervention = {
 		name: 'New Intervention',
 		appliedTo: parameterOptions.value[0].value,
-		staticInterventions: [{ threshold: 0, value: 0 }],
+		type: InterventionSemanticType.Parameter,
+		staticInterventions: [{ threshold: Number.NaN, value: Number.NaN }],
 		dynamicInterventions: []
 	};
 	knobs.value.transientInterventionPolicy.interventions.push(intervention);
