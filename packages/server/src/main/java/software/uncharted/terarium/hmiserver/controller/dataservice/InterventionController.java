@@ -142,7 +142,8 @@ public class InterventionController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(interventionService.createAsset(item, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(interventionService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
 			log.error(error, e);
@@ -178,7 +179,8 @@ public class InterventionController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			intervention.setId(id);
-			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, permission);
+			final Optional<InterventionPolicy> updated =
+					interventionService.updateAsset(intervention, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -219,7 +221,7 @@ public class InterventionController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			interventionService.deleteAsset(id, permission);
+			interventionService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Intervention", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete intervention %s", id);

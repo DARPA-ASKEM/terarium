@@ -27,7 +27,8 @@ export enum WorkflowOperationTypes {
 	DOCUMENT = 'Document',
 	MODEL_FROM_EQUATIONS = 'ModelFromEquations',
 	DECAPODES = 'Decapodes',
-	REGRIDDING = 'Regridding'
+	REGRIDDING = 'Regridding',
+	INTERVENTIONS = 'Interventions'
 }
 
 export enum OperatorStatus {
