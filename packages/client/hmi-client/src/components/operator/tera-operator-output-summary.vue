@@ -52,7 +52,6 @@ const isEditing = ref(false);
 const isLoading = ref(true);
 
 function updateSummaryText() {
-	console.log('new text value', summaryText.value);
 	if (!summary.value || isEmpty(summary.value)) return;
 	summary.value.humanSummary = summaryText.value;
 	updateSummary(summary.value);
@@ -78,7 +77,6 @@ function cancelEdit() {
  * */
 const poller = new Poller<Summary>();
 async function pollSummary() {
-	console.log('checking ...', props.summaryId);
 	isLoading.value = true;
 	poller
 		.setInterval(3000)
@@ -97,7 +95,6 @@ async function pollSummary() {
 	}
 
 	summary.value = pollerResult.data;
-	console.log('done done', summary.value);
 	if (summary.value) {
 		summaryText.value = getSummaryText(summary.value);
 	}
@@ -105,14 +102,12 @@ async function pollSummary() {
 }
 
 onUnmounted(() => {
-	console.log('stop poller');
 	poller.stop();
 });
 
 watch(
 	() => props.summaryId,
 	async (newId, oldId) => {
-		console.log('debug 3 ...... watcher', newId, oldId);
 		if (!newId || newId === oldId) return;
 		pollSummary();
 		/*
