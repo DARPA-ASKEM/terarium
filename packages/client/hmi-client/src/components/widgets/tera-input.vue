@@ -3,6 +3,7 @@
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
+				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
 				:value="getValue()"
