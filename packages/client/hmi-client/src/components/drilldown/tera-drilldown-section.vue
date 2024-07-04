@@ -61,6 +61,5 @@ main {
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
-	gap: 1.5rem;
 }
 </style>

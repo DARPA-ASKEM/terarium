@@ -157,6 +157,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setUpdateEmbeddings(document.getPublicAsset() && !document.getTemporary()); // update search embeddings
 		req.setAdditionalProperties(props);
@@ -260,6 +261,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
@@ -402,6 +404,7 @@ public class GoLLMController {
 
 		final ConfigureFromDatasetResponseHandler.Properties props =
 				new ConfigureFromDatasetResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDatasetIds(datasetIds);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
@@ -489,7 +492,7 @@ public class GoLLMController {
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-		input.setModelCards(modelCards);
+		input.setCards(modelCards);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
@@ -582,6 +585,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final GenerateSummaryHandler.Properties props = new GenerateSummaryHandler.Properties();
+		props.setProjectId(projectId);
 		props.setSummaryId(UUID.randomUUID());
 		props.setPreviousSummaryId(previousSummaryId);
 		req.setAdditionalProperties(props);

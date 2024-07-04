@@ -604,10 +604,12 @@ const saveModelConfiguration = async () => {
 	if (!knobs.value.optimizationRunId) {
 		logger.error('No optimization run to create model configuration from');
 	}
+
 	// TODO: use new interventions
 	// const optRunId = knobs.value.optimizationRunId;
 	// const interventions = await getOptimizedInterventions(optRunId);
 	const configClone = cloneDeep(modelConfiguration.value);
+
 	// setInterventions(configClone, interventions);
 	configClone.name = modelConfigName.value;
 	configClone.description = modelConfigDesc.value;

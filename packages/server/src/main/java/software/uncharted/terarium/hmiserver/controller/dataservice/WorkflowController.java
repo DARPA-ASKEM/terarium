@@ -142,7 +142,8 @@ public class WorkflowController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(workflowService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
@@ -178,7 +179,7 @@ public class WorkflowController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			workflow.setId(id);
-			final Optional<Workflow> updated = workflowService.updateAsset(workflow, permission);
+			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -219,7 +220,7 @@ public class WorkflowController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			workflowService.deleteAsset(id, permission);
+			workflowService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);
