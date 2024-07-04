@@ -90,7 +90,6 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 	operatorStatus?: OperatorStatus;
 	state?: Partial<S>;
 	timestamp?: Date;
-	summaryId?: string;
 }
 
 // Common state properties for all operators
