@@ -96,7 +96,7 @@
 						</AccordionTab>
 					</Accordion>
 					<!-- Unstratified -->
-					<div v-else class="flex gap-4">
+					<div v-else class="flex gap-4 pl-5">
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&

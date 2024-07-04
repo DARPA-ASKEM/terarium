@@ -43,6 +43,7 @@
 					<!-- Unstratified -->
 					<tera-initial-entry
 						v-else
+						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
 						:initial-id="baseInitial"
