@@ -42,15 +42,15 @@
 					<template v-if="intervention.staticInterventions.length === 1">
 						<tera-input
 							type="number"
-							:model-value="intervention.staticInterventions[0].threshold"
-							@update:model-value="(val) => onUpdateThreshold(val, 0)"
+							:model-value="intervention.staticInterventions[0].value"
+							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
 						starting at
 						<tera-input
 							type="number"
-							:model-value="intervention.staticInterventions[0].value"
-							@update:model-value="(val) => onUpdateTimestep(val, 0)"
+							:model-value="intervention.staticInterventions[0].threshold"
+							@update:model-value="(val) => onUpdateThreshold(val, 0)"
 							placeholder="time step"
 						/>
 						.
@@ -62,15 +62,15 @@
 						<div class="flex align-items-center pt-2 pb-2 gap-2">
 							<tera-input
 								type="number"
-								:model-value="i.threshold"
-								@update:model-value="(val) => onUpdateThreshold(val, index)"
+								:model-value="i.value"
+								@update:model-value="(val) => onUpdateValue(val, index)"
 								placeholder="value"
 							/>
 							starting at
 							<tera-input
 								type="number"
-								:model-value="i.value"
-								@update:model-value="(val) => onUpdateTimestep(val, index)"
+								:model-value="i.threshold"
+								@update:model-value="(val) => onUpdateThreshold(val, index)"
 								placeholder="time step"
 							/>
 							.
@@ -100,7 +100,7 @@
 				<tera-input
 					type="number"
 					:model-value="intervention.dynamicInterventions[0].value"
-					@update:model-value="(val) => onUpdateTimestep(val, 0)"
+					@update:model-value="(val) => onUpdateValue(val, 0)"
 					placeholder="value"
 				/>
 				when
@@ -197,7 +197,7 @@ const onUpdateThreshold = (value: number, index: number) => {
 	emit('update', intervention);
 };
 
-const onUpdateTimestep = (value: number, index: number) => {
+const onUpdateValue = (value: number, index: number) => {
 	const intervention = cloneDeep(props.intervention);
 	if (interventionType.value === 'static') {
 		intervention.staticInterventions[index].value = value;
