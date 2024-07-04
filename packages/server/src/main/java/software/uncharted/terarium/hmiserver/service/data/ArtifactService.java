@@ -13,10 +13,11 @@ public class ArtifactService extends TerariumAssetServiceWithoutSearch<Artifact,
 	public ArtifactService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final ArtifactRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, Artifact.class);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Artifact.class);
 	}
 
 	@Override
