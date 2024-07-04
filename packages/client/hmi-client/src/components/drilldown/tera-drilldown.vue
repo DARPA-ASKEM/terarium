@@ -35,18 +35,6 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
-					<!--
-					<tera-operator-output-summary
-						v-if="!isEmpty(outputSummary)"
-						:node="node"
-						@generate-output-summary="
-							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
-						"
-						@update-output-port="
-							(output: WorkflowOutput<any>) => emit('update-output-port', output)
-						"
-					/>
-					-->
 					<tera-operator-annotation
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"

@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { csvParse } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -42,6 +43,7 @@ import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCiemss,
+	getRunResult,
 	pollAction,
 	getSimulation
 } from '@/services/models/simulation-service';
@@ -112,11 +114,25 @@ const processResult = async (runId: string) => {
 		chartProxy.addChart();
 	}
 
+	// FIXME: Test summarization
+	const summaryStr = await getRunResult(runId, 'result_summary.csv');
+	const summaryData = csvParse(summaryStr);
+	const start = _.first(summaryData);
+	const end = _.last(summaryData);
+
 	const prompt = `
 The following are the key attributes of a simulation/forecasting process for a ODE epidemilogy model.
+
+The input parameters are as follows:
 - samples: ${state.numSamples}
 - method: ${state.method}
 - timespan: ${JSON.stringify(state.currentTimespan)}
+
+The output has these metrics at the start:
+- ${JSON.stringify(start)}
+
+The output has these metrics at the end:
+- ${JSON.stringify(end)}
 
 Provide a summary in 100 words or less.
 	`;

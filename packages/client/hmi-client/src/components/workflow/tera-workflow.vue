@@ -169,7 +169,6 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -370,24 +369,6 @@ async function appendOutput(
 
 	selectOutput(node, uuid);
 	workflowDirty = true;
-}
-
-// @deprecated
-async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
-	if (!node) return;
-
-	const result = await workflowService.generateSummary(
-		node,
-		outputPort,
-		registry.getOperation(node.operationType)?.createNotebook ?? null
-	);
-	if (!result) return;
-	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
-	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
-	if (!updateNode || !updateOutput) return;
-	updateOutput.summary = result.summary;
-	updateOutput.label = result.title;
-	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
