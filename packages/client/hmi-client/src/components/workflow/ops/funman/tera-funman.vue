@@ -6,129 +6,126 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<Button
-						:loading="showSpinner"
-						class="run-button"
-						label="Run"
-						icon="pi pi-play"
-						@click="runMakeQuery"
-						size="large"
-					/>
-				</template>
-				<main>
-					<h5>
-						Set validation parameters
-						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
-					</h5>
-					<p class="secondary-text mt-1">
-						The validator will use these parameters to execute the sanity checks.
-					</p>
-					<div class="section-row timespan">
-						<div class="button-column">
-							<label>Start time</label>
-							<InputNumber v-model="knobs.currentTimespan.start" />
-						</div>
-						<div class="button-column">
-							<label>End time</label>
-							<InputNumber v-model="knobs.currentTimespan.end" />
-						</div>
-						<div class="button-column">
-							<label>Number of steps</label>
-							<InputNumber v-model="knobs.numberOfSteps" />
-						</div>
+		<tera-drilldown-section :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
+			<template #header-controls-right>
+				<Button
+					:loading="showSpinner"
+					class="run-button"
+					label="Run"
+					icon="pi pi-play"
+					@click="runMakeQuery"
+					size="large"
+				/>
+			</template>
+			<main>
+				<h5>
+					Set validation parameters
+					<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
+				</h5>
+				<p class="secondary-text mt-1">
+					The validator will use these parameters to execute the sanity checks.
+				</p>
+				<div class="section-row timespan">
+					<div class="button-column">
+						<label>Start time</label>
+						<InputNumber v-model="knobs.currentTimespan.start" />
 					</div>
-					<InputText
-						:disabled="true"
-						class="p-inputtext-sm timespan-list mb-2"
-						v-model="requestStepListString"
-					/>
-					<template v-if="showAdditionalOptions">
-						<div class="button-column">
-							<label>Tolerance</label>
-							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input type="decimal" :min="0" :max="1" v-model="knobs.tolerance" />
-								<Slider
-									v-model="knobs.tolerance"
-									:min="0"
-									:max="1"
-									:step="0.01"
-									class="w-full mr-2"
-								/>
-							</div>
-						</div>
-						<div class="section-row fadein animation-duration-600">
-							<!-- This will definitely require a proper tool tip. -->
-							<label class="w-auto mr-2"
-								>Select parameters of interest <i class="pi pi-info-circle"
-							/></label>
-							<MultiSelect
-								ref="columnSelect"
-								:modelValue="variablesOfInterest"
-								:options="requestParameters.map((d: any) => d.name)"
-								:show-toggle-all="false"
-								class="w-auto"
-								@update:modelValue="onToggleVariableOfInterest"
-								:maxSelectedLabels="1"
-								placeholder="Select variables"
+					<div class="button-column">
+						<label>End time</label>
+						<InputNumber v-model="knobs.currentTimespan.end" />
+					</div>
+					<div class="button-column">
+						<label>Number of steps</label>
+						<InputNumber v-model="knobs.numberOfSteps" />
+					</div>
+				</div>
+				<InputText
+					:disabled="true"
+					class="p-inputtext-sm timespan-list mb-2"
+					v-model="requestStepListString"
+				/>
+				<template v-if="showAdditionalOptions">
+					<div class="button-column">
+						<label>Tolerance</label>
+						<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
+							<tera-input type="decimal" :min="0" :max="1" v-model="knobs.tolerance" />
+							<Slider
+								v-model="knobs.tolerance"
+								:min="0"
+								:max="1"
+								:step="0.01"
+								class="w-full mr-2"
 							/>
 						</div>
-					</template>
-					<Button
-						text
-						icon="pi pi-eye"
-						label="Show additional options"
-						size="small"
-						v-if="!showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					/>
-					<Button
-						text
-						icon="pi pi-eye-slash"
-						label="Hide additional options"
-						size="small"
-						v-if="showAdditionalOptions"
-						@click="toggleAdditonalOptions"
-					/>
-
-					<div class="spacer">
-						<h5>Add sanity checks</h5>
-						<p class="secondary-text mt-1">
-							Model configurations will be tested against these constraints.
-						</p>
 					</div>
-					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
-					<tera-constraint-group-form
-						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="selectedOutputId + ':' + index"
-						:config="cfg"
-						:index="index"
-						:model-states="modelStates"
-						:model-parameters="modelParameters"
-						@delete-self="deleteConstraintGroupForm"
-						@update-self="updateConstraintGroupForm"
-					/>
-					<Button
-						class="add-constraint-spacer"
-						text
-						icon="pi pi-plus"
-						label="Add another constraint"
-						size="small"
-						@click="addConstraintForm"
-					/>
-				</main>
-			</tera-drilldown-section>
-		</div>
-		<div :tabName="FunmanTabs.Notebook">
-			<tera-drilldown-section>
-				<main>
-					<!-- TODO: notebook functionality -->
-					<p>{{ requestConstraints }}</p>
-				</main>
-			</tera-drilldown-section>
-		</div>
+					<div class="section-row fadein animation-duration-600">
+						<!-- This will definitely require a proper tool tip. -->
+						<label class="w-auto mr-2"
+							>Select parameters of interest <i class="pi pi-info-circle"
+						/></label>
+						<MultiSelect
+							ref="columnSelect"
+							:modelValue="variablesOfInterest"
+							:options="requestParameters.map((d: any) => d.name)"
+							:show-toggle-all="false"
+							class="w-auto"
+							@update:modelValue="onToggleVariableOfInterest"
+							:maxSelectedLabels="1"
+							placeholder="Select variables"
+						/>
+					</div>
+				</template>
+				<Button
+					text
+					icon="pi pi-eye"
+					label="Show additional options"
+					size="small"
+					v-if="!showAdditionalOptions"
+					@click="toggleAdditonalOptions"
+				/>
+				<Button
+					text
+					icon="pi pi-eye-slash"
+					label="Hide additional options"
+					size="small"
+					v-if="showAdditionalOptions"
+					@click="toggleAdditonalOptions"
+				/>
+
+				<div class="spacer">
+					<h5>Add sanity checks</h5>
+					<p class="secondary-text mt-1">
+						Model configurations will be tested against these constraints.
+					</p>
+				</div>
+				<tera-compartment-constraint :variables="modelStates" :mass="mass" />
+				<tera-constraint-group-form
+					v-for="(cfg, index) in node.state.constraintGroups"
+					:key="selectedOutputId + ':' + index"
+					:config="cfg"
+					:index="index"
+					:model-states="modelStates"
+					:model-parameters="modelParameters"
+					@delete-self="deleteConstraintGroupForm"
+					@update-self="updateConstraintGroupForm"
+				/>
+				<Button
+					class="add-constraint-spacer"
+					text
+					icon="pi pi-plus"
+					label="Add another constraint"
+					size="small"
+					@click="addConstraintForm"
+				/>
+			</main>
+		</tera-drilldown-section>
+
+		<tera-drilldown-section :tabName="FunmanTabs.Notebook">
+			<main>
+				<!-- TODO: notebook functionality -->
+				<p>{{ requestConstraints }}</p>
+			</main>
+		</tera-drilldown-section>
 
 		<template #preview>
 			<tera-drilldown-preview

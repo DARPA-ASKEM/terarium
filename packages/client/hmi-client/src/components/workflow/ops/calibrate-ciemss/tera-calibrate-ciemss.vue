@@ -5,110 +5,99 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
-					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+		<tera-drilldown-section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<template #header-controls-right>
+				<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
+			</template>
+			<div class="form-section">
+				<h5>Mapping</h5>
+				<DataTable class="mapping-table" :value="mapping">
 					<Button
-						label="Run"
-						icon="pi pi-play"
-						@click="runCalibrate"
-						:disabled="disableRunButton"
+						class="p-button-sm p-button-text"
+						label="Delete all mapping"
+						@click="deleteMapping"
 					/>
-				</template>
-				<div class="form-section">
-					<h5>Mapping</h5>
-					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteMapping"
-						/>
-						<Column field="modelVariable">
-							<template #header>
-								<span class="column-header">Model variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									:placeholder="mappingDropdownPlaceholder"
-									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
-								/>
-							</template>
-						</Column>
-						<Column field="datasetVariable">
-							<template #header>
-								<span class="column-header">Dataset variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									:placeholder="mappingDropdownPlaceholder"
-									v-model="data[field]"
-									:options="datasetColumns?.map((ele) => ele.name)"
-								/>
-							</template>
-						</Column>
-						<Column field="deleteRow">
-							<template #header>
-								<span class="column-header"></span>
-							</template>
-							<template #body="{ index }">
-								<Button
-									class="p-button-sm p-button-text"
-									label="Delete"
-									@click="deleteMapRow(index)"
-								/>
-							</template>
-						</Column>
-					</DataTable>
-					<div>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
-						/>
-					</div>
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">Model variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<Dropdown
+								class="w-full"
+								:placeholder="mappingDropdownPlaceholder"
+								v-model="data[field]"
+								:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+							/>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">Dataset variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<Dropdown
+								class="w-full"
+								:placeholder="mappingDropdownPlaceholder"
+								v-model="data[field]"
+								:options="datasetColumns?.map((ele) => ele.name)"
+							/>
+						</template>
+					</Column>
+					<Column field="deleteRow">
+						<template #header>
+							<span class="column-header"></span>
+						</template>
+						<template #body="{ index }">
+							<Button
+								class="p-button-sm p-button-text"
+								label="Delete"
+								@click="deleteMapRow(index)"
+							/>
+						</template>
+					</Column>
+				</DataTable>
+				<div>
+					<Button
+						class="p-button-sm p-button-text"
+						icon="pi pi-plus"
+						label="Add mapping"
+						@click="addMapping"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						icon="pi pi-plus"
+						label="Auto map"
+						@click="getAutoMapping"
+					/>
 				</div>
+			</div>
 
-				<div class="form-section">
-					<h4>Calibration settings</h4>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="num-samples">Number of samples</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numSamples"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numIterations"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="num-samples">End time for forecast</label>
-							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
-						</div>
+			<div class="form-section">
+				<h4>Calibration settings</h4>
+				<div class="input-row">
+					<div class="label-and-input">
+						<label for="num-samples">Number of samples</label>
+						<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numSamples" />
+					</div>
+					<div class="label-and-input">
+						<label for="num-iterations">Number of solver iterations</label>
+						<InputNumber
+							class="p-inputtext-sm"
+							inputId="integeronly"
+							v-model="knobs.numIterations"
+						/>
+					</div>
+					<div class="label-and-input">
+						<label for="num-samples">End time for forecast</label>
+						<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.endTime" />
 					</div>
 				</div>
-			</tera-drilldown-section>
-		</section>
-		<section :tabName="CalibrateTabs.Notebook">
+			</div>
+		</tera-drilldown-section>
+		<tera-drilldown-section :tabName="CalibrateTabs.Notebook">
 			<h5>Notebook</h5>
-		</section>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"

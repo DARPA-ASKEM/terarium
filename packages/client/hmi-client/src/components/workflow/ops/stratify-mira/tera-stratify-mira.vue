@@ -10,67 +10,63 @@
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
-		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-4">
-				<div class="form-section">
-					<header class="inline-flex justify-content-between">
-						<section>
-							<h5>Stratify model</h5>
-							<p>The model will be stratified with the following settings.</p>
-							<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
-								Note: Code has been executed which may not be reflected here.
-							</p>
-						</section>
-						<section>
-							<Button
-								style="margin-right: auto"
-								size="small"
-								severity="secondary"
-								outlined
-								label="Reset"
-								@click="resetModel"
-								class="mr-2"
-							/>
-							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
-						</section>
-					</header>
-					<tera-stratification-group-form
-						class="mt-2"
-						:model-node-options="modelNodeOptions"
-						:config="node.state.strataGroup"
-						@update-self="updateStratifyGroupForm"
-					/>
-				</div>
-			</tera-drilldown-section>
-		</div>
-		<div :tabName="StratifyTabs.Notebook">
-			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="'python3'"
-						@llm-output="(data: any) => processLLMOutput(data)"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
-						</template>
-					</tera-notebook-jupyter-input>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
-				</div>
-				<v-ace-editor
-					v-model:value="codeText"
-					@init="initialize"
-					lang="python"
-					theme="chrome"
-					style="flex-grow: 1; width: 100%"
-					class="ace-editor"
-					:options="{ showPrintMargin: false }"
+		<tera-drilldown-section :tabName="StratifyTabs.Wizard" class="pl-4">
+			<div class="form-section">
+				<header class="inline-flex justify-content-between">
+					<section>
+						<h5>Stratify model</h5>
+						<p>The model will be stratified with the following settings.</p>
+						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
+							Note: Code has been executed which may not be reflected here.
+						</p>
+					</section>
+					<section>
+						<Button
+							style="margin-right: auto"
+							size="small"
+							severity="secondary"
+							outlined
+							label="Reset"
+							@click="resetModel"
+							class="mr-2"
+						/>
+						<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
+					</section>
+				</header>
+				<tera-stratification-group-form
+					class="mt-2"
+					:model-node-options="modelNodeOptions"
+					:config="node.state.strataGroup"
+					@update-self="updateStratifyGroupForm"
 				/>
-			</tera-drilldown-section>
-		</div>
+			</div>
+		</tera-drilldown-section>
+		<tera-drilldown-section :tabName="StratifyTabs.Notebook" class="notebook-section">
+			<div class="toolbar">
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
+					</template>
+				</tera-notebook-jupyter-input>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+			</div>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initialize"
+				lang="python"
+				theme="chrome"
+				style="flex-grow: 1; width: 100%"
+				class="ace-editor"
+				:options="{ showPrintMargin: false }"
+			/>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"

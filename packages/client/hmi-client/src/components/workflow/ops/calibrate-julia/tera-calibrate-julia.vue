@@ -5,123 +5,121 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<tera-drilldown-section>
-				<template #header-controls-right>
+		<tera-drilldown-section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<template #header-controls-right>
+				<Button
+					:style="{ marginRight: 'auto' }"
+					label="Run"
+					icon="pi pi-play"
+					@click="runCalibrate"
+					:disabled="disableRunButton"
+				/>
+			</template>
+			<div class="form-section">
+				<h5>Mapping</h5>
+				<DataTable class="mapping-table" :value="mapping">
 					<Button
-						:style="{ marginRight: 'auto' }"
-						label="Run"
-						icon="pi pi-play"
-						@click="runCalibrate"
-						:disabled="disableRunButton"
+						class="p-button-sm p-button-text"
+						label="Delete all mapping"
+						@click="deleteAllMapping"
 					/>
-				</template>
-				<div class="form-section">
-					<h5>Mapping</h5>
-					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteAllMapping"
-						/>
-						<Column field="modelVariable">
-							<template #header>
-								<span class="column-header">Model variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full p-inputtext-sm"
-									placeholder="Select a variable"
-									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
-								/>
-							</template>
-						</Column>
-						<Column field="datasetVariable">
-							<template #header>
-								<span class="column-header">Dataset variable</span>
-							</template>
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full p-inputtext-sm"
-									placeholder="Select a variable"
-									v-model="data[field]"
-									:options="datasetColumns?.map((ele) => ele.name)"
-								/>
-							</template>
-						</Column>
-						<Column field="deleteRow">
-							<template #header>
-								<span class="column-header"></span>
-							</template>
-							<template #body="{ index }">
-								<Button
-									class="p-button-sm p-button-text"
-									label="Delete"
-									@click="deleteMapRow(index)"
-								/>
-							</template>
-						</Column>
-					</DataTable>
-					<div>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
-						/>
-					</div>
-				</div>
-				<div class="form-section">
-					<h5>Calibration settings</h5>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label for="chains">Chains</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="extra.numChains"
-								@update:model-value="updateStateExtras"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="iterations">Iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="extra.numIterations"
-								@update:model-value="updateStateExtras"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="ode-method">ODE method</label>
-							<InputText
-								class="p-inputtext-sm"
-								v-model="extra.odeMethod"
-								@update:model-value="updateStateExtras"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label for="calibrate-method">Calibrate method</label>
+					<Column field="modelVariable">
+						<template #header>
+							<span class="column-header">Model variable</span>
+						</template>
+						<template #body="{ data, field }">
 							<Dropdown
-								:options="Object.values(CalibrateMethodOptions)"
-								v-model="extra.calibrateMethod"
-								@update:model-value="updateStateExtras"
+								class="w-full p-inputtext-sm"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 							/>
-						</div>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #header>
+							<span class="column-header">Dataset variable</span>
+						</template>
+						<template #body="{ data, field }">
+							<Dropdown
+								class="w-full p-inputtext-sm"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="datasetColumns?.map((ele) => ele.name)"
+							/>
+						</template>
+					</Column>
+					<Column field="deleteRow">
+						<template #header>
+							<span class="column-header"></span>
+						</template>
+						<template #body="{ index }">
+							<Button
+								class="p-button-sm p-button-text"
+								label="Delete"
+								@click="deleteMapRow(index)"
+							/>
+						</template>
+					</Column>
+				</DataTable>
+				<div>
+					<Button
+						class="p-button-sm p-button-text"
+						icon="pi pi-plus"
+						label="Add mapping"
+						@click="addMapping"
+					/>
+					<Button
+						class="p-button-sm p-button-text"
+						icon="pi pi-plus"
+						label="Auto map"
+						@click="getAutoMapping"
+					/>
+				</div>
+			</div>
+			<div class="form-section">
+				<h5>Calibration settings</h5>
+				<div class="input-row">
+					<div class="label-and-input">
+						<label for="chains">Chains</label>
+						<InputNumber
+							class="p-inputtext-sm"
+							inputId="integeronly"
+							v-model="extra.numChains"
+							@update:model-value="updateStateExtras"
+						/>
+					</div>
+					<div class="label-and-input">
+						<label for="iterations">Iterations</label>
+						<InputNumber
+							class="p-inputtext-sm"
+							inputId="integeronly"
+							v-model="extra.numIterations"
+							@update:model-value="updateStateExtras"
+						/>
+					</div>
+					<div class="label-and-input">
+						<label for="ode-method">ODE method</label>
+						<InputText
+							class="p-inputtext-sm"
+							v-model="extra.odeMethod"
+							@update:model-value="updateStateExtras"
+						/>
+					</div>
+					<div class="label-and-input">
+						<label for="calibrate-method">Calibrate method</label>
+						<Dropdown
+							:options="Object.values(CalibrateMethodOptions)"
+							v-model="extra.calibrateMethod"
+							@update:model-value="updateStateExtras"
+						/>
 					</div>
 				</div>
-			</tera-drilldown-section>
-		</section>
-		<section :tabName="CalibrateTabs.Notebook">
+			</div>
+		</tera-drilldown-section>
+		<tera-drilldown-section :tabName="CalibrateTabs.Notebook">
 			<h5>Notebook</h5>
-		</section>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Preview"

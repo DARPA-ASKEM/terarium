@@ -18,85 +18,83 @@
 				is-selectable
 			/>
 		</template>
-		<div tabName="Wizard" class="p-3">
-			<tera-drilldown-section :isLoading="fetchingInputBlocks">
-				<header>
-					<section class="flex items-center gap-3">
+		<tera-drilldown-section tabName="Wizard" class="p-3" :isLoading="fetchingInputBlocks">
+			<header>
+				<section class="flex items-center gap-3">
+					<Dropdown
+						class="w-full md:w-14rem"
+						v-model="clonedState.codeLanguage"
+						:options="programmingLanguages"
+						@change="setKernelContext"
+					/>
+					<span
+						><label>Model framework</label>
 						<Dropdown
-							class="w-full md:w-14rem"
-							v-model="clonedState.codeLanguage"
-							:options="programmingLanguages"
+							size="small"
+							v-model="clonedState.modelFramework"
+							:options="modelFrameworks"
 							@change="setKernelContext"
 						/>
-						<span
-							><label>Model framework</label>
-							<Dropdown
-								size="small"
-								v-model="clonedState.modelFramework"
-								:options="modelFrameworks"
-								@change="setKernelContext"
-							/>
-						</span>
-						<span class="mr-auto">
-							<label>Service</label>
-							<Dropdown
-								size="small"
-								v-model="clonedState.modelService"
-								:options="modelServices"
-								@change="emit('update-state', clonedState)"
-							/>
-						</span>
-						<Button
-							label="Add code block"
-							icon="pi pi-plus"
-							text
-							@click="addCodeBlock"
-							:disabled="
-								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
-							"
+					</span>
+					<span class="mr-auto">
+						<label>Service</label>
+						<Dropdown
+							size="small"
+							v-model="clonedState.modelService"
+							:options="modelServices"
+							@change="emit('update-state', clonedState)"
 						/>
-					</section>
-				</header>
-				<tera-operator-placeholder
-					v-if="allCodeBlocks.length === 0"
-					:operation-type="node.operationType"
-					style="height: 100%"
-				>
-					Please attach a code asset.
-				</tera-operator-placeholder>
-				<template v-else>
-					<tera-asset-block
-						v-for="({ name, asset }, i) in allCodeBlocks"
-						:key="i"
-						:is-editable="asset.type !== CodeBlockType.INPUT"
-						:is-deletable="asset.type !== CodeBlockType.INPUT"
-						@delete="removeCodeBlock(i - inputCodeBlocks.length)"
-						:is-included="allCodeBlocks[i].includeInProcess"
-						@update:is-included="
-							allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess;
-							emit('update-state', clonedState);
+					</span>
+					<Button
+						label="Add code block"
+						icon="pi pi-plus"
+						text
+						@click="addCodeBlock"
+						:disabled="
+							clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
 						"
-					>
-						<template #header>
-							<h5>{{ name }}</h5>
-						</template>
-						<v-ace-editor
-							v-model:value="allCodeBlocks[i].asset.codeContent"
-							@update:value="emit('update-state', clonedState)"
-							:lang="asset.codeLanguage"
-							theme="chrome"
-							style="height: calc(100vh - 25rem); width: 100%"
-							class="ace-editor"
-							:readonly="asset.type === CodeBlockType.INPUT"
-							:options="{ showPrintMargin: false }"
-						/>
-					</tera-asset-block>
-				</template>
-			</tera-drilldown-section>
-		</div>
-		<div tabName="Notebook">
+					/>
+				</section>
+			</header>
+			<tera-operator-placeholder
+				v-if="allCodeBlocks.length === 0"
+				:operation-type="node.operationType"
+				style="height: 100%"
+			>
+				Please attach a code asset.
+			</tera-operator-placeholder>
+			<template v-else>
+				<tera-asset-block
+					v-for="({ name, asset }, i) in allCodeBlocks"
+					:key="i"
+					:is-editable="asset.type !== CodeBlockType.INPUT"
+					:is-deletable="asset.type !== CodeBlockType.INPUT"
+					@delete="removeCodeBlock(i - inputCodeBlocks.length)"
+					:is-included="allCodeBlocks[i].includeInProcess"
+					@update:is-included="
+						allCodeBlocks[i].includeInProcess = !allCodeBlocks[i].includeInProcess;
+						emit('update-state', clonedState);
+					"
+				>
+					<template #header>
+						<h5>{{ name }}</h5>
+					</template>
+					<v-ace-editor
+						v-model:value="allCodeBlocks[i].asset.codeContent"
+						@update:value="emit('update-state', clonedState)"
+						:lang="asset.codeLanguage"
+						theme="chrome"
+						style="height: calc(100vh - 25rem); width: 100%"
+						class="ace-editor"
+						:readonly="asset.type === CodeBlockType.INPUT"
+						:options="{ showPrintMargin: false }"
+					/>
+				</tera-asset-block>
+			</template>
+		</tera-drilldown-section>
+		<tera-drilldown-section tabName="Notebook">
 			<!--Notebook section if we decide we need one-->
-		</div>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview :is-loading="isProcessing" class="pt-3 pb-2 pl-2 pr-4">
 				<section v-if="selectedModel">
