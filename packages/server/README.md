@@ -228,3 +228,7 @@ Instead of saying we "were unable to…," simply state "we couldn't…"
 
 #### UUID
 Not typically familiar to an end user. Replace with "ID" or "unique ID."
+
+
+## Permissions with Services:
+When a service needs access to a controller that controller's end point will need to be added to the list in applications.properties under the Application configuration section with the other terarium.serviceRequestPatterns
