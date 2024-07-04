@@ -55,6 +55,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+		UUID projectId;
 		UUID documentId;
 		UUID modelId;
 		UUID workflowId;
@@ -112,8 +113,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 						condition.get("name").asText(),
 						condition.get("description").asText());
 
-				final ModelConfiguration newConfig =
-						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
+						configuration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()
 						.setLeft(newConfig.getId())

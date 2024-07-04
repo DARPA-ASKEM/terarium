@@ -237,7 +237,7 @@ public class ModelConfigurationController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), permission));
+					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission));
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
@@ -280,7 +280,7 @@ public class ModelConfigurationController {
 
 		try {
 			final Optional<ModelConfiguration> optionalModelConfiguration =
-					modelConfigurationService.updateAsset(modelConfiguration, permission);
+					modelConfigurationService.updateAsset(modelConfiguration, projectId, permission);
 			if (optionalModelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
@@ -325,7 +325,7 @@ public class ModelConfigurationController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), permission));
+					.body(modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission));
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
@@ -371,7 +371,8 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, permission);
+			final Optional<ModelConfiguration> updated =
+					modelConfigurationService.updateAsset(config, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -411,7 +412,7 @@ public class ModelConfigurationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelConfigurationService.deleteAsset(id, permission);
+			modelConfigurationService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
 		} catch (final IOException e) {
 			log.error("Unable to delete model configuration", e);

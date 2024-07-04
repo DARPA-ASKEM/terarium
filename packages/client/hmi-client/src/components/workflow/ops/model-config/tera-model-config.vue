@@ -74,15 +74,11 @@
 
 		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
 			<template #header-controls-left>
-				<template v-if="!isEditingName">
-					<h4>{{ knobs.transientModelConfig.name }}</h4>
-					<Button v-if="!isEditingName" icon="pi pi-pencil" text @click.stop="onEditName" />
-				</template>
-				<template v-else>
-					<tera-input v-model="newName" />
-					<Button icon="pi pi-times" text @click.stop="isEditingName = false" />
-					<Button icon="pi pi-check" text @click.stop="onConfirmEditName" />
-				</template>
+				<tera-toggleable-edit
+					v-if="knobs.transientModelConfig.name"
+					v-model="knobs.transientModelConfig.name"
+					tag="h4"
+				/>
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
@@ -148,24 +144,6 @@
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-			<Accordion multiple :active-index="[0]" class="pb-6">
-				<AccordionTab>
-					<template #header> Interventions </template>
-					<Button outlined size="small" label="Add Intervention" @click="addIntervention" />
-					<tera-model-intervention
-						v-for="(intervention, idx) of interventions"
-						:key="intervention.name + intervention.timestep + intervention.value"
-						:intervention="intervention"
-						:parameter-options="Object.keys(mmt.parameters)"
-						@update-value="
-							(data: Intervention) => {
-								interventions[idx] = data;
-							}
-						"
-						@delete="interventions.splice(idx, 1)"
-					/>
-				</AccordionTab>
-			</Accordion>
 
 			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
 			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
@@ -301,12 +279,10 @@ import {
 	setParameterSource,
 	setParameterDistributions,
 	getAsConfiguredModel,
-	getInterventions,
-	setInterventions,
 	amrToModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -314,12 +290,12 @@ import { logger } from '@/utils/logger';
 import { isModelMissingMetadata } from '@/model-representation/service';
 import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
-import TeraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
+import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -333,9 +309,7 @@ const props = defineProps<{
 }>();
 
 const isSidebarOpen = ref(true);
-const isEditingName = ref(false);
 const isEditingDescription = ref(false);
-const newName = ref('');
 const newDescription = ref('');
 
 const menuItems = computed(() => [
@@ -367,7 +341,6 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-const interventions = ref<Intervention[]>([]);
 const sanityCheckErrors = ref<string[]>([]);
 const isSaveDisabled = computed(() => knobs.value.transientModelConfig.name === '');
 
@@ -573,7 +546,6 @@ const handleModelPreview = async (data: any) => {
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
 	const modelConfig = await amrToModelConfiguration(model.value);
-	setInterventions(modelConfig, interventions.value);
 	knobs.value.transientModelConfig = modelConfig;
 };
 
@@ -607,14 +579,6 @@ const isLoading = computed(
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-
-const addIntervention = () => {
-	interventions.value.push({
-		name: '',
-		timestep: 1,
-		value: 1
-	});
-};
 
 const downloadConfiguredModel = async (
 	configuration: ModelConfiguration = knobs.value.transientModelConfig
@@ -681,7 +645,6 @@ const initialize = async () => {
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
-		interventions.value = getInterventions(knobs.value.transientModelConfig);
 	}
 
 	// Create a new session and context based on model
@@ -714,7 +677,6 @@ const onSelectConfiguration = (configuration: ModelConfiguration) => {
 const applyConfigValues = (config: ModelConfiguration) => {
 	const state = cloneDeep(props.node.state);
 	knobs.value.transientModelConfig = cloneDeep(config);
-	interventions.value = getInterventions(config);
 
 	// Update output port:
 	if (!config.id) {
@@ -743,19 +705,9 @@ const applyConfigValues = (config: ModelConfiguration) => {
 	logger.success(`Configuration applied ${config.name}`);
 };
 
-const onEditName = () => {
-	isEditingName.value = true;
-	newName.value = knobs.value.transientModelConfig.name ?? '';
-};
-
 const onEditDescription = () => {
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientModelConfig.description ?? '';
-};
-
-const onConfirmEditName = () => {
-	knobs.value.transientModelConfig.name = newName.value;
-	isEditingName.value = false;
 };
 
 const onConfirmEditDescription = () => {
@@ -793,16 +745,6 @@ watch(
 		mmtParams.value = response.template_params;
 	},
 	{ immediate: true, deep: true }
-);
-
-// A very temporary way of doing interventions until we do a redesign
-watch(
-	() => interventions.value,
-	() => {
-		if (!isEmpty(interventions.value))
-			setInterventions(knobs.value.transientModelConfig, interventions.value);
-	},
-	{ deep: true }
 );
 
 watch(

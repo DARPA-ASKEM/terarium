@@ -118,7 +118,7 @@ public class NotebookSessionController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			sessionService.createAsset(session, permission);
+			sessionService.createAsset(session, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
 			final String error = "Unable to create session";
@@ -209,7 +209,7 @@ public class NotebookSessionController {
 
 		try {
 			session.setId(id);
-			final Optional<NotebookSession> updated = sessionService.updateAsset(session, permission);
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -286,7 +286,7 @@ public class NotebookSessionController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			sessionService.deleteAsset(id, permission);
+			sessionService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete noteboko session";

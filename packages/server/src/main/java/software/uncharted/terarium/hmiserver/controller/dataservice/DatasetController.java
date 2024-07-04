@@ -183,7 +183,8 @@ public class DatasetController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(datasetService.createAsset(dataset, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
@@ -262,7 +263,7 @@ public class DatasetController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			datasetService.deleteAsset(id, permission);
+			datasetService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete dataset";
@@ -300,7 +301,7 @@ public class DatasetController {
 
 		try {
 			dataset.setId(id);
-			final Optional<Dataset> updated = datasetService.updateAsset(dataset, permission);
+			final Optional<Dataset> updated = datasetService.updateAsset(dataset, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -507,7 +508,7 @@ public class DatasetController {
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
 		final String[] csvRows = csvString.split("\\R");
 		final String[] headers = csvRows[0].split(",");
-		return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
+		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 	}
 
 	/**
@@ -558,7 +559,7 @@ public class DatasetController {
 				// strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
-			return uploadCSVAndUpdateColumns(datasetId, filename, csvEntity, headers, permission);
+			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
@@ -619,7 +620,7 @@ public class DatasetController {
 					// let it pass.
 				}
 
-				datasetService.updateAsset(updatedDataset.get(), permission);
+				datasetService.updateAsset(updatedDataset.get(), projectId, permission);
 			}
 
 			return res;
@@ -675,6 +676,7 @@ public class DatasetController {
 	 */
 	private ResponseEntity<ResponseStatus> uploadCSVAndUpdateColumns(
 			final UUID datasetId,
+			final UUID projectId,
 			final String filename,
 			final HttpEntity csvEntity,
 			final String[] headers,
@@ -701,7 +703,7 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateAsset(updatedDataset.get(), hasWritePermission);
+				datasetService.updateAsset(updatedDataset.get(), projectId, hasWritePermission);
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));

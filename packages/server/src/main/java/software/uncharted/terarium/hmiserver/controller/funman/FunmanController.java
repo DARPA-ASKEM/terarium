@@ -105,7 +105,7 @@ public class FunmanController {
 		// Create new simulation object to proxy the funman validation process
 		final Simulation newSimulation;
 		try {
-			newSimulation = simulationService.createAsset(sim, permission);
+			newSimulation = simulationService.createAsset(sim, projectId, permission);
 		} catch (final Exception e) {
 			log.error("An error occurred while trying to create a simulation asset.", e);
 			throw new ResponseStatusException(
@@ -113,6 +113,7 @@ public class FunmanController {
 		}
 
 		final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
+		props.setProjectId(projectId);
 		props.setSimulationId(newSimulation.getId());
 		taskRequest.setAdditionalProperties(props);
 

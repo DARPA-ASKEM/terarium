@@ -115,6 +115,11 @@ public class DocumentAsset extends TerariumAsset {
 			clone.assets = new ArrayList<>();
 			for (final DocumentExtraction asset : this.assets) {
 				clone.assets.add(asset.clone());
+
+				// ensure the asset filename is added
+				if (!clone.getFileNames().contains(asset.getFileName())) {
+					clone.getFileNames().add(asset.getFileName());
+				}
 			}
 		}
 

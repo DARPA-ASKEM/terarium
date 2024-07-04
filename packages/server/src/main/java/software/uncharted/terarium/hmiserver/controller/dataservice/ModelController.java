@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -45,6 +44,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
+import software.uncharted.terarium.hmiserver.repository.data.InterventionRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -87,6 +88,8 @@ public class ModelController {
 	final Messages messages;
 
 	final ModelConfigRepository modelConfigRepository;
+
+	final InterventionRepository interventionRepository;
 
 	final EmbeddingService embeddingService;
 
@@ -341,29 +344,23 @@ public class ModelController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
+
+			final Optional<Model> originalModel = modelService.getAsset(id, permission);
+			if (originalModel.isEmpty()) {
+				return ResponseEntity.notFound().build();
+			}
+
 			model.setId(id);
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			final Optional<Model> updated = modelService.updateAsset(model, permission);
+			final Optional<Model> updated = modelService.updateAsset(model, projectId, permission);
 
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
 
-			final Model updatedModel = updated.get();
-
-			if (updatedModel.getPublicAsset() && !updatedModel.getTemporary()) {
-				try {
-					final String amr = objectMapper.writeValueAsString(updatedModel);
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
-					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-				} catch (final Exception e) {
-					log.warn("Unable to update embeddings for model " + model.getId(), e);
-				}
-			}
-
-			return ResponseEntity.ok(updatedModel);
+			return ResponseEntity.ok(updated.get());
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
@@ -395,7 +392,7 @@ public class ModelController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelService.deleteAsset(id, permission);
+			modelService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Model", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete model";
@@ -424,7 +421,7 @@ public class ModelController {
 						content = @Content)
 			})
 	ResponseEntity<Model> createModel(
-			@RequestBody Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+			@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
@@ -433,24 +430,14 @@ public class ModelController {
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
 			model.setName(model.getHeader().getName());
-			model = modelService.createAsset(model, permission);
+			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
-			modelConfigurationService.createAsset(modelConfiguration, permission);
+					ModelConfigurationService.modelConfigurationFromAMR(created, null, null);
+			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
-			if (model.getPublicAsset() && !model.getTemporary()) {
-				try {
-					final String amr = objectMapper.writeValueAsString(model);
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(amr);
-					modelService.uploadEmbeddings(model.getId(), embeddings, permission);
-				} catch (final Exception e) {
-					log.warn("Unable to generate embeddings for model " + model.getId(), e);
-				}
-			}
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(model);
+			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
@@ -494,6 +481,45 @@ public class ModelController {
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	@GetMapping("/{id}/intervention-policies")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets all intervention policies for a model")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Interventions policies found.",
+						content =
+								@Content(
+										array =
+												@ArraySchema(
+														schema =
+																@io.swagger.v3.oas.annotations.media.Schema(
+																		implementation = InterventionPolicy.class)))),
+				@ApiResponse(
+						responseCode = "500",
+						description = "There was an issue retrieving policies from the data store",
+						content = @Content)
+			})
+	ResponseEntity<List<InterventionPolicy>> getInterventionsForModelId(
+			@PathVariable("id") final UUID id,
+			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+
+		try {
+			final List<InterventionPolicy> interventionPolicies =
+					interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
+							id, PageRequest.of(page, pageSize));
+
+			return ResponseEntity.ok(interventionPolicies);
+		} catch (final Exception e) {
+			final String error = "Unable to get intervention policies";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}

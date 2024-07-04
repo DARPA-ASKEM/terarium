@@ -36,6 +36,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -281,6 +282,7 @@ public class ExtractionService {
 						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
 
 						document.getAssets().add(extraction);
+						document.getFileNames().add(assetFileName);
 						notificationInterface.sendMessage(
 								String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
@@ -305,7 +307,7 @@ public class ExtractionService {
 
 				// update the document
 				document = documentService
-						.updateAsset(document, hasWritePermission)
+						.updateAsset(document, projectId, hasWritePermission)
 						.orElseThrow();
 
 				// if there is text, run variable extraction
@@ -315,7 +317,12 @@ public class ExtractionService {
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
 						document = runVariableExtraction(
-								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
+								notificationInterface,
+								projectId,
+								documentId,
+								new ArrayList<>(),
+								domain,
+								hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -340,6 +347,7 @@ public class ExtractionService {
 						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+						props.setProjectId(projectId);
 						props.setDocumentId(documentId);
 						props.setUpdateEmbeddings(true); // update the embeddings using the card
 						req.setAdditionalProperties(props);
@@ -377,6 +385,7 @@ public class ExtractionService {
 
 	private DocumentAsset runVariableExtraction(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -441,7 +450,7 @@ public class ExtractionService {
 				for (final UUID modelId : modelIds) {
 					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
 					try {
-						runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+						runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
@@ -450,7 +459,9 @@ public class ExtractionService {
 			}
 
 			// update the document
-			return documentService.updateAsset(document, hasWritePermission).orElseThrow();
+			return documentService
+					.updateAsset(document, projectId, hasWritePermission)
+					.orElseThrow();
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
 			log.error(error, e.contentUTF8(), e);
@@ -467,6 +478,7 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractVariables(
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -482,15 +494,18 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc =
-					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
+			final DocumentAsset doc = runVariableExtraction(
+					notificationInterface, projectId, documentId, modelIds, domain, hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
 	public Future<Model> alignAMR(
-			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
+			final UUID projectId,
+			final UUID documentId,
+			final UUID modelId,
+			final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
@@ -503,7 +518,7 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Model alignment task submitted...");
 
 		return executor.submit(() -> {
-			final Model model = runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+			final Model model = runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 			notificationInterface.sendFinalMessage("Alignment complete");
 			return model;
 		});
@@ -511,6 +526,7 @@ public class ExtractionService {
 
 	public Model runAlignAMR(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final UUID modelId,
 			final Schema.Permission hasWritePermission) {
@@ -564,8 +580,20 @@ public class ExtractionService {
 			// overwrite all updated fields
 			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
 
+			final Model updatedModel = objectMapper.treeToValue(modelJson, Model.class);
+
+			if (updatedModel.getMetadata() == null) {
+				updatedModel.setMetadata(new ModelMetadata());
+			}
+
+			// add document gollm card to model
+			final JsonNode card = document.getMetadata().get("gollmCard");
+			if (card != null) {
+				updatedModel.getMetadata().setGollmCard(card);
+			}
+
 			// update the model
-			modelService.updateAsset(model, hasWritePermission);
+			modelService.updateAsset(model, projectId, hasWritePermission);
 
 			// create provenance
 			final Provenance provenance = new Provenance(
@@ -577,21 +605,17 @@ public class ExtractionService {
 			provenanceService.createProvenance(provenance);
 
 			// update model embeddings
-			if (model.getPublicAsset() && !model.getTemporary()) {
+			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
 
-				final JsonNode card = document.getMetadata().get("gollmCard");
-				if (card != null) {
+				final String cardText = objectMapper.writeValueAsString(card);
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					final String cardText = objectMapper.writeValueAsString(card);
-					try {
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
+					notificationInterface.sendMessage("Embeddings created");
 
-						modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
-						notificationInterface.sendMessage("Embeddings created");
-
-					} catch (final Exception e) {
-						log.warn("Unable to generate embedding vectors for model");
-					}
+				} catch (final Exception e) {
+					log.warn("Unable to generate embedding vectors for model");
 				}
 			}
 

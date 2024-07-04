@@ -241,9 +241,11 @@ const onUpdateDistributions = () => {
 				id: paramId,
 				distribution: {
 					type: uncertaintyType.value,
+					// A way to get around the floating point precision issue is to set a fixed number of decimal places and parse as a float
+					// This will be an issue for adding uncertainty to very small numbers, but I think 8 decimal points should do
 					parameters: {
-						minimum: v - delta,
-						maximum: v + delta
+						minimum: parseFloat((v - delta).toFixed(8)),
+						maximum: parseFloat((v + delta).toFixed(8))
 					}
 				}
 			};

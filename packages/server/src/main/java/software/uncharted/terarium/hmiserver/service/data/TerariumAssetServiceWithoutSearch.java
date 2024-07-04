@@ -56,6 +56,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	/** The configuration for the application */
 	protected final Config config;
 
+	protected final ProjectService projectService;
 	protected final ProjectAssetService projectAssetService;
 
 	/** The repository for the asset this service manages */
@@ -117,7 +118,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id, final Schema.Permission hasWritePermission) throws IOException {
+	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		final Optional<T> asset = getAsset(id, hasWritePermission);
 		if (asset.isEmpty()) {
 			return Optional.empty();
@@ -136,10 +138,14 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset, final Schema.Permission hasWritePermission) throws IOException {
+	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
 		}
+
+		asset.setPublicAsset(projectService.isProjectPublic(projectId));
+
 		return repository.save(asset);
 	}
 
@@ -152,13 +158,18 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
+	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
 		if (existing.size() > 0) {
 			throw new IllegalArgumentException("Asset already exists for id:"
 					+ ids.stream().map(UUID::toString).toList());
 		}
+
+		final boolean projectIsPublic = projectService.isProjectPublic(projectId);
+		assets.forEach(asset -> asset.setPublicAsset(projectIsPublic));
+
 		return repository.saveAll(assets);
 	}
 
@@ -173,7 +184,7 @@ public abstract class TerariumAssetServiceWithoutSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, final Schema.Permission hasWritePermission)
+	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
 		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
@@ -186,6 +197,8 @@ public abstract class TerariumAssetServiceWithoutSearch<
 		if (asset.getTemporary() && !oldAsset.get().getTemporary()) {
 			throw new IllegalArgumentException("Cannot update a non-temporary asset to be temporary");
 		}
+
+		asset.setPublicAsset(projectService.isProjectPublic(projectId));
 
 		final T updated = repository.save(asset);
 

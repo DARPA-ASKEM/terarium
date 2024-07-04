@@ -7,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -16,7 +14,6 @@ import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -33,10 +30,6 @@ public class ParameterSemantic extends Semantic {
 
 	private boolean isDefault;
 
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<Intervention> interventions;
-
 	@ManyToOne
 	@JsonBackReference
 	@Schema(hidden = true)
@@ -50,15 +43,6 @@ public class ParameterSemantic extends Semantic {
 		clone.referenceId = this.referenceId;
 		clone.distribution = this.distribution.clone();
 		clone.isDefault = this.isDefault;
-		if (this.interventions != null) {
-			clone.interventions = new ArrayList<>();
-			for (final Intervention intervention : this.interventions) {
-				clone.interventions.add(new Intervention()
-						.setName(intervention.getName())
-						.setValue(intervention.getValue())
-						.setTimestep(intervention.getTimestep()));
-			}
-		}
 		return clone;
 	}
 }
