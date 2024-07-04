@@ -124,9 +124,13 @@ const startForecast = async (simulationIntervetions) => {
 		engine: 'ciemss'
 	};
 	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
-	if (simulationIntervetions) {
-		simulationPayload.interventions = simulationIntervetions;
-	}
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/4025
+	console.log(
+		`We now need to concat this with the policy intervention provided and make an object in TDS ${simulationIntervetions}`
+	);
+	// if (simulationIntervetions) {
+	// 	simulationPayload.interventions = simulationIntervetions;
+	// }
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
