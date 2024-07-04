@@ -107,10 +107,10 @@
 											<ul v-if="!isEmpty(intervention.staticInterventions)">
 												<li
 													v-for="staticIntervention in intervention.staticInterventions"
-													:key="staticIntervention.threshold"
+													:key="staticIntervention.timestep"
 												>
 													<p>
-														Set parameter {{ appliedTo }} to {{ staticIntervention.threshold }} at
+														Set parameter {{ appliedTo }} to {{ staticIntervention.timestep }} at
 														time step {{ staticIntervention.value }}.
 													</p>
 												</li>
@@ -301,7 +301,7 @@ const onAddIntervention = () => {
 	const intervention: Intervention = {
 		name: 'New Intervention',
 		appliedTo: parameterOptions.value[0].value,
-		staticInterventions: [{ threshold: 0, value: 0 }],
+		staticInterventions: [{ timestep: 0, value: 0 }],
 		dynamicInterventions: []
 	};
 	knobs.value.transientInterventionPolicy.interventions.push(intervention);

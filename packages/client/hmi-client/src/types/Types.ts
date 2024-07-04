@@ -773,7 +773,7 @@ export interface InterventionPolicy extends TerariumAsset {
 }
 
 export interface StaticIntervention {
-    threshold: number;
+    timestep: number;
     value: number;
 }
 

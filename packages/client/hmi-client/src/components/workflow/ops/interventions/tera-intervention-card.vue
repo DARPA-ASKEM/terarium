@@ -42,7 +42,7 @@
 					<template v-if="intervention.staticInterventions.length === 1">
 						<tera-input
 							type="number"
-							:model-value="intervention.staticInterventions[0].threshold"
+							:model-value="intervention.staticInterventions[0].timestep"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
 							placeholder="value"
 						/>
@@ -62,7 +62,7 @@
 						<div class="flex align-items-center pt-2 pb-2 gap-2">
 							<tera-input
 								type="number"
-								:model-value="i.threshold"
+								:model-value="i.timestep"
 								@update:model-value="(val) => onUpdateThreshold(val, index)"
 								placeholder="value"
 							/>
@@ -189,7 +189,7 @@ const onAppliedToParameterChange = (event: DropdownChangeEvent) => {
 const onUpdateThreshold = (value: number, index: number) => {
 	const intervention = cloneDeep(props.intervention);
 	if (interventionType.value === 'static') {
-		intervention.staticInterventions[index].threshold = value;
+		intervention.staticInterventions[index].timestep = value;
 	} else {
 		intervention.dynamicInterventions[index].threshold = value;
 	}
@@ -215,7 +215,7 @@ const onRemoveStaticIntervention = (index: number) => {
 const onAddNewStaticIntervention = () => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.staticInterventions.push({
-		threshold: 0,
+		timestep: 0,
 		value: 0
 	});
 	emit('update', intervention);
@@ -226,7 +226,7 @@ const onInterventionTypeChange = (value: string) => {
 	if (value === 'static') {
 		intervention.staticInterventions = [
 			{
-				threshold: 0,
+				timestep: 0,
 				value: 0
 			}
 		];
