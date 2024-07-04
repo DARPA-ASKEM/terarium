@@ -349,7 +349,6 @@ public class ExtractionService {
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 						props.setProjectId(projectId);
 						props.setDocumentId(documentId);
-						props.setUpdateEmbeddings(true); // update the embeddings using the card
 						req.setAdditionalProperties(props);
 
 						notificationInterface.sendMessage("Sending GoLLM model card request");

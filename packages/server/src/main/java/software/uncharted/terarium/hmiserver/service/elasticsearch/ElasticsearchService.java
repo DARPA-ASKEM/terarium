@@ -464,6 +464,7 @@ public class ElasticsearchService {
 			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
 					.index(index)
 					.id(id)
+					.doc(partial)
 					.refresh(Refresh.WaitFor)
 					.build();
 
