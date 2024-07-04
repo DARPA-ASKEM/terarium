@@ -99,15 +99,15 @@
 				to
 				<tera-input
 					type="number"
-					:model-value="intervention.dynamicInterventions[0].threshold"
-					@update:model-value="(val) => onUpdateThreshold(val, 0)"
+					:model-value="intervention.dynamicInterventions[0].value"
+					@update:model-value="(val) => onUpdateTimestep(val, 0)"
 					placeholder="value"
 				/>
 				when
 				<Dropdown
 					:model-value="intervention.dynamicInterventions[0].parameter"
 					@change="onTargetParameterChange"
-					:options="parameterOptions"
+					:options="stateOptions"
 					option-label="label"
 					option-value="value"
 				/>
@@ -122,9 +122,9 @@
 				than the threshold value
 				<tera-input
 					type="number"
-					:model-value="intervention.dynamicInterventions[0].value"
-					@update:model-value="(val) => onUpdateTimestep(val, 0)"
-					placeholder="time step"
+					:model-value="intervention.dynamicInterventions[0].threshold"
+					@update:model-value="(val) => onUpdateThreshold(val, 0)"
+					placeholder="threshold"
 				/>
 				.
 			</div>
@@ -157,6 +157,7 @@ const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
 	intervention: Intervention;
 	parameterOptions: { label: string; value: string }[];
+	stateOptions: { label: string; value: string }[];
 }>();
 
 const interventionType = computed(() => {
@@ -237,7 +238,7 @@ const onInterventionTypeChange = (value: string) => {
 			{
 				threshold: 0,
 				value: 0,
-				parameter: props.parameterOptions[0].value,
+				parameter: props.stateOptions[0].value,
 				isGreaterThan: true
 			}
 		];
