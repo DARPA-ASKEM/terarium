@@ -85,7 +85,10 @@
 							:value="`0${i}`"
 						/>
 						<label :for="`thumbnail-0${i}`">
-							<img :src="getImage(`project-thumbnails/0${i}.png`)" :alt="`Thumbnail image 0{$i}`" />
+							<img
+								:src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail"
+								:alt="`Thumbnail image 0{$i}`"
+							/>
 						</label>
 					</li>
 				</ul>
@@ -122,6 +125,7 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Types';
 import getImage from '@/assets/utils';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
 
 const props = defineProps<{
 	confirmText: string;
