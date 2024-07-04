@@ -111,8 +111,8 @@
 													:key="staticIntervention.threshold"
 												>
 													<p>
-														Set parameter {{ appliedTo }} to {{ staticIntervention.threshold }} at
-														time step {{ staticIntervention.value }}.
+														Set parameter {{ appliedTo }} to {{ staticIntervention.value }} at time
+														step {{ staticIntervention.threshold }}.
 													</p>
 												</li>
 											</ul>
