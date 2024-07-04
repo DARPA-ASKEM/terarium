@@ -51,6 +51,7 @@ import { chartActionsProxy } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
+import { createLLMSummary } from '@/services/summary-service';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -105,11 +106,22 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
-const processResult = (runId: string) => {
+const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
+
+	const prompt = `
+The following are the key attributes of a simulation/forecasting process for a ODE epidemilogy model.
+- samples: ${state.numSamples}
+- method: ${state.method}
+- timespan: ${JSON.stringify(state.currentTimespan)}
+
+Provide a summary in 100 words or less.
+	`;
+
+	const summaryResponse = await createLLMSummary(prompt);
 
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
@@ -118,7 +130,8 @@ const processResult = (runId: string) => {
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
-			method: state.method
+			method: state.method,
+			summaryId: summaryResponse?.id
 		},
 		isSelected: false
 	});
@@ -131,7 +144,7 @@ watch(
 
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
-			processResult(id);
+			await processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressSimulationId = '';

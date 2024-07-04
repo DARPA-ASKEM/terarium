@@ -1,6 +1,6 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { createLLMSummary } from '@/services/summary-service';
+// import { createLLMSummary } from '@/services/summary-service';
 
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
@@ -42,8 +42,9 @@ export const SimulateCiemssOperation: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
-	},
+	}
 
+	/*
 	createOutputSummary: async (state: SimulateCiemssOperationState) => {
 		// const response = await createSummary({
 		// 	generatedSummary: '',
@@ -67,4 +68,5 @@ Provide a summary in 100 words or less.
 	action: async (): Promise<void> => {
 		console.log('test');
 	}
+	*/
 };

@@ -347,17 +347,6 @@ async function appendOutput(
 	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
-	// Generate summary
-	const summaryCall = registry.getOperation(node.operationType)?.createOutputSummary ?? null;
-	if (summaryCall) {
-		const summaryId = await summaryCall(node.state);
-		console.log('debug 0', summaryId);
-		if (port.state) {
-			port.state.summaryId = summaryId;
-		}
-		// port.state.summaryId = uuidv4();
-	}
-
 	const uuid = uuidv4();
 	const outputPort: WorkflowOutput<any> = {
 		id: uuid,
@@ -378,8 +367,6 @@ async function appendOutput(
 
 	// Filter out temporary outputs where value is null
 	node.outputs = node.outputs.filter((d) => d.value);
-
-	console.log('debug 1 ..............................');
 
 	selectOutput(node, uuid);
 	workflowDirty = true;
