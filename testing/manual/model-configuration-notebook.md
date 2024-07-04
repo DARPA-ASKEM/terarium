@@ -8,13 +8,14 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `QA Model configuration notebook[YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. Workflow
 1. Go to the model explorer and select `SIR Model`
 2. Add the `SIR Model` to your project
-3. Create a new workflow and add the model to it
-4. Add a `Configure model` operator to the workflow and attach the model to it
+3. Create a new workflow named `Model Configuration Notebook`
+4. Add the model to it
+5. Add a `Configure model` operator to the workflow and attach the model to it
 
 ### 3. Operator setup
 1. Open the `Configure model` operator

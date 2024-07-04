@@ -159,7 +159,6 @@ public class GoLLMController {
 		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
-		props.setUpdateEmbeddings(document.getPublicAsset() && !document.getTemporary()); // update search embeddings
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;
@@ -492,7 +491,7 @@ public class GoLLMController {
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-		input.setModelCards(modelCards);
+		input.setCards(modelCards);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
