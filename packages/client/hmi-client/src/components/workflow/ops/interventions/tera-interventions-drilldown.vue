@@ -289,7 +289,15 @@ const fetchInterventionPolicies = async (modelId: string) => {
 };
 
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
-	knobs.value.transientInterventionPolicy.interventions[index] = cloneDeep(intervention);
+	// Clone the entire interventions array
+	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
+
+	// Replace the intervention at the specified index with a deep clone of the updated intervention
+	updatedInterventions[index] = cloneDeep(intervention);
+
+	// Reassign the updated interventions array back to the transientInterventionPolicy
+	// This ensures that we're not modifying the original array in place
+	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
 };
 
 const onSelection = (id: string) => {
@@ -312,14 +320,21 @@ const onAddIntervention = () => {
 		name: 'New Intervention',
 		appliedTo: parameterOptions.value[0].value,
 		type: InterventionSemanticType.Parameter,
-		staticInterventions: [{ threshold: Number.NaN, value: Number.NaN }],
+		staticInterventions: [{ threshold: 0, value: 0 }],
 		dynamicInterventions: []
 	};
 	knobs.value.transientInterventionPolicy.interventions.push(intervention);
 };
 
 const onDeleteIntervention = (index: number) => {
-	knobs.value.transientInterventionPolicy.interventions.splice(index, 1);
+	// Create a new array excluding the intervention at the specified index
+	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
+		(_, i) => i !== index
+	);
+
+	// Reassign the updated interventions array back to the transientInterventionPolicy
+	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
+	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
 };
 
 const onChangeName = async (name: string) => {

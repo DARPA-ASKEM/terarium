@@ -226,8 +226,8 @@ const onRemoveStaticIntervention = (index: number) => {
 const onAddNewStaticIntervention = () => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.staticInterventions.push({
-		threshold: Number.NaN,
-		value: Number.NaN
+		threshold: 0,
+		value: 0
 	});
 	emit('update', intervention);
 };
@@ -237,8 +237,8 @@ const onInterventionTypeChange = (value: string) => {
 	if (value === 'static') {
 		intervention.staticInterventions = [
 			{
-				threshold: Number.NaN,
-				value: Number.NaN
+				threshold: 0,
+				value: 0
 			}
 		];
 		intervention.dynamicInterventions = [];
@@ -246,8 +246,8 @@ const onInterventionTypeChange = (value: string) => {
 		intervention.staticInterventions = [];
 		intervention.dynamicInterventions = [
 			{
-				threshold: Number.NaN,
-				value: Number.NaN,
+				threshold: 0,
+				value: 0,
 				parameter: props.stateOptions[0].value,
 				isGreaterThan: true
 			}
