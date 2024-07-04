@@ -28,7 +28,8 @@ export const CalibrationOperationCiemss: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'datasetId', label: 'Dataset' },
+		{ type: 'policyId', label: 'Interventions', acceptMultiple: false, isOptional: true }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,

@@ -687,7 +687,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: string;
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
