@@ -6,7 +6,7 @@ function getImage(fileName: string) {
 		});
 		const moduleKeys = Object.keys(modules);
 		const fileSrc = moduleKeys.find((key) => key.endsWith(fileName));
-		return fileSrc ? (modules[fileSrc] as string) : '';
+		return fileSrc ? (modules[fileSrc] as string) : null;
 	} catch (err) {
 		console.debug('getImage', err);
 		return null;
