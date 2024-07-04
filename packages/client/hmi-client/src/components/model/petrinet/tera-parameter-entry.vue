@@ -5,7 +5,7 @@
 				<strong>{{ parameterId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="units">
-					<label class="ml-2">Units</label>
+					<label class="ml-2">Unit</label>
 					<span class="ml-1">{{ units }}</span>
 				</template>
 
