@@ -42,10 +42,7 @@
 				</div>
 			</header>
 			<div class="img">
-				<img
-					:src="`src/assets/images/project-thumbnails/${project.thumbnail ?? 'default'}.png`"
-					alt="Artistic representation of the Project statistics"
-				/>
+				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
@@ -100,6 +97,7 @@ import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
@@ -127,6 +125,22 @@ const stats = computed(() => {
 		workflows: parseInt(metadata['workflows-count'] ?? '0', 10)
 	};
 });
+
+const thumbnail = computed(() => getImage(`${props.project?.thumbnail ?? 'default'}.png`));
+function getImage(fileName: string): string {
+	try {
+		const modules = import.meta.glob('@/assets/images/**/*.{png,svg}', {
+			eager: true,
+			import: 'default'
+		});
+		const moduleKeys = Object.keys(modules);
+		const fileSrc = moduleKeys.find((key) => key.endsWith(fileName));
+		return fileSrc ? (modules[fileSrc] as string) : '';
+	} catch (err) {
+		console.debug('getImage', err);
+		return DefaultThumbnail;
+	}
+}
 </script>
 
 <style scoped>
