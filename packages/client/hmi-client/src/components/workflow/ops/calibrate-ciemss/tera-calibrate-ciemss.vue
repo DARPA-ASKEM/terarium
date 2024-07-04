@@ -327,7 +327,7 @@ const runCalibrate = async () => {
 		engine: 'ciemss'
 	};
 
-	if (policyInterventions.value) {
+	if (policyInterventions.value?.[0]) {
 		calibrationRequest.policyInterventionId = policyInterventions.value[0];
 	}
 

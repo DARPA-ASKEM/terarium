@@ -316,10 +316,10 @@ const makeForecastRequest = async () => {
 		engine: 'ciemss'
 	};
 
-	if (inferredParameters.value) {
+	if (inferredParameters.value?.[0]) {
 		payload.extra.inferred_parameters = inferredParameters.value[0];
 	}
-	if (policyInterventions.value) {
+	if (policyInterventions.value?.[0]) {
 		payload.policyInterventionId = policyInterventions.value[0];
 	}
 
