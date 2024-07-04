@@ -5,156 +5,158 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
-			<template #header-controls-right>
-				<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
-				<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-			</template>
-			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<!-- Model weights -->
-				<AccordionTab header="Model weights">
-					<p class="subheader">
-						How do you want to distribute weights of the attached models? You can distribute them
-						equally or set custom weights using the input boxes.
-					</p>
-					<div class="model-weights">
-						<table class="p-datatable-table">
-							<tbody class="p-datatable-tbody">
-								<!-- Index matching listModelLabels and ensembleConfigs-->
-								<tr v-for="(id, i) in listModelLabels" :key="i">
-									<td>
-										{{ id }}
+		<section :tabName="Tabs.Wizard" class="ml-3 mr-2 pt-3">
+			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<Accordion :multiple="true" :active-index="[0, 1, 2]">
+					<!-- Model weights -->
+					<AccordionTab header="Model weights">
+						<p class="subheader">
+							How do you want to distribute weights of the attached models? You can distribute them
+							equally or set custom weights using the input boxes.
+						</p>
+						<div class="model-weights">
+							<table class="p-datatable-table">
+								<tbody class="p-datatable-tbody">
+									<!-- Index matching listModelLabels and ensembleConfigs-->
+									<tr v-for="(id, i) in listModelLabels" :key="i">
+										<td>
+											{{ id }}
+										</td>
+										<td>
+											<tera-input type="decimal" v-model="ensembleConfigs[i].weight" />
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<Button
+							label="Set weights to be equal"
+							class="p-button-sm p-button-outlined mt-2"
+							outlined
+							severity="secondary"
+							@click="calculateEvenWeights()"
+						/>
+					</AccordionTab>
+
+					<!-- Mapping -->
+					<AccordionTab header="Mapping">
+						<p class="subheader">Map the variables from the models to the ensemble variables.</p>
+						<template v-if="ensembleConfigs.length > 0">
+							<table class="w-full mb-2">
+								<tr>
+									<th>Ensemble variables</th>
+									<th v-for="(element, i) in listModelLabels" :key="i">
+										{{ element }}
+									</th>
+								</tr>
+
+								<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
+									<td>{{ key }}</td>
+									<td v-for="config in ensembleConfigs" :key="config.id">
+										<Dropdown
+											class="w-full"
+											:options="allModelOptions[config.id]"
+											v-model="config.solutionMappings[key]"
+											placeholder="Select a variable"
+										/>
 									</td>
 									<td>
-										<tera-input type="decimal" v-model="ensembleConfigs[i].weight" />
+										<Button
+											class="p-button-sm"
+											icon="pi pi-times"
+											rounded
+											text
+											@click="deleteMapping(key)"
+										/>
 									</td>
 								</tr>
-							</tbody>
-						</table>
-					</div>
-					<Button
-						label="Set weights to be equal"
-						class="p-button-sm p-button-outlined mt-2"
-						outlined
-						severity="secondary"
-						@click="calculateEvenWeights()"
-					/>
-				</AccordionTab>
-
-				<!-- Mapping -->
-				<AccordionTab header="Mapping">
-					<p class="subheader">Map the variables from the models to the ensemble variables.</p>
-					<template v-if="ensembleConfigs.length > 0">
-						<table class="w-full mb-2">
-							<tr>
-								<th>Ensemble variables</th>
-								<th v-for="(element, i) in listModelLabels" :key="i">
-									{{ element }}
-								</th>
-							</tr>
-
-							<tr v-for="key in Object.keys(ensembleConfigs[0].solutionMappings)" :key="key">
-								<td>{{ key }}</td>
-								<td v-for="config in ensembleConfigs" :key="config.id">
-									<Dropdown
-										class="w-full"
-										:options="allModelOptions[config.id]"
-										v-model="config.solutionMappings[key]"
-										placeholder="Select a variable"
-									/>
-								</td>
-								<td>
-									<Button
-										class="p-button-sm"
-										icon="pi pi-times"
-										rounded
-										text
-										@click="deleteMapping(key)"
-									/>
-								</td>
-							</tr>
-						</table>
-					</template>
-					<section class="add-mapping">
-						<Button
-							v-if="!showAddMappingInput"
-							outlined
-							:style="{ marginRight: 'auto' }"
-							label="Add mapping"
-							size="small"
-							severity="secondary"
-							icon="pi pi-plus"
-							@click="
-								newSolutionMappingKey = '';
-								showAddMappingInput = true;
-							"
-						/>
-						<div v-if="showAddMappingInput" class="flex items-center">
-							<InputText
-								v-model="newSolutionMappingKey"
-								v-focus
-								class="w-full"
-								placeholder="Add a name"
-								@keypress.enter="
-									addMapping();
-									showAddMappingInput = false;
-								"
-							/>
+							</table>
+						</template>
+						<section class="add-mapping">
 							<Button
-								class="p-button-sm p-button-outlined w-2 ml-2"
+								v-if="!showAddMappingInput"
+								outlined
+								:style="{ marginRight: 'auto' }"
+								label="Add mapping"
+								size="small"
 								severity="secondary"
-								icon="pi pi-times"
-								label="Cancel"
+								icon="pi pi-plus"
 								@click="
 									newSolutionMappingKey = '';
-									showAddMappingInput = false;
+									showAddMappingInput = true;
 								"
 							/>
-							<Button
-								:disabled="!newSolutionMappingKey"
-								class="p-button-sm p-button-outlined w-2 ml-2"
-								icon="pi pi-check"
-								label="Add"
-								@click="
-									addMapping();
-									showAddMappingInput = false;
-								"
-							/>
-						</div>
-					</section>
-				</AccordionTab>
+							<div v-if="showAddMappingInput" class="flex items-center">
+								<InputText
+									v-model="newSolutionMappingKey"
+									v-focus
+									class="w-full"
+									placeholder="Add a name"
+									@keypress.enter="
+										addMapping();
+										showAddMappingInput = false;
+									"
+								/>
+								<Button
+									class="p-button-sm p-button-outlined w-2 ml-2"
+									severity="secondary"
+									icon="pi pi-times"
+									label="Cancel"
+									@click="
+										newSolutionMappingKey = '';
+										showAddMappingInput = false;
+									"
+								/>
+								<Button
+									:disabled="!newSolutionMappingKey"
+									class="p-button-sm p-button-outlined w-2 ml-2"
+									icon="pi pi-check"
+									label="Add"
+									@click="
+										addMapping();
+										showAddMappingInput = false;
+									"
+								/>
+							</div>
+						</section>
+					</AccordionTab>
 
-				<!-- Time span -->
-				<AccordionTab header="Time span">
-					<p class="subheader">
-						Set the time span and number of samples for the ensemble simulation.
-					</p>
-					<table class="w-full">
-						<thead class="p-datatable-thead">
-							<th>Units</th>
-							<th>Start Step</th>
-							<th>End Step</th>
-							<th>Number of Samples</th>
-						</thead>
-						<tbody class="p-datatable-tbody">
-							<td class="w-2">Steps</td>
-							<td>
-								<InputNumber class="w-full" v-model="timeSpan.start" />
-							</td>
-							<td>
-								<InputNumber class="w-full" v-model="timeSpan.end" />
-							</td>
-							<td>
-								<InputNumber class="w-full" v-model="numSamples" />
-							</td>
-						</tbody>
-					</table>
-				</AccordionTab>
-			</Accordion>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="Tabs.Notebook">
+					<!-- Time span -->
+					<AccordionTab header="Time span">
+						<p class="subheader">
+							Set the time span and number of samples for the ensemble simulation.
+						</p>
+						<table class="w-full">
+							<thead class="p-datatable-thead">
+								<th>Units</th>
+								<th>Start Step</th>
+								<th>End Step</th>
+								<th>Number of Samples</th>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<td class="w-2">Steps</td>
+								<td>
+									<InputNumber class="w-full" v-model="timeSpan.start" />
+								</td>
+								<td>
+									<InputNumber class="w-full" v-model="timeSpan.end" />
+								</td>
+								<td>
+									<InputNumber class="w-full" v-model="numSamples" />
+								</td>
+							</tbody>
+						</table>
+					</AccordionTab>
+				</Accordion>
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="Tabs.Notebook">
 			<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
-		</tera-drilldown-section>
+		</section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"

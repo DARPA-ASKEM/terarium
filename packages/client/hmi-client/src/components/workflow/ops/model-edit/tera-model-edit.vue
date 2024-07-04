@@ -11,7 +11,7 @@
 		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		v-bind="$attrs"
 	>
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+		<div :tabName="DrilldownTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr"
 				:model="amr"
@@ -21,42 +21,44 @@
 				@save-new-model-output="createOutput"
 				@reset="resetModel"
 			/>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<div class="toolbar">
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button
-								label="Reset"
-								outlined
-								severity="secondary"
-								size="small"
-								@click="resetModel"
-							/>
-							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
-						</template>
-					</tera-notebook-jupyter-input>
-				</Suspense>
-				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
-			</div>
-			<v-ace-editor
-				v-model:value="codeText"
-				@init="initializeAceEditor"
-				lang="python"
-				theme="chrome"
-				style="flex-grow: 1; width: 100%"
-				class="ace-editor"
-				:options="{ showPrintMargin: false }"
-			/>
-		</tera-drilldown-section>
+		</div>
+		<div :tabName="DrilldownTabs.Notebook">
+			<tera-drilldown-section class="notebook-section">
+				<div class="toolbar">
+					<Suspense>
+						<tera-notebook-jupyter-input
+							:kernel-manager="kernelManager"
+							:default-options="sampleAgentQuestions"
+							:context-language="contextLanguage"
+							@llm-output="(data: any) => appendCode(data, 'code')"
+							@llm-thought-output="(data: any) => llmThoughts.push(data)"
+							@question-asked="updateLlmQuery"
+						>
+							<template #toolbar-right-side>
+								<Button
+									label="Reset"
+									outlined
+									severity="secondary"
+									size="small"
+									@click="resetModel"
+								/>
+								<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+							</template>
+						</tera-notebook-jupyter-input>
+					</Suspense>
+					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+				</div>
+				<v-ace-editor
+					v-model:value="codeText"
+					@init="initializeAceEditor"
+					lang="python"
+					theme="chrome"
+					style="flex-grow: 1; width: 100%"
+					class="ace-editor"
+					:options="{ showPrintMargin: false }"
+				/>
+			</tera-drilldown-section>
+		</div>
 		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
 			<tera-drilldown-preview
 				title="Preview"

@@ -6,64 +6,66 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<template #header-controls-left>
-				<h5>Set simulation parameters</h5>
-			</template>
-			<template #header-controls-right>
-				<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-				<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-			</template>
-			<div class="form-section">
-				<!-- Start & End -->
-				<div class="input-row">
-					<div class="label-and-input">
-						<label for="2">Start time</label>
-						<InputNumber
-							id="2"
-							v-model="timespan.start"
-							inputId="integeronly"
-							@update:model-value="updateState"
-						/>
+		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<tera-drilldown-section>
+				<template #header-controls-left>
+					<h5>Set simulation parameters</h5>
+				</template>
+				<template #header-controls-right>
+					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<div class="form-section">
+					<!-- Start & End -->
+					<div class="input-row">
+						<div class="label-and-input">
+							<label for="2">Start time</label>
+							<InputNumber
+								id="2"
+								v-model="timespan.start"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label for="3">End time</label>
+							<InputNumber
+								id="3"
+								v-model="timespan.end"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
 					</div>
-					<div class="label-and-input">
-						<label for="3">End time</label>
-						<InputNumber
-							id="3"
-							v-model="timespan.end"
-							inputId="integeronly"
-							@update:model-value="updateState"
-						/>
-					</div>
-				</div>
 
-				<!-- Number of Samples & Method -->
-				<div class="input-row mt-3">
-					<div class="label-and-input">
-						<label for="4">Number of samples</label>
-						<InputNumber
-							id="4"
-							v-model="numSamples"
-							inputId="integeronly"
-							:min="1"
-							@update:model-value="updateState"
-						/>
+					<!-- Number of Samples & Method -->
+					<div class="input-row mt-3">
+						<div class="label-and-input">
+							<label for="4">Number of samples</label>
+							<InputNumber
+								id="4"
+								v-model="numSamples"
+								inputId="integeronly"
+								:min="1"
+								@update:model-value="updateState"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label for="5">Method</label>
+							<Dropdown
+								id="5"
+								v-model="method"
+								:options="ciemssMethodOptions"
+								@update:model-value="updateState"
+							/>
+						</div>
 					</div>
-					<div class="label-and-input">
-						<label for="5">Method</label>
-						<Dropdown
-							id="5"
-							v-model="method"
-							:options="ciemssMethodOptions"
-							@update:model-value="updateState"
-						/>
+					<div v-if="inferredParameters">
+						Using inferred parameters from calibration: {{ inferredParameters[0] }}
 					</div>
 				</div>
-				<div v-if="inferredParameters">
-					Using inferred parameters from calibration: {{ inferredParameters[0] }}
-				</div>
-			</div>
-		</tera-drilldown-section>
+			</tera-drilldown-section>
+		</section>
 		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input

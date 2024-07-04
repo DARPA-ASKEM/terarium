@@ -6,129 +6,131 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section :tabName="CalibrateEnsembleTabs.Wizard" class="ml-3 mr-2 pt-3">
-			<template #header-controls-right>
-				<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runEnsemble" />
-				<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-			</template>
-			<Accordion :multiple="true" :active-index="[0, 1, 2]">
-				<AccordionTab header="Model weights">
-					<div class="model-weights">
-						<!-- Turn this into a horizontal bar chart -->
-						<section>
-							<table class="p-datatable-table">
-								<thead class="p-datatable-thead">
-									<th>Model config ID</th>
-									<th>Weight</th>
-								</thead>
-								<tbody class="p-datatable-tbody">
-									<!-- Index matching listModelLabels and ensembleConfigs-->
-									<tr v-for="(id, i) in listModelLabels" :key="i">
-										<td>
-											{{ id }}
-										</td>
-										<td>
-											<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
-										</td>
-									</tr>
-								</tbody>
-							</table>
-							<Button
-								label="Set weights to be equal"
-								class="p-button-sm p-button-outlined ml-2 mt-2"
-								outlined
-								severity="secondary"
-								@click="calculateEvenWeights()"
-							/>
-						</section>
-					</div>
-				</AccordionTab>
-				<AccordionTab header="Mapping">
-					<label> Dataset timestamp column </label>
-					<Dropdown
-						v-model="knobs.timestampColName"
-						:options="datasetColumnNames"
-						placeholder="Timestamp column"
-						class="ml-2"
-					/>
-					<template v-if="knobs.ensembleConfigs.length > 0">
-						<table class="w-full mt-3">
-							<tr>
-								<th class="w-4">Ensemble variables</th>
-								<!-- Index matching listModelLabels and ensembleConfigs-->
-								<th v-for="(element, i) in listModelLabels" :key="i">
-									{{ element }}
-								</th>
-							</tr>
-							<tr>
-								<div class="row-header">
-									<td
-										v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
-										:key="i"
-									>
-										{{ element }}
-									</td>
-								</div>
-								<td v-for="i in knobs.ensembleConfigs.length" :key="i">
-									<template
-										v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
-										:key="element"
-									>
-										<Dropdown
-											v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
-											:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
-											class="w-full mb-2 mt-2"
-										/>
-									</template>
-								</td>
-							</tr>
-						</table>
-					</template>
-					<Dropdown
-						class="mr-2"
-						v-model="newSolutionMappingKey"
-						:options="datasetColumnNames"
-						placeholder="Variable name"
-					/>
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add mapping"
-						@click="addMapping"
-					/>
-				</AccordionTab>
-				<AccordionTab header="Additional fields">
-					<table>
-						<thead class="p-datatable-thead">
-							<th>Units</th>
-							<th>Number of particles</th>
-							<th>Number of iterations</th>
-							<th>Solver method</th>
-						</thead>
-						<tbody class="p-datatable-tbody">
-							<td>Steps</td>
-							<td>
-								<InputNumber v-model="knobs.extra.numParticles" />
-							</td>
-							<td>
-								<InputNumber v-model="knobs.extra.numIterations" />
-							</td>
-							<td>
-								<Dropdown
-									class="p-inputtext-sm"
-									:options="['dopri5', 'euler']"
-									v-model="knobs.extra.solverMethod"
-									placeholder="Select"
+		<section :tabName="CalibrateEnsembleTabs.Wizard">
+			<tera-drilldown-section class="ml-3 mr-2 pt-3">
+				<template #header-controls-right>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runEnsemble" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<Accordion :multiple="true" :active-index="[0, 1, 2]">
+					<AccordionTab header="Model weights">
+						<div class="model-weights">
+							<!-- Turn this into a horizontal bar chart -->
+							<section>
+								<table class="p-datatable-table">
+									<thead class="p-datatable-thead">
+										<th>Model config ID</th>
+										<th>Weight</th>
+									</thead>
+									<tbody class="p-datatable-tbody">
+										<!-- Index matching listModelLabels and ensembleConfigs-->
+										<tr v-for="(id, i) in listModelLabels" :key="i">
+											<td>
+												{{ id }}
+											</td>
+											<td>
+												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								<Button
+									label="Set weights to be equal"
+									class="p-button-sm p-button-outlined ml-2 mt-2"
+									outlined
+									severity="secondary"
+									@click="calculateEvenWeights()"
 								/>
-							</td>
-						</tbody>
-					</table>
-				</AccordionTab>
-			</Accordion>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="CalibrateEnsembleTabs.Notebook">
+							</section>
+						</div>
+					</AccordionTab>
+					<AccordionTab header="Mapping">
+						<label> Dataset timestamp column </label>
+						<Dropdown
+							v-model="knobs.timestampColName"
+							:options="datasetColumnNames"
+							placeholder="Timestamp column"
+							class="ml-2"
+						/>
+						<template v-if="knobs.ensembleConfigs.length > 0">
+							<table class="w-full mt-3">
+								<tr>
+									<th class="w-4">Ensemble variables</th>
+									<!-- Index matching listModelLabels and ensembleConfigs-->
+									<th v-for="(element, i) in listModelLabels" :key="i">
+										{{ element }}
+									</th>
+								</tr>
+								<tr>
+									<div class="row-header">
+										<td
+											v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
+											:key="i"
+										>
+											{{ element }}
+										</td>
+									</div>
+									<td v-for="i in knobs.ensembleConfigs.length" :key="i">
+										<template
+											v-for="element in Object.keys(knobs.ensembleConfigs[i - 1].solutionMappings)"
+											:key="element"
+										>
+											<Dropdown
+												v-model="knobs.ensembleConfigs[i - 1].solutionMappings[element]"
+												:options="allModelOptions[i - 1]?.map((ele) => ele.referenceId ?? ele.id)"
+												class="w-full mb-2 mt-2"
+											/>
+										</template>
+									</td>
+								</tr>
+							</table>
+						</template>
+						<Dropdown
+							class="mr-2"
+							v-model="newSolutionMappingKey"
+							:options="datasetColumnNames"
+							placeholder="Variable name"
+						/>
+						<Button
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-plus"
+							label="Add mapping"
+							@click="addMapping"
+						/>
+					</AccordionTab>
+					<AccordionTab header="Additional fields">
+						<table>
+							<thead class="p-datatable-thead">
+								<th>Units</th>
+								<th>Number of particles</th>
+								<th>Number of iterations</th>
+								<th>Solver method</th>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<td>Steps</td>
+								<td>
+									<InputNumber v-model="knobs.extra.numParticles" />
+								</td>
+								<td>
+									<InputNumber v-model="knobs.extra.numIterations" />
+								</td>
+								<td>
+									<Dropdown
+										class="p-inputtext-sm"
+										:options="['dopri5', 'euler']"
+										v-model="knobs.extra.solverMethod"
+										placeholder="Select"
+									/>
+								</td>
+							</tbody>
+						</table>
+					</AccordionTab>
+				</Accordion>
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="CalibrateEnsembleTabs.Notebook">
 			<h4>Notebook</h4>
-		</tera-drilldown-section>
+		</section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Calibrate ensemble"

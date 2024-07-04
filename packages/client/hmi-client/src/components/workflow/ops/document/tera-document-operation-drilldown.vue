@@ -4,7 +4,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-columnar-panel>
+		<div>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
@@ -71,7 +71,7 @@
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
-		</tera-columnar-panel>
+		</div>
 	</tera-drilldown>
 </template>
 
@@ -97,7 +97,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 
 import { DocumentOperationState } from './document-operation';
 

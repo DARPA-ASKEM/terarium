@@ -4,13 +4,13 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section>
+		<section>
 			<tera-code
 				:asset-id="node.state?.codeAssetId ?? ''"
 				is-preview
 				@apply-changes="onApplyChanges"
 			/>
-		</tera-drilldown-section>
+		</section>
 	</tera-drilldown>
 </template>
 
@@ -21,7 +21,6 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { cloneDeep } from 'lodash';
 import type { Code } from '@/types/Types';
 import { getCodeBlocks } from '@/utils/code-asset';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 
 import { CodeAssetState } from './code-asset-operation';
 

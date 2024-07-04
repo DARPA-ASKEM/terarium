@@ -6,148 +6,150 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<template #header-controls-left>
-				<label class="center-label"
-					>The model configuration will be optimized with the following settings</label
-				>
-			</template>
-			<template #header-controls-right>
-				<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
-				<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-			</template>
-			<div class="form-section">
-				<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
-				<tera-optimize-constraint-group-form
-					v-for="(cfg, index) in node.state.constraintGroups"
-					:key="selectedOutputId + ':' + index"
-					:index="index"
-					:constraint="cfg"
-					:model-state-and-obs-options="modelStateAndObsOptions"
-					@update-self="(config) => updateConstraintGroupForm(index, config)"
-					@delete-self="() => deleteConstraintGroupForm(index)"
-				/>
-				<div>
-					<Button
-						icon="pi pi-plus"
-						class="p-button-sm p-button-text"
-						label="Add more constraints"
-						@click="addConstraintGroupForm"
+		<section :tabName="OptimizeTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<tera-drilldown-section>
+				<template #header-controls-left>
+					<label class="center-label"
+						>The model configuration will be optimized with the following settings</label
+					>
+				</template>
+				<template #header-controls-right>
+					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<div class="form-section">
+					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
+					<tera-optimize-constraint-group-form
+						v-for="(cfg, index) in node.state.constraintGroups"
+						:key="selectedOutputId + ':' + index"
+						:index="index"
+						:constraint="cfg"
+						:model-state-and-obs-options="modelStateAndObsOptions"
+						@update-self="(config) => updateConstraintGroupForm(index, config)"
+						@delete-self="() => deleteConstraintGroupForm(index)"
 					/>
-				</div>
-			</div>
-			<div class="form-section">
-				<h5>
-					Intervention policy
-					<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
-				</h5>
-				<div>
-					<label>Intervention Type</label>
-					<Dropdown
-						class="p-inputtext-sm"
-						:options="[
-							{ label: 'parameter value', value: InterventionTypes.paramValue },
-							{ label: 'start time', value: InterventionTypes.startTime }
-						]"
-						option-label="label"
-						option-value="value"
-						v-model="knobs.interventionType"
-						placeholder="Select"
-					/>
-				</div>
-				<tera-intervention-policy-group-form
-					v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
-					:key="idx"
-					:config="cfg"
-					:intervention-type="props.node.state.interventionType"
-					:parameter-options="modelParameterOptions.map((ele) => ele.id)"
-					@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-					@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
-				/>
-				<div>
-					<Button
-						icon="pi pi-plus"
-						class="p-button-sm p-button-text"
-						label="Add more interventions"
-						@click="addInterventionPolicyGroupForm"
-					/>
-				</div>
-			</div>
-			<div class="form-section">
-				<h5>
-					Optimization settings
-					<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
-				</h5>
-				<div class="input-row">
-					<div class="label-and-input">
-						<label>Start time</label>
-						<tera-input disabled type="number" model-value="0" />
-					</div>
-					<div class="label-and-input">
-						<label>End time</label>
-						<tera-input type="number" v-model="knobs.endTime" />
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more constraints"
+							@click="addConstraintGroupForm"
+						/>
 					</div>
 				</div>
-				<div>
-					<Button
-						v-if="!showAdditionalOptions"
-						class="p-button-sm p-button-text"
-						label="Show additional options"
-						@click="toggleAdditonalOptions"
+				<div class="form-section">
+					<h5>
+						Intervention policy
+						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
+					</h5>
+					<div>
+						<label>Intervention Type</label>
+						<Dropdown
+							class="p-inputtext-sm"
+							:options="[
+								{ label: 'parameter value', value: InterventionTypes.paramValue },
+								{ label: 'start time', value: InterventionTypes.startTime }
+							]"
+							option-label="label"
+							option-value="value"
+							v-model="knobs.interventionType"
+							placeholder="Select"
+						/>
+					</div>
+					<tera-intervention-policy-group-form
+						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
+						:key="idx"
+						:config="cfg"
+						:intervention-type="props.node.state.interventionType"
+						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
+						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
-					<Button
-						v-if="showAdditionalOptions"
-						class="p-button-sm p-button-text"
-						label="Hide additional options"
-						@click="toggleAdditonalOptions"
-					/>
+					<div>
+						<Button
+							icon="pi pi-plus"
+							class="p-button-sm p-button-text"
+							label="Add more interventions"
+							@click="addInterventionPolicyGroupForm"
+						/>
+					</div>
 				</div>
-				<div v-if="showAdditionalOptions">
+				<div class="form-section">
+					<h5>
+						Optimization settings
+						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
 					<div class="input-row">
 						<div class="label-and-input">
-							<label>Number of samples to simulate model</label>
-							<div>
-								<tera-input type="number" v-model="knobs.numSamples" />
+							<label>Start time</label>
+							<tera-input disabled type="number" model-value="0" />
+						</div>
+						<div class="label-and-input">
+							<label>End time</label>
+							<tera-input type="number" v-model="knobs.endTime" />
+						</div>
+					</div>
+					<div>
+						<Button
+							v-if="!showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Show additional options"
+							@click="toggleAdditonalOptions"
+						/>
+						<Button
+							v-if="showAdditionalOptions"
+							class="p-button-sm p-button-text"
+							label="Hide additional options"
+							@click="toggleAdditonalOptions"
+						/>
+					</div>
+					<div v-if="showAdditionalOptions">
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Number of samples to simulate model</label>
+								<div>
+									<tera-input type="number" v-model="knobs.numSamples" />
+								</div>
+							</div>
+							<div class="label-and-input">
+								<label>Solver method</label>
+								<Dropdown
+									class="p-inputtext-sm"
+									disabled
+									:options="['dopri5', 'euler']"
+									v-model="knobs.solverMethod"
+									placeholder="Select"
+								/>
 							</div>
 						</div>
-						<div class="label-and-input">
-							<label>Solver method</label>
-							<Dropdown
-								class="p-inputtext-sm"
-								disabled
-								:options="['dopri5', 'euler']"
-								v-model="knobs.solverMethod"
-								placeholder="Select"
-							/>
+						<div class="input-row">
+							<h3>Optimizer options</h3>
 						</div>
-					</div>
-					<div class="input-row">
-						<h3>Optimizer options</h3>
-					</div>
-					<div class="input-row">
-						<div class="label-and-input">
-							<label>Algorithm</label>
-							<tera-input disabled model-value="basinhopping" />
-						</div>
-						<div class="label-and-input">
-							<label>Minimizer method</label>
-							<tera-input disabled model-value="COBYLA" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxiter</label>
-							<tera-input v-model="knobs.maxiter" />
-						</div>
-						<div class="label-and-input">
-							<label>Maxfeval</label>
-							<tera-input v-model="knobs.maxfeval" />
+						<div class="input-row">
+							<div class="label-and-input">
+								<label>Algorithm</label>
+								<tera-input disabled model-value="basinhopping" />
+							</div>
+							<div class="label-and-input">
+								<label>Minimizer method</label>
+								<tera-input disabled model-value="COBYLA" />
+							</div>
+							<div class="label-and-input">
+								<label>Maxiter</label>
+								<tera-input v-model="knobs.maxiter" />
+							</div>
+							<div class="label-and-input">
+								<label>Maxfeval</label>
+								<tera-input v-model="knobs.maxfeval" />
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
-		</tera-drilldown-section>
+		</section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"

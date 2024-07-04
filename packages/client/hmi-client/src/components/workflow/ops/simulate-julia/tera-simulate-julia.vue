@@ -6,45 +6,47 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<tera-drilldown-section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<template #header-controls-right>
-				<Button
-					:style="{ marginRight: 'auto' }"
-					label="Run"
-					icon="pi pi-play"
-					@click="run"
-					:disabled="showSpinner"
-				/>
-			</template>
-			<div class="form-section">
-				<h4>Set simulation parameters</h4>
-				<div class="input-row">
-					<div class="label-and-input">
-						<label for="2">Start time</label>
-						<InputNumber
-							id="2"
-							class="p-inputtext-sm"
-							v-model="timespan.start"
-							inputId="integeronly"
-							@update:model-value="updateState"
-						/>
-					</div>
-					<div class="label-and-input">
-						<label for="3">End time</label>
-						<InputNumber
-							id="3"
-							class="p-inputtext-sm"
-							v-model="timespan.end"
-							inputId="integeronly"
-							@update:model-value="updateState"
-						/>
+		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:style="{ marginRight: 'auto' }"
+						label="Run"
+						icon="pi pi-play"
+						@click="run"
+						:disabled="showSpinner"
+					/>
+				</template>
+				<div class="form-section">
+					<h4>Set simulation parameters</h4>
+					<div class="input-row">
+						<div class="label-and-input">
+							<label for="2">Start time</label>
+							<InputNumber
+								id="2"
+								class="p-inputtext-sm"
+								v-model="timespan.start"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
+						<div class="label-and-input">
+							<label for="3">End time</label>
+							<InputNumber
+								id="3"
+								class="p-inputtext-sm"
+								v-model="timespan.end"
+								inputId="integeronly"
+								@update:model-value="updateState"
+							/>
+						</div>
 					</div>
 				</div>
-			</div>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
+			</tera-drilldown-section>
+		</section>
+		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
-		</tera-drilldown-section>
+		</section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"

@@ -6,95 +6,96 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
-			<template #header-controls-right>
-				<Button
-					class="mr-auto mb-2"
-					@click="run"
-					:label="isSubsetLoading ? 'Processing' : 'Run'"
-					:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
-					:disabled="isSubsetLoading"
-				/>
-			</template>
-			<!-- Geo boundaries -->
-			<h5>Select geo-boundaries</h5>
-			<p class="subheader">
-				Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
-				skipping to retain every nth data point for a coarser subset.
-			</p>
+		<div :tabName="SubsetDataTabs.Wizard" class="ml-4 mr-2 pt-3">
+			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						class="mr-auto mb-2"
+						@click="run"
+						:label="isSubsetLoading ? 'Processing' : 'Run'"
+						:icon="isSubsetLoading ? 'pi pi-spinner pi-spin' : 'pi pi-play'"
+						:disabled="isSubsetLoading"
+					/>
+				</template>
+				<!-- Geo boundaries -->
+				<h5>Select geo-boundaries</h5>
+				<p class="subheader">
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
+					skipping to retain every nth data point for a coarser subset.
+				</p>
 
-			<!-- Preview image -->
-			<img v-if="preview" :src="preview" alt="Preview" />
-			<div v-else class="map-container">
-				<div class="geo-box" :style="geoBoxStyle"></div>
-				<p>No preview available</p>
-			</div>
-
-			<!-- Lat/Long inputs & range sliders -->
-			<span>
-				<label>Latitude</label>
-				<InputNumber v-model="latitudeStart" placeholder="Start" />
-				<Slider v-model="latitudeRange" range class="w-full" :min="-90" :max="90" :step="0.001" />
-				<InputNumber v-model="latitudeEnd" placeholder="End" />
-			</span>
-			<span>
-				<label>Longitude</label>
-				<InputNumber v-model="longitudeStart" placeholder="Start" />
-				<Slider
-					v-model="longitudeRange"
-					range
-					class="w-full"
-					:min="-180"
-					:max="180"
-					:step="0.001"
-				/>
-				<InputNumber v-model="longitudeEnd" placeholder="End" />
-			</span>
-			<code>
-				selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}', '{{
-					longitudeEnd
-				}}'])
-			</code>
-			<div class="flex flex-row align-items-center">
-				<span>
-					<Checkbox v-model="isSpatialSkipping" binary />
-					<label>Spatial skipping</label>
-				</span>
-
-				<span class="ml-3">
-					<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
-					<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
-				</span>
-			</div>
-
-			<!-- Temporal slice -->
-			<h5 class="mt-3">Select temporal slice</h5>
-			<p class="subheader">
-				Set your desired time range to define the temporal boundaries. Apply time skipping to retain
-				every nth time slice for a coarser subset.
-			</p>
-			<div class="flex flex-row">
-				<div class="col">
-					<label class="float-label">From</label>
-					<Calender v-model="fromDate" showIcon showTime hourFormat="24" />
+				<!-- Preview image -->
+				<img v-if="preview" :src="preview" alt="Preview" />
+				<div v-else class="map-container">
+					<div class="geo-box" :style="geoBoxStyle"></div>
+					<p>No preview available</p>
 				</div>
-				<div class="col">
-					<label class="float-label">To</label>
-					<Calender v-model="toDate" showIcon showTime hourFormat="24" />
-				</div>
-			</div>
-			<div class="flex flex-row align-items-center">
+
+				<!-- Lat/Long inputs & range sliders -->
 				<span>
-					<Checkbox v-model="isTimeSkipping" binary />
-					<label>Time skipping</label>
+					<label>Latitude</label>
+					<InputNumber v-model="latitudeStart" placeholder="Start" />
+					<Slider v-model="latitudeRange" range class="w-full" :min="-90" :max="90" :step="0.001" />
+					<InputNumber v-model="latitudeEnd" placeholder="End" />
 				</span>
-				<span class="ml-3">
-					<p :class="!isTimeSkipping ? 'disabled' : ''">Keep every nth time slice</p>
-					<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+				<span>
+					<label>Longitude</label>
+					<InputNumber v-model="longitudeStart" placeholder="Start" />
+					<Slider
+						v-model="longitudeRange"
+						range
+						class="w-full"
+						:min="-180"
+						:max="180"
+						:step="0.001"
+					/>
+					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
-			</div>
-		</tera-drilldown-section>
-		<tera-drilldown-section :tabName="SubsetDataTabs.Notebook"></tera-drilldown-section>
+				<code>
+					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
+					'{{ longitudeEnd }}'])
+				</code>
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isSpatialSkipping" binary />
+						<label>Spatial skipping</label>
+					</span>
+
+					<span class="ml-3">
+						<p :class="!isSpatialSkipping ? 'disabled' : ''">Keep every nth datapoint</p>
+						<InputNumber v-model="spatialSkipping" :disabled="!isSpatialSkipping" />
+					</span>
+				</div>
+
+				<!-- Temporal slice -->
+				<h5 class="mt-3">Select temporal slice</h5>
+				<p class="subheader">
+					Set your desired time range to define the temporal boundaries. Apply time skipping to
+					retain every nth time slice for a coarser subset.
+				</p>
+				<div class="flex flex-row">
+					<div class="col">
+						<label class="float-label">From</label>
+						<Calender v-model="fromDate" showIcon showTime hourFormat="24" />
+					</div>
+					<div class="col">
+						<label class="float-label">To</label>
+						<Calender v-model="toDate" showIcon showTime hourFormat="24" />
+					</div>
+				</div>
+				<div class="flex flex-row align-items-center">
+					<span>
+						<Checkbox v-model="isTimeSkipping" binary />
+						<label>Time skipping</label>
+					</span>
+					<span class="ml-3">
+						<p :class="!isTimeSkipping ? 'disabled' : ''">Keep every nth time slice</p>
+						<InputNumber v-model="timeSkipping" :disabled="!isTimeSkipping" />
+					</span>
+				</div>
+			</tera-drilldown-section>
+		</div>
+		<div :tabName="SubsetDataTabs.Notebook"></div>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Output"
