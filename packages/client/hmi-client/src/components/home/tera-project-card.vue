@@ -98,6 +98,7 @@ import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
 import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
+import getImage from '@/assets/utils';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
@@ -126,21 +127,10 @@ const stats = computed(() => {
 	};
 });
 
-const thumbnail = computed(() => getImage(`${props.project?.thumbnail ?? 'default'}.png`));
-function getImage(fileName: string): string {
-	try {
-		const modules = import.meta.glob('@/assets/images/**/*.{png,svg}', {
-			eager: true,
-			import: 'default'
-		});
-		const moduleKeys = Object.keys(modules);
-		const fileSrc = moduleKeys.find((key) => key.endsWith(fileName));
-		return fileSrc ? (modules[fileSrc] as string) : '';
-	} catch (err) {
-		console.debug('getImage', err);
-		return DefaultThumbnail;
-	}
-}
+const thumbnail = computed(
+	() =>
+		getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
+);
 </script>
 
 <style scoped>
