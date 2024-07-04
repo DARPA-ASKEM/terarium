@@ -16,7 +16,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 2. Upload test model
 
 1. Click `Upload resources`.
-2. Drag and drop `Configured SIR.json` file over the text "Drop resources here".
+2. Drag and drop [`Configured SIR.json`](https://drive.google.com/file/d/1a8y5IqGqZEZpQVivj6dlbNlRhkwesGvi/view?usp=drive_link) file over the text "Drop resources here".
 3. Click `Upload` and wait for the file upload to finish.
 4. Repeat with the [`data-1.csv`](https://drive.google.com/file/d/1o6pSraJdVK8XY13Mj3RvV9th-DbULsEX/view?usp=drive_link) file.
 5. A model named "Configured SIR" and a dataset named "data-1" should appear in the "Resources" panel.
