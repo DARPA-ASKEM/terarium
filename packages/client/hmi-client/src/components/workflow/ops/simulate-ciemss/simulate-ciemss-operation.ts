@@ -1,6 +1,5 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-// import { createLLMSummary } from '@/services/summary-service';
 
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
@@ -43,30 +42,4 @@ export const SimulateCiemssOperation: Operation = {
 		};
 		return init;
 	}
-
-	/*
-	createOutputSummary: async (state: SimulateCiemssOperationState) => {
-		// const response = await createSummary({
-		// 	generatedSummary: '',
-		// 	humanSummary: 'testing'
-		// });
-
-		const prompt = `
-The following are the key attributes of a simulation/forecasting process for a ODE epidemilogy model.
-- samples: ${state.numSamples}
-- method: ${state.method}
-- timespan: ${JSON.stringify(state.currentTimespan)}
-
-Provide a summary in 100 words or less.
-    `;
-		const response = await createLLMSummary(prompt);
-		return response?.id;
-	},
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
-	}
-	*/
 };

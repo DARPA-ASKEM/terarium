@@ -331,7 +331,7 @@ function appendInputPort(
  * output as selected, and revert the selection status of
  * existing outputs
  * */
-async function appendOutput(
+function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: {
 		type: string;

@@ -69,12 +69,6 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
-
-	// Returns an id of the created summary
-	createOutputSummary?: (state: any) => Promise<string>;
-
-	// @deprecated
-	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -97,11 +91,6 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 	state?: Partial<S>;
 	timestamp?: Date;
 	summaryId?: string;
-
-	// @deprecated
-	summary?: string;
-	// @deprecated
-	summaryHasBeenEdited?: boolean;
 }
 
 // Common state properties for all operators
