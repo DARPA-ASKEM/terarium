@@ -160,8 +160,7 @@ public abstract class TerariumAssetServiceWithSearch<
 
 		final Optional<T> deleted = super.deleteAsset(id, projectId, hasWritePermission);
 
-		if (deleted.isPresent() && !deleted.get().getTemporary()
-				|| deleted.get().getPublicAsset()) {
+		if (deleted.isPresent()) {
 			elasticService.delete(getAssetAlias(), id.toString());
 		}
 

@@ -42,7 +42,6 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	public static class Properties {
 		UUID projectId;
 		UUID documentId;
-		boolean updateEmbeddings = false;
 	}
 
 	@Override

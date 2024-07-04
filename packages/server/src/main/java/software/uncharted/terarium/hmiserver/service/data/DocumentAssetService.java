@@ -102,14 +102,19 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				// update embeddings
 				final JsonNode card = updated.getMetadata().get("gollmCard");
 				final String cardText = objectMapper.writeValueAsString(card);
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+				new Thread(() -> {
+							try {
+								final TerariumAssetEmbeddings embeddings =
+										embeddingService.generateEmbeddings(cardText);
 
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for document {}", updated.getId(), e);
-				}
+								// Execute the update request
+								uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+							} catch (final Exception e) {
+								log.error("Failed to update embeddings for document {}", updated.getId(), e);
+							}
+						})
+						.start();
 			}
 		}
 		return updatedOptional;

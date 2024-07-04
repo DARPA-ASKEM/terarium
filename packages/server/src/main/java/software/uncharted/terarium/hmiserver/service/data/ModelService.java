@@ -127,18 +127,26 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
-			try {
-				String text;
-				if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
-					text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
-				} else {
-					text = objectMapper.writeValueAsString(created);
-				}
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-				uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-			} catch (final Exception e) {
-				log.warn("Unable to generate embeddings for model " + created.getId(), e);
+
+			String text;
+			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
+				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
+			} else {
+				text = objectMapper.writeValueAsString(created);
 			}
+
+			new Thread(() -> {
+						try {
+							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+
+							// Execute the update request
+							uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
+						} catch (final Exception e) {
+							log.error("Failed to update embeddings for document {}", created.getId(), e);
+						}
+					})
+					.start();
+			;
 		}
 
 		return created;
@@ -158,18 +166,26 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Model updated = updatedOptional.get();
 
 		if (updated.getPublicAsset() && !updated.getTemporary()) {
-			try {
-				String text;
-				if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
-					text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
-				} else {
-					text = objectMapper.writeValueAsString(updated);
-				}
-				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-				uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-			} catch (final Exception e) {
-				log.warn("Unable to update embeddings for model " + updated.getId(), e);
+
+			String text;
+			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
+				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
+			} else {
+				text = objectMapper.writeValueAsString(updated);
 			}
+
+			new Thread(() -> {
+						try {
+							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+
+							// Execute the update request
+							uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+						} catch (final Exception e) {
+							log.error("Failed to update embeddings for document {}", updated.getId(), e);
+						}
+					})
+					.start();
+			;
 		}
 
 		return updatedOptional;
