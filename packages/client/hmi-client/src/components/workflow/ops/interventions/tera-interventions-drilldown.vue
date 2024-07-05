@@ -318,7 +318,7 @@ const onAddIntervention = () => {
 	// by default add the first parameter with a static intervention
 	const intervention: Intervention = {
 		name: 'New Intervention',
-		appliedTo: parameterOptions.value[0].value,
+		appliedTo: '',
 		type: InterventionSemanticType.Parameter,
 		staticInterventions: [{ threshold: Number.NaN, value: Number.NaN }],
 		dynamicInterventions: []

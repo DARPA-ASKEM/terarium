@@ -43,6 +43,7 @@
 					:options="semanticOptions"
 					option-label="label"
 					option-value="value"
+					placeholder="Select"
 				/>
 				<span>to<span v-if="intervention.staticInterventions.length > 1">...</span></span>
 				<template v-if="interventionType === 'static'">
@@ -107,6 +108,7 @@
 						:options="stateOptions"
 						option-label="label"
 						option-value="value"
+						placeholder="Select a trigger"
 					/>
 					is
 					<Dropdown
@@ -181,8 +183,8 @@ const interventionType = computed(() => {
 });
 
 const comparisonOperations = [
-	{ label: 'greater', value: true },
-	{ label: 'less', value: false }
+	{ label: 'increases to above', value: true },
+	{ label: 'falls to below', value: false }
 ];
 
 const onUpdateName = (name: string) => {
@@ -248,7 +250,7 @@ const onInterventionTypeChange = (value: string) => {
 			{
 				threshold: Number.NaN,
 				value: Number.NaN,
-				parameter: props.stateOptions[0].value,
+				parameter: '',
 				isGreaterThan: true
 			}
 		];
@@ -273,9 +275,9 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.type = event.value;
 	if (event.value === InterventionSemanticType.Variable) {
-		intervention.appliedTo = props.stateOptions[0].value;
+		intervention.appliedTo = '';
 	} else {
-		intervention.appliedTo = props.parameterOptions[0].value;
+		intervention.appliedTo = '';
 	}
 	emit('update', intervention);
 };
