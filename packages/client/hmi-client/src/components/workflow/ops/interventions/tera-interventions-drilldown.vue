@@ -48,6 +48,7 @@
 						<tera-intervention-card
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
+							:stateOptions="stateOptions"
 							@update="onUpdateInterventionCard($event, index)"
 							@delete="onDeleteIntervention(index)"
 						/>
@@ -110,21 +111,22 @@
 													:key="staticIntervention.threshold"
 												>
 													<p>
-														Set parameter {{ appliedTo }} to {{ staticIntervention.threshold }} at
-														time step {{ staticIntervention.value }}.
+														Set {{ intervention.type }} {{ appliedTo }} to
+														{{ staticIntervention.value }} at time step
+														{{ staticIntervention.threshold }}.
 													</p>
 												</li>
 											</ul>
 											<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
-												Set parameter {{ appliedTo }} to
-												{{ intervention.dynamicInterventions[0].threshold }} when the
-												{{ intervention.dynamicInterventions[0].parameter }} is
+												Set {{ intervention.type }} {{ appliedTo }} to
+												{{ intervention.dynamicInterventions[0].value }} when the
+												{{ intervention.dynamicInterventions[0].parameter }}
 												{{
 													intervention.dynamicInterventions[0].isGreaterThan
-														? 'greater than'
-														: 'less than'
+														? 'increases to above'
+														: 'decreases to below'
 												}}
-												the threshold value {{ intervention.dynamicInterventions[0].value }}.
+												{{ intervention.dynamicInterventions[0].threshold }}.
 											</p>
 										</li>
 									</ul>
@@ -152,11 +154,11 @@ import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, Model } from '@/types/Types';
+import { Intervention, InterventionPolicy, InterventionSemanticType, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import { getParameters } from '@/model-representation/service';
+import { getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import {
 	createInterventionPolicy,
@@ -221,6 +223,14 @@ const parameterOptions = computed(() => {
 	}));
 });
 
+const stateOptions = computed(() => {
+	if (!model.value) return [];
+	return getStates(model.value).map((state) => ({
+		label: state.name ?? state.id,
+		value: state.id
+	}));
+});
+
 const groupedOutputParameters = computed(() =>
 	groupBy(selectedPolicy.value?.interventions, 'appliedTo')
 );
@@ -279,7 +289,15 @@ const fetchInterventionPolicies = async (modelId: string) => {
 };
 
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
-	knobs.value.transientInterventionPolicy.interventions[index] = cloneDeep(intervention);
+	// Clone the entire interventions array
+	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
+
+	// Replace the intervention at the specified index with a deep clone of the updated intervention
+	updatedInterventions[index] = cloneDeep(intervention);
+
+	// Reassign the updated interventions array back to the transientInterventionPolicy
+	// This ensures that we're not modifying the original array in place
+	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
 };
 
 const onSelection = (id: string) => {
@@ -300,15 +318,23 @@ const onAddIntervention = () => {
 	// by default add the first parameter with a static intervention
 	const intervention: Intervention = {
 		name: 'New Intervention',
-		appliedTo: parameterOptions.value[0].value,
-		staticInterventions: [{ threshold: 0, value: 0 }],
+		appliedTo: '',
+		type: InterventionSemanticType.Parameter,
+		staticInterventions: [{ threshold: Number.NaN, value: Number.NaN }],
 		dynamicInterventions: []
 	};
 	knobs.value.transientInterventionPolicy.interventions.push(intervention);
 };
 
 const onDeleteIntervention = (index: number) => {
-	knobs.value.transientInterventionPolicy.interventions.splice(index, 1);
+	// Create a new array excluding the intervention at the specified index
+	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
+		(_, i) => i !== index
+	);
+
+	// Reassign the updated interventions array back to the transientInterventionPolicy
+	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
+	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
 };
 
 const onChangeName = async (name: string) => {
