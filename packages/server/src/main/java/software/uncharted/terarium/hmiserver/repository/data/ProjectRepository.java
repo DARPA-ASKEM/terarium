@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAndAssetAggregate;
@@ -50,4 +51,7 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 			+ " p.id in (:ids) "
 			+ " and p.deletedOn is null")
 	List<ProjectAndAssetAggregate> findByIdsWithAssets(final List<UUID> ids);
+
+	@Query(value = "SELECT public_asset FROM project WHERE id = :id", nativeQuery = true)
+	Optional<Boolean> findPublicAssetByIdNative(@Param("id") UUID id);
 }

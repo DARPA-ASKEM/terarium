@@ -131,6 +131,14 @@ public class ProjectService {
 		return true;
 	}
 
+	public boolean isProjectPublic(final UUID id) {
+		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
+		if (isPublic.isEmpty()) {
+			return false;
+		}
+		return isPublic.get();
+	}
+
 	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
 			throws ResponseStatusException {
 		try {

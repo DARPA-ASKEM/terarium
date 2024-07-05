@@ -3,12 +3,13 @@
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
+				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
 				@onFocusOut="emit('on-focus-out')"
-				:style="{ 'text-align': textAlign }"
+				:style="inputStyle"
 				@blur="unmask"
 				:type="getType"
 				:placeholder="placeholder"
@@ -20,7 +21,7 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
+import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
 	modelValue: string | number | undefined;
@@ -29,6 +30,7 @@ const props = defineProps<{
 	disabled?: boolean;
 	type?: InputTypeHTMLAttribute | 'nist';
 	placeholder?: string;
+	autoWidth?: boolean;
 }>();
 
 const emit = defineEmits(['update:model-value', 'on-focus-out']);
@@ -37,13 +39,31 @@ const error = ref('');
 const maskedValue = ref('');
 
 const isNistType = props.type === 'nist';
-const textAlign = props.type === 'number' || isNistType ? 'right' : 'left';
 const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
 const focusInput = () => {
 	inputField.value?.focus();
 };
+
+// Computed property to dynamically adjust the input's style based on the autoWidth prop
+const inputStyle = computed(() => {
+	const style: CSSProperties = {
+		'text-align': props.type === 'number' || props.type === 'nist' ? 'right' : 'left' // Set textAlign based on type
+	};
+
+	if (props.autoWidth) {
+		const textToMeasure = maskedValue.value?.length > 0 ? maskedValue.value : props.placeholder;
+		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
+		// Use the length of the text to measure as the width in ch units
+		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.
+		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
+		style.width = `${width}px`; // Dynamically set the width
+		style['min-width'] = '20px'; // Ensure a minimum width
+	}
+
+	return style; // Return the combined style object
+});
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 

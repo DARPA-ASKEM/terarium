@@ -15,7 +15,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
@@ -33,9 +35,17 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getSimulationIndex());
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -65,7 +75,8 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		final Simulation tempSim = new Simulation();
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
-		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, ASSUME_WRITE_PERMISSION);
+		final Simulation simulationAsset =
+				simulationAssetService.createAsset(tempSim, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -81,7 +92,8 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
 
-		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, ASSUME_WRITE_PERMISSION);
+		final Simulation simulationAsset =
+				simulationAssetService.createAsset(tempSim, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
 						.param("project-id", PROJECT_ID.toString())

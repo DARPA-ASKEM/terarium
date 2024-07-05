@@ -96,7 +96,7 @@ public class SimulationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Simulation sim = simulationService.createAsset(simulation, permission);
+			final Simulation sim = simulationService.createAsset(simulation, projectId, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -212,7 +212,7 @@ public class SimulationController {
 
 		try {
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(simulation, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -243,7 +243,7 @@ public class SimulationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			simulationService.deleteAsset(id, permission);
+			simulationService.deleteAsset(id, projectId, permission);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -328,7 +328,7 @@ public class SimulationController {
 
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
+			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
 			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
@@ -343,7 +343,7 @@ public class SimulationController {
 
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset, permission);
+			datasetService.updateAsset(dataset, projectId, permission);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);

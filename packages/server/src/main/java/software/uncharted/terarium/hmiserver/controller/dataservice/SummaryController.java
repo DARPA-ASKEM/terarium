@@ -147,7 +147,8 @@ public class SummaryController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, permission));
+			return ResponseEntity.status(HttpStatus.CREATED)
+					.body(summaryService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create summary";
 			log.error(error, e);
@@ -183,7 +184,7 @@ public class SummaryController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			summary.setId(id);
-			final Optional<Summary> updated = summaryService.updateAsset(summary, permission);
+			final Optional<Summary> updated = summaryService.updateAsset(summary, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
@@ -224,7 +225,7 @@ public class SummaryController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			summaryService.deleteAsset(id, permission);
+			summaryService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Summary", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete summary %s", id);
