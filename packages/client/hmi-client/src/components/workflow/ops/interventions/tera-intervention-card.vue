@@ -59,7 +59,7 @@
 							type="nist"
 							:model-value="intervention.staticInterventions[0].threshold"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
-							placeholder="time step"
+							placeholder="timepoint value"
 						/>
 						.
 					</template>
@@ -78,7 +78,7 @@
 									type="nist"
 									:model-value="i.threshold"
 									@update:model-value="(val) => onUpdateThreshold(val, index)"
-									placeholder="time step"
+									placeholder="timepoint value"
 								/>
 								.
 								<Button
@@ -110,7 +110,6 @@
 						option-value="value"
 						placeholder="Select a trigger"
 					/>
-					is
 					<Dropdown
 						:model-value="intervention.dynamicInterventions[0].isGreaterThan"
 						@change="onComparisonOperatorChange"
@@ -118,7 +117,6 @@
 						option-label="label"
 						option-value="value"
 					/>
-					than the threshold value
 					<tera-input
 						type="nist"
 						:model-value="intervention.dynamicInterventions[0].threshold"

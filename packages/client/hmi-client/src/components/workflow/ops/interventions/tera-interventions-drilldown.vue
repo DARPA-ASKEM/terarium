@@ -120,13 +120,13 @@
 											<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
 												Set {{ intervention.type }} {{ appliedTo }} to
 												{{ intervention.dynamicInterventions[0].value }} when the
-												{{ intervention.dynamicInterventions[0].parameter }} is
+												{{ intervention.dynamicInterventions[0].parameter }}
 												{{
 													intervention.dynamicInterventions[0].isGreaterThan
-														? 'greater than'
-														: 'less than'
+														? 'increases to above'
+														: 'falls to below'
 												}}
-												the threshold value {{ intervention.dynamicInterventions[0].threshold }}.
+												{{ intervention.dynamicInterventions[0].threshold }}.
 											</p>
 										</li>
 									</ul>
