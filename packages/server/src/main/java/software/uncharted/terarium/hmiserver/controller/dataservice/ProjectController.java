@@ -217,7 +217,8 @@ public class ProjectController {
 			List<Contributor> contributors = null;
 			try {
 				contributors = projectPermissionsService.getContributors(rebacProject);
-				project.getMetadata().put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
+				project.getMetadata()
+						.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
 			} catch (final Exception e) {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
 			}
@@ -239,7 +240,6 @@ public class ProjectController {
 
 		return ResponseEntity.ok(projects);
 	}
-
 
 	/**
 	 * Gets the project by id
@@ -1137,5 +1137,4 @@ public class ProjectController {
 					HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project user permission relationships");
 		}
 	}
-
 }

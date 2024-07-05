@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,11 +20,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @Service
@@ -42,8 +41,8 @@ public class ProjectPermissionsService {
 			final Schema.Relationship relationship = permissionRelationship.getRelationship();
 			// Ensure the relationship is capable of editing the project
 			if (relationship.equals(Schema.Relationship.CREATOR)
-				|| relationship.equals(Schema.Relationship.ADMIN)
-				|| relationship.equals(Schema.Relationship.WRITER)) {
+					|| relationship.equals(Schema.Relationship.ADMIN)
+					|| relationship.equals(Schema.Relationship.WRITER)) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
 					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
 					final String name = user.getFirstName() + " " + user.getLastName();
@@ -64,7 +63,7 @@ public class ProjectPermissionsService {
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public ResponseEntity<JsonNode> setProjectPermissions(
-		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
@@ -75,8 +74,8 @@ public class ProjectPermissionsService {
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public ResponseEntity<JsonNode> updateProjectPermissions(
-		final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
-		throws Exception {
+			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
+			throws Exception {
 		try {
 			what.removePermissionRelationships(who, oldRelationship);
 			what.setPermissionRelationships(who, newRelationship);
@@ -88,7 +87,7 @@ public class ProjectPermissionsService {
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
 	public ResponseEntity<JsonNode> removeProjectPermissions(
-		final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
 			return ResponseEntity.ok().build();
