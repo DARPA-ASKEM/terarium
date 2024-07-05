@@ -57,7 +57,11 @@ public class EmbeddingService {
 		req.setType(TaskType.GOLLM);
 		req.setInput(embeddingRequest);
 		req.setScript("gollm_task:embedding");
-		req.setUserId(currentUserService.get().getId());
+		try {
+			req.setUserId(currentUserService.get().getId());
+		} catch (Exception e) {
+			log.warn("No user id to associate with embedding request");
+		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 

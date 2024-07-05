@@ -763,6 +763,7 @@ export interface DynamicIntervention {
 export interface Intervention {
     name: string;
     appliedTo: string;
+    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -1408,6 +1409,11 @@ export enum SimulationType {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum InterventionSemanticType {
+    Variable = "variable",
+    Parameter = "parameter",
 }
 
 export enum ExtractionAssetType {
