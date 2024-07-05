@@ -48,14 +48,14 @@
 				<template v-if="interventionType === 'static'">
 					<template v-if="intervention.staticInterventions.length === 1">
 						<tera-input
-							type="number"
+							type="nist"
 							:model-value="intervention.staticInterventions[0].value"
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
 						starting at
 						<tera-input
-							type="number"
+							type="nist"
 							:model-value="intervention.staticInterventions[0].threshold"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
 							placeholder="time step"
@@ -67,14 +67,14 @@
 						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								<tera-input
-									type="number"
+									type="nist"
 									:model-value="i.value"
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
 								starting at
 								<tera-input
-									type="number"
+									type="nist"
 									:model-value="i.threshold"
 									@update:model-value="(val) => onUpdateThreshold(val, index)"
 									placeholder="time step"
@@ -95,7 +95,7 @@
 				<!-- Dynamic -->
 				<template v-else>
 					<tera-input
-						type="number"
+						type="nist"
 						:model-value="intervention.dynamicInterventions[0].value"
 						@update:model-value="(val) => onUpdateValue(val, 0)"
 						placeholder="value"
@@ -118,7 +118,7 @@
 					/>
 					than the threshold value
 					<tera-input
-						type="number"
+						type="nist"
 						:model-value="intervention.dynamicInterventions[0].threshold"
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
 						placeholder="threshold"
@@ -226,8 +226,8 @@ const onRemoveStaticIntervention = (index: number) => {
 const onAddNewStaticIntervention = () => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.staticInterventions.push({
-		threshold: 0,
-		value: 0
+		threshold: Number.NaN,
+		value: Number.NaN
 	});
 	emit('update', intervention);
 };
@@ -237,8 +237,8 @@ const onInterventionTypeChange = (value: string) => {
 	if (value === 'static') {
 		intervention.staticInterventions = [
 			{
-				threshold: 0,
-				value: 0
+				threshold: Number.NaN,
+				value: Number.NaN
 			}
 		];
 		intervention.dynamicInterventions = [];
@@ -246,8 +246,8 @@ const onInterventionTypeChange = (value: string) => {
 		intervention.staticInterventions = [];
 		intervention.dynamicInterventions = [
 			{
-				threshold: 0,
-				value: 0,
+				threshold: Number.NaN,
+				value: Number.NaN,
 				parameter: props.stateOptions[0].value,
 				isGreaterThan: true
 			}

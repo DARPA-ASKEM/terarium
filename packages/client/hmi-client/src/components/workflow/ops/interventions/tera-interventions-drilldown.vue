@@ -320,7 +320,7 @@ const onAddIntervention = () => {
 		name: 'New Intervention',
 		appliedTo: parameterOptions.value[0].value,
 		type: InterventionSemanticType.Parameter,
-		staticInterventions: [{ threshold: 0, value: 0 }],
+		staticInterventions: [{ threshold: Number.NaN, value: Number.NaN }],
 		dynamicInterventions: []
 	};
 	knobs.value.transientInterventionPolicy.interventions.push(intervention);
