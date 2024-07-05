@@ -169,7 +169,6 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -344,7 +343,7 @@ function appendOutput(
 ) {
 	if (!node) return;
 
-	// we assume that if we can produce an output, the status is okay
+	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
@@ -360,7 +359,6 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
-	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -371,28 +369,6 @@ function appendOutput(
 
 	selectOutput(node, uuid);
 	workflowDirty = true;
-}
-
-function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
-	if (!registry.getOperation(node.operationType)?.createNotebook) return;
-	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
-}
-
-async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
-	if (!node) return;
-	const result = await workflowService.generateSummary(
-		node,
-		outputPort,
-		registry.getOperation(node.operationType)?.createNotebook ?? null
-	);
-	if (!result) return;
-	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
-	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
-	if (!updateNode || !updateOutput) return;
-	updateOutput.summary = result.summary;
-	updateOutput.label = result.title;
-	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {

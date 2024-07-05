@@ -69,8 +69,6 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
-
-	createNotebook?: (state: any, value: WorkflowPort['value']) => Promise<any>;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -90,15 +88,14 @@ export interface WorkflowPort {
 export interface WorkflowOutput<S> extends WorkflowPort {
 	isSelected?: boolean;
 	operatorStatus?: OperatorStatus;
-	summary?: string;
-	summaryHasBeenEdited?: boolean;
 	state?: Partial<S>;
 	timestamp?: Date;
 }
 
 // Common state properties for all operators
 export interface BaseState {
-	annotation?: string;
+	annotation?: string; // @deprecated
+	summaryId?: string;
 }
 
 // Node definition in the workflow
