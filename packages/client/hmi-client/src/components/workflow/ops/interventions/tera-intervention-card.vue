@@ -28,105 +28,109 @@
 		</header>
 		<section>
 			<!-- Static -->
-			<template v-if="interventionType === 'static'">
-				<div class="flex align-items-center flex-wrap gap-2">
-					Set Parameter
-					<Dropdown
-						:model-value="intervention.appliedTo"
-						@change="onAppliedToParameterChange"
-						:options="parameterOptions"
-						option-label="label"
-						option-value="value"
-					/>
-					<span>to<span v-if="intervention.staticInterventions.length > 1">...</span></span>
+			<div class="flex align-items-center flex-wrap gap-2">
+				Set
+				<Dropdown
+					:model-value="intervention.type"
+					@change="onSemanticChange"
+					:options="interventionSemanticOptions"
+					option-label="label"
+					option-value="value"
+				/>
+				<Dropdown
+					:model-value="intervention.appliedTo"
+					@change="onAppliedToParameterChange"
+					:options="semanticOptions"
+					option-label="label"
+					option-value="value"
+					placeholder="Select"
+				/>
+				<span>to<span v-if="intervention.staticInterventions.length > 1">...</span></span>
+				<template v-if="interventionType === 'static'">
 					<template v-if="intervention.staticInterventions.length === 1">
 						<tera-input
-							type="number"
-							:model-value="intervention.staticInterventions[0].threshold"
-							@update:model-value="(val) => onUpdateThreshold(val, 0)"
+							type="nist"
+							auto-width
+							:model-value="intervention.staticInterventions[0].value"
+							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
 						starting at
 						<tera-input
-							type="number"
-							:model-value="intervention.staticInterventions[0].value"
-							@update:model-value="(val) => onUpdateTimestep(val, 0)"
-							placeholder="time step"
+							type="nist"
+							auto-width
+							:model-value="intervention.staticInterventions[0].threshold"
+							@update:model-value="(val) => onUpdateThreshold(val, 0)"
+							placeholder="timestep"
 						/>
 						.
 					</template>
-				</div>
 
-				<ul v-if="intervention.staticInterventions.length > 1">
-					<li v-for="(i, index) in intervention.staticInterventions" :key="index">
-						<div class="flex align-items-center pt-2 pb-2 gap-2">
-							<tera-input
-								type="number"
-								:model-value="i.threshold"
-								@update:model-value="(val) => onUpdateThreshold(val, index)"
-								placeholder="value"
-							/>
-							starting at
-							<tera-input
-								type="number"
-								:model-value="i.value"
-								@update:model-value="(val) => onUpdateTimestep(val, index)"
-								placeholder="time step"
-							/>
-							.
-							<Button
-								class="ml-auto"
-								icon="pi pi-times"
-								text
-								@click="onRemoveStaticIntervention(index)"
-							/>
-						</div>
-						<Divider />
-					</li>
-				</ul>
-			</template>
+					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
+						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
+							<div class="flex align-items-center pt-2 pb-2 gap-2">
+								<tera-input
+									type="nist"
+									auto-width
+									:model-value="i.value"
+									@update:model-value="(val) => onUpdateValue(val, index)"
+									placeholder="value"
+								/>
+								starting at
+								<tera-input
+									type="nist"
+									auto-width
+									:model-value="i.threshold"
+									@update:model-value="(val) => onUpdateThreshold(val, index)"
+									placeholder="timestep"
+								/>
+								.
+								<Button
+									class="ml-auto"
+									icon="pi pi-times"
+									text
+									@click="onRemoveStaticIntervention(index)"
+								/>
+							</div>
+							<Divider />
+						</li>
+					</ul>
+				</template>
 
-			<!-- Dynamic -->
-			<div v-else class="flex align-items-center flex-wrap gap-2">
-				Set Parameter
-				<Dropdown
-					:model-value="intervention.appliedTo"
-					@change="onAppliedToParameterChange"
-					:options="parameterOptions"
-					option-label="label"
-					option-value="value"
-				/>
-				to
-				<tera-input
-					type="number"
-					:model-value="intervention.dynamicInterventions[0].threshold"
-					@update:model-value="(val) => onUpdateThreshold(val, 0)"
-					placeholder="value"
-				/>
-				when
-				<Dropdown
-					:model-value="intervention.dynamicInterventions[0].parameter"
-					@change="onTargetParameterChange"
-					:options="parameterOptions"
-					option-label="label"
-					option-value="value"
-				/>
-				is
-				<Dropdown
-					:model-value="intervention.dynamicInterventions[0].isGreaterThan"
-					@change="onComparisonOperatorChange"
-					:options="comparisonOperations"
-					option-label="label"
-					option-value="value"
-				/>
-				than the threshold value
-				<tera-input
-					type="number"
-					:model-value="intervention.dynamicInterventions[0].value"
-					@update:model-value="(val) => onUpdateTimestep(val, 0)"
-					placeholder="time step"
-				/>
-				.
+				<!-- Dynamic -->
+				<template v-else>
+					<tera-input
+						type="nist"
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].value"
+						@update:model-value="(val) => onUpdateValue(val, 0)"
+						placeholder="value"
+					/>
+					when
+					<Dropdown
+						:model-value="intervention.dynamicInterventions[0].parameter"
+						@change="onTargetParameterChange"
+						:options="stateOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select a trigger"
+					/>
+					<Dropdown
+						:model-value="intervention.dynamicInterventions[0].isGreaterThan"
+						@change="onComparisonOperatorChange"
+						:options="comparisonOperations"
+						option-label="label"
+						option-value="value"
+					/>
+					<tera-input
+						type="nist"
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].threshold"
+						@update:model-value="(val) => onUpdateThreshold(val, 0)"
+						placeholder="threshold"
+					/>
+					.
+				</template>
 			</div>
 		</section>
 		<footer>
@@ -147,7 +151,7 @@ import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
-import { Intervention } from '@/types/Types';
+import { Intervention, InterventionSemanticType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { cloneDeep, uniqueId } from 'lodash';
@@ -157,7 +161,20 @@ const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
 	intervention: Intervention;
 	parameterOptions: { label: string; value: string }[];
+	stateOptions: { label: string; value: string }[];
 }>();
+
+const interventionSemanticOptions = [
+	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
+	{ label: 'Variable', value: InterventionSemanticType.Variable }
+];
+
+const semanticOptions = computed(() => {
+	if (props.intervention.type === InterventionSemanticType.Variable) {
+		return props.stateOptions;
+	}
+	return props.parameterOptions;
+});
 
 const interventionType = computed(() => {
 	if (props.intervention.staticInterventions.length > 0) {
@@ -170,8 +187,8 @@ const interventionType = computed(() => {
 });
 
 const comparisonOperations = [
-	{ label: 'greater', value: true },
-	{ label: 'less', value: false }
+	{ label: 'increases to above', value: true },
+	{ label: 'decreases to below', value: false }
 ];
 
 const onUpdateName = (name: string) => {
@@ -196,7 +213,7 @@ const onUpdateThreshold = (value: number, index: number) => {
 	emit('update', intervention);
 };
 
-const onUpdateTimestep = (value: number, index: number) => {
+const onUpdateValue = (value: number, index: number) => {
 	const intervention = cloneDeep(props.intervention);
 	if (interventionType.value === 'static') {
 		intervention.staticInterventions[index].value = value;
@@ -215,8 +232,8 @@ const onRemoveStaticIntervention = (index: number) => {
 const onAddNewStaticIntervention = () => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.staticInterventions.push({
-		threshold: 0,
-		value: 0
+		threshold: Number.NaN,
+		value: Number.NaN
 	});
 	emit('update', intervention);
 };
@@ -226,8 +243,8 @@ const onInterventionTypeChange = (value: string) => {
 	if (value === 'static') {
 		intervention.staticInterventions = [
 			{
-				threshold: 0,
-				value: 0
+				threshold: Number.NaN,
+				value: Number.NaN
 			}
 		];
 		intervention.dynamicInterventions = [];
@@ -235,9 +252,9 @@ const onInterventionTypeChange = (value: string) => {
 		intervention.staticInterventions = [];
 		intervention.dynamicInterventions = [
 			{
-				threshold: 0,
-				value: 0,
-				parameter: props.parameterOptions[0].value,
+				threshold: Number.NaN,
+				value: Number.NaN,
+				parameter: '',
 				isGreaterThan: true
 			}
 		];
@@ -255,6 +272,17 @@ const onTargetParameterChange = (event: DropdownChangeEvent) => {
 const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.dynamicInterventions[0].isGreaterThan = event.value;
+	emit('update', intervention);
+};
+
+const onSemanticChange = (event: DropdownChangeEvent) => {
+	const intervention = cloneDeep(props.intervention);
+	intervention.type = event.value;
+	if (event.value === InterventionSemanticType.Variable) {
+		intervention.appliedTo = '';
+	} else {
+		intervention.appliedTo = '';
+	}
 	emit('update', intervention);
 };
 </script>
