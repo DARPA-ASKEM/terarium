@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAndAssetAggregate;
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
@@ -17,20 +18,20 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 	Optional<Project> getByIdAndDeletedOnIsNull(final UUID id);
 
 	@Query("select "
-			+ " p.id, "
-			+ " p.createdOn, "
-			+ " p.deletedOn, "
-			+ " p.description, "
-			+ " p.fileNames, "
-			+ " p.name, "
-			+ " p.overviewContent, "
-			+ " p.publicAsset, "
-			+ " p.temporary, "
-			+ " p.updatedOn, "
-			+ " p.thumbnail, "
-			+ " p.userId, "
-			+ " p2.assetCount, "
-			+ " p2.assetType "
+			+ " p.id as id, "
+			+ " p.createdOn as createdOn, "
+			+ " p.updatedOn as updatedOn, "
+			+ " p.deletedOn as deletedOn, "
+			+ " p.description as description, "
+			+ " p.fileNames as fileNames, "
+			+ " p.name as name, "
+			+ " p.overviewContent as overviewContent, "
+			+ " p.publicAsset as publicAsset, "
+			+ " p.temporary as temporary, "
+			+ " p.thumbnail as thumbnail, "
+			+ " p.userId as userId, "
+			+ " p2.assetCount as assetCount, "
+			+ " p2.assetType as assetType "
 			+ "from "
 			+ " Project p "
 			+ "left join ("
@@ -48,5 +49,5 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 			+ "where "
 			+ " p.id in (:ids) "
 			+ " and p.deletedOn is null")
-	List<Project> findByIdsWithAssets(final List<UUID> ids);
+	List<ProjectAndAssetAggregate> findByIdsWithAssets(final List<UUID> ids);
 }

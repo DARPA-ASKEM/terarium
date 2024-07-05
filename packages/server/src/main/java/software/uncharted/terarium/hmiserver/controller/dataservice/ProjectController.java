@@ -215,39 +215,9 @@ public class ProjectController {
 			List<Contributor> contributors = null;
 			try {
 				contributors = getContributors(rebacProject);
+				project.getMetadata().put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
 			} catch (final Exception e) {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
-			}
-
-			// Set the metadata for the project. If we are unable to get the metadata, we
-			// default to empty values.
-			try {
-				final Map<String, String> metadata = new HashMap<>();
-
-				final Map<AssetType, Integer> counts = new EnumMap<>(AssetType.class);
-				for (final ProjectAsset asset : project.getProjectAssets()) {
-					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
-				}
-
-				metadata.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
-				metadata.put(
-						"datasets-count",
-						counts.getOrDefault(AssetType.DATASET, 0).toString());
-				metadata.put(
-						"document-count",
-						counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
-				metadata.put(
-						"models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
-				metadata.put(
-						"workflows-count",
-						counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
-
-				project.setMetadata(metadata);
-			} catch (final Exception e) {
-				log.error(
-						"Failed to get project assets from postgres db for project {}. Setting Default Metadata.",
-						project.getId(),
-						e);
 			}
 
 			// Set the author name for the project. If we are unable to get the author name,
