@@ -124,7 +124,7 @@
 												{{
 													intervention.dynamicInterventions[0].isGreaterThan
 														? 'increases to above'
-														: 'falls to below'
+														: 'decreases to below'
 												}}
 												{{ intervention.dynamicInterventions[0].threshold }}.
 											</p>

@@ -50,6 +50,7 @@
 					<template v-if="intervention.staticInterventions.length === 1">
 						<tera-input
 							type="nist"
+							auto-width
 							:model-value="intervention.staticInterventions[0].value"
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
@@ -57,18 +58,20 @@
 						starting at
 						<tera-input
 							type="nist"
+							auto-width
 							:model-value="intervention.staticInterventions[0].threshold"
 							@update:model-value="(val) => onUpdateThreshold(val, 0)"
-							placeholder="timepoint value"
+							placeholder="timestep"
 						/>
 						.
 					</template>
 
-					<ul v-if="intervention.staticInterventions.length > 1">
+					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
 						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								<tera-input
 									type="nist"
+									auto-width
 									:model-value="i.value"
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
@@ -76,9 +79,10 @@
 								starting at
 								<tera-input
 									type="nist"
+									auto-width
 									:model-value="i.threshold"
 									@update:model-value="(val) => onUpdateThreshold(val, index)"
-									placeholder="timepoint value"
+									placeholder="timestep"
 								/>
 								.
 								<Button
@@ -97,6 +101,7 @@
 				<template v-else>
 					<tera-input
 						type="nist"
+						auto-width
 						:model-value="intervention.dynamicInterventions[0].value"
 						@update:model-value="(val) => onUpdateValue(val, 0)"
 						placeholder="value"
@@ -119,6 +124,7 @@
 					/>
 					<tera-input
 						type="nist"
+						auto-width
 						:model-value="intervention.dynamicInterventions[0].threshold"
 						@update:model-value="(val) => onUpdateThreshold(val, 0)"
 						placeholder="threshold"
@@ -182,7 +188,7 @@ const interventionType = computed(() => {
 
 const comparisonOperations = [
 	{ label: 'increases to above', value: true },
-	{ label: 'falls to below', value: false }
+	{ label: 'decreases to below', value: false }
 ];
 
 const onUpdateName = (name: string) => {
