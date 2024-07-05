@@ -27,7 +27,8 @@ public class CacheConfiguration implements CachingConfigurer {
 		Cache usersCache = new ConcurrentMapCache("users");
 		Cache rolesCache = new ConcurrentMapCache("roles");
 		Cache authoriesCache = new ConcurrentMapCache("authorities");
-		cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache));
+		Cache projectContributorsCache = new ConcurrentMapCache("projectcontributors");
+	  cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache, projectContributorsCache));
 		return cacheManager;
 	}
 

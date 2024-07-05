@@ -17,6 +17,12 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 
 	Optional<Project> getByIdAndDeletedOnIsNull(final UUID id);
 
+	/**
+	 * Index wanted:
+	 *
+	 * create index pa_count on project_asset (project_id, asset_type, deleted_on);
+	 *
+	 */
 	@Query("select "
 			+ " p.id as id, "
 			+ " p.createdOn as createdOn, "
