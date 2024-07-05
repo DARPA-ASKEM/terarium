@@ -125,7 +125,6 @@ watch(
 <style scoped>
 section {
 	display: flex;
-	/* flex: 1; */
 	&:empty {
 		display: none;
 	}
