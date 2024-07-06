@@ -1,5 +1,9 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention as SimulationIntervention } from '@/types/Types';
+import {
+	Intervention,
+	Intervention as SimulationIntervention,
+	InterventionPolicy
+} from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -24,6 +28,8 @@ export interface InterventionPolicyGroup {
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
+	isDisabled?: boolean;
+	intervention?: Intervention;
 }
 
 export interface ConstraintGroup {
@@ -38,6 +44,7 @@ export interface ConstraintGroup {
 
 export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
+	startTime?: number;
 	endTime: number;
 	numSamples: number;
 	solverMethod: string;
@@ -46,6 +53,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Intervention policies
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
+	interventions?: InterventionPolicy[];
 	// Constraints:
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
@@ -88,7 +96,13 @@ export const OptimizeCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+		{
+			type: 'calibrateSimulationId',
+			label: 'Calibration',
+			acceptMultiple: false,
+			isOptional: true
+		},
+		{ type: 'policyId', label: 'Interventions', acceptMultiple: false, isOptional: true }
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
