@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -91,7 +92,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				}
 
 				// Map the initials values to the model
-				final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials =
 							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
@@ -105,6 +105,9 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Set the all the GoLLM extractions into the model metadata
 				// FIXME - It is not what we should do, this is a hack for the March 2024
 				// Evaluation
+				if (model.getMetadata() == null) {
+					model.setMetadata(new ModelMetadata());
+				}
 				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
