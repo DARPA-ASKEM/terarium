@@ -1,6 +1,8 @@
 <template>
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
+			{{ console.log('modelConfiguration', modelConfiguration) }}
+			{{ console.log('modelConfigurations', modelConfigurations) }}
 			<template #header>
 				<span class="mr-auto"
 					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
@@ -28,7 +30,8 @@
 									<li v-for="{ target } in childInitials" :key="target">
 										<tera-initial-entry
 											:model="model"
-											:model-configuration="props.modelConfiguration"
+											:model-configuration="modelConfiguration"
+											:modelConfigurations="modelConfigurations"
 											:initial-id="target"
 											@update-expression="emit('update-expression', $event)"
 											@update-source="emit('update-source', $event)"
@@ -46,6 +49,7 @@
 						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
+						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
 						@update-expression="emit('update-expression', $event)"
 						@update-source="emit('update-source', $event)"
@@ -89,6 +93,7 @@ import TeraInitialEntry from './tera-initial-entry.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
