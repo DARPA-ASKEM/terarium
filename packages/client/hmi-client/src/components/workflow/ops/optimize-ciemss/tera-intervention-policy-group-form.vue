@@ -23,13 +23,6 @@
 					@change="emit('update-self', config)"
 				/>
 			</div>
-			<!--			<div>-->
-			<!--				<i-->
-			<!--					class="trash-button pi pi-trash"-->
-			<!--					:style="'cursor: pointer'"-->
-			<!--					@click="emit('delete-self')"-->
-			<!--				/>-->
-			<!--			</div>-->
 		</div>
 
 		<div v-if="dynamicInterventions.length > 0">
