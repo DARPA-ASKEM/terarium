@@ -23,6 +23,7 @@
 						</Chip>
 					</aside>
 					<tera-output-dropdown
+						class="ml-auto"
 						v-if="outputOptions && selectedOutputId"
 						:options="outputOptions"
 						:output="selectedOutputId"
