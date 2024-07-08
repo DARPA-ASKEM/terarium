@@ -102,7 +102,12 @@ export const OptimizeCiemssOperation: Operation = {
 			acceptMultiple: false,
 			isOptional: true
 		},
-		{ type: 'policyInterventionId', label: 'Interventions', acceptMultiple: false, isOptional: true }
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false,
+			isOptional: true
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
