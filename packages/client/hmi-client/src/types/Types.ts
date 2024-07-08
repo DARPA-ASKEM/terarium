@@ -263,6 +263,10 @@ export interface Semantic extends TerariumEntity {
     type: SemanticType;
 }
 
+export interface Author {
+    name: string;
+}
+
 export interface State {
     id: string;
     name?: string;
@@ -1052,7 +1056,7 @@ export interface OdeSemantics {
 
 export interface Annotations {
     license?: string;
-    authors?: string[];
+    authors?: Author[];
     references?: string[];
     locations?: string[];
     pathogens?: string[];
