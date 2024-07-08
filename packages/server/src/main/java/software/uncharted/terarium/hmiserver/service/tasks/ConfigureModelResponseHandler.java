@@ -1,18 +1,15 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
+import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -83,8 +80,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Map the parameters values to the model
 				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters = ScenarioExtraction
-							.getModelParameters(condition.get("parameters"), modelCopy);
+					final List<ModelParameter> modelParameters =
+							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy
 								.getModel()
@@ -96,8 +93,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"),
-							modelCopy);
+					final List<Initial> modelInitials =
+							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					if (modelCopy.isRegnet()) {
 						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 					}
