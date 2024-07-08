@@ -82,7 +82,7 @@
 				Set the <b>{{ config.intervention?.type }}</b>
 				<b>{{ config.intervention?.appliedTo }}</b> to a new value of
 				<b>{{ staticIntervention.value }}</b> day at start time
-				<b>{{ staticIntervention.threshold }}</b> day.
+				<b>{{ staticIntervention.timestep }}</b> day.
 			</p>
 		</div>
 	</div>
