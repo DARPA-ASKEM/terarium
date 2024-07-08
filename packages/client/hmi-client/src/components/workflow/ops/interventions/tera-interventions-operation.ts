@@ -12,7 +12,7 @@ export const InterventionsOperation: Operation = {
 	displayName: 'Create intervention policy',
 	isRunnable: true,
 	inputs: [{ type: 'modelId', label: 'Model' }],
-	outputs: [{ type: 'policyId', label: 'Interventions' }],
+	outputs: [{ type: 'policyInterventionId', label: 'Interventions' }],
 	action: () => {},
 
 	initState: () => {
