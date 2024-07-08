@@ -82,6 +82,8 @@ const updateValue = (event: Event) => {
 		} else {
 			error.value = 'Invalid number';
 		}
+	} else if (props.type === 'number') {
+		emit('update:model-value', parseFloat(value));
 	} else {
 		emit('update:model-value', value);
 	}
