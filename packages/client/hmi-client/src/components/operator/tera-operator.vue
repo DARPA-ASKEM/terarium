@@ -54,7 +54,7 @@ import type { WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection } from '@/types/workflow';
 import type { Position } from '@/types/common';
 import { addDrag, addHover, removeDrag, removeHover } from '@/services/operator-bitmask';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import floatingWindow from '@/utils/floating-window';
 import router from '@/router';
 import { RouteName } from '@/router/routes';
@@ -127,6 +127,9 @@ onBeforeUnmount(() => {
 		resizeObserver = null;
 	}
 });
+
+const isEditing = computed(() => annotationRef.value?.isEditing ?? false);
+defineExpose({ isEditing, id: props.node.id });
 </script>
 
 <style scoped>

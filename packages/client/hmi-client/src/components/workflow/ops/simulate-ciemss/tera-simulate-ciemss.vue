@@ -99,6 +99,10 @@
 				:is-loading="showSpinner"
 				is-selectable
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && runResults[selectedRunId]"
+					:summary-id="node.state.summaryId"
+				/>
 				<div class="flex flex-row align-items-center gap-2">
 					What do you want to see?
 					<SelectButton
@@ -182,6 +186,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';

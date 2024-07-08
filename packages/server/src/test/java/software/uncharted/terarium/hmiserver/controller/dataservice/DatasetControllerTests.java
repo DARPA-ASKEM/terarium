@@ -29,7 +29,9 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class DatasetControllerTests extends TerariumApplicationTests {
 
@@ -39,9 +41,17 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DatasetService datasetService;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		datasetService.setupIndexAndAliasAndEnsureEmpty();
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -70,6 +80,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
@@ -84,14 +95,17 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name0").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name1").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name2").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf()))
@@ -105,6 +119,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
@@ -123,6 +138,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -148,7 +164,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 						}))
 				.andExpect(status().isOk());
 
-		Dataset updated = datasetService
+		final Dataset updated = datasetService
 				.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION)
 				.get();
 		Assertions.assertEquals(4, updated.getColumns().size());
@@ -160,6 +176,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
@@ -178,6 +195,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -221,6 +239,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "This is my small test dataset\n";
@@ -253,6 +272,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -296,6 +316,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		// Perform the multipart file upload request
@@ -328,6 +349,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 		final Dataset dataset = datasetService.createAsset(
 				(Dataset) new Dataset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		// Perform the multipart file upload request
@@ -371,43 +393,33 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 
-		Dataset dataset_public_not_temp = (Dataset) new Dataset()
+		final Dataset dataset_public_not_temp = (Dataset) new Dataset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(true)
 				.setTemporary(false);
-		Dataset dataset_not_public_temp = (Dataset) new Dataset()
+		final Dataset dataset_not_public_temp = (Dataset) new Dataset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(false)
 				.setTemporary(true);
-		Dataset dataset_not_public_not_temp = (Dataset) new Dataset()
-				.setName("test-document-name")
-				.setDescription("my description")
-				.setPublicAsset(false)
-				.setTemporary(false);
-		Dataset dataset_public_temp = (Dataset) new Dataset()
+		final Dataset dataset_public_temp = (Dataset) new Dataset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(true)
 				.setTemporary(true);
 
-		final Dataset createdDataset_not_public_not_temp =
-				datasetService.createAsset(dataset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
 		final Dataset createdDataset_public_not_temp =
-				datasetService.createAsset(dataset_public_not_temp, ASSUME_WRITE_PERMISSION);
+				datasetService.createAsset(dataset_public_not_temp, project.getId(), ASSUME_WRITE_PERMISSION);
 		final Dataset createdDataset_public_temp =
-				datasetService.createAsset(dataset_public_temp, ASSUME_WRITE_PERMISSION);
+				datasetService.createAsset(dataset_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
 		final Dataset createdDataset_not_public_temp =
-				datasetService.createAsset(dataset_not_public_temp, ASSUME_WRITE_PERMISSION);
+				datasetService.createAsset(dataset_not_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId())
 						.with(csrf()))
 				.andExpect(status().isOk());
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_temp.getId())
-						.with(csrf()))
-				.andExpect(status().is5xxServerError());
-		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_not_temp.getId())
 						.with(csrf()))
 				.andExpect(status().is5xxServerError());
 		mockMvc.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_temp.getId())

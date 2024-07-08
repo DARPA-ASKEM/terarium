@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,15 +28,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 
 @RequestMapping("/search-by-asset-type")
 @RestController
@@ -43,13 +41,9 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 public class SearchByAssetTypeController {
 
 	private final ObjectMapper objectMapper;
-	private final TaskService taskService;
 	private final ElasticsearchService esService;
 	private final ElasticsearchConfiguration esConfig;
-	private final CurrentUserService currentUserService;
-
-	private static final int REQUEST_TIMEOUT_MINUTES = 1;
-	private static final String EMBEDDING_MODEL = "text-embedding-ada-002";
+	private final EmbeddingService embeddingService;
 
 	private static final List<String> EXCLUDE_FIELDS = List.of("embeddings", "text", "topics");
 
@@ -93,7 +87,8 @@ public class SearchByAssetTypeController {
 			@RequestParam(value = "text", defaultValue = "") final String text,
 			@RequestParam(value = "k", defaultValue = "100") final int k,
 			@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates,
-			@RequestParam(value = "embedding-model", defaultValue = EMBEDDING_MODEL) final String embeddingModel,
+			@RequestParam(value = "embedding-model", defaultValue = EmbeddingService.EMBEDDING_MODEL)
+					final String embeddingModel,
 			@RequestParam(value = "index", defaultValue = "") String index) {
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 		try {
@@ -114,32 +109,12 @@ public class SearchByAssetTypeController {
 			KnnQuery knn = null;
 			if (text != null && !text.isEmpty()) {
 
-				// create the embedding search request
-				final GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
-				embeddingRequest.setText(text);
-				embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
+				final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 
-				final TaskRequest req = new TaskRequest();
-				req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
-				req.setType(TaskType.GOLLM);
-				req.setInput(embeddingRequest);
-				req.setScript("gollm_task:embedding");
-				req.setUserId(currentUserService.get().getId());
-
-				final TaskResponse resp = taskService.runTaskSync(req);
-
-				if (resp.getStatus() != TaskStatus.SUCCESS) {
-					throw new ResponseStatusException(
-							org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-							"Unable to generate vectors for knn search");
-				}
-
-				final byte[] outputBytes = resp.getOutput();
-				final JsonNode output = objectMapper.readTree(outputBytes);
-
-				final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
-
-				final List<Float> vector = embeddingResp.getResponse();
+				final List<Float> vector = Arrays.stream(
+								embeddings.getEmbeddings().get(0).getVector())
+						.mapToObj(d -> (float) d)
+						.collect(Collectors.toList());
 
 				knn = new KnnQuery.Builder()
 						.field("embeddings.vector")
@@ -165,7 +140,6 @@ public class SearchByAssetTypeController {
 					docs.add(source);
 				}
 			}
-
 			return ResponseEntity.ok(docs);
 
 		} catch (final Exception e) {

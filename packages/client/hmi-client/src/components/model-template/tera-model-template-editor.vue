@@ -508,13 +508,14 @@ onUnmounted(() => {
 <style scoped>
 .template-editor-wrapper {
 	display: flex;
-	flex: 1;
+	height: 100%;
 	overflow: hidden;
 	position: relative;
 }
 
 :deep(.foreground-layer) {
 	pointer-events: none;
+	height: 100%;
 }
 
 .button-container {
@@ -535,7 +536,10 @@ onUnmounted(() => {
 }
 
 .spinner {
-	margin-bottom: 15rem;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 aside {

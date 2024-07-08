@@ -11,9 +11,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -30,12 +30,19 @@ public class ParameterSemantic extends Semantic {
 
 	private boolean isDefault;
 
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private Intervention[] interventions;
-
 	@ManyToOne
 	@JsonBackReference
 	@Schema(hidden = true)
+	@TSIgnore
 	@NotNull private ModelConfiguration modelConfiguration;
+
+	@Override
+	public ParameterSemantic clone() {
+		final ParameterSemantic clone = new ParameterSemantic();
+		super.cloneSuperFields(clone);
+		clone.referenceId = this.referenceId;
+		clone.distribution = this.distribution.clone();
+		clone.isDefault = this.isDefault;
+		return clone;
+	}
 }

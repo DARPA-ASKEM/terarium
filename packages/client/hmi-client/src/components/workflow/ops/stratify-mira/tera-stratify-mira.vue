@@ -2,12 +2,11 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
-		:output-summary="true"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
-		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		@update:selection="onSelection"
+		v-bind="$attrs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
 			<tera-drilldown-section class="pl-4">
@@ -86,7 +85,7 @@
 					/>
 					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
-						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
+						<tera-model-semantic-tables :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
@@ -131,7 +130,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations-legacy';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -149,7 +148,6 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'update-output-port',
-	'generate-output-summary',
 	'select-output'
 ]);
 

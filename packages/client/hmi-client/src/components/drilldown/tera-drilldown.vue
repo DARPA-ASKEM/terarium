@@ -35,37 +35,29 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
-					<tera-operator-output-summary
-						v-if="outputSummary"
-						:node="node"
-						@generate-output-summary="
-							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
-						"
-						@update-output-port="
-							(output: WorkflowOutput<any>) => emit('update-output-port', output)
-						"
-					/>
 					<tera-operator-annotation
-						v-else
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
 				</template>
 			</tera-drilldown-header>
-			<tera-columnar-panel>
-				<template v-for="(tab, index) in tabs" :key="index">
-					<!--
+			<div class="flex overflow-hidden h-full">
+				<slot name="sidebar" />
+				<tera-columnar-panel class="flex-1">
+					<template v-for="(tab, index) in tabs" :key="index">
+						<!--
 						TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
 						if it was in the unselected tab. For now we are using v-if but we may want to
 						use css to hide the unselected tab content instead.
 					-->
-					<component :is="tab" v-if="selectedViewIndex === index" />
-				</template>
+						<component :is="tab" v-if="selectedViewIndex === index" />
+					</template>
 
-				<section v-if="slots.preview">
-					<slot name="preview" />
-				</section>
-			</tera-columnar-panel>
+					<section v-if="slots.preview">
+						<slot name="preview" />
+					</section>
+				</tera-columnar-panel>
+			</div>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
@@ -78,9 +70,8 @@ import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vu
 import { TabViewChangeEvent } from 'primevue/tabview';
 import { computed, ref, useSlots } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import Chip from 'primevue/chip';
 import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import { isEmpty } from 'lodash';
@@ -94,14 +85,12 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
-	outputSummary?: boolean;
 }>();
 
 const emit = defineEmits([
 	'on-close-clicked',
 	'update-state',
 	'update:selection',
-	'generate-output-summary',
 	'update-output-port'
 ]);
 const slots = useSlots();
@@ -127,6 +116,9 @@ const selectedViewIndex = ref<number>(0);
 const handleTabChange = (event: TabViewChangeEvent) => {
 	selectedViewIndex.value = event.index;
 };
+
+const selectedTab = computed(() => views.value[selectedViewIndex.value]);
+defineExpose({ selectedTab });
 
 const selectedOutputId = computed(() => {
 	if (props.node.active) {

@@ -74,6 +74,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
+					ref="teraOperatorRef"
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="
@@ -168,7 +169,6 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -231,6 +231,7 @@ import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
+import * as InterventionsOp from '@/components/workflow/ops/interventions/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -256,6 +257,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(RegriddingOp);
+registry.registerOp(InterventionsOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -300,6 +302,7 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+const teraOperatorRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -340,7 +343,7 @@ function appendOutput(
 ) {
 	if (!node) return;
 
-	// we assume that if we can produce an output, the status is okay
+	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
@@ -356,7 +359,6 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
-	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -367,28 +369,6 @@ function appendOutput(
 
 	selectOutput(node, uuid);
 	workflowDirty = true;
-}
-
-function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
-	if (!registry.getOperation(node.operationType)?.createNotebook) return;
-	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
-}
-
-async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
-	if (!node) return;
-	const result = await workflowService.generateSummary(
-		node,
-		outputPort,
-		registry.getOperation(node.operationType)?.createNotebook ?? null
-	);
-	if (!result) return;
-	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
-	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
-	if (!updateNode || !updateOutput) return;
-	updateOutput.summary = result.summary;
-	updateOutput.label = result.title;
-	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -535,6 +515,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: StratifyMiraOp.operation.displayName,
 				command: addOperatorToWorkflow(StratifyMiraOp)
+			},
+			{
+				label: InterventionsOp.operation.displayName,
+				command: addOperatorToWorkflow(InterventionsOp)
 			}
 		]
 	},
@@ -865,6 +849,10 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	const teraNode = teraOperatorRef.value.find((operatorNode) => operatorNode.id === node.id);
+	if (teraNode.isEditing ?? false) {
+		return;
+	}
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -937,7 +925,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
-		if (workflowDirty) {
+		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}

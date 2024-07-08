@@ -42,7 +42,7 @@
 				</div>
 			</header>
 			<div class="img">
-				<img :src="image" alt="Artistic representation of the Project statistics" />
+				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
@@ -95,9 +95,10 @@ import { ref, computed } from 'vue';
 import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
-import { placeholder } from '@/utils/project-card';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
+import getImage from '@/assets/utils';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
@@ -108,11 +109,8 @@ const emit = defineEmits(['forked-project']);
 const titleRef = ref();
 const descriptionLines = computed(() => {
 	const titleHeight = titleRef.value?.clientHeight;
-	for (let i = 1; i < 3; i++) {
-		if (titleHeight === 17 * i) {
-			return 10 - i;
-		}
-	}
+	if (titleHeight === 17) return 9;
+	if (titleHeight === 34) return 8;
 	return 7;
 });
 
@@ -129,7 +127,10 @@ const stats = computed(() => {
 	};
 });
 
-const image = computed(() => (stats.value ? placeholder(stats.value) : undefined));
+const thumbnail = computed(
+	() =>
+		getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
+);
 </script>
 
 <style scoped>
