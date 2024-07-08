@@ -1,6 +1,6 @@
 <template>
 	<p>
-		Set the parameter <b>{{ config.intervention.appliedTo }}</b> to
+		Set the parameter <b>{{ config.intervention?.appliedTo }}</b> to
 		<b>{{ dynamicInterventions[0].threshold }}</b> days when it
 		<b>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</b>
 		the threshold value <b>{{ dynamicInterventions[0].value }}</b> person.
@@ -8,9 +8,10 @@
 </template>
 <script setup lang="ts">
 import { DynamicIntervention } from '@/types/Types';
+import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 defineProps<{
-	config: any;
+	config: InterventionPolicyGroup;
 	dynamicInterventions: DynamicIntervention[];
 }>();
 </script>

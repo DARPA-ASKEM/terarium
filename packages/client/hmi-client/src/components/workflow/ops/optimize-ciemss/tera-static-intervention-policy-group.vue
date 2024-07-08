@@ -10,7 +10,7 @@
 					option-value="value"
 					:options="optimizeOptions"
 				/>
-				for the parameter <b>{{ config.intervention.appliedTo }}</b
+				for the parameter <b>{{ config.intervention?.appliedTo }}</b
 				>.
 			</p>
 		</div>
@@ -79,7 +79,7 @@
 	<div v-else>
 		<div v-for="(staticIntervention, index) in staticInterventions" :key="index">
 			<p>
-				Set the parameter <b>{{ config.intervention.appliedTo }}</b> to a new value of
+				Set the parameter <b>{{ config.intervention?.appliedTo }}</b> to a new value of
 				<b>{{ staticIntervention.value }}</b> day at start time
 				<b>{{ staticIntervention.threshold }}</b> day.
 			</p>
@@ -92,9 +92,10 @@ import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
+import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
-	config: any;
+	config: InterventionPolicyGroup;
 	knobs: any;
 	staticInterventions: StaticIntervention[];
 }>();

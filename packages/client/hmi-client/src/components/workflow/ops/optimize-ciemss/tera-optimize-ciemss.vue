@@ -42,20 +42,6 @@
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
-					<!--					<div>-->
-					<!--						<label>Intervention Type</label>-->
-					<!--						<Dropdown-->
-					<!--							class="p-inputtext-sm"-->
-					<!--							:options="[-->
-					<!--								{ label: 'parameter value', value: InterventionTypes.paramValue },-->
-					<!--								{ label: 'start time', value: InterventionTypes.startTime }-->
-					<!--							]"-->
-					<!--							option-label="label"-->
-					<!--							option-value="value"-->
-					<!--							v-model="knobs.interventionType"-->
-					<!--							placeholder="Select"-->
-					<!--						/>-->
-					<!--					</div>-->
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in interventions"
 						:key="idx"
@@ -66,14 +52,6 @@
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
-					<!--					<div>-->
-					<!--						<Button-->
-					<!--							icon="pi pi-plus"-->
-					<!--							class="p-button-sm p-button-text"-->
-					<!--							label="Add more interventions"-->
-					<!--							@click="addInterventionPolicyGroupForm"-->
-					<!--						/>-->
-					<!--					</div>-->
 				</section>
 				<section class="form-section">
 					<h5>
@@ -83,7 +61,7 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled type="number" v-model="knobs.startTime" />
+							<tera-input disabled type="number" model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
@@ -475,14 +453,6 @@ const deleteInterverntionPolicyGroupForm = (index: number) => {
 	state.interventionPolicyGroups.splice(index, 1);
 	emit('update-state', state);
 };
-
-// const addInterventionPolicyGroupForm = () => {
-// 	const state = _.cloneDeep(props.node.state);
-// 	if (!state.interventionPolicyGroups) return;
-//
-// 	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
-// 	emit('update-state', state);
-// };
 
 const addConstraintGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
