@@ -31,7 +31,7 @@ import { watch, ref } from 'vue';
 import { WorkflowNode, WorkflowOperationTypes as OperationType } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
-import TeraModelWorkflowWrapper from '@/components/workflow/ops/model/tera-model-workflow-wrapper.vue';
+import TeraModelWorkflowWrapper from '@/components/workflow/ops/model/tera-model-drilldown.vue';
 import TeraDatasetDrilldown from '@/components/workflow/ops/dataset/tera-dataset-drilldown.vue';
 import TeraRegriddingDrilldown from '@/components/workflow/ops/regridding/tera-regridding.vue';
 import TeraDatasetTransformer from '@/components/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
