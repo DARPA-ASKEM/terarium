@@ -14,10 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -45,12 +42,11 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
-import software.uncharted.terarium.hmiserver.models.permissions.PermissionGroup;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
-import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
@@ -62,6 +58,7 @@ import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
@@ -70,7 +67,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacGroup;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacObject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
@@ -114,6 +110,7 @@ public class ProjectController {
 	final UserService userService;
 	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
+	final ProjectPermissionsService projectPermissionsService;
 
 	// --------------------------------------------------------------------------
 	// Basic Project Operations
@@ -219,40 +216,11 @@ public class ProjectController {
 			// list.
 			List<Contributor> contributors = null;
 			try {
-				contributors = getContributors(rebacProject);
+				contributors = projectPermissionsService.getContributors(rebacProject);
+				project.getMetadata()
+						.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
 			} catch (final Exception e) {
 				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
-			}
-
-			// Set the metadata for the project. If we are unable to get the metadata, we
-			// default to empty values.
-			try {
-				final Map<String, String> metadata = new HashMap<>();
-
-				final Map<AssetType, Integer> counts = new EnumMap<>(AssetType.class);
-				for (final ProjectAsset asset : project.getProjectAssets()) {
-					counts.put(asset.getAssetType(), counts.getOrDefault(asset.getAssetType(), 0) + 1);
-				}
-
-				metadata.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
-				metadata.put(
-						"datasets-count",
-						counts.getOrDefault(AssetType.DATASET, 0).toString());
-				metadata.put(
-						"document-count",
-						counts.getOrDefault(AssetType.DOCUMENT, 0).toString());
-				metadata.put(
-						"models-count", counts.getOrDefault(AssetType.MODEL, 0).toString());
-				metadata.put(
-						"workflows-count",
-						counts.getOrDefault(AssetType.WORKFLOW, 0).toString());
-
-				project.setMetadata(metadata);
-			} catch (final Exception e) {
-				log.error(
-						"Failed to get project assets from postgres db for project {}. Setting Default Metadata.",
-						project.getId(),
-						e);
 			}
 
 			// Set the author name for the project. If we are unable to get the author name,
@@ -271,40 +239,6 @@ public class ProjectController {
 		});
 
 		return ResponseEntity.ok(projects);
-	}
-
-	/**
-	 * Capture the subset of RebacPermissionRelationships for a given Project.
-	 *
-	 * @param rebacProject the Project to collect RebacPermissionRelationships of.
-	 * @return List of Users and Groups who have edit capability of the rebacProject
-	 */
-	private List<Contributor> getContributors(final RebacProject rebacProject) throws Exception {
-		final Map<String, Contributor> contributorMap = new HashMap<>();
-
-		final List<RebacPermissionRelationship> permissionRelationships = rebacProject.getPermissionRelationships();
-		for (final RebacPermissionRelationship permissionRelationship : permissionRelationships) {
-			final Schema.Relationship relationship = permissionRelationship.getRelationship();
-			// Ensure the relationship is capable of editing the project
-			if (relationship.equals(Schema.Relationship.CREATOR)
-					|| relationship.equals(Schema.Relationship.ADMIN)
-					|| relationship.equals(Schema.Relationship.WRITER)) {
-				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
-					final String name = user.getFirstName() + " " + user.getLastName();
-					if (!contributorMap.containsKey(name)) {
-						contributorMap.put(name, new Contributor(name, relationship));
-					}
-				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-					final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
-					if (!contributorMap.containsKey(group.getName())) {
-						contributorMap.put(group.getName(), new Contributor(group.getName(), relationship));
-					}
-				}
-			}
-		}
-
-		return new ArrayList<>(contributorMap.values());
 	}
 
 	/**
@@ -355,9 +289,9 @@ public class ProjectController {
 
 		try {
 			final List<String> authors = new ArrayList<>();
-			final List<Contributor> contributors = getContributors(rebacProject);
+			final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
 			for (final Contributor contributor : contributors) {
-				authors.add(contributor.name);
+				authors.add(contributor.getName());
 			}
 
 			project.get().setPublicProject(rebacProject.isPublic());
@@ -939,7 +873,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return setProjectPermissions(what, who, relationship);
+			return projectPermissionsService.setProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error setting project group permission relationships", e);
 			throw new ResponseStatusException(
@@ -978,7 +912,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
+			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
@@ -1019,7 +953,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return removeProjectPermissions(what, who, relationship);
+			return projectPermissionsService.removeProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project group permission relationships", e);
 			throw new ResponseStatusException(
@@ -1076,10 +1010,10 @@ public class ProjectController {
 
 			if (isPublic) {
 				// Set the Public Group permissions to READ the Project
-				return setProjectPermissions(project, who, relationship);
+				return projectPermissionsService.setProjectPermissions(project, who, relationship);
 			} else {
 				// Remove the Public Group permissions to READ the Project
-				return removeProjectPermissions(project, who, relationship);
+				return projectPermissionsService.removeProjectPermissions(project, who, relationship);
 			}
 
 		} catch (final Exception e) {
@@ -1118,7 +1052,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			return setProjectPermissions(what, who, relationship);
+			return projectPermissionsService.setProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error setting project user permission relationships", e);
 			throw new ResponseStatusException(
@@ -1157,7 +1091,7 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			return updateProjectPermissions(what, who, oldRelationship, newRelationship);
+			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
@@ -1196,54 +1130,11 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			return removeProjectPermissions(what, who, relationship);
+			return projectPermissionsService.removeProjectPermissions(what, who, relationship);
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting project user permission relationships");
-		}
-	}
-
-	private static ResponseEntity<JsonNode> setProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
-		try {
-			what.setPermissionRelationships(who, relationship);
-			return ResponseEntity.ok().build();
-		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		}
-	}
-
-	private static ResponseEntity<JsonNode> updateProjectPermissions(
-			final RebacProject what, final RebacObject who, final String oldRelationship, final String newRelationship)
-			throws Exception {
-		try {
-			what.removePermissionRelationships(who, oldRelationship);
-			what.setPermissionRelationships(who, newRelationship);
-			return ResponseEntity.ok().build();
-		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		}
-	}
-
-	private static ResponseEntity<JsonNode> removeProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
-		try {
-			what.removePermissionRelationships(who, relationship);
-			return ResponseEntity.ok().build();
-		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		}
-	}
-
-	/** A Contributor is a User or Group that is capable of editing a Project. */
-	private class Contributor {
-		String name;
-		Schema.Relationship permission;
-
-		Contributor(final String name, final Schema.Relationship permission) {
-			this.name = name;
-			this.permission = permission;
 		}
 	}
 }

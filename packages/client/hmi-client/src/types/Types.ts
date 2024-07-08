@@ -691,7 +691,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: string;
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -754,7 +754,7 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: string;
+    policyInterventionId?: string;
 }
 
 export interface DynamicIntervention {
@@ -778,7 +778,7 @@ export interface InterventionPolicy extends TerariumAsset {
 }
 
 export interface StaticIntervention {
-    threshold: number;
+    timestep: number;
     value: number;
 }
 

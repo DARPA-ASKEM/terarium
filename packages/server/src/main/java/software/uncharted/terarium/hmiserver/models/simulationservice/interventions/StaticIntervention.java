@@ -6,13 +6,13 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Data
 @TSModel
 public class StaticIntervention {
-	private Number threshold;
+	private Number timestep;
 	private Number value;
 
 	@Override
 	public StaticIntervention clone() {
 		StaticIntervention staticIntervention = new StaticIntervention();
-		staticIntervention.threshold = this.threshold;
+		staticIntervention.timestep = this.timestep;
 		staticIntervention.value = this.value;
 		return staticIntervention;
 	}

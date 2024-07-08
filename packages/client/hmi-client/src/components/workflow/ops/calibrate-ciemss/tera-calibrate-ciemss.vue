@@ -236,6 +236,8 @@ const modelConfig = ref<ModelConfiguration>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
+const policyInterventionId = computed(() => props.node.inputs[2].value);
+
 const cancelRunId = computed(
 	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
 );
@@ -324,6 +326,11 @@ const runCalibrate = async () => {
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
+
+	if (policyInterventionId.value?.[0]) {
+		calibrationRequest.policyInterventionId = policyInterventionId.value[0];
+	}
+
 	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
 
 	if (response?.simulationId) {
