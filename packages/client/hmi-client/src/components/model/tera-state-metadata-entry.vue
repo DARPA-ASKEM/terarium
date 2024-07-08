@@ -2,14 +2,15 @@
 	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
 		<h6>{{ id }}</h6>
 		<tera-input
-			label="Name"
+			title="Name"
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
-			label="Description"
+			title="Description"
 			:model-value="''"
+			placeholder="Add a description"
 			@update:model-value="
 				$emit('update-state', {
 					key: 'description',
@@ -58,9 +59,9 @@ const { id, name, grounding, initial } = props.state; // description property sh
 section {
 	display: grid;
 	grid-template-areas:
-		'symbol name description description'
-		'unit	unit concept .';
-	grid-template-columns: max-content 30% 30% auto;
+		'symbol name unit . concept'
+		'description description description description description';
+	grid-template-columns: max-content max-content max-content auto max-content;
 	gap: var(--gap-small);
 	align-items: center;
 }
@@ -77,18 +78,23 @@ section.no-second-row {
 
 h6 {
 	grid-area: symbol;
-	justify-self: center;
+
+	&::after {
+		content: '|';
+		color: var(--text-color-light);
+		margin-left: var(--gap-2);
+	}
 }
 
 button {
 	grid-area: toggle;
 }
 
-:deep([label='Name']) {
+:deep([title='Name']) {
 	grid-area: name;
 }
 
-:deep([label='Description']) {
+:deep([title='Description']) {
 	grid-area: description;
 }
 
