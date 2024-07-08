@@ -67,7 +67,6 @@ import { useProjects } from '@/composables/project';
 import {
 	AssetType,
 	Dataset,
-	Document,
 	DocumentAsset,
 	Model,
 	ProjectAsset,
@@ -75,7 +74,7 @@ import {
 } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
-import { DocumentSource } from '@/types/search';
+import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
@@ -84,8 +83,7 @@ import {
 	getSearchByExampleOptionsString,
 	useSearchByExampleOptions
 } from '@/page/data-explorer/search-by-example';
-import { createDocumentFromXDD } from '@/services/document-assets';
-import { isDataset, isDocument, isModel } from '@/utils/data-util';
+import { isDataset, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
 import { isEmpty, sortBy, orderBy, remove } from 'lodash';
 import { computed, PropType, Ref, ref } from 'vue';
@@ -124,7 +122,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String as PropType<Source>,
-		default: DocumentSource.XDD
+		default: DatasetSource.TERARIUM
 	}
 });
 
@@ -169,11 +167,7 @@ const projectOptions = computed(() => {
 						response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
 						assetName = selectedAsset.value.name ?? '';
 					}
-				} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
-					const document = selectedAsset.value as Document;
-					await createDocumentFromXDD(document, project.id as string);
-					assetName = selectedAsset.value.title;
-				} else if (props.source === DocumentSource.TERARIUM) {
+				} else {
 					const document = selectedAsset.value as DocumentAsset;
 					const assetType = AssetType.Document;
 					response = await useProjects().addAsset(assetType, document.id, project.id);

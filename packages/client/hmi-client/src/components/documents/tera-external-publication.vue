@@ -232,8 +232,6 @@
 </template>
 
 <script setup lang="ts">
-import { getDocumentById, getXDDArtifacts } from '@/services/data';
-import { XDDExtractionType } from '@/types/XDD';
 import { CodeRequest, FeatureConfig, ResultType } from '@/types/common';
 import { getDocumentDoi, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
@@ -242,12 +240,12 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
-import { PropType, computed, onMounted, onUpdated, ref, watch } from 'vue';
+import { PropType, computed, onUpdated, ref, watch } from 'vue';
 // import { getRelatedArtifacts } from '@/services/provenance';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import type { Dataset, Document, Extraction, Model } from '@/types/Types';
+import type { Dataset, Document, Model } from '@/types/Types';
 // import { ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
@@ -322,18 +320,8 @@ const formattedAbstract = computed(() => {
 const doi = computed(() => getDocumentDoi(doc.value));
 
 /* Artifacts */
-const artifacts = ref<Extraction[]>([]);
 const associatedResources = ref<ResultType[]>([]);
 
-const figures = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
-);
-const tables = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
-);
-const equations = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
-);
 const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
@@ -343,16 +331,6 @@ const sectionSummaries = computed(
 	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
-const otherExtractions = computed(() => {
-	const exclusion = [
-		XDDExtractionType.URL,
-		XDDExtractionType.Table,
-		XDDExtractionType.Figure,
-		XDDExtractionType.Equation
-	];
-
-	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
-});
 
 /* Provenance */
 const relatedTerariumModels = computed(
@@ -382,18 +360,6 @@ const documentContent = computed(() => [
 ]);
 */
 
-// This fetches various parts of the document: figures, tables, equations ... etc
-const fetchDocumentArtifacts = async () => {
-	if (doi.value !== '') {
-		const allArtifacts = await getXDDArtifacts(doi.value);
-		// filter out Document extraction type
-		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Doc);
-	} else {
-		// note that some XDD documents do not have a valid doi
-		artifacts.value = [];
-	}
-};
-
 /*
 // Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
@@ -421,30 +387,9 @@ const openPDF = () => {
 };
 
 watch(
-	props,
-	async () => {
-		const id = props.xddUri;
-
-		if (id !== '') {
-			// fetch doc from XDD
-			const d = await getDocumentById(id);
-			if (d) {
-				doc.value = d;
-			}
-		} else {
-			doc.value = null;
-		}
-	},
-	{
-		immediate: true
-	}
-);
-
-watch(
 	doi,
 	async (currentValue, oldValue) => {
 		if (currentValue !== oldValue) {
-			fetchDocumentArtifacts();
 			viewOptions.value = [extractionsOption, pdfOption];
 			view.value = DocumentView.EXTRACTIONS;
 			pdfLink.value = null;
@@ -483,10 +428,6 @@ function openImportGithubFileModal(url: string) {
 	openedUrl.value = url;
 	isImportGithubFileModalVisible.value = true;
 }
-
-onMounted(async () => {
-	fetchDocumentArtifacts();
-});
 
 onUpdated(() => {
 	if (doc.value) {

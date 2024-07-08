@@ -1,18 +1,8 @@
 <template>
 	<tera-slider content-width="100%" tab-width="0" direction="right" :is-open="Boolean(previewItem)">
 		<template v-slot:content>
-			<template v-if="previewItemResourceType === ResourceType.XDD">
-				<tera-external-publication
-					v-if="source === DocumentSource.XDD"
-					:xdd-uri="previewItemId"
-					:asset-id="previewItemId"
-					:highlight="searchTerm"
-					:previewLineLimit="10"
-					:feature-config="{ isPreview: true }"
-					@close-preview="closePreview"
-				/>
+			<template v-if="previewItemResourceType === ResourceType.DOCUMENT">
 				<tera-document-asset
-					v-else-if="source === DocumentSource.TERARIUM"
 					:asset-id="previewItemId"
 					:previewLineLimit="10"
 					:feature-config="{ isPreview: true }"
@@ -41,14 +31,13 @@
 <script setup lang="ts">
 import { computed, PropType, ref, watch } from 'vue';
 import { ResourceType, ResultType } from '@/types/common';
-import { DatasetSource, DocumentSource } from '@/types/search';
+import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
 import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
-import TeraExternalPublication from '@/components/documents/tera-external-publication.vue';
 import { Dataset } from '@/types/Types';
 
 const props = defineProps({
@@ -79,7 +68,7 @@ const props = defineProps({
 	},
 	source: {
 		type: String as PropType<Source>,
-		default: DocumentSource.XDD
+		default: DatasetSource.TERARIUM
 	}
 });
 

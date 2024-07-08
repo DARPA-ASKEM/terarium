@@ -119,8 +119,6 @@ defineProps<{
 	placeholder?: string;
 }>();
 
-const emit = defineEmits(['query-changed']);
-
 const route = useRoute();
 const router = useRouter();
 // const resources = useResourcesStore();
@@ -143,11 +141,9 @@ const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOption
 
 function clearQuery() {
 	query.value = '';
-	emit('query-changed');
 }
 
 const initiateSearch = () => {
-	emit('query-changed', query.value);
 	router.push({ name: RouteName.DataExplorer, query: { q: query.value } });
 	EventService.create(EventType.Search, useProjects().activeProject.value?.id, query.value);
 };

@@ -13,7 +13,6 @@ import {
 } from '@/types/Types';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
-import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -67,14 +66,13 @@ export enum ViewType {
 }
 
 export enum ResourceType {
-	XDD = 'xdd',
+	DOCUMENT = 'document',
 	MODEL = 'model',
 	DATASET = 'dataset',
 	ALL = 'all'
 }
 
 export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
 	[ResourceType.MODEL]?: ModelSearchParams;
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };

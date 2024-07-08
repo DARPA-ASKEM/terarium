@@ -53,9 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { getXDDArtifacts } from '@/services/data';
 import type { Document, Extraction } from '@/types/Types';
-import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
 import Card from 'primevue/card';
 import { onMounted, ref, computed } from 'vue';
