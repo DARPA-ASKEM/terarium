@@ -1,9 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import {
-	Intervention,
-	Intervention as SimulationIntervention,
-	InterventionPolicy
-} from '@/types/Types';
+import { Intervention, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -23,6 +19,7 @@ export interface InterventionPolicyGroup {
 	name: string;
 	parameter: string;
 	startTime: number;
+	endTime: number;
 	lowerBound: number;
 	upperBound: number;
 	initialGuess: number;
@@ -44,7 +41,6 @@ export interface ConstraintGroup {
 
 export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
-	startTime?: number;
 	endTime: number;
 	numSamples: number;
 	solverMethod: string;
@@ -72,6 +68,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	name: 'Policy bounds',
 	parameter: '',
 	startTime: 0,
+	endTime: 0,
 	lowerBound: 0,
 	upperBound: 0,
 	initialGuess: 0,
@@ -136,7 +133,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	const simulationIntervetions: SimulationIntervention[] =
+	const simulationIntervetions =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const policyInterventions = simulation?.executionPayload?.policy_interventions;
 	const interventionType = policyInterventions.selection ?? '';

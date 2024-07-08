@@ -37,7 +37,7 @@
 						/>
 					</div>
 				</div>
-				<div class="form-section">
+				<section class="form-section">
 					<h5>
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
@@ -74,8 +74,8 @@
 					<!--							@click="addInterventionPolicyGroupForm"-->
 					<!--						/>-->
 					<!--					</div>-->
-				</div>
-				<div class="form-section">
+				</section>
+				<section class="form-section">
 					<h5>
 						Optimization settings
 						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
@@ -145,7 +145,7 @@
 							</div>
 						</div>
 					</div>
-				</div>
+				</section>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
@@ -346,7 +346,6 @@ enum OutputView {
 }
 
 interface BasicKnobs {
-	startTime: number;
 	endTime: number;
 	numSamples: number;
 	solverMethod: string;
@@ -358,7 +357,6 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	startTime: props.node.state.startTime ?? 0,
 	endTime: props.node.state.endTime ?? 1,
 	numSamples: props.node.state.numSamples ?? 0,
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.

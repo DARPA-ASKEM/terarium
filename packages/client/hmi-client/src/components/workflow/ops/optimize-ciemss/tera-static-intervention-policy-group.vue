@@ -91,14 +91,15 @@
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import { computed, ref } from 'vue';
+import { StaticIntervention } from '@/types/Types';
 
 const props = defineProps<{
 	config: any;
 	knobs: any;
-	staticInterventions: any;
+	staticInterventions: StaticIntervention[];
 }>();
 
-const startTime = ref(props.knobs.startTime);
+const startTime = ref(props.config.startTime);
 const endTime = ref(props.knobs.endTime);
 const initialGuess = ref(props.staticInterventions[0]?.value);
 

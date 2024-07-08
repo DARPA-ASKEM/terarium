@@ -7,9 +7,11 @@
 	</p>
 </template>
 <script setup lang="ts">
+import { DynamicIntervention } from '@/types/Types';
+
 defineProps<{
 	config: any;
-	dynamicInterventions: any;
+	dynamicInterventions: DynamicIntervention[];
 }>();
 </script>
 
