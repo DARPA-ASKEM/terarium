@@ -105,7 +105,7 @@ const props = defineProps<{
 	isGeneratingCard?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
+const emit = defineEmits(['update-model', 'update-configuration', 'model-updated']);
 
 const teraModelDiagramRef = ref();
 const descriptionType = ref('TA1');
