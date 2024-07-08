@@ -95,7 +95,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				}
 
 				// Map the initials values to the model
-				// final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"),
 							modelCopy);
