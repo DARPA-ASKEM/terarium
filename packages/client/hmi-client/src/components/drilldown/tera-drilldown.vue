@@ -134,17 +134,18 @@ const outputOptions = computed(() => {
 			WorkflowOperationTypes.DOCUMENT,
 			WorkflowOperationTypes.CODE
 		].includes(props.node.operationType)
-	)
+	) {
 		return null;
-	if (!isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
 	}
-	return [];
+
+	if (isEmpty(props.node.outputs)) return [];
+
+	return [
+		{
+			label: 'Select outputs to display in operator',
+			items: props.node.outputs
+		}
+	];
 });
 
 const toggle = (event) => {
