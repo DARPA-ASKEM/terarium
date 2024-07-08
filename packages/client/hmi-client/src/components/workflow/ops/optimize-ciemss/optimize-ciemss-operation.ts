@@ -115,7 +115,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxiter: 5,
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
-			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
