@@ -1,32 +1,39 @@
 <template>
-	<header>
-		<strong>{{ initialId }}</strong>
-		<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-		<span v-if="unit" class="ml-2">({{ unit }})</span>
-		<span v-if="description" class="ml-4">{{ description }}</span>
-	</header>
-	<main>
-		<span class="expression">
-			<tera-input
-				label="Expression"
-				:model-value="getInitialExpression(modelConfiguration, initialId)"
-				@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+	<div>
+		<header>
+			<div>
+				<strong>{{ initialId }}</strong>
+				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+				<template v-if="unit">
+					<label class="ml-2">Unit</label>
+					<span class="ml-1">{{ unit }}</span>
+				</template>
+			</div>
+			<span v-if="description" class="ml-4">{{ description }}</span>
+		</header>
+		<main>
+			<span class="expression">
+				<tera-input
+					label="Expression"
+					:model-value="getInitialExpression(modelConfiguration, initialId)"
+					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+				/>
+			</span>
+			<Button
+				:label="getSourceLabel(initialId)"
+				text
+				size="small"
+				@click="sourceOpen = !sourceOpen"
 			/>
-		</span>
-		<Button
-			:label="getSourceLabel(initialId)"
-			text
-			size="small"
-			@click="sourceOpen = !sourceOpen"
-		/>
-	</main>
-	<footer v-if="sourceOpen">
-		<tera-input
-			label="Source / notes / etc"
-			:model-value="getInitialSource(modelConfiguration, initialId)"
-			@update:model-value="emit('update-source', { id: initialId, value: $event })"
-		/>
-	</footer>
+		</main>
+		<footer v-if="sourceOpen">
+			<tera-input
+				placeholder="Add a source"
+				:model-value="getInitialSource(modelConfiguration, initialId)"
+				@update:model-value="emit('update-source', { id: initialId, value: $event })"
+			/>
+		</footer>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -65,6 +72,7 @@ function getSourceLabel(initialId) {
 <style scoped>
 header {
 	display: flex;
+	flex-direction: column;
 	padding-bottom: var(--gap-small);
 }
 .expression {
@@ -74,5 +82,9 @@ main {
 	display: flex;
 	justify-content: space-between;
 	padding-bottom: var(--gap-small);
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 </style>

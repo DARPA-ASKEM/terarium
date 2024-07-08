@@ -3,98 +3,128 @@
 		<template v-if="isEditing">
 			<Textarea
 				v-focus
-				v-model="summary"
+				v-model="summaryText"
 				:maxlength="MAX_LENGTH"
 				autoResize
 				rows="1"
 				@click.stop
-				@keydown.enter.prevent="updateSummary"
-				@keydown.esc.prevent="updateSummary"
+				@keydown.enter.prevent="updateSummaryText"
+				@keydown.esc.prevent="updateSummaryText"
 			/>
 			<div class="btn-group">
 				<Button icon="pi pi-times" rounded text @click="cancelEdit" />
-				<Button icon="pi pi-check" rounded text @click="updateSummary" />
+				<Button icon="pi pi-check" rounded text @click="updateSummaryText" />
 			</div>
 		</template>
-		<div v-else-if="!isNil(activeOutput?.summary)" class="summary">
-			<img v-if="isGenerating || isGenerated" src="@assets/svg/icons/magic.svg" alt="Magic icon" />
-			<p v-if="isGenerating">Generating AI summary...</p>
-			<p v-else @click="isEditing = true">
-				{{ summary }}<span class="pi pi-pencil ml-2 text-xs" />
+		<div v-else-if="isLoading === false" class="summary">
+			<p else @click="isEditing = true">
+				{{ summaryText }}<span class="pi pi-pencil ml-2 text-xs" />
 			</p>
+		</div>
+		<div v-else-if="isLoading" class="summary">
+			<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />
+			<p>Generating summary...</p>
 		</div>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isNil } from 'lodash';
-import { ref, watch, PropType, computed } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, watch, onUnmounted } from 'vue';
+import { Poller, PollerState } from '@/api/api';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-import { getActiveOutput } from '@/services/workflow';
-import { WorkflowNode } from '@/types/workflow';
+import { updateSummary, getSummaries } from '@/services/summary-service';
+import { Summary } from '@/types/Types';
 
 const MAX_LENGTH = 400;
 
 const props = defineProps({
-	node: {
-		type: Object as PropType<WorkflowNode<any>>,
+	summaryId: {
+		type: String,
 		required: true
 	}
 });
 
-const activeOutput = computed(() => getActiveOutput(props.node));
-
-const emit = defineEmits(['update-output-port', 'generate-output-summary']);
-
-const summary = ref(activeOutput.value?.summary);
-
+const summaryText = ref('');
+const summary = ref<Summary | null>(null);
 const isEditing = ref(false);
+const isLoading = ref(true);
 
-function updateSummary() {
-	const updated = cloneDeep(activeOutput.value);
-	if (!updated) return;
-	if (updated.summary === summary.value) {
-		isEditing.value = false;
-		return;
-	}
-	updated.summaryHasBeenEdited = true;
-	updated.summary = summary.value;
-	emit('update-output-port', updated);
+function updateSummaryText() {
+	if (!summary.value || isEmpty(summary.value)) return;
+	summary.value.humanSummary = summaryText.value;
+	updateSummary(summary.value);
 	isEditing.value = false;
+}
+
+function getSummaryText(s: Summary) {
+	if (s.humanSummary) {
+		return s.humanSummary;
+	}
+	return s.generatedSummary || '';
 }
 
 function cancelEdit() {
 	isEditing.value = false;
-	summary.value = activeOutput.value?.summary;
+	if (summary.value) {
+		summaryText.value = getSummaryText(summary.value);
+	}
 }
 
-const isGenerating = computed(
-	() => activeOutput?.value?.summaryHasBeenEdited !== true && activeOutput?.value?.summary === ''
-);
-const isGenerated = computed(
-	() =>
-		activeOutput?.value?.summaryHasBeenEdited !== true &&
-		(activeOutput?.value?.summary?.length ?? 0) > 0
-);
+/**
+ * It can take some time (30-40 seconds) for generated summary to appear
+ * */
+const poller = new Poller<Summary>();
+async function pollSummary() {
+	isLoading.value = true;
+	poller
+		.setInterval(3000)
+		.setThreshold(15)
+		.setPollAction(async () => {
+			const summaryMap = await getSummaries([props.summaryId]);
+			const summaryObj = summaryMap[props.summaryId];
+			if (summaryObj && summaryObj.generatedSummary) {
+				return { data: summaryObj, progress: null, error: null };
+			}
+			return { data: null, progress: null, error: null };
+		});
+	const pollerResult = await poller.start();
+	if (pollerResult.state === PollerState.Cancelled) {
+		return;
+	}
+
+	summary.value = pollerResult.data;
+	if (summary.value) {
+		summaryText.value = getSummaryText(summary.value);
+	}
+	isLoading.value = false;
+}
+
+onUnmounted(() => {
+	poller.stop();
+});
 
 watch(
-	() => activeOutput.value,
-	() => {
-		if (isGenerating.value) {
-			emit('generate-output-summary', activeOutput.value);
-		} else {
-			summary.value = activeOutput.value?.summary;
+	() => props.summaryId,
+	async (newId, oldId) => {
+		if (!newId || newId === oldId) return;
+		pollSummary();
+		/*
+		const summaryMap = await getSummaries([props.summaryId]);
+		summary.value = summaryMap[props.summaryId];
+		if (summary.value) {
+			summaryText.value = getSummaryText(summary.value);
 		}
+		*/
 	},
-	{ immediate: true, deep: true }
+	{ immediate: true }
 );
 </script>
 
 <style scoped>
 section {
 	display: flex;
-	flex: 1;
 	&:empty {
 		display: none;
 	}

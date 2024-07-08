@@ -2,11 +2,9 @@
 	<tera-drilldown
 		:node="node"
 		:menu-items="menuItems"
-		:output-summary="true"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
-		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
@@ -150,7 +148,6 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'update-output-port',
-	'generate-output-summary',
 	'select-output'
 ]);
 

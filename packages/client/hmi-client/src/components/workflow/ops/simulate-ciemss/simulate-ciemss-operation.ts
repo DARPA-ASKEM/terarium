@@ -41,11 +41,5 @@ export const SimulateCiemssOperation: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
-	},
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
 	}
 };

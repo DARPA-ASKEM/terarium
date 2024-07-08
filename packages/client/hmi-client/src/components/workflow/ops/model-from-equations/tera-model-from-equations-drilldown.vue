@@ -21,7 +21,7 @@
 				class="hidden"
 			/>
 		</template>
-		<section :tabName="DrilldownTabs.Wizard">
+		<tera-columnar-panel :tabName="DrilldownTabs.Wizard">
 			<tera-drilldown-section :is-loading="assetLoading">
 				<template #header-controls-left>
 					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
@@ -129,10 +129,10 @@
 					style="height: 100%"
 				/>
 			</tera-drilldown-preview>
-		</section>
-		<section :tabName="DrilldownTabs.Notebook">
+		</tera-columnar-panel>
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
-		</section>
+		</tera-drilldown-section>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
@@ -168,6 +168,7 @@ import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.
 import { DrilldownTabs, ModelServiceType } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 
 import * as textUtils from '@/utils/text';
 import {
