@@ -25,9 +25,9 @@ export interface InterventionPolicyGroup {
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
-	optimizeOption?: string;
-	startTimeOption?: string;
-	newValueOption?: string;
+	optimizationType: string;
+	startTimeOption: string;
+	newValueOption: string;
 	isDisabled?: boolean;
 	intervention?: Intervention;
 }
@@ -76,7 +76,10 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	upperBound: 0,
 	initialGuess: 0,
 	isActive: true,
-	paramValue: 0
+	paramValue: 0,
+	optimizationType: 'new value',
+	startTimeOption: 'earliest',
+	newValueOption: 'initial guess'
 };
 
 export const defaultConstraintGroup: ConstraintGroup = {

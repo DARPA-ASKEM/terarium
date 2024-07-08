@@ -5,10 +5,8 @@
 				Find the
 				<Dropdown
 					class="toolbar-button"
-					v-model="configIntervention.optimizeOption"
-					option-label="label"
-					option-value="value"
-					:options="optimizeOptions"
+					v-model="knobs.optimizationType"
+					:options="OPTIMIZATION_TYPES"
 				/>
 				for the <b>{{ config.intervention?.type }}</b> <b>{{ config.intervention?.appliedTo }}</b
 				>.
@@ -22,21 +20,15 @@
 					<Dropdown
 						v-if="showNewValueOptions"
 						class="toolbar-button ml-1 mr-1"
-						v-model="configIntervention.newValueOption"
-						optionLabel="label"
-						optionValue="value"
-						:options="objectiveOptions"
-						@update:model-value="upstateState"
+						v-model="knobs.newValueOption"
+						:options="NEW_VALUE_OPTIONS"
 					/>
 					<span v-if="showNewValueOptions && showStartTimeOptions">and at the</span>
 					<Dropdown
 						v-if="showStartTimeOptions"
 						class="toolbar-button ml-1 mr-1"
-						v-model="configIntervention.startTimeOption"
-						optionLabel="timeLabel"
-						optionValue="value"
-						:options="objectiveOptions"
-						@update:model-value="emit('update-self', config)"
+						v-model="knobs.startTimeOption"
+						:options="START_TIME_OPTIONS"
 					/>
 					<span v-if="showStartTimeOptions">start time</span>
 					<span>.</span>
@@ -46,14 +38,10 @@
 			<div v-if="showNewValueOptions">
 				<h6 class="pt-4, pb-3">New Value</h6>
 				<div class="input-row">
-					<div v-for="objective in objectiveOptions" :key="objective.value" class="label-and-input">
+					<div v-for="(objective, index) in NEW_VALUE_OPTIONS" :key="index" class="label-and-input">
 						<div class="label-and-input">
-							<label :for="objective.value">{{ objective.label }}</label>
-							<InputNumber
-								type="number"
-								v-model="configIntervention[objective.value]"
-								@update:model-value="upstateState"
-							/>
+							<label :for="objective">{{ objective }}</label>
+							<tera-input type="number" v-model="knobs[objective]" />
 						</div>
 					</div>
 				</div>
@@ -62,14 +50,14 @@
 			<div v-if="showStartTimeOptions">
 				<h6 class="pt-4, pb-3">Start Time</h6>
 				<div class="input-row">
-					<div v-for="objective in objectiveOptions" :key="objective.value" class="label-and-input">
+					<div
+						v-for="(objective, index) in START_TIME_OPTIONS"
+						:key="index"
+						class="label-and-input"
+					>
 						<div class="label-and-input">
-							<label :for="objective.value">{{ objective.label }}</label>
-							<InputNumber
-								type="number"
-								v-model="configIntervention[objective.value]"
-								@update:model-value="emit('update-self', config)"
-							/>
+							<label :for="objective">{{ objective }}</label>
+							<tera-input type="number" v-model="knobs[objective]" />
 						</div>
 					</div>
 				</div>
@@ -89,10 +77,9 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
-import InputNumber from 'primevue/inputnumber';
-import { computed, onMounted } from 'vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
+import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
@@ -101,61 +88,39 @@ const props = defineProps<{
 	staticInterventions: StaticIntervention[];
 }>();
 
-const configIntervention = cloneDeep(props.config);
-const emit = defineEmits(['update-self', 'delete-self']);
-
-const LOWER_BOUND = 'lowerBound';
-const UPPER_BOUND = 'upperBound';
-const INITIAL_GUESS = 'initialGuess';
-const VALUE = 'VALUE';
-const START_TIME = 'startTime';
-const VALUE_START_TIME = 'VALUE_START_TIME';
-
-const OPTIONS = {
-	[LOWER_BOUND]: 'Lower bound',
-	[UPPER_BOUND]: 'Upper bound',
-	[INITIAL_GUESS]: 'Initial guess',
-	[VALUE]: 'new value',
-	[START_TIME]: 'new start time',
-	[VALUE_START_TIME]: 'new value and start time'
-};
-
-onMounted(() => {
-	if (!configIntervention.newValueOption) {
-		configIntervention.newValueOption = INITIAL_GUESS;
-	}
-	if (!configIntervention.startTimeOption) {
-		configIntervention.startTimeOption = LOWER_BOUND;
-	}
-	if (!configIntervention.optimizeOption) {
-		configIntervention.optimizeOption = VALUE;
-	}
+const knobs = ref({
+	optimizationType: props.config.optimizationType ?? 'new value',
+	newValueOption: props.config.newValueOption ?? 'initial guess',
+	startTimeOption: props.config.startTimeOption ?? 'earliest'
 });
 
-const optimizeOptions = [
-	{ label: OPTIONS[VALUE], value: VALUE },
-	{ label: OPTIONS[START_TIME], value: START_TIME },
-	{ label: OPTIONS[VALUE_START_TIME], value: VALUE_START_TIME }
-];
+// const emit = defineEmits(['update-self']);
 
-const objectiveOptions = [
-	{ label: OPTIONS[LOWER_BOUND], timeLabel: 'earliest', value: LOWER_BOUND },
-	{ label: OPTIONS[UPPER_BOUND], timeLabel: 'latest', value: UPPER_BOUND },
-	{ label: OPTIONS[INITIAL_GUESS], timeLabel: OPTIONS[INITIAL_GUESS], value: INITIAL_GUESS }
-];
+const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
+const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
+const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
-const showStartTimeOptions = computed(() => {
-	const config = configIntervention;
-	return config.optimizeOption === START_TIME || config.optimizeOption === VALUE_START_TIME;
-});
+const showStartTimeOptions = computed(
+	() =>
+		// TODO: check why OPTIMIZATION_TYPES[2] does not == OPTIMIZATION_TYPES[2]
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[1] ||
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+);
 const showNewValueOptions = computed(() => {
-	const config = configIntervention;
-	return config.optimizeOption === VALUE || config.optimizeOption === VALUE_START_TIME;
+	console.log(
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
+			knobs.value.optimizationType === OPTIMIZATION_TYPES[3]
+	);
+	return (
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[3]
+	);
 });
 
-const upstateState = () => {
-	emit('update-self', configIntervention);
-};
+// TODO: Fix this
+// const upstateState = () => {
+// 	emit('update-self', configIntervention);
+// };
 </script>
 
 <style scoped>
