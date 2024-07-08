@@ -5,12 +5,12 @@
 				Find the
 				<Dropdown
 					class="toolbar-button"
-					v-model="optimizeOption"
+					v-model="configIntervention.optimizeOption"
 					option-label="label"
 					option-value="value"
 					:options="optimizeOptions"
 				/>
-				for the parameter <b>{{ config.intervention?.appliedTo }}</b
+				for the <b>{{ config.intervention?.type }}</b> <b>{{ config.intervention?.appliedTo }}</b
 				>.
 			</p>
 		</div>
@@ -22,17 +22,17 @@
 					<Dropdown
 						v-if="showNewValueOptions"
 						class="toolbar-button ml-1 mr-1"
-						v-model="newValueOption"
+						v-model="configIntervention.newValueOption"
 						optionLabel="label"
 						optionValue="value"
 						:options="objectiveOptions"
-						@update:model-value="emit('update-self', config)"
+						@update:model-value="upstateState"
 					/>
 					<span v-if="showNewValueOptions && showStartTimeOptions">and at the</span>
 					<Dropdown
 						v-if="showStartTimeOptions"
 						class="toolbar-button ml-1 mr-1"
-						v-model="startTimeOption"
+						v-model="configIntervention.startTimeOption"
 						optionLabel="timeLabel"
 						optionValue="value"
 						:options="objectiveOptions"
@@ -51,8 +51,8 @@
 							<label :for="objective.value">{{ objective.label }}</label>
 							<InputNumber
 								type="number"
-								v-model="newValueObjectives[objective.value]"
-								@update:model-value="emit('update-self', config)"
+								v-model="configIntervention[objective.value]"
+								@update:model-value="upstateState"
 							/>
 						</div>
 					</div>
@@ -67,7 +67,7 @@
 							<label :for="objective.value">{{ objective.label }}</label>
 							<InputNumber
 								type="number"
-								v-model="startTimeObjectives[objective.value]"
+								v-model="configIntervention[objective.value]"
 								@update:model-value="emit('update-self', config)"
 							/>
 						</div>
@@ -79,7 +79,8 @@
 	<div v-else>
 		<div v-for="(staticIntervention, index) in staticInterventions" :key="index">
 			<p>
-				Set the parameter <b>{{ config.intervention?.appliedTo }}</b> to a new value of
+				Set the <b>{{ config.intervention?.type }}</b>
+				<b>{{ config.intervention?.appliedTo }}</b> to a new value of
 				<b>{{ staticIntervention.value }}</b> day at start time
 				<b>{{ staticIntervention.threshold }}</b> day.
 			</p>
@@ -88,29 +89,26 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import { computed, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
 	config: InterventionPolicyGroup;
-	knobs: any;
 	staticInterventions: StaticIntervention[];
 }>();
 
-const startTime = ref(props.config.startTime);
-const endTime = ref(props.knobs.endTime);
-const initialGuess = ref(props.staticInterventions[0]?.value);
-
+const configIntervention = cloneDeep(props.config);
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const LOWER_BOUND = 'LOWER_BOUND';
-const UPPER_BOUND = 'UPPER_BOUND';
-const INITIAL_GUESS = 'INITIAL_GUESS';
+const LOWER_BOUND = 'lowerBound';
+const UPPER_BOUND = 'upperBound';
+const INITIAL_GUESS = 'initialGuess';
 const VALUE = 'VALUE';
-const START_TIME = 'START_TIME';
+const START_TIME = 'startTime';
 const VALUE_START_TIME = 'VALUE_START_TIME';
 
 const OPTIONS = {
@@ -122,20 +120,16 @@ const OPTIONS = {
 	[VALUE_START_TIME]: 'new value and start time'
 };
 
-const optimizeOption = ref(VALUE);
-const startTimeOption = ref(LOWER_BOUND);
-const newValueOption = ref(INITIAL_GUESS);
-
-const startTimeObjectives = ref({
-	[LOWER_BOUND]: startTime.value,
-	[UPPER_BOUND]: endTime.value,
-	[INITIAL_GUESS]: initialGuess.value
-});
-
-const newValueObjectives = ref({
-	[LOWER_BOUND]: 0,
-	[UPPER_BOUND]: 0,
-	[INITIAL_GUESS]: initialGuess.value
+onMounted(() => {
+	if (!configIntervention.newValueOption) {
+		configIntervention.newValueOption = INITIAL_GUESS;
+	}
+	if (!configIntervention.startTimeOption) {
+		configIntervention.startTimeOption = LOWER_BOUND;
+	}
+	if (!configIntervention.optimizeOption) {
+		configIntervention.optimizeOption = VALUE;
+	}
 });
 
 const optimizeOptions = [
@@ -150,12 +144,18 @@ const objectiveOptions = [
 	{ label: OPTIONS[INITIAL_GUESS], timeLabel: OPTIONS[INITIAL_GUESS], value: INITIAL_GUESS }
 ];
 
-const showStartTimeOptions = computed(
-	() => optimizeOption.value === START_TIME || optimizeOption.value === VALUE_START_TIME
-);
-const showNewValueOptions = computed(
-	() => optimizeOption.value === VALUE || optimizeOption.value === VALUE_START_TIME
-);
+const showStartTimeOptions = computed(() => {
+	const config = configIntervention;
+	return config.optimizeOption === START_TIME || config.optimizeOption === VALUE_START_TIME;
+});
+const showNewValueOptions = computed(() => {
+	const config = configIntervention;
+	return config.optimizeOption === VALUE || config.optimizeOption === VALUE_START_TIME;
+});
+
+const upstateState = () => {
+	emit('update-self', configIntervention);
+};
 </script>
 
 <style scoped>

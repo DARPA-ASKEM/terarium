@@ -28,13 +28,14 @@
 		<div v-if="dynamicInterventions.length > 0">
 			<tera-dynamic-intervention-policy-group
 				:config="config"
+				@update-self="updateState"
 				:dynamicInterventions="dynamicInterventions"
 			/>
 		</div>
 		<div v-else-if="staticInterventions.length > 0">
 			<tera-static-intervention-policy-group
 				:config="config"
-				:knobs="knobs"
+				@update-self="updateState"
 				:staticInterventions="staticInterventions"
 			/>
 		</div>
@@ -58,7 +59,6 @@ const props = defineProps<{
 	parameterOptions: string[];
 	config: InterventionPolicyGroup;
 	interventionType?: InterventionTypes;
-	knobs: any;
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
@@ -70,12 +70,15 @@ const staticInterventions = ref<StaticIntervention[] | []>(
 	props.config.intervention?.staticInterventions ?? []
 );
 
-const knobs = ref(cloneDeep(props.knobs));
 const config = ref<InterventionPolicyGroup>(cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
 
 const onEdit = () => {
 	isEditing.value = !isEditing.value;
+};
+
+const updateState = () => {
+	emit('update-self', config);
 };
 </script>
 

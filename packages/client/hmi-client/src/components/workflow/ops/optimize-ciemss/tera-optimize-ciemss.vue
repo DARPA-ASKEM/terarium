@@ -43,10 +43,9 @@
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
 					<tera-intervention-policy-group-form
-						v-for="(cfg, idx) in interventions"
+						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
 						:config="cfg"
-						:knobs="knobs"
 						:intervention-type="props.node.state.interventionType"
 						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
@@ -534,10 +533,6 @@ const addInterventionPolicyToGroup = (interventions) => {
 	}
 	emit('update-state', state);
 };
-
-const interventions = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((policy) => policy.intervention)
-);
 
 const runOptimize = async () => {
 	if (!modelConfiguration.value?.id) {

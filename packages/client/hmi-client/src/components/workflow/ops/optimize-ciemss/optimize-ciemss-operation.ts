@@ -25,6 +25,9 @@ export interface InterventionPolicyGroup {
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
+	optimizeOption?: string;
+	startTimeOption?: string;
+	newValueOption?: string;
 	isDisabled?: boolean;
 	intervention?: Intervention;
 }
