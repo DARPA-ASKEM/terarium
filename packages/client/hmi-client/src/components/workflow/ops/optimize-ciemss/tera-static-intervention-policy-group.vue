@@ -114,7 +114,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-self']);
 
 const knobs = ref({
-	name: props.config.name ?? 'policy bounds',
+	name: props.config.name ?? 'Intervention',
 	isActive: props.config.isActive ?? false,
 	intervention: props.config.intervention,
 	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,

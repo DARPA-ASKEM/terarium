@@ -75,7 +75,7 @@ export const OPTIMIZATION_TYPE_MAP = [
 ];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	name: 'Policy bounds',
+	name: 'Intervention',
 	parameter: '',
 	startTime: 0,
 	endTime: 0,
