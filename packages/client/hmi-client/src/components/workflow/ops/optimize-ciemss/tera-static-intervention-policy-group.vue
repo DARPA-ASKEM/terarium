@@ -97,6 +97,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
