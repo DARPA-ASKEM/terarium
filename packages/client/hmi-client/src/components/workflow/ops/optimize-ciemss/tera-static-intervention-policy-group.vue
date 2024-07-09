@@ -117,7 +117,7 @@ const knobs = ref({
 	name: props.config.name ?? 'policy bounds',
 	isActive: props.config.isActive ?? false,
 	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType ?? InterventionTypes.startTime,
+	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,
 	newValueOption: props.config.newValueOption ?? 'initial guess',
 	startTimeOption: props.config.startTimeOption ?? 'earliest',
 	startTime: props.config.startTime ?? 0,
