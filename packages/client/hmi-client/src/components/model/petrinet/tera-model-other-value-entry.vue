@@ -2,6 +2,7 @@
 	<tera-modal>
 		<section style="width: 800px">
 			<DataTable
+				class="value-border"
 				:value="tableData"
 				@update:selection="onSelectionChange"
 				dataKey="id"
@@ -10,9 +11,10 @@
 				scrollHeight="45rem"
 			>
 				<template #header> </template>
-				<Column selectionMode="single" headerStyle="width: 3rem"></Column>
+				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
 				<Column
 					v-for="(col, index) in selectedColumns"
+					:class="isExpression(col.field) ? 'border' : ''"
 					:field="col.field"
 					:header="col.header"
 					:sortable="col.field !== 'stats'"
@@ -27,7 +29,12 @@
 							{{ data.target }}
 						</template>
 						<template v-if="col.field === 'expression'">
-							<div class>Constants {{ data.expression }}</div>
+							<section class="inline-flex gap-1">
+								<div v-if="isConstant()">
+									<span>Constants</span>
+									<span>{{ data.expression }}</span>
+								</div>
+							</section>
 						</template>
 					</template>
 				</Column>
@@ -35,11 +42,11 @@
 					<Row>
 						<Column>
 							<template #footer>
-								<!-- <RadioButton v-model="customSelection" value="1" variant="filled" onchange=""/> -->
-								<input
-									type="checkbox"
-									:checked="customSelection"
-									:onchange="onCustomSelectionChange"
+								<RadioButton
+									v-model="customSelection"
+									value="true"
+									variant="filled"
+									@change="onCustomSelectionChange"
 								/>
 							</template>
 						</Column>
@@ -50,16 +57,40 @@
 						</Column>
 						<Column>
 							<template #footer>
-								<p>
+								<section v-if="isConstant()" class="inline-flex gap-1">
+									<span class="pl-1 pr-1">Constant</span>
+									<tera-input
+										class=""
+										placeholder="Constant"
+										v-model="customConstant"
+										@update:modelValue="onCustomSelectionChange"
+									/>
+								</section>
+								<section v-else class="inline-flex gap-1">
 									<Dropdown v-model="numberType" :options="numberOptions"></Dropdown>
 									<template v-if="numberType === numberOptions[0]">
-										<tera-input placeholder="Constant" v-model="customConstant" />
+										<tera-input
+											class=""
+											placeholder="Constant"
+											v-model="customConstant"
+											@update:modelValue="onCustomSelectionChange"
+										/>
 									</template>
 									<template v-if="numberType === numberOptions[1]">
-										<tera-input placeholder="Min" v-model="customMin" />
-										<tera-input placeholder="Max" v-model="customMax" />
+										<tera-input
+											class=""
+											placeholder="Min"
+											v-model="customMin"
+											@update:modelValue="onCustomSelectionChange"
+										/>
+										<tera-input
+											class=""
+											placeholder="Max"
+											v-model="customMax"
+											@update:modelValue="onCustomSelectionChange"
+										/>
 									</template>
-								</p>
+								</section>
 							</template>
 						</Column>
 					</Row>
@@ -74,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import { OtherValuesInputTypes, OtherValuesInput } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
@@ -83,10 +115,12 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
+import RadioButton from 'primevue/radiobutton';
 
 const props = defineProps<{
 	initialId: string;
 	tableData: any;
+	otherValuesInputTypes: OtherValuesInputTypes;
 }>();
 
 const tableData = ref(props.tableData);
@@ -94,23 +128,15 @@ const tableData = ref(props.tableData);
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
 	{ field: 'target', header: 'Source' },
-	{ field: 'expression', header: 'Value' }
+	{ field: 'expression', header: 'Value' },
+	{ field: 'max', header: '' },
+	{ field: 'min', header: '' }
 ]);
 
-enum OtherValuesInputTypes {
-	constant = 'constant',
-	uniform = 'uniform'
-}
-
-interface OtherValuesInput {
-	type: OtherValuesInputTypes;
-	constant: number;
-	max: number;
-	min: number;
-	source: string;
-}
-
 const emit = defineEmits(['update-expression', 'update-source', 'close-modal']);
+
+const isExpression = (field) => field === 'expression';
+const isConstant = () => props.otherValuesInputTypes === OtherValuesInputTypes.constant;
 
 const customSource = ref('default');
 const numberType = ref('constant');
@@ -125,17 +151,19 @@ const customSelection = ref(false);
 const selection = ref<null | OtherValuesInput>(null);
 
 const onSelectionChange = (val) => {
-	selection.value = val;
+	console.log(val);
+	console.log(val.expression);
+	selection.value = { constant: val.expression, source: customSource.value };
 	customSelection.value = false;
+	console.log(selection.value);
 };
 
 const onCustomSelectionChange = () => {
-	customSelection.value = !customSelection.value;
 	if (customSelection.value) {
 		selection.value =
 			numberType.value === numberOptions[0]
 				? { constant: customConstant.value, source: customSource.value }
-				: { expression: 0, source: '' };
+				: { constant: 0, source: '' };
 	}
 };
 
@@ -153,6 +181,7 @@ function getColumnWidth(columnField: string) {
 }
 
 function applySelectedValue() {
+	console.log('selection.value', selection.value);
 	emit('update-expression', { id: props.initialId, value: selection.value?.constant });
 	emit('update-source', { id: props.initialId, value: selection.value?.source });
 	emit('close-modal');
@@ -176,5 +205,10 @@ main {
 
 label {
 	color: var(--text-color-subdued);
+}
+
+.value-border > p-datatable-wrapper {
+	border: 1px solid #000;
+	border-radius: 8px;
 }
 </style>

@@ -25,7 +25,12 @@
 				size="small"
 				@click="sourceOpen = !sourceOpen"
 			/>
-			<Button :label="getOtherValuesLabel(initialId)" text size="small" @click="openModal()" />
+			<Button
+				:label="getOtherValuesLabel(initialId)"
+				text
+				size="small"
+				@click="showOtherConfigValueModal = true"
+			/>
 		</main>
 		<footer v-if="sourceOpen">
 			<tera-input
@@ -40,6 +45,7 @@
 			v-if="showOtherConfigValueModal"
 			:initial-id="initialId"
 			:tableData="tableData"
+			:otherValuesInputTypes="OtherValuesInputTypes.constant"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
 			@update-expression="emit('update-expression', $event)"
 			@update-source="emit('update-source', $event)"
@@ -49,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration } from '@/types/Types';
+import { Model, ModelConfiguration, OtherValuesInputTypes } from '@/types/Types';
 import { getInitialExpression, getInitialSource } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraModelOtherValueEntry from '@/components/model/petrinet/tera-model-other-value-entry.vue';
@@ -99,10 +105,6 @@ function getOtherValuesLabel(initialId) {
 		}
 	});
 	return `Other Values(${tableData.value.length})`;
-}
-
-function openModal() {
-	showOtherConfigValueModal.value = true;
 }
 </script>
 
