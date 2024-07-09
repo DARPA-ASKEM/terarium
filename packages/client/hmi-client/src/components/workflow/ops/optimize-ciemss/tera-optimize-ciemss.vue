@@ -43,7 +43,7 @@
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
-						<tera-static-intervention-policy-group-form
+						<tera-static-intervention-policy-group
 							v-if="
 								cfg.intervention?.staticInterventions &&
 								cfg.intervention?.staticInterventions.length > 0
@@ -56,7 +56,7 @@
 						/>
 					</template>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
-						<tera-dynamic-intervention-policy-group-form
+						<tera-dynamic-intervention-policy-group
 							v-if="
 								cfg.intervention?.dynamicInterventions &&
 								cfg.intervention?.dynamicInterventions.length > 0
@@ -312,9 +312,9 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraDynamicInterventionPolicyGroupForm from './tera-dynamic-intervention-policy-group-form.vue';
-import TeraStaticInterventionPolicyGroupForm from './tera-static-intervention-policy-group-form.vue';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
+import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
+import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
