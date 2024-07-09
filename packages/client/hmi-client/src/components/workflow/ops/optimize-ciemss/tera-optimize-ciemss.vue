@@ -18,7 +18,7 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<h5>Constraints <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
+					<h5>Success criteria <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -37,25 +37,11 @@
 						/>
 					</div>
 				</div>
-				<div class="form-section">
+				<section class="form-section">
 					<h5>
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
-					<div>
-						<label>Intervention Type</label>
-						<Dropdown
-							class="p-inputtext-sm"
-							:options="[
-								{ label: 'parameter value', value: InterventionTypes.paramValue },
-								{ label: 'start time', value: InterventionTypes.startTime }
-							]"
-							option-label="label"
-							option-value="value"
-							v-model="knobs.interventionType"
-							placeholder="Select"
-						/>
-					</div>
 					<tera-intervention-policy-group-form
 						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
 						:key="idx"
@@ -65,16 +51,8 @@
 						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
 					/>
-					<div>
-						<Button
-							icon="pi pi-plus"
-							class="p-button-sm p-button-text"
-							label="Add more interventions"
-							@click="addInterventionPolicyGroupForm"
-						/>
-					</div>
-				</div>
-				<div class="form-section">
+				</section>
+				<section class="form-section">
 					<h5>
 						Optimization settings
 						<i v-tooltip="optimizeSettingsToolTip" class="pi pi-info-circle" />
@@ -144,7 +122,7 @@
 							</div>
 						</div>
 					</div>
-				</div>
+				</section>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
@@ -317,6 +295,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import {
 	OptimizeCiemssOperationState,
@@ -474,14 +453,6 @@ const deleteInterverntionPolicyGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const addInterventionPolicyGroupForm = () => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
-
-	state.interventionPolicyGroups.push(blankInterventionPolicyGroup);
-	emit('update-state', state);
-};
-
 const addConstraintGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
@@ -523,11 +494,45 @@ const initialize = async () => {
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
 	const model = await getAsConfiguredModel(modelConfiguration.value);
 
+	const policyId = props.node.inputs[2]?.value?.[0];
+	if (policyId) {
+		getInterventionPolicyById(policyId).then((interventions) =>
+			addInterventionPolicyToGroup(interventions)
+		);
+	}
+
 	modelParameterOptions.value = model?.semantics?.ode.parameters ?? ([] as ModelParameter[]);
 	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id) ?? ([] as State[]);
 	model?.semantics?.ode.observables
 		?.map((ele) => ele.id)
 		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
+};
+
+const addInterventionPolicyToGroup = (interventions) => {
+	const state = _.cloneDeep(props.node.state);
+	if (
+		state.interventions &&
+		interventions.interventions &&
+		state.interventions.length === interventions.interventions.length
+	) {
+		return;
+	}
+	if (interventions.interventions && interventions.interventions.length > 0) {
+		interventions.interventions.forEach((intervention) => {
+			const isNotActive =
+				intervention.dynamicInterventions?.length > 0 ||
+				intervention.staticInterventions?.length > 1;
+			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.intervention = intervention;
+			newIntervention.name = intervention.name;
+			newIntervention.parameter = intervention.appliedTo;
+			newIntervention.isActive = !isNotActive;
+			newIntervention.isDisabled = isNotActive;
+			state.interventionPolicyGroups.push(newIntervention);
+		});
+		state.interventions = interventions.interventions;
+	}
+	emit('update-state', state);
 };
 
 const runOptimize = async () => {
@@ -686,7 +691,7 @@ watch(
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 2px; /* Adjust the gap between rows as needed */
+	gap: var(--gap-0-5); /* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
 	background-color: var(--surface-glass);
 	border: solid 1px var(--surface-border-light);
@@ -722,7 +727,6 @@ watch(
 	margin: 0 var(--gap) var(--gap) var(--gap);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
-	overflow: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -731,7 +735,7 @@ watch(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .input-row {
@@ -740,7 +744,7 @@ watch(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	padding-top: var(--gap);
 	& > * {
 		flex: 1;
@@ -752,7 +756,7 @@ watch(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 
 	& > *:first-child {
 		flex: 2;

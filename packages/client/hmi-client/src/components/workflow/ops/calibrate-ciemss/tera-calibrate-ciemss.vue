@@ -117,6 +117,11 @@
 				@update:selection="onSelection"
 				is-selectable
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					:summary-id="node.state.summaryId"
+				/>
+
 				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
@@ -188,6 +193,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
@@ -218,7 +224,7 @@ import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits(['append-output', 'close', 'select-output', 'update-state']);
+const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
 
 enum CalibrateTabs {
