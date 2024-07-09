@@ -17,7 +17,6 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroup {
-	name: string;
 	parameter: string;
 	startTime: number;
 	endTime: number;
@@ -75,7 +74,6 @@ export const OPTIMIZATION_TYPE_MAP = [
 ];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	name: 'Intervention',
 	parameter: '',
 	startTime: 0,
 	endTime: 0,

@@ -1,12 +1,7 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<tera-toggleable-edit
-				class="mr-auto"
-				:model-value="knobs.name"
-				@update:model-value="onEditName($event)"
-				tag="h5"
-			/>
+			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<label for="active">Optimize</label>
 				<InputSwitch v-model="knobs.isActive" @change="emit('update-self', knobs)" />
@@ -96,7 +91,6 @@
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
@@ -114,7 +108,6 @@ const props = defineProps<{
 const emit = defineEmits(['update-self']);
 
 const knobs = ref({
-	name: props.config.name ?? 'Intervention',
 	isActive: props.config.isActive ?? false,
 	intervention: props.config.intervention,
 	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,
@@ -127,11 +120,6 @@ const knobs = ref({
 	startTimeGuess: props.config.startTimeGuess ?? 1,
 	initialGuess: props.config.initialGuess ?? 0
 });
-
-const onEditName = (name: string) => {
-	knobs.value.name = name;
-	emit('update-self', knobs);
-};
 
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
