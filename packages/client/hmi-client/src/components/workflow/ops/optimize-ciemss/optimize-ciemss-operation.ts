@@ -7,8 +7,9 @@ const DOCUMENTATION_URL =
 
 export enum InterventionTypes {
 	paramValue = 'param_value',
-	startTime = 'start_time',
-	paramValueAndStartTime = 'param_value_and_start_time' // TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
+	startTime = 'start_time'
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
+	// ,paramValueAndStartTime = 'param_value_and_start_time'
 }
 
 export enum ContextMethods {
@@ -67,8 +68,9 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'start time', value: InterventionTypes.paramValue },
-	{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+	{ label: 'start time', value: InterventionTypes.paramValue }
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
+	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
 ];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
