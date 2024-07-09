@@ -67,31 +67,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Transactional
 public class ModelController {
 
-	final ModelService modelService;
-
-	final DocumentAssetService documentAssetService;
-
-	final ProvenanceSearchService provenanceSearchService;
-
-	final ObjectMapper objectMapper;
-
-	final DatasetService datasetService;
-
-	final ProjectService projectService;
-
 	final CurrentUserService currentUserService;
-
-	final ProjectAssetService projectAssetService;
-
-	final ModelConfigurationService modelConfigurationService;
-
-	final Messages messages;
-
-	final ModelConfigRepository modelConfigRepository;
-
-	final InterventionRepository interventionRepository;
-
+	final DatasetService datasetService;
+	final DocumentAssetService documentAssetService;
 	final EmbeddingService embeddingService;
+	final InterventionRepository interventionRepository;
+	final Messages messages;
+	final ModelConfigRepository modelConfigRepository;
+	final ModelConfigurationService modelConfigurationService;
+	final ModelService modelService;
+	final ObjectMapper objectMapper;
+	final ProjectAssetService projectAssetService;
+	final ProjectService projectService;
+	final ProvenanceSearchService provenanceSearchService;
 
 	@GetMapping("/descriptions")
 	@Secured(Roles.USER)
