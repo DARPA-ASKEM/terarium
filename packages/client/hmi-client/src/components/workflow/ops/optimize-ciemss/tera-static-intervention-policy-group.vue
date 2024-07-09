@@ -37,7 +37,9 @@
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
 								v-model="knobs.objectiveFunctionOption"
-								:options="NEW_VALUE_OPTIONS"
+								option-value="value"
+								option-label="label"
+								:options="OBJECTIVE_FUNCTION_MAP"
 								@change="emit('update-self', knobs)"
 							/>
 						</template>
@@ -46,7 +48,9 @@
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
 								v-model="knobs.objectiveFunctionOption"
-								:options="START_TIME_OPTIONS"
+								option-value="value"
+								option-label="label"
+								:options="OBJECTIVE_FUNCTION_MAP"
 								@change="emit('update-self', knobs)"
 							/>
 							<span>start time</span>
@@ -111,7 +115,8 @@ import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
 	InterventionTypes,
-	OPTIMIZATION_TYPE_MAP
+	OPTIMIZATION_TYPE_MAP,
+	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -141,8 +146,6 @@ const isNotEditable = computed(() => {
 	if (staticInterventions.value.length === 1) return false;
 	return true;
 });
-const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
-const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
 const showStartTimeOptions = computed(
 	() => knobs.value.optimizationType === InterventionTypes.paramValue

@@ -78,6 +78,13 @@ export const OPTIMIZATION_TYPE_MAP = [
 	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
 ];
 
+// This is used as a map between dropdown labels and the inner values used by pyciemss-service.
+export const OBJECTIVE_FUNCTION_MAP = [
+	{ label: 'initial guess', value: InterventionObjectiveFunctions.initialGuess },
+	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
+	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
+];
+
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
