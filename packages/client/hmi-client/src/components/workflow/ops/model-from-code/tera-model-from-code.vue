@@ -372,7 +372,7 @@ async function handleCode() {
 			return;
 		}
 
-		generateCard(documentId.value, model.id);
+		await generateCard(documentId.value);
 
 		clonedState.value.modelId = model.id;
 
