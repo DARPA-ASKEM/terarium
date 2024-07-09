@@ -7,7 +7,8 @@ const DOCUMENTATION_URL =
 
 export enum InterventionTypes {
 	paramValue = 'param_value',
-	startTime = 'start_time'
+	startTime = 'start_time',
+	paramValueAndStartTime = 'param_value_and_start_time'
 }
 
 export enum ContextMethods {
@@ -65,6 +66,13 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
+
+// This is used as a map between dropdown labels and the inner values used by pyciemss-service.
+export const OPTIMIZATION_TYPE_MAP = [
+	{ label: 'new value', value: InterventionTypes.startTime },
+	{ label: 'start time', value: InterventionTypes.paramValue },
+	{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	name: 'Policy bounds',

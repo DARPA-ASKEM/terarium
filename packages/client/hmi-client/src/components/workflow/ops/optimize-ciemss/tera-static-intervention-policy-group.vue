@@ -19,7 +19,9 @@
 					<Dropdown
 						class="toolbar-button"
 						v-model="knobs.optimizationType"
-						:options="OPTIMIZATION_TYPES"
+						option-value="value"
+						option-label="label"
+						:options="OPTIMIZATION_TYPE_MAP"
 					/>
 					for the <strong>{{ knobs.intervention?.type }}</strong>
 					<strong>{{ knobs.intervention?.appliedTo }}</strong
@@ -99,7 +101,8 @@ import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroup,
-	InterventionTypes
+	InterventionTypes,
+	OPTIMIZATION_TYPE_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -129,8 +132,6 @@ const onEditName = (name: string) => {
 	emit('update-self', knobs);
 };
 
-// const Optimzation_TY
-const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
@@ -139,13 +140,13 @@ const newStartTimeInputs = ['startTime', 'endTime', 'startTimeGuess'];
 
 const showStartTimeOptions = computed(
 	() =>
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[1] ||
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+		knobs.value.optimizationType === InterventionTypes.paramValue ||
+		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
 	() =>
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+		knobs.value.optimizationType === InterventionTypes.startTime ||
+		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );
 
 // TODO: Fix this
