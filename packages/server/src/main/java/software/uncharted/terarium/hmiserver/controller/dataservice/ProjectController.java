@@ -973,7 +973,11 @@ public class ProjectController {
 									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
 						}),
 				@ApiResponse(
-						responseCode = "304",
+					responseCode = "304",
+					description = "Not Modified.",
+					content = @Content),
+				@ApiResponse(
+						responseCode = "403",
 						description = "The current user does not have privileges to modify this project.",
 						content = @Content),
 				@ApiResponse(
