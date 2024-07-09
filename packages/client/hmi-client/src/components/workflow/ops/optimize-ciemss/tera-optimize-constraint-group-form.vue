@@ -15,12 +15,12 @@
 					@click="onEdit"
 				/>
 			</div>
-			<label for="active">Active</label>
+			<label for="active">Optimize</label>
 			<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			<i class="trash-button pi pi-trash" @click="emit('delete-self')" />
 		</div>
-		<div class="section-row">
-			<p>The average value of</p>
+		<div v-if="config.isActive" class="section-row">
+			Ensure
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="modelStateAndObsOptions"
@@ -28,7 +28,21 @@
 				placeholder="Select"
 				@update:model-value="emit('update-self', config)"
 			/>
-			<p>at</p>
+			is
+			<Dropdown
+				class="toolbar-button"
+				v-model="config.isMinimized"
+				optionLabel="label"
+				optionValue="value"
+				:options="[
+					{ label: 'below', value: true },
+					{ label: 'above', value: false }
+				]"
+				@update:model-value="emit('update-self', config)"
+			/>
+			a threshold of
+			<tera-input v-model="config.threshold" @on-focus-out="emit('update-self', config)" />
+			at
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="[
@@ -40,22 +54,15 @@
 				v-model="config.qoiMethod"
 				@update:model-value="emit('update-self', config)"
 			/>
-			<p>over the worst</p>
-			<tera-input v-model="config.riskTolerance" @on-focus-out="emit('update-self', config)" />
-			<p>% of simulated outcomes</p>
-			<Dropdown
-				class="toolbar-button"
-				v-model="config.isMinimized"
-				optionLabel="label"
-				optionValue="value"
-				:options="[
-					{ label: 'less than', value: true },
-					{ label: 'greater than', value: false }
-				]"
-				@update:model-value="emit('update-self', config)"
-			/>
-			<p>a threshold of</p>
-			<tera-input v-model="config.threshold" @on-focus-out="emit('update-self', config)" />
+			in
+			<tera-input v-model="config.riskTolerance" @on-focus-out="emit('update-self', config)" />% of
+			simulate outcomes
+		</div>
+		<div v-else class="section-row">
+			Ensure <b>{{ config.targetVariable }}</b> is
+			<b>{{ config.isMinimized ? 'below' : 'above' }}</b> a threshold of
+			<b>{{ config.threshold }}</b> at <b>{{ config.qoiMethod }}</b> in
+			<b>{{ config.riskTolerance }}%</b> of simulate outcomes
 		</div>
 	</div>
 </template>
@@ -98,8 +105,8 @@ const onEdit = () => {
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow:
-		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
-		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+		0 2px 4px -1px rgba(0, 0, 0, 0.06),
+		0 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .form-header {

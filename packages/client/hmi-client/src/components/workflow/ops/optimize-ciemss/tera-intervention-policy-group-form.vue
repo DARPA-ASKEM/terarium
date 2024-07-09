@@ -8,7 +8,7 @@
 					placeholder="Policy bounds"
 					@focusout="emit('update-self', config)"
 				/>
-				<h6 v-else>{{ props.config.name }}</h6>
+				<h6 v-else>{{ config.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
@@ -16,90 +16,44 @@
 				/>
 			</div>
 			<div>
-				<label for="active">Active</label>
-				<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
-			</div>
-			<div>
-				<i
-					class="trash-button pi pi-trash"
-					:style="'cursor: pointer'"
-					@click="emit('delete-self')"
+				<label for="active">Optimize</label>
+				<InputSwitch
+					v-model="config.isActive"
+					:disabled="config.isDisabled"
+					@change="emit('update-self', config)"
 				/>
 			</div>
 		</div>
-		<div class="input-row">
-			<div class="label-and-input">
-				<label for="parameter">Parameter</label>
-				<Dropdown
-					class="p-inputtext-sm"
-					:options="props.parameterOptions"
-					v-model="config.parameter"
-					placeholder="Select"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="initial-guess">Initial guess</label>
-				<tera-input
-					type="number"
-					v-model="config.initialGuess"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input"></div>
-		</div>
-		<div class="input-row">
-			<div class="label-and-input">
-				<label for="lower-bound">Lower bound</label>
-				<tera-input
-					type="number"
-					v-model="config.lowerBound"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="upper-bound">Upper bound</label>
-				<tera-input
-					type="number"
-					v-model="config.upperBound"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="start-time">Start time</label>
-				<InputNumber
-					:disabled="props.interventionType == InterventionTypes.startTime"
-					class="p-inputtext-sm"
-					inputId="integeronly"
-					v-model="config.startTime"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-			<div class="label-and-input">
-				<label for="start-time">Param value</label>
-				<InputNumber
-					:disabled="props.interventionType == InterventionTypes.paramValue"
-					class="p-inputtext-sm"
-					v-model="config.paramValue"
-					@update:model-value="emit('update-self', config)"
-				/>
-			</div>
-		</div>
+
+		<template v-if="dynamicInterventions.length > 0">
+			<tera-dynamic-intervention-policy-group
+				:config="config"
+				@update-self="updateState"
+				:dynamicInterventions="dynamicInterventions"
+			/>
+		</template>
+		<template v-else-if="staticInterventions.length > 0">
+			<tera-static-intervention-policy-group
+				:config="config"
+				@update-self="updateState"
+				:staticInterventions="staticInterventions"
+			/>
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
 import { ref } from 'vue';
-import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
-import TeraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
 import {
 	InterventionPolicyGroup,
 	InterventionTypes
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import TeraStaticInterventionPolicyGroup from '@/components/workflow/ops/optimize-ciemss/tera-static-intervention-policy-group.vue';
+import TeraDynamicInterventionPolicyGroup from '@/components/workflow/ops/optimize-ciemss/tera-dynamic-intervention-policy-group.vue';
+import { DynamicIntervention, StaticIntervention } from '@/types/Types';
 
 const props = defineProps<{
 	parameterOptions: string[];
@@ -109,11 +63,22 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const config = ref<InterventionPolicyGroup>(_.cloneDeep(props.config));
+const dynamicInterventions = ref<DynamicIntervention[] | []>(
+	props.config.intervention?.dynamicInterventions ?? []
+);
+const staticInterventions = ref<StaticIntervention[] | []>(
+	props.config.intervention?.staticInterventions ?? []
+);
+
+const config = ref<InterventionPolicyGroup>(cloneDeep(props.config));
 const isEditing = ref<boolean>(false);
 
 const onEdit = () => {
 	isEditing.value = !isEditing.value;
+};
+
+const updateState = () => {
+	emit('update-self', config);
 };
 </script>
 
@@ -124,14 +89,14 @@ const onEdit = () => {
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	border-radius: 0.375rem;
 	background: #fff;
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow:
-		0px 2px 4px -1px rgba(0, 0, 0, 0.06),
-		0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+		0 2px 4px -1px rgba(0, 0, 0, 0.06),
+		0 4px 6px -1px rgba(0, 0, 0, 0.08);
 }
 
 .form-header {
@@ -140,7 +105,7 @@ const onEdit = () => {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	gap: 1rem;
+	gap: var(--gap-4);
 	padding-bottom: 0.5rem;
 
 	& > *:first-child {
@@ -152,30 +117,7 @@ const onEdit = () => {
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
-		gap: 0.5rem;
+		gap: var(--gap-2);
 	}
-}
-
-.input-row {
-	width: 100%;
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.5rem;
-
-	& > *:first-child {
-		flex: 2;
-	}
-
-	& > *:not(:first-child) {
-		flex: 1;
-	}
-}
-
-.label-and-input {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
 }
 </style>
