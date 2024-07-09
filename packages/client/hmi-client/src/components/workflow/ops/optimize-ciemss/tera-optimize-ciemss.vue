@@ -587,7 +587,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100,
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100,
 			solverMethod: knobs.value.solverMethod
 		}
 	};
