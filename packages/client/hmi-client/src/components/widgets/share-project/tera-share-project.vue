@@ -98,12 +98,11 @@ const generalAccessOptions = ref([
 	{ label: Accessibility.Public, icon: 'pi pi-users' }
 ]);
 const isUpdatingAccessibility = ref(false);
+const publicGeneralAccess = ref(props.project.publicProject);
 const generalAccess = computed(() => {
 	if (isUpdatingAccessibility.value) return { label: 'Loading...' };
 
-	return useProjects().activeProject.value?.publicProject
-		? generalAccessOptions.value[1]
-		: generalAccessOptions.value[0];
+	return publicGeneralAccess.value ? generalAccessOptions.value[1] : generalAccessOptions.value[0];
 });
 const generalAccessCaption = computed(() => {
 	if (generalAccess.value.label === Accessibility.Restricted) {
@@ -115,6 +114,7 @@ const generalAccessCaption = computed(() => {
 async function changeAccessibility({ label }: { label: Accessibility }) {
 	isUpdatingAccessibility.value = true;
 	await useProjects().setAccessibility(props.project.id, label === Accessibility.Public);
+	publicGeneralAccess.value = label === Accessibility.Public;
 	isUpdatingAccessibility.value = false;
 }
 

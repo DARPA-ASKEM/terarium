@@ -53,15 +53,6 @@
 					@update-configuration="updateConfiguration"
 				/>
 			</AccordionTab>
-			<AccordionTab header="Provenance">
-				<tera-related-documents
-					class="m-2"
-					:documents="documents"
-					:asset-type="AssetType.Model"
-					:assetId="model.id"
-					@enriched="fetchAsset"
-				/>
-			</AccordionTab>
 			<AccordionTab header="Model equations">
 				<tera-model-equation
 					:model="model"
@@ -98,11 +89,8 @@ import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
-import type { Dataset, Model, ModelConfiguration, ProjectAsset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
+import type { Dataset, Model, ModelConfiguration } from '@/types/Types';
 import SelectButton from 'primevue/selectbutton';
-import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { useProjects } from '@/composables/project';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
@@ -117,7 +105,7 @@ const props = defineProps<{
 	isGeneratingCard?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
+const emit = defineEmits(['update-model', 'update-configuration', 'model-updated']);
 
 const teraModelDiagramRef = ref();
 const descriptionType = ref('TA1');
@@ -185,16 +173,6 @@ const authors = computed(() => {
 	return authorsList.join(', ');
 });
 
-const documents = computed<{ name: string; id: string }[]>(
-	() =>
-		useProjects()
-			.getActiveProjectAssets(AssetType.Document)
-			.map((projectAsset: ProjectAsset) => ({
-				name: projectAsset.assetName,
-				id: projectAsset.assetId
-			})) ?? []
-);
-
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -205,10 +183,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
-
-function fetchAsset() {
-	emit('fetch-model');
-}
 
 function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	emit('update-configuration', updatedConfiguration);
