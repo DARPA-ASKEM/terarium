@@ -547,7 +547,7 @@ const runOptimize = async () => {
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
-		paramValues.push(ele.paramValue);
+		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);
 		listBoundsInterventions.push([ele.lowerBound]);

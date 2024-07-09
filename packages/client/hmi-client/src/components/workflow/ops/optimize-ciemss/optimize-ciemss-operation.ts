@@ -24,7 +24,6 @@ export interface InterventionPolicyGroupForm {
 	upperBound: number;
 	initialGuess: number;
 	isActive: boolean;
-	paramValue: number;
 	optimizationType: InterventionTypes;
 	startTimeOption: string;
 	newValueOption: string;
@@ -80,7 +79,6 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBound: 0,
 	initialGuess: 0,
 	isActive: true,
-	paramValue: 0,
 	optimizationType: InterventionTypes.paramValue,
 	startTimeOption: 'earliest',
 	newValueOption: 'initial guess',
