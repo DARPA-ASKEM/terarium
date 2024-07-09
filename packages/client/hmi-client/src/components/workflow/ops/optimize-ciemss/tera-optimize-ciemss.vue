@@ -42,15 +42,32 @@
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
-					<tera-intervention-policy-group-form
-						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
-						:key="idx"
-						:config="cfg"
-						:intervention-type="props.node.state.interventionType"
-						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
-						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
-					/>
+					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+						<tera-static-intervention-policy-group
+							v-if="
+								cfg.intervention?.staticInterventions &&
+								cfg.intervention?.staticInterventions.length > 0
+							"
+							:key="idx"
+							:config="cfg"
+							:staticInterventions="cfg.intervention.staticInterventions"
+							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
+							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						/>
+					</template>
+					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+						<tera-dynamic-intervention-policy-group
+							v-if="
+								cfg.intervention?.dynamicInterventions &&
+								cfg.intervention?.dynamicInterventions.length > 0
+							"
+							:key="idx"
+							:config="cfg"
+							:dynamic-interventions="cfg.intervention.dynamicInterventions"
+							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
+							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						/>
+					</template>
 				</section>
 				<section class="form-section">
 					<h5>
@@ -262,7 +279,6 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraInterventionPolicyGroupForm from '@/components/workflow/ops/optimize-ciemss/tera-intervention-policy-group-form.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 // Services:
@@ -297,6 +313,8 @@ import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
+import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
+import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	OptimizeCiemssOperationState,
 	InterventionTypes,
@@ -442,14 +460,6 @@ const updateInterventionPolicyGroupForm = (index: number, config: InterventionPo
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups[index] = config;
-	emit('update-state', state);
-};
-
-const deleteInterverntionPolicyGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
-
-	state.interventionPolicyGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
