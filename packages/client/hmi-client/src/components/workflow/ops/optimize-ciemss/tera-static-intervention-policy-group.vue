@@ -36,7 +36,7 @@
 							<span>value closet to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.newValueOption"
+								v-model="knobs.objectiveFunctionOption"
 								:options="NEW_VALUE_OPTIONS"
 								@change="emit('update-self', knobs)"
 							/>
@@ -45,7 +45,7 @@
 						<template v-if="showStartTimeOptions">
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.startTimeOption"
+								v-model="knobs.objectiveFunctionOption"
 								:options="START_TIME_OPTIONS"
 								@change="emit('update-self', knobs)"
 							/>
@@ -125,17 +125,16 @@ const staticInterventions = ref<StaticIntervention[]>(
 );
 
 const knobs = ref<InterventionPolicyGroupForm>({
-	isActive: props.config.isActive ?? false,
+	isActive: props.config.isActive,
 	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,
-	newValueOption: props.config.newValueOption ?? 'initial guess',
-	startTimeOption: props.config.startTimeOption ?? 'earliest',
-	startTime: props.config.startTime ?? 0,
-	endTime: props.config.endTime ?? 0,
-	lowerBoundValue: props.config.lowerBoundValue ?? 0,
-	upperBoundValue: props.config.upperBoundValue ?? 0,
-	initialGuessValue: props.config.initialGuessValue ?? 0,
-	initialGuessTime: props.config.initialGuessTime ?? 1
+	optimizationType: props.config.optimizationType,
+	objectiveFunctionOption: props.config.objectiveFunctionOption,
+	startTime: props.config.startTime,
+	endTime: props.config.endTime,
+	lowerBoundValue: props.config.lowerBoundValue,
+	upperBoundValue: props.config.upperBoundValue,
+	initialGuessValue: props.config.initialGuessValue,
+	initialGuessTime: props.config.initialGuessTime
 });
 
 const isNotEditable = computed(() => {

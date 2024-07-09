@@ -12,6 +12,12 @@ export enum InterventionTypes {
 	// ,paramValueAndStartTime = 'param_value_and_start_time'
 }
 
+export enum InterventionObjectiveFunctions {
+	lowerBound = 'lower_bound',
+	upperbound = 'upper_bound',
+	initialGuess = 'initial_guess'
+}
+
 export enum ContextMethods {
 	day_average = 'day_average',
 	max = 'max'
@@ -26,8 +32,7 @@ export interface InterventionPolicyGroupForm {
 	initialGuessValue: number;
 	isActive: boolean;
 	optimizationType: InterventionTypes;
-	startTimeOption: string;
-	newValueOption: string;
+	objectiveFunctionOption: InterventionObjectiveFunctions;
 	intervention: Intervention;
 }
 
@@ -82,8 +87,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	initialGuessValue: 0,
 	isActive: true,
 	optimizationType: InterventionTypes.paramValue,
-	startTimeOption: 'earliest',
-	newValueOption: 'initial guess',
+	objectiveFunctionOption: InterventionObjectiveFunctions.lowerBound,
 	intervention: {
 		name: 'default name',
 		appliedTo: '',
