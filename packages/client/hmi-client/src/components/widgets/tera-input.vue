@@ -1,5 +1,5 @@
 <template>
-	<div class="flex" :label="label">
+	<div class="flex" :label="label" :title="title">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<input
@@ -26,6 +26,7 @@ import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch 
 const props = defineProps<{
 	modelValue: string | number | undefined;
 	label?: string;
+	title?: string;
 	errorMessage?: string;
 	disabled?: boolean;
 	type?: InputTypeHTMLAttribute | 'nist';
@@ -145,7 +146,8 @@ label {
 	background-color: none;
 	color: var(--text-color-secondary);
 	cursor: text;
-	padding-right: var(--gap-xsmall);
+	padding-right: var(--gap-1-5);
+	font-size: var(--font-caption);
 }
 
 input {
