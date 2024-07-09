@@ -353,7 +353,7 @@ public class KnowledgeController {
 			if (model.getHeader() == null) {
 				model.setHeader(new ModelHeader());
 			}
-			model.getHeader().setDescription(description);
+			model.getHeader().setDescription(description.getBytes());
 		}
 
 		try {
