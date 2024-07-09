@@ -55,9 +55,6 @@
 							<tera-input v-model="filterModelConfigurationsText" placeholder="Filter" />
 						</div>
 						<ul v-if="!isLoading && model?.id">
-							{{
-								console.log(filteredModelConfigurations)
-							}}
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"

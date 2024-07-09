@@ -1,8 +1,6 @@
 <template>
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
-			{{ console.log('modelConfiguration', modelConfiguration) }}
-			{{ console.log('modelConfigurations', modelConfigurations) }}
 			<template #header>
 				<span class="mr-auto"
 					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
