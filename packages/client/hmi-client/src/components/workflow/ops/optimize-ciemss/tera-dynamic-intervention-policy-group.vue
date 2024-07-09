@@ -2,12 +2,12 @@
 	<div class="policy-group">
 		<div class="form-header">
 			<div>
-				<tera-input v-if="isEditing" v-model="knobs.name" placeholder="Policy bounds" />
+				<tera-input v-if="isEditingName" v-model="knobs.name" placeholder="Policy bounds" />
 				<h6 v-else>{{ knobs.name }}</h6>
 				<i
-					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
+					:class="{ 'pi pi-check i': isEditingName, 'pi pi-pencil i': !isEditingName }"
 					:style="'cursor: pointer'"
-					@click="onEdit"
+					@click="onEditName"
 				/>
 			</div>
 			<div>
@@ -50,10 +50,10 @@ const knobs = ref({
 	isActive: props.config.isActive ?? false
 });
 
-const isEditing = ref<boolean>(false);
+const isEditingName = ref<boolean>(false);
 
-const onEdit = () => {
-	isEditing.value = !isEditing.value;
+const onEditName = () => {
+	isEditingName.value = !isEditingName.value;
 };
 </script>
 <style>
