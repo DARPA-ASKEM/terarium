@@ -102,20 +102,14 @@ const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
 const showStartTimeOptions = computed(
 	() =>
-		// TODO: check why OPTIMIZATION_TYPES[2] does not == OPTIMIZATION_TYPES[2]
 		knobs.value.optimizationType === OPTIMIZATION_TYPES[1] ||
 		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
 );
-const showNewValueOptions = computed(() => {
-	console.log(
+const showNewValueOptions = computed(
+	() =>
 		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
-			knobs.value.optimizationType === OPTIMIZATION_TYPES[3]
-	);
-	return (
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[3]
-	);
-});
+		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+);
 
 // TODO: Fix this
 // const upstateState = () => {
