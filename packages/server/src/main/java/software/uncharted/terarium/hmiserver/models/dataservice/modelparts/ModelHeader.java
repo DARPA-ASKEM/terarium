@@ -3,9 +3,13 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
+import java.sql.Types;
+
+import jakarta.persistence.Lob;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
@@ -27,7 +31,10 @@ public class ModelHeader extends SupportAdditionalProperties implements Serializ
 	@JsonProperty("schema_name")
 	private String schemaName;
 
-	private String description;
+	@TSOptional
+	@Lob
+	@JdbcTypeCode(Types.BINARY)
+	private byte[] description;
 
 	@TSOptional
 	@JsonProperty("model_version")
