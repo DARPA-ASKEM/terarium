@@ -64,15 +64,27 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Lower bound</label>
-							<tera-input type="number" v-model="knobs.lowerBoundValue" />
+							<tera-input
+								type="number"
+								v-model="knobs.lowerBoundValue"
+								@update:model-value="$emit('update-self', knobs)"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label>Upper bound</label>
-							<tera-input type="number" v-model="knobs.upperBoundValue" />
+							<tera-input
+								type="number"
+								v-model="knobs.upperBoundValue"
+								@update:model-value="emit('update-self', knobs)"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label>Initial guess</label>
-							<tera-input type="number" v-model="knobs.initialGuessValue" />
+							<tera-input
+								type="number"
+								v-model="knobs.initialGuessValue"
+								@update:model-value="emit('update-self', knobs)"
+							/>
 						</div>
 					</div>
 				</section>
@@ -81,15 +93,27 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input type="number" v-model="knobs.startTime" />
+							<tera-input
+								type="number"
+								v-model="knobs.startTime"
+								@update:model-value="emit('update-self', knobs)"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input type="number" v-model="knobs.endTime" />
+							<tera-input
+								type="number"
+								v-model="knobs.endTime"
+								@update:model-value="emit('update-self', knobs)"
+							/>
 						</div>
 						<div class="label-and-input">
 							<label>Initial guess</label>
-							<tera-input type="number" v-model="knobs.initialGuessTime" />
+							<tera-input
+								type="number"
+								v-model="knobs.initialGuessTime"
+								@update:model-value="emit('update-self', knobs)"
+							/>
 						</div>
 					</div>
 				</section>
