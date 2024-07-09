@@ -40,7 +40,7 @@
 				<div class="input-row">
 					<div v-for="(objective, index) in newValueInputs" :key="index" class="label-and-input">
 						<div class="label-and-input">
-							<label :for="objective">{{ objective }}</label>
+							<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
 							<tera-input type="number" v-model="knobs[objective]" />
 						</div>
 					</div>
@@ -56,7 +56,7 @@
 						class="label-and-input"
 					>
 						<div class="label-and-input">
-							<label :for="objective">{{ objective }}</label>
+							<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
 							<tera-input type="number" v-model="knobs[objective]" />
 						</div>
 					</div>
