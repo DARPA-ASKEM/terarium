@@ -58,6 +58,7 @@ import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { createLLMSummary } from '@/services/summary-service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -165,6 +166,23 @@ watch(
 			state.forecastId = id;
 			emit('update-state', state);
 
+			// Get the calibrate losses to generate a run summary
+			const calibrateResponse = await pollAction(state.calibrationId);
+			const calibreateUpdates = calibrateResponse.data?.updates;
+			const errorStart = _.first(calibreateUpdates)?.data;
+			const errorEnd = _.last(calibreateUpdates)?.data;
+
+			const prompt = `
+		The following are the key attributes of a calibration/fitting process for a ODE epidemilogy model.
+
+		- Fitting: ${JSON.stringify(state.mapping)}
+		- Loss at start is: ${JSON.stringify(errorStart)}
+		- Loss at end is: ${JSON.stringify(errorEnd)}
+
+		Provide a summary in 100 words or less.
+			`;
+			const summaryResponse = await createLLMSummary(prompt);
+
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
@@ -174,7 +192,8 @@ watch(
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
 					numIterations: state.numIterations,
-					numSamples: state.numSamples
+					numSamples: state.numSamples,
+					summaryId: summaryResponse?.id
 				}
 			});
 		}

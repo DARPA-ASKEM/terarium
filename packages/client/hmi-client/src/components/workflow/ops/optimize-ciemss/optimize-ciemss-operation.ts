@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention as SimulationIntervention } from '@/types/Types';
+import { Intervention, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -19,11 +19,18 @@ export interface InterventionPolicyGroup {
 	name: string;
 	parameter: string;
 	startTime: number;
+	endTime: number;
+	startTimeGuess: number;
 	lowerBound: number;
 	upperBound: number;
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
+	optimizationType: string;
+	startTimeOption: string;
+	newValueOption: string;
+	isDisabled?: boolean;
+	intervention?: Intervention;
 }
 
 export interface ConstraintGroup {
@@ -46,6 +53,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Intervention policies
 	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
+	interventions?: InterventionPolicy[];
 	// Constraints:
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
@@ -64,11 +72,16 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	name: 'Policy bounds',
 	parameter: '',
 	startTime: 0,
+	endTime: 0,
+	startTimeGuess: 0,
 	lowerBound: 0,
 	upperBound: 0,
 	initialGuess: 0,
 	isActive: true,
-	paramValue: 0
+	paramValue: 0,
+	optimizationType: 'new value',
+	startTimeOption: 'earliest',
+	newValueOption: 'initial guess'
 };
 
 export const defaultConstraintGroup: ConstraintGroup = {
@@ -88,7 +101,18 @@ export const OptimizeCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+		{
+			type: 'calibrateSimulationId',
+			label: 'Calibration',
+			acceptMultiple: false,
+			isOptional: true
+		},
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false,
+			isOptional: true
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -101,7 +125,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxiter: 5,
 			maxfeval: 25,
 			interventionType: InterventionTypes.paramValue,
-			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
@@ -122,7 +146,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	const simulationIntervetions: SimulationIntervention[] =
+	const simulationIntervetions =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const policyInterventions = simulation?.executionPayload?.policy_interventions;
 	const interventionType = policyInterventions.selection ?? '';

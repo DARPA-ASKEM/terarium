@@ -164,7 +164,7 @@ const schema = computed(() => card.value?.schema ?? '');
 const authors = computed(() => {
 	const authorsSet: Set<string> = new Set();
 	if (props.model?.metadata?.annotations?.authors)
-		props.model.metadata.annotations.authors.forEach((ele) => authorsSet.add(ele));
+		props.model.metadata.annotations.authors.forEach((ele) => authorsSet.add(ele.name));
 	if (card.value?.ModelCardAuthors)
 		card.value.ModelCardAuthors.forEach((ele) => authorsSet.add(ele));
 	if (card.value?.authorAuthor)

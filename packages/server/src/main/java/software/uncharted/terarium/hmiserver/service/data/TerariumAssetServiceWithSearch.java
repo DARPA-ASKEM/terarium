@@ -245,15 +245,6 @@ public abstract class TerariumAssetServiceWithSearch<
 			final UUID assetId, final TerariumAssetEmbeddings embeddings, final Schema.Permission hasWritePermission)
 			throws IOException {
 
-		final Optional<T> asset = super.getAsset(assetId, hasWritePermission);
-		if (asset.isEmpty()) {
-			throw new IllegalArgumentException("Asset not found");
-		}
-
-		if (!asset.get().getPublicAsset() || asset.get().getTemporary()) {
-			throw new IllegalArgumentException("Asset is not searchable");
-		}
-
 		// Execute the update request
 		elasticService.update(getAssetAlias(), assetId.toString(), embeddings);
 	}
