@@ -70,7 +70,7 @@ onUnmounted(() => {
 
 <style scoped>
 :deep(.ql-editor) {
-	font-family: var(--font-family), serif;
+	font-family: var(--font-family);
 	font-size: var(--font-size);
 }
 
@@ -90,13 +90,13 @@ onUnmounted(() => {
 }
 
 :deep(.p-editor-container .p-editor-toolbar) {
-	border-radius: 0;
+	border-radius: 0px;
 	border-color: var(--surface-border-light) !important;
 	border-top: none !important;
 }
 
 :deep(.ql-picker-label) {
-	font-family: var(--font-family), serif;
+	font-family: var(--font-family);
 }
 
 :deep(.ql-active) {
