@@ -1,6 +1,6 @@
 <template>
-	<div v-if="config.isActive">
-		<div class="input-row">
+	<section v-if="config.isActive">
+		<section class="input-row">
 			<p>
 				Find the
 				<Dropdown
@@ -11,9 +11,9 @@
 				for the <b>{{ config.intervention?.type }}</b> <b>{{ config.intervention?.appliedTo }}</b
 				>.
 			</p>
-		</div>
+		</section>
 		<div>
-			<div class="input-row">
+			<section class="input-row">
 				<p>
 					The objective is the
 					<span v-if="showNewValueOptions">value closet to the</span>
@@ -33,25 +33,25 @@
 					<span v-if="showStartTimeOptions">start time</span>
 					<span>.</span>
 				</p>
-			</div>
+			</section>
 
-			<div v-if="showNewValueOptions">
+			<section v-if="showNewValueOptions">
 				<h6 class="pt-4, pb-3">New Value</h6>
 				<div class="input-row">
-					<div v-for="(objective, index) in NEW_VALUE_OPTIONS" :key="index" class="label-and-input">
+					<div v-for="(objective, index) in newValueInputs" :key="index" class="label-and-input">
 						<div class="label-and-input">
 							<label :for="objective">{{ objective }}</label>
 							<tera-input type="number" v-model="knobs[objective]" />
 						</div>
 					</div>
 				</div>
-			</div>
+			</section>
 
-			<div v-if="showStartTimeOptions">
+			<section v-if="showStartTimeOptions">
 				<h6 class="pt-4, pb-3">Start Time</h6>
 				<div class="input-row">
 					<div
-						v-for="(objective, index) in START_TIME_OPTIONS"
+						v-for="(objective, index) in newStartTimeInputs"
 						:key="index"
 						class="label-and-input"
 					>
@@ -61,9 +61,9 @@
 						</div>
 					</div>
 				</div>
-			</div>
+			</section>
 		</div>
-	</div>
+	</section>
 	<div v-else>
 		<div v-for="(staticIntervention, index) in staticInterventions" :key="index">
 			<p>
@@ -91,7 +91,13 @@ const props = defineProps<{
 const knobs = ref({
 	optimizationType: props.config.optimizationType ?? 'new value',
 	newValueOption: props.config.newValueOption ?? 'initial guess',
-	startTimeOption: props.config.startTimeOption ?? 'earliest'
+	startTimeOption: props.config.startTimeOption ?? 'earliest',
+	startTime: props.config.startTime ?? 0,
+	endTime: props.config.endTime ?? 0,
+	lowerBound: props.config.lowerBound ?? 0,
+	upperBound: props.config.upperBound ?? 0,
+	startTimeGuess: props.config.startTimeGuess ?? 1,
+	initialGuess: props.config.initialGuess ?? 0
 });
 
 // const emit = defineEmits(['update-self']);
@@ -99,6 +105,9 @@ const knobs = ref({
 const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
+
+const newValueInputs = ['lowerBound', 'upperBound', 'initialGuess'];
+const newStartTimeInputs = ['startTime', 'endTime', 'startTimeGuess'];
 
 const showStartTimeOptions = computed(
 	() =>

@@ -20,6 +20,7 @@ export interface InterventionPolicyGroup {
 	parameter: string;
 	startTime: number;
 	endTime: number;
+	startTimeGuess: number;
 	lowerBound: number;
 	upperBound: number;
 	initialGuess: number;
@@ -72,6 +73,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	parameter: '',
 	startTime: 0,
 	endTime: 0,
+	startTimeGuess: 0,
 	lowerBound: 0,
 	upperBound: 0,
 	initialGuess: 0,
