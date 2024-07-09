@@ -62,14 +62,11 @@ public class ProjectPermissionsService {
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
-	public ResponseEntity<JsonNode> setProjectPermissions(
+	public void setProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
-			return ResponseEntity.ok().build();
-		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		}
+		} catch (final RelationshipAlreadyExistsException ignore) {}
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
@@ -86,13 +83,10 @@ public class ProjectPermissionsService {
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
-	public ResponseEntity<JsonNode> removeProjectPermissions(
+	public void removeProjectPermissions(
 			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
-			return ResponseEntity.ok().build();
-		} catch (final RelationshipAlreadyExistsException e) {
-			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
-		}
+		} catch (final RelationshipAlreadyExistsException ignore) {}
 	}
 }

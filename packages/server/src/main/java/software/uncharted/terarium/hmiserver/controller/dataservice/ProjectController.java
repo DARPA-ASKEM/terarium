@@ -873,7 +873,8 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return projectPermissionsService.setProjectPermissions(what, who, relationship);
+			projectPermissionsService.setProjectPermissions(what, who, relationship);
+			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
 			log.error("Error setting project group permission relationships", e);
 			throw new ResponseStatusException(
@@ -953,7 +954,8 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
-			return projectPermissionsService.removeProjectPermissions(what, who, relationship);
+			projectPermissionsService.removeProjectPermissions(what, who, relationship);
+			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
 			log.error("Error deleting project group permission relationships", e);
 			throw new ResponseStatusException(
@@ -972,10 +974,6 @@ public class ProjectController {
 									mediaType = "application/json",
 									schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class))
 						}),
-				@ApiResponse(
-					responseCode = "304",
-					description = "Not Modified.",
-					content = @Content),
 				@ApiResponse(
 						responseCode = "403",
 						description = "The current user does not have privileges to modify this project.",
@@ -1014,11 +1012,12 @@ public class ProjectController {
 
 			if (isPublic) {
 				// Set the Public Group permissions to READ the Project
-				return projectPermissionsService.setProjectPermissions(project, who, relationship);
+				projectPermissionsService.setProjectPermissions(project, who, relationship);
 			} else {
 				// Remove the Public Group permissions to READ the Project
-				return projectPermissionsService.removeProjectPermissions(project, who, relationship);
+				projectPermissionsService.removeProjectPermissions(project, who, relationship);
 			}
+			return ResponseEntity.ok().build();
 
 		} catch (final Exception e) {
 			throw new ResponseStatusException(
@@ -1056,7 +1055,8 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			return projectPermissionsService.setProjectPermissions(what, who, relationship);
+			projectPermissionsService.setProjectPermissions(what, who, relationship);
+			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
 			log.error("Error setting project user permission relationships", e);
 			throw new ResponseStatusException(
@@ -1134,7 +1134,8 @@ public class ProjectController {
 
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
-			return projectPermissionsService.removeProjectPermissions(what, who, relationship);
+			projectPermissionsService.removeProjectPermissions(what, who, relationship);
+			return ResponseEntity.ok().build();
 		} catch (final Exception e) {
 			log.error("Error deleting project user permission relationships", e);
 			throw new ResponseStatusException(
