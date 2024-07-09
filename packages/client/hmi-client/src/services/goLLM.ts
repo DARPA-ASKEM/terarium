@@ -6,7 +6,6 @@ import { logger } from '@/utils/logger';
 /**
  * Fetches model card data from the server and wait for task to finish.
  * @param {string} documentId - The document ID.
- * @param {string} modelId - The model ID.
  */
 export async function modelCard(documentId: string): Promise<void> {
 	try {
