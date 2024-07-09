@@ -102,10 +102,13 @@ import {
 
 const props = defineProps<{
 	config: InterventionPolicyGroupForm;
-	staticInterventions: StaticIntervention[];
 }>();
 
 const emit = defineEmits(['update-self']);
+
+const staticInterventions = ref<StaticIntervention[]>(
+	props.config.intervention.staticInterventions
+);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false,

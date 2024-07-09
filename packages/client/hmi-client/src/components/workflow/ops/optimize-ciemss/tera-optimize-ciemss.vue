@@ -50,8 +50,6 @@
 							"
 							:key="idx"
 							:config="cfg"
-							:staticInterventions="cfg.intervention.staticInterventions"
-							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
@@ -63,8 +61,6 @@
 							"
 							:key="idx"
 							:config="cfg"
-							:dynamic-interventions="cfg.intervention.dynamicInterventions"
-							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
