@@ -54,7 +54,6 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setName("test-name")
 						.setModelSchema("test-schema")
 						.setModelVersion("0.1.2")
-						.setDescription("test-description")
 						.setSchemaName("petrinet"));
 
 		mockMvc.perform(MockMvcRequestBuilders.post("/models")
