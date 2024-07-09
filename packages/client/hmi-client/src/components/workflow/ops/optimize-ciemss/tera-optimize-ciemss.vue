@@ -691,7 +691,7 @@ watch(
 .result-message-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 2px; /* Adjust the gap between rows as needed */
+	gap: var(--gap-0-5); /* Adjust the gap between rows as needed */
 	font-size: var(--font-caption);
 	background-color: var(--surface-glass);
 	border: solid 1px var(--surface-border-light);
@@ -735,7 +735,7 @@ watch(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .input-row {
@@ -744,7 +744,7 @@ watch(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	padding-top: var(--gap);
 	& > * {
 		flex: 1;
@@ -756,7 +756,7 @@ watch(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 
 	& > *:first-child {
 		flex: 2;
