@@ -2,14 +2,19 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ numParameters }})</span>
+				<span class="mr-auto"
+					>Parameters<span class="artifact-amount">({{ numParameters }})</span></span
+				>
 				<Button
 					v-if="!isAddingUncertainty"
 					label="Add uncertainty"
-					text
+					outlined
+					severity="secondary"
 					size="small"
 					@click.stop="onAddUncertainty"
+					class="mr-2"
 				/>
+				<tera-input v-model="filterText" placeholder="Filter" />
 			</template>
 
 			<!-- Adding uncertainty header -->
@@ -44,64 +49,68 @@
 				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
 			</span>
 
-			<!-- Stratified -->
-			<Accordion v-if="isStratified" multiple>
-				<AccordionTab
-					v-for="[key, values] in collapseParameters(props.mmt, props.mmtParams).entries()"
-					:key="key"
+			<ul>
+				<li
+					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
+					:key="baseParameter"
 				>
-					<template #header>
-						<span>{{ key }}</span>
-						<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = key" />
-					</template>
-					<div class="flex">
-						<Divider layout="vertical" type="solid" />
-						<ul>
-							<li v-for="parameterId in values" :key="parameterId">
-								<div class="flex gap-4">
-									<Checkbox
-										v-if="
-											isAddingUncertainty &&
-											getParameterDistribution(modelConfiguration, parameterId).type ===
-												DistributionType.Constant
-										"
-										binary
-										:model-value="selectedParameters.includes(parameterId)"
-										@change="onSelect(parameterId)"
-									/>
-									<tera-parameter-entry
-										:model="model"
-										:model-configuration="props.modelConfiguration"
-										:parameter-id="parameterId"
-										@update-parameter="emit('update-parameters', [$event])"
-										@update-source="emit('update-source', $event)"
-									/>
-								</div>
-								<Divider type="solid" />
-							</li>
-						</ul>
-					</div>
-				</AccordionTab>
-			</Accordion>
-
-			<!-- Unstratified -->
-			<ul v-else class="flex-grow">
-				<li v-for="{ referenceId } in getParameters(modelConfiguration)" :key="referenceId">
-					<div class="flex gap-4">
+					<!-- Stratified -->
+					<Accordion v-if="isVirtual" multiple>
+						<AccordionTab>
+							<template #header>
+								<span>{{ baseParameter }}</span>
+								<Button
+									label="Open Matrix"
+									text
+									size="small"
+									@click.stop="matrixModalId = baseParameter"
+								/>
+							</template>
+							<div class="flex">
+								<Divider layout="vertical" type="solid" />
+								<ul>
+									<li v-for="{ referenceId } in childParameters" :key="referenceId">
+										<div class="flex gap-4">
+											<Checkbox
+												v-if="
+													isAddingUncertainty &&
+													getParameterDistribution(modelConfiguration, referenceId).type ===
+														DistributionType.Constant
+												"
+												binary
+												:model-value="selectedParameters.includes(referenceId)"
+												@change="onSelect(referenceId)"
+											/>
+											<tera-parameter-entry
+												:model="model"
+												:model-configuration="props.modelConfiguration"
+												:parameter-id="referenceId"
+												@update-parameter="emit('update-parameters', [$event])"
+												@update-source="emit('update-source', $event)"
+											/>
+										</div>
+										<Divider type="solid" />
+									</li>
+								</ul>
+							</div>
+						</AccordionTab>
+					</Accordion>
+					<!-- Unstratified -->
+					<div v-else class="flex gap-4 pl-5">
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&
-								getParameterDistribution(modelConfiguration, referenceId).type ===
+								getParameterDistribution(modelConfiguration, baseParameter).type ===
 									DistributionType.Constant
 							"
 							binary
-							:model-value="selectedParameters.includes(referenceId)"
-							@change="onSelect(referenceId)"
+							:model-value="selectedParameters.includes(baseParameter)"
+							@change="onSelect(baseParameter)"
 						/>
 						<tera-parameter-entry
 							:model="model"
 							:model-configuration="modelConfiguration"
-							:parameter-id="referenceId"
+							:parameter-id="baseParameter"
 							@update-parameter="emit('update-parameters', [$event])"
 							@update-source="emit('update-source', $event)"
 						/>
@@ -137,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
+import { Model, ModelConfiguration, ModelDistribution, ParameterSemantic } from '@/types/Types';
 import { getParameterDistribution, getParameters } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
@@ -155,6 +164,7 @@ import {
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -173,8 +183,30 @@ const isAddingUncertainty = ref(false);
 const uncertaintyType = ref(DistributionType.Uniform);
 const uncertaintyPercentage = ref(10);
 const selectedParameters = ref<string[]>([]);
+const filterText = ref('');
 
-const numParameters = computed(() => Object.keys(props.mmt.parameters).length);
+const numParameters = computed(() => parameterList.value.length);
+const parameterList = computed<
+	{ baseParameter: string; childParameters: ParameterSemantic[]; isVirtual: boolean }[]
+>(() => {
+	const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
+	const parameters = getParameters(props.modelConfiguration);
+	return Array.from(collapsedParameters.keys())
+		.flat()
+		.map((id) => {
+			const childIds = collapsedParameters.get(id) ?? [];
+			const childParameters = childIds
+				.map((childId) => parameters.find((p) => p.referenceId === childId))
+				.filter(Boolean) as ParameterSemantic[];
+			const isVirtual = childIds.length > 1;
+			const baseParameter = id;
+
+			return { baseParameter, childParameters, isVirtual };
+		})
+		.filter(({ baseParameter }) =>
+			baseParameter.toLowerCase().includes(filterText.value.toLowerCase())
+		);
+});
 
 const matrixModalId = ref('');
 
@@ -209,9 +241,11 @@ const onUpdateDistributions = () => {
 				id: paramId,
 				distribution: {
 					type: uncertaintyType.value,
+					// A way to get around the floating point precision issue is to set a fixed number of decimal places and parse as a float
+					// This will be an issue for adding uncertainty to very small numbers, but I think 8 decimal points should do
 					parameters: {
-						minimum: v - delta,
-						maximum: v + delta
+						minimum: parseFloat((v - delta).toFixed(8)),
+						maximum: parseFloat((v + delta).toFixed(8))
 					}
 				}
 			};

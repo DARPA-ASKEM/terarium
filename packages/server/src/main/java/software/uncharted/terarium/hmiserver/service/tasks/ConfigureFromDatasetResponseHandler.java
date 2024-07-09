@@ -59,6 +59,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Properties {
 		List<UUID> datasetIds;
+		UUID projectId;
 		UUID modelId;
 		UUID workflowId;
 		UUID nodeId;
@@ -92,7 +93,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			try {
 				for (final UUID datasetId : props.datasetIds) {
 					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-							modelConfiguration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+							modelConfiguration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 					// add provenance
 					provenanceService.createProvenance(new Provenance()
 							.setLeft(newConfig.getId())

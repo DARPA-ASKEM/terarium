@@ -139,7 +139,7 @@ public class TerariumAssetCloneService {
 
 			// persist the clone
 			final TerariumAsset created =
-					(TerariumAsset) terariumAssetService.createAsset(resolved, Schema.Permission.WRITE);
+					(TerariumAsset) terariumAssetService.createAsset(resolved, projectId, Schema.Permission.WRITE);
 
 			res.add(created);
 		}
@@ -148,6 +148,9 @@ public class TerariumAssetCloneService {
 	}
 
 	private List<String> removeDuplicates(final List<String> list) {
+		if (list == null) {
+			return new ArrayList<>();
+		}
 		final Set<String> set = list.stream().collect(Collectors.toCollection(LinkedHashSet::new));
 		return new ArrayList<>(set);
 	}
@@ -251,7 +254,8 @@ public class TerariumAssetCloneService {
 			}
 
 			// create the asset
-			asset = (TerariumAsset) terariumAssetService.createAsset(assetExport.getAsset(), Schema.Permission.WRITE);
+			asset = (TerariumAsset)
+					terariumAssetService.createAsset(assetExport.getAsset(), project.getId(), Schema.Permission.WRITE);
 
 			// add the asset to the project
 			final Optional<ProjectAsset> projectAsset =

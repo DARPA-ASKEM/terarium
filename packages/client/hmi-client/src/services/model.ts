@@ -1,7 +1,13 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import * as EventService from '@/services/event';
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	Initial,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
 import { Artifact, AssetType, EventType } from '@/types/Types';
 import { AMRSchemaNames, ModelServiceType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
@@ -76,9 +82,18 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function getModelConfigurations(modelId: Model['id']): Promise<ModelConfiguration[]> {
+export async function getModelConfigurationsForModel(
+	modelId: Model['id']
+): Promise<ModelConfiguration[]> {
 	const response = await API.get(`/models/${modelId}/model-configurations`);
 	return response?.data ?? ([] as ModelConfiguration[]);
+}
+
+export async function getInterventionPoliciesForModel(
+	modelId: Model['id']
+): Promise<InterventionPolicy[]> {
+	const response = await API.get(`/models/${modelId}/intervention-policies`);
+	return response?.data ?? ([] as InterventionPolicy[]);
 }
 
 export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {

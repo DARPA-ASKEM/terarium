@@ -48,12 +48,16 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 	@Autowired
 	TerariumAssetCloneService cloneService;
 
+	Project project;
+
 	static ObjectMapper objectMapper = new ObjectMapper();
 
 	@BeforeEach
 	public void setup() throws IOException {
 		documentService.setupIndexAndAliasAndEnsureEmpty();
 		workflowService.setupIndexAndAliasAndEnsureEmpty();
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -120,7 +124,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		final List<DocumentAsset> documents = new ArrayList<>();
 		for (int i = 0; i < NUM_DOCUMENTS; i++) {
 			final DocumentAsset before = createDocument(Integer.toString(i));
-			final DocumentAsset after = documentService.createAsset(before, ASSUME_WRITE_PERMISSION);
+			final DocumentAsset after = documentService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 			documents.add(after);
 
 			for (final String filename : after.getFileNames()) {
@@ -142,7 +146,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 								objectMapper.valueToTree(doc.getId().toString()));
 			}
 		}
-		final Workflow workflow = workflowService.createAsset(before, ASSUME_WRITE_PERMISSION);
+		final Workflow workflow = workflowService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Project project = new Project();
 		project.setName("test-project-name-0");
@@ -175,7 +179,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		final List<DocumentAsset> documents = new ArrayList<>();
 		for (int i = 0; i < NUM_DOCUMENTS; i++) {
 			final DocumentAsset before = createDocument(Integer.toString(i));
-			final DocumentAsset after = documentService.createAsset(before, ASSUME_WRITE_PERMISSION);
+			final DocumentAsset after = documentService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 			documents.add(after);
 
 			for (final String filename : after.getFileNames()) {
@@ -197,7 +201,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 								objectMapper.valueToTree(doc.getId().toString()));
 			}
 		}
-		final Workflow workflow = workflowService.createAsset(before, ASSUME_WRITE_PERMISSION);
+		final Workflow workflow = workflowService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Project project = new Project();
 		project.setName("test-project-name-0");

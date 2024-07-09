@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
@@ -28,7 +29,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
  * Base class for services that manage TerariumAssets with syncing to Elasticsearch.
  *
  * @param <T> The type of asset this service manages
- * @param <R> The respository of the asset this service manages
+ * @param <R> The respository of the asset this service manages.
  */
 @Service
 @Slf4j
@@ -41,12 +42,13 @@ public abstract class TerariumAssetServiceWithSearch<
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final R repository,
 			final Class<T> assetClass) {
 
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, assetClass);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, assetClass);
 
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
@@ -153,12 +155,12 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id, Schema.Permission hasWritePermission) throws IOException {
+	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 
-		final Optional<T> deleted = super.deleteAsset(id, hasWritePermission);
+		final Optional<T> deleted = super.deleteAsset(id, projectId, hasWritePermission);
 
-		if (deleted.isPresent() && !deleted.get().getTemporary()
-				|| deleted.get().getPublicAsset()) {
+		if (deleted.isPresent()) {
 			elasticService.delete(getAssetAlias(), id.toString());
 		}
 
@@ -174,8 +176,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset, Schema.Permission hasWritePermission) throws IOException {
-		final T created = super.createAsset(asset, hasWritePermission);
+	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
+		final T created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
 			elasticService.index(getAssetAlias(), created.getId().toString(), created);
@@ -194,8 +197,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public List<T> createAssets(final List<T> assets, final Schema.Permission hasWritePermission) throws IOException {
-		final List<T> created = super.createAssets(assets, hasWritePermission);
+	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
+		final List<T> created = super.createAssets(assets, projectId, hasWritePermission);
 
 		if (created.size() > 0) {
 			elasticService.bulkIndex(getAssetAlias(), (List<TerariumAsset>) created);
@@ -215,10 +219,10 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, Schema.Permission hasWritePermission)
+	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 
-		final Optional<T> updated = super.updateAsset(asset, hasWritePermission);
+		final Optional<T> updated = super.updateAsset(asset, projectId, hasWritePermission);
 
 		if (updated.isEmpty()) {
 			return Optional.empty();
@@ -228,7 +232,21 @@ public abstract class TerariumAssetServiceWithSearch<
 			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
 		}
 
+		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
+			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
+		}
+
 		return updated;
+	}
+
+	/** Upload search vector embeddings into the asset document. */
+	@Observed(name = "function_profile")
+	public void uploadEmbeddings(
+			final UUID assetId, final TerariumAssetEmbeddings embeddings, final Schema.Permission hasWritePermission)
+			throws IOException {
+
+		// Execute the update request
+		elasticService.update(getAssetAlias(), assetId.toString(), embeddings);
 	}
 
 	private static String getVersionFromIndex(final String index) {

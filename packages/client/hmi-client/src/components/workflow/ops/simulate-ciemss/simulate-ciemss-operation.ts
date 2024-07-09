@@ -26,7 +26,18 @@ export const SimulateCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+		{
+			type: 'calibrateSimulationId',
+			label: 'Calibration',
+			acceptMultiple: false,
+			isOptional: true
+		},
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false,
+			isOptional: true
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -41,11 +52,5 @@ export const SimulateCiemssOperation: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
-	},
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
 	}
 };

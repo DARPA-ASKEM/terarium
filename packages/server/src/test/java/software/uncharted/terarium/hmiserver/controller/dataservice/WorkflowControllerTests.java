@@ -14,7 +14,9 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 
 public class WorkflowControllerTests extends TerariumApplicationTests {
@@ -25,9 +27,17 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private WorkflowService workflowService;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		workflowService.setupIndexAndAliasAndEnsureEmpty();
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -71,9 +81,9 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflow3.setDescription("test-workflow-description3");
 		workflow3.setPublicAsset(true);
 
-		workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow2, ASSUME_WRITE_PERMISSION);
-		workflowService.createAsset(workflow3, ASSUME_WRITE_PERMISSION);
+		workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
+		workflowService.createAsset(workflow2, project.getId(), ASSUME_WRITE_PERMISSION);
+		workflowService.createAsset(workflow3, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf()))
 				.andExpect(status().isOk())
@@ -87,7 +97,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/workflows/" + workflow.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -102,7 +112,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/workflows/" + workflow.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -118,7 +128,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/workflows/" + workflow.getId())
 						.param("project-id", PROJECT_ID.toString())

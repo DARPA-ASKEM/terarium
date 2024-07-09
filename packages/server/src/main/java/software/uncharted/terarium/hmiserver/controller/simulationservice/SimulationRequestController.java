@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.simulationservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
@@ -35,7 +33,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSi
 import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 import software.uncharted.terarium.hmiserver.models.simulationservice.OptimizeRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Intervention;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationCiemssServiceProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -88,7 +85,6 @@ public class SimulationRequestController implements SnakeCaseController {
 			@RequestParam(name = "project-id", required = false) final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
-
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
 			if (sim.isEmpty()) {
@@ -144,7 +140,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -168,15 +164,6 @@ public class SimulationRequestController implements SnakeCaseController {
 				modelConfigService.getAsset(request.payload.getModelConfigId(), permission);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
-		}
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setInterventions(allInterventions);
 		}
 
 		request.payload.setEngine(SimulationEngine.CIEMSS.toString());
@@ -212,7 +199,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -259,15 +246,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setInterventions(allInterventions);
-		}
+
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeCalibrateJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
@@ -298,15 +277,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		final List<Intervention> modelInterventions = modelConfiguration.get().getInterventions();
-		if (modelInterventions != null) {
-			List<Intervention> allInterventions = request.payload.getFixedStaticParameterInterventions();
-			if (allInterventions == null) {
-				allInterventions = new ArrayList<>();
-			}
-			allInterventions.addAll(modelInterventions);
-			request.payload.setFixedStaticParameterInterventions(allInterventions);
-		}
+
 		final JobResponse res = simulationCiemssServiceProxy
 				.makeOptimizeJob(convertObjectToSnakeCaseJsonNode(request.payload))
 				.getBody();
@@ -329,7 +300,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy
@@ -352,7 +323,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 			@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
 			@RequestParam("project-id") final UUID projectId) {
-		Schema.Permission permission =
+		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		final JobResponse res = simulationCiemssServiceProxy

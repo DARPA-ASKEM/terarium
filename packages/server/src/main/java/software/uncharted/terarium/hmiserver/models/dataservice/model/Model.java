@@ -64,6 +64,13 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
+	public ModelMetadata getMetadata() {
+		if (metadata == null) {
+			return new ModelMetadata();
+		}
+		return metadata;
+	}
+
 	@Override
 	public Model clone() {
 		final Model clone = new Model();
@@ -99,7 +106,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public List<Observable> getObservables() {
-		if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+		if (this.getSemantics() == null
+				|| this.getSemantics().getOde() == null
+				|| this.getSemantics().getOde().getObservables() == null) {
 			return new ArrayList<Observable>();
 		}
 		return this.getSemantics().getOde().getObservables();
@@ -111,12 +120,13 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
-		} else {
-			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
-				return new ArrayList<ModelParameter>();
-			}
-			return this.getSemantics().getOde().getParameters();
 		}
+		if (this.getSemantics() == null
+				|| this.getSemantics().getOde() == null
+				|| this.getSemantics().getOde().getParameters() == null) {
+			return new ArrayList<ModelParameter>();
+		}
+		return this.getSemantics().getOde().getParameters();
 	}
 
 	@JsonIgnore
@@ -126,7 +136,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
-			if (this.getSemantics() == null || this.getSemantics().getOde() == null) {
+			if (this.getSemantics() == null
+					|| this.getSemantics().getOde() == null
+					|| this.getSemantics().getOde().getInitials() == null) {
 				return new ArrayList<Initial>();
 			}
 			return this.getSemantics().getOde().getInitials();

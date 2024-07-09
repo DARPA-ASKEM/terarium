@@ -86,7 +86,7 @@
 						/>
 						<label :for="`thumbnail-0${i}`">
 							<img
-								:src="`src/assets/images/project-thumbnails/0${i}.png`"
+								:src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail"
 								:alt="`Thumbnail image 0{$i}`"
 							/>
 						</label>
@@ -124,6 +124,8 @@ import { cloneDeep, isEmpty } from 'lodash';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Types';
+import getImage from '@/assets/utils';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
 
 const props = defineProps<{
 	confirmText: string;

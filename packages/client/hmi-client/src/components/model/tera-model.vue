@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
@@ -16,13 +17,12 @@
 				@keyup.esc="updateModelName"
 				v-focus
 			/>
-
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
 			</div>
 		</template>
 		<template #edit-buttons>
-			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
+			<span>{{ model?.header.schema_name }}</span>
 			<template v-if="!featureConfig.isPreview">
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -56,7 +56,12 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
 import { updateModelConfiguration } from '@/services/model-configurations';
-import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
+import {
+	getModel,
+	getModelConfigurationsForModel,
+	isModelEmpty,
+	updateModel
+} from '@/services/model';
 import { FeatureConfig } from '@/types/common';
 import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -183,7 +188,7 @@ async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 
 async function fetchConfigurations() {
 	if (model.value) {
-		let tempConfigurations = await getModelConfigurations(model.value.id);
+		let tempConfigurations = await getModelConfigurationsForModel(model.value.id);
 
 		// Ensure that we always have a "default config" model configuration
 		if (useProjects().hasEditPermission()) {
@@ -195,7 +200,7 @@ async function fetchConfigurations() {
 				// await addDefaultConfiguration(model.value);
 				setTimeout(async () => {
 					// elastic search might still not update in time
-					tempConfigurations = await getModelConfigurations(model.value?.id!);
+					tempConfigurations = await getModelConfigurationsForModel(model.value?.id!);
 					modelConfigurations.value = tempConfigurations;
 				}, 800);
 				return;
@@ -228,3 +233,9 @@ watch(
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+span {
+	color: var(--text-color-subdued);
+}
+</style>

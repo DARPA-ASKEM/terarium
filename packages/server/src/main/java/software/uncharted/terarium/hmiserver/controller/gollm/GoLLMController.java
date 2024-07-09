@@ -42,7 +42,6 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelResponseHandler;
@@ -66,7 +65,6 @@ public class GoLLMController {
 	private final ModelService modelService;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
-	private final SummaryService summaryService;
 
 	private final ModelCardResponseHandler modelCardResponseHandler;
 	private final ConfigureModelResponseHandler configureModelResponseHandler;
@@ -120,26 +118,28 @@ public class GoLLMController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-		if (document.isEmpty()) {
+		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+		if (documentOpt.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
+		final DocumentAsset document = documentOpt.get();
+
 		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+		if (document.getText() == null || document.getText().isEmpty()) {
 			log.warn(String.format("Document %s has no text to send", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		// check for input length
-		if (document.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
+		if (document.getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
 			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
 		}
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setResearchPaper(document.get().getText());
+		input.setResearchPaper(document.getText());
 
 		// Create the task
 		final TaskRequest req = new TaskRequest();
@@ -157,6 +157,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		req.setAdditionalProperties(props);
 
@@ -259,6 +260,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final ConfigureModelResponseHandler.Properties props = new ConfigureModelResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDocumentId(documentId);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
@@ -401,6 +403,7 @@ public class GoLLMController {
 
 		final ConfigureFromDatasetResponseHandler.Properties props =
 				new ConfigureFromDatasetResponseHandler.Properties();
+		props.setProjectId(projectId);
 		props.setDatasetIds(datasetIds);
 		props.setModelId(modelId);
 		props.setWorkflowId(workflowId);
@@ -488,7 +491,7 @@ public class GoLLMController {
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
-		input.setModelCards(modelCards);
+		input.setCards(modelCards);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
@@ -581,6 +584,7 @@ public class GoLLMController {
 		req.setProjectId(projectId);
 
 		final GenerateSummaryHandler.Properties props = new GenerateSummaryHandler.Properties();
+		props.setProjectId(projectId);
 		props.setSummaryId(UUID.randomUUID());
 		props.setPreviousSummaryId(previousSummaryId);
 		req.setAdditionalProperties(props);

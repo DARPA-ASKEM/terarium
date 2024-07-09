@@ -255,13 +255,16 @@ export interface ObservableSemantic extends Semantic {
 export interface ParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
-    interventions: Intervention[];
     default: boolean;
 }
 
 export interface Semantic extends TerariumEntity {
     source: string;
     type: SemanticType;
+}
+
+export interface Author {
+    name: string;
 }
 
 export interface State {
@@ -688,7 +691,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: Intervention[];
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -726,7 +729,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedStaticParameterInterventions?: string;
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -751,7 +754,32 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: Intervention[];
+    policyInterventionId?: string;
+}
+
+export interface DynamicIntervention {
+    parameter: string;
+    threshold: number;
+    value: number;
+    isGreaterThan: boolean;
+}
+
+export interface Intervention {
+    name: string;
+    appliedTo: string;
+    type: InterventionSemanticType;
+    staticInterventions: StaticIntervention[];
+    dynamicInterventions: DynamicIntervention[];
+}
+
+export interface InterventionPolicy extends TerariumAsset {
+    modelId: string;
+    interventions: Intervention[];
+}
+
+export interface StaticIntervention {
+    timestep: number;
+    value: number;
 }
 
 export interface DatasetLocation {
@@ -764,12 +792,6 @@ export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
     weight: number;
-}
-
-export interface Intervention {
-    name: string;
-    timestep: number;
-    value: number;
 }
 
 export interface OptimizeExtra {
@@ -1034,7 +1056,7 @@ export interface OdeSemantics {
 
 export interface Annotations {
     license?: string;
-    authors?: string[];
+    authors?: Author[];
     references?: string[];
     locations?: string[];
     pathogens?: string[];
@@ -1391,6 +1413,11 @@ export enum SimulationType {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum InterventionSemanticType {
+    Variable = "variable",
+    Parameter = "parameter",
 }
 
 export enum ExtractionAssetType {

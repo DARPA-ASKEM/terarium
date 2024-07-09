@@ -153,7 +153,7 @@ public class KnowledgeController {
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR, permission);
+				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a Model asset.", e);
@@ -173,7 +173,7 @@ public class KnowledgeController {
 
 		responseAMR.setId(model.get().getId());
 		try {
-			modelService.updateAsset(responseAMR, permission);
+			modelService.updateAsset(responseAMR, projectId, permission);
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error(String.format("Unable to update the model with id %s.", modelId), e);
@@ -358,7 +358,7 @@ public class KnowledgeController {
 		}
 
 		try {
-			model = modelService.createAsset(model, permission);
+			model = modelService.createAsset(model, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create model", e);
 			throw new ResponseStatusException(
@@ -372,7 +372,7 @@ public class KnowledgeController {
 		code.get().getMetadata().put("model_id", model.getId().toString());
 
 		try {
-			codeService.updateAsset(code.get(), permission);
+			codeService.updateAsset(code.get(), projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code", e);
 			throw new ResponseStatusException(
@@ -425,7 +425,7 @@ public class KnowledgeController {
 		// 1. create code asset from code blocks
 		final Code createdCode;
 		try {
-			createdCode = codeService.createAsset(code, permission);
+			createdCode = codeService.createAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create code asset", e);
 			throw new ResponseStatusException(
@@ -466,7 +466,7 @@ public class KnowledgeController {
 		code.getFiles().put(filename, codeFile);
 
 		try {
-			codeService.updateAsset(code, permission);
+			codeService.updateAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code asset", e);
 			throw new ResponseStatusException(
@@ -582,7 +582,7 @@ public class KnowledgeController {
 
 		final Optional<Model> updatedModel;
 		try {
-			updatedModel = modelService.updateAsset(model, permission);
+			updatedModel = modelService.updateAsset(model, projectId, permission);
 		} catch (final IOException e) {
 			log.warn("Unable to update model", e);
 			throw new ResponseStatusException(
@@ -719,7 +719,7 @@ public class KnowledgeController {
 
 		final Optional<Dataset> updatedDataset;
 		try {
-			updatedDataset = datasetService.updateAsset(dataset, permission);
+			updatedDataset = datasetService.updateAsset(dataset, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update dataset", e);
 			throw new ResponseStatusException(
@@ -756,8 +756,9 @@ public class KnowledgeController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			return ResponseEntity.ok(
-					extractionService.alignAMR(documentId, modelId, permission).get());
+			return ResponseEntity.ok(extractionService
+					.alignAMR(projectId, documentId, modelId, permission)
+					.get());
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
@@ -782,7 +783,7 @@ public class KnowledgeController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractVariables(
-				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
+				projectId, documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 
