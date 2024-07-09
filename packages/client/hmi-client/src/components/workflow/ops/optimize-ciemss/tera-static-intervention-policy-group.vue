@@ -1,15 +1,12 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<div>
-				<tera-input v-if="isEditing" v-model="knobs.name" placeholder="Policy bounds" />
-				<h6 v-else>{{ knobs.name }}</h6>
-				<i
-					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
-					:style="'cursor: pointer'"
-					@click="onEdit"
-				/>
-			</div>
+			<tera-toggleable-edit
+				class="mr-auto"
+				:model-value="knobs.name"
+				@update:model-value="onEditName($event)"
+				tag="h5"
+			/>
 			<div>
 				<label for="active">Optimize</label>
 				<InputSwitch v-model="knobs.isActive" @change="emit('update-self', knobs)" />
@@ -97,7 +94,7 @@
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import InputSwitch from 'primevue/inputswitch';
+import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
@@ -124,10 +121,9 @@ const knobs = ref({
 	initialGuess: props.config.initialGuess ?? 0
 });
 
-const isEditing = ref<boolean>(false);
-
-const onEdit = () => {
-	isEditing.value = !isEditing.value;
+const onEditName = (name: string) => {
+	knobs.value.name = name;
+	emit('update-self', knobs);
 };
 
 const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
