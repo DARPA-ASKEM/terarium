@@ -1,5 +1,4 @@
 import type { DocumentExtraction } from '@/types/Types';
-import { ModelServiceType } from '@/types/common';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 const DOCUMENTATION_URL =
@@ -25,7 +24,6 @@ export interface ModelFromEquationsState {
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
-	modelService: ModelServiceType;
 }
 
 export const ModelFromEquationsOperation: Operation = {
@@ -43,8 +41,7 @@ export const ModelFromEquationsOperation: Operation = {
 			equations: [],
 			text: '',
 			modelFramework: 'petrinet',
-			modelId: null,
-			modelService: ModelServiceType.TA1
+			modelId: null
 		};
 		return init;
 	}
