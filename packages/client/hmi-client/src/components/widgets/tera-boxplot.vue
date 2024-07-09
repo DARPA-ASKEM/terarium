@@ -76,7 +76,7 @@ const sortedMostCommonEntries = computed(() =>
 );
 
 function getBoxplotPartialWidth(n1: number, n2: number) {
-	if (n2 === 0) return `width: 1%;`; // Prevent spanision by zero (n2 can be 0 if all values are the same)
+	if (n2 === 0) return `width: 1%;`; // Prevent division by zero (n2 can be 0 if all values are the same)
 	return `width: ${(n1 / n2) * 100}%;`;
 }
 </script>
