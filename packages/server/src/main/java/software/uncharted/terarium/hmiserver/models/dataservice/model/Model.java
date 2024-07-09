@@ -64,6 +64,13 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@Column(columnDefinition = "json")
 	private ModelMetadata metadata;
 
+	public ModelMetadata getMetadata() {
+		if (metadata == null) {
+			return new ModelMetadata();
+		}
+		return metadata;
+	}
+
 	@Override
 	public Model clone() {
 		final Model clone = new Model();
