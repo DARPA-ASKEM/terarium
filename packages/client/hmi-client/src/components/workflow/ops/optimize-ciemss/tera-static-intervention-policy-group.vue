@@ -97,7 +97,10 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
-import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import {
+	InterventionPolicyGroup,
+	InterventionTypes
+} from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
 	config: InterventionPolicyGroup;
@@ -110,7 +113,7 @@ const knobs = ref({
 	name: props.config.name ?? 'policy bounds',
 	isActive: props.config.isActive ?? false,
 	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType ?? 'new value',
+	optimizationType: props.config.optimizationType ?? InterventionTypes.startTime,
 	newValueOption: props.config.newValueOption ?? 'initial guess',
 	startTimeOption: props.config.startTimeOption ?? 'earliest',
 	startTime: props.config.startTime ?? 0,
@@ -126,6 +129,7 @@ const onEditName = (name: string) => {
 	emit('update-self', knobs);
 };
 
+// const Optimzation_TY
 const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];

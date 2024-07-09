@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention, InterventionPolicy } from '@/types/Types';
+import { Intervention } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -26,7 +26,7 @@ export interface InterventionPolicyGroup {
 	initialGuess: number;
 	isActive: boolean;
 	paramValue: number;
-	optimizationType: string;
+	optimizationType: InterventionTypes;
 	startTimeOption: string;
 	newValueOption: string;
 	isDisabled?: boolean;
@@ -51,9 +51,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
-	interventionType: InterventionTypes;
 	interventionPolicyGroups: InterventionPolicyGroup[];
-	interventions?: InterventionPolicy[];
 	// Constraints:
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
@@ -79,7 +77,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	initialGuess: 0,
 	isActive: true,
 	paramValue: 0,
-	optimizationType: 'new value',
+	optimizationType: InterventionTypes.paramValue,
 	startTimeOption: 'earliest',
 	newValueOption: 'initial guess'
 };
@@ -124,7 +122,6 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
-			interventionType: InterventionTypes.paramValue,
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],

@@ -301,7 +301,8 @@ import {
 	OptimizeRequestCiemss,
 	CsvAsset,
 	PolicyInterventions,
-	OptimizeQoi
+	OptimizeQoi,
+	InterventionPolicy
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -317,7 +318,6 @@ import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	OptimizeCiemssOperationState,
-	InterventionTypes,
 	InterventionPolicyGroup,
 	blankInterventionPolicyGroup,
 	defaultConstraintGroup,
@@ -348,7 +348,6 @@ interface BasicKnobs {
 	maxfeval: number;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	interventionType: InterventionTypes;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -358,8 +357,7 @@ const knobs = ref<BasicKnobs>({
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
-	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	interventionType: props.node.state.interventionType ?? ''
+	optimizationRunId: props.node.state.optimizationRunId ?? ''
 });
 
 // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
@@ -506,8 +504,8 @@ const initialize = async () => {
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
-		getInterventionPolicyById(policyId).then((interventions) =>
-			addInterventionPolicyToGroup(interventions)
+		getInterventionPolicyById(policyId).then((interventionPolicy) =>
+			setInterventionPolicyGroups(interventionPolicy)
 		);
 	}
 
@@ -518,17 +516,10 @@ const initialize = async () => {
 		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
 
-const addInterventionPolicyToGroup = (interventions) => {
+const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
-	if (
-		state.interventions &&
-		interventions.interventions &&
-		state.interventions.length === interventions.interventions.length
-	) {
-		return;
-	}
-	if (interventions.interventions && interventions.interventions.length > 0) {
-		interventions.interventions.forEach((intervention) => {
+	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
+		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive =
 				intervention.dynamicInterventions?.length > 0 ||
 				intervention.staticInterventions?.length > 1;
@@ -540,7 +531,6 @@ const addInterventionPolicyToGroup = (interventions) => {
 			newIntervention.isDisabled = isNotActive;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
-		state.interventions = interventions.interventions;
 	}
 	emit('update-state', state);
 };
@@ -564,9 +554,10 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.lowerBound]);
 		listBoundsInterventions.push([ele.upperBound]);
 	});
+	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
 	const optimizeInterventions: PolicyInterventions = {
-		interventionType: knobs.value.interventionType,
+		interventionType,
 		paramNames,
 		startTime,
 		paramValues
@@ -672,7 +663,6 @@ watch(
 		state.maxfeval = knobs.value.maxfeval;
 		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.interventionType = knobs.value.interventionType;
 		emit('update-state', state);
 	},
 	{ deep: true }
