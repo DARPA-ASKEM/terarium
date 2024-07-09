@@ -52,7 +52,7 @@
 		"extended-eventsource": "1.4.9",
 		"feather-icons": "4.29.2",
 		"graph-scaffolder": "*",
-		"katex": "0.16.10",
+		"katex": "0.16.11",
 		"lodash": "4.17.21",
 		"mathlive": "0.89.2",
 		"mathml-to-latex": "1.2.0",
