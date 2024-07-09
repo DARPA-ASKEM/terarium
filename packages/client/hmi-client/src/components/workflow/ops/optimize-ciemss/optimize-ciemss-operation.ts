@@ -8,7 +8,7 @@ const DOCUMENTATION_URL =
 export enum InterventionTypes {
 	paramValue = 'param_value',
 	startTime = 'start_time',
-	paramValueAndStartTime = 'param_value_and_start_time'
+	paramValueAndStartTime = 'param_value_and_start_time' // TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
 }
 
 export enum ContextMethods {
