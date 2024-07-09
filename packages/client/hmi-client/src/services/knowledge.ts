@@ -31,25 +31,6 @@ export const equationsToAMR = async (
 };
 
 /**
- * Given a model, enrich its metadata
- * Returns a runId used to poll for result
- */
-export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
-	let response: any;
-	try {
-		if (documentId && modelId) {
-			response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
-		} else {
-			response = await API.post(`/knowledge/profile-model/${modelId}`);
-		}
-		return response.data.id;
-	} catch (error: unknown) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
-};
-
-/**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
