@@ -217,8 +217,7 @@ public class ModelController {
 							final List<JsonNode> extractions = objectMapper.convertValue(
 									document.get().getMetadata().get("attributes"), new TypeReference<>() {});
 
-							// Append the Document extractions to the Model extractions, just for the
-							// front-end.
+							// Append the Document extractions to the Model extractions, just for the front-end.
 							// Those are NOT to be saved back to the data-service.
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
