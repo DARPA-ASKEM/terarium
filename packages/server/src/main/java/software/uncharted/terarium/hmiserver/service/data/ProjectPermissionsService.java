@@ -62,11 +62,12 @@ public class ProjectPermissionsService {
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
-	public void setProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+	public void setProjectPermissions(final RebacProject what, final RebacObject who, final String relationship)
+			throws Exception {
 		try {
 			what.setPermissionRelationships(who, relationship);
-		} catch (final RelationshipAlreadyExistsException ignore) {}
+		} catch (final RelationshipAlreadyExistsException ignore) {
+		}
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
@@ -83,10 +84,11 @@ public class ProjectPermissionsService {
 	}
 
 	@CacheEvict(value = "projectcontributors", key = "#what.id")
-	public void removeProjectPermissions(
-			final RebacProject what, final RebacObject who, final String relationship) throws Exception {
+	public void removeProjectPermissions(final RebacProject what, final RebacObject who, final String relationship)
+			throws Exception {
 		try {
 			what.removePermissionRelationships(who, relationship);
-		} catch (final RelationshipAlreadyExistsException ignore) {}
+		} catch (final RelationshipAlreadyExistsException ignore) {
+		}
 	}
 }
