@@ -525,7 +525,6 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 				intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
-			newIntervention.parameter = intervention.appliedTo;
 			newIntervention.isActive = !isNotActive;
 			newIntervention.isDisabled = isNotActive;
 			state.interventionPolicyGroups.push(newIntervention);
@@ -546,7 +545,7 @@ const runOptimize = async () => {
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		paramNames.push(ele.parameter);
+		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.paramValue);
 		startTime.push(ele.startTime);
 		listInitialGuessInterventions.push(ele.initialGuess);

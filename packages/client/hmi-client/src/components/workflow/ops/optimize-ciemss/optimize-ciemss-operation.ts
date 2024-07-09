@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention } from '@/types/Types';
+import { Intervention, InterventionSemanticType } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -17,7 +17,6 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroup {
-	parameter: string;
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
@@ -30,7 +29,7 @@ export interface InterventionPolicyGroup {
 	startTimeOption: string;
 	newValueOption: string;
 	isDisabled?: boolean;
-	intervention?: Intervention;
+	intervention: Intervention;
 }
 
 export interface ConstraintGroup {
@@ -74,7 +73,6 @@ export const OPTIMIZATION_TYPE_MAP = [
 ];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	parameter: '',
 	startTime: 0,
 	endTime: 0,
 	startTimeGuess: 0,
@@ -85,7 +83,14 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
 	paramValue: 0,
 	optimizationType: InterventionTypes.paramValue,
 	startTimeOption: 'earliest',
-	newValueOption: 'initial guess'
+	newValueOption: 'initial guess',
+	intervention: {
+		name: 'default name',
+		appliedTo: '',
+		type: InterventionSemanticType.Parameter,
+		staticInterventions: [],
+		dynamicInterventions: []
+	}
 };
 
 export const defaultConstraintGroup: ConstraintGroup = {

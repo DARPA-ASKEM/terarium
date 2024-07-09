@@ -18,8 +18,8 @@
 						option-label="label"
 						:options="OPTIMIZATION_TYPE_MAP"
 					/>
-					for the <strong>{{ knobs.intervention?.type }}</strong>
-					<strong>{{ knobs.intervention?.appliedTo }}</strong
+					for the <strong>{{ knobs.intervention.type }}</strong>
+					<strong>{{ knobs.intervention.appliedTo }}</strong
 					>.
 				</p>
 			</section>
