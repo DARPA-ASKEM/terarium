@@ -20,10 +20,10 @@ export enum ContextMethods {
 export interface InterventionPolicyGroupForm {
 	startTime: number;
 	endTime: number;
-	startTimeGuess: number;
-	lowerBound: number;
-	upperBound: number;
-	initialGuess: number;
+	initialGuessTime: number;
+	lowerBoundValue: number;
+	upperBoundValue: number;
+	initialGuessValue: number;
 	isActive: boolean;
 	optimizationType: InterventionTypes;
 	startTimeOption: string;
@@ -76,10 +76,10 @@ export const OPTIMIZATION_TYPE_MAP = [
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
-	startTimeGuess: 0,
-	lowerBound: 0,
-	upperBound: 0,
-	initialGuess: 0,
+	initialGuessTime: 0,
+	lowerBoundValue: 0,
+	upperBoundValue: 0,
+	initialGuessValue: 0,
 	isActive: true,
 	optimizationType: InterventionTypes.paramValue,
 	startTimeOption: 'earliest',

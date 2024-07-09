@@ -58,35 +58,34 @@
 				<section v-if="showNewValueOptions">
 					<h6 class="pt-4, pb-3">New Value</h6>
 					<div class="input-row">
-						<div v-for="(objective, index) in newValueInputs" :key="index" class="label-and-input">
-							<div class="label-and-input">
-								<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
-								<tera-input
-									type="number"
-									v-model="knobs[objective]"
-									@on-focus-out="emit('update-self', knobs)"
-								/>
-							</div>
+						<div class="label-and-input">
+							<label>Lower bound</label>
+							<tera-input type="number" v-model="knobs.lowerBoundValue" />
+						</div>
+						<div class="label-and-input">
+							<label>Upper bound</label>
+							<tera-input type="number" v-model="knobs.upperBoundValue" />
+						</div>
+						<div class="label-and-input">
+							<label>Initial guess</label>
+							<tera-input type="number" v-model="knobs.initialGuessValue" />
 						</div>
 					</div>
 				</section>
-
 				<section v-if="showStartTimeOptions">
 					<h6 class="pt-4, pb-3">Start Time</h6>
 					<div class="input-row">
-						<div
-							v-for="(objective, index) in newStartTimeInputs"
-							:key="index"
-							class="label-and-input"
-						>
-							<div class="label-and-input">
-								<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
-								<tera-input
-									type="number"
-									v-model="knobs[objective]"
-									@on-focus-out="emit('update-self', knobs)"
-								/>
-							</div>
+						<div class="label-and-input">
+							<label>Start time</label>
+							<tera-input type="number" v-model="knobs.startTime" />
+						</div>
+						<div class="label-and-input">
+							<label>End time</label>
+							<tera-input type="number" v-model="knobs.endTime" />
+						</div>
+						<div class="label-and-input">
+							<label>Initial guess</label>
+							<tera-input type="number" v-model="knobs.initialGuessTime" />
 						</div>
 					</div>
 				</section>
@@ -133,10 +132,10 @@ const knobs = ref<InterventionPolicyGroupForm>({
 	startTimeOption: props.config.startTimeOption ?? 'earliest',
 	startTime: props.config.startTime ?? 0,
 	endTime: props.config.endTime ?? 0,
-	lowerBound: props.config.lowerBound ?? 0,
-	upperBound: props.config.upperBound ?? 0,
-	startTimeGuess: props.config.startTimeGuess ?? 1,
-	initialGuess: props.config.initialGuess ?? 0
+	lowerBoundValue: props.config.lowerBoundValue ?? 0,
+	upperBoundValue: props.config.upperBoundValue ?? 0,
+	initialGuessValue: props.config.initialGuessValue ?? 0,
+	initialGuessTime: props.config.initialGuessTime ?? 1
 });
 
 const isNotEditable = computed(() => {
@@ -145,9 +144,6 @@ const isNotEditable = computed(() => {
 });
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
-
-const newValueInputs = ['lowerBound', 'upperBound', 'initialGuess'];
-const newStartTimeInputs = ['startTime', 'endTime', 'startTimeGuess'];
 
 const showStartTimeOptions = computed(
 	() => knobs.value.optimizationType === InterventionTypes.paramValue
