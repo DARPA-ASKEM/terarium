@@ -95,6 +95,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model', 'update-configuration', 'model-updated']);
 const teraModelDiagramRef = ref();
+
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
 const description = computed(
 	() => card.value?.ModelDetails?.model_description ?? props.model?.header?.description ?? ''
