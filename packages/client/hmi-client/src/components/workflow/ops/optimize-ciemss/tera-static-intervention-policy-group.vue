@@ -64,7 +64,7 @@
 								<tera-input
 									type="number"
 									v-model="knobs[objective]"
-									@change="emit('update-self', knobs)"
+									@on-focus-out="emit('update-self', knobs)"
 								/>
 							</div>
 						</div>
@@ -84,7 +84,7 @@
 								<tera-input
 									type="number"
 									v-model="knobs[objective]"
-									@change="emit('update-self', knobs)"
+									@on-focus-out="emit('update-self', knobs)"
 								/>
 							</div>
 						</div>
