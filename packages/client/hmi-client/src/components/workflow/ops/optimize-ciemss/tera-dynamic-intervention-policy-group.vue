@@ -26,11 +26,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
-import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
-	config: InterventionPolicyGroup;
+	config: InterventionPolicyGroupForm;
 	dynamicInterventions: DynamicIntervention[];
 }>();
 

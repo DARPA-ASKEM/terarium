@@ -95,13 +95,13 @@ import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
-	InterventionPolicyGroup,
+	InterventionPolicyGroupForm,
 	InterventionTypes,
 	OPTIMIZATION_TYPE_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
-	config: InterventionPolicyGroup;
+	config: InterventionPolicyGroupForm;
 	staticInterventions: StaticIntervention[];
 }>();
 

@@ -16,7 +16,7 @@ export enum ContextMethods {
 	max = 'max'
 }
 
-export interface InterventionPolicyGroup {
+export interface InterventionPolicyGroupForm {
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
@@ -49,7 +49,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
-	interventionPolicyGroups: InterventionPolicyGroup[];
+	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
+	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
@@ -71,7 +72,7 @@ export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
 ];
 
-export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
+export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
 	startTimeGuess: 0,
@@ -132,6 +133,7 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
+			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],

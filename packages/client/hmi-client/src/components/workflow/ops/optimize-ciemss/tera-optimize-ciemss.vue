@@ -318,7 +318,7 @@ import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	OptimizeCiemssOperationState,
-	InterventionPolicyGroup,
+	InterventionPolicyGroupForm,
 	blankInterventionPolicyGroup,
 	defaultConstraintGroup,
 	ConstraintGroup
@@ -453,7 +453,7 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
+const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
@@ -517,6 +517,7 @@ const initialize = async () => {
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
+	console.log(interventionPolicy);
 	const state = _.cloneDeep(props.node.state);
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
