@@ -28,7 +28,6 @@ export interface InterventionPolicyGroup {
 	optimizationType: InterventionTypes;
 	startTimeOption: string;
 	newValueOption: string;
-	isDisabled?: boolean;
 	intervention: Intervention;
 }
 

@@ -526,7 +526,6 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.isDisabled = isNotActive;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
