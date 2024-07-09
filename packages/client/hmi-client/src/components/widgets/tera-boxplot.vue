@@ -3,7 +3,7 @@
 		<!-- Top line -->
 		<header class="subdued">
 			<span>{{ stats.type.toUpperCase() }}</span>
-			<span v-if="stats.type === 'numeric'">STD: {{ stats.std.toFixed(3) }}</span>
+			<span v-if="stats.type === 'numeric'">STD: {{ displayNumber(stats.std.toString()) }}</span>
 			<span v-if="stats.type === 'categorical'">{{ stats.num_unique_entries }} unique</span>
 			<span>{{ stats.num_null_entries }} nulls</span>
 		</header>
@@ -17,7 +17,7 @@
 					:style="getBoxplotPartialWidth(stats.quantile_50 - stats.quantile_25, stats.max)"
 				/>
 				<span class="box-middle">
-					<span class="centered-text below">{{ stats.mean.toFixed(2) }}</span>
+					<span class="centered-text below">{{ displayNumber(stats.mean.toString()) }}</span>
 				</span>
 				<span
 					class="box-right"
