@@ -78,7 +78,9 @@ public class DocumentAsset extends TerariumAsset {
 		final List<String> res = new ArrayList<>();
 		if (this.fileNames != null) {
 			for (final String fileName : fileNames) {
-				res.add(fileName);
+				if (!res.contains(fileName)) {
+					res.add(fileName);
+				}
 			}
 		}
 		// ensure these are included in filenames
