@@ -36,7 +36,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 	@JsonAlias("file_names")
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private List<String> fileNames = new ArrayList<>();
+	protected List<String> fileNames = new ArrayList<>();
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)

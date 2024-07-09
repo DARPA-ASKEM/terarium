@@ -27,7 +27,7 @@
 											{{ id }}
 										</td>
 										<td>
-											<tera-input type="decimal" v-model="ensembleConfigs[i].weight" />
+											<tera-input type="nist" v-model="ensembleConfigs[i].weight" />
 										</td>
 									</tr>
 								</tbody>
