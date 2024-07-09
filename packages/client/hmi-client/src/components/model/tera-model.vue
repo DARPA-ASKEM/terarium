@@ -21,16 +21,13 @@
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
 			</div>
 		</template>
-		<template #edit-buttons>
-			<span>{{ model?.header.schema_name }}</span>
-			<template v-if="!featureConfig.isPreview">
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
-				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
-			</template>
+		<template #edit-buttons v-if="!featureConfig.isPreview">
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
 		<tera-model-description
 			v-if="model"
@@ -233,9 +230,3 @@ watch(
 	{ immediate: true }
 );
 </script>
-
-<style scoped>
-span {
-	color: var(--text-color-subdued);
-}
-</style>
