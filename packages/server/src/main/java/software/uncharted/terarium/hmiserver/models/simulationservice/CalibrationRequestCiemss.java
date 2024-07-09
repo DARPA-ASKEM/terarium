@@ -24,7 +24,8 @@ public class CalibrationRequestCiemss implements Serializable {
 	private TimeSpan timespan;
 
 	@TSOptional
-	private UUID interventions;
+	@JsonAlias("policy_intervention_id")
+	private UUID policyInterventionId;
 
 	private DatasetLocation dataset;
 	private String engine;

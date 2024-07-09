@@ -263,6 +263,10 @@ export interface Semantic extends TerariumEntity {
     type: SemanticType;
 }
 
+export interface Author {
+    name: string;
+}
+
 export interface State {
     id: string;
     name?: string;
@@ -687,7 +691,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: string;
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -750,7 +754,7 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: string;
+    policyInterventionId?: string;
 }
 
 export interface DynamicIntervention {
@@ -774,7 +778,7 @@ export interface InterventionPolicy extends TerariumAsset {
 }
 
 export interface StaticIntervention {
-    threshold: number;
+    timestep: number;
     value: number;
 }
 
@@ -1052,7 +1056,7 @@ export interface OdeSemantics {
 
 export interface Annotations {
     license?: string;
-    authors?: string[];
+    authors?: Author[];
     references?: string[];
     locations?: string[];
     pathogens?: string[];

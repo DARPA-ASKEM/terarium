@@ -25,7 +25,8 @@ public class SimulationRequest implements Serializable {
 	private String engine;
 
 	@TSOptional
-	private UUID interventions;
+	@JsonAlias("policy_intervention_id")
+	private UUID policyInterventionId;
 
 	@Override
 	public SimulationRequest clone() {
@@ -39,7 +40,7 @@ public class SimulationRequest implements Serializable {
 						: null);
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);
-		clone.setInterventions(this.interventions);
+		clone.setPolicyInterventionId(this.policyInterventionId);
 
 		return clone;
 	}
