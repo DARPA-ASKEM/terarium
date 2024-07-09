@@ -4,7 +4,11 @@
 			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<label for="active">Optimize</label>
-				<InputSwitch v-model="knobs.isActive" @change="emit('update-self', knobs)" />
+				<InputSwitch
+					v-model="knobs.isActive"
+					:disabled="isNotEditable"
+					@change="emit('update-self', knobs)"
+				/>
 			</div>
 		</div>
 		<template v-if="knobs.isActive">
@@ -124,6 +128,10 @@ const knobs = ref({
 	initialGuess: props.config.initialGuess ?? 0
 });
 
+const isNotEditable = computed(() => {
+	if (staticInterventions.value.length === 1) return false;
+	return true;
+});
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
