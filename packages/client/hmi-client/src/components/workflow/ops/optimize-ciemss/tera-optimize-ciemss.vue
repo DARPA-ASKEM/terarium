@@ -517,8 +517,13 @@ const initialize = async () => {
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
-	console.log(interventionPolicy);
 	const state = _.cloneDeep(props.node.state);
+	// If already set + not changed since set, do not reset.
+	if (state.interventionPolicyId === interventionPolicy.id) {
+		return;
+	}
+	state.interventionPolicyId = interventionPolicy.id ?? '';
+	state.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive =
