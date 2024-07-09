@@ -496,8 +496,9 @@ const initialize = async () => {
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
-		const interventions = await getInterventionPolicyById(policyId);
-		addInterventionPolicyToGroup(interventions);
+		getInterventionPolicyById(policyId).then((interventions) =>
+			addInterventionPolicyToGroup(interventions)
+		);
 	}
 
 	modelParameterOptions.value = model?.semantics?.ode.parameters ?? ([] as ModelParameter[]);

@@ -25,20 +25,20 @@
 			</div>
 		</div>
 
-		<div v-if="dynamicInterventions.length > 0">
+		<template v-if="dynamicInterventions.length > 0">
 			<tera-dynamic-intervention-policy-group
 				:config="config"
 				@update-self="updateState"
 				:dynamicInterventions="dynamicInterventions"
 			/>
-		</div>
-		<div v-else-if="staticInterventions.length > 0">
+		</template>
+		<template v-else-if="staticInterventions.length > 0">
 			<tera-static-intervention-policy-group
 				:config="config"
 				@update-self="updateState"
 				:staticInterventions="staticInterventions"
 			/>
-		</div>
+		</template>
 	</div>
 </template>
 
@@ -89,7 +89,7 @@ const updateState = () => {
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	border-radius: 0.375rem;
 	background: #fff;
 	border: 1px solid rgba(0, 0, 0, 0.08);
@@ -105,7 +105,7 @@ const updateState = () => {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	gap: 1rem;
+	gap: var(--gap-4);
 	padding-bottom: 0.5rem;
 
 	& > *:first-child {
@@ -117,7 +117,7 @@ const updateState = () => {
 		flex-direction: row;
 		justify-content: space-between;
 		align-items: center;
-		gap: 0.5rem;
+		gap: var(--gap-2);
 	}
 }
 </style>

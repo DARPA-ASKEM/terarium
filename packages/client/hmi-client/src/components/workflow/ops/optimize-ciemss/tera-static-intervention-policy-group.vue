@@ -1,5 +1,5 @@
 <template>
-	<section v-if="config.isActive">
+	<template v-if="config.isActive">
 		<section class="input-row">
 			<p>
 				Find the
@@ -8,7 +8,8 @@
 					v-model="knobs.optimizationType"
 					:options="OPTIMIZATION_TYPES"
 				/>
-				for the <b>{{ config.intervention?.type }}</b> <b>{{ config.intervention?.appliedTo }}</b
+				for the <strong>{{ config.intervention?.type }}</strong>
+				<strong>{{ config.intervention?.appliedTo }}</strong
 				>.
 			</p>
 		</section>
@@ -16,21 +17,23 @@
 			<section class="input-row">
 				<p>
 					The objective is the
-					<span v-if="showNewValueOptions">value closet to the</span>
-					<Dropdown
-						v-if="showNewValueOptions"
-						class="toolbar-button ml-1 mr-1"
-						v-model="knobs.newValueOption"
-						:options="NEW_VALUE_OPTIONS"
-					/>
+					<template v-if="showNewValueOptions">
+						<span>value closet to the</span>
+						<Dropdown
+							class="toolbar-button ml-1 mr-1"
+							v-model="knobs.newValueOption"
+							:options="NEW_VALUE_OPTIONS"
+						/>
+					</template>
 					<span v-if="showNewValueOptions && showStartTimeOptions">and at the</span>
-					<Dropdown
-						v-if="showStartTimeOptions"
-						class="toolbar-button ml-1 mr-1"
-						v-model="knobs.startTimeOption"
-						:options="START_TIME_OPTIONS"
-					/>
-					<span v-if="showStartTimeOptions">start time</span>
+					<template v-if="showStartTimeOptions">
+						<Dropdown
+							class="toolbar-button ml-1 mr-1"
+							v-model="knobs.startTimeOption"
+							:options="START_TIME_OPTIONS"
+						/>
+						<span>start time</span>
+					</template>
 					<span>.</span>
 				</p>
 			</section>
@@ -63,17 +66,15 @@
 				</div>
 			</section>
 		</div>
-	</section>
-	<div v-else>
-		<div v-for="(staticIntervention, index) in staticInterventions" :key="index">
-			<p>
-				Set the <b>{{ config.intervention?.type }}</b>
-				<b>{{ config.intervention?.appliedTo }}</b> to a new value of
-				<b>{{ staticIntervention.value }}</b> day at start time
-				<b>{{ staticIntervention.timestep }}</b> day.
-			</p>
-		</div>
-	</div>
+	</template>
+	<template v-else>
+		<p v-for="(staticIntervention, index) in staticInterventions" :key="index">
+			Set the <strong>{{ config.intervention?.type }}</strong>
+			<strong>{{ config.intervention?.appliedTo }}</strong> to a new value of
+			<strong>{{ staticIntervention.value }}</strong> day at start time
+			<strong>{{ staticIntervention.timestep }}</strong> day.
+		</p>
+	</template>
 </template>
 
 <script setup lang="ts">
@@ -133,7 +134,7 @@ const showNewValueOptions = computed(
 	flex-direction: row;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	padding-bottom: 0.5rem;
 
 	& > *:first-child {
@@ -148,6 +149,6 @@ const showNewValueOptions = computed(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 </style>

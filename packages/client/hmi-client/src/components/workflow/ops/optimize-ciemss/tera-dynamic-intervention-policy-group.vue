@@ -1,9 +1,12 @@
 <template>
 	<p>
-		Set the <b>{{ config.intervention?.type }}</b> <b>{{ config.intervention?.appliedTo }}</b> to
-		<b>{{ dynamicInterventions[0].threshold }}</b> days when it
-		<b>{{ dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below' }}</b>
-		the threshold value <b>{{ dynamicInterventions[0].value }}</b> person.
+		Set the <strong>{{ config.intervention?.type }}</strong>
+		<strong>{{ config.intervention?.appliedTo }}</strong> to
+		<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
+		<strong>{{
+			dynamicInterventions[0].isGreaterThan ? 'increase to above' : 'decrease to below'
+		}}</strong>
+		the threshold value <strong>{{ dynamicInterventions[0].value }}</strong> person.
 	</p>
 </template>
 <script setup lang="ts">
@@ -15,5 +18,3 @@ defineProps<{
 	dynamicInterventions: DynamicIntervention[];
 }>();
 </script>
-
-<style scoped></style>
