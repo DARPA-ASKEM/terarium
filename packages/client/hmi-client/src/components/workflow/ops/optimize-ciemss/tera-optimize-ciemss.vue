@@ -549,9 +549,9 @@ const runOptimize = async () => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
-		listInitialGuessInterventions.push(ele.initialGuess);
-		listBoundsInterventions.push([ele.lowerBound]);
-		listBoundsInterventions.push([ele.upperBound]);
+		listInitialGuessInterventions.push(ele.initialGuessValue);
+		listBoundsInterventions.push([ele.lowerBoundValue]);
+		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
