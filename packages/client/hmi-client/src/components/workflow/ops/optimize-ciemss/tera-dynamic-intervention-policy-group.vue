@@ -1,12 +1,7 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<tera-toggleable-edit
-				class="mr-auto"
-				:model-value="knobs.name"
-				@update:model-value="onEditName($event)"
-				tag="h5"
-			/>
+			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<!-- TODO: We should be able to utilize dynamic in the future -->
 				<label for="active">Optimize</label>
@@ -31,26 +26,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
-import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import InputSwitch from 'primevue/inputswitch';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 
 const props = defineProps<{
-	config: InterventionPolicyGroup;
+	config: InterventionPolicyGroupForm;
 	dynamicInterventions: DynamicIntervention[];
 }>();
 
 const emit = defineEmits(['update-self']);
 
 const knobs = ref({
-	name: props.config.name ?? 'policy bounds',
 	isActive: props.config.isActive ?? false
 });
-
-const onEditName = (name: string) => {
-	knobs.value.name = name;
-	emit('update-self', knobs);
-};
 </script>
 <style>
 .form-header {

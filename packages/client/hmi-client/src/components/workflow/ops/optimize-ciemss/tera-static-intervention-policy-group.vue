@@ -1,12 +1,7 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<tera-toggleable-edit
-				class="mr-auto"
-				:model-value="knobs.name"
-				@update:model-value="onEditName($event)"
-				tag="h5"
-			/>
+			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<label for="active">Optimize</label>
 				<InputSwitch v-model="knobs.isActive" @change="emit('update-self', knobs)" />
@@ -19,10 +14,12 @@
 					<Dropdown
 						class="toolbar-button"
 						v-model="knobs.optimizationType"
-						:options="OPTIMIZATION_TYPES"
+						option-value="value"
+						option-label="label"
+						:options="OPTIMIZATION_TYPE_MAP"
 					/>
-					for the <strong>{{ knobs.intervention?.type }}</strong>
-					<strong>{{ knobs.intervention?.appliedTo }}</strong
+					for the <strong>{{ knobs.intervention.type }}</strong>
+					<strong>{{ knobs.intervention.appliedTo }}</strong
 					>.
 				</p>
 			</section>
@@ -94,24 +91,26 @@
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import InputSwitch from 'primevue/inputswitch';
 import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
-import { InterventionPolicyGroup } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import {
+	InterventionPolicyGroupForm,
+	InterventionTypes,
+	OPTIMIZATION_TYPE_MAP
+} from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
-	config: InterventionPolicyGroup;
+	config: InterventionPolicyGroupForm;
 	staticInterventions: StaticIntervention[];
 }>();
 
 const emit = defineEmits(['update-self']);
 
 const knobs = ref({
-	name: props.config.name ?? 'policy bounds',
 	isActive: props.config.isActive ?? false,
 	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType ?? 'new value',
+	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,
 	newValueOption: props.config.newValueOption ?? 'initial guess',
 	startTimeOption: props.config.startTimeOption ?? 'earliest',
 	startTime: props.config.startTime ?? 0,
@@ -122,12 +121,6 @@ const knobs = ref({
 	initialGuess: props.config.initialGuess ?? 0
 });
 
-const onEditName = (name: string) => {
-	knobs.value.name = name;
-	emit('update-self', knobs);
-};
-
-const OPTIMIZATION_TYPES = ['new value', 'start time', 'new value and start time'];
 const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
 const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
 
@@ -136,13 +129,13 @@ const newStartTimeInputs = ['startTime', 'endTime', 'startTimeGuess'];
 
 const showStartTimeOptions = computed(
 	() =>
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[1] ||
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+		knobs.value.optimizationType === InterventionTypes.paramValue ||
+		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
 	() =>
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[0] ||
-		knobs.value.optimizationType === OPTIMIZATION_TYPES[2]
+		knobs.value.optimizationType === InterventionTypes.startTime ||
+		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );
 
 // TODO: Fix this
