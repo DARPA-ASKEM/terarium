@@ -110,6 +110,7 @@
 						<tera-parameter-entry
 							:model="model"
 							:model-configuration="modelConfiguration"
+							:modelConfigurations="modelConfigurations"
 							:parameter-id="baseParameter"
 							@update-parameter="emit('update-parameters', [$event])"
 							@update-source="emit('update-source', $event)"
@@ -171,6 +172,7 @@ import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-ma
 const props = defineProps<{
 	model: Model;
 	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
 }>();

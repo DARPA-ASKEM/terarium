@@ -264,11 +264,12 @@ export interface Semantic extends TerariumEntity {
 }
 
 export enum OtherValuesInputTypes {
-	constant = 'constant',
-	uniform = 'uniform'
+	constant = 'Constant',
+	uniform = 'StandardUniform1'
 }
 
 export interface OtherValuesInput {
+    id?: string;
 	type?: OtherValuesInputTypes;
 	constant?: number;
 	max?: number;
