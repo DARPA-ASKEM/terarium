@@ -164,10 +164,7 @@ const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
 });
 
-const isNotEditable = computed(() => {
-	if (staticInterventions.value.length === 1) return false;
-	return true;
-});
+const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
 	() => knobs.value.optimizationType === InterventionTypes.paramValue
