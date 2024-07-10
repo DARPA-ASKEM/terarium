@@ -14,7 +14,6 @@
 				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
 				<Column
 					v-for="(col, index) in selectedColumns"
-					:class="isExpression(col.field) ? 'border' : ''"
 					:field="col.field"
 					:header="col.header"
 					:sortable="col.field !== 'stats'"
@@ -118,7 +117,7 @@ import ColumnGroup from 'primevue/columngroup';
 import RadioButton from 'primevue/radiobutton';
 
 const props = defineProps<{
-	initialId: string;
+	id: string;
 	tableData: any;
 	otherValuesInputTypes: OtherValuesInputTypes;
 }>();
@@ -135,7 +134,6 @@ const columns = ref([
 
 const emit = defineEmits(['update-expression', 'update-source', 'close-modal']);
 
-const isExpression = (field) => field === 'expression';
 const isConstant = () => props.otherValuesInputTypes === OtherValuesInputTypes.constant;
 
 const customSource = ref('default');
@@ -181,9 +179,8 @@ function getColumnWidth(columnField: string) {
 }
 
 function applySelectedValue() {
-	console.log('selection.value', selection.value);
-	emit('update-expression', { id: props.initialId, value: selection.value?.constant });
-	emit('update-source', { id: props.initialId, value: selection.value?.source });
+	emit('update-expression', { id: props.id, value: selection.value?.constant });
+	emit('update-source', { id: props.id, value: selection.value?.source });
 	emit('close-modal');
 }
 </script>

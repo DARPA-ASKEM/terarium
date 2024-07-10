@@ -26,7 +26,7 @@
 				@click="sourceOpen = !sourceOpen"
 			/>
 			<Button
-				:label="getOtherValuesLabel(initialId)"
+				:label="getOtherValuesLabel"
 				text
 				size="small"
 				@click="showOtherConfigValueModal = true"
@@ -41,9 +41,9 @@
 		</footer>
 	</div>
 	<Teleport to="body">
-		<TeraModelOtherValueEntry
+		<tera-model-other-value-entry
 			v-if="showOtherConfigValueModal"
-			:initial-id="initialId"
+			:id="initialId"
 			:tableData="tableData"
 			:otherValuesInputTypes="OtherValuesInputTypes.constant"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
@@ -59,7 +59,7 @@ import { Model, ModelConfiguration, OtherValuesInputTypes } from '@/types/Types'
 import { getInitialExpression, getInitialSource } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraModelOtherValueEntry from '@/components/model/petrinet/tera-model-other-value-entry.vue';
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import Button from 'primevue/button';
 import {
 	getInitialDescription,
@@ -75,6 +75,7 @@ const props = defineProps<{
 }>();
 
 const tableData = ref();
+onMounted(() => setTableData(props.initialId));
 
 const emit = defineEmits(['update-expression', 'update-source']);
 
@@ -91,21 +92,24 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-function getOtherValuesLabel(initialId) {
+const setTableData = (id, key = 'target', otherValueList = 'initialSemanticList') => {
 	tableData.value = [];
+
 	const modelConfigTableData = props.modelConfigurations.map((modelConfig) => ({
 		name: modelConfig.name,
-		initialSemanticList: modelConfig.initialSemanticList
+		list: modelConfig[otherValueList]
 	}));
+
 	modelConfigTableData.forEach((modelConfig) => {
-		const config = modelConfig.initialSemanticList.filter((item) => item.target === initialId)[0];
+		const config = modelConfig.list.filter((item) => item[key] === id)[0];
 		if (config && modelConfig.name) {
 			const data = { name: modelConfig.name, ...config };
 			tableData.value.push(data);
 		}
 	});
-	return `Other Values(${tableData.value.length})`;
-}
+};
+
+const getOtherValuesLabel = computed(() => `Other Values(${tableData.value?.length})`);
 </script>
 
 <style scoped>
