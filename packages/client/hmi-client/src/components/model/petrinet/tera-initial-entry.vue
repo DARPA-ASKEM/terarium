@@ -45,8 +45,8 @@
 			v-if="showOtherConfigValueModal"
 			:id="initialId"
 			:updateEvent="'update-expression'"
-			:tableData="tableData"
-			:otherValuesInputTypes="OtherValuesInputTypes.constant"
+			:otherValueList="otherValueList"
+			:otherValuesInputTypes="DistributionType.Constant"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
 			@update-expression="emit('update-expression', $event)"
 			@update-source="emit('update-source', $event)"
@@ -56,11 +56,16 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration, OtherValuesInputTypes } from '@/types/Types';
-import { getInitialExpression, getInitialSource } from '@/services/model-configurations';
+import { DistributionType } from '@/services/distribution';
+import { Model, ModelConfiguration } from '@/types/Types';
+import {
+	getInitialExpression,
+	getInitialSource,
+	getOtherValues
+} from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import {
 	getInitialDescription,
@@ -75,8 +80,9 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 }>();
 
-const tableData = ref();
-onMounted(() => setTableData(props.initialId));
+const otherValueList = ref(
+	getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList')
+);
 
 const emit = defineEmits(['update-expression', 'update-source']);
 
@@ -93,24 +99,7 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-const setTableData = (id, key = 'target', otherValueList = 'initialSemanticList') => {
-	tableData.value = [];
-
-	const modelConfigTableData = props.modelConfigurations.map((modelConfig) => ({
-		name: modelConfig.name,
-		list: modelConfig[otherValueList]
-	}));
-
-	modelConfigTableData.forEach((modelConfig) => {
-		const config = modelConfig.list.filter((item) => item[key] === id)[0];
-		if (config && modelConfig.name) {
-			const data = { name: modelConfig.name, ...config };
-			tableData.value.push(data);
-		}
-	});
-};
-
-const getOtherValuesLabel = computed(() => `Other Values(${tableData.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 </script>
 
 <style scoped>
