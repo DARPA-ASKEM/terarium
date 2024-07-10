@@ -1,13 +1,12 @@
 <template>
 	<tera-modal>
-		<section style="width: 800px">
+		<section>
 			<DataTable
 				:value="otherValueList"
 				@update:selection="onSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
-				scrollable
-				scrollHeight="45rem"
+				tableStyle="min-width: 55rem"
 			>
 				<template #header> </template>
 				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
@@ -28,8 +27,8 @@
 						</template>
 						<template v-if="col.field === 'expression'">
 							<section class="inline-flex gap-1">
-								<span>Constants</span>
-								<span class="pl-1">{{ data.expression }}</span>
+								<span class="cell-space">Constants</span>
+								<span>{{ data.expression }}</span>
 							</section>
 						</template>
 					</template>
@@ -58,7 +57,7 @@
 						<Column>
 							<template #footer>
 								<section class="inline-flex gap-1">
-									<span class="pl-1 pr-1">Constant</span>
+									<span class="custom-input-label">Constant</span>
 									<tera-input
 										placeholder="Constant"
 										v-model="customConstant"
@@ -166,5 +165,16 @@ main {
 
 label {
 	color: var(--text-color-subdued);
+}
+
+.cell-space {
+	padding-right: 1rem;
+}
+
+.custom-input-label {
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	padding-right: 1rem;
 }
 </style>
