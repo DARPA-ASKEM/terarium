@@ -263,20 +263,6 @@ export interface Semantic extends TerariumEntity {
     type: SemanticType;
 }
 
-export enum OtherValuesInputTypes {
-	constant = 'Constant',
-	uniform = 'StandardUniform1'
-}
-
-export interface OtherValuesInput {
-    id?: string;
-	type?: OtherValuesInputTypes;
-	constant?: number;
-	max?: number;
-	min?: number;
-	source: string;
-}
-
 export interface Author {
     name: string;
 }
