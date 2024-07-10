@@ -70,19 +70,19 @@
 					<h6 class="pt-4, pb-3">New Value</h6>
 					<div class="input-row">
 						<tera-input
-							type="number"
+							type="nist"
 							label="Lower bound"
 							v-model="knobs.lowerBoundValue"
 							@update:model-value="$emit('update-self', knobs)"
 						/>
 						<tera-input
-							type="number"
+							type="nist"
 							label="Upper bound"
 							v-model="knobs.upperBoundValue"
 							@update:model-value="emit('update-self', knobs)"
 						/>
 						<tera-input
-							type="number"
+							type="nist"
 							label="Initial guess"
 							v-model="knobs.initialGuessValue"
 							@update:model-value="emit('update-self', knobs)"
@@ -93,19 +93,19 @@
 					<h6 class="pt-4, pb-3">Start Time</h6>
 					<div class="input-row">
 						<tera-input
-							type="number"
+							type="nist"
 							label="Start time"
 							v-model="knobs.startTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
 						<tera-input
-							type="number"
+							type="nist"
 							label="End time"
 							v-model="knobs.endTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
 						<tera-input
-							type="number"
+							type="nist"
 							label="Initial guess"
 							v-model="knobs.startTimeGuess"
 							@update:model-value="emit('update-self', knobs)"
