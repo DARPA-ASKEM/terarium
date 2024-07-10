@@ -128,6 +128,7 @@
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
 				:model="model"
 				:model-configuration="knobs.transientModelConfig"
+				:modelConfigurations="filteredModelConfigurations"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				@update-expression="
