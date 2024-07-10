@@ -1,14 +1,13 @@
 <template>
 	<tera-modal>
-		<section style="width: 800px">
+		<section>
 			<DataTable
 				class="value-border"
 				:value="otherValueList"
 				@update:selection="onSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
-				scrollable
-				scrollHeight="45rem"
+				tableStyle="min-width: 60rem"
 			>
 				<template #header> </template>
 				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
@@ -129,8 +128,8 @@ const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
 	{ field: 'target', header: 'Source' },
 	{ field: 'value', header: 'Value' },
-	{ field: 'maximum', header: '' },
-	{ field: 'minimum', header: '' }
+	{ field: 'minimum', header: '' },
+	{ field: 'maximum', header: '' }
 ]);
 
 const emit = defineEmits(['update-parameter', 'update-source', 'close-modal']);
@@ -197,8 +196,12 @@ function getColumnWidth(columnField: string) {
 			return 40;
 		case 'target':
 			return 20;
-		case 'expression':
-			return 100;
+		case 'value':
+			return 20;
+		case 'minimum':
+			return 20;
+		case 'maximum':
+			return 20;
 		default:
 			return 100;
 	}
