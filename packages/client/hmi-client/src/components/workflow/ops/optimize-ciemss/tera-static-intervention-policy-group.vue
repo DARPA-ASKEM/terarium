@@ -23,7 +23,8 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the <strong>{{ knobs.intervention.type }}</strong>
+					for the
+					<strong>{{ knobs.intervention.type }}</strong>
 					<strong>{{ knobs.intervention.appliedTo }}</strong
 					>.
 				</p>
