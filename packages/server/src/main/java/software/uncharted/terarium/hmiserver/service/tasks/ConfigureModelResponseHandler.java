@@ -11,14 +11,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfigurationLegacy;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationLegacyService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
@@ -31,7 +32,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
-	private final ModelConfigurationLegacyService modelConfigurationService;
+	private final ModelConfigurationService modelConfigurationService;
 	private final ProvenanceService provenanceService;
 
 	@Override
@@ -55,6 +56,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+		UUID projectId;
 		UUID documentId;
 		UUID modelId;
 		UUID workflowId;
@@ -90,7 +92,6 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				}
 
 				// Map the initials values to the model
-				final ArrayNode gollmExtractionsInitials = objectMapper.createArrayNode();
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials =
 							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
@@ -104,18 +105,19 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				// Set the all the GoLLM extractions into the model metadata
 				// FIXME - It is not what we should do, this is a hack for the March 2024
 				// Evaluation
+				if (model.getMetadata() == null) {
+					model.setMetadata(new ModelMetadata());
+				}
 				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
-				final ModelConfigurationLegacy configuration = new ModelConfigurationLegacy();
-				configuration.setModelId(model.getId());
-				configuration.setName(condition.get("name").asText());
-				configuration.setDescription(condition.get("description").asText());
+				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
+						model,
+						condition.get("name").asText(),
+						condition.get("description").asText());
 
-				configuration.setConfiguration(modelCopy);
-
-				final ModelConfigurationLegacy newConfig =
-						modelConfigurationService.createAsset(configuration, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
+						configuration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 				// add provenance
 				provenanceService.createProvenance(new Provenance()
 						.setLeft(newConfig.getId())

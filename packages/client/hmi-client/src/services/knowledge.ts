@@ -31,37 +31,6 @@ export const equationsToAMR = async (
 };
 
 /**
- * Given a model, enrich its metadata
- * Returns a runId used to poll for result
- */
-export const profileModel = async (modelId: Model['id'], documentId: string | null = null) => {
-	let response: any;
-	try {
-		if (documentId && modelId) {
-			response = await API.post(`/knowledge/profile-model/${modelId}?document-id=${documentId}`);
-		} else {
-			response = await API.post(`/knowledge/profile-model/${modelId}`);
-		}
-		return response.data.id;
-	} catch (error: unknown) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
-};
-
-export const alignModel = async (
-	modelId: Model['id'],
-	documentId: DocumentAsset['id']
-): Promise<boolean> => {
-	if (!modelId || !documentId) {
-		return false;
-	}
-	const url = `/knowledge/align-model?document-id=${documentId}&model-id=${modelId}`;
-	const response = await API.post(url);
-	return response?.status === 204;
-};
-
-/**
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */

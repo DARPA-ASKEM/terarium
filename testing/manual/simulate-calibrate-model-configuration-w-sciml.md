@@ -1,8 +1,6 @@
 ## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 
@@ -18,7 +16,7 @@ Estimated time to completion: [X] minutes
 ### 2. Upload test model
 
 1. Click `Upload resources`.
-2. Drag and drop `Configured SIR.json` file over the text "Drop resources here".
+2. Drag and drop [`Configured SIR.json`](https://drive.google.com/file/d/1a8y5IqGqZEZpQVivj6dlbNlRhkwesGvi/view?usp=drive_link) file over the text "Drop resources here".
 3. Click `Upload` and wait for the file upload to finish.
 4. Repeat with the [`data-1.csv`](https://drive.google.com/file/d/1o6pSraJdVK8XY13Mj3RvV9th-DbULsEX/view?usp=drive_link) file.
 5. A model named "Configured SIR" and a dataset named "data-1" should appear in the "Resources" panel.
@@ -65,8 +63,3 @@ Estimated time to completion: [X] minutes
 8. Click `Run`.
 9. As the calibration runs, the "Loss function" section on the right panel should have a chart showing a history of the loss. Expect it to be a timeseries that decreases quickly then slowly.
 10. When the calibration is completed successfully, there should be a chart showing the predicted values for each model variable and the dataset values to which it has been mapped.
-
-### 4. End test
-
-1. Click on "QA" on the top right of the screen.
-2. Click "Logout" to log out of the application.

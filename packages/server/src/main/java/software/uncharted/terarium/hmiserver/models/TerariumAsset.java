@@ -36,7 +36,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 	@JsonAlias("file_names")
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private List<String> fileNames = new ArrayList<>();
+	protected List<String> fileNames = new ArrayList<>();
 
 	@TSOptional
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -65,7 +65,7 @@ public abstract class TerariumAsset extends TerariumEntity {
 
 		asset.name = name;
 		asset.description = description;
-		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : null;
+		asset.fileNames = fileNames != null ? new ArrayList<>(fileNames) : new ArrayList<>();
 		asset.deletedOn = deletedOn != null ? new Timestamp(deletedOn.getTime()) : null;
 		asset.temporary = temporary;
 		asset.publicAsset = publicAsset;

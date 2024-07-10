@@ -46,6 +46,7 @@ header {
 header > div {
 	display: inline-flex;
 	gap: var(--gap-small);
+	align-items: center;
 }
 
 section {
@@ -53,12 +54,12 @@ section {
 	flex-direction: column;
 	gap: 0.75rem;
 	overflow: hidden;
+	height: 100%;
 }
 main {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
-	gap: 1.5rem;
 }
 </style>

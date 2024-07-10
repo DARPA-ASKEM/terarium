@@ -96,7 +96,7 @@ public class SimulationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Simulation sim = simulationService.createAsset(simulation, permission);
+			final Simulation sim = simulationService.createAsset(simulation, projectId, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -136,7 +136,7 @@ public class SimulationController {
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
 		try {
-			Optional<Simulation> simulation = simulationService.getAsset(id, permission);
+			final Optional<Simulation> simulation = simulationService.getAsset(id, permission);
 
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
@@ -170,13 +170,12 @@ public class SimulationController {
 					} else {
 						sim.setStatusMessage("Failed running simulation " + sim.getId());
 					}
-
-					simulation = simulationService.updateAsset(sim, permission);
 				}
 			}
 
 			return simulation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent()
 					.build());
+
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get simulation %s", id);
 			log.error(error, e);
@@ -213,7 +212,7 @@ public class SimulationController {
 
 		try {
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(simulation, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
@@ -244,7 +243,7 @@ public class SimulationController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			simulationService.deleteAsset(id, permission);
+			simulationService.deleteAsset(id, projectId, permission);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -277,10 +276,8 @@ public class SimulationController {
 
 		try {
 			final Optional<String> results = simulationService.fetchFileAsString(id, filename);
-			if (results.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(results.get());
+			return results.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
@@ -295,7 +292,7 @@ public class SimulationController {
 	 * @param projectId ID of the project to add the dataset to
 	 * @return Dataset the new dataset created
 	 */
-	@GetMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
+	@PostMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(
@@ -331,7 +328,7 @@ public class SimulationController {
 
 			// Create the dataset asset:
 			final UUID simId = sim.get().getId();
-			final Dataset dataset = datasetService.createAsset(new Dataset(), permission);
+			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
 			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
 			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
@@ -346,7 +343,7 @@ public class SimulationController {
 
 			// Duplicate the simulation results to a new dataset
 			simulationService.copySimulationResultToDataset(sim.get(), dataset);
-			datasetService.updateAsset(dataset, permission);
+			datasetService.updateAsset(dataset, projectId, permission);
 
 			// Add the dataset to the project as an asset
 			final Optional<Project> project = projectService.getProject(projectId);

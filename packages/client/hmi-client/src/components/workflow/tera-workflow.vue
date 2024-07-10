@@ -91,6 +91,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
+					ref="teraOperatorRef"
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="
@@ -185,7 +186,6 @@
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@close="addOperatorToRoute(null)"
 			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-			@generate-output-summary="(event: any) => generateSummary(currentActiveNode, event)"
 		/>
 	</Teleport>
 </template>
@@ -235,7 +235,6 @@ import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
 import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
 import * as SimulateJuliaOp from '@/components/workflow/ops/simulate-julia/mod';
-import * as ModelTransformerOp from '@/components/workflow/ops/model-transformer/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -246,12 +245,11 @@ import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
 import * as CalibrateJuliaOp from '@/components/workflow/ops/calibrate-julia/mod';
 import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
-import * as ModelCouplingOp from '@/components/workflow/ops/model-coupling/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as DecapodesOp from '@/components/workflow/ops/decapodes/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
+import * as InterventionsOp from '@/components/workflow/ops/interventions/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -262,7 +260,6 @@ registry.registerOp(StratifyMiraOp);
 registry.registerOp(ModelFromCodeOp);
 registry.registerOp(SimulateEnsembleCiemssOp);
 registry.registerOp(DatasetOp);
-registry.registerOp(ModelTransformerOp);
 registry.registerOp(FunmanOp);
 registry.registerOp(ModelOp);
 registry.registerOp(ModelEditOp);
@@ -274,12 +271,11 @@ registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
-registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
-registry.registerOp(DecapodesOp);
 registry.registerOp(RegriddingOp);
+registry.registerOp(InterventionsOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -324,6 +320,7 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+const teraOperatorRef = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -364,7 +361,7 @@ function appendOutput(
 ) {
 	if (!node) return;
 
-	// we assume that if we can produce an output, the status is okay
+	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
@@ -380,7 +377,6 @@ function appendOutput(
 		timestamp: new Date(),
 		operatorStatus: node.status
 	};
-	initiateSummaryGeneration(node, outputPort);
 
 	// Append and set active
 	node.outputs.push(outputPort);
@@ -391,28 +387,6 @@ function appendOutput(
 
 	selectOutput(node, uuid);
 	workflowDirty = true;
-}
-
-function initiateSummaryGeneration(node: WorkflowNode<any>, outputPort: WorkflowOutput<any>) {
-	// If operation does not have createNotebook, we do not generate summary since summary endpoint expects notebook as an input payload.
-	if (!registry.getOperation(node.operationType)?.createNotebook) return;
-	outputPort.summary = ''; // Indicating that we are expecting the summary value will be generated and filled.
-}
-
-async function generateSummary(node: WorkflowNode<any> | null, outputPort: WorkflowOutput<any>) {
-	if (!node) return;
-	const result = await workflowService.generateSummary(
-		node,
-		outputPort,
-		registry.getOperation(node.operationType)?.createNotebook ?? null
-	);
-	if (!result) return;
-	const updateNode = wf.value.nodes.find((n) => n.id === node.id);
-	const updateOutput = (updateNode?.outputs ?? []).find((o) => o.id === outputPort.id);
-	if (!updateNode || !updateOutput) return;
-	updateOutput.summary = result.summary;
-	updateOutput.label = result.title;
-	updateOutputPort(updateNode, updateOutput);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -566,9 +540,8 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(StratifyMiraOp)
 			},
 			{
-				label: DecapodesOp.operation.displayName,
-				disabled: true,
-				command: addOperatorToWorkflow(DecapodesOp)
+				label: InterventionsOp.operation.displayName,
+				command: addOperatorToWorkflow(InterventionsOp)
 			}
 		]
 	},
@@ -578,10 +551,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
-			},
-			{
-				label: ModelCouplingOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelCouplingOp)
 			},
 			{ separator: true },
 			{
@@ -921,6 +890,10 @@ const updateAnnotationPosition = (annotation: WorkflowAnnotation, { x, y }) => {
 };
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
+	const teraNode = teraOperatorRef.value.find((operatorNode) => operatorNode.id === node.id);
+	if (teraNode.isEditing ?? false) {
+		return;
+	}
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -993,7 +966,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
-		if (workflowDirty) {
+		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}

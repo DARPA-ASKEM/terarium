@@ -31,22 +31,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
-import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -69,19 +70,20 @@ public class ExtractionService {
 	private final NotificationService notificationService;
 	private final TaskService taskService;
 	private final ProvenanceService provenanceService;
+	private final EmbeddingService embeddingService;
 	private final CurrentUserService currentUserService;
 
 	// Used to get the Abstract text from PDF
 	private static final String NODE_CONTENT = "content";
 
-	// time the progress takes to reach each subsequent half
+	// time the progress takes to reach each subsequent half.
 	final Double HALFTIME_SECONDS = 2.0;
 
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	private ExecutorService executor;
 
@@ -109,7 +111,7 @@ public class ExtractionService {
 			final UUID projectId,
 			final Schema.Permission hasWritePermission) {
 
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
 				notificationService,
 				ClientEventType.EXTRACTION_PDF,
@@ -209,12 +211,12 @@ public class ExtractionService {
 
 						fileMap.put(filenameNoExt, bytes);
 						if (entry != null && entry.getName().toLowerCase().endsWith(".json")) {
-							ObjectMapper objectMapper = new ObjectMapper();
+							final ObjectMapper objectMapper = new ObjectMapper();
 
-							JsonNode rootNode = objectMapper.readTree(bytes);
+							final JsonNode rootNode = objectMapper.readTree(bytes);
 							if (rootNode instanceof ArrayNode) {
-								ArrayNode arrayNode = (ArrayNode) rootNode;
-								for (JsonNode record : arrayNode) {
+								final ArrayNode arrayNode = (ArrayNode) rootNode;
+								for (final JsonNode record : arrayNode) {
 									if (record.has("detect_cls")
 											&& record.get("detect_cls").asText().equals("Abstract")) {
 										abstractJsonNode = record;
@@ -280,6 +282,7 @@ public class ExtractionService {
 						extraction.setMetadata(objectMapper.convertValue(record, new TypeReference<>() {}));
 
 						document.getAssets().add(extraction);
+						document.getFileNames().add(assetFileName);
 						notificationInterface.sendMessage(
 								String.format("Add COSMOS extraction %s to Document...", assetFileName));
 					}
@@ -304,7 +307,7 @@ public class ExtractionService {
 
 				// update the document
 				document = documentService
-						.updateAsset(document, hasWritePermission)
+						.updateAsset(document, projectId, hasWritePermission)
 						.orElseThrow();
 
 				// if there is text, run variable extraction
@@ -314,7 +317,12 @@ public class ExtractionService {
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
 						document = runVariableExtraction(
-								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
+								notificationInterface,
+								projectId,
+								documentId,
+								new ArrayList<>(),
+								domain,
+								hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -339,14 +347,14 @@ public class ExtractionService {
 						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+						props.setProjectId(projectId);
 						props.setDocumentId(documentId);
 						req.setAdditionalProperties(props);
 
 						notificationInterface.sendMessage("Sending GoLLM model card request");
-						final TaskResponse resp = taskService.runTaskSync(req);
-						if (resp.getStatus() != TaskStatus.SUCCESS) {
-							throw new RuntimeException("GoLLM model card task failed");
-						}
+
+						taskService.runTaskSync(req);
+
 						notificationInterface.sendMessage("Model Card created");
 					}
 				}
@@ -376,6 +384,7 @@ public class ExtractionService {
 
 	private DocumentAsset runVariableExtraction(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -440,7 +449,7 @@ public class ExtractionService {
 				for (final UUID modelId : modelIds) {
 					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
 					try {
-						alignAMR(documentId, modelId, hasWritePermission).get();
+						runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
@@ -449,7 +458,9 @@ public class ExtractionService {
 			}
 
 			// update the document
-			return documentService.updateAsset(document, hasWritePermission).orElseThrow();
+			return documentService
+					.updateAsset(document, projectId, hasWritePermission)
+					.orElseThrow();
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
 			log.error(error, e.contentUTF8(), e);
@@ -466,12 +477,13 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractVariables(
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
 			final Schema.Permission hasWritePermission) {
 		// Set up the client interface
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
 				notificationService,
 				ClientEventType.EXTRACTION,
@@ -481,17 +493,20 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc =
-					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
+			final DocumentAsset doc = runVariableExtraction(
+					notificationInterface, projectId, documentId, modelIds, domain, hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
 	public Future<Model> alignAMR(
-			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
+			final UUID projectId,
+			final UUID documentId,
+			final UUID modelId,
+			final Schema.Permission hasWritePermission) {
 
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<Properties>(
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
 				notificationService,
 				ClientEventType.EXTRACTION,
@@ -499,84 +514,124 @@ public class ExtractionService {
 				new Properties(documentId),
 				HALFTIME_SECONDS);
 
+		notificationInterface.sendMessage("Model alignment task submitted...");
+
 		return executor.submit(() -> {
+			final Model model = runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
+			notificationInterface.sendFinalMessage("Alignment complete");
+			return model;
+		});
+	}
+
+	public Model runAlignAMR(
+			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
+			final UUID documentId,
+			final UUID modelId,
+			final Schema.Permission hasWritePermission) {
+
+		try {
+			notificationInterface.sendMessage("Starting model alignment...");
+
+			final DocumentAsset document =
+					documentService.getAsset(documentId, hasWritePermission).orElseThrow();
+
+			final Model model =
+					modelService.getAsset(modelId, hasWritePermission).orElseThrow();
+
+			final String modelString = objectMapper.writeValueAsString(model);
+
+			if (document.getMetadata() == null) {
+				document.setMetadata(new HashMap<>());
+			}
+			if (document.getMetadata().get("attributes") == null) {
+				throw new RuntimeException("No attributes found in document");
+			}
+
+			final JsonNode attributes =
+					objectMapper.valueToTree(document.getMetadata().get("attributes"));
+
+			final ObjectNode extractions = objectMapper.createObjectNode();
+			extractions.set("attributes", attributes);
+
+			final String extractionsString = objectMapper.writeValueAsString(extractions);
+
+			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json", "application/json");
+			final StringMultipartFile extractionFile =
+					new StringMultipartFile(extractionsString, "extractions.json", "application/json");
+
+			final ResponseEntity<JsonNode> res;
 			try {
-				notificationInterface.sendMessage("Starting model alignment...");
-
-				final DocumentAsset document =
-						documentService.getAsset(documentId, hasWritePermission).orElseThrow();
-
-				final Model model =
-						modelService.getAsset(modelId, hasWritePermission).orElseThrow();
-
-				final String modelString = objectMapper.writeValueAsString(model);
-
-				if (document.getMetadata() == null) {
-					document.setMetadata(new HashMap<>());
-				}
-				if (document.getMetadata().get("attributes") == null) {
-					throw new RuntimeException("No attributes found in document");
-				}
-
-				final JsonNode attributes =
-						objectMapper.valueToTree(document.getMetadata().get("attributes"));
-
-				final ObjectNode extractions = objectMapper.createObjectNode();
-				extractions.set("attributes", attributes);
-
-				final String extractionsString = objectMapper.writeValueAsString(extractions);
-
-				final StringMultipartFile amrFile =
-						new StringMultipartFile(modelString, "amr.json", "application/json");
-				final StringMultipartFile extractionFile =
-						new StringMultipartFile(extractionsString, "extractions.json", "application/json");
-
-				final ResponseEntity<JsonNode> res;
-				try {
-					res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
-				} catch (final FeignException e) {
-					final String error = "Transitive service failure";
-					log.error(error, e.contentUTF8(), e);
-					throw new ResponseStatusException(
-							e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-							error + ": " + e.getMessage());
-				}
-				if (!res.getStatusCode().is2xxSuccessful()) {
-					throw new ResponseStatusException(res.getStatusCode(), "Unable to link AMR file");
-				}
-
-				final JsonNode modelJson = objectMapper.valueToTree(model);
-
-				// overwrite all updated fields
-				JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
-
-				// update the model
-				modelService.updateAsset(model, hasWritePermission);
-
-				// create provenance
-				final Provenance provenance = new Provenance(
-						ProvenanceRelationType.EXTRACTED_FROM,
-						modelId,
-						ProvenanceType.MODEL,
-						documentId,
-						ProvenanceType.DOCUMENT);
-				provenanceService.createProvenance(provenance);
-
-				return model;
-
+				res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
 			} catch (final FeignException e) {
 				final String error = "Transitive service failure";
 				log.error(error, e.contentUTF8(), e);
 				throw new ResponseStatusException(
 						e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
 						error + ": " + e.getMessage());
-			} catch (final Exception e) {
-				final String error = "SKEMA link_amr request from document: " + documentId + " failed.";
-				log.error(error, e);
-				notificationInterface.sendError(error + " — " + e.getMessage());
-				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
-		});
+			if (!res.getStatusCode().is2xxSuccessful()) {
+				throw new ResponseStatusException(res.getStatusCode(), "Unable to link AMR file");
+			}
+
+			final JsonNode modelJson = objectMapper.valueToTree(model);
+
+			// overwrite all updated fields
+			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
+
+			final Model updatedModel = objectMapper.treeToValue(modelJson, Model.class);
+
+			if (updatedModel.getMetadata() == null) {
+				updatedModel.setMetadata(new ModelMetadata());
+			}
+
+			// add document gollm card to model
+			final JsonNode card = document.getMetadata().get("gollmCard");
+			if (card != null) {
+				updatedModel.getMetadata().setGollmCard(card);
+			}
+
+			// update the model
+			modelService.updateAsset(model, projectId, hasWritePermission);
+
+			// create provenance
+			final Provenance provenance = new Provenance(
+					ProvenanceRelationType.EXTRACTED_FROM,
+					modelId,
+					ProvenanceType.MODEL,
+					documentId,
+					ProvenanceType.DOCUMENT);
+			provenanceService.createProvenance(provenance);
+
+			// update model embeddings
+			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
+
+				final String cardText = objectMapper.writeValueAsString(card);
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
+
+					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
+					notificationInterface.sendMessage("Embeddings created");
+
+				} catch (final Exception e) {
+					log.warn("Unable to generate embedding vectors for model");
+				}
+			}
+
+			return model;
+
+		} catch (final FeignException e) {
+			final String error = "Transitive service failure";
+			log.error(error, e.contentUTF8(), e);
+			throw new ResponseStatusException(
+					e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
+					error + ": " + e.getMessage());
+		} catch (final Exception e) {
+			final String error = "SKEMA link_amr request from document: " + documentId + " failed.";
+			log.error(error, e);
+			notificationInterface.sendError(error + " — " + e.getMessage());
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
 	}
 
 	public static byte[] zipEntryToBytes(final ZipInputStream zipInputStream) throws IOException {

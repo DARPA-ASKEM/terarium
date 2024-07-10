@@ -21,10 +21,18 @@ public class NotebookSessionService
 	public NotebookSessionService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final NotebookSessionRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, NotebookSession.class);
+		super(
+				objectMapper,
+				config,
+				projectService,
+				projectAssetService,
+				repository,
+				s3ClientService,
+				NotebookSession.class);
 	}
 
 	@Override

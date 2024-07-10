@@ -213,7 +213,7 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else {
+		} else if (obj[key]) {
 			obj[key] = value;
 		}
 	}
@@ -228,6 +228,38 @@ export function updateParameter(model: Model, parameterId: string, key: string, 
 	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
 	if (!auxiliary) return;
 	updateProperty(auxiliary);
+}
+
+// Gets states, vertices, stocks
+export function getStates(model: Model): any[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
+	}
+}
+
+export function updateState(model: Model, id: string, key: string, value: any) {
+	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+		// TODO: Add support for editing concept/grounding
+		if (key === 'initial') {
+			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
+			obj.initial.expression = value;
+			obj.initial.expression_mathml = `<ci>${value}</ci>`;
+		} else if (obj[key]) {
+			obj[key] = value;
+		}
+	}
+	const states = getStates(model);
+	const state = states.find((i: any) => i.id === id);
+	if (!state) return;
+	updateProperty(state);
 }
 
 /**
@@ -306,6 +338,7 @@ export function getInitial(model: Model, target: string): Initial | undefined {
 	}
 }
 
+// TODO: These updateMetadata functions and even the updateParameter function share similar logic and can be refactored
 /**
  * Updates the metadata for a specific parameter in the model.
  * @param {Model} model - The model object.
@@ -323,8 +356,19 @@ export function updateParameterMetadata(
 		model.metadata ??= {};
 		model.metadata.parameters ??= {};
 		model.metadata.parameters[parameterId] ??= {};
+		model.metadata.parameters[parameterId].id = parameterId;
 	}
-	model.metadata.parameters[parameterId][key] = value;
+	const parameterMetadata = model.metadata.parameters[parameterId];
+
+	// TODO: Add support for editing concept metadata
+	if (key === 'units') {
+		if (!parameterMetadata.units)
+			parameterMetadata.units = { expression: '', expression_mathml: '' };
+		parameterMetadata.units.expression = value;
+		parameterMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		parameterMetadata[key] = value;
+	}
 }
 
 /**
@@ -339,14 +383,17 @@ export function updateInitialMetadata(model: Model, target: string, key: string,
 		model.metadata ??= {};
 		model.metadata.initials ??= {};
 		model.metadata.initials[target] ??= {};
+		model.metadata.initials[target].id = target;
 	}
+
 	const initialMetadata = model.metadata.initials[target];
 
 	// TODO: Add support for editing concept metadata
-	if (key === 'units') {
-		if (!initialMetadata.units) initialMetadata.units = { expression: '', expression_mathml: '' };
-		initialMetadata.units.expression = value;
-		initialMetadata.units.expression_mathml = `<ci>${value}</ci>`;
+	if (key === 'initial') {
+		if (!initialMetadata.initial)
+			initialMetadata.initial = { expression: '', expression_mathml: '' };
+		initialMetadata.initial.expression = value;
+		initialMetadata.initial.expression_mathml = `<ci>${value}</ci>`;
 	} else {
 		initialMetadata[key] = value;
 	}

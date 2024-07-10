@@ -4,7 +4,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -12,7 +14,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class FrameworkControllerTests extends TerariumApplicationTests {
 	@Autowired
@@ -20,6 +24,18 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 
 	@Autowired
 	private FrameworkService frameworkService;
+
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
+	@BeforeEach
+	public void setup() throws IOException {
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
+	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)

@@ -132,6 +132,12 @@ export interface ResponseSuccess {
     success: boolean;
 }
 
+export interface Summary extends TerariumAsset {
+    generatedSummary?: string;
+    humanSummary?: string;
+    previousSummary?: string;
+}
+
 export interface Code extends TerariumAsset {
     files?: { [index: string]: CodeFile };
     repoUrl?: string;
@@ -211,12 +217,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelConfigurationLegacy extends TerariumAssetThatSupportsAdditionalProperties {
-    configuration: Model;
-    interventions?: Intervention[];
-    model_id: string;
-}
-
 export interface ModelDescription {
     id: string;
     header: ModelHeader;
@@ -234,11 +234,10 @@ export interface InitialSemantic extends Semantic {
     target: string;
     expression: string;
     expressionMathml: string;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface ModelConfiguration extends TerariumAsset {
-    calibrationRunId: string;
+    calibrationRunId?: string;
     modelId: string;
     simulationId?: string;
     observableSemanticList: ObservableSemantic[];
@@ -251,20 +250,21 @@ export interface ObservableSemantic extends Semantic {
     states: string[];
     expression: string;
     expressionMathml: string;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface ParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
-    interventions: Intervention[];
     default: boolean;
-    modelConfiguration: ModelConfiguration;
 }
 
 export interface Semantic extends TerariumEntity {
     source: string;
     type: SemanticType;
+}
+
+export interface Author {
+    name: string;
 }
 
 export interface State {
@@ -429,6 +429,7 @@ export interface PetriNetModel {
 
 export interface Project extends TerariumAsset {
     userId: string;
+    thumbnail: string;
     userName?: string;
     authors?: string[];
     overviewContent?: any;
@@ -690,7 +691,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: Intervention[];
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -728,7 +729,7 @@ export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
     policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: Intervention[];
+    fixedStaticParameterInterventions?: string;
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -753,7 +754,32 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: Intervention[];
+    policyInterventionId?: string;
+}
+
+export interface DynamicIntervention {
+    parameter: string;
+    threshold: number;
+    value: number;
+    isGreaterThan: boolean;
+}
+
+export interface Intervention {
+    name: string;
+    appliedTo: string;
+    type: InterventionSemanticType;
+    staticInterventions: StaticIntervention[];
+    dynamicInterventions: DynamicIntervention[];
+}
+
+export interface InterventionPolicy extends TerariumAsset {
+    modelId: string;
+    interventions: Intervention[];
+}
+
+export interface StaticIntervention {
+    timestep: number;
+    value: number;
 }
 
 export interface DatasetLocation {
@@ -766,12 +792,6 @@ export interface EnsembleModelConfigs {
     id: string;
     solutionMappings: { [index: string]: string };
     weight: number;
-}
-
-export interface Intervention {
-    name: string;
-    timestep: number;
-    value: number;
 }
 
 export interface OptimizeExtra {
@@ -811,6 +831,7 @@ export interface TaskResponse {
     additionalProperties: any;
     stdout: string;
     stderr: string;
+    requestSHA256: string;
 }
 
 export interface Annotation {
@@ -838,6 +859,13 @@ export interface UserEvent {
     user: UserOld;
     id: string;
     message: any;
+}
+
+export interface SimulationNotificationData {
+    simulationId: string;
+    simulationType: SimulationType;
+    simulationEngine: SimulationEngine;
+    metadata: any;
 }
 
 export interface Role {
@@ -1028,7 +1056,7 @@ export interface OdeSemantics {
 
 export interface Annotations {
     license?: string;
-    authors?: string[];
+    authors?: Author[];
     references?: string[];
     locations?: string[];
     pathogens?: string[];
@@ -1270,6 +1298,7 @@ export enum ClientEventType {
     Notification = "NOTIFICATION",
     SimulationSciml = "SIMULATION_SCIML",
     SimulationPyciemss = "SIMULATION_PYCIEMSS",
+    SimulationNotification = "SIMULATION_NOTIFICATION",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
@@ -1278,6 +1307,7 @@ export enum ClientEventType {
     TaskGollmConfigureModel = "TASK_GOLLM_CONFIGURE_MODEL",
     TaskGollmConfigureFromDataset = "TASK_GOLLM_CONFIGURE_FROM_DATASET",
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
+    TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskFunmanValidation = "TASK_FUNMAN_VALIDATION",
 }
 
@@ -1383,6 +1413,11 @@ export enum SimulationType {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum InterventionSemanticType {
+    Variable = "variable",
+    Parameter = "parameter",
 }
 
 export enum ExtractionAssetType {

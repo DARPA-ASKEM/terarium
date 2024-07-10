@@ -1,14 +1,18 @@
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import * as EventService from '@/services/event';
-import type { Initial, Model, ModelConfigurationLegacy, ModelParameter } from '@/types/Types';
-import { Artifact, AssetType, EventType } from '@/types/Types';
-import { AMRSchemaNames, ModelServiceType } from '@/types/common';
+import type {
+	Initial,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	ModelParameter
+} from '@/types/Types';
+import { Artifact, EventType } from '@/types/Types';
+import { AMRSchemaNames } from '@/types/common';
 import { fileToJson } from '@/utils/file';
-import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { modelCard } from './goLLM';
-import { profileModel } from './knowledge';
+import type { MMT } from '@/model-representation/mira/mira-common';
 
 export async function createModel(model: Model): Promise<Model | null> {
 	delete model.id;
@@ -51,7 +55,7 @@ export async function getMMT(model: Model) {
 	const miraModel = response?.data?.response;
 	if (!miraModel) throw new Error(`Failed to convert model ${model.id}`);
 
-	return response?.data?.response ?? null;
+	return (response?.data?.response as MMT) ?? null;
 }
 
 /**
@@ -65,7 +69,7 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 
 export async function updateModel(model: Model) {
 	const response = await API.put(`/models/${model.id}`, model);
-	EventService.create(
+	await EventService.create(
 		EventType.PersistModel,
 		useProjects().activeProject.value?.id,
 		JSON.stringify({
@@ -75,11 +79,18 @@ export async function updateModel(model: Model) {
 	return response?.data ?? null;
 }
 
-export async function getModelConfigurations(
+export async function getModelConfigurationsForModel(
 	modelId: Model['id']
-): Promise<ModelConfigurationLegacy[]> {
-	const response = await API.get(`/models/${modelId}/model-configurations-legacy`);
-	return response?.data ?? ([] as ModelConfigurationLegacy[]);
+): Promise<ModelConfiguration[]> {
+	const response = await API.get(`/models/${modelId}/model-configurations`);
+	return response?.data ?? ([] as ModelConfiguration[]);
+}
+
+export async function getInterventionPoliciesForModel(
+	modelId: Model['id']
+): Promise<InterventionPolicy[]> {
+	const response = await API.get(`/models/${modelId}/intervention-policies`);
+	return response?.data ?? ([] as InterventionPolicy[]);
 }
 
 export async function processAndAddModelToProject(artifact: Artifact): Promise<string | null> {
@@ -97,24 +108,6 @@ export function isModelEmpty(model: Model) {
 	}
 	// TODO: support different frameworks' version of empty
 	return false;
-}
-
-// A helper function to check if a model name already exists
-export function validateModelName(name: string): boolean {
-	const existingModelNames: string[] = useProjects()
-		.getActiveProjectAssets(AssetType.Model)
-		.map((item) => item.assetName ?? '');
-
-	if (name.trim().length === 0) {
-		logger.info('Model name cannot be empty - please enter a different name');
-		return false;
-	}
-	if (existingModelNames.includes(name.trim())) {
-		logger.info('Duplicate model name - please enter a different name');
-		return false;
-	}
-
-	return true;
 }
 
 /**
@@ -146,36 +139,10 @@ export function isValidAMR(json: Record<string, unknown>) {
 
 	if (!schema || !schemaName) return false;
 	if (!Object.values(AMRSchemaNames).includes(schemaName as AMRSchemaNames)) return false;
-	if (!Object.values(AMRSchemaNames).some((name) => schema.includes(name))) return false;
-	return true;
+	return Object.values(AMRSchemaNames).some((name) => schema.includes(name));
 }
 
-export async function profile(modelId: string, documentId: string): Promise<Model | null> {
-	return profileModel(modelId, documentId);
-}
-
-/**
- * Generates a model card based on the provided document ID, model ID, and model service type.
- *
- * @param {string} documentId - The ID of the document.
- * @param {string} modelId - The ID of the model.
- * @param {ModelServiceType} modelServiceType - The type of the model service.
- */
-export async function generateModelCard(
-	documentId: string,
-	modelId: string,
-	modelServiceType: ModelServiceType
-): Promise<void> {
-	if (modelServiceType === ModelServiceType.TA1) {
-		await profile(modelId, documentId);
-	}
-
-	if (modelServiceType === ModelServiceType.TA4) {
-		await modelCard(documentId);
-	}
-}
-
-// helper function to get the model type, will always default to petrinet if the model is not found
+// Helper function to get the model type, will always default to PetriNet if the model is not found
 export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	const schemaName = model?.header?.schema_name?.toLowerCase();
 	if (schemaName === 'regnet') {
@@ -190,7 +157,7 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	return AMRSchemaNames.PETRINET;
 }
 
-// Converts a model into latex equation, either one of petrinet, stocknflow, or regnet;
+// Converts a model into LaTeX equation, either one of PetriNet, StockN'Flow, or RegNet;
 export async function getModelEquation(model: Model): Promise<string> {
 	const unSupportedFormats = ['decapodes'];
 	if (unSupportedFormats.includes(model.header.schema_name as string)) {

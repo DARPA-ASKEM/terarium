@@ -33,7 +33,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.id)"
+									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 								/>
 							</template>
 						</Column>
@@ -201,9 +201,8 @@ import {
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfigurationLegacy,
-	ScimlStatusUpdate,
-	State
+	ModelConfiguration,
+	ScimlStatusUpdate
 } from '@/types/Types';
 import {
 	setupModelInput,
@@ -227,8 +226,14 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
-import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import {
+	getTimespan,
+	chartActionsProxy,
+	drilldownChartSize,
+	nodeMetadata
+} from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
+import { getInitials } from '@/services/model-configurations';
 import {
 	CalibrateExtraJulia,
 	CalibrateMethodOptions,
@@ -247,7 +252,7 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<State[] | undefined>();
+const modelStateOptions = ref<any[] | undefined>();
 const datasetColumns = ref<DatasetColumn[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
@@ -256,7 +261,7 @@ const inProgressSimulationId = ref<string>(props.node.state.inProgressSimulation
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const modelConfig = ref<ModelConfigurationLegacy>();
+const modelConfig = ref<ModelConfiguration>();
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const currentDatasetFileName = ref<string>();
@@ -307,8 +312,8 @@ const updateStateExtras = () => {
 };
 
 const filterStateVars = (params) => {
-	const initialStates =
-		modelConfig.value?.configuration?.semantics?.ode?.initials?.map((d) => d.expression) ?? [];
+	if (!modelConfig.value) return {};
+	const initialStates = getInitials(modelConfig.value).map((d) => d.expression) ?? [];
 	return Object.keys(params).reduce((acc, key) => {
 		if (!initialStates.includes(key)) {
 			acc[key] = params[key];
@@ -356,7 +361,7 @@ const makeCalibrateRequest = async () => {
 		engine: 'sciml',
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
-	const response = await makeCalibrateJobJulia(calibrationRequest);
+	const response = await makeCalibrateJobJulia(calibrationRequest, nodeMetadata(props.node));
 	return response.simulationId;
 };
 

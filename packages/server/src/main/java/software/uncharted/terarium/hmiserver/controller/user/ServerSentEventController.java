@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.user;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;

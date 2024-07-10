@@ -1,9 +1,9 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="dataset?.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isRenamingDataset"
-		:stretch-content="view === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 		:is-loading="isDatasetLoading"
 		:overflow-hidden="selectedTabIndex === 1"
@@ -48,6 +48,7 @@
 				<tera-dataset-description
 					tabName="Description"
 					:dataset="dataset"
+					@fetch-dataset="fetchDataset"
 					@update-dataset="(dataset: Dataset) => updateAndFetchDataset(dataset)"
 				/>
 			</section>
@@ -89,12 +90,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraDatasetDescription from './tera-dataset-description.vue';
 import { enrichDataset } from './utils';
 
-enum DatasetView {
-	DESCRIPTION = 'Description',
-	DATA = 'Data',
-	LLM = 'LLM'
-}
-
 const props = defineProps({
 	assetId: {
 		type: String,
@@ -121,7 +116,6 @@ const isRenamingDataset = ref(false);
 const rawContent: Ref<CsvAsset | null> = ref(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
-const view = ref(DatasetView.DESCRIPTION);
 
 const datasetInfo = computed(() => {
 	const information = {

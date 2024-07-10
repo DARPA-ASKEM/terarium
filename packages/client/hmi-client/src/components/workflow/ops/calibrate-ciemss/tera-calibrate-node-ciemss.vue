@@ -52,12 +52,13 @@ import {
 	getSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { createLLMSummary } from '@/services/summary-service';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -124,19 +125,22 @@ watch(
 			const dillURL = await getCalibrateBlobURL(id);
 			console.log('dill URL is', dillURL);
 
-			const forecastResponse = await makeForecastJobCiemss({
-				modelConfigId: modelConfigId.value as string,
-				timespan: {
-					start: 0,
-					end: props.node.state.endTime
+			const forecastResponse = await makeForecastJobCiemss(
+				{
+					modelConfigId: modelConfigId.value as string,
+					timespan: {
+						start: 0,
+						end: props.node.state.endTime
+					},
+					extra: {
+						num_samples: props.node.state.numSamples,
+						method: 'dopri5',
+						inferred_parameters: id
+					},
+					engine: 'ciemss'
 				},
-				extra: {
-					num_samples: props.node.state.numSamples,
-					method: 'dopri5',
-					inferred_parameters: id
-				},
-				engine: 'ciemss'
-			});
+				nodeMetadata(props.node)
+			);
 			const forecastId = forecastResponse.id;
 
 			const state = _.cloneDeep(props.node.state);
@@ -162,6 +166,23 @@ watch(
 			state.forecastId = id;
 			emit('update-state', state);
 
+			// Get the calibrate losses to generate a run summary
+			const calibrateResponse = await pollAction(state.calibrationId);
+			const calibreateUpdates = calibrateResponse.data?.updates;
+			const errorStart = _.first(calibreateUpdates)?.data;
+			const errorEnd = _.last(calibreateUpdates)?.data;
+
+			const prompt = `
+		The following are the key attributes of a calibration/fitting process for a ODE epidemilogy model.
+
+		- Fitting: ${JSON.stringify(state.mapping)}
+		- Loss at start is: ${JSON.stringify(errorStart)}
+		- Loss at end is: ${JSON.stringify(errorEnd)}
+
+		Provide a summary in 100 words or less.
+			`;
+			const summaryResponse = await createLLMSummary(prompt);
+
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
@@ -171,7 +192,8 @@ watch(
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
 					numIterations: state.numIterations,
-					numSamples: state.numSamples
+					numSamples: state.numSamples,
+					summaryId: summaryResponse?.id
 				}
 			});
 		}

@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -19,8 +17,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.connector.ClientAbortException;
-import org.redisson.api.RLock;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Binding;
@@ -37,7 +33,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -73,9 +68,8 @@ public class TaskService {
 	}
 
 	// This private subclass is to prevent people from setting the task id
-	// themselves since it may be overridden if the task is already in the cache.
-	// This will prevent situations where someone creates an id, does something with
-	// it, and then sends the request expected the response to match it.
+	// themselves since many other resources are tied to the id and it is assumed
+	// to be unique.
 	@NoArgsConstructor
 	@Data
 	@EqualsAndHashCode(callSuper = true)
@@ -100,7 +94,8 @@ public class TaskService {
 					.setUserId(userId)
 					.setProjectId(projectId)
 					.setScript(getScript())
-					.setAdditionalProperties(getAdditionalProperties());
+					.setAdditionalProperties(getAdditionalProperties())
+					.setRequestSHA256(getSHA256());
 		}
 	}
 
@@ -108,34 +103,25 @@ public class TaskService {
 	// mucking with the futures internal state.
 	private static class CompletableTaskFuture extends TaskFuture {
 
-		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
+		public CompletableTaskFuture(final UUID id) {
 			this.id = id;
-			this.latestResponse = resp;
 			this.future = new CompletableFuture<>();
-			if (this.latestResponse.getStatus() == TaskStatus.SUCCESS) {
-				// if the task has already completed successfully, but the future is being
-				// created then complete it. This would occur if another instance of the
-				// hmi-server has already dispatched and processed the task response.
-				future.complete(this.latestResponse);
-			}
 		}
 
-		public synchronized void update(final TaskResponse resp) {
-			if (future.isDone()) {
-				throw new IllegalStateException("TaskFuture is already complete");
-			}
-			latestResponse = resp;
+		public CompletableTaskFuture(final UUID id, final TaskResponse resp) {
+			this.id = id;
+			this.future = new CompletableFuture<>();
+			this.future.complete(resp);
+			this.latestResponse = resp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
-			latestResponse = resp;
-			future.complete(resp);
+			this.latestResponse = resp;
+			this.future.complete(resp);
 		}
 	}
 
 	private static final String RESPONSE_CACHE_KEY = "task-service-response-cache";
-	private static final String TASK_ID_CACHE_KEY = "task-service-task-id-cache";
-	private static final String LOCK_KEY = "task-service-distributed-lock";
 
 	// TTL = Time to live, the maximum time a key will be in the cache before it is
 	// evicted, regardless of activity.
@@ -161,25 +147,19 @@ public class TaskService {
 	private final ClientEventService clientEventService;
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
-	private final Map<UUID, SseEmitter> taskIdToEmitter = new ConcurrentHashMap<>();
 
 	private final RedissonClient redissonClient;
 
-	// NOTE: We require a distributed lock to keep the following three caches in
-	// sync across instances. Anytime these caches are written or read from, the
-	// lock must be acquired.
-	// DO NOT TOUCH THESE CACHES, UNLESS YOU KNOW WHAT YOU ARE DOING.
-	// There be dragons.
-	// vvvvvvvvvvvvvvvvvvv
-	private RLock rLock;
-	private RMapCache<String, UUID> taskIdCache;
-	private RMapCache<UUID, TaskResponse> responseCache;
-	private final Map<UUID, CompletableTaskFuture> futures = new HashMap<>();
-	// ^^^^^^^^^^^^^^^^^^^
+	private RMapCache<String, TaskResponse> responseCache;
+	private final Map<UUID, CompletableTaskFuture> futures = new ConcurrentHashMap<>();
 
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
+
+	// The exchange that the task responses are published to.
+	@Value("${terarium.taskrunner.response-exchange}")
+	private String TASK_RUNNER_RESPONSE_EXCHANGE;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
@@ -209,16 +189,10 @@ public class TaskService {
 		// use a distributed cache and lock so that these can be synchronized across
 		// multiple instances of the hmi-server
 		responseCache = redissonClient.getMapCache(RESPONSE_CACHE_KEY);
-		taskIdCache = redissonClient.getMapCache(TASK_ID_CACHE_KEY);
-		rLock = redissonClient.getLock(LOCK_KEY);
 
 		if (isRunningLocalProfile()) {
 			// sanity check for local development to clear the caches
-			rLock.lock();
-
 			responseCache.clear();
-			taskIdCache.clear();
-			rLock.unlock();
 		}
 	}
 
@@ -253,39 +227,6 @@ public class TaskService {
 		rabbitTemplate.convertAndSend(TASK_RUNNER_CANCELLATION_EXCHANGE, taskId.toString(), msg);
 	}
 
-	public SseEmitter subscribe(final UUID taskId) {
-		final SseEmitter emitter = new SseEmitter();
-		if (taskIdToEmitter.containsKey(taskId)) {
-			try {
-				taskIdToEmitter.get(taskId).complete();
-			} catch (final IllegalStateException ignored) {
-			}
-		}
-
-		try {
-			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
-
-			taskIdToEmitter.put(taskId, emitter);
-
-			final TaskResponse latestResp = responseCache.get(taskId);
-
-			if (latestResp != null
-					&& (latestResp.getStatus() == TaskStatus.SUCCESS
-							|| latestResp.getStatus() == TaskStatus.FAILED
-							|| latestResp.getStatus() == TaskStatus.CANCELLED)) {
-
-				// if this task has already resolved, send the response to the emitter
-				emitter.send(latestResp);
-			}
-		} catch (final Exception e) {
-			log.error("Error occured while attemping to send latest response to emitter", e);
-		} finally {
-			rLock.unlock();
-		}
-
-		return emitter;
-	}
-
 	// This is an anonymous queue, every instance the hmi-server will receive a
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
@@ -317,59 +258,27 @@ public class TaskService {
 				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
 			}
 
-			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
-			try {
+			if (resp.getStatus() == TaskStatus.SUCCESS
+					|| resp.getStatus() == TaskStatus.CANCELLED
+					|| resp.getStatus() == TaskStatus.FAILED) {
+				final CompletableTaskFuture future = futures.remove(resp.getId());
+				if (future != null) {
+					log.info("Found promise for task id: {}", resp.getId());
+					// complete the future
+					log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
+					future.complete(resp);
+
+				} else {
+					log.info("Did not find promise for task id: {}", resp.getId());
+				}
+			} else {
 				final CompletableTaskFuture future = futures.get(resp.getId());
 				if (future != null) {
-					if (resp.getStatus() == TaskStatus.SUCCESS
-							|| resp.getStatus() == TaskStatus.CANCELLED
-							|| resp.getStatus() == TaskStatus.FAILED) {
-						// complete the future
-						log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
-						future.complete(resp);
-
-						// remove the future from the map
-						futures.remove(resp.getId());
-					} else {
-						// update the future with the latest response
-						future.update(resp);
-					}
-				}
-			} catch (final Exception e) {
-				log.error("Error occured while writing to response queue for task {}", resp.getId(), e);
-			} finally {
-				rLock.unlock();
-			}
-
-			// if the task failed, lets log the stdout / stderr
-			if (resp.getStatus() == TaskStatus.FAILED) {
-				if (resp.getStdout() != null && resp.getStdout().length() > 0) {
-					log.error("Task {} failed, logging stdout", resp.getId());
-					System.out.print(resp.getStdout());
-				} else {
-					log.error("Task {} failed, stdout is empty, nothing to log", resp.getId());
-				}
-				if (resp.getStderr() != null && resp.getStderr().length() > 0) {
-					log.error("Task {} failed, logging stdout", resp.getId());
-					System.out.print(resp.getStderr());
-				} else {
-					log.error("Task {} failed, stderr is empty, nothing to log", resp.getId());
+					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
+					future.setLatest(resp);
 				}
 			}
 
-			final SseEmitter emitter = taskIdToEmitter.get(resp.getId());
-			synchronized (taskIdToEmitter) {
-				if (emitter != null) {
-					try {
-						emitter.send(resp);
-					} catch (IllegalStateException | ClientAbortException e) {
-						log.warn("Error sending task response for task {}. User likely disconnected", resp.getId());
-						taskIdToEmitter.remove(resp.getId());
-					} catch (final IOException e) {
-						log.error("Error sending task response for task {}", resp.getId(), e);
-					}
-				}
-			}
 		} catch (final Exception e) {
 			log.error("Error processing task response message", e);
 		}
@@ -418,19 +327,23 @@ public class TaskService {
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
-			try {
-				// add to the response cache
-				log.info("Writing response for task id {} for status {} to cache", resp.getId(), resp.getStatus());
-				responseCache.put(
-						resp.getId(),
-						resp,
-						CACHE_TTL_SECONDS,
-						TimeUnit.SECONDS,
-						CACHE_MAX_IDLE_SECONDS,
-						TimeUnit.SECONDS);
-			} finally {
-				rLock.unlock();
+			if (resp.getStatus() == TaskStatus.SUCCESS) {
+				try {
+					// add to the response cache
+					log.info(
+							"Writing SUCCESS response for task id {} to cache under SHA: {}",
+							resp.getId(),
+							resp.getRequestSHA256());
+					responseCache.put(
+							resp.getRequestSHA256(),
+							resp,
+							CACHE_TTL_SECONDS,
+							TimeUnit.SECONDS,
+							CACHE_MAX_IDLE_SECONDS,
+							TimeUnit.SECONDS);
+				} catch (final Exception e) {
+					log.error("Failed to write response to response cache {}", resp.getId(), e);
+				}
 			}
 
 			try {
@@ -461,6 +374,22 @@ public class TaskService {
 
 			} catch (final Exception e) {
 				log.error("Failed to send client event for for task {}", resp.getId(), e);
+			}
+
+			// if the task failed, log to stdout / stderr
+			if (resp.getStatus() == TaskStatus.FAILED) {
+				if (resp.getStdout() != null && resp.getStdout().length() > 0) {
+					log.error("Task {} failed, logging stdout", resp.getId());
+					System.out.print(resp.getStdout());
+				} else {
+					log.error("Task {} failed, stdout is empty, nothing to log", resp.getId());
+				}
+				if (resp.getStderr() != null && resp.getStderr().length() > 0) {
+					log.error("Task {} failed, logging stdout", resp.getId());
+					System.out.print(resp.getStderr());
+				} else {
+					log.error("Task {} failed, stderr is empty, nothing to log", resp.getId());
+				}
 			}
 
 			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
@@ -514,128 +443,85 @@ public class TaskService {
 			throw new RuntimeException("TaskRequest must have a script set");
 		}
 
-		rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+		final TaskRequestWithId req = new TaskRequestWithId(r);
+
+		// create sha256 hash of the request
+		final String hash = req.getSHA256();
+
+		log.info("Checking for cached response under SHA: {}", hash);
+
+		// check if there is an existing response for the hash
+		final TaskResponse resp = responseCache.get(hash);
+
+		if (resp != null) {
+			// a task id already exits for the SHA256, this means the request has already
+			// been dispatched.
+			log.info("Task response found in cache for SHA: {}", hash);
+
+			// create and return a completed task future
+			return new CompletableTaskFuture(req.getId(), resp);
+		}
+
+		// no cache entry for task, send a new one
+
 		try {
-			// generate the task id
-			final TaskRequestWithId req = new TaskRequestWithId(r);
+			log.info("Creating notification group under id: {}", req.getId());
 
-			// create sha256 hash of the request
-			final String hash = req.getSHA256();
+			// create the notification group for the task
+			final NotificationGroup group = new NotificationGroup();
+			group.setId(req.getId()); // use the task id
+			group.setType(TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
+			group.setUserId(req.getUserId());
+			group.setProjectId(req.getProjectId());
 
-			// check if there is an id associated with the hash of the request already
-			final UUID existingId = taskIdCache.putIfAbsent(
-					hash, req.getId(), CACHE_TTL_SECONDS, TimeUnit.SECONDS, CACHE_MAX_IDLE_SECONDS, TimeUnit.SECONDS);
+			notificationService.createNotificationGroup(group);
 
-			if (existingId != null) {
-				// a task id already exits for the SHA256, this means the request has already
-				// been dispatched.
-				log.info("Task id: {} found in cache for SHA: {}", existingId, hash);
-				final TaskResponse resp = responseCache.get(existingId);
+		} catch (final Exception e) {
+			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+		}
 
-				// only return responese if they have not failed or been cancelled
-				if (resp != null
-						&& resp.getStatus() != TaskStatus.CANCELLING
-						&& resp.getStatus() != TaskStatus.CANCELLED
-						&& resp.getStatus() != TaskStatus.FAILED) {
+		// now send request
+		final String requestQueue =
+				String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-					// if the response is in the cache, return it
-					log.info("Response for task id: {} with status: {} found in cache", existingId, resp.getStatus());
+		log.info(
+				"Readying task: {} with SHA: {} to send on queue: {}",
+				req.getId(),
+				hash,
+				req.getType().toString());
 
-					if (!futures.containsKey(existingId)) {
-						// create the future if need be
-						final CompletableTaskFuture future = new CompletableTaskFuture(existingId, resp);
-						futures.put(existingId, future);
-						return future;
-					}
+		// ensure the request queue exists
+		declareQueue(requestQueue);
 
-					// future already exists on this instance
-					return futures.get(existingId);
-				}
+		// create the cancellation queue _BEFORE_ sending the request, because a
+		// cancellation can be send before the request is consumed on the other end if
+		// there is contention. We need this queue to exist to hold the message.
+		final String queueName = req.getId().toString();
+		final String routingKey = req.getId().toString();
+		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
 
-				// otherwise dispatch it again, and overwrite the id
-				log.info(
-						"No viable cached response found for task id: {} for SHA: {}, creating new task with id {}",
-						existingId,
-						hash,
-						req.getId());
+		try {
+			// send the request to the task runner
+			log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
+			final String jsonStr = objectMapper.writeValueAsString(req);
+			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
-				taskIdCache.put(
-						hash,
-						req.getId(),
-						CACHE_TTL_SECONDS,
-						TimeUnit.SECONDS,
-						CACHE_MAX_IDLE_SECONDS,
-						TimeUnit.SECONDS);
-			}
+			// publish the queued task response
+			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
 
-			try {
-				log.info("Creating notification group under id: {}", req.getId());
+			// create and return the future
+			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
+			future.setLatest(queuedResponse);
+			log.info("Adding future for task id: {} to the futures map", req.getId());
+			futures.put(req.getId(), future);
+			return future;
 
-				// create the notification group for the task
-				final NotificationGroup group = new NotificationGroup();
-				group.setId(req.getId()); // use the task id
-				group.setType(
-						TaskNotificationEventTypes.getTypeFor(req.getScript()).toString());
-				group.setUserId(req.getUserId());
-				group.setProjectId(req.getProjectId());
-
-				notificationService.createNotificationGroup(group);
-
-			} catch (final Exception e) {
-				log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
-			}
-
-			// now send request
-			final String requestQueue = String.format(
-					"%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
-
-			log.info(
-					"Readying task: {} with SHA: {} to send on queue: {}",
-					req.getId(),
-					hash,
-					req.getType().toString());
-
-			// ensure the request queue exists
-			declareQueue(requestQueue);
-
-			// create the cancellation queue _BEFORE_ sending the request, because a
-			// cancellation can be send before the request is consumed on the other end if
-			// there is contention. We need this queue to exist to hold the message.
-			final String queueName = req.getId().toString();
-			final String routingKey = req.getId().toString();
-			declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
-
-			try {
-				// send the request to the task runner
-				log.info("Dispatching request: {} for task id: {}", new String(req.getInput()), req.getId());
-				final String jsonStr = objectMapper.writeValueAsString(req);
-				rabbitTemplate.convertAndSend(requestQueue, jsonStr);
-
-				// put the response in redis after it is queued in the case the id is reserved
-				// but the server is shutdown before it dispatches the request, which would
-				// cause servers to wait on requests that were never sent.
-				final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
-				responseCache.put(
-						req.getId(),
-						queuedResponse,
-						CACHE_TTL_SECONDS,
-						TimeUnit.SECONDS,
-						CACHE_MAX_IDLE_SECONDS,
-						TimeUnit.SECONDS);
-
-				// create and return the future
-				final CompletableTaskFuture future = new CompletableTaskFuture(req.getId(), queuedResponse);
-				futures.put(req.getId(), future);
-				return future;
-
-			} catch (final Exception e) {
-				// ensure cancellation queue is removed on failure
-				rabbitAdmin.deleteQueue(queueName);
-				throw e;
-			}
-
-		} finally {
-			rLock.unlock();
+		} catch (final Exception e) {
+			// ensure cancellation queue is removed on failure
+			rabbitAdmin.deleteQueue(queueName);
+			throw e;
 		}
 	}
 
@@ -648,7 +534,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
+			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -661,24 +547,14 @@ public class TaskService {
 			log.info("Future completed for task: {}", future.getId());
 			return resp;
 		} catch (final TimeoutException e) {
-
-			// if we time out, something has probably gone wrong, lets remove it from the
-			// SHA lookup
-			rLock.lock(REDIS_LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
-			try {
-				// check if there is an id associated with the hash of the request already
-				taskIdCache.remove(req.getSHA256());
-			} finally {
-				rLock.unlock();
-			}
-
+			// remove the future
+			futures.remove(future.getId());
 			try {
 				// if the task is still running, or hasn't started yet, lets cancel it
 				cancelTask(future.getId());
 			} catch (final Exception ee) {
 				log.warn("Failed to cancel task: {}", future.getId(), ee);
 			}
-
 			throw new TimeoutException("Task " + future.getId().toString() + " did not complete within "
 					+ req.getTimeoutMinutes() + " minutes");
 		}
@@ -689,8 +565,7 @@ public class TaskService {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
-			// return the latest received response held in the future
-			return runTaskAsync(req).poll();
+			return runTaskAsync(req).getLatest();
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}

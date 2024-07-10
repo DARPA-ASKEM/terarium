@@ -19,4 +19,11 @@ public abstract class Semantic extends TerariumEntity {
 	private String source;
 
 	private SemanticType type;
+
+	protected TerariumEntity cloneSuperFields(final Semantic entity) {
+		super.cloneSuperFields(entity);
+		entity.source = this.source;
+		entity.type = this.type;
+		return entity;
+	}
 }

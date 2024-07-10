@@ -20,4 +20,5 @@ public class TaskResponse implements Serializable {
 	protected String userId;
 	private String stdout;
 	private String stderr;
+	private String requestSHA256;
 }

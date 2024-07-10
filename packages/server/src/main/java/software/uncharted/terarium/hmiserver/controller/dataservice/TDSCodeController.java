@@ -6,13 +6,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import javax.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -146,7 +146,7 @@ public class TDSCodeController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			code = codeService.createAsset(code, permission);
+			code = codeService.createAsset(code, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
@@ -241,7 +241,7 @@ public class TDSCodeController {
 
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateAsset(code, permission);
+			final Optional<Code> updated = codeService.updateAsset(code, projectId, permission);
 			return updated.map(ResponseEntity::ok)
 					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final NotFoundException e) {
@@ -286,7 +286,7 @@ public class TDSCodeController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			codeService.deleteAsset(id, permission);
+			codeService.deleteAsset(id, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
@@ -322,10 +322,8 @@ public class TDSCodeController {
 
 		try {
 			final Optional<String> results = codeService.fetchFileAsString(codeId, filename);
-			if (results.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(results.get());
+			return results.map(ResponseEntity::ok)
+					.orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
@@ -443,7 +441,7 @@ public class TDSCodeController {
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCodeHelper(codeId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
@@ -480,7 +478,7 @@ public class TDSCodeController {
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to get file as string data");
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadCodeHelper(codeId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
 	}
 
 	/**
@@ -529,7 +527,7 @@ public class TDSCodeController {
 
 			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-			return uploadCodeHelper(codeId, repoName, fileEntity, permission);
+			return uploadCodeHelper(codeId, projectId, repoName, fileEntity, permission);
 
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
@@ -548,6 +546,7 @@ public class TDSCodeController {
 	 */
 	private ResponseEntity<Integer> uploadCodeHelper(
 			final UUID codeId,
+			final UUID projectId,
 			final String fileName,
 			final HttpEntity codeHttpEntity,
 			final Schema.Permission hasWritePermission) {
@@ -571,7 +570,7 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateAsset(code.get(), hasWritePermission);
+			codeService.updateAsset(code.get(), projectId, hasWritePermission);
 
 			code.get().getFileNames().add(fileName);
 

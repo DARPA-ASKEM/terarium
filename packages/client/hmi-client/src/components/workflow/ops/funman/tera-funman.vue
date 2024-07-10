@@ -49,14 +49,7 @@
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number
-									class="w-2"
-									:min="0"
-									:max="1"
-									:min-fraction-digits="0"
-									:max-fraction-digits="7"
-									v-model="knobs.tolerance"
-								/>
+								<tera-input type="nist" v-model="knobs.tolerance" />
 								<Slider
 									v-model="knobs.tolerance"
 									:min="0"
@@ -170,7 +163,7 @@ import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -185,12 +178,12 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import type {
 	FunmanPostQueriesRequest,
 	Model,
-	ModelConfigurationLegacy,
+	ModelConfiguration,
 	ModelParameter
 } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations-legacy';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
@@ -294,7 +287,7 @@ const requestConstraints = computed(() =>
 
 const requestParameters = ref<any[]>([]);
 const model = ref<Model | null>();
-const modelConfiguration = ref<ModelConfigurationLegacy>();
+const modelConfiguration = ref<ModelConfiguration>();
 
 const modelStates = ref<string[]>([]); // Used for form's multiselect.
 const modelParameters = ref<string[]>([]);
@@ -434,7 +427,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = modelConfiguration.value.configuration;
+	model.value = await getAsConfiguredModel(modelConfiguration.value);
 };
 
 const setModelOptions = async () => {

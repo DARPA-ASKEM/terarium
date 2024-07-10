@@ -23,7 +23,9 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Dynamics;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class TDSCodeControllerTests extends TerariumApplicationTests {
@@ -40,9 +42,17 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getCodeIndex());
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -69,7 +79,9 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanGetCode() throws Exception {
 
 		final Code codeAsset = codeAssetService.createAsset(
-				(Code) new Code().setName("test-code-name").setDescription("my description"), ASSUME_WRITE_PERMISSION);
+				(Code) new Code().setName("test-code-name").setDescription("my description"),
+				project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset/" + codeAsset.getId())
 						.param("project-id", PROJECT_ID.toString())
@@ -102,6 +114,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		codeAssetService.createAsset(
@@ -110,6 +123,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		codeAssetService.createAsset(
@@ -118,6 +132,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf()))
@@ -135,6 +150,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/code-asset/" + codeAsset.getId())
@@ -157,6 +173,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setFiles(Map.of("test.py", createCodeFile()))
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
@@ -190,6 +207,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github")
@@ -211,6 +229,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
@@ -231,6 +250,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 						.setMetadata(createMetadata())
 						.setName("test-code-name")
 						.setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadCode test";

@@ -33,7 +33,7 @@
 									class="w-full"
 									:placeholder="mappingDropdownPlaceholder"
 									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.id)"
+									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 								/>
 							</template>
 						</Column>
@@ -117,6 +117,11 @@
 				@update:selection="onSelection"
 				is-selectable
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					:summary-id="node.state.summaryId"
+				/>
+
 				<h5>Loss</h5>
 				<div ref="drilldownLossPlot"></div>
 				<div v-if="!showSpinner" class="form-section">
@@ -188,16 +193,21 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import {
 	CalibrationRequestCiemss,
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
 	DatasetColumn,
-	ModelConfigurationLegacy,
-	State
+	ModelConfiguration
 } from '@/types/Types';
-import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import {
+	getTimespan,
+	chartActionsProxy,
+	drilldownChartSize,
+	nodeMetadata
+} from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -214,7 +224,7 @@ import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
-const emit = defineEmits(['append-output', 'close', 'select-output', 'update-state']);
+const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
 
 enum CalibrateTabs {
@@ -223,15 +233,17 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<State[] | undefined>();
+const modelStateOptions = ref<any[] | undefined>();
 
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const modelConfig = ref<ModelConfigurationLegacy>();
+const modelConfig = ref<ModelConfiguration>();
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
+const policyInterventionId = computed(() => props.node.inputs[2].value);
+
 const cancelRunId = computed(
 	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
 );
@@ -320,7 +332,12 @@ const runCalibrate = async () => {
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
 		engine: 'ciemss'
 	};
-	const response = await makeCalibrateJobCiemss(calibrationRequest);
+
+	if (policyInterventionId.value?.[0]) {
+		calibrationRequest.policyInterventionId = policyInterventionId.value[0];
+	}
+
+	const response = await makeCalibrateJobCiemss(calibrationRequest, nodeMetadata(props.node));
 
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);

@@ -12,16 +12,19 @@
 </template>
 
 <script setup lang="ts">
+import { cloneDeep, isEmpty } from 'lodash';
+import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { computed, watch } from 'vue';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
+import { postAsConfiguredModel } from '@/services/model-configurations';
 import { ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['open-drilldown', 'append-input-port']);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -30,8 +33,37 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 watch(
 	() => props.node.inputs,
 	() => {
-		const documentInputs = props.node.inputs.filter((input) => input.type === 'documentId');
-		const datasetInputs = props.node.inputs.filter((input) => input.type === 'datasetId');
+		const inputs = props.node.inputs;
+		const documentInputs = inputs.filter((input) => input.type === 'documentId');
+		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
+
+		const modelInputs = inputs.filter((input) => input.type === 'modelId');
+		if (!modelInputs[0].value) {
+			// Reset previous model cache
+			const state = cloneDeep(props.node.state);
+			state.transientModelConfig = {
+				id: '',
+				modelId: '',
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
+			};
+			emit('update-state', state);
+		}
+
+		if (modelInputs?.[0]?.value?.[0]) {
+			const modelId = modelInputs?.[0]?.value?.[0];
+			getModelConfigurationsForModel(modelId).then((modelConfigurations) => {
+				if (isEmpty(modelConfigurations)) {
+					// Create a model configuration if it does not exist
+					getModel(modelId).then((model) => {
+						if (model) {
+							postAsConfiguredModel(model);
+						}
+					});
+				}
+			});
+		}
 
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
