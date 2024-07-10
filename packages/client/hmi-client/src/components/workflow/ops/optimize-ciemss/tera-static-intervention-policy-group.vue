@@ -122,7 +122,7 @@
 		<template v-else>
 			<p v-for="(staticIntervention, index) in staticInterventions" :key="index">
 				Set the <strong>{{ config.intervention?.type }}</strong>
-				<strong>{{ config.intervention?.appliedTo }}</strong> to a new value of
+				<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
 				<strong>{{ staticIntervention.value }}</strong> day at start time
 				<strong>{{ staticIntervention.timestep }}</strong> day.
 			</p>
