@@ -69,59 +69,47 @@
 				<section v-if="showNewValueOptions">
 					<h6 class="pt-4, pb-3">New Value</h6>
 					<div class="input-row">
-						<div class="label-and-input">
-							<label>Lower bound</label>
-							<tera-input
-								type="number"
-								v-model="knobs.lowerBoundValue"
-								@update:model-value="$emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Upper bound</label>
-							<tera-input
-								type="number"
-								v-model="knobs.upperBoundValue"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Initial guess</label>
-							<tera-input
-								type="number"
-								v-model="knobs.initialGuessValue"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
+						<tera-input
+							type="number"
+							label="Lower bound"
+							v-model="knobs.lowerBoundValue"
+							@update:model-value="$emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="number"
+							label="Upper bound"
+							v-model="knobs.upperBoundValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="number"
+							label="Initial guess"
+							v-model="knobs.initialGuessValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
 				<section v-if="showStartTimeOptions">
 					<h6 class="pt-4, pb-3">Start Time</h6>
 					<div class="input-row">
-						<div class="label-and-input">
-							<label>Start time</label>
-							<tera-input
-								type="number"
-								v-model="knobs.startTime"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>End time</label>
-							<tera-input
-								type="number"
-								v-model="knobs.endTime"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Initial guess</label>
-							<tera-input
-								type="number"
-								v-model="knobs.startTimeGuess"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
+						<tera-input
+							type="number"
+							label="Start time"
+							v-model="knobs.startTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="number"
+							label="End time"
+							v-model="knobs.endTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="number"
+							label="Initial guess"
+							v-model="knobs.startTimeGuess"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
 			</div>
