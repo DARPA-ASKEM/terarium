@@ -102,14 +102,14 @@ const columns = ref([
 const emit = defineEmits(['update-expression', 'update-source', 'close-modal']);
 
 const customSource = ref('default');
-const numberType = ref('constant');
+const numberType = ref(DistributionType.Constant);
 const customConstant = ref(0);
 
-const numberOptions = ['constant', 'uniform'];
+const numberOptions = [DistributionType.Constant, DistributionType.Uniform];
 
 const selectedColumns = ref(columns.value);
 const customSelection = ref(false);
-const selection = ref<null | object>(null);
+const selection = ref<null | { id?: string; source?: string; constant?: number }>(null);
 
 const onSelectionChange = (val) => {
 	selection.value = { constant: val.expression, source: customSource.value };
