@@ -27,6 +27,12 @@
 					<strong>{{ knobs.intervention.appliedTo }}</strong
 					>.
 				</p>
+				<p v-if="showNewValueOptions && staticInterventions.length === 1">
+					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
+				</p>
+				<p v-else-if="showStartTimeOptions && staticInterventions.length === 1">
+					when the value is <strong>{{ staticInterventions[0].value }}</strong>
+				</p>
 			</section>
 			<div>
 				<section class="input-row">
