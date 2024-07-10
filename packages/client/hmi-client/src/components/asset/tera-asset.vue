@@ -45,7 +45,6 @@
 			<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 		</div>
 		<div v-if="publisher" v-html="publisher" />
-		<!--created on: date-->
 		<div class="header-buttons">
 			<slot name="bottom-header-buttons" />
 		</div>

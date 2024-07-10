@@ -42,15 +42,28 @@
 						Intervention policy
 						<i v-tooltip="interventionPolicyToolTip" class="pi pi-info-circle" />
 					</h5>
-					<tera-intervention-policy-group-form
-						v-for="(cfg, idx) in props.node.state.interventionPolicyGroups"
-						:key="idx"
-						:config="cfg"
-						:intervention-type="props.node.state.interventionType"
-						:parameter-options="modelParameterOptions.map((ele) => ele.id)"
-						@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-						@delete-self="() => deleteInterverntionPolicyGroupForm(idx)"
-					/>
+					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+						<tera-static-intervention-policy-group
+							v-if="
+								cfg.intervention?.staticInterventions &&
+								cfg.intervention?.staticInterventions.length > 0
+							"
+							:key="idx"
+							:config="cfg"
+							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						/>
+					</template>
+					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
+						<tera-dynamic-intervention-policy-group
+							v-if="
+								cfg.intervention?.dynamicInterventions &&
+								cfg.intervention?.dynamicInterventions.length > 0
+							"
+							:key="idx"
+							:config="cfg"
+							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+						/>
+					</template>
 				</section>
 				<section class="form-section">
 					<h5>
@@ -262,7 +275,6 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
-import TeraInterventionPolicyGroupForm from '@/components/workflow/ops/optimize-ciemss/tera-intervention-policy-group-form.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 // Services:
@@ -285,7 +297,8 @@ import {
 	OptimizeRequestCiemss,
 	CsvAsset,
 	PolicyInterventions,
-	OptimizeQoi
+	OptimizeQoi,
+	InterventionPolicy
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -297,10 +310,11 @@ import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
+import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
+import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	OptimizeCiemssOperationState,
-	InterventionTypes,
-	InterventionPolicyGroup,
+	InterventionPolicyGroupForm,
 	blankInterventionPolicyGroup,
 	defaultConstraintGroup,
 	ConstraintGroup
@@ -330,7 +344,6 @@ interface BasicKnobs {
 	maxfeval: number;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	interventionType: InterventionTypes;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -340,8 +353,7 @@ const knobs = ref<BasicKnobs>({
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
-	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	interventionType: props.node.state.interventionType ?? ''
+	optimizationRunId: props.node.state.optimizationRunId ?? ''
 });
 
 // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
@@ -437,19 +449,11 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroup) => {
+const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups[index] = config;
-	emit('update-state', state);
-};
-
-const deleteInterverntionPolicyGroupForm = (index: number) => {
-	const state = _.cloneDeep(props.node.state);
-	if (!state.interventionPolicyGroups) return;
-
-	state.interventionPolicyGroups.splice(index, 1);
 	emit('update-state', state);
 };
 
@@ -496,8 +500,8 @@ const initialize = async () => {
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
-		getInterventionPolicyById(policyId).then((interventions) =>
-			addInterventionPolicyToGroup(interventions)
+		getInterventionPolicyById(policyId).then((interventionPolicy) =>
+			setInterventionPolicyGroups(interventionPolicy)
 		);
 	}
 
@@ -508,29 +512,24 @@ const initialize = async () => {
 		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
 };
 
-const addInterventionPolicyToGroup = (interventions) => {
+const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
-	if (
-		state.interventions &&
-		interventions.interventions &&
-		state.interventions.length === interventions.interventions.length
-	) {
+	// If already set + not changed since set, do not reset.
+	if (state.interventionPolicyId === interventionPolicy.id) {
 		return;
 	}
-	if (interventions.interventions && interventions.interventions.length > 0) {
-		interventions.interventions.forEach((intervention) => {
+	state.interventionPolicyId = interventionPolicy.id ?? '';
+	state.interventionPolicyGroups = []; // Reset prior to populating.
+	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
+		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive =
 				intervention.dynamicInterventions?.length > 0 ||
 				intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
-			newIntervention.name = intervention.name;
-			newIntervention.parameter = intervention.appliedTo;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.isDisabled = isNotActive;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
-		state.interventions = interventions.interventions;
 	}
 	emit('update-state', state);
 };
@@ -547,16 +546,17 @@ const runOptimize = async () => {
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		paramNames.push(ele.parameter);
-		paramValues.push(ele.paramValue);
+		paramNames.push(ele.intervention.appliedTo);
+		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
-		listInitialGuessInterventions.push(ele.initialGuess);
-		listBoundsInterventions.push([ele.lowerBound]);
-		listBoundsInterventions.push([ele.upperBound]);
+		listInitialGuessInterventions.push(ele.initialGuessValue);
+		listBoundsInterventions.push([ele.lowerBoundValue]);
+		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
+	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
 	const optimizeInterventions: PolicyInterventions = {
-		interventionType: knobs.value.interventionType,
+		interventionType,
 		paramNames,
 		startTime,
 		paramValues
@@ -587,7 +587,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100,
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // divide alpha by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};
@@ -662,7 +662,6 @@ watch(
 		state.maxfeval = knobs.value.maxfeval;
 		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.interventionType = knobs.value.interventionType;
 		emit('update-state', state);
 	},
 	{ deep: true }
