@@ -48,7 +48,11 @@
 						</Column>
 						<Column :colspan="2">
 							<template #footer>
-								<tera-input placeholder="Add a source" :model-value="customSource" />
+								<tera-input
+									placeholder="Add a source"
+									v-model="customSource"
+									@update:modelValue="onCustomSelectionChange"
+								/>
 							</template>
 						</Column>
 						<Column>
