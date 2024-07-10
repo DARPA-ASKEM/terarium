@@ -69,59 +69,47 @@
 				<section v-if="showNewValueOptions">
 					<h6 class="pt-4, pb-3">New Value</h6>
 					<div class="input-row">
-						<div class="label-and-input">
-							<label>Lower bound</label>
-							<tera-input
-								type="number"
-								v-model="knobs.lowerBoundValue"
-								@update:model-value="$emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Upper bound</label>
-							<tera-input
-								type="number"
-								v-model="knobs.upperBoundValue"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Initial guess</label>
-							<tera-input
-								type="number"
-								v-model="knobs.initialGuessValue"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
+						<tera-input
+							type="nist"
+							label="Lower bound"
+							v-model="knobs.lowerBoundValue"
+							@update:model-value="$emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Upper bound"
+							v-model="knobs.upperBoundValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Initial guess"
+							v-model="knobs.initialGuessValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
 				<section v-if="showStartTimeOptions">
 					<h6 class="pt-4, pb-3">Start Time</h6>
 					<div class="input-row">
-						<div class="label-and-input">
-							<label>Start time</label>
-							<tera-input
-								type="number"
-								v-model="knobs.startTime"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>End time</label>
-							<tera-input
-								type="number"
-								v-model="knobs.endTime"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
-						<div class="label-and-input">
-							<label>Initial guess</label>
-							<tera-input
-								type="number"
-								v-model="knobs.startTimeGuess"
-								@update:model-value="emit('update-self', knobs)"
-							/>
-						</div>
+						<tera-input
+							type="nist"
+							label="Start time"
+							v-model="knobs.startTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="End time"
+							v-model="knobs.endTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Initial guess"
+							v-model="knobs.startTimeGuess"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
 			</div>
@@ -161,22 +149,10 @@ const staticInterventions = ref<StaticIntervention[]>(
 );
 
 const knobs = ref<InterventionPolicyGroupForm>({
-	isActive: props.config.isActive,
-	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType,
-	objectiveFunctionOption: props.config.objectiveFunctionOption,
-	startTime: props.config.startTime,
-	endTime: props.config.endTime,
-	lowerBoundValue: props.config.lowerBoundValue,
-	upperBoundValue: props.config.upperBoundValue,
-	initialGuessValue: props.config.initialGuessValue,
-	startTimeGuess: props.config.startTimeGuess
+	...props.config
 });
 
-const isNotEditable = computed(() => {
-	if (staticInterventions.value.length === 1) return false;
-	return true;
-});
+const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
 	() => knobs.value.optimizationType === InterventionTypes.paramValue
