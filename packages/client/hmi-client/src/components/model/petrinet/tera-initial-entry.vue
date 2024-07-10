@@ -41,9 +41,10 @@
 		</footer>
 	</div>
 	<Teleport to="body">
-		<tera-model-other-value-entry
+		<tera-initial-other-value-modal
 			v-if="showOtherConfigValueModal"
 			:id="initialId"
+			:updateEvent="'update-expression'"
 			:tableData="tableData"
 			:otherValuesInputTypes="OtherValuesInputTypes.constant"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
@@ -58,7 +59,7 @@
 import { Model, ModelConfiguration, OtherValuesInputTypes } from '@/types/Types';
 import { getInitialExpression, getInitialSource } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import TeraModelOtherValueEntry from '@/components/model/petrinet/tera-model-other-value-entry.vue';
+import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import { computed, onMounted, ref } from 'vue';
 import Button from 'primevue/button';
 import {
@@ -69,9 +70,9 @@ import {
 
 const props = defineProps<{
 	model: Model;
+	initialId: string;
 	modelConfiguration: ModelConfiguration;
 	modelConfigurations: ModelConfiguration[];
-	initialId: string;
 }>();
 
 const tableData = ref();
