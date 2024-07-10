@@ -2,7 +2,7 @@
 	<tera-modal>
 		<section style="width: 800px">
 			<DataTable
-				:value="tableData"
+				:value="otherValueList"
 				@update:selection="onSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
@@ -75,8 +75,8 @@
 </template>
 
 <script setup lang="ts">
-import { OtherValuesInputTypes, OtherValuesInput } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import { DistributionType } from '@/services/distribution';
 import { ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -88,12 +88,11 @@ import RadioButton from 'primevue/radiobutton';
 
 const props = defineProps<{
 	id: string;
-	tableData: any;
-	otherValuesInputTypes: OtherValuesInputTypes;
+	otherValueList: any[];
+	otherValuesInputTypes: DistributionType;
 }>();
 
-const tableData = ref(props.tableData);
-
+const otherValueList = ref(props.otherValueList);
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
 	{ field: 'target', header: 'Source' },
@@ -110,7 +109,7 @@ const numberOptions = ['constant', 'uniform'];
 
 const selectedColumns = ref(columns.value);
 const customSelection = ref(false);
-const selection = ref<null | OtherValuesInput>(null);
+const selection = ref<null | object>(null);
 
 const onSelectionChange = (val) => {
 	selection.value = { constant: val.expression, source: customSource.value };
