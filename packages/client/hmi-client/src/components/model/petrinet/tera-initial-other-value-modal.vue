@@ -1,13 +1,11 @@
 <template>
 	<tera-modal>
-		<section style="width: 800px">
+		<section>
 			<DataTable
 				:value="otherValueList"
 				@update:selection="onSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
-				scrollable
-				scrollHeight="45rem"
 			>
 				<template #header> </template>
 				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
