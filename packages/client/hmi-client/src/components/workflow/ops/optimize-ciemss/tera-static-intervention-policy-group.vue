@@ -161,16 +161,7 @@ const staticInterventions = ref<StaticIntervention[]>(
 );
 
 const knobs = ref<InterventionPolicyGroupForm>({
-	isActive: props.config.isActive,
-	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType,
-	objectiveFunctionOption: props.config.objectiveFunctionOption,
-	startTime: props.config.startTime,
-	endTime: props.config.endTime,
-	lowerBoundValue: props.config.lowerBoundValue,
-	upperBoundValue: props.config.upperBoundValue,
-	initialGuessValue: props.config.initialGuessValue,
-	startTimeGuess: props.config.startTimeGuess
+	...props.config
 });
 
 const isNotEditable = computed(() => {
