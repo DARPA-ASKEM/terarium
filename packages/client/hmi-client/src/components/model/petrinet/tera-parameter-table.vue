@@ -84,6 +84,7 @@
 											<tera-parameter-entry
 												:model="model"
 												:model-configuration="props.modelConfiguration"
+												:model-configurations="props.modelConfigurations"
 												:parameter-id="referenceId"
 												@update-parameter="emit('update-parameters', [$event])"
 												@update-source="emit('update-source', $event)"
