@@ -111,7 +111,7 @@
 							<label>Initial guess</label>
 							<tera-input
 								type="number"
-								v-model="knobs.initialGuessTime"
+								v-model="knobs.startTimeGuess"
 								@update:model-value="emit('update-self', knobs)"
 							/>
 						</div>
@@ -163,7 +163,7 @@ const knobs = ref<InterventionPolicyGroupForm>({
 	lowerBoundValue: props.config.lowerBoundValue,
 	upperBoundValue: props.config.upperBoundValue,
 	initialGuessValue: props.config.initialGuessValue,
-	initialGuessTime: props.config.initialGuessTime
+	startTimeGuess: props.config.startTimeGuess
 });
 
 const isNotEditable = computed(() => {
