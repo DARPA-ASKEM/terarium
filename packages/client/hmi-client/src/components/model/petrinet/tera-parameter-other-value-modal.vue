@@ -3,7 +3,7 @@
 		<section style="width: 800px">
 			<DataTable
 				class="value-border"
-				:value="tableData"
+				:value="otherValueList"
 				@update:selection="onSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
@@ -25,22 +25,22 @@
 							{{ data.name }}
 						</template>
 						<template v-if="col.field === 'target'">
-							{{ data.target }}
+							{{ data.referenceId }}
 						</template>
 						<template v-if="col.field === 'value'">
 							<section class="inline-flex gap-1">
-								<template v-if="data.type === OtherValuesInputTypes.constant">
+								<template v-if="data.distribution.type === DistributionType.Constant">
 									<span>Constants</span>
-									<span class="pl-1">{{ data.value }}</span>
+									<span class="pl-1">{{ data.distribution.parameters.value }}</span>
 								</template>
 								<template v-else>
 									<div>
 										<span>Min</span>
-										<span class="pl-1 pr-1">{{ data.minimum }}</span>
+										<span class="pl-1 pr-1">{{ data.distribution.parameters.minimum }}</span>
 									</div>
 									<div>
 										<span>Max</span>
-										<span class="pl-1 pr-1">{{ data.maximum }}</span>
+										<span class="pl-1 pr-1">{{ data.distribution.parameters.maximum }}</span>
 									</div>
 								</template>
 							</section>
@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { OtherValuesInputTypes, OtherValuesInput } from '@/types/Types';
+import { DistributionType } from '@/services/distribution';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
@@ -116,10 +116,10 @@ import RadioButton from 'primevue/radiobutton';
 
 const props = defineProps<{
 	id: string;
-	tableData: any;
+	otherValueList: any;
 }>();
 
-const tableData = ref(props.tableData);
+const otherValueList = ref(props.otherValueList);
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
@@ -132,39 +132,57 @@ const columns = ref([
 const emit = defineEmits(['update-parameter', 'update-source', 'close-modal']);
 
 const customSource = ref('default');
-const numberType = ref('constant');
+const numberType = ref(DistributionType.Constant);
 const customConstant = ref(0);
 const customMin = ref(0);
 const customMax = ref(1);
 
-const numberOptions = ['constant', 'uniform'];
+const numberOptions = [DistributionType.Constant, DistributionType.Uniform];
 
 const selectedColumns = ref(columns.value);
 const customSelection = ref(false);
-const selection = ref<null | OtherValuesInput>(null);
+
+interface OtherValueSelection {
+	type: DistributionType;
+	source?: string;
+	constant?: number;
+	min?: number;
+	max?: number;
+}
+
+const selection = ref<null | OtherValueSelection>(null);
 
 const onSelectionChange = (val) => {
 	selection.value =
-		val.type === OtherValuesInputTypes.constant
-			? { constant: val.value, source: customSource.value, type: val.type }
-			: { min: val.minimum, max: val.maximum, source: val.source, type: val.type };
+		val.type === DistributionType.Constant
+			? {
+					constant: val.distribution.parameters.value,
+					source: customSource.value,
+					type: val.distribution.type
+				}
+			: {
+					min: val.distribution.parameters.minimum,
+					max: val.distribution.parameters.maximum,
+					source: val.source,
+					type: val.distribution.type
+				};
 	customSelection.value = false;
 };
 
 const onCustomSelectionChange = () => {
 	if (customSelection.value) {
 		selection.value =
-			numberType.value === numberOptions[0]
+			numberType.value === DistributionType.Constant
 				? {
 						constant: customConstant.value,
 						source: customSource.value,
-						type: OtherValuesInputTypes.constant
+						type: DistributionType.Constant
 					}
 				: {
 						min: customMin.value,
 						max: customMax.value,
 						source: customSource.value,
-						type: OtherValuesInputTypes.uniform
+						type: DistributionType.Uniform
 					};
 	}
 };
@@ -183,7 +201,7 @@ function getColumnWidth(columnField: string) {
 }
 
 function applySelectedValue() {
-	if (selection.value?.type === OtherValuesInputTypes.constant) {
+	if (selection.value?.type === DistributionType.Constant) {
 		emit('update-parameter', {
 			id: props.id,
 			distribution: { type: selection.value.type }
@@ -196,7 +214,7 @@ function applySelectedValue() {
 			}
 		});
 		emit('update-source', { id: props.id, value: selection.value?.source });
-	} else if (selection.value?.type === OtherValuesInputTypes.uniform) {
+	} else if (selection.value?.type === DistributionType.Uniform) {
 		emit('update-parameter', {
 			id: props.id,
 			distribution: { type: selection.value.type }

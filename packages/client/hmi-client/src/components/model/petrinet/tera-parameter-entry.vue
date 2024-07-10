@@ -110,7 +110,7 @@
 		<tera-paramenter-other-value-modal
 			v-if="showOtherConfigValueModal"
 			:id="parameterId"
-			:tableData="tableData"
+			:otherValueList="otherValueList"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
 			@update-parameter="emit('update-parameter', $event)"
 			@update-source="emit('update-source', $event)"
@@ -121,9 +121,13 @@
 
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
-import { getParameterSource, getParameterDistribution } from '@/services/model-configurations';
+import {
+	getParameterSource,
+	getParameterDistribution,
+	getOtherValues
+} from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
@@ -144,12 +148,17 @@ const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
 const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
 
-const tableData = ref();
-
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 
-onMounted(() => setTableData(props.parameterId));
+const otherValueList = ref(
+	getOtherValues(
+		props.modelConfigurations,
+		props.parameterId,
+		'referenceId',
+		'parameterSemanticList'
+	)
+);
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
@@ -177,30 +186,7 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	return distribution;
 }
 
-const setTableData = (id, key = 'referenceId', otherValueList = 'parameterSemanticList') => {
-	tableData.value = [];
-	console.log('props.modelConfigurations', props.modelConfigurations);
-	const modelConfigTableData = props.modelConfigurations.map((modelConfig) => ({
-		name: modelConfig.name,
-		list: modelConfig[otherValueList]
-	}));
-
-	modelConfigTableData.forEach((modelConfig) => {
-		const config = modelConfig.list.filter((item) => item[key] === id)[0];
-		if (config && modelConfig.name) {
-			const data = {
-				name: modelConfig.name,
-				...config,
-				...config.distribution.parameters,
-				type: config.distribution.type
-			};
-			tableData.value.push(data);
-		}
-	});
-	console.log('tableData.value', tableData.value);
-};
-
-const getOtherValuesLabel = computed(() => `Other Values(${tableData.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 </script>
 
 <style scoped>
