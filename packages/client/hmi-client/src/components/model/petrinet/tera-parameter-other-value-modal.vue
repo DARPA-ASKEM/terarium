@@ -32,17 +32,23 @@
 									<span>Constants</span>
 									<span class="pl-1">{{ data.distribution.parameters.value }}</span>
 								</template>
-								<template v-else>
-									<div>
-										<span>Min</span>
-										<span class="pl-1 pr-1">{{ data.distribution.parameters.minimum }}</span>
-									</div>
-									<div>
-										<span>Max</span>
-										<span class="pl-1 pr-1">{{ data.distribution.parameters.maximum }}</span>
-									</div>
-								</template>
 							</section>
+						</template>
+						<template v-if="col.field === 'minimum'">
+							<template v-if="data.distribution.type === DistributionType.Uniform">
+								<div>
+									<span>Min</span>
+									<span class="pl-1 pr-1">{{ data.distribution.parameters.minimum }}</span>
+								</div>
+							</template>
+						</template>
+						<template v-if="col.field === 'maximum'">
+							<template v-if="data.distribution.type === DistributionType.Uniform">
+								<div>
+									<span>Max</span>
+									<span class="pl-1 pr-1">{{ data.distribution.parameters.maximum }}</span>
+								</div>
+							</template>
 						</template>
 					</template>
 				</Column>
@@ -58,7 +64,7 @@
 								/>
 							</template>
 						</Column>
-						<Column :colspan="2">
+						<Column>
 							<template #footer>
 								<tera-input
 									placeholder="Add a source"
@@ -71,26 +77,34 @@
 							<template #footer>
 								<section class="inline-flex gap-1">
 									<Dropdown v-model="numberType" :options="numberOptions"></Dropdown>
-									<template v-if="numberType === numberOptions[0]">
-										<tera-input
-											placeholder="Constant"
-											v-model="customConstant"
-											@update:modelValue="onCustomSelectionChange"
-										/>
-									</template>
-									<template v-if="numberType === numberOptions[1]">
-										<tera-input
-											placeholder="Min"
-											v-model="customMin"
-											@update:modelValue="onCustomSelectionChange"
-										/>
-										<tera-input
-											placeholder="Max"
-											v-model="customMax"
-											@update:modelValue="onCustomSelectionChange"
-										/>
-									</template>
 								</section>
+							</template>
+						</Column>
+						<Column>
+							<template #footer v-if="numberType === numberOptions[0]">
+								<tera-input
+									placeholder="Constant"
+									v-model="customConstant"
+									@update:modelValue="onCustomSelectionChange"
+								/>
+							</template>
+						</Column>
+						<Column>
+							<template #footer v-if="numberType === numberOptions[1]">
+								<tera-input
+									placeholder="Min"
+									v-model="customMin"
+									@update:modelValue="onCustomSelectionChange"
+								/>
+							</template>
+						</Column>
+						<Column>
+							<template #footer v-if="numberType === numberOptions[1]">
+								<tera-input
+									placeholder="Max"
+									v-model="customMax"
+									@update:modelValue="onCustomSelectionChange"
+								/>
 							</template>
 						</Column>
 					</Row>
@@ -197,11 +211,13 @@ function getColumnWidth(columnField: string) {
 		case 'target':
 			return 20;
 		case 'value':
-			return 20;
+			return 10;
+		case 'constant':
+			return 10;
 		case 'minimum':
-			return 20;
+			return 10;
 		case 'maximum':
-			return 20;
+			return 10;
 		default:
 			return 100;
 	}
