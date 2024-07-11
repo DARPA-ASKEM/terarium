@@ -130,8 +130,7 @@ export const OptimizeCiemssOperation: Operation = {
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
-			acceptMultiple: false,
-			isOptional: true
+			acceptMultiple: false
 		}
 	],
 	outputs: [{ type: 'simulationId' }],
@@ -166,13 +165,14 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
+	console.log(simulation);
 	const simulationIntervetions =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
-	const policyInterventions = simulation?.executionPayload?.policy_interventions;
-	const interventionType = policyInterventions.selection ?? '';
-	const paramNames: string[] = policyInterventions.param_names ?? [];
-	const paramValue: number[] = policyInterventions.param_values ?? [];
-	const startTime: number[] = policyInterventions.start_time ?? [];
+	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
+	const interventionType = optimizeInterventions.intervention_type ?? '';
+	const paramNames: string[] = optimizeInterventions.param_names ?? [];
+	const paramValue: number[] = optimizeInterventions.param_values ?? [];
+	const startTime: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
 

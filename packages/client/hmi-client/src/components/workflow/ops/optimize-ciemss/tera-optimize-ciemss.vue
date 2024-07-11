@@ -296,7 +296,7 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	PolicyInterventions,
+	OptimizeInterventions,
 	OptimizeQoi,
 	InterventionPolicy,
 	Intervention
@@ -546,6 +546,9 @@ const runOptimize = async () => {
 	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
+	const initialGuess: number[] = [];
+	const objectiveFunctionOption: string[] = [];
+
 	const activeGroups = props.node.state.interventionPolicyGroups.filter(
 		(ele) => ele.isActive === true
 	);
@@ -557,6 +560,8 @@ const runOptimize = async () => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
+		initialGuess.push(ele.initialGuessValue);
+		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		listInitialGuessInterventions.push(ele.initialGuessValue);
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
@@ -564,16 +569,18 @@ const runOptimize = async () => {
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
 	// These are interventions to be optimized over.
-	const optimizeInterventions: PolicyInterventions = {
+	const optimizeInterventions: OptimizeInterventions = {
 		interventionType,
 		paramNames,
 		startTime,
-		paramValues
+		paramValues,
+		initialGuess,
+		objectiveFunctionOption
 	};
 
 	// These are interventions to be considered but not optimized over.
-	const fixedStaticParameterInterventions: Intervention[] = inActiveGroups.map(
-		(ele) => ele.intervention
+	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
+		inActiveGroups.map((ele) => ele.intervention)
 	);
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
@@ -591,7 +598,7 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		policyInterventions: optimizeInterventions,
+		optimizeInterventions,
 		fixedStaticParameterInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
@@ -612,7 +619,6 @@ const runOptimize = async () => {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
 
-	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

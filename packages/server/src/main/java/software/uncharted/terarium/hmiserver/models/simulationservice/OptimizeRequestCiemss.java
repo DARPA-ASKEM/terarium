@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.PolicyInterventions;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeInterventions;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -26,7 +26,7 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	@TSOptional
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-	private PolicyInterventions policyInterventions;
+	private OptimizeInterventions optimizeInterventions;
 
 	@TSOptional
 	@JsonAlias("fixed_static_parameter_interventions")
