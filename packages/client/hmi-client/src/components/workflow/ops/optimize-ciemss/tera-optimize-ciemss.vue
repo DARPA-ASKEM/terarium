@@ -136,111 +136,6 @@
 						</div>
 					</div>
 				</section>
-				<section class="form-section">
-					<h5>
-						Output settings
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-
-					<!--Summary-->
-					<h5>Summary</h5>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="generate-summary"
-						label="Auto-generate operation summary"
-						subtext="Automatically generates a brief summary of the inputs and outputs."
-					/>
-					<Divider />
-
-					<!--Success Criteria-->
-					<h5>
-						Success Criteria
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-display-charts"
-						label="Display chart(s)"
-						subtext="Turn this on to generate an interactive chart of the success criteria conditions."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-display-data-table"
-						label="Display data table"
-						subtext="Turn this on to display the raw data of the output."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-generate-caption"
-						label="Auto-generate chart caption"
-						subtext="Automatically generates a caption for the cuccess criteria histogram."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-include-annotations"
-						label="Include annotations"
-						subtext="Add annotations to the chart and customize their settings below."
-					/>
-					<Divider />
-
-					<!--Interventions-->
-					<h5>
-						Interventions
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-display-charts"
-						label="Display chart(s)"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-display-data-table"
-						label="Display data table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-generate-caption"
-						label="Auto-generate chart caption"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-include-annotations"
-						label="Include annotations"
-					/>
-					<Divider />
-
-					<!--Simulation plots-->
-					<h5>
-						Simulation plots
-						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
-					</h5>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-display-charts"
-						label="Display chart(s)"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-display-stats-table"
-						label="Display statistics table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-display-data-table"
-						label="Display data table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-generate-caption"
-						label="Auto-generate chart caption"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-include-annotations"
-						label="Include annotations"
-					/>
-				</section>
 			</tera-drilldown-section>
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
@@ -256,33 +151,6 @@
 				is-selectable
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
-				<Accordion multiple :active-index="[0, 1]">
-					<AccordionTab header="Success criteria">
-						<ul>
-							<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
-								<h5>{{ constraint.name }}</h5>
-								<tera-optimize-chart
-									:risk-results="riskResults[knobs.postForecastRunId]"
-									:target-variable="constraint.targetVariable || undefined"
-									:size="chartSize"
-									:threshold="constraint.threshold"
-									:is-minimized="constraint.isMinimized"
-								/>
-							</li>
-						</ul>
-					</AccordionTab>
-					<AccordionTab header="Interventions">
-						<ul>
-							<li v-for="(data, key) in preProcessedInterventionsData" :key="key">
-								<tera-intervention-chart
-									:data="data"
-									:size="chartSize"
-									:end-time="node.state.endTime"
-								/>
-							</li>
-						</ul>
-					</AccordionTab>
-				</Accordion>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && !showSpinner"
 					:summary-id="node.state.summaryId"
@@ -324,6 +192,33 @@
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="simulationRunResults[knobs.postForecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
+						<Accordion multiple :active-index="[0, 1]">
+							<AccordionTab header="Success criteria">
+								<ul>
+									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
+										<h5>{{ constraint.name }}</h5>
+										<tera-optimize-chart
+											:risk-results="riskResults[knobs.postForecastRunId]"
+											:target-variable="constraint.targetVariable || undefined"
+											:size="chartSize"
+											:threshold="constraint.threshold"
+											:is-minimized="constraint.isMinimized"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<ul>
+									<li v-for="(data, key) in preProcessedInterventionsData" :key="key">
+										<tera-intervention-chart
+											:data="data"
+											:size="chartSize"
+											:end-time="node.state.endTime"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+						</Accordion>
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -437,8 +332,6 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
-import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
@@ -493,9 +386,6 @@ const knobs = ref<BasicKnobs>({
 const constraintToolTip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
-const outputSettingsToolTip = 'TODO';
-
-const checkbox = ref(false);
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
