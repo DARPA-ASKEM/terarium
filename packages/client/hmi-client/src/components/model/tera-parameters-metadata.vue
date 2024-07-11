@@ -5,19 +5,25 @@
 			:key="index"
 		>
 			<template v-if="isVirtual">
-				<tera-parameter-metadata-entry
-					:parameter="baseParameter"
-					is-base
-					:show-stratified-variables="toggleStates[index]"
-					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-parameter="updateBaseParameter(baseParameter.id, $event)"
-					@open-matrix="matrixModalId = baseParameter.id"
-				/>
+				<section class="base">
+					<span>
+						<Button
+							:icon="toggleStates[index] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							text
+							rounded
+							size="small"
+							@click="toggleStates[index] = !toggleStates[index]"
+						/>
+						<h6>{{ baseParameter.id }}</h6>
+					</span>
+					<Button label="Add unit to all children" text size="small" />
+					<Button label="Open matrix" text size="small" @click="matrixModalId = baseParameter.id" />
+					<Button label="Add concept to all children" text size="small" />
+				</section>
 				<ul v-if="toggleStates[index]" class="stratified">
 					<li v-for="childParameter in childParameters" :key="childParameter.id">
 						<tera-parameter-metadata-entry
 							:parameter="childParameter"
-							is-stratified
 							@update-parameter="
 								$emit('update-parameter', { parameterId: childParameter.id, ...$event })
 							"
@@ -53,6 +59,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
 import TeraParameterMetadataEntry from '@/components/model/tera-parameter-metadata-entry.vue';
+import Button from 'primevue/button';
 import TeraStratifiedMatrixModal from './petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{
@@ -61,7 +68,7 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 }>();
 
-const emit = defineEmits(['update-parameter']);
+defineEmits(['update-parameter']);
 
 const parameters = computed(() => getParameters(props.model));
 const collapsedParameters = computed(() => collapseParameters(props.mmt, props.mmtParams));
@@ -88,14 +95,6 @@ const parameterList = computed<
 
 const matrixModalId = ref('');
 
-function updateBaseParameter(baseParameter: string, event: any) {
-	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-parameter', { parameterId: baseParameter, isMetadata: true, ...event });
-	// Cascade the change to all children
-	const ids = collapsedParameters.value.get(baseParameter);
-	ids?.forEach((id) => emit('update-parameter', { parameterId: id, ...event }));
-}
-
 const toggleStates = ref<boolean[]>([]);
 watch(
 	() => collapsedParameters.value.size,
@@ -109,6 +108,13 @@ watch(
 li {
 	padding-bottom: var(--gap-small);
 	border-bottom: 1px solid var(--surface-border);
+}
+
+.base,
+.base > span {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .stratified {

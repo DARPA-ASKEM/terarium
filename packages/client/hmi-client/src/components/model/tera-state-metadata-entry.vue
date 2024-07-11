@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
+	<section :class="{ 'no-second-row': isStratified }">
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
@@ -21,13 +21,6 @@
 			disabled
 		/>
 		<template v-if="!isStratified">
-			<Button
-				v-if="isBase"
-				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-				text
-				rounded
-				@click="$emit('toggle-stratified-variables')"
-			/>
 			<tera-input
 				label="Unit"
 				placeholder="Add a unit"
@@ -49,16 +42,14 @@
 <script setup lang="ts">
 import { PetriNetState, RegNetVertex } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import Button from 'primevue/button';
 
 const props = defineProps<{
 	state: PetriNetState | RegNetVertex;
-	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state', 'toggle-stratified-variables']);
 
 const { id, name, grounding, initial } = props.state; // description property should be added to the state type
 </script>

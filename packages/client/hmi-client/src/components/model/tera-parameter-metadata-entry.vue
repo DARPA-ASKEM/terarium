@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
+	<section :class="{ 'no-second-row': isStratified }">
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
@@ -14,14 +14,6 @@
 			@update:model-value="$emit('update-parameter', { key: 'description', value: $event })"
 		/>
 		<template v-if="!isStratified">
-			<Button
-				class="toggle"
-				v-if="isBase"
-				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-				text
-				rounded
-				@click="$emit('toggle-stratified-variables')"
-			/>
 			<tera-input
 				label="Unit"
 				placeholder="Add a unit"
@@ -43,7 +35,6 @@
 						: ''
 				"
 			/>
-			<Button v-if="isBase" size="small" label="Open matrix" text @click="$emit('open-matrix')" />
 		</template>
 	</section>
 </template>
@@ -52,16 +43,14 @@
 import type { ModelParameter } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
-import Button from 'primevue/button';
 
 const props = defineProps<{
 	parameter: ModelParameter;
-	isBase?: boolean;
 	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-parameter', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-parameter', 'toggle-stratified-variables']);
 
 const { id, name, description, grounding, units } = props.parameter;
 </script>

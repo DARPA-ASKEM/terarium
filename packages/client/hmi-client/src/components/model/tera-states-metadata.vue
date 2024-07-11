@@ -2,18 +2,24 @@
 	<ul>
 		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="index">
 			<template v-if="isVirtual">
-				<tera-state-metadata-entry
-					:state="baseState"
-					is-base
-					:show-stratified-variables="toggleStates[index]"
-					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-state="updateBaseState(baseState.id, $event)"
-				/>
+				<section class="base">
+					<span>
+						<Button
+							:icon="toggleStates[index] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							text
+							rounded
+							size="small"
+							@click="toggleStates[index] = !toggleStates[index]"
+						/>
+						<h6>{{ baseState.id }}</h6>
+					</span>
+					<Button label="Add unit to all children" text size="small" />
+					<Button label="Add concept to all children" text size="small" />
+				</section>
 				<ul v-if="toggleStates[index]" class="stratified">
 					<li v-for="childState in childStates" :key="childState.id">
 						<tera-state-metadata-entry
 							:state="childState"
-							is-stratified
 							@update-state="$emit('update-state', { id: childState.id, ...$event })"
 						/>
 					</li>
@@ -30,6 +36,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import Button from 'primevue/button';
 import { Model, PetriNetState, RegNetVertex } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
@@ -41,7 +48,7 @@ const props = defineProps<{
 	mmt: MiraModel;
 }>();
 
-const emit = defineEmits(['update-state']);
+defineEmits(['update-state']);
 
 const states = computed(() => getStates(props.model)); // could be states, vertices, and stocks type
 const collapsedInitials = computed(() => collapseInitials(props.mmt));
@@ -70,14 +77,6 @@ const stateList = computed<
 		})
 );
 
-function updateBaseState(baseId: string, event: any) {
-	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-state', { id: baseId, isMetadata: true, ...event });
-	// Cascade the change to all children
-	const targets = collapsedInitials.value.get(baseId);
-	targets?.forEach((target) => emit('update-state', { id: target, ...event }));
-}
-
 const toggleStates = ref<boolean[]>([]);
 watch(
 	() => collapsedInitials.value.size,
@@ -91,6 +90,13 @@ watch(
 li {
 	padding-bottom: var(--gap-small);
 	border-bottom: 1px solid var(--surface-border);
+}
+
+.base,
+.base > span {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .stratified {
