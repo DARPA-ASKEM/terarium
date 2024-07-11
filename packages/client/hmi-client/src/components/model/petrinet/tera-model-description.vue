@@ -2,6 +2,13 @@
 	<section>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
+				<Editor
+					v-model="editorContent"
+					:class="{ readonly: !hasEditPermission }"
+					:readonly="!hasEditPermission"
+				/>
+			</AccordionTab>
+			<AccordionTab header="Model Card">
 				<section v-if="!isGeneratingCard" class="description">
 					<tera-show-more-text :text="description" :lines="5" />
 					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
@@ -85,6 +92,8 @@ import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.v
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+import Editor from 'primevue/editor';
+import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	model: Model;
@@ -141,6 +150,13 @@ const relatedTerariumDocuments = computed(
 function updateConfiguration(updatedConfiguration: ModelConfiguration) {
 	emit('update-configuration', updatedConfiguration);
 }
+
+// Editor for the description
+const { activeProject } = useProjects();
+const hasEditPermission = computed(() =>
+	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
+);
+const editorContent = ref('');
 </script>
 
 <style scoped>
