@@ -3,13 +3,24 @@
 		<section>
 			<DataTable
 				:value="otherValueList"
-				@update:selection="onSelectionChange"
+				@update:selection="onCustomSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
 				tableStyle="min-width: 55rem"
 			>
 				<template #header> </template>
-				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
+				<Column headerStyle="width: 2rem">
+					<template #body="{ data }">
+						{{ console.log(data) }}
+						<RadioButton
+							v-model="customSelection"
+							:inputId="data.id"
+							:value="data"
+							variant="filled"
+							@change="onCustomSelectionChange(data)"
+						/>
+					</template>
+				</Column>
 				<Column
 					v-for="(col, index) in selectedColumns"
 					:field="col.field"
@@ -28,7 +39,7 @@
 						<template v-if="col.field === 'expression'">
 							<section class="inline-flex gap-1">
 								<span class="cell-space">Constants</span>
-								<span>{{ data.expression }}</span>
+								<span>{{ numberToNist(data.expression) }}</span>
 							</section>
 						</template>
 					</template>
@@ -39,15 +50,17 @@
 							<template #footer>
 								<RadioButton
 									v-model="customSelection"
-									value="true"
+									inputId="custom"
+									:value="{}"
 									variant="filled"
-									@change="onCustomSelectionChange"
+									@change="onCustomSelectionChange('custom')"
 								/>
 							</template>
 						</Column>
 						<Column :colspan="2">
 							<template #footer>
 								<tera-input
+									type="nist"
 									placeholder="Add a source"
 									v-model="customSource"
 									@update:modelValue="onCustomSelectionChange"
@@ -59,6 +72,7 @@
 								<section class="inline-flex gap-1">
 									<span class="custom-input-label">Constant</span>
 									<tera-input
+										type="nist"
 										placeholder="Constant"
 										v-model="customConstant"
 										@update:modelValue="onCustomSelectionChange"
@@ -78,6 +92,7 @@
 </template>
 
 <script setup lang="ts">
+import { numberToNist } from '@/utils/number';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { DistributionType } from '@/services/distribution';
 import { ref } from 'vue';
@@ -114,17 +129,14 @@ const selectedColumns = ref(columns.value);
 const customSelection = ref(false);
 const selection = ref<null | { id?: string; source?: string; constant?: number }>(null);
 
-const onSelectionChange = (val) => {
-	selection.value = { constant: val.expression, source: customSource.value };
-	customSelection.value = false;
-};
-
-const onCustomSelectionChange = () => {
-	if (customSelection.value) {
+const onCustomSelectionChange = (val) => {
+	if (!val?.name) {
 		selection.value =
 			numberType.value === numberOptions[0]
 				? { constant: customConstant.value, source: customSource.value }
 				: { constant: 0, source: '' };
+	} else {
+		selection.value = { constant: val.expression, source: customSource.value };
 	}
 };
 
@@ -149,24 +161,6 @@ function applySelectedValue() {
 </script>
 
 <style scoped>
-header {
-	display: flex;
-	flex-direction: column;
-	padding-bottom: var(--gap-small);
-}
-.expression {
-	flex-grow: 1;
-}
-main {
-	display: flex;
-	justify-content: space-between;
-	padding-bottom: var(--gap-small);
-}
-
-label {
-	color: var(--text-color-subdued);
-}
-
 .cell-space {
 	padding-right: 1rem;
 }
