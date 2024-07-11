@@ -75,7 +75,12 @@ const spec = computed<any>(() => {
 				}
 			},
 			{
-				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+				mark: {
+					type: 'text',
+					align: 'left',
+					text: `Threshold = ${props.threshold}`,
+					baseline: 'line-bottom'
+				},
 				encoding: {
 					y: { datum: +props.threshold }
 				}
