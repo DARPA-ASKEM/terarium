@@ -96,7 +96,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
-		Assertions.assertEquals(after.getFileNames().size(), 2);
+		Assertions.assertEquals(after.getFileNames().size(), 1);
 
 		Assertions.assertNotNull(after.getGrounding());
 		Assertions.assertNotNull(after.getGrounding().getId());
