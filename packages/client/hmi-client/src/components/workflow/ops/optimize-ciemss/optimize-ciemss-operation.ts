@@ -7,8 +7,15 @@ const DOCUMENTATION_URL =
 
 export enum InterventionTypes {
 	paramValue = 'param_value',
-	startTime = 'start_time',
-	paramValueAndStartTime = 'param_value_and_start_time' // TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
+	startTime = 'start_time'
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
+	// ,paramValueAndStartTime = 'param_value_and_start_time'
+}
+
+export enum InterventionObjectiveFunctions {
+	lowerBound = 'lower_bound',
+	upperbound = 'upper_bound',
+	initialGuess = 'initial_guess'
 }
 
 export enum ContextMethods {
@@ -20,14 +27,12 @@ export interface InterventionPolicyGroupForm {
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
-	lowerBound: number;
-	upperBound: number;
-	initialGuess: number;
+	lowerBoundValue: number;
+	upperBoundValue: number;
+	initialGuessValue: number;
 	isActive: boolean;
-	paramValue: number;
 	optimizationType: InterventionTypes;
-	startTimeOption: string;
-	newValueOption: string;
+	objectiveFunctionOption: InterventionObjectiveFunctions;
 	intervention: Intervention;
 }
 
@@ -68,22 +73,28 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'start time', value: InterventionTypes.paramValue },
-	{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+	{ label: 'start time', value: InterventionTypes.paramValue }
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
+	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+];
+
+// This is used as a map between dropdown labels and the inner values used by pyciemss-service.
+export const OBJECTIVE_FUNCTION_MAP = [
+	{ label: 'initial guess', value: InterventionObjectiveFunctions.initialGuess },
+	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
+	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
 ];
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
 	startTimeGuess: 0,
-	lowerBound: 0,
-	upperBound: 0,
-	initialGuess: 0,
+	lowerBoundValue: 0,
+	upperBoundValue: 0,
+	initialGuessValue: 0,
 	isActive: true,
-	paramValue: 0,
 	optimizationType: InterventionTypes.paramValue,
-	startTimeOption: 'earliest',
-	newValueOption: 'initial guess',
+	objectiveFunctionOption: InterventionObjectiveFunctions.lowerBound,
 	intervention: {
 		name: 'default name',
 		appliedTo: '',
