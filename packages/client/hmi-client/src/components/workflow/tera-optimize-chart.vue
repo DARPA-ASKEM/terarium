@@ -68,36 +68,21 @@ const spec = computed<any>(() => {
 					}
 				}
 			},
-			thresholdLineSpec.value,
-			thresholdLabelSpec.value
+			{
+				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+				encoding: {
+					y: { datum: +props.threshold }
+				}
+			},
+			{
+				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+				encoding: {
+					y: { datum: +props.threshold }
+				}
+			}
 		],
 		config: {
 			legend: { title: null, orient: 'top', direction: 'horizontal' }
-		}
-	};
-});
-
-const thresholdLineSpec = computed(() => {
-	if (!props.threshold) return {};
-	return {
-		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
-		encoding: {
-			y: { datum: +props.threshold }
-		}
-	};
-});
-
-const thresholdLabelSpec = computed(() => {
-	if (!props.threshold) return {};
-	return {
-		mark: {
-			type: 'text',
-			align: 'left',
-			text: `Threshold = ${props.threshold}`,
-			baseline: 'line-bottom'
-		},
-		encoding: {
-			y: { datum: +props.threshold }
 		}
 	};
 });
