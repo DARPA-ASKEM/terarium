@@ -2,43 +2,42 @@
 	<section>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
+				<tera-progress-spinner v-if="isGeneratingCard" is-centered
+					>Generating description...
+				</tera-progress-spinner>
 				<Editor
+					v-else
 					v-model="editorContent"
 					:class="{ readonly: !hasEditPermission }"
 					:readonly="!hasEditPermission"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Model Card">
-				<section v-if="!isGeneratingCard" class="description">
-					<tera-show-more-text :text="description" :lines="5" />
-					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
-					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
-					<p v-if="authors"><label>Authors</label>{{ authors }}</p>
-					<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
-					<p v-if="uses?.OutOfScopeUse"><label>Out of scope use</label>{{ uses.OutOfScopeUse }}</p>
-					<p v-if="biasAndRiskLimitations">
-						<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
-					</p>
-					<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
-					<p v-if="technicalSpecifications">
-						<label>Technical Specifications</label>{{ technicalSpecifications }}
-					</p>
-					<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
-					<p v-if="!isEmpty(moreInformation)">
-						<label>More Information</label>
-						<a
-							v-for="(link, index) in moreInformation"
-							:key="index"
-							:href="link"
-							rel="noopener noreferrer"
-						>
-							{{ link }}
-						</a>
-					</p>
-				</section>
-				<section v-else>
-					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
-				</section>
+				<tera-show-more-text :text="description" :lines="5" />
+				<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
+				<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
+				<p v-if="authors"><label>Authors</label>{{ authors }}</p>
+				<p v-if="uses?.DirectUse"><label>Direct use</label>{{ uses.DirectUse }}</p>
+				<p v-if="uses?.OutOfScopeUse"><label>Out of scope use</label>{{ uses.OutOfScopeUse }}</p>
+				<p v-if="biasAndRiskLimitations">
+					<label>Bias and Risk Limitations</label>{{ biasAndRiskLimitations }}
+				</p>
+				<p v-if="evaluation"><label>Evaluation</label>{{ evaluation }}</p>
+				<p v-if="technicalSpecifications">
+					<label>Technical Specifications</label>{{ technicalSpecifications }}
+				</p>
+				<p v-if="!isEmpty(glossary)"><label>Glossary</label>{{ glossary.join(', ') }}</p>
+				<p v-if="!isEmpty(moreInformation)">
+					<label>More Information</label>
+					<a
+						v-for="(link, index) in moreInformation"
+						:key="index"
+						:href="link"
+						rel="noopener noreferrer"
+					>
+						{{ link }}
+					</a>
+				</p>
 			</AccordionTab>
 			<AccordionTab header="Diagram">
 				<tera-model-diagram
@@ -158,21 +157,3 @@ const hasEditPermission = computed(() =>
 );
 const editorContent = ref('');
 </script>
-
-<style scoped>
-.description {
-	display: flex;
-	gap: var(--gap-small);
-	flex-direction: column;
-	grid-template-columns: max-content 1fr;
-
-	& label {
-		font-weight: bold;
-		margin-right: var(--gap-small);
-
-		&:after {
-			content: '.';
-		}
-	}
-}
-</style>
