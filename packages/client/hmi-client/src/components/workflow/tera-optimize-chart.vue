@@ -1,134 +1,132 @@
 <template>
 	<div class="row">
-		<canvas ref="chartCanvas" />
+		<vega-chart v-if="!isEmpty(spec)" :visualization-spec="spec" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import ChartAnnotation from 'chartjs-plugin-annotation';
-import { ChartConfig } from '@/types/SimulateConfig';
-import { Chart } from 'chart.js';
+import { computed } from 'vue';
 
-// Note: There's seems to be a problem with vueprime/chart, chart.js and chartjs-plugin-annotation where the annotation plugin is not working properly throwing errors unexpectedly.
-// In order to work around this issue, we are using the chart.js directly and importing the annotation plugin from chartjs-plugin-annotation instead of using the vueprime/chart component.
-// Also there's weird issue with eslint complaining about the import of ChartAnnotation from 'chartjs-plugin-annotation' even though it's in the package.json and being used in the code.
-// To workaround this, we are disabling the eslint rule for this line.
-
-Chart.register(ChartAnnotation);
-
-const chartCanvas = ref();
-const chart = ref<any>(null);
-
-const renderChart = () => {
-	if (chart.value !== null) {
-		chart.value.destroy();
-	}
-	// eslint-disable-next-line no-new
-	chart.value = new Chart(chartCanvas.value, {
-		type: 'bar',
-		data: chartData.value,
-		options: chartOptions.value
-	});
-	chart.value.resize(chartSize.value.width, chartSize.value.height);
-};
+import { isEmpty, mean } from 'lodash';
+import VegaChart from '../widgets/VegaChart.vue';
 
 const props = defineProps<{
 	riskResults: any;
 	targetVariable?: string;
-	chartConfig: ChartConfig;
 	size?: { width: number; height: number };
-	threshold?: number;
+	threshold: number;
+	isMinimized: boolean;
 }>();
 
-const chartSize = computed(() => {
-	if (props.size) return props.size;
-	return { width: 520, height: 190 };
-});
-
-const chartOptions = ref();
-const chartData = ref();
-const binCount = 6;
-
-const setChartOptions = () => {
-	if (!props.riskResults) return {};
-	if (!props.threshold) return {};
-
-	const { toBinIndex } = getBinData(qoiData.value);
+const spec = computed<any>(() => {
+	const { data } = getChartData(qoiData.value);
 	return {
-		indexAxis: 'y',
-		responsive: false,
-		devicePixelRatio: 4,
-		maintainAspectRatio: false,
-		pointStyle: false,
-		animation: {
-			duration: 0
+		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		width: 400,
+		height: 400,
+		data: {
+			values: data
 		},
-		showLine: true,
-		plugins: {
-			legend: {
-				display: false
+		transform: [
+			{
+				calculate: 'split(datum.range, "-")[0]',
+				as: 'start'
 			},
-			annotation: {
-				annotations: {
-					line1: {
-						type: 'line',
-						yMin: toBinIndex(props.threshold),
-						yMax: toBinIndex(props.threshold),
-						borderColor: 'rgb(255, 99, 132)',
-						borderWidth: 2
+			{
+				calculate: 'split(datum.range, "-")[1]',
+				as: 'end'
+			}
+		],
+		layer: [
+			{
+				mark: {
+					type: 'bar',
+					stroke: 'black',
+					tooltip: true,
+					interpolate: 'linear'
+				},
+				encoding: {
+					y: {
+						field: 'start',
+						type: 'quantitative',
+						title: 'Min value at all times'
+					},
+					y2: { field: 'end' },
+					x: {
+						aggregate: 'sum',
+						field: 'count',
+						type: 'quantitative',
+						title: 'Count'
+					},
+					color: {
+						field: 'tag',
+						type: 'nominal',
+						scale: {
+							domain: ['out', 'in'],
+							range: ['#FFAB00', '#1B8073']
+						}
 					}
 				}
-			}
-		},
-		scales: {
-			x: {
-				title: {
-					display: true,
-					text: 'Number of Samples'
-				},
-				ticks: {
-					color: '#aaa',
-					maxTicksLimit: 5,
-					includeBounds: true,
-					// this rounds the tick label to nearest int
-					callback: (num) => num
-				},
-				grid: {
-					color: '#fff',
-					borderColor: '#fff'
-				}
 			},
-			y: {
-				title: {
-					display: true,
-					text: props.targetVariable
-				},
-				ticks: {
-					color: '#aaa',
-					includeBounds: true,
-					precision: 4
-				},
-				grid: {
-					color: '#fff',
-					borderColor: '#fff'
-				}
-			}
+			thresholdLineSpec.value,
+			thresholdLabelSpec.value
+		],
+		config: {
+			legend: { title: null, orient: 'top', direction: 'horizontal' }
 		}
 	};
-};
+});
 
-const getBinData = (data: number[]) => {
+const thresholdLineSpec = computed(() => {
+	if (!props.threshold) return {};
+	return {
+		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+		encoding: {
+			y: { datum: +props.threshold }
+		}
+	};
+});
+
+const thresholdLabelSpec = computed(() => {
+	if (!props.threshold) return {};
+	return {
+		mark: {
+			type: 'text',
+			align: 'left',
+			text: `Threshold = ${props.threshold}`,
+			baseline: 'line-bottom'
+		},
+		encoding: {
+			y: { datum: +props.threshold }
+		}
+	};
+});
+
+const binCount = 5;
+
+const getChartData = (data: number[]) => {
 	const minValue = Math.min(...data);
 	const maxValue = Math.max(...data);
 	const stepSize = (maxValue - minValue) / binCount;
-	const bins: number[] = Array<number>(binCount).fill(0);
+	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
 	const binLabels: string[] = [];
 	for (let i = binCount; i > 0; i--) {
-		binLabels.push(
-			`${(minValue + stepSize * (i - 1)).toFixed(4)} - ${(minValue + stepSize * i).toFixed(4)}`
-		);
+		const rangeStart = minValue + stepSize * (i - 1);
+		const rangeEnd = minValue + stepSize * i;
+		const threshold = props.threshold;
+		let tag;
+		if (props.isMinimized) {
+			tag = rangeEnd < threshold ? 'in' : 'out';
+		} else {
+			tag = rangeStart > threshold ? 'in' : 'out';
+		}
+
+		bins.push({
+			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
+			count: 0,
+			tag
+		});
+		binLabels.push(`${rangeStart.toFixed(4)} - ${rangeEnd.toFixed(4)}`);
 	}
 
 	const toBinIndex = (value: number) => {
@@ -137,52 +135,26 @@ const getBinData = (data: number[]) => {
 		return index;
 	};
 
+	const avgArray: number[] = [];
+
 	// Fill bins:
 	data.forEach((ele) => {
-		bins[toBinIndex(ele)] += 1;
+		const index = toBinIndex(ele);
+		if (index !== -1) {
+			bins[index].count += 1;
+			if (bins[index].tag === 'out') {
+				avgArray.push(ele);
+			}
+		}
 	});
 
-	return { binValues: bins, binLabels, toBinIndex };
+	const avg = mean(avgArray);
+
+	return { data: bins, avg };
 };
 
 const targetState = computed(() => `${props.targetVariable}_state`);
-// TODO: risk.json has _state appended to all states. This is an ugly but fast fix.
-const riskValue = computed(() => props.riskResults?.[targetState.value]?.risk[0] || 0);
 const qoiData = computed(() => props.riskResults?.[targetState.value]?.qoi || []);
-
-const setChartData = () => {
-	if (!props.riskResults) return {};
-	const binData = getBinData(qoiData.value);
-	const binLabels = binData.binLabels;
-	const binValues = binData.binValues.map((ele, index) => ({ x: ele, y: index }));
-	const riskLine: any[] = [];
-	for (let i = 0; i < binCount; i++) {
-		riskLine.push({ x: riskValue.value, y: i });
-	}
-	return {
-		labels: binLabels,
-		datasets: [
-			{
-				type: 'bar',
-				label: '',
-				data: binValues,
-				borderColor: '#440154',
-				borderWidth: 1
-			}
-		]
-	};
-};
-
-watch(
-	[() => props.riskResults, () => props.threshold],
-	async () => {
-		if (!props.riskResults || !props.threshold) return;
-		chartOptions.value = setChartOptions();
-		chartData.value = setChartData();
-		renderChart();
-	},
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
