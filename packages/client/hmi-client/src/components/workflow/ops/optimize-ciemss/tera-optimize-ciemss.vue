@@ -283,6 +283,11 @@
 						</ul>
 					</AccordionTab>
 				</Accordion>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					:summary-id="node.state.summaryId"
+				/>
+
 				<!-- Optimize result.json display: -->
 				<div
 					v-if="optimizationResult && displayOptimizationResultMessage"
@@ -398,6 +403,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+
 // Services:
 import {
 	getModelConfigurationById,
