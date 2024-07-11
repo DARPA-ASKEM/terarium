@@ -36,7 +36,7 @@
 		<!-- Datable -->
 		<DataTable
 			:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-			:value="props.rawContent?.data ? csvContent : csvContent?.slice(1, csvContent.length)"
+			:value="csvContent?.slice(1, csvContent.length)"
 			:rows="props.rows"
 			paginator
 			:paginatorPosition="paginatorPosition ? paginatorPosition : `bottom`"
@@ -52,7 +52,7 @@
 			<Column
 				v-for="(colName, index) of selectedColumns"
 				:key="index"
-				:field="props.rawContent?.data ? colName : index.toString()"
+				:field="index.toString()"
 				:header="colName"
 				:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 				sortable
@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ComputedRef, ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset } from '@/types/Types';
@@ -123,7 +123,7 @@ const MINBARLENGTH = 1;
 
 const showSummaries = ref(true);
 
-const csvContent = computed(() => props.rawContent?.data || props.rawContent?.csv);
+const csvContent: ComputedRef<string[][] | undefined> = computed(() => props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
 const chartData = computed(() =>
 	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))

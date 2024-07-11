@@ -209,3 +209,28 @@ export function getInitialExpression(config: ModelConfiguration, initialId: stri
 export function getObservables(config: ModelConfiguration): ObservableSemantic[] {
 	return config.observableSemanticList ?? [];
 }
+
+export function getOtherValues(
+	configs: ModelConfiguration[],
+	id: string,
+	key: string,
+	otherValueList: string
+) {
+	let otherValues: object[] = [];
+
+	const modelConfigTableData = configs.map((modelConfig) => ({
+		name: modelConfig.name ?? '',
+		list: modelConfig[otherValueList]
+	}));
+
+	modelConfigTableData.forEach((modelConfig) => {
+		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter(
+			(item) => item[key] === id
+		)[0];
+		if (config && modelConfig.name) {
+			const data: object = { name: modelConfig.name, ...config };
+			otherValues = [...otherValues, data];
+		}
+	});
+	return otherValues;
+}

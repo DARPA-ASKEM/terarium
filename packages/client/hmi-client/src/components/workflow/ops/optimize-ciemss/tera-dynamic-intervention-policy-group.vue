@@ -31,10 +31,13 @@ import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
 	config: InterventionPolicyGroupForm;
-	dynamicInterventions: DynamicIntervention[];
 }>();
 
 const emit = defineEmits(['update-self']);
+
+const dynamicInterventions = ref<DynamicIntervention[]>(
+	props.config.intervention.dynamicInterventions
+);
 
 const knobs = ref({
 	isActive: props.config.isActive ?? false

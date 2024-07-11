@@ -50,8 +50,6 @@
 							"
 							:key="idx"
 							:config="cfg"
-							:staticInterventions="cfg.intervention.staticInterventions"
-							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
@@ -63,8 +61,6 @@
 							"
 							:key="idx"
 							:config="cfg"
-							:dynamic-interventions="cfg.intervention.dynamicInterventions"
-							:parameter-options="modelParameterOptions.map((ele) => ele.id)"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
@@ -155,6 +151,11 @@
 				is-selectable
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					:summary-id="node.state.summaryId"
+				/>
+
 				<!-- Optimize result.json display: -->
 				<div
 					v-if="optimizationResult && displayOptimizationResultMessage"
@@ -281,6 +282,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+
 // Services:
 import {
 	getModelConfigurationById,
@@ -551,11 +554,11 @@ const runOptimize = async () => {
 	const listBoundsInterventions: number[][] = [];
 	props.node.state.interventionPolicyGroups.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
-		paramValues.push(ele.paramValue);
+		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
-		listInitialGuessInterventions.push(ele.initialGuess);
-		listBoundsInterventions.push([ele.lowerBound]);
-		listBoundsInterventions.push([ele.upperBound]);
+		listInitialGuessInterventions.push(ele.initialGuessValue);
+		listBoundsInterventions.push([ele.lowerBoundValue]);
+		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
@@ -591,7 +594,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100,
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // divide alpha by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};
