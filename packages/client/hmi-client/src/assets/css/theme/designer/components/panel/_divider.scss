@@ -5,7 +5,7 @@
 
     &.p-divider-horizontal {
         margin: $dividerHorizontalMargin;
-				color: var(--gray-300);
+				padding: $dividerHorizontalPadding;
 
         .p-divider-content {
             padding: 0 $inlineSpacing;
