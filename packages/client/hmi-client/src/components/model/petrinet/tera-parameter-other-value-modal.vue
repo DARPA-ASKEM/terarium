@@ -4,13 +4,23 @@
 			<DataTable
 				class="value-border"
 				:value="otherValueList"
-				@update:selection="onSelectionChange"
+				@update:selection="onCustomSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
-				tableStyle="min-width: 60rem"
+				tableStyle="min-width: 65rem"
 			>
 				<template #header> </template>
-				<Column selectionMode="single" headerStyle="width: 2rem"></Column>
+				<Column headerStyle="width: 2rem">
+					<template #body="{ data }">
+						<RadioButton
+							v-model="customSelection"
+							:inputId="data.id"
+							:value="data"
+							variant="filled"
+							@change="onCustomSelectionChange(data)"
+						/>
+					</template>
+				</Column>
 				<Column
 					v-for="(col, index) in selectedColumns"
 					:field="col.field"
@@ -30,7 +40,9 @@
 							<section class="inline-flex gap-1">
 								<template v-if="data.distribution.type === DistributionType.Constant">
 									<span>Constants</span>
-									<span class="pl-1">{{ data.distribution.parameters.value }}</span>
+									<span class="pl-1">{{
+										displayNumber(data.distribution.parameters.value.toString())
+									}}</span>
 								</template>
 							</section>
 						</template>
@@ -38,7 +50,9 @@
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
 									<span>Min</span>
-									<span class="pl-1 pr-1">{{ data.distribution.parameters.minimum }}</span>
+									<span class="pl-1 pr-1">{{
+										displayNumber(data.distribution.parameters.minimum.toString())
+									}}</span>
 								</div>
 							</template>
 						</template>
@@ -46,7 +60,9 @@
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
 									<span>Max</span>
-									<span class="pl-1 pr-1">{{ data.distribution.parameters.maximum }}</span>
+									<span class="pl-1 pr-1">{{
+										displayNumber(data.distribution.parameters.maximum.toString())
+									}}</span>
 								</div>
 							</template>
 						</template>
@@ -75,14 +91,13 @@
 						</Column>
 						<Column>
 							<template #footer>
-								<section class="inline-flex gap-1">
-									<Dropdown v-model="numberType" :options="numberOptions"></Dropdown>
-								</section>
+								<Dropdown class="input-field" v-model="numberType" :options="numberOptions" />
 							</template>
 						</Column>
 						<Column>
 							<template #footer v-if="numberType === numberOptions[0]">
 								<tera-input
+									type="nist"
 									placeholder="Constant"
 									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
@@ -92,6 +107,7 @@
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
+									type="nist"
 									placeholder="Min"
 									v-model="customMin"
 									@update:modelValue="onCustomSelectionChange"
@@ -101,6 +117,7 @@
 						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
+									type="nist"
 									placeholder="Max"
 									v-model="customMax"
 									@update:modelValue="onCustomSelectionChange"
@@ -119,6 +136,7 @@
 </template>
 
 <script setup lang="ts">
+import { displayNumber } from '@/utils/number';
 import { DistributionType } from '@/services/distribution';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
@@ -169,25 +187,8 @@ interface OtherValueSelection {
 
 const selection = ref<null | OtherValueSelection>(null);
 
-const onSelectionChange = (val) => {
-	selection.value =
-		val.type === DistributionType.Constant
-			? {
-					constant: val.distribution.parameters.value,
-					source: customSource.value,
-					type: val.distribution.type
-				}
-			: {
-					min: val.distribution.parameters.minimum,
-					max: val.distribution.parameters.maximum,
-					source: val.source,
-					type: val.distribution.type
-				};
-	customSelection.value = false;
-};
-
-const onCustomSelectionChange = () => {
-	if (customSelection.value) {
+const onCustomSelectionChange = (val) => {
+	if (customSelection.value && !val?.name) {
 		selection.value =
 			numberType.value === DistributionType.Constant
 				? {
@@ -201,6 +202,20 @@ const onCustomSelectionChange = () => {
 						source: customSource.value,
 						type: DistributionType.Uniform
 					};
+	} else {
+		selection.value =
+			val.type === DistributionType.Constant
+				? {
+						constant: val.distribution.parameters.value,
+						source: val.source,
+						type: val.distribution.type
+					}
+				: {
+						min: val.distribution.parameters.minimum,
+						max: val.distribution.parameters.maximum,
+						source: val.source,
+						type: val.distribution.type
+					};
 	}
 };
 
@@ -209,15 +224,13 @@ function getColumnWidth(columnField: string) {
 		case 'name':
 			return 40;
 		case 'target':
-			return 20;
+			return 5;
 		case 'value':
-			return 10;
-		case 'constant':
-			return 10;
+			return 25;
 		case 'minimum':
-			return 10;
+			return 15;
 		case 'maximum':
-			return 10;
+			return 15;
 		default:
 			return 100;
 	}
@@ -251,32 +264,12 @@ function applySelectedValue() {
 		});
 		emit('update-source', { id: props.id, value: selection.value?.source });
 	}
-	console.log('selection.value', selection.value);
 	emit('close-modal');
 }
 </script>
 
 <style scoped>
-header {
-	display: flex;
-	flex-direction: column;
-	padding-bottom: var(--gap-small);
-}
-.expression {
-	flex-grow: 1;
-}
-main {
-	display: flex;
-	justify-content: space-between;
-	padding-bottom: var(--gap-small);
-}
-
-label {
-	color: var(--text-color-subdued);
-}
-
-.value-border > p-datatable-wrapper {
-	border: 1px solid #000;
-	border-radius: 8px;
+.input-field {
+	height: 40px;
 }
 </style>
