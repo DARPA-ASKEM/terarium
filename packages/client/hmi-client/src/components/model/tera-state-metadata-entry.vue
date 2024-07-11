@@ -3,6 +3,7 @@
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
+			placeholder="Add a name"
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
@@ -29,11 +30,18 @@
 			/>
 			<tera-input
 				label="Unit"
+				placeholder="Add a unit"
 				:model-value="initial?.expression ?? ''"
 				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
 			/>
 			<!--TODO: Add support for editing concepts-->
-			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
+			<tera-input
+				label="Concept"
+				placeholder="Select a concept"
+				icon="pi pi-search"
+				:model-value="grounding?.identifiers[0] ?? ''"
+				disabled
+			/>
 		</template>
 	</section>
 </template>
@@ -62,7 +70,7 @@ section {
 		'symbol name unit . concept'
 		'description description description description description';
 	grid-template-columns: max-content max-content max-content auto max-content;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	align-items: center;
 }
 
@@ -73,7 +81,7 @@ section.has-toggle {
 }
 
 section.no-second-row {
-	gap: 0 var(--gap-small);
+	gap: 0 var(--gap-2);
 }
 
 h6 {
