@@ -2,8 +2,8 @@
 	<section>
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
-				<tera-progress-spinner v-if="isGeneratingCard" is-centered
-					>Generating description...
+				<tera-progress-spinner v-if="isGeneratingCard" is-centered>
+					Generating description...
 				</tera-progress-spinner>
 				<Editor
 					v-else
