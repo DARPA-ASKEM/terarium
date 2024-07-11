@@ -298,7 +298,8 @@ import {
 	CsvAsset,
 	PolicyInterventions,
 	OptimizeQoi,
-	InterventionPolicy
+	InterventionPolicy,
+	Intervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -545,7 +546,14 @@ const runOptimize = async () => {
 	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
-	props.node.state.interventionPolicyGroups.forEach((ele) => {
+	const activeGroups = props.node.state.interventionPolicyGroups.filter(
+		(ele) => ele.isActive === true
+	);
+	const inActiveGroups = props.node.state.interventionPolicyGroups.filter(
+		(ele) => ele.isActive === false
+	);
+
+	activeGroups.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
@@ -555,12 +563,18 @@ const runOptimize = async () => {
 	});
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
+	// These are interventions to be optimized over.
 	const optimizeInterventions: PolicyInterventions = {
 		interventionType,
 		paramNames,
 		startTime,
 		paramValues
 	};
+
+	// These are interventions to be considered but not optimized over.
+	const fixedStaticParameterInterventions: Intervention[] = inActiveGroups.map(
+		(ele) => ele.intervention
+	);
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -578,6 +592,7 @@ const runOptimize = async () => {
 			end: knobs.value.endTime
 		},
 		policyInterventions: optimizeInterventions,
+		fixedStaticParameterInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		initialGuessInterventions: listInitialGuessInterventions,
@@ -592,9 +607,12 @@ const runOptimize = async () => {
 		}
 	};
 
+	// InferredParameters is to link a calibration run to this optimize call.
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
+
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

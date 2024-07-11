@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.PolicyInterventions;
@@ -28,7 +29,8 @@ public class OptimizeRequestCiemss implements Serializable {
 	private PolicyInterventions policyInterventions;
 
 	@TSOptional
-	private UUID fixedStaticParameterInterventions;
+	@JsonAlias("fixed_static_parameter_interventions")
+	private List<Intervention> fixedStaticParameterInterventions;
 
 	@JsonAlias("step_size")
 	@TSOptional
