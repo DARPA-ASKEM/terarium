@@ -295,11 +295,19 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
-export const collapseObservableReferences = (observableSummary: ObservableSummary) => {
+export const collapseObservableReferences = (
+	observableSummary: ObservableSummary,
+	initials: Map<string, string[]>
+) => {
 	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
 	Object.values(collapsedObservableSummary).forEach((observable) => {
 		// Extract the first part of the reference before the first underscore
-		observable.references = uniq(observable.references.map((r) => r.split('_')[0]));
+		observable.references = uniq(
+			observable.references.map((r) => {
+				const splitReference = r.split('_')[0];
+				return initials.has(splitReference) ? splitReference : r;
+			})
+		);
 	});
 	return collapsedObservableSummary;
 };
@@ -418,6 +426,7 @@ export const createParameterMatrix = (
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
 	miraModel: MiraModel,
+	mmtParams: MiraTemplateParams,
 	initObservableSummary: ObservableSummary,
 	isStratified: boolean
 ) => {
@@ -426,7 +435,10 @@ export const convertToIGraph = (
 
 	if (isStratified) {
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
-		observableSummary = collapseObservableReferences(initObservableSummary);
+		observableSummary = collapseObservableReferences(
+			initObservableSummary,
+			collapseInitials(miraModel)
+		);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
 		observableSummary = cloneDeep(initObservableSummary);
