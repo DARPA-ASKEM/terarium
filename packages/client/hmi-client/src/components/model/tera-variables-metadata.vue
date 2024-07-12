@@ -39,7 +39,11 @@
 							size="small"
 							@click="
 								() => {
-									updateAllChildren(base.id, 'units', parentEditingState[index].childrenUnits);
+									updateAllChildren(
+										base.id,
+										'unitExpression',
+										parentEditingState[index].childrenUnits
+									);
 									parentEditingState[index].isEditingChildrenUnits = false;
 								}
 							"

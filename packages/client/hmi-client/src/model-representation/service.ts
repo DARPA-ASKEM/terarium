@@ -210,7 +210,7 @@ export function updateParameter(model: Model, id: string, key: string, value: an
 	function updateProperty(obj: ModelParameter) {
 		// TODO: Add support for editing concept/grounding
 		if (key === 'unitExpression') {
-			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
+			if (!obj.units?.expression) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 			obj.units.expression_mathml = `<ci>${value}</ci>`;
 		} else if (key in obj) {
