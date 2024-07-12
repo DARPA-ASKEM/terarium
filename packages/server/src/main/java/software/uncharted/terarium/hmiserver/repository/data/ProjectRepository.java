@@ -50,7 +50,7 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 			+ "where "
 			+ " p.id in (:ids) "
 			+ " and p.deletedOn is null")
-	List<ProjectAndAssetAggregate> findByIdsWithAssets(@Param("ids") final List<UUID> ids);
+	List<ProjectAndAssetAggregate> findByIdsWithAssets(final List<UUID> ids);
 
 	@Query(value = "SELECT public_asset FROM project WHERE id = :id", nativeQuery = true)
 	Optional<Boolean> findPublicAssetByIdNative(@Param("id") UUID id);
