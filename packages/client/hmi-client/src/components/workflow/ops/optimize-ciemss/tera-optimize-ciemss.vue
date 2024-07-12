@@ -489,7 +489,6 @@ const onSelection = (id: string) => {
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
-	console.log('Testing');
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
