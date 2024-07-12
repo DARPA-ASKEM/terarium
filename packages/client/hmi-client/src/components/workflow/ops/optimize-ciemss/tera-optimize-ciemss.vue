@@ -197,12 +197,16 @@
 								<ul>
 									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
 										<h5>{{ constraint.name }}</h5>
-										<tera-optimize-chart
-											:risk-results="riskResults[knobs.postForecastRunId]"
-											:target-variable="constraint.targetVariable || undefined"
-											:size="chartSize"
-											:threshold="constraint.threshold"
-											:is-minimized="constraint.isMinimized"
+										<vega-chart
+											v-if="riskResults[knobs.postForecastRunId]"
+											:visualization-spec="
+												createOptimizeChart(
+													riskResults[knobs.postForecastRunId],
+													constraint.targetVariable,
+													constraint.threshold,
+													constraint.isMinimized
+												)
+											"
 										/>
 									</li>
 								</ul>
@@ -210,10 +214,8 @@
 							<AccordionTab header="Interventions">
 								<ul>
 									<li v-for="(data, key) in preProcessedInterventionsData" :key="key">
-										<tera-intervention-chart
-											:data="data"
-											:size="chartSize"
-											:end-time="node.state.endTime"
+										<vega-chart
+											:visualization-spec="createInterventionsChart(data, node.state.endTime)"
 										/>
 									</li>
 								</ul>
@@ -290,7 +292,6 @@ import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -334,6 +335,8 @@ import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -344,7 +347,6 @@ import {
 	defaultConstraintGroup,
 	ConstraintGroup
 } from './optimize-ciemss-operation';
-import TeraInterventionChart from './tera-intervention-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
