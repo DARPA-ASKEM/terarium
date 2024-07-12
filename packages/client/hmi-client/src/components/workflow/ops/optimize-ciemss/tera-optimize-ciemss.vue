@@ -493,7 +493,6 @@ const updateInterventionPolicyGroupForm = (index: number, config: InterventionPo
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups[index] = config;
-	console.log(config);
 	emit('update-state', state);
 };
 
