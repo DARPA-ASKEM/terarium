@@ -91,20 +91,29 @@
 					</span>
 				</section>
 				<ul v-if="baseOptions[index].showChildren" class="stratified">
-					<li v-for="childParameter in childParameters" :key="childParameter.id">
-						<tera-parameter-metadata-entry
-							:parameter="childParameter"
-							@update-parameter="
-								$emit('update-parameter', { parameterId: childParameter.id, ...$event })
-							"
+					<li
+						v-for="({ id, name, description, grounding, units }, index) in childParameters"
+						:key="index"
+					>
+						<tera-variable-metadata-entry
+							:id="id"
+							:name="name"
+							:description="description"
+							:grounding="grounding"
+							:unit="units?.expression"
+							@update-variable="$emit('update-parameter', { parameterId: id, ...$event })"
 						/>
 					</li>
 				</ul>
 			</template>
-			<tera-parameter-metadata-entry
+			<tera-variable-metadata-entry
 				v-else
-				:parameter="baseParameter"
-				@update-parameter="$emit('update-parameter', { parameterId: baseParameter.id, ...$event })"
+				:id="baseParameter.id"
+				:name="baseParameter.name"
+				:description="baseParameter.description"
+				:grounding="baseParameter.grounding"
+				:unit="baseParameter.units?.expression"
+				@update-variable="$emit('update-parameter', { parameterId: baseParameter.id, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -129,7 +138,7 @@ import { StratifiedMatrix } from '@/types/Model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
-import TeraParameterMetadataEntry from '@/components/model/tera-parameter-metadata-entry.vue';
+import TeraVariableMetadataEntry from '@/components/model/tera-variable-metadata-entry.vue';
 import Button from 'primevue/button';
 import TeraStratifiedMatrixModal from './petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInput from '../widgets/tera-input.vue';

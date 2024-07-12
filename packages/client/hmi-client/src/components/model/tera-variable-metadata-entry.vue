@@ -5,19 +5,23 @@
 			title="Name"
 			placeholder="Add a name"
 			:model-value="name ?? ''"
-			@update:model-value="$emit('update-parameter', { key: 'name', value: $event })"
+			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
 		/>
+		<!--FIXME: description property should be added to the state type-->
+		<!--disabling may not always be a good idea since you may want to create the property if it is a valid one-->
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
 			:model-value="description ?? ''"
-			@update:model-value="$emit('update-parameter', { key: 'description', value: $event })"
+			@update:model-value="$emit('update-variable', { key: 'description', value: $event })"
+			:disabled="description === undefined"
 		/>
 		<tera-input
 			label="Unit"
 			placeholder="Add a unit"
-			:model-value="units?.expression ?? ''"
-			@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
+			:model-value="unit ?? ''"
+			@update:model-value="$emit('update-variable', { key: 'units', value: $event })"
+			:disabled="unit === undefined"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input
@@ -38,18 +42,19 @@
 </template>
 
 <script setup lang="ts">
-import type { ModelParameter } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
-const props = defineProps<{
-	parameter: ModelParameter;
+defineProps<{
+	id: string;
+	name?: string;
+	description?: string;
+	grounding?: any;
+	unit?: string; // 'units' key may not work all the time dor states,
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-parameter', 'toggle-stratified-variables']);
-
-const { id, name, description, grounding, units } = props.parameter;
+defineEmits(['update-variable']);
 </script>
 
 <style scoped>
@@ -63,13 +68,6 @@ section {
 	align-items: center;
 }
 
-section.has-toggle {
-	grid-template-areas:
-		'symbol name description description'
-		'toggle	unit concept open-matrix';
-	grid-template-columns: max-content 30% auto 8rem;
-}
-
 h6 {
 	grid-area: symbol;
 	justify-self: center;
@@ -78,15 +76,6 @@ h6 {
 		color: var(--text-color-light);
 		margin-left: var(--gap-2);
 	}
-}
-
-.toggle {
-	grid-area: toggle;
-	margin-left: auto;
-}
-
-[label='Open Matrix'] {
-	grid-area: open-matrix;
 }
 
 :deep([title='Name']) {

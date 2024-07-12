@@ -83,18 +83,24 @@
 					</span>
 				</section>
 				<ul v-if="baseOptions[index].showChildren" class="stratified">
-					<li v-for="childState in childStates" :key="childState.id">
-						<tera-state-metadata-entry
-							:state="childState"
-							@update-state="$emit('update-state', { id: childState.id, ...$event })"
+					<li v-for="({ id, name, grounding, initial }, index) in childStates" :key="index">
+						<tera-variable-metadata-entry
+							:id="id"
+							:name="name"
+							:grounding="grounding"
+							:unit="initial?.expression"
+							@update-variable="$emit('update-state', { id, ...$event })"
 						/>
 					</li>
 				</ul>
 			</template>
-			<tera-state-metadata-entry
+			<tera-variable-metadata-entry
 				v-else
-				:state="baseState"
-				@update-state="$emit('update-state', { id: baseState.id, ...$event })"
+				:id="baseState.id"
+				:name="baseState.name"
+				:grounding="baseState.grounding"
+				:unit="baseState.initial?.expression"
+				@update-variable="$emit('update-state', { id: baseState.id, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -108,7 +114,7 @@ import { Model, PetriNetState, RegNetVertex } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
-import TeraStateMetadataEntry from '@/components/model/tera-state-metadata-entry.vue';
+import TeraVariableMetadataEntry from '@/components/model/tera-variable-metadata-entry.vue';
 import TeraInput from '../widgets/tera-input.vue';
 
 const props = defineProps<{
