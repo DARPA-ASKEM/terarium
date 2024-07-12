@@ -426,7 +426,6 @@ export const createParameterMatrix = (
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const convertToIGraph = (
 	miraModel: MiraModel,
-	mmtParams: MiraTemplateParams,
 	initObservableSummary: ObservableSummary,
 	isStratified: boolean
 ) => {
