@@ -19,14 +19,7 @@
 			placeholder="Select a concept"
 			icon="pi pi-search"
 			disabled
-			:model-value="
-				grounding?.identifiers
-					? getNameOfCurieCached(
-							new Map<string, string>(),
-							getCurieFromGroundingIdentifier(grounding.identifiers)
-						)
-					: ''
-			"
+			:model-value="''"
 		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
@@ -42,7 +35,12 @@
 <script setup lang="ts">
 import TeraInput from '@/components/widgets/tera-input.vue';
 import type { ModelVariable } from '@/types/Model';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+
+// import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+// getNameOfCurieCached(
+// 		new Map<string, string>(),
+// 		getCurieFromGroundingIdentifier(grounding.identifiers)
+// 	)
 
 const props = defineProps<{
 	variable: ModelVariable;
@@ -50,7 +48,7 @@ const props = defineProps<{
 
 defineEmits(['update-variable']);
 
-const { id, name, description, grounding, unitExpression } = props.variable;
+const { id, name, description, unitExpression } = props.variable; // grounding,
 </script>
 
 <style scoped>
