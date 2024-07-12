@@ -45,12 +45,14 @@ import {
 	pollAction,
 	getRunResultCiemss,
 	makeForecastJobCiemss,
-	getSimulation
+	getSimulation,
+	getRunResult
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { SimulationRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
+import { createLLMSummary } from '@/services/summary-service';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -178,6 +180,25 @@ watch(
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
 			emit('update-state', state);
+
+			// Generate output summary, collect key facts and get agent to summarize
+			const optimizationResult = await getRunResult(
+				state.optimizationRunId,
+				'optimize_results.json'
+			);
+			const prompt = `
+The following are the key attributes and findings of an optimization process for a ODE epidemilogy model, the goal is to find the best values or time points that satisfy a set of constraints.
+
+- The succss constraints are, in JSON: ${JSON.stringify(state.constraintGroups)}
+- We want to optimize: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === true))}
+- The fixed/static intervenations: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === false))}
+- The best guesses are: ${optimizationResult.x}
+- The result is ${optimizationResult.success}
+
+Provide a consis summary in 100 words or less.
+			`;
+			const summaryResponse = await createLLMSummary(prompt);
+			state.summaryId = summaryResponse?.id;
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
