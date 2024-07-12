@@ -611,7 +611,7 @@ const runOptimize = async () => {
 
 	// These are interventions to be considered but not optimized over.
 	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inActivePolicyGroups.value.map((ele) => ele.intervention)
+		inactivePolicyGroups.value.map((ele) => ele.intervention)
 	);
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
