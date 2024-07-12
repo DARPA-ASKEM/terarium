@@ -147,9 +147,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				} catch (final Exception e) {
 					log.error("Failed to update embeddings for model {}", created.getId(), e);
 				}
-			})
-					.start();
-			;
+			}).start();
 		}
 
 		return created;
@@ -186,9 +184,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				} catch (final Exception e) {
 					log.error("Failed to update embeddings for model {}", updated.getId(), e);
 				}
-			})
-					.start();
-			;
+			}).start();
 		}
 
 		return updatedOptional;
