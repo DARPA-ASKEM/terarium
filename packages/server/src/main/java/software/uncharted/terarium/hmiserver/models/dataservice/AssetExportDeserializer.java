@@ -1,14 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 
 public class AssetExportDeserializer extends JsonDeserializer<AssetExport> {
@@ -24,8 +26,9 @@ public class AssetExportDeserializer extends JsonDeserializer<AssetExport> {
 		final TerariumAsset asset = mapper.treeToValue(node.get("asset"), assetType.getAssetClass());
 
 		Map<String, FileExport> files = new HashMap<>();
-		if (node.has("files") && !node.get("files").isNull()) {
-			files = mapper.convertValue(node.get("files"), new TypeReference<Map<String, FileExport>>() {});
+		if (node.hasNonNull("files")) {
+			files = mapper.convertValue(node.get("files"), new TypeReference<Map<String, FileExport>>() {
+			});
 		}
 
 		final AssetExport export = new AssetExport();
