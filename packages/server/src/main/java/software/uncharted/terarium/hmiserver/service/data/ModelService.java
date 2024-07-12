@@ -1,16 +1,19 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.search.SourceConfig;
+import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import io.micrometer.observation.annotation.Observed;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
@@ -136,15 +139,15 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			}
 
 			new Thread(() -> {
-						try {
-							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 
-							// Execute the update request
-							uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-						} catch (final Exception e) {
-							log.error("Failed to update embeddings for document {}", created.getId(), e);
-						}
-					})
+					// Execute the update request
+					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
+				} catch (final Exception e) {
+					log.error("Failed to update embeddings for model {}", created.getId(), e);
+				}
+			})
 					.start();
 			;
 		}
@@ -175,15 +178,15 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			}
 
 			new Thread(() -> {
-						try {
-							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+				try {
+					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
 
-							// Execute the update request
-							uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-						} catch (final Exception e) {
-							log.error("Failed to update embeddings for document {}", updated.getId(), e);
-						}
-					})
+					// Execute the update request
+					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+				} catch (final Exception e) {
+					log.error("Failed to update embeddings for model {}", updated.getId(), e);
+				}
+			})
 					.start();
 			;
 		}
