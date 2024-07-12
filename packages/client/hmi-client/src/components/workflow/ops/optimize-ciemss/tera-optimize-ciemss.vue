@@ -409,7 +409,7 @@ const activePolicyGroups = computed(() =>
 	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === true)
 );
 
-const inActivePolicyGroups = computed(() =>
+const inactivePolicyGroups = computed(() =>
 	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === false)
 );
 
