@@ -167,6 +167,7 @@ const specNew = ref<any>(
 	createForecastChart(dataNew.data, dataNew.summary, [], {
 		width: 400,
 		height: 200,
+		legend: true,
 
 		variables: ['alpha', 'beta'],
 		statisticalVariables: ['alphaMean', 'betaMean'],

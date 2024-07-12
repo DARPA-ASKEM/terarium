@@ -1,11 +1,22 @@
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-interface ForecastChartOptions {
-	variables: string[];
-	statisticalVariables: string[];
-	groundTruthVariables: string[];
+const CATEGORICAL_SCHEME = [
+	'#5F9E3E',
+	'#4375B0',
+	'#8F69B9',
+	'#D67DBF',
+	'#E18547',
+	'#D2C446',
+	'#84594D'
+];
 
-	colorscheme: string[];
+interface ForecastChartOptions {
+	variables?: string[];
+	statisticalVariables?: string[];
+	groundTruthVariables?: string[];
+
+	legend: boolean;
+	colorscheme?: string[];
 	timeField: string;
 	groupField: string;
 
@@ -65,7 +76,7 @@ export const createForecastChart = (
 
 	// Build sample layer
 	if (sampleRunData && sampleRunData.length > 0) {
-		const sampleVariables = options.variables.map((d) => d);
+		const sampleVariables = options.variables?.map((d) => d);
 
 		spec.layer.push({
 			mark: { type: 'line' },
@@ -84,9 +95,9 @@ export const createForecastChart = (
 					type: 'nominal',
 					scale: {
 						domain: sampleVariables,
-						range: options.colorscheme
+						range: options.colorscheme || CATEGORICAL_SCHEME
 					},
-					legend: false
+					legend: false // Turn this off all the time, too noisy with samples
 				},
 				detail: { field: options.groupField, type: 'nominal' },
 				strokeWidth: { value: 1 },
@@ -95,16 +106,16 @@ export const createForecastChart = (
 		});
 	}
 
-	// Build statistical layer (mean)
+	// Build statistical layer
 	if (statisticData && statisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables.map((d) => d);
-		const tooltipContent = statisticalVariables.map((d) => ({
+		const statisticalVariables = options.statisticalVariables?.map((d) => d);
+		const tooltipContent = statisticalVariables?.map((d) => ({
 			field: d,
 			type: 'quantitative',
 			format: '.4f'
 		}));
 
-		spec.layer.push({
+		const layerSpec: any = {
 			mark: { type: 'line' },
 			data: { values: statisticData },
 			transform: [
@@ -121,24 +132,30 @@ export const createForecastChart = (
 					type: 'nominal',
 					scale: {
 						domain: statisticalVariables,
-						range: options.colorscheme
+						range: options.colorscheme || CATEGORICAL_SCHEME
 					},
-					legend: {
-						strokeColor: null,
-						padding: { value: 5 }
-					}
+					legend: false
 				},
 				opacity: { value: 1.0 },
 				strokeWidth: { value: 3.5 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...tooltipContent]
+				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 			}
-		});
+		};
+
+		if (options.legend === true) {
+			layerSpec.encoding.color.legend = {
+				strokeColor: null,
+				padding: { value: 5 }
+			};
+		}
+		spec.layer.push(layerSpec);
 	}
 
 	// Build ground truth layer
 	if (groundTruthData && groundTruthData.length > 0) {
-		const groundTruthVariables = options.groundTruthVariables.map((d) => d);
-		spec.layer.push({
+		const groundTruthVariables = options.groundTruthVariables?.map((d) => d);
+
+		const layerSpec: any = {
 			mark: { type: 'point' },
 			data: { values: groundTruthData },
 			transform: [
@@ -155,15 +172,20 @@ export const createForecastChart = (
 					type: 'nominal',
 					scale: {
 						domain: groundTruthVariables,
-						range: options.colorscheme
+						range: options.colorscheme || CATEGORICAL_SCHEME
 					},
-					legend: {
-						strokeColor: null,
-						padding: { value: 5 }
-					}
+					legend: false
 				}
 			}
-		});
+		};
+
+		if (options.legend === true) {
+			layerSpec.encoding.color.legend = {
+				strokeColor: null,
+				padding: { value: 5 }
+			};
+		}
+		spec.layer.push(layerSpec);
 	}
 	return spec;
 };

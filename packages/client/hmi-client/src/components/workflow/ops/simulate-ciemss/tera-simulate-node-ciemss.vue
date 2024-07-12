@@ -13,6 +13,8 @@
 				has-mean-line
 				@configuration-change="chartProxy.configurationChange(idx, $event)"
 			/>
+
+			<vega-chart :are-embed-actions-visible="false" :visualization-spec="chartSpec" />
 		</template>
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
@@ -35,7 +37,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse } from 'd3';
+import { csvParse, autoType } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -54,6 +56,8 @@ import { chartActionsProxy } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -107,6 +111,7 @@ const pollResult = async (runId: string) => {
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
+const chartSpec: any = ref();
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
@@ -180,6 +185,30 @@ watch(
 
 		const output = await getRunResultCiemss(selectedRunId.value);
 		runResults.value[selectedRunId.value] = output.runResults;
+
+		const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
+		const result = csvParse(resultRaw, autoType);
+
+		const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
+		const resultSummary = csvParse(resultSummaryRaw, autoType);
+
+		// FIXME: summary need to have time
+		resultSummary.forEach((d: any, idx) => {
+			d.timepoint_id = idx;
+		});
+
+		chartSpec.value = createForecastChart(result, resultSummary, [], {
+			width: 140,
+			height: 150,
+			variables: ['S_state', 'I_state'],
+			statisticalVariables: ['S_state_mean', 'I_state_mean'],
+
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: ''
+		});
 	},
 	{ immediate: true }
 );
