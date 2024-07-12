@@ -83,12 +83,20 @@
 					/>
 				</template>
 			</span>
-			<Button
-				:label="getSourceLabel(parameterId)"
-				text
-				size="small"
-				@click="isSourceOpen = !isSourceOpen"
-			/>
+			<section>
+				<Button
+					:label="getSourceLabel(parameterId)"
+					text
+					size="small"
+					@click="isSourceOpen = !isSourceOpen"
+				/>
+				<Button
+					:label="getOtherValuesLabel"
+					text
+					size="small"
+					@click="showOtherConfigValueModal = true"
+				/>
+			</section>
 		</main>
 		<footer v-if="isSourceOpen">
 			<tera-input
@@ -98,21 +106,38 @@
 			/>
 		</footer>
 	</div>
+	<Teleport to="body">
+		<tera-paramenter-other-value-modal
+			v-if="showOtherConfigValueModal"
+			:id="parameterId"
+			:otherValueList="otherValueList"
+			@modal-mask-clicked="showOtherConfigValueModal = false"
+			@update-parameter="emit('update-parameter', $event)"
+			@update-source="emit('update-source', $event)"
+			@close-modal="showOtherConfigValueModal = false"
+		/>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
-import { getParameterSource, getParameterDistribution } from '@/services/model-configurations';
+import {
+	getParameterSource,
+	getParameterDistribution,
+	getOtherValues
+} from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
+import TeraParamenterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 
 const props = defineProps<{
 	model: Model;
 	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
 }>();
 
@@ -124,6 +149,16 @@ const description = getParameter(props.model, props.parameterId)?.description;
 const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
 
 const isSourceOpen = ref(false);
+const showOtherConfigValueModal = ref(false);
+
+const otherValueList = ref(
+	getOtherValues(
+		props.modelConfigurations,
+		props.parameterId,
+		'referenceId',
+		'parameterSemanticList'
+	)
+);
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
@@ -150,6 +185,8 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	distribution.parameters = {};
 	return distribution;
 }
+
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 </script>
 
 <style scoped>

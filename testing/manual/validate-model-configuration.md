@@ -47,7 +47,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Select `I` in _Trajectory State_ dropdown
 3. Note that the time-series chart show the evolution of the model variables as a function of time, with one trajectory per sampled points in parameter space (coloured green when they satisfy all sanity checks, yellow otherwise)
 4. Verify that the x-axis of this chart include the given _Start time_ and _End time_ (`0` and `100`) and that the trajectories have as many points as specified by _Number of steps_ (`10`)
-5. Verify that there is a semi-transparent green rectangle (`width = [0, 90] days, height = [0, 750]`), representing the region in which a trajectory needs to be for satisfiability
+5. Verify that there is a semi-transparent green rectangle (`width = [0, 100] days, height = [0, 750]`), representing the region in which a trajectory needs to be for satisfiability
 6. Select the parameter space plot associated with the `γ` parameter under _Configuration parameters_
 7. Verify that a _β:γ pairwise drilldown_ chart appears and selecting each of the rectangular regions (labelled `box<N>`) highlights a trajectory in the _Trajectory State_ chart (both the selected rectangle and highlighted trajectory should shared the same colour)
 8. Verify that the x-axis is labelled `β` with the same range as configured (`[0.4, 0.8]`) and ditto for the y-axis (`γ` and `[0.1, 0.3]`)

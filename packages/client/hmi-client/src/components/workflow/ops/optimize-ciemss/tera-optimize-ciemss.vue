@@ -151,6 +151,11 @@
 				is-selectable
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && !showSpinner"
+					:summary-id="node.state.summaryId"
+				/>
+
 				<!-- Optimize result.json display: -->
 				<div
 					v-if="optimizationResult && displayOptimizationResultMessage"
@@ -187,6 +192,35 @@
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="simulationRunResults[knobs.postForecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
+						<Accordion multiple :active-index="[0, 1]">
+							<AccordionTab header="Success criteria">
+								<ul>
+									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
+										<h5>{{ constraint.name }}</h5>
+										<vega-chart
+											v-if="riskResults[knobs.postForecastRunId]"
+											:visualization-spec="
+												createOptimizeChart(
+													riskResults[knobs.postForecastRunId],
+													constraint.targetVariable,
+													constraint.threshold,
+													constraint.isMinimized
+												)
+											"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+							<AccordionTab header="Interventions">
+								<ul>
+									<li v-for="(data, key) in preProcessedInterventionsData" :key="key">
+										<vega-chart
+											:visualization-spec="createInterventionsChart(data, node.state.endTime)"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+						</Accordion>
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -206,17 +240,6 @@
 							@click="chartProxy.addChart()"
 							label="Add chart"
 							icon="pi pi-plus"
-						/>
-						<!-- TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909 -->
-						<tera-optimize-chart
-							:risk-results="riskResults[knobs.postForecastRunId]"
-							:chartConfig="{
-								selectedRun: knobs.postForecastRunId,
-								selectedVariable: props.node.state.constraintGroups.map((ele) => ele.targetVariable)
-							}"
-							:target-variable="props.node.state.constraintGroups?.[0]?.targetVariable || undefined"
-							:size="chartSize"
-							:threshold="props.node.state.constraintGroups?.[0]?.threshold"
 						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
@@ -261,7 +284,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep } from 'lodash';
+import _, { Dictionary, cloneDeep, groupBy } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
 // components:
 import Button from 'primevue/button';
@@ -269,7 +292,6 @@ import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraOptimizeChart from '@/components/workflow/tera-optimize-chart.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -277,6 +299,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+
 // Services:
 import {
 	getModelConfigurationById,
@@ -310,6 +334,10 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -675,6 +703,23 @@ const setOutputValues = async () => {
 	);
 	optimizationResult.value = optimzationResult;
 };
+
+const preProcessedInterventionsData = computed<
+	Dictionary<{ name: string; value: number; time: number; phase: string }[]>
+>(() => {
+	const state = _.cloneDeep(props.node.state);
+
+	const data = state.interventionPolicyGroups.flatMap((ele) =>
+		ele.intervention.staticInterventions.map((intervention) => ({
+			name: ele.intervention.appliedTo,
+			value: intervention.value,
+			time: intervention.timestep,
+			phase: 'Before optimization'
+		}))
+	);
+
+	return groupBy(data, 'name');
+});
 
 onMounted(async () => {
 	initialize();

@@ -140,6 +140,7 @@
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
 				:model="model"
 				:model-configuration="knobs.transientModelConfig"
+				:modelConfigurations="filteredModelConfigurations"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"

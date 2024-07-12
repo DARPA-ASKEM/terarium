@@ -93,7 +93,6 @@ export interface CsvAsset {
     stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
-    data: { [index: string]: string }[];
 }
 
 export interface CsvColumnStats {
