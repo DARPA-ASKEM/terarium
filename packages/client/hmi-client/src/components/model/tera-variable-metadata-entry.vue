@@ -11,7 +11,7 @@
 			label="Unit"
 			placeholder="Add a unit"
 			:model-value="unitExpression ?? ''"
-			@update:model-value="$emit('update-variable', { key: 'units', value: $event })"
+			@update:model-value="$emit('update-variable', { key: 'unitExpression', value: $event })"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input

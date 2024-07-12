@@ -209,7 +209,7 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 export function updateParameter(model: Model, id: string, key: string, value: any) {
 	function updateProperty(obj: ModelParameter) {
 		// TODO: Add support for editing concept/grounding
-		if (key === 'units') {
+		if (key === 'unitExpression') {
 			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
 			obj.units.expression = value;
 			obj.units.expression_mathml = `<ci>${value}</ci>`;
@@ -248,7 +248,7 @@ export function getStates(model: Model): any[] {
 export function updateState(model: Model, id: string, key: string, value: any) {
 	function updateProperty(obj: PetriNetState & RegNetVertex) {
 		// TODO: Add support for editing concept/grounding
-		if (key === 'units') {
+		if (key === 'unitExpression') {
 			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
 			obj.initial.expression = value;
 			obj.initial.expression_mathml = `<ci>${value}</ci>`;
