@@ -1,6 +1,7 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
+			<!--
 			<tera-simulate-chart
 				v-for="(config, idx) of props.node.state.chartConfigs"
 				:key="idx"
@@ -13,8 +14,14 @@
 				has-mean-line
 				@configuration-change="chartProxy.configurationChange(idx, $event)"
 			/>
+			-->
 
-			<vega-chart :are-embed-actions-visible="false" :visualization-spec="chartSpec" />
+			<vega-chart
+				v-for="(config, idx) of props.node.state.chartConfigs"
+				:key="idx"
+				:are-embed-actions-visible="false"
+				:visualization-spec="prepareChart(config)"
+			/>
 		</template>
 		<tera-progress-spinner
 			v-if="inProgressSimulationId"
@@ -41,20 +48,13 @@ import { csvParse, autoType } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import {
-	getRunResultCiemss,
-	getRunResult,
-	pollAction,
-	getSimulation
-} from '@/services/models/simulation-service';
+import { getRunResult, pollAction, getSimulation } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
-import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -65,7 +65,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
@@ -111,7 +112,6 @@ const pollResult = async (runId: string) => {
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
-const chartSpec: any = ref();
 
 const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
@@ -158,6 +158,27 @@ Provide a summary in 100 words or less.
 	});
 };
 
+const prepareChart = (selectedVariables: string[]) => {
+	if (!selectedRunId.value) return {};
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+
+	const spec = createForecastChart(result, resultSummary, [], {
+		width: 140,
+		height: 120,
+		variables: selectedVariables.map((d) => `${d}_state`), // ['S_state', 'I_state'],
+		statisticalVariables: selectedVariables.map((d) => `${d}_state_mean`), // ['S_state_mean', 'I_state_mean'],
+
+		legend: false,
+		groupField: 'sample_id',
+		timeField: 'timepoint_id',
+		xAxisTitle: '',
+		yAxisTitle: ''
+	});
+	return spec;
+};
+
 watch(
 	() => props.node.state.inProgressSimulationId,
 	async (id) => {
@@ -183,11 +204,12 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value);
-		runResults.value[selectedRunId.value] = output.runResults;
+		// const output = await getRunResultCiemss(selectedRunId.value);
+		// runResults.value[selectedRunId.value] = output.runResults;
 
 		const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
 		const result = csvParse(resultRaw, autoType);
+		runResults.value[selectedRunId.value] = result;
 
 		const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
 		const resultSummary = csvParse(resultSummaryRaw, autoType);
@@ -197,18 +219,7 @@ watch(
 			d.timepoint_id = idx;
 		});
 
-		chartSpec.value = createForecastChart(result, resultSummary, [], {
-			width: 140,
-			height: 150,
-			variables: ['S_state', 'I_state'],
-			statisticalVariables: ['S_state_mean', 'I_state_mean'],
-
-			legend: false,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: ''
-		});
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );
