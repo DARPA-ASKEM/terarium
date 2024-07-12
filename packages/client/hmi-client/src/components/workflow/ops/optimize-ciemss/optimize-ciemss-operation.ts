@@ -165,7 +165,6 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	console.log(simulation);
 	const simulationIntervetions =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;

@@ -377,6 +377,14 @@ const isSaveDisabled = computed<boolean>(() =>
 	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
 );
 
+const activePolicyGroups = computed(() =>
+	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === true)
+);
+
+const inActivePolicyGroups = computed(() =>
+	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === false)
+);
+
 const menuItems = computed(() => [
 	{
 		label: 'Save as a new model configuration',
@@ -423,11 +431,13 @@ const outputs = computed(() => {
 const isRunDisabled = computed(() => {
 	if (
 		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
-		props.node.state.interventionPolicyGroups.length === 0
+		props.node.state.interventionPolicyGroups.length === 0 ||
+		activePolicyGroups.value.length <= 0
 	)
 		return true;
 	return false;
 });
+
 const selectedOutputId = ref<string>();
 
 const outputViewSelection = ref(OutputView.Charts);
@@ -451,10 +461,12 @@ const onSelection = (id: string) => {
 };
 
 const updateInterventionPolicyGroupForm = (index: number, config: InterventionPolicyGroupForm) => {
+	console.log('Testing');
 	const state = _.cloneDeep(props.node.state);
 	if (!state.interventionPolicyGroups) return;
 
 	state.interventionPolicyGroups[index] = config;
+	console.log(config);
 	emit('update-state', state);
 };
 
@@ -549,14 +561,7 @@ const runOptimize = async () => {
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
 
-	const activeGroups = props.node.state.interventionPolicyGroups.filter(
-		(ele) => ele.isActive === true
-	);
-	const inActiveGroups = props.node.state.interventionPolicyGroups.filter(
-		(ele) => ele.isActive === false
-	);
-
-	activeGroups.forEach((ele) => {
+	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
@@ -580,7 +585,7 @@ const runOptimize = async () => {
 
 	// These are interventions to be considered but not optimized over.
 	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
-		inActiveGroups.map((ele) => ele.intervention)
+		inActivePolicyGroups.value.map((ele) => ele.intervention)
 	);
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
