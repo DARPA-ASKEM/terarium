@@ -142,11 +142,10 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 							// Execute the update request
 							uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
 						} catch (final Exception e) {
-							log.error("Failed to update embeddings for document {}", created.getId(), e);
+							log.error("Failed to update embeddings for model {}", created.getId(), e);
 						}
 					})
 					.start();
-			;
 		}
 
 		return created;
@@ -181,11 +180,10 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 							// Execute the update request
 							uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
 						} catch (final Exception e) {
-							log.error("Failed to update embeddings for document {}", updated.getId(), e);
+							log.error("Failed to update embeddings for model {}", updated.getId(), e);
 						}
 					})
 					.start();
-			;
 		}
 
 		return updatedOptional;
