@@ -7,21 +7,12 @@
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
 		/>
-		<!--FIXME: description property should be added to the state type-->
-		<!--disabling may not always be a good idea since you may want to create the property if it is a valid one-->
-		<tera-input
-			title="Description"
-			placeholder="Add a description"
-			:model-value="description ?? ''"
-			@update:model-value="$emit('update-variable', { key: 'description', value: $event })"
-			:disabled="description === undefined"
-		/>
 		<tera-input
 			label="Unit"
 			placeholder="Add a unit"
-			:model-value="unit ?? ''"
+			:model-value="unitExpression ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'units', value: $event })"
-			:disabled="unit === undefined"
+			:disabled="unitExpression === undefined"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input
@@ -38,23 +29,30 @@
 					: ''
 			"
 		/>
+		<!--FIXME: description property should be added to the state type-->
+		<!--disabling may not always be a good idea since you may want to create the property if it is a valid one-->
+		<tera-input
+			title="Description"
+			placeholder="Add a description"
+			:model-value="description ?? ''"
+			@update:model-value="$emit('update-variable', { key: 'description', value: $event })"
+			:disabled="description === undefined"
+		/>
 	</section>
 </template>
 
 <script setup lang="ts">
 import TeraInput from '@/components/widgets/tera-input.vue';
+import type { ModelVariable } from '@/types/Model';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 
-defineProps<{
-	id: string;
-	name?: string;
-	description?: string;
-	grounding?: any;
-	unit?: string; // 'units' key may not work all the time dor states,
-	showStratifiedVariables?: boolean;
+const props = defineProps<{
+	variable: ModelVariable;
 }>();
 
 defineEmits(['update-variable']);
+
+const { id, name, description, grounding, unitExpression } = props.variable;
 </script>
 
 <style scoped>

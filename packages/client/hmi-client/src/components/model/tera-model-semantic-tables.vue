@@ -57,8 +57,8 @@ function onUpdateState(event: any) {
 }
 
 function onUpdateParameter(event: any) {
-	const { parameterId, key, value } = event;
-	updateParameter(transientModel.value, parameterId, key, value);
+	const { id, key, value } = event;
+	updateParameter(transientModel.value, id, key, value);
 }
 
 function updateMMT() {
