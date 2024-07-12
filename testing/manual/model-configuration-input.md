@@ -9,7 +9,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
-3. Upload model `input_model.json` to project
+3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link) to project
 
 ### 2. Configure a model
 1. Make sure the initial and parameter tables appear with expected data
