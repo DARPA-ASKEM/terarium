@@ -3,6 +3,7 @@
 		:model="model"
 		:variable-list="parameterList"
 		:collapsed-variables="collapsedParameters"
+		show-matrix
 		@open-matrix="(id) => (matrixModalId = id)"
 		@update-variable="emit('update-parameter', $event)"
 	/>
@@ -22,7 +23,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { StratifiedMatrix, ModelVariable } from '@/types/Model';
-import { Model, ModelParameter } from '@/types/Types';
+import { Model } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
@@ -50,15 +51,28 @@ const parameterList = computed<
 		.flat()
 		.map((id) => {
 			const childIds = collapsedParameters.value.get(id) ?? [];
-			const children = childIds
-				.map((childId) => parameters.value.find((p) => p.id === childId))
-				.filter(Boolean) as ModelParameter[];
 			const isParent = childIds.length > 1;
+			const children = childIds
+				.map((childId) => {
+					const p = parameters.value.find((param) => param.id === childId);
+					return {
+						id: p?.id ?? '',
+						name: p?.name ?? '',
+						description: p?.description ?? '',
+						grounding: p?.grounding,
+						unitExpression: p?.units?.expression ?? ''
+					};
+				})
+				.filter(Boolean) as ModelVariable[];
 
-			// If the parameter is virtual, we need to get the parameter data from model.metadata
-			const base = isParent
-				? props.model.metadata?.parameters?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
-				: parameters.value.find((p) => p.id === id);
+			const baseParameter = isParent ? { id } : parameters.value.find((p) => p.id === id);
+			const base = {
+				id: baseParameter?.id ?? '',
+				name: baseParameter?.name ?? '',
+				description: baseParameter?.description ?? '',
+				grounding: baseParameter?.grounding,
+				unitExpression: baseParameter?.units?.expression ?? ''
+			};
 
 			return { base, children, isParent };
 		})

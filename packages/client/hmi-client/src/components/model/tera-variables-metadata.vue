@@ -1,21 +1,27 @@
 <template>
 	<ul>
 		<li v-for="({ base, children, isParent }, index) in variableList" :key="index">
-			<template v-if="isParent && !isEmpty(baseOptions)">
+			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
 						<Button
-							:icon="baseOptions[index].showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							:icon="
+								parentEditingState[index].showChildren
+									? 'pi pi-chevron-down'
+									: 'pi pi-chevron-right'
+							"
 							text
 							rounded
 							size="small"
-							@click="baseOptions[index].showChildren = !baseOptions[index].showChildren"
+							@click="
+								parentEditingState[index].showChildren = !parentEditingState[index].showChildren
+							"
 						/>
 						<h6>{{ base.id }}</h6>
 					</span>
 					<Button
-						v-if="!baseOptions[index].isEditingChildrenUnits"
-						@click="baseOptions[index].isEditingChildrenUnits = true"
+						v-if="!parentEditingState[index].isEditingChildrenUnits"
+						@click="parentEditingState[index].isEditingChildrenUnits = true"
 						label="Add unit to all children"
 						text
 						size="small"
@@ -24,7 +30,7 @@
 						<tera-input
 							label="Unit"
 							placeholder="Add a unit"
-							v-model="baseOptions[index].childrenUnits"
+							v-model="parentEditingState[index].childrenUnits"
 						/>
 						<Button
 							icon="pi pi-check"
@@ -33,8 +39,8 @@
 							size="small"
 							@click="
 								() => {
-									updateAllChildren(base.id, 'units', baseOptions[index].childrenUnits);
-									baseOptions[index].isEditingChildrenUnits = false;
+									updateAllChildren(base.id, 'units', parentEditingState[index].childrenUnits);
+									parentEditingState[index].isEditingChildrenUnits = false;
 								}
 							"
 						/>
@@ -43,13 +49,19 @@
 							text
 							rounded
 							size="small"
-							@click="baseOptions[index].isEditingChildrenUnits = false"
+							@click="parentEditingState[index].isEditingChildrenUnits = false"
 						/>
 					</span>
-					<Button label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
 					<Button
-						v-if="!baseOptions[index].isEditingChildrenConcepts"
-						@click="baseOptions[index].isEditingChildrenConcepts = true"
+						v-if="showMatrix"
+						label="Open matrix"
+						text
+						size="small"
+						@click="$emit('open-matrix', base.id)"
+					/>
+					<Button
+						v-if="!parentEditingState[index].isEditingChildrenConcepts"
+						@click="parentEditingState[index].isEditingChildrenConcepts = true"
 						label="Add concept to all children"
 						text
 						size="small"
@@ -60,7 +72,7 @@
 							placeholder="Select a concept"
 							icon="pi pi-search"
 							disabled
-							v-model="baseOptions[index].childrenConcepts"
+							v-model="parentEditingState[index].childrenConcepts"
 						/>
 						<Button
 							icon="pi pi-check"
@@ -69,8 +81,8 @@
 							size="small"
 							@click="
 								() => {
-									updateAllChildren(base.id, 'concept', baseOptions[index].childrenConcepts);
-									baseOptions[index].isEditingChildrenConcepts = false;
+									updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts);
+									parentEditingState[index].isEditingChildrenConcepts = false;
 								}
 							"
 						/>
@@ -79,11 +91,11 @@
 							text
 							rounded
 							size="small"
-							@click="baseOptions[index].isEditingChildrenConcepts = false"
+							@click="parentEditingState[index].isEditingChildrenConcepts = false"
 						/>
 					</span>
 				</section>
-				<ul v-if="baseOptions[index].showChildren" class="stratified">
+				<ul v-if="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
 						<tera-variable-metadata-entry
 							:variable="child"
@@ -118,11 +130,12 @@ const props = defineProps<{
 		isParent: boolean;
 	}[];
 	collapsedVariables: Map<string, string[]>;
+	showMatrix?: boolean;
 }>();
 
 const emit = defineEmits(['update-variable', 'open-matrix']);
 
-const baseOptions = ref<
+const parentEditingState = ref<
 	{
 		showChildren: boolean;
 		isEditingChildrenUnits: boolean;
@@ -132,7 +145,7 @@ const baseOptions = ref<
 	}[]
 >([]);
 onMounted(() => {
-	baseOptions.value = Array.from({ length: props.variableList.length }, () => ({
+	parentEditingState.value = Array.from({ length: props.variableList.length }, () => ({
 		showChildren: false,
 		isEditingChildrenUnits: false,
 		isEditingChildrenConcepts: false,

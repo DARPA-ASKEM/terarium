@@ -36,15 +36,28 @@ const stateList = computed<
 		.flat()
 		.map((id) => {
 			const childTargets = collapsedInitials.value.get(id) ?? [];
-			const children = childTargets
-				.map((childTarget) => states.value.find((i: any) => i.id === childTarget))
-				.filter(Boolean);
 			const isParent = childTargets.length > 1;
+			const children = childTargets
+				.map((childTarget) => {
+					const s = states.value.find((state) => state.id === childTarget);
+					return {
+						id: s?.id ?? '',
+						name: s?.name ?? '',
+						description: s?.description ?? '',
+						grounding: s?.grounding,
+						unitExpression: s?.initial?.expression ?? ''
+					};
+				})
+				.filter(Boolean);
 
-			// If the initial is virtual, we need to get it from model.metadata
-			const base = isParent
-				? props.model.metadata?.initials?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
-				: states.value.find((s: any) => s.id === id);
+			const baseState = isParent ? { id } : states.value.find((s: any) => s.id === id);
+			const base = {
+				id: baseState?.id ?? '',
+				name: baseState?.name ?? '',
+				description: baseState?.description ?? '',
+				grounding: baseState?.grounding,
+				unitExpression: baseState?.initial?.expression ?? ''
+			};
 
 			return { base, children, isParent };
 		})

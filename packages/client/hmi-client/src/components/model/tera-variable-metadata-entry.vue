@@ -12,7 +12,6 @@
 			placeholder="Add a unit"
 			:model-value="unitExpression ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'units', value: $event })"
-			:disabled="unitExpression === undefined"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input
@@ -30,7 +29,6 @@
 			"
 		/>
 		<!--FIXME: description property should be added to the state type-->
-		<!--disabling may not always be a good idea since you may want to create the property if it is a valid one-->
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
