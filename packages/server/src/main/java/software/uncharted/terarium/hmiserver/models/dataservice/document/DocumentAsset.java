@@ -72,23 +72,19 @@ public class DocumentAsset extends TerariumAsset {
 
 	@Override
 	public List<String> getFileNames() {
-		final List<String> res = new ArrayList<>();
-		if (this.fileNames != null) {
-			for (final String fileName : fileNames) {
-				if (!res.contains(fileName)) {
-					res.add(fileName);
-				}
-			}
+		if (this.fileNames == null) {
+			this.fileNames = new ArrayList<>();
 		}
+
 		// ensure these are included in filenames
 		if (this.assets != null) {
 			for (final DocumentExtraction asset : assets) {
-				if (!res.contains(asset.getFileName())) {
-					res.add(asset.getFileName());
+				if (!this.fileNames.contains(asset.getFileName())) {
+					this.fileNames.add(asset.getFileName());
 				}
 			}
 		}
-		return res;
+		return this.fileNames;
 	}
 
 	/**

@@ -1,45 +1,39 @@
 <template>
-	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
+	<section>
 		<h6>{{ id }}</h6>
 		<tera-input
-			label="Name"
+			title="Name"
+			placeholder="Add a name"
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-parameter', { key: 'name', value: $event })"
 		/>
 		<tera-input
-			label="Description"
+			title="Description"
+			placeholder="Add a description"
 			:model-value="description ?? ''"
 			@update:model-value="$emit('update-parameter', { key: 'description', value: $event })"
 		/>
-		<template v-if="!isStratified">
-			<Button
-				class="toggle"
-				v-if="isBase"
-				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-				text
-				rounded
-				@click="$emit('toggle-stratified-variables')"
-			/>
-			<tera-input
-				label="Unit"
-				:model-value="units?.expression ?? ''"
-				@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
-			/>
-			<!--TODO: Add support for editing concepts-->
-			<tera-input
-				label="Concept"
-				disabled
-				:model-value="
-					grounding?.identifiers
-						? getNameOfCurieCached(
-								new Map<string, string>(),
-								getCurieFromGroundingIdentifier(grounding.identifiers)
-							)
-						: ''
-				"
-			/>
-			<Button v-if="isBase" size="small" label="Open matrix" text @click="$emit('open-matrix')" />
-		</template>
+		<tera-input
+			label="Unit"
+			placeholder="Add a unit"
+			:model-value="units?.expression ?? ''"
+			@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
+		/>
+		<!--TODO: Add support for editing concepts-->
+		<tera-input
+			label="Concept"
+			placeholder="Select a concept"
+			icon="pi pi-search"
+			disabled
+			:model-value="
+				grounding?.identifiers
+					? getNameOfCurieCached(
+							new Map<string, string>(),
+							getCurieFromGroundingIdentifier(grounding.identifiers)
+						)
+					: ''
+			"
+		/>
 	</section>
 </template>
 
@@ -47,16 +41,13 @@
 import type { ModelParameter } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
-import Button from 'primevue/button';
 
 const props = defineProps<{
 	parameter: ModelParameter;
-	isBase?: boolean;
-	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-parameter', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-parameter', 'toggle-stratified-variables']);
 
 const { id, name, description, grounding, units } = props.parameter;
 </script>
@@ -65,10 +56,10 @@ const { id, name, description, grounding, units } = props.parameter;
 section {
 	display: grid;
 	grid-template-areas:
-		'symbol name description description'
-		'unit	unit concept .';
-	grid-template-columns: max-content 30% 30% auto;
-	gap: var(--gap-small);
+		'symbol name unit . concept'
+		'description description description description description';
+	grid-template-columns: max-content max-content max-content auto max-content;
+	gap: var(--gap-2);
 	align-items: center;
 }
 
@@ -79,13 +70,14 @@ section.has-toggle {
 	grid-template-columns: max-content 30% auto 8rem;
 }
 
-section.no-second-row {
-	gap: 0 var(--gap-small);
-}
-
 h6 {
 	grid-area: symbol;
 	justify-self: center;
+	&::after {
+		content: '|';
+		color: var(--text-color-light);
+		margin-left: var(--gap-2);
+	}
 }
 
 .toggle {
@@ -97,11 +89,11 @@ h6 {
 	grid-area: open-matrix;
 }
 
-:deep([label='Name']) {
+:deep([title='Name']) {
 	grid-area: name;
 }
 
-:deep([label='Description']) {
+:deep([title='Description']) {
 	grid-area: description;
 }
 
