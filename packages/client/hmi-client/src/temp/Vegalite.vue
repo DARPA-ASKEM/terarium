@@ -164,7 +164,7 @@ const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
 // Generate time series data
 const dataNew = generateSimulateData();
 const specNew = ref<any>(
-	createForecastChart(dataNew.data, dataNew.summary, dataNew.truth, {
+	createForecastChart(dataNew.data, dataNew.summary, [], {
 		width: 400,
 		height: 200,
 
@@ -174,24 +174,19 @@ const specNew = ref<any>(
 		colorscheme: ['#F00', '#0F0', '#00F'],
 
 		timeField: 'time',
+		groupField: 'sample',
 
 		xAxisTitle: 'x-axis',
 		yAxisTitle: 'y-axis'
 	})
 );
 
-console.log('');
-console.log('');
-console.log(JSON.stringify(specNew.value));
-console.log('');
-console.log('');
-
 function generateSimulateData() {
 	const data: any[] = [];
 	const summary: any[] = [];
 	const truth: any[] = [];
 
-	const numSamples = 10;
+	const numSamples = 30;
 	const numSteps = 200;
 
 	for (let j = 0; j < numSteps; j++) {

@@ -7,6 +7,7 @@ interface ForecastChartOptions {
 
 	colorscheme: string[];
 	timeField: string;
+	groupField: string;
 
 	xAxisTitle: string;
 	yAxisTitle: string;
@@ -87,7 +88,7 @@ export const createForecastChart = (
 					},
 					legend: false
 				},
-				detail: { field: 'sample_variable', type: 'nominal' },
+				detail: { field: options.groupField, type: 'nominal' },
 				strokeWidth: { value: 1 },
 				opacity: { value: 0.1 }
 			}
