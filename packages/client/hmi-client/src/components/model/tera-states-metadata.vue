@@ -165,6 +165,7 @@ onMounted(() => {
 });
 
 function updateAllChildren(baseId: string, key: string, value: string) {
+	if (isEmpty(value)) return;
 	const ids = collapsedInitials.value.get(baseId);
 	ids?.forEach((id) => emit('update-state', { id, key, value }));
 }

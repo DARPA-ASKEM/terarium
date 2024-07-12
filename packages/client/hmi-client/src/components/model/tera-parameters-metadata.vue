@@ -187,6 +187,7 @@ onMounted(() => {
 });
 
 function updateAllChildren(baseParameter: string, key: string, value: string) {
+	if (isEmpty(value)) return;
 	const ids = collapsedParameters.value.get(baseParameter);
 	ids?.forEach((id) => emit('update-parameter', { parameterId: id, key, value }));
 }
