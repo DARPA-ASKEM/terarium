@@ -1,7 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.annotations.Type;
+
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -9,15 +18,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
@@ -72,23 +75,19 @@ public class DocumentAsset extends TerariumAsset {
 
 	@Override
 	public List<String> getFileNames() {
-		final List<String> res = new ArrayList<>();
 		if (this.fileNames != null) {
-			for (final String fileName : fileNames) {
-				if (!res.contains(fileName)) {
-					res.add(fileName);
-				}
-			}
+			this.fileNames = new ArrayList<>();
 		}
+
 		// ensure these are included in filenames
 		if (this.assets != null) {
 			for (final DocumentExtraction asset : assets) {
-				if (!res.contains(asset.getFileName())) {
-					res.add(asset.getFileName());
+				if (!this.fileNames.contains(asset.getFileName())) {
+					this.fileNames.add(asset.getFileName());
 				}
 			}
 		}
-		return res;
+		return this.fileNames;
 	}
 
 	/**
