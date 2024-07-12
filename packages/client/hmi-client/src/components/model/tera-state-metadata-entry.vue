@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'no-second-row': isStratified }">
+	<section>
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
@@ -20,22 +20,20 @@
 			"
 			disabled
 		/>
-		<template v-if="!isStratified">
-			<tera-input
-				label="Unit"
-				placeholder="Add a unit"
-				:model-value="initial?.expression ?? ''"
-				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
-			/>
-			<!--TODO: Add support for editing concepts-->
-			<tera-input
-				label="Concept"
-				placeholder="Select a concept"
-				icon="pi pi-search"
-				:model-value="grounding?.identifiers[0] ?? ''"
-				disabled
-			/>
-		</template>
+		<tera-input
+			label="Unit"
+			placeholder="Add a unit"
+			:model-value="initial?.expression ?? ''"
+			@update:model-value="$emit('update-state', { key: 'units', value: $event })"
+		/>
+		<!--TODO: Add support for editing concepts-->
+		<tera-input
+			label="Concept"
+			placeholder="Select a concept"
+			icon="pi pi-search"
+			:model-value="grounding?.identifiers[0] ?? ''"
+			disabled
+		/>
 	</section>
 </template>
 
@@ -45,7 +43,6 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
 	state: PetriNetState | RegNetVertex;
-	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
@@ -69,10 +66,6 @@ section.has-toggle {
 	grid-template-areas:
 		'symbol name description description'
 		'toggle	unit concept .';
-}
-
-section.no-second-row {
-	gap: 0 var(--gap-2);
 }
 
 h6 {

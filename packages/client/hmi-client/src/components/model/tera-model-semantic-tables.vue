@@ -50,6 +50,7 @@ const tables = computed(() => {
 	}
 });
 
+// states don't have units yet and don't worry about concept yet
 function onUpdateState(event: any) {
 	const { id, key, value } = event;
 	updateState(transientModel.value, id, key, value);

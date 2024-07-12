@@ -1,5 +1,5 @@
 <template>
-	<section :class="{ 'no-second-row': isStratified }">
+	<section>
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
@@ -13,29 +13,27 @@
 			:model-value="description ?? ''"
 			@update:model-value="$emit('update-parameter', { key: 'description', value: $event })"
 		/>
-		<template v-if="!isStratified">
-			<tera-input
-				label="Unit"
-				placeholder="Add a unit"
-				:model-value="units?.expression ?? ''"
-				@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
-			/>
-			<!--TODO: Add support for editing concepts-->
-			<tera-input
-				label="Concept"
-				placeholder="Select a concept"
-				icon="pi pi-search"
-				disabled
-				:model-value="
-					grounding?.identifiers
-						? getNameOfCurieCached(
-								new Map<string, string>(),
-								getCurieFromGroundingIdentifier(grounding.identifiers)
-							)
-						: ''
-				"
-			/>
-		</template>
+		<tera-input
+			label="Unit"
+			placeholder="Add a unit"
+			:model-value="units?.expression ?? ''"
+			@update:model-value="$emit('update-parameter', { key: 'units', value: $event })"
+		/>
+		<!--TODO: Add support for editing concepts-->
+		<tera-input
+			label="Concept"
+			placeholder="Select a concept"
+			icon="pi pi-search"
+			disabled
+			:model-value="
+				grounding?.identifiers
+					? getNameOfCurieCached(
+							new Map<string, string>(),
+							getCurieFromGroundingIdentifier(grounding.identifiers)
+						)
+					: ''
+			"
+		/>
 	</section>
 </template>
 
@@ -46,7 +44,6 @@ import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/service
 
 const props = defineProps<{
 	parameter: ModelParameter;
-	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
@@ -71,10 +68,6 @@ section.has-toggle {
 		'symbol name description description'
 		'toggle	unit concept open-matrix';
 	grid-template-columns: max-content 30% auto 8rem;
-}
-
-section.no-second-row {
-	gap: 0 var(--gap-2);
 }
 
 h6 {
