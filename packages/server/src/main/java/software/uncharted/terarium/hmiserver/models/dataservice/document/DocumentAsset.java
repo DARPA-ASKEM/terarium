@@ -75,7 +75,7 @@ public class DocumentAsset extends TerariumAsset {
 
 	@Override
 	public List<String> getFileNames() {
-		if (this.fileNames != null) {
+		if (this.fileNames == null) {
 			this.fileNames = new ArrayList<>();
 		}
 

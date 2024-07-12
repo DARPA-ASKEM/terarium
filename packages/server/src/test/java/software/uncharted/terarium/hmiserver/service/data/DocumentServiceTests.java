@@ -1,20 +1,23 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithUserDetails;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -42,8 +45,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	public void setup() throws IOException {
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 
-		project = projectService.createProject((Project)
-				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
+		project = projectService.createProject((Project) new Project().setPublicAsset(true).setName("test-project-name")
+				.setDescription("my description"));
 	}
 
 	@AfterEach
@@ -96,7 +99,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
-		Assertions.assertEquals(after.getFileNames().size(), 2);
+		Assertions.assertEquals(3, after.getFileNames().size());
 
 		Assertions.assertNotNull(after.getGrounding());
 		Assertions.assertNotNull(after.getGrounding().getId());
@@ -141,8 +144,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset =
-				documentAssetService.createAsset(createDocument(), project.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		final DocumentAsset fetchedDocumentAsset = documentAssetService
 				.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION)
@@ -160,8 +163,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset =
-				documentAssetService.createAsset(createDocument(), project.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), project.getId(),
+				ASSUME_WRITE_PERMISSION);
 		documentAsset.setName("new name");
 
 		final DocumentAsset updatedDocumentAsset = documentAssetService
@@ -176,13 +179,13 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteDocumentAsset() throws Exception {
 
-		final DocumentAsset documentAsset =
-				documentAssetService.createAsset(createDocument(), project.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset documentAsset = documentAssetService.createAsset(createDocument(), project.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.deleteAsset(documentAsset.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<DocumentAsset> deleted =
-				documentAssetService.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION);
+		final Optional<DocumentAsset> deleted = documentAssetService.getAsset(documentAsset.getId(),
+				ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
