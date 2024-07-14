@@ -121,12 +121,19 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<vega-chart
-							v-for="(_config, idx) of props.node.state.chartConfigs"
-							:key="idx"
-							:are-embed-actions-visible="true"
-							:visualization-spec="preparedCharts[idx]"
-						/>
+						<template v-for="(cfg, idx) of props.node.state.chartConfigs" :key="idx">
+							<tera-chart-control
+								:variables="Object.keys(pyciemssMap)"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:show-remove-button="true"
+								@configuration-change="chartProxy.configurationChange(idx, $event)"
+								@remove="chartProxy.removeChart(idx)"
+							/>
+							<vega-chart
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[idx]"
+							/>
+						</template>
 
 						<!--
 						<tera-simulate-chart
@@ -189,7 +196,8 @@ import {
 	chartActionsProxy,
 	drilldownChartSize,
 	nodeMetadata,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	convertToCsvAsset
 } from '@/components/workflow/util';
 
 // import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
@@ -213,6 +221,7 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraChartControl from '../../tera-chart-control.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -278,8 +287,8 @@ const menuItems = computed(() => [
 const showSpinner = ref(false);
 const runResults = ref<{ [runId: string]: any }>({});
 const runResultsSummary = ref<{ [runId: string]: any }>({});
-
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
 let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
@@ -381,6 +390,7 @@ const lazyLoadSimulationData = async (runId: string) => {
 	const result = csvParse(resultRaw, autoType);
 	pyciemssMap = parsePyCiemssMap(result[0]);
 	runResults.value[selectedRunId.value] = result;
+	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
 	const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
 	const resultSummary = csvParse(resultSummaryRaw, autoType);
