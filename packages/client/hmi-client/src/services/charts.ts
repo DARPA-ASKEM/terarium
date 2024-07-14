@@ -54,12 +54,13 @@ export const createForecastChart = (
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: {
+		title: null /* {
 			text: 'Simulation chart',
 			anchor: 'start',
 			subtitle: ' ',
 			subtitlePadding: 4
 		},
+	  */,
 		description: '',
 		width: options.width,
 		height: options.height,

@@ -17,10 +17,10 @@
 			-->
 
 			<vega-chart
-				v-for="(config, idx) of props.node.state.chartConfigs"
+				v-for="(_config, idx) of props.node.state.chartConfigs"
 				:key="idx"
 				:are-embed-actions-visible="false"
-				:visualization-spec="prepareChart(config)"
+				:visualization-spec="preparedCharts[idx]"
 			/>
 		</template>
 		<tera-progress-spinner
@@ -52,7 +52,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { getRunResult, pollAction, getSimulation } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, parsePyCiemssMap } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -71,6 +71,8 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+
+let pyciemssMap: Record<string, string> = {};
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -158,26 +160,27 @@ Provide a summary in 100 words or less.
 	});
 };
 
-const prepareChart = (selectedVariables: string[]) => {
-	if (!selectedRunId.value) return {};
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
 
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 
-	const spec = createForecastChart(result, resultSummary, [], {
-		width: 140,
-		height: 120,
-		variables: selectedVariables.map((d) => `${d}_state`), // ['S_state', 'I_state'],
-		statisticalVariables: selectedVariables.map((d) => `${d}_state_mean`), // ['S_state_mean', 'I_state_mean'],
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(result, resultSummary, [], {
+			width: 140,
+			height: 120,
+			variables: config.map((d) => pyciemssMap[d]),
+			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
 
-		legend: false,
-		groupField: 'sample_id',
-		timeField: 'timepoint_id',
-		xAxisTitle: '',
-		yAxisTitle: ''
-	});
-	return spec;
-};
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: ''
+		})
+	);
+});
 
 watch(
 	() => props.node.state.inProgressSimulationId,
@@ -204,11 +207,9 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		// const output = await getRunResultCiemss(selectedRunId.value);
-		// runResults.value[selectedRunId.value] = output.runResults;
-
 		const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
 		const result = csvParse(resultRaw, autoType);
+		pyciemssMap = parsePyCiemssMap(result[0]);
 		runResults.value[selectedRunId.value] = result;
 
 		const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
@@ -218,7 +219,6 @@ watch(
 		resultSummary.forEach((d: any, idx) => {
 			d.timepoint_id = idx;
 		});
-
 		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }

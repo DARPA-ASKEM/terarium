@@ -121,6 +121,14 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
+						<vega-chart
+							v-for="(_config, idx) of props.node.state.chartConfigs"
+							:key="idx"
+							:are-embed-actions-visible="true"
+							:visualization-spec="preparedCharts[idx]"
+						/>
+
+						<!--
 						<tera-simulate-chart
 							v-for="(cfg, idx) in node.state.chartConfigs"
 							:key="idx"
@@ -133,6 +141,7 @@
 							:size="chartSize"
 							class="mb-2"
 						/>
+						-->
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart()"
@@ -162,21 +171,28 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { csvParse, autoType } from 'd3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
+// import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import {
-	getRunResultCiemss,
+	// getRunResultCiemss,
+	getRunResult,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+// import { createCsvAssetFromRunResults } from '@/services/dataset';
+import {
+	chartActionsProxy,
+	drilldownChartSize,
+	nodeMetadata,
+	parsePyCiemssMap
+} from '@/components/workflow/util';
 
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+// import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -194,6 +210,8 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -258,9 +276,11 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
 
@@ -286,6 +306,28 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
+});
+
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(result, resultSummary, [], {
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			variables: config.map((d) => pyciemssMap[d]),
+			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
+
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: ''
+		})
+	);
 });
 
 const updateState = () => {
@@ -335,9 +377,19 @@ const makeForecastRequest = async () => {
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId] && rawContent.value[runId]) return;
 
-	const output = await getRunResultCiemss(runId);
-	runResults.value[runId] = output.runResults;
-	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
+	const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
+	const result = csvParse(resultRaw, autoType);
+	pyciemssMap = parsePyCiemssMap(result[0]);
+	runResults.value[selectedRunId.value] = result;
+
+	const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
+	const resultSummary = csvParse(resultSummaryRaw, autoType);
+
+	// FIXME: summary need to have time
+	resultSummary.forEach((d: any, idx) => {
+		d.timepoint_id = idx;
+	});
+	runResultsSummary.value[selectedRunId.value] = resultSummary;
 };
 
 const onSelection = (id: string) => {
