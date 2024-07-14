@@ -135,20 +135,6 @@
 							/>
 						</template>
 
-						<!--
-						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.chartConfigs"
-							:key="idx"
-							:run-results="runResults[selectedRunId]"
-							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-							has-mean-line
-							@configuration-change="chartProxy.configurationChange(idx, $event)"
-							@remove="chartProxy.removeChart(idx)"
-							show-remove-button
-							:size="chartSize"
-							class="mb-2"
-						/>
-						-->
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart()"
@@ -184,14 +170,11 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-// import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import {
-	// getRunResultCiemss,
 	getRunResult,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
-// import { createCsvAssetFromRunResults } from '@/services/dataset';
 import {
 	chartActionsProxy,
 	drilldownChartSize,
@@ -200,7 +183,6 @@ import {
 	convertToCsvAsset
 } from '@/components/workflow/util';
 
-// import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';

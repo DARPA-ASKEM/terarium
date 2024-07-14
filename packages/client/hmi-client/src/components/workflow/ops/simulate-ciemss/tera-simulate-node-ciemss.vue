@@ -1,21 +1,6 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<!--
-			<tera-simulate-chart
-				v-for="(config, idx) of props.node.state.chartConfigs"
-				:key="idx"
-				:run-results="runResults[selectedRunId]"
-				:chartConfig="{
-					selectedRun: selectedRunId,
-					selectedVariable: config
-				}"
-				:size="{ width: 180, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(idx, $event)"
-			/>
-			-->
-
 			<vega-chart
 				v-for="(_config, idx) of props.node.state.chartConfigs"
 				:key="idx"
@@ -121,7 +106,6 @@ const processResult = async (runId: string) => {
 		chartProxy.addChart();
 	}
 
-	// FIXME: Test summarization
 	const summaryStr = await getRunResult(runId, 'result_summary.csv');
 	const summaryData = csvParse(summaryStr);
 	const start = _.first(summaryData);
