@@ -251,6 +251,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
+import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -263,7 +264,6 @@ import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tabl
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
-import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
@@ -284,8 +284,8 @@ import {
 	amrToModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { TaskStatus } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
+import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
@@ -464,6 +464,22 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
+const handleConfigModelResp = async (resp: TaskResponse, type: ClientEventType) => {
+	const taskIdRefs = {
+		[ClientEventType.TaskGollmConfigureModel]: modelFromDocumentTaskId,
+		[ClientEventType.TaskGollmConfigureFromDataset]: modelFromDatasetTaskId
+	};
+	taskIdRefs[type].value = [TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(
+		resp.status
+	)
+		? ''
+		: resp.id;
+	if (resp.status !== TaskStatus.Success) return;
+	const outputJSON = JSON.parse(b64DecodeUnicode(resp.output));
+	console.debug('Task success', outputJSON);
+	if (model.value?.id) fetchConfigurations(model.value.id);
+};
+
 const extractConfigurationsFromInputs = async () => {
 	console.group('Extracting configurations from inputs');
 	if (!model.value?.id) {
@@ -472,76 +488,40 @@ const extractConfigurationsFromInputs = async () => {
 	}
 	if (documentId.value) {
 		console.debug('Configuring model from document', documentId.value);
-		modelFromDocumentHandler.value = await configureModelFromDocument(
+		const resp = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
-			{
-				ondata(data, closeConnection) {
-					if (data?.status === TaskStatus.Failed) {
-						closeConnection();
-						console.debug('Task failed');
-						throw new FatalError('Configs from document(s) - Task failed');
-					}
-					if (data?.status === TaskStatus.Success) {
-						logger.success('Model configured from document(s)');
-						const outputJSON = JSON.parse(b64DecodeUnicode(data.output));
-						console.debug('Task success', outputJSON);
-						closeConnection();
-					}
-					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
-						console.debug('Task running');
-						closeConnection();
-					}
-				},
-				onclose() {
-					if (model.value?.id) {
-						fetchConfigurations(model.value.id);
-					}
-				}
-			},
 			props.node.workflowId,
 			props.node.id
 		);
+		handleConfigModelResp(resp, ClientEventType.TaskGollmConfigureModel);
 	}
 	if (datasetIds.value) {
 		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
-
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-
-		modelFromDatasetHandler.value = await configureModelFromDatasets(
+		const resp = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
 			matrixStr,
-			{
-				ondata(data, closeConnection) {
-					if (data?.status === TaskStatus.Failed) {
-						closeConnection();
-						console.debug('Task failed');
-						throw new FatalError('Configs from dataset(s) - Task failed');
-					}
-					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from dataset(s)');
-						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
-						console.debug('Task success', outputJSON);
-						closeConnection();
-					}
-					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
-						console.debug('Task running');
-						closeConnection();
-					}
-				},
-				onclose() {
-					if (model.value?.id) {
-						fetchConfigurations(model.value.id);
-					}
-				}
-			},
 			props.node.workflowId,
 			props.node.id
 		);
+		handleConfigModelResp(resp, ClientEventType.TaskGollmConfigureFromDataset);
 	}
 	console.groupEnd();
 };
+
+const configModelEventHandler = (event: ClientEvent<TaskResponse>) => {
+	const taskIdRefs = {
+		[ClientEventType.TaskGollmConfigureModel]: modelFromDocumentTaskId,
+		[ClientEventType.TaskGollmConfigureFromDataset]: modelFromDatasetTaskId
+	};
+	if (!event.data || event.data.id !== taskIdRefs[event.type].value) return;
+	handleConfigModelResp(event.data, event.type);
+};
+
+useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
@@ -569,13 +549,10 @@ const suggestedConfigurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentHandler = ref();
-const modelFromDatasetHandler = ref();
+const modelFromDocumentTaskId = ref('');
+const modelFromDatasetTaskId = ref('');
 const isLoading = computed(
-	() =>
-		modelFromDocumentHandler.value?.isRunning ||
-		modelFromDatasetHandler.value?.isRunning ||
-		isFetching.value
+	() => modelFromDocumentTaskId.value || modelFromDatasetTaskId.value || isFetching.value
 );
 
 const model = ref<Model | null>(null);

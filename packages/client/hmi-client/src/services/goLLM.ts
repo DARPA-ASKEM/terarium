@@ -36,6 +36,46 @@ export async function modelCard(documentId: string): Promise<void> {
 export async function configureModelFromDocument(
 	documentId: string,
 	modelId: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/configure-model', {
+		params: {
+			'model-id': modelId,
+			'document-id': documentId,
+			'workflow-id': workflowId,
+			'node-id': nodeId
+		}
+	});
+	return data;
+}
+
+export async function configureModelFromDatasets(
+	modelId: string,
+	datasetIds: string[],
+	matrixStr: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
+	// FIXME: Using first dataset for now...
+	const { data } = await API.post<TaskResponse>(
+		'/gollm/configure-from-dataset',
+		{ matrixStr },
+		{
+			params: {
+				'model-id': modelId,
+				'dataset-ids': datasetIds.join(),
+				'workflow-id': workflowId,
+				'node-id': nodeId
+			}
+		}
+	);
+	return data;
+}
+
+export async function configureModelFromDocumentBK(
+	documentId: string,
+	modelId: string,
 	handlers: TaskEventHandlers,
 	workflowId?: string,
 	nodeId?: string
@@ -61,7 +101,7 @@ export async function configureModelFromDocument(
 	return null;
 }
 
-export async function configureModelFromDatasets(
+export async function configureModelFromDatasetsBk(
 	modelId: string,
 	datasetIds: string[],
 	matrixStr: string,
