@@ -37,7 +37,7 @@ const stateList = computed<
 		.map((id) => {
 			const childTargets = collapsedInitials.value.get(id) ?? [];
 			const isParent = childTargets.length > 1;
-			const children = childTargets
+			const children: ModelVariable[] = childTargets
 				.map((childTarget) => {
 					const s = states.value.find((state) => state.id === childTarget);
 					return {
@@ -51,7 +51,7 @@ const stateList = computed<
 				.filter(Boolean);
 
 			const baseState = isParent ? { id } : states.value.find((s: any) => s.id === id);
-			const base = isParent
+			const base: ModelVariable = isParent
 				? { id: baseState.id ?? '' }
 				: {
 						id: baseState?.id ?? '',
