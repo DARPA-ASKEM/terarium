@@ -1,8 +1,9 @@
 <template>
-	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
+	<section>
 		<h6>{{ id }}</h6>
 		<tera-input
 			title="Name"
+			placeholder="Add a name"
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
@@ -19,38 +20,33 @@
 			"
 			disabled
 		/>
-		<template v-if="!isStratified">
-			<Button
-				v-if="isBase"
-				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-				text
-				rounded
-				@click="$emit('toggle-stratified-variables')"
-			/>
-			<tera-input
-				label="Unit"
-				:model-value="initial?.expression ?? ''"
-				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
-			/>
-			<!--TODO: Add support for editing concepts-->
-			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
-		</template>
+		<tera-input
+			label="Unit"
+			placeholder="Add a unit"
+			:model-value="initial?.expression ?? ''"
+			@update:model-value="$emit('update-state', { key: 'units', value: $event })"
+		/>
+		<!--TODO: Add support for editing concepts-->
+		<tera-input
+			label="Concept"
+			placeholder="Select a concept"
+			icon="pi pi-search"
+			:model-value="grounding?.identifiers[0] ?? ''"
+			disabled
+		/>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { PetriNetState, RegNetVertex } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import Button from 'primevue/button';
 
 const props = defineProps<{
 	state: PetriNetState | RegNetVertex;
-	isBase?: boolean;
-	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state', 'toggle-stratified-variables']);
 
 const { id, name, grounding, initial } = props.state; // description property should be added to the state type
 </script>
@@ -62,7 +58,7 @@ section {
 		'symbol name unit . concept'
 		'description description description description description';
 	grid-template-columns: max-content max-content max-content auto max-content;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	align-items: center;
 }
 
@@ -70,10 +66,6 @@ section.has-toggle {
 	grid-template-areas:
 		'symbol name description description'
 		'toggle	unit concept .';
-}
-
-section.no-second-row {
-	gap: 0 var(--gap-small);
 }
 
 h6 {
