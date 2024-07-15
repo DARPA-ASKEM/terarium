@@ -8,7 +8,7 @@
 				ref="inputField"
 				:disabled="getDisabled"
 				:value="getValue()"
-				@input="updateValue"
+				@input="debounceUpdateHandler"
 				@onFocusOut="emit('on-focus-out')"
 				:style="inputStyle"
 				@blur="unmask"
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { debounce } from 'lodash';
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
@@ -91,6 +92,8 @@ const updateValue = (event: Event) => {
 		emit('update:model-value', value);
 	}
 };
+
+const debounceUpdateHandler = debounce(updateValue, 200);
 
 watch(
 	() => props.modelValue,
