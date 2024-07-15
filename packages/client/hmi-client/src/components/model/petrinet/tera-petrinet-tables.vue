@@ -2,7 +2,7 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
+				Initial variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
 			<tera-states-metadata
 				v-if="!isEmpty(mmt.initials)"
@@ -30,6 +30,7 @@
 			<tera-observables-metadata
 				v-if="!isEmpty(observables)"
 				:model="model"
+				:mmt="mmt"
 				:observables="observables"
 				:observable-summary="observableSummary"
 				@update-variable="emit('update-parameter', $event)"
@@ -150,7 +151,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model', 'update-state', 'update-parameter']);
 
-const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() =>

@@ -133,7 +133,7 @@ const props = defineProps<{
 		children: ModelVariable[];
 		isParent: boolean;
 	}[];
-	collapsedVariables: Map<string, string[]>;
+	collapsedVariables?: Map<string, string[]>;
 	disabledInputs?: string[];
 	showMatrix?: boolean;
 }>();
@@ -160,7 +160,7 @@ onMounted(() => {
 });
 
 function updateAllChildren(base: string, key: string, value: string) {
-	if (isEmpty(value)) return;
+	if (isEmpty(value) || !props.collapsedVariables) return;
 	const ids = props.collapsedVariables.get(base);
 	ids?.forEach((id) => emit('update-variable', { id, key, value }));
 }

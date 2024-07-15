@@ -16,6 +16,7 @@ export type ModelVariable = {
 	grounding?: any;
 	unitExpression?: string;
 	expression?: string;
+	expression_mathml?: string;
 };
 
 export enum StratifiedMatrix {

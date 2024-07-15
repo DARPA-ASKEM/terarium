@@ -438,6 +438,7 @@ export const convertToIGraph = (
 			initObservableSummary,
 			collapseInitials(miraModel)
 		);
+		console.log(observableSummary, initObservableSummary);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
 		observableSummary = cloneDeep(initObservableSummary);
