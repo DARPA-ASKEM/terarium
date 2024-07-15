@@ -60,6 +60,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
 	chartConfigs: string[][];
+	selectedInterventionCharts: string[];
+	selectedSimulationCharts: string[];
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
 	preForecastRunId: string;
@@ -147,6 +149,8 @@ export const OptimizeCiemssOperation: Operation = {
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
+			selectedInterventionCharts: [],
+			selectedSimulationCharts: [],
 			inProgressOptimizeId: '',
 			inProgressPostForecastId: '',
 			inProgressPreForecastId: '',

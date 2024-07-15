@@ -9,15 +9,13 @@
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
-				<tera-simulate-chart
-					v-for="(cfg, idx) in node.state.chartConfigs"
-					:key="idx"
-					:run-results="runResults"
-					:chartConfig="{ selectedRun: props.node.state.postForecastRunId, selectedVariable: cfg }"
-					has-mean-line
-					:size="{ width: 190, height: 120 }"
-					@configuration-change="chartProxy.configurationChange(idx, $event)"
-				/>
+				<template v-for="(variable, index) of node.state.selectedSimulationCharts" :key="index">
+					<h6>{{ variable }}</h6>
+					<vega-chart
+						:visualization-spec="preparedCharts[index]"
+						:are-embed-actions-visible="false"
+					/>
+				</template>
 			</div>
 			<div class="flex gap-2">
 				<Button
@@ -33,26 +31,27 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import { computed, watch, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { Poller, PollerResult, PollerState } from '@/api/api';
 import {
 	pollAction,
-	getRunResultCiemss,
 	makeForecastJobCiemss,
 	getSimulation,
-	getRunResult
+	getRunResult,
+	getRunResultCSV,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { SimulationRequest } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { createOptimizeForecastChart } from '@/utils/optimize';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
@@ -65,16 +64,19 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const runResults = ref<RunResults>({});
+const runResults = ref<any>({});
+const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+
+let pyciemssMap: Record<string, string> = {};
+
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
 	() =>
-		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
+		props.node.state.inProgressOptimizeId !== '' ||
+		props.node.state.inProgressPostForecastId !== '' ||
+		props.node.state.inProgressPreForecastId !== ''
 );
-const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -138,6 +140,30 @@ const startForecast = async (simulationIntervetions) => {
 	}
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
+
+const preparedCharts = computed(() => {
+	const state = cloneDeep(props.node.state);
+	const preForecastRunId = state.preForecastRunId;
+	const postForecastRunId = state.postForecastRunId;
+	if (!postForecastRunId || !preForecastRunId) return [];
+	const preResult = runResults.value[preForecastRunId];
+	const preResultSummary = runResultsSummary.value[preForecastRunId];
+	const postResult = runResults.value[postForecastRunId];
+	const postResultSummary = runResultsSummary.value[postForecastRunId];
+	return state.selectedSimulationCharts.map((variable) =>
+		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
+			width: 150,
+			height: 120,
+			variables: [pyciemssMap[variable]],
+			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: ''
+		})
+	);
+});
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
@@ -218,13 +244,23 @@ watch(
 		const active = props.node.active;
 		const state = props.node.state;
 		if (!active) return;
-		if (!state.postForecastRunId) return;
+		if (!state.postForecastRunId || !state.preForecastRunId) return;
 
+		const preForecastRunId = state.preForecastRunId;
 		const postForecastRunId = state.postForecastRunId;
 
-		// Simulate
-		const result = await getRunResultCiemss(postForecastRunId, 'result.csv');
-		runResults.value = result.runResults;
+		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+		const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(postResult[0]);
+
+		runResults.value[preForecastRunId] = preResult;
+		runResults.value[postForecastRunId] = postResult;
+
+		const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+		const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
+
+		runResultsSummary.value[preForecastRunId] = preResultSummary;
+		runResultsSummary.value[postForecastRunId] = postResultSummary;
 	},
 	{ immediate: true }
 );

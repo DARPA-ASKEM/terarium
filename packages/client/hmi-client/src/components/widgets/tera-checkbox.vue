@@ -6,6 +6,7 @@
 			:model-value="modelValue"
 			@update:model-value="(val) => emit('update:model-value', val)"
 			binary
+			:disabled="disabled"
 		/>
 		<div class="flex flex-column ml-2">
 			<label :for="inputId">{{ label }}</label>
@@ -22,6 +23,7 @@ defineProps<{
 	inputId?: string;
 	label: string;
 	subtext?: string;
+	disabled?: boolean;
 }>();
 
 const emit = defineEmits(['update:model-value']);

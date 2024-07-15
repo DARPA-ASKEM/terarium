@@ -145,10 +145,11 @@
 					<!--Summary-->
 					<h5>Summary</h5>
 					<tera-checkbox
-						v-model="checkbox"
+						v-model="summaryCheckbox"
 						inputId="generate-summary"
 						label="Auto-generate operation summary"
 						subtext="Automatically generates a brief summary of the inputs and outputs."
+						disabled
 					/>
 					<Divider />
 
@@ -158,28 +159,11 @@
 						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
 					</h5>
 					<tera-checkbox
-						v-model="checkbox"
+						v-model="successDisplayChartsCheckbox"
 						inputId="success-criteria-display-charts"
 						label="Display chart(s)"
 						subtext="Turn this on to generate an interactive chart of the success criteria conditions."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-display-data-table"
-						label="Display data table"
-						subtext="Turn this on to display the raw data of the output."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-generate-caption"
-						label="Auto-generate chart caption"
-						subtext="Automatically generates a caption for the cuccess criteria histogram."
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="success-criteria-include-annotations"
-						label="Include annotations"
-						subtext="Add annotations to the chart and customize their settings below."
+						disabled
 					/>
 					<Divider />
 
@@ -188,25 +172,17 @@
 						Interventions
 						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
 					</h5>
+					<MultiSelect
+						v-model="knobs.selectedInterventionCharts"
+						:options="_.keys(preProcessedInterventionsData)"
+						placeholder="What do you want to see?"
+						filter
+					/>
 					<tera-checkbox
-						v-model="checkbox"
+						v-model="interventionsDisplayChartsCheckbox"
 						inputId="interventions-display-charts"
 						label="Display chart(s)"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-display-data-table"
-						label="Display data table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-generate-caption"
-						label="Auto-generate chart caption"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="interventions-include-annotations"
-						label="Include annotations"
+						disabled
 					/>
 					<Divider />
 
@@ -215,30 +191,17 @@
 						Simulation plots
 						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
 					</h5>
+					<MultiSelect
+						v-model="knobs.selectedSimulationCharts"
+						:options="simulationChartOptions"
+						placeholder="What do you want to see?"
+						filter
+					/>
 					<tera-checkbox
-						v-model="checkbox"
+						v-model="simulationDisplayChartsCheckbox"
 						inputId="sim-plots-display-charts"
 						label="Display chart(s)"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-display-stats-table"
-						label="Display statistics table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-display-data-table"
-						label="Display data table"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-generate-caption"
-						label="Auto-generate chart caption"
-					/>
-					<tera-checkbox
-						v-model="checkbox"
-						inputId="sim-plots-include-annotations"
-						label="Include annotations"
+						disabled
 					/>
 				</section>
 			</tera-drilldown-section>
@@ -295,9 +258,9 @@
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
-				<template v-if="simulationRunResults[knobs.postForecastRunId]">
+				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
-						<Accordion multiple :active-index="[0, 1]">
+						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
@@ -318,34 +281,27 @@
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li v-for="(data, key) in preProcessedInterventionsData" :key="key">
+									<li v-for="(variable, key) in knobs.selectedInterventionCharts" :key="key">
+										<h5>{{ variable }}</h5>
 										<vega-chart
-											:visualization-spec="createInterventionsChart(data, node.state.endTime)"
+											are-embed-actions-visible
+											:visualization-spec="preparedInterventionsCharts[key]"
+										/>
+									</li>
+								</ul>
+							</AccordionTab>
+							<AccordionTab header="Simulation plots">
+								<ul>
+									<li v-for="(variable, key) of knobs.selectedSimulationCharts" :key="key">
+										<h5>{{ variable }}</h5>
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedCharts[key]"
 										/>
 									</li>
 								</ul>
 							</AccordionTab>
 						</Accordion>
-						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.chartConfigs"
-							:key="idx"
-							:run-results="simulationRunResults[knobs.postForecastRunId]"
-							:chartConfig="{
-								selectedRun: knobs.postForecastRunId,
-								selectedVariable: cfg
-							}"
-							has-mean-line
-							:size="chartSize"
-							@configuration-change="chartProxy.configurationChange(idx, $event)"
-							@remove="chartProxy.removeChart(idx)"
-							show-remove-button
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						/>
 					</section>
 					<div v-else-if="outputViewSelection === OutputView.Data">
 						<tera-dataset-datatable
@@ -397,7 +353,6 @@ import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
 import SelectButton from 'primevue/selectbutton';
 import Dialog from 'primevue/dialog';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -414,10 +369,11 @@ import {
 } from '@/services/model-configurations';
 import {
 	makeOptimizeJobCiemss,
-	getRunResultCiemss,
-	getRunResult
+	getRunResult,
+	parsePyCiemssMap,
+	getRunResultCSV,
+	convertToCsvAsset
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset';
 // Types:
 import {
 	ModelConfiguration,
@@ -431,8 +387,7 @@ import {
 	Intervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
-import { RunResults as SimulationRunResults } from '@/types/SimulateConfig';
+import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -443,8 +398,9 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
+import { createOptimizeChart, createOptimizeForecastChart } from '@/utils/optimize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import MultiSelect from 'primevue/multiselect';
 import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -478,8 +434,11 @@ interface BasicKnobs {
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
+	preForecastRunId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
+	selectedInterventionCharts: string[];
+	selectedSimulationCharts: string[];
 }
 
 const knobs = ref<BasicKnobs>({
@@ -488,8 +447,11 @@ const knobs = ref<BasicKnobs>({
 	solverMethod: props.node.state.solverMethod ?? '', // Currently not used.
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
+	preForecastRunId: props.node.state.preForecastRunId ?? '',
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
-	optimizationRunId: props.node.state.optimizationRunId ?? ''
+	optimizationRunId: props.node.state.optimizationRunId ?? '',
+	selectedInterventionCharts: props.node.state.selectedInterventionCharts ?? [],
+	selectedSimulationCharts: props.node.state.selectedSimulationCharts ?? []
 });
 
 // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
@@ -498,7 +460,11 @@ const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
 const outputSettingsToolTip = 'TODO';
 
-const checkbox = ref(false);
+const summaryCheckbox = ref(true);
+
+const successDisplayChartsCheckbox = ref(true);
+const interventionsDisplayChartsCheckbox = ref(true);
+const simulationDisplayChartsCheckbox = ref(true);
 
 const modelConfigName = ref<string>('');
 const modelConfigDesc = ref<string>('');
@@ -522,6 +488,7 @@ const activePolicyGroups = computed(() =>
 const inactivePolicyGroups = computed(() =>
 	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === false)
 );
+let pyciemssMap: Record<string, string> = {};
 
 const menuItems = computed(() => [
 	{
@@ -541,10 +508,6 @@ const menuItems = computed(() => [
 		}
 	}
 ]);
-
-const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const showSpinner = computed<boolean>(
 	() =>
@@ -583,13 +546,21 @@ const outputViewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
-const simulationRunResults = ref<{ [runId: string]: SimulationRunResults }>({});
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
 const modelParameterOptions = ref<ModelParameter[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
+
+const simulationChartOptions = computed(() => {
+	let params: string[] = [];
+	if (modelParameterOptions.value) params = modelParameterOptions.value.map((ele) => ele.id);
+
+	return [...params, ...modelStateAndObsOptions.value];
+});
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -794,16 +765,31 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
-	const output = await getRunResultCiemss(knobs.value.postForecastRunId);
-	simulationRunResults.value[knobs.value.postForecastRunId] = output.runResults;
+	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
+	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+
 	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(
 		knobs.value.postForecastRunId,
 		'risk.json'
 	);
 
-	simulationRawContent.value[knobs.value.postForecastRunId] = createCsvAssetFromRunResults(
-		simulationRunResults.value[knobs.value.postForecastRunId]
+	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+	pyciemssMap = parsePyCiemssMap(postResult[0]);
+
+	// FIXME: only show the post optimize data for now...
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
+		postResult,
+		Object.values(pyciemssMap)
 	);
+	runResults.value[preForecastRunId] = preResult;
+	runResults.value[postForecastRunId] = postResult;
+
+	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+	const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
+
+	runResultsSummary.value[preForecastRunId] = preResultSummary;
+	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
 	const optimzationResult = await getRunResult(
 		knobs.value.optimizationRunId,
@@ -813,7 +799,7 @@ const setOutputValues = async () => {
 };
 
 const preProcessedInterventionsData = computed<
-	Dictionary<{ name: string; value: number; time: number; phase: string }[]>
+	Dictionary<{ name: string; value: number; time: number }[]>
 >(() => {
 	const state = _.cloneDeep(props.node.state);
 
@@ -821,8 +807,7 @@ const preProcessedInterventionsData = computed<
 		ele.intervention.staticInterventions.map((intervention) => ({
 			name: ele.intervention.appliedTo,
 			value: intervention.value,
-			time: intervention.timestep,
-			phase: 'Before optimization'
+			time: intervention.timestep
 		}))
 	);
 
@@ -831,6 +816,64 @@ const preProcessedInterventionsData = computed<
 
 onMounted(async () => {
 	initialize();
+});
+
+const preparedInterventionsCharts = computed(() => {
+	const state = cloneDeep(props.node.state);
+	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
+	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+	if (!postForecastRunId || !preForecastRunId) return [];
+	const preResult = runResults.value[preForecastRunId];
+	const preResultSummary = runResultsSummary.value[preForecastRunId];
+	const postResult = runResults.value[postForecastRunId];
+	const postResultSummary = runResultsSummary.value[postForecastRunId];
+
+	return state.selectedSimulationCharts.map((variable) =>
+		createOptimizeForecastChart(
+			preResult,
+			preResultSummary,
+			postResult,
+			postResultSummary,
+			preProcessedInterventionsData.value[variable],
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				variables: [pyciemssMap[variable]],
+				statisticalVariables: [`${pyciemssMap[variable]}_mean`],
+				legend: false,
+				groupField: 'sample_id',
+				timeField: 'timepoint_id',
+				xAxisTitle: 'Time',
+				yAxisTitle: variable
+			}
+		)
+	);
+});
+
+const preparedCharts = computed(() => {
+	const state = cloneDeep(props.node.state);
+	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
+	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+	if (!postForecastRunId || !preForecastRunId) return [];
+	const preResult = runResults.value[preForecastRunId];
+	const preResultSummary = runResultsSummary.value[preForecastRunId];
+	const postResult = runResults.value[postForecastRunId];
+	const postResultSummary = runResultsSummary.value[postForecastRunId];
+	// const interventionsData = preProcessedInterventionsData.value[variable];
+
+	return state.selectedSimulationCharts.map((variable) =>
+		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			variables: [pyciemssMap[variable]],
+			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable
+		})
+	);
 });
 
 watch(
@@ -842,8 +885,11 @@ watch(
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;
+		state.preForecastRunId = knobs.value.preForecastRunId;
 		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
+		state.selectedInterventionCharts = knobs.value.selectedInterventionCharts;
+		state.selectedSimulationCharts = knobs.value.selectedSimulationCharts;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -856,10 +902,11 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 			initialize();
-			if (props.node.state.postForecastRunId !== '') {
+			if (props.node.state.postForecastRunId !== '' && props.node.state.preForecastRunId !== '') {
 				// The run has finished
 				knobs.value.optimizationRunId = props.node.state.optimizationRunId;
 				knobs.value.postForecastRunId = props.node.state.postForecastRunId;
+				knobs.value.preForecastRunId = props.node.state.preForecastRunId;
 				setOutputValues();
 			}
 		}
