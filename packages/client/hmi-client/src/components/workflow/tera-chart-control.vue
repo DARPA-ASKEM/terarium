@@ -68,7 +68,7 @@ const updateSelectedVariable = () => {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	gap:var(--gap-2);
+	gap: var(--gap-2);
 	justify-content: space-between;
 }
 </style>
