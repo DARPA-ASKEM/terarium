@@ -146,9 +146,6 @@ const optionsMenuItems = computed(() => [
 			emit('close-preview');
 		}
 	}
-
-	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
 async function updateModelContent(updatedModel: Model) {
