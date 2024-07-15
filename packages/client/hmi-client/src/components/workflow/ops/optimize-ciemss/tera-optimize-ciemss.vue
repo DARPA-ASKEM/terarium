@@ -281,7 +281,10 @@
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li v-for="(variable, key) in knobs.selectedInterventionCharts" :key="key">
+									<li
+										v-for="(variable, key) of knobs.selectedInterventionCharts"
+										:key="`intervention_${key}`"
+									>
 										<h5>{{ variable }}</h5>
 										<vega-chart
 											are-embed-actions-visible
@@ -292,7 +295,10 @@
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li v-for="(variable, key) of knobs.selectedSimulationCharts" :key="key">
+									<li
+										v-for="(variable, key) of knobs.selectedSimulationCharts"
+										:key="`simulation_${key}`"
+									>
 										<h5>{{ variable }}</h5>
 										<vega-chart
 											are-embed-actions-visible
@@ -828,7 +834,7 @@ const preparedInterventionsCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return state.selectedSimulationCharts.map((variable) =>
+	return state.selectedInterventionCharts.map((variable) =>
 		createOptimizeForecastChart(
 			preResult,
 			preResultSummary,
