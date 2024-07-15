@@ -170,6 +170,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
+import { sortDates } from '@/utils/date';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import { InterventionsOperation, InterventionsState } from './tera-interventions-operation';
 import TeraInterventionsPolicyCard from './tera-interventions-policy-card.vue';
@@ -205,9 +206,11 @@ const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
 const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
-	interventionsPolicyList.value.filter((policy) =>
-		policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
-	)
+	interventionsPolicyList.value
+		.filter((policy) =>
+			policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
+		)
+		.sort(sortDates)
 );
 const selectedOutputId = ref<string>('');
 const selectedPolicy = ref<InterventionPolicy | null>(null);
