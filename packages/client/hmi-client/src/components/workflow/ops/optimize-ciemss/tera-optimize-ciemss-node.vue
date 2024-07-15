@@ -168,10 +168,13 @@ watch(
 	() => [props.node.state.inProgressPreForecastId, props.node.state.inProgressPostForecastId],
 	async ([preSimId, postSimId]) => {
 		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
+		console.log('Pre: ', preSimId, ' Post: ', postSimId);
 		const responseList: Promise<PollerResult<any>>[] = [];
 		responseList.push(pollResult(preSimId));
 		responseList.push(pollResult(postSimId));
 		const [preResponse, postResponse] = await Promise.all(responseList);
+		console.log('Post await: ');
+		console.log('Pre Response: ', preResponse, ' Post response: ', postResponse);
 		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
