@@ -338,67 +338,6 @@ export function getInitial(model: Model, target: string): Initial | undefined {
 	}
 }
 
-// TODO: These updateMetadata functions and even the updateParameter function share similar logic and can be refactored
-/**
- * Updates the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateParameterMetadata(
-	model: Model,
-	parameterId: string,
-	key: string,
-	value: any
-) {
-	if (!model.metadata?.parameters?.[parameterId]) {
-		model.metadata ??= {};
-		model.metadata.parameters ??= {};
-		model.metadata.parameters[parameterId] ??= {};
-		model.metadata.parameters[parameterId].id = parameterId;
-	}
-	const parameterMetadata = model.metadata.parameters[parameterId];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'units') {
-		if (!parameterMetadata.units)
-			parameterMetadata.units = { expression: '', expression_mathml: '' };
-		parameterMetadata.units.expression = value;
-		parameterMetadata.units.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		parameterMetadata[key] = value;
-	}
-}
-
-/**
- * Updates the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} target - The target of the initial.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateInitialMetadata(model: Model, target: string, key: string, value: any) {
-	if (!model.metadata?.initials?.[target]) {
-		model.metadata ??= {};
-		model.metadata.initials ??= {};
-		model.metadata.initials[target] ??= {};
-		model.metadata.initials[target].id = target;
-	}
-
-	const initialMetadata = model.metadata.initials[target];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'initial') {
-		if (!initialMetadata.initial)
-			initialMetadata.initial = { expression: '', expression_mathml: '' };
-		initialMetadata.initial.expression = value;
-		initialMetadata.initial.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		initialMetadata[key] = value;
-	}
-}
-
 // cleans a model by removing distributions that are not needed
 export function cleanModel(model: Model): void {
 	const parameters: ModelParameter[] = getParameters(model);

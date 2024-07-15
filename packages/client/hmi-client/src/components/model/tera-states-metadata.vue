@@ -1,19 +1,91 @@
 <template>
 	<ul>
 		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="index">
-			<template v-if="isVirtual">
-				<tera-state-metadata-entry
-					:state="baseState"
-					is-base
-					:show-stratified-variables="toggleStates[index]"
-					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-state="updateBaseState(baseState.id, $event)"
-				/>
-				<ul v-if="toggleStates[index]" class="stratified">
+			<template v-if="isVirtual && !isEmpty(baseOptions)">
+				<section class="base">
+					<span>
+						<Button
+							:icon="baseOptions[index].showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].showChildren = !baseOptions[index].showChildren"
+						/>
+						<h6>{{ baseState.id }}</h6>
+					</span>
+					<Button
+						v-if="!baseOptions[index].isEditingChildrenUnits"
+						@click="baseOptions[index].isEditingChildrenUnits = true"
+						label="Add unit to all children"
+						text
+						size="small"
+					/>
+					<span v-else>
+						<tera-input
+							label="Unit"
+							placeholder="Add a unit"
+							v-model="baseOptions[index].childrenUnits"
+						/>
+						<Button
+							icon="pi pi-check"
+							text
+							rounded
+							size="small"
+							@click="
+								() => {
+									updateAllChildren(baseState.id, 'units', baseOptions[index].childrenUnits);
+									baseOptions[index].isEditingChildrenUnits = false;
+								}
+							"
+						/>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].isEditingChildrenUnits = false"
+						/>
+					</span>
+					<Button
+						v-if="!baseOptions[index].isEditingChildrenConcepts"
+						@click="baseOptions[index].isEditingChildrenConcepts = true"
+						label="Add concept to all children"
+						text
+						size="small"
+					/>
+					<span v-else>
+						<tera-input
+							label="Concept"
+							placeholder="Select a concept"
+							icon="pi pi-search"
+							disabled
+							v-model="baseOptions[index].childrenConcepts"
+						/>
+						<Button
+							icon="pi pi-check"
+							text
+							rounded
+							size="small"
+							@click="
+								() => {
+									updateAllChildren(baseState.id, 'concept', baseOptions[index].childrenConcepts);
+									baseOptions[index].isEditingChildrenConcepts = false;
+								}
+							"
+						/>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].isEditingChildrenConcepts = false"
+						/>
+					</span>
+				</section>
+				<ul v-if="baseOptions[index].showChildren" class="stratified">
 					<li v-for="childState in childStates" :key="childState.id">
 						<tera-state-metadata-entry
 							:state="childState"
-							is-stratified
 							@update-state="$emit('update-state', { id: childState.id, ...$event })"
 						/>
 					</li>
@@ -29,12 +101,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, computed, onMounted } from 'vue';
+import Button from 'primevue/button';
 import { Model, PetriNetState, RegNetVertex } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
 import TeraStateMetadataEntry from '@/components/model/tera-state-metadata-entry.vue';
+import TeraInput from '../widgets/tera-input.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -70,27 +145,43 @@ const stateList = computed<
 		})
 );
 
-function updateBaseState(baseId: string, event: any) {
-	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-state', { id: baseId, isMetadata: true, ...event });
-	// Cascade the change to all children
-	const targets = collapsedInitials.value.get(baseId);
-	targets?.forEach((target) => emit('update-state', { id: target, ...event }));
-}
+const baseOptions = ref<
+	{
+		showChildren: boolean;
+		isEditingChildrenUnits: boolean;
+		isEditingChildrenConcepts: boolean;
+		childrenUnits: string;
+		childrenConcepts: string;
+	}[]
+>([]);
+onMounted(() => {
+	baseOptions.value = Array.from({ length: collapsedInitials.value.size }, () => ({
+		showChildren: false,
+		isEditingChildrenUnits: false,
+		isEditingChildrenConcepts: false,
+		childrenUnits: '',
+		childrenConcepts: ''
+	}));
+});
 
-const toggleStates = ref<boolean[]>([]);
-watch(
-	() => collapsedInitials.value.size,
-	() => {
-		toggleStates.value = Array.from({ length: collapsedInitials.value.size }, () => false);
-	}
-);
+function updateAllChildren(baseId: string, key: string, value: string) {
+	if (isEmpty(value)) return;
+	const ids = collapsedInitials.value.get(baseId);
+	ids?.forEach((id) => emit('update-state', { id, key, value }));
+}
 </script>
 
 <style scoped>
 li {
 	padding-bottom: var(--gap-small);
 	border-bottom: 1px solid var(--surface-border);
+}
+
+.base,
+.base > span {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .stratified {

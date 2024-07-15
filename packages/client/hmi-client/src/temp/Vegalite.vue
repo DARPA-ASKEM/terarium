@@ -8,14 +8,17 @@
 			@update-interval-selection="debounceHandleIntervalSelect"
 		/>
 		<vega-chart :visualization-spec="spec2" />
+		<vega-chart :visualization-spec="specNew" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { debounce } from 'lodash';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import unchartedVegaTheme from './vega-theme';
+import { createForecastChart } from '@/services/charts';
+// import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
 
@@ -157,4 +160,91 @@ const handleIntervalSelect = (name: any, valueRange: any) => {
 };
 
 const debounceHandleIntervalSelect = debounce(handleIntervalSelect, 200);
+
+// Generate time series data
+const dataNew = generateSimulateData();
+const specNew = ref<any>(
+	createForecastChart(dataNew.data, dataNew.summary, [], {
+		width: 400,
+		height: 200,
+		legend: true,
+
+		variables: ['alpha', 'beta'],
+		statisticalVariables: ['alphaMean', 'betaMean'],
+		groundTruthVariables: ['alphaTrue', 'betaTrue'],
+		colorscheme: ['#F00', '#0F0', '#00F'],
+
+		timeField: 'time',
+		groupField: 'sample',
+
+		xAxisTitle: 'x-axis',
+		yAxisTitle: 'y-axis'
+	})
+);
+
+function generateSimulateData() {
+	const data: any[] = [];
+	const summary: any[] = [];
+	const truth: any[] = [];
+
+	const numSamples = 30;
+	const numSteps = 200;
+
+	for (let j = 0; j < numSteps; j++) {
+		let alphaMean = 0;
+		let betaMean = 0;
+		let gammaMean = 0;
+
+		let alphaTrue = 0.1 * (j % 3);
+		let betaTrue = 0.2 * (j % 3) - 0.1;
+		let gammaTrue = 0.1 * (j % 5);
+
+		for (let i = 0; i < numSamples; i++) {
+			const alpha = Math.sin((5 * j * Math.PI) / 180) + 0.2 * Math.random() + 0.06 * i;
+			const beta = Math.cos((5 * j * Math.PI) / 180) + 0.2 * Math.random() - 0.07 * i;
+			const gamma = 0.07 * (-0.5 * (j % 25) + Math.random() * (j % 25));
+
+			data.push({
+				sample: i,
+				time: j,
+				alpha: alpha,
+				beta: beta,
+				gamma: gamma
+			});
+
+			// Summary
+			alphaMean += alpha;
+			betaMean += beta;
+			gammaMean += gamma;
+		}
+		alphaMean /= numSamples;
+		betaMean /= numSamples;
+		gammaMean /= numSamples;
+
+		truth.push({
+			time: j,
+			alphaTrue: alphaTrue,
+			betaTrue: betaTrue,
+			gammaTrue: gammaTrue
+		});
+
+		summary.push({
+			time: j,
+			alphaMean: alphaMean,
+			betaMean: betaMean,
+			gammaMean: gammaMean
+		});
+	}
+	return { data, summary, truth };
+}
+
+onMounted(async () => {
+	// Test
+	// const abc = await createLLMSummary('what is 1 + 2 + 3');
+	// console.log('abc', abc.additionalProperties.summaryId);
+	// const summaries = await getSummaries(
+	// 	['754f7222-35a6-47f2-8487-06e16330a237', 'd61f4a4e-577a-4f98-aa64-8ba2e0f15f24', 'c98a9a61-461b-41c2-965b-833a93d63f86']
+	// );
+	// console.log('!!', summaries);
+});
 </script>

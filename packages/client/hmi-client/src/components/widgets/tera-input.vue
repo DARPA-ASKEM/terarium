@@ -2,6 +2,7 @@
 	<div class="flex" :label="label" :title="title">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+			<i v-if="icon" :class="icon" />
 			<input
 				@click.stop
 				ref="inputField"
@@ -27,6 +28,7 @@ const props = defineProps<{
 	modelValue: string | number | undefined;
 	label?: string;
 	title?: string;
+	icon?: string;
 	errorMessage?: string;
 	disabled?: boolean;
 	type?: InputTypeHTMLAttribute | 'nist';
@@ -137,7 +139,12 @@ main {
 	&.error {
 		border-color: var(--error-border-color);
 	}
-	input {
+
+	& > i {
+		margin-right: var(--gap-1);
+	}
+
+	& > input {
 		min-width: 0;
 	}
 }

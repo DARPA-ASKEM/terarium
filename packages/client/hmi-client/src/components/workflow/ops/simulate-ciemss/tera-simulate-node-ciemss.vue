@@ -1,17 +1,11 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<tera-simulate-chart
-				v-for="(config, idx) of props.node.state.chartConfigs"
-				:key="idx"
-				:run-results="runResults[selectedRunId]"
-				:chartConfig="{
-					selectedRun: selectedRunId,
-					selectedVariable: config
-				}"
-				:size="{ width: 180, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			<vega-chart
+				v-for="(_config, index) of props.node.state.chartConfigs"
+				:key="index"
+				:are-embed-actions-visible="false"
+				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
 		<tera-progress-spinner
@@ -35,25 +29,24 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
-	getRunResultCiemss,
-	getRunResult,
+	getRunResultCSV,
 	pollAction,
-	getSimulation
+	getSimulation,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
-import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -61,11 +54,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+
+let pyciemssMap: Record<string, string> = {};
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -114,9 +110,7 @@ const processResult = async (runId: string) => {
 		chartProxy.addChart();
 	}
 
-	// FIXME: Test summarization
-	const summaryStr = await getRunResult(runId, 'result_summary.csv');
-	const summaryData = csvParse(summaryStr);
+	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -153,6 +147,28 @@ Provide a summary in 100 words or less.
 	});
 };
 
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(result, resultSummary, [], {
+			width: 150,
+			height: 120,
+			variables: config.map((d) => pyciemssMap[d]),
+			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
+
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: ''
+		})
+	);
+});
+
 watch(
 	() => props.node.state.inProgressSimulationId,
 	async (id) => {
@@ -178,8 +194,12 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value);
-		runResults.value[selectedRunId.value] = output.runResults;
+		const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(result[0]);
+		runResults.value[selectedRunId.value] = result;
+
+		const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );
