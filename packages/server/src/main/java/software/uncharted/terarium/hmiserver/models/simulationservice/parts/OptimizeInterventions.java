@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 // Interventions applied by the user within the optimization box.
-public class PolicyInterventions {
+public class OptimizeInterventions {
 	// This denotes whether the intervention is on a start date, or a parameter value.
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L99
 	private String interventionType;
@@ -26,6 +26,14 @@ public class PolicyInterventions {
 	@TSOptional
 	@JsonAlias("start_time")
 	private List<Integer> startTime;
+
+	@TSOptional
+	@JsonAlias("objective_function_option")
+	private List<String> objectiveFunctionOption;
+
+	@TSOptional
+	@JsonAlias("initial_guess")
+	private List<Double> initialGuess;
 
 	@Override
 	public String toString() {
