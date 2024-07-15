@@ -300,13 +300,6 @@ const preparedCharts = computed(() => {
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 
-	// let legendLabelExpr = '';
-	// Object.keys(pyciemssMap).forEach(key => {
-	// 	legendLabelExpr += `datum.value === '${pyciemssMap[key]}_mean' ? '${key}' : `;
-	// });
-	// legendLabelExpr += ' \'other\'';
-	// console.log('expression', legendLabelExpr);
-
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
@@ -324,7 +317,7 @@ const preparedCharts = computed(() => {
 
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
+			xAxisTitle: 'Time',
 			yAxisTitle: ''
 		})
 	);
