@@ -20,6 +20,7 @@ interface ForecastChartOptions {
 	timeField: string;
 	groupField: string;
 
+	title?: string;
 	xAxisTitle: string;
 	yAxisTitle: string;
 
@@ -29,16 +30,37 @@ interface ForecastChartOptions {
 
 /**
  * Generate Vegalite specs for simulation/forecast charts
+ *
+ * Data comes in as a list of multi-variate objects:
+ *   [ { time: 1, var1: 0.2, var2: 0.5, var3: 0.1 }, ... ]
+ *
+ * This then transformed by the fold-transform to be something like:
+ *   [
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var1', value: 0.2 },
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var2', value: 0.5 },
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var3', value: 0.1 },
+ *     ...
+ *   ]
+ *
+ * Then we use the new 'var' and 'value' columns to render timeseries
  * */
 export const createForecastChart = (
-	sampleRunData: any[],
-	statisticData: any[],
-	groundTruthData: any[],
+	sampleRunData: Record<string, any>[],
+	statisticData: Record<string, any>[],
+	groundTruthData: Record<string, any>[],
 	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal'; // Adjust font weight here
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
 
 	const xaxis = {
 		domainColor: axisColor,
@@ -54,13 +76,7 @@ export const createForecastChart = (
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: null /* {
-			text: 'Simulation chart',
-			anchor: 'start',
-			subtitle: ' ',
-			subtitlePadding: 4
-		},
-	  */,
+		title: titleObj,
 		description: '',
 		width: options.width,
 		height: options.height,
