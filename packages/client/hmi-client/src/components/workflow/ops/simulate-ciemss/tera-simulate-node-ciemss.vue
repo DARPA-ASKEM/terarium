@@ -29,15 +29,19 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResult, pollAction, getSimulation } from '@/services/models/simulation-service';
+import {
+	getRunResultCSV,
+	pollAction,
+	getSimulation,
+	parsePyCiemssMap
+} from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, parsePyCiemssMap } from '@/components/workflow/util';
+import { chartActionsProxy } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -106,8 +110,7 @@ const processResult = async (runId: string) => {
 		chartProxy.addChart();
 	}
 
-	const summaryStr = await getRunResult(runId, 'result_summary.csv');
-	const summaryData = csvParse(summaryStr);
+	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -152,7 +155,7 @@ const preparedCharts = computed(() => {
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(result, resultSummary, [], {
-			width: 140,
+			width: 150,
 			height: 120,
 			variables: config.map((d) => pyciemssMap[d]),
 			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
@@ -191,18 +194,11 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
-		const result = csvParse(resultRaw, autoType);
+		const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
 		pyciemssMap = parsePyCiemssMap(result[0]);
 		runResults.value[selectedRunId.value] = result;
 
-		const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
-		const resultSummary = csvParse(resultSummaryRaw, autoType);
-
-		// FIXME: summary need to have time
-		resultSummary.forEach((d: any, idx) => {
-			d.timepoint_id = idx;
-		});
+		const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
 		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }

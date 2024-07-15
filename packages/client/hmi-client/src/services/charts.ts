@@ -98,7 +98,7 @@ export const createForecastChart = (
 						domain: sampleVariables,
 						range: options.colorscheme || CATEGORICAL_SCHEME
 					},
-					legend: false // Turn this off all the time, too noisy with samples
+					legend: false // No legend for sampling-layer, too noisy
 				},
 				detail: { field: options.groupField, type: 'nominal' },
 				strokeWidth: { value: 1 },

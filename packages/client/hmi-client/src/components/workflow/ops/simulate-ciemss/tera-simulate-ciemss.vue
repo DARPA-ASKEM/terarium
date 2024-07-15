@@ -164,7 +164,6 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse, autoType } from 'd3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -172,14 +171,14 @@ import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
-	getRunResult,
+	getRunResultCSV,
+	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob
 } from '@/services/models/simulation-service';
 import {
 	chartActionsProxy,
 	drilldownChartSize,
 	nodeMetadata,
-	parsePyCiemssMap,
 	convertToCsvAsset
 } from '@/components/workflow/util';
 
@@ -368,19 +367,12 @@ const makeForecastRequest = async () => {
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId] && rawContent.value[runId]) return;
 
-	const resultRaw = await getRunResult(selectedRunId.value, 'result.csv');
-	const result = csvParse(resultRaw, autoType);
+	const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(result[0]);
 	runResults.value[selectedRunId.value] = result;
 	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
 
-	const resultSummaryRaw = await getRunResult(selectedRunId.value, 'result_summary.csv');
-	const resultSummary = csvParse(resultSummaryRaw, autoType);
-
-	// FIXME: summary need to have time
-	resultSummary.forEach((d: any, idx) => {
-		d.timepoint_id = idx;
-	});
+	const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
 	runResultsSummary.value[selectedRunId.value] = resultSummary;
 };
 

@@ -5,35 +5,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
 
-// FIXME: PyCIEMSS renames state and parameters, should consolidate upstream
-export const parsePyCiemssMap = (obj: Record<string, any>) => {
-	const keys = Object.keys(obj);
-	const result: Record<string, string> = {};
-
-	keys.forEach((k) => {
-		if (k.endsWith('_observable_state')) {
-			const newKey = k.replace(/_observable_state$/, '');
-			result[newKey] = k;
-			return;
-		}
-
-		if (k.endsWith('_state')) {
-			const newKey = k.replace(/_state$/, '');
-			result[newKey] = k;
-			return;
-		}
-
-		if (k.startsWith('persistent_') && k.endsWith('_param')) {
-			const newKey = k.replace(/_param$/, '').replace(/^persistent_/, '');
-			result[newKey] = k;
-			return;
-		}
-		result[k] = k;
-	});
-
-	return result;
-};
-
 /**
  * FIXME: This overlaps somewhat with services/dataset#createCsvAssetFromRunResults,
  *

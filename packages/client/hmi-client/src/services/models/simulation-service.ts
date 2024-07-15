@@ -1,4 +1,4 @@
-import { csvParse } from 'd3';
+import { csvParse, autoType } from 'd3';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
@@ -114,6 +114,26 @@ export async function getRunResult(runId: string, filename: string) {
 	} catch (err) {
 		logger.error(err);
 		return null;
+	}
+}
+
+export async function getRunResultCSV(runId: string, filename: string) {
+	try {
+		const resp = await API.get(`simulations/${runId}/result`, {
+			params: { filename }
+		});
+		const output = csvParse(resp.data, autoType);
+
+		// FIXME: summary need to have time
+		if (filename === 'result_summary.csv') {
+			output.forEach((d: any, idx) => {
+				d.timepoint_id = idx;
+			});
+		}
+		return output;
+	} catch (err) {
+		logger.error(err);
+		return [{}];
 	}
 }
 
@@ -313,3 +333,32 @@ export async function pollAction(id: string) {
 	}
 	return { data: simResponse, progress: null, error: null };
 }
+
+// FIXME: PyCIEMSS renames state and parameters, should consolidate upstream in pyciemss-service
+export const parsePyCiemssMap = (obj: Record<string, any>) => {
+	const keys = Object.keys(obj);
+	const result: Record<string, string> = {};
+
+	keys.forEach((k) => {
+		if (k.endsWith('_observable_state')) {
+			const newKey = k.replace(/_observable_state$/, '');
+			result[newKey] = k;
+			return;
+		}
+
+		if (k.endsWith('_state')) {
+			const newKey = k.replace(/_state$/, '');
+			result[newKey] = k;
+			return;
+		}
+
+		if (k.startsWith('persistent_') && k.endsWith('_param')) {
+			const newKey = k.replace(/_param$/, '').replace(/^persistent_/, '');
+			result[newKey] = k;
+			return;
+		}
+		result[k] = k;
+	});
+
+	return result;
+};
