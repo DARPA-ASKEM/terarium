@@ -66,7 +66,7 @@ const parameterList = computed<
 				})
 				.filter(Boolean) as ModelVariable[];
 
-			const baseParameter = isParent ? { id } : parameters.value.find((p) => p.id === id);
+			const baseParameter = parameters.value.find((p) => p.id === id);
 			const base: ModelVariable =
 				isParent || !baseParameter
 					? { id }

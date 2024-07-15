@@ -37,29 +37,31 @@ const stateList = computed<
 		.map((id) => {
 			const childTargets = collapsedInitials.value.get(id) ?? [];
 			const isParent = childTargets.length > 1;
-			const children: ModelVariable[] = childTargets
+			const children = childTargets
 				.map((childTarget) => {
 					const s = states.value.find((state) => state.id === childTarget);
+					if (!s) return null;
 					return {
-						id: s?.id ?? '',
-						name: s?.name ?? '',
-						description: s?.description ?? '',
-						grounding: s?.grounding,
-						unitExpression: s?.initial?.expression ?? ''
+						id: s.id,
+						name: s.name,
+						description: '', // s.description doesn't exist yet
+						grounding: s.grounding,
+						unitExpression: s.initial?.expression
 					};
 				})
-				.filter(Boolean);
+				.filter(Boolean) as ModelVariable[];
 
-			const baseState = isParent ? { id } : states.value.find((s: any) => s.id === id);
-			const base: ModelVariable = isParent
-				? { id: baseState.id ?? '' }
-				: {
-						id: baseState?.id ?? '',
-						name: baseState?.name ?? '',
-						description: baseState?.description ?? '',
-						grounding: baseState?.grounding,
-						unitExpression: baseState?.initial?.expression ?? ''
-					};
+			const baseState = states.value.find((s) => s.id === id);
+			const base: ModelVariable =
+				isParent || !baseState
+					? { id }
+					: {
+							id,
+							name: baseState.name,
+							description: '', // baseState.description doesn't exist yet
+							grounding: baseState.grounding,
+							unitExpression: baseState.initial?.expression
+						};
 
 			return { base, children, isParent };
 		})
