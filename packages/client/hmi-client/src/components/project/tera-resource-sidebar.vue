@@ -54,7 +54,7 @@
 						<div class="flex align-items-center w-full">
 							<template v-if="type === AssetType.Document">Documents</template>
 							<template v-else>{{ capitalize(type) }}</template>
-							<aside>({{ assetItems.size }})</aside>
+							<aside>({{ assetItems.length }})</aside>
 						</div>
 						<!-- New asset buttons for some types -->
 						<Button
@@ -119,7 +119,7 @@
 						"
 					/>
 				</Button>
-				<section v-if="assetItems.size == 0" class="empty-resource">Empty</section>
+				<section v-if="assetItems.length == 0" class="empty-resource">Empty</section>
 			</AccordionTab>
 		</Accordion>
 
