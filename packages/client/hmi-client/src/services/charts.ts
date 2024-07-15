@@ -183,11 +183,11 @@ export const createForecastChart = (
 		};
 
 		if (options.legend === true) {
-			console.log('in here');
 			layerSpec.encoding.color.legend = {
 				title: { value: 'Stat. Summary' },
 				strokeColor: null,
-				padding: { value: 5 }
+				padding: { value: 5 },
+				orient: 'bottom'
 			};
 
 			if (labelExpr.length > 0) {
