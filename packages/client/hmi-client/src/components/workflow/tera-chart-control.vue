@@ -62,7 +62,7 @@ const updateSelectedVariable = () => {
 
 .multiselect-title {
 	font-size: smaller;
-	font-weight: 700;
+	font-weight: var(--font-weight-semibold);
 }
 .multiselect-container {
 	display: flex;
