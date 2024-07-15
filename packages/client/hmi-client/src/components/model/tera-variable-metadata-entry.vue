@@ -1,16 +1,16 @@
 <template>
 	<section>
-		<h6>{{ id }}</h6>
+		<h6>{{ variable.id }}</h6>
 		<tera-input
 			title="Name"
 			placeholder="Add a name"
-			:model-value="name ?? ''"
+			:model-value="variable.name ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
 		/>
 		<tera-input
 			label="Unit"
 			placeholder="Add a unit"
-			:model-value="unitExpression ?? ''"
+			:model-value="variable.unitExpression ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'unitExpression', value: $event })"
 		/>
 		<!--TODO: Add support for editing concepts-->
@@ -18,16 +18,16 @@
 			label="Concept"
 			placeholder="Select a concept"
 			icon="pi pi-search"
-			disabled
+			:disabled="disabledInputs?.includes('concept')"
 			:model-value="''"
 		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
-			:model-value="description ?? ''"
+			:model-value="variable.description ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'description', value: $event })"
-			:disabled="description === undefined"
+			:disabled="disabledInputs?.includes('description')"
 		/>
 	</section>
 </template>
@@ -42,13 +42,12 @@ import type { ModelVariable } from '@/types/Model';
 // 		getCurieFromGroundingIdentifier(grounding.identifiers)
 // 	)
 
-const props = defineProps<{
+defineProps<{
 	variable: ModelVariable;
+	disabledInputs?: string[];
 }>();
 
 defineEmits(['update-variable']);
-
-const { id, name, description, unitExpression } = props.variable; // grounding,
 </script>
 
 <style scoped>

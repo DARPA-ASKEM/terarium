@@ -3,6 +3,7 @@
 		:model="model"
 		:variable-list="stateList"
 		:collapsed-variables="collapsedInitials"
+		:disabled-inputs="['concept', 'description']"
 		@update-variable="emit('update-state', $event)"
 	/>
 </template>
@@ -51,13 +52,15 @@ const stateList = computed<
 				.filter(Boolean);
 
 			const baseState = isParent ? { id } : states.value.find((s: any) => s.id === id);
-			const base = {
-				id: baseState?.id ?? '',
-				name: baseState?.name ?? '',
-				description: baseState?.description ?? '',
-				grounding: baseState?.grounding,
-				unitExpression: baseState?.initial?.expression ?? ''
-			};
+			const base = isParent
+				? { id: baseState.id ?? '' }
+				: {
+						id: baseState?.id ?? '',
+						name: baseState?.name ?? '',
+						description: baseState?.description ?? '',
+						grounding: baseState?.grounding,
+						unitExpression: baseState?.initial?.expression ?? ''
+					};
 
 			return { base, children, isParent };
 		})

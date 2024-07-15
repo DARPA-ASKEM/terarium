@@ -3,6 +3,7 @@
 		:model="model"
 		:variable-list="parameterList"
 		:collapsed-variables="collapsedParameters"
+		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id) => (matrixModalId = id)"
 		@update-variable="emit('update-parameter', $event)"
@@ -55,6 +56,7 @@ const parameterList = computed<
 			const children = childIds
 				.map((childId) => {
 					const p = parameters.value.find((param) => param.id === childId);
+					// console.log(p, p?.units?.expression ?? '');
 					return {
 						id: p?.id ?? '',
 						name: p?.name ?? '',
@@ -66,13 +68,15 @@ const parameterList = computed<
 				.filter(Boolean) as ModelVariable[];
 
 			const baseParameter = isParent ? { id } : parameters.value.find((p) => p.id === id);
-			const base = {
-				id: baseParameter?.id ?? '',
-				name: baseParameter?.name ?? '',
-				description: baseParameter?.description ?? '',
-				grounding: baseParameter?.grounding,
-				unitExpression: baseParameter?.units?.expression ?? ''
-			};
+			const base = isParent
+				? { id: baseParameter?.id ?? '' }
+				: {
+						id: baseParameter?.id ?? '',
+						name: baseParameter?.name ?? '',
+						description: baseParameter?.description ?? '',
+						grounding: baseParameter?.grounding,
+						unitExpression: baseParameter?.units?.expression ?? ''
+					};
 
 			return { base, children, isParent };
 		})

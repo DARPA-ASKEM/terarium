@@ -103,6 +103,7 @@
 					<li v-for="(child, index) in children" :key="index">
 						<tera-variable-metadata-entry
 							:variable="child"
+							:disabled-inputs="disabledInputs"
 							@update-variable="$emit('update-variable', { id: child.id, ...$event })"
 						/>
 					</li>
@@ -111,6 +112,7 @@
 			<tera-variable-metadata-entry
 				v-else
 				:variable="base"
+				:disabled-inputs="disabledInputs"
 				@update-variable="$emit('update-variable', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -134,6 +136,7 @@ const props = defineProps<{
 		isParent: boolean;
 	}[];
 	collapsedVariables: Map<string, string[]>;
+	disabledInputs?: string[];
 	showMatrix?: boolean;
 }>();
 

@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
@@ -207,27 +206,28 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 }
 
 export function updateParameter(model: Model, id: string, key: string, value: any) {
-	function updateProperty(obj: ModelParameter) {
+	function updateParameterProperty(p: ModelParameter) {
 		// TODO: Add support for editing concept/grounding
+		// Consider checking if the key passed is a valid property within the acceptable types?
 		if (key === 'unitExpression') {
-			if (!obj.units?.expression) obj.units = { expression: '', expression_mathml: '' };
-			obj.units.expression = value;
-			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else if (key in obj) {
-			obj[key] = value;
+			if (!p.units) p.units = { expression: '', expression_mathml: '' };
+			p.units.expression = value;
+			p.units.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			p[key] = value;
 		}
 	}
 
 	const parameters = getParameters(model);
 	const parameter = parameters.find((p: ModelParameter) => p.id === id);
 	if (!parameter) return;
-	updateProperty(parameter);
+	updateParameterProperty(parameter);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
 	const auxiliary = auxiliaries.find((a) => a.id === id);
 	if (!auxiliary) return;
-	updateProperty(auxiliary);
+	updateParameterProperty(auxiliary);
 }
 
 // Gets states, vertices, stocks
@@ -246,20 +246,21 @@ export function getStates(model: Model): any[] {
 }
 
 export function updateState(model: Model, id: string, key: string, value: any) {
-	function updateProperty(obj: PetriNetState & RegNetVertex) {
-		// TODO: Add support for editing concept/grounding
+	function updateStateProperty(s: PetriNetState & RegNetVertex) {
+		// TODO: Add support for editing concept/grounding and description
+		// Consider checking if the key passed is a valid property within the acceptable types?
 		if (key === 'unitExpression') {
-			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
-			obj.initial.expression = value;
-			obj.initial.expression_mathml = `<ci>${value}</ci>`;
-		} else if (key in obj) {
-			obj[key] = value;
+			if (!s.initial) s.initial = { expression: '', expression_mathml: '' };
+			s.initial.expression = value;
+			s.initial.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			s[key] = value;
 		}
 	}
 	const states = getStates(model);
 	const state = states.find((i: any) => i.id === id);
 	if (!state) return;
-	updateProperty(state);
+	updateStateProperty(state);
 }
 
 /**
