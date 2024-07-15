@@ -22,6 +22,11 @@
 			:disabled="disabledInputs?.includes('concept')"
 			:model-value="''"
 		/>
+		<katex-element
+			v-if="variable.expression"
+			:expression="variable.expression"
+			:throw-on-error="false"
+		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			title="Description"

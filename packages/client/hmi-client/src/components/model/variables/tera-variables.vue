@@ -101,7 +101,7 @@
 				</section>
 				<ul v-if="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
-						<tera-variable-metadata-entry
+						<tera-variable-entry
 							:variable="child"
 							:disabled-inputs="disabledInputs"
 							@update-variable="$emit('update-variable', { id: child.id, ...$event })"
@@ -109,7 +109,7 @@
 					</li>
 				</ul>
 			</template>
-			<tera-variable-metadata-entry
+			<tera-variable-entry
 				v-else
 				:variable="base"
 				:disabled-inputs="disabledInputs"
@@ -123,9 +123,9 @@
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
 import { ModelVariable } from '@/types/Model';
-import TeraVariableMetadataEntry from '@/components/model/tera-variable-metadata-entry.vue';
+import TeraVariableEntry from '@/components/model/variables/tera-variable-entry.vue';
 import Button from 'primevue/button';
-import TeraInput from '../widgets/tera-input.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
 	variableList: {

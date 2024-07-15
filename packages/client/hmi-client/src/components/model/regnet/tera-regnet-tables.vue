@@ -63,7 +63,7 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<tera-parameters-metadata
+			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
@@ -95,7 +95,7 @@ import type {
 	MiraTemplateParams,
 	ObservableSummary
 } from '@/model-representation/mira/mira-common';
-import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
+import TeraParameters from '@/components/model/variables/tera-parameters.vue';
 
 const props = defineProps<{
 	model: Model;

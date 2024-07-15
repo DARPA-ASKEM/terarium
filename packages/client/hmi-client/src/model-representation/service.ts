@@ -264,6 +264,13 @@ export function updateState(model: Model, id: string, key: string, value: any) {
 	updateStateProperty(state);
 }
 
+export function updateObservable(model: Model, id: string, key: string, value: any) {
+	const observables = model?.semantics?.ode?.observables ?? [];
+	const observable = observables.find((o) => o.id === id);
+	if (!observable) return;
+	observable[key] = value;
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.

@@ -4,11 +4,11 @@
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
-		:observable-summary="observableSummary"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
-		@update-state="onUpdateState"
-		@update-parameter="onUpdateParameter"
+		@update-state="(e: Event) => onUpdate('state', e)"
+		@update-parameter="(e: Event) => onUpdate('parameter', e)"
+		@update-observable="(e: Event) => onUpdate('observable', e)"
 	/>
 </template>
 
@@ -21,11 +21,7 @@ import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
-import {
-	MiraModel,
-	MiraTemplateParams,
-	ObservableSummary
-} from '@/model-representation/mira/mira-common';
+import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { updateState, updateParameter } from '@/model-representation/service';
 
@@ -38,7 +34,6 @@ const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
-const observableSummary = ref<ObservableSummary>({});
 const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
@@ -57,21 +52,27 @@ const tables = computed(() => {
 });
 
 // states don't have units yet and don't worry about concept yet
-function onUpdateState(event: any) {
+function onUpdate(property: string, event: any) {
 	const { id, key, value } = event;
-	updateState(transientModel.value, id, key, value);
-}
-
-function onUpdateParameter(event: any) {
-	const { id, key, value } = event;
-	updateParameter(transientModel.value, id, key, value);
+	switch (property) {
+		case 'state':
+			updateState(transientModel.value, id, key, value);
+			break;
+		case 'parameter':
+			updateParameter(transientModel.value, id, key, value);
+			break;
+		case 'observable':
+			updateParameter(transientModel.value, id, key, value);
+			break;
+		default:
+			break;
+	}
 }
 
 function updateMMT() {
 	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-		observableSummary.value = response.observable_summary;
 	});
 }
 

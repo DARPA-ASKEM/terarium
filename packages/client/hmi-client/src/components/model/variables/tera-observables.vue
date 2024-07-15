@@ -1,5 +1,5 @@
 <template>
-	<tera-variables-metadata
+	<tera-variables
 		:variable-list="observablesList"
 		:disabled-inputs="['concept', 'description', 'unitExpression']"
 		@update-observable="emit('update-observable', $event)"
@@ -10,14 +10,13 @@
 import { computed } from 'vue';
 import { ModelVariable } from '@/types/Model';
 import { Model, Observable } from '@/types/Types';
-import { ObservableSummary, MiraModel } from '@/model-representation/mira/mira-common';
-import TeraVariablesMetadata from './tera-variables-metadata.vue';
+import { MiraModel } from '@/model-representation/mira/mira-common';
+import TeraVariables from '@/components/model/variables/tera-variables.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	observables: Observable[];
-	observableSummary: ObservableSummary;
 }>();
 
 const emit = defineEmits(['update-observable']);
@@ -32,6 +31,7 @@ const observablesList = computed<
 	props.observables.map((observable) => {
 		const { id, name, expression } = observable;
 		return {
+			// Observables are missing units and description
 			base: { id, name, expression, expression_mathml: observable.expression_mathml },
 			// Observables can't be stratified therefore don't have children
 			children: [],

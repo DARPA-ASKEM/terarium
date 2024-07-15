@@ -4,7 +4,7 @@
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
 			</template>
-			<tera-states-metadata
+			<tera-states
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
@@ -15,7 +15,7 @@
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
 			</template>
-			<tera-parameters-metadata
+			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
@@ -144,13 +144,13 @@ import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
 import type {
 	MiraModel,
 	MiraTemplateParams,
 	ObservableSummary
 } from '@/model-representation/mira/mira-common';
-import TeraParametersMetadata from '../tera-parameters-metadata.vue';
+import TeraStates from '@/components/model/variables/tera-states.vue';
+import TeraParameters from '@/components/model/variables/tera-parameters.vue';
 
 const props = defineProps<{
 	model: Model;

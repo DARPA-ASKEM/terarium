@@ -4,7 +4,7 @@
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
-			<tera-states-metadata
+			<tera-states
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
@@ -15,7 +15,7 @@
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 			</template>
-			<tera-parameters-metadata
+			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
@@ -27,34 +27,13 @@
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<tera-observables-metadata
+			<tera-observables
 				v-if="!isEmpty(observables)"
 				:model="model"
 				:mmt="mmt"
 				:observables="observables"
-				:observable-summary="observableSummary"
-				@update-variable="emit('update-parameter', $event)"
+				@update-variable="emit('update-observable', $event)"
 			/>
-			<!-- <DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="name" header="Name" />
-				<Column field="expression" header="Expression">
-					<template #body="{ data }">
-						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
-							:throw-on-error="false"
-						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable> -->
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -131,25 +110,20 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
-import type {
-	MiraModel,
-	MiraTemplateParams,
-	ObservableSummary
-} from '@/model-representation/mira/mira-common';
-import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
-import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
-import TeraObservablesMetadata from '@/components/model/tera-observables-metadata.vue';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import TeraStates from '@/components/model/variables/tera-states.vue';
+import TeraParameters from '@/components/model/variables/tera-parameters.vue';
+import TeraObservables from '@/components/model/variables/tera-observables.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
-	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-state', 'update-parameter']);
+const emit = defineEmits(['update-model', 'update-state', 'update-parameter', 'update-observable']);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
