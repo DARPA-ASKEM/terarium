@@ -123,13 +123,11 @@
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
 import { ModelVariable } from '@/types/Model';
-import { Model } from '@/types/Types';
 import TeraVariableMetadataEntry from '@/components/model/tera-variable-metadata-entry.vue';
 import Button from 'primevue/button';
 import TeraInput from '../widgets/tera-input.vue';
 
 const props = defineProps<{
-	model: Model;
 	variableList: {
 		base: ModelVariable;
 		children: ModelVariable[];

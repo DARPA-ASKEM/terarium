@@ -231,8 +231,8 @@ export function updateParameter(model: Model, id: string, key: string, value: an
 	updateParameterProperty(auxiliary);
 }
 
-// Gets states, vertices, stocks
-export function getStates(model: Model): any[] {
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:

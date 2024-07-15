@@ -1,6 +1,5 @@
 <template>
 	<tera-variables-metadata
-		:model="model"
 		:variable-list="parameterList"
 		:collapsed-variables="collapsedParameters"
 		:disabled-inputs="['concept']"
@@ -56,27 +55,28 @@ const parameterList = computed<
 			const children = childIds
 				.map((childId) => {
 					const p = parameters.value.find((param) => param.id === childId);
-					// console.log(p, p?.units?.expression ?? '');
+					if (!p) return null;
 					return {
-						id: p?.id ?? '',
-						name: p?.name ?? '',
-						description: p?.description ?? '',
-						grounding: p?.grounding,
-						unitExpression: p?.units?.expression ?? ''
+						id: p.id,
+						name: p.name,
+						description: p.description,
+						grounding: p.grounding,
+						unitExpression: p.units?.expression
 					};
 				})
 				.filter(Boolean) as ModelVariable[];
 
-			const baseParameter = isParent ? { id } : parameters.value.find((p) => p.id === id);
-			const base = isParent
-				? { id: baseParameter?.id ?? '' }
-				: {
-						id: baseParameter?.id ?? '',
-						name: baseParameter?.name ?? '',
-						description: baseParameter?.description ?? '',
-						grounding: baseParameter?.grounding,
-						unitExpression: baseParameter?.units?.expression ?? ''
-					};
+			const baseParameter = parameters.value.find((p) => p.id === id);
+			const base: ModelVariable =
+				isParent || !baseParameter
+					? { id }
+					: {
+							id,
+							name: baseParameter.name,
+							description: baseParameter.description,
+							grounding: baseParameter.grounding,
+							unitExpression: baseParameter.units?.expression
+						};
 
 			return { base, children, isParent };
 		})

@@ -12,6 +12,7 @@
 			placeholder="Add a unit"
 			:model-value="variable.unitExpression ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'unitExpression', value: $event })"
+			:disabled="disabledInputs?.includes('unitExpression')"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input
