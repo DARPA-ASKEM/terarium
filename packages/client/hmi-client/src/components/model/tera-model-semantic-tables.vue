@@ -4,6 +4,7 @@
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
+		:observable-summary="observableSummary"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
 		@update-state="onUpdateState"
@@ -20,7 +21,11 @@ import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
 import TeraStockflowTables from '@/components/model/stockflow/tera-stockflow-tables.vue';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import { updateState, updateParameter } from '@/model-representation/service';
 
@@ -33,6 +38,7 @@ const emit = defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
+const observableSummary = ref<ObservableSummary>({});
 const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
@@ -65,6 +71,7 @@ function updateMMT() {
 	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
+		observableSummary.value = response.observable_summary;
 	});
 }
 

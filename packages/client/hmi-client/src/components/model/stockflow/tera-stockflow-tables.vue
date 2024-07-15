@@ -145,13 +145,18 @@ import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import TeraParametersMetadata from '../tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 

@@ -90,13 +90,18 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 

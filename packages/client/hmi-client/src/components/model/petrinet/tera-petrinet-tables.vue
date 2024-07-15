@@ -27,7 +27,14 @@
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
+			<tera-observables-metadata
+				v-if="!isEmpty(observables)"
+				:model="model"
+				:observables="observables"
+				:observable-summary="observableSummary"
+				@update-variable="emit('update-parameter', $event)"
+			/>
+			<!-- <DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
 						<span class="latex-font">
@@ -46,13 +53,13 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-			</DataTable>
+			</DataTable> -->
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
+			<!-- <DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
 						<span class="latex-font">
@@ -85,7 +92,7 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-			</DataTable>
+			</DataTable> -->
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -102,7 +109,7 @@
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
+			<!-- <DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
 						<span class="latex-font">
@@ -111,7 +118,7 @@
 					</template>
 				</Column>
 				<Column field="units.expression" header="Unit" />
-			</DataTable>
+			</DataTable> -->
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -123,17 +130,21 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
-import TeraParametersMetadata from '@/components/model//tera-parameters-metadata.vue';
+import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
+import TeraObservablesMetadata from '@/components/model/tera-observables-metadata.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 
