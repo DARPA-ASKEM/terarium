@@ -2,10 +2,10 @@
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
 			<vega-chart
-				v-for="(_config, idx) of props.node.state.chartConfigs"
-				:key="idx"
+				v-for="(_config, index) of props.node.state.chartConfigs"
+				:key="index"
 				:are-embed-actions-visible="false"
-				:visualization-spec="preparedCharts[idx]"
+				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
 		<tera-progress-spinner

@@ -121,17 +121,17 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, idx) of props.node.state.chartConfigs" :key="idx">
+						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:variables="Object.keys(pyciemssMap)"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
 								:show-remove-button="true"
-								@configuration-change="chartProxy.configurationChange(idx, $event)"
-								@remove="chartProxy.removeChart(idx)"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@remove="chartProxy.removeChart(index)"
 							/>
 							<vega-chart
 								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[idx]"
+								:visualization-spec="preparedCharts[index]"
 							/>
 						</template>
 
