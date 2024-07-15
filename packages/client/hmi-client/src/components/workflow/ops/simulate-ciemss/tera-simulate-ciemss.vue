@@ -300,6 +300,18 @@ const preparedCharts = computed(() => {
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 
+	// let legendLabelExpr = '';
+	// Object.keys(pyciemssMap).forEach(key => {
+	// 	legendLabelExpr += `datum.value === '${pyciemssMap[key]}_mean' ? '${key}' : `;
+	// });
+	// legendLabelExpr += ' \'other\'';
+	// console.log('expression', legendLabelExpr);
+
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
+
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(result, resultSummary, [], {
 			width: chartSize.value.width,
@@ -307,7 +319,9 @@ const preparedCharts = computed(() => {
 			variables: config.map((d) => pyciemssMap[d]),
 			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
 
-			legend: false,
+			legend: true,
+			translationMap: reverseMap,
+
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
 			xAxisTitle: '',
