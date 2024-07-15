@@ -166,6 +166,17 @@ export const collapseInitials = (miraModel: MiraModel) => {
 			map.set(rootName, [name]);
 		}
 	}
+
+	// when a key only has one child, we will rename the key of the root to the child.
+	// this is to avoid renaming when a single entry key has an underscore
+	[...map.keys()].forEach((key) => {
+		const newKey = map.get(key)?.[0];
+		if (newKey && map.get(key)?.length === 1 && newKey !== key) {
+			map.set(newKey, [newKey]);
+			map.delete(key);
+		}
+	});
+
 	return map;
 };
 
@@ -284,11 +295,19 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
-export const collapseObservableReferences = (observableSummary: ObservableSummary) => {
+export const collapseObservableReferences = (
+	observableSummary: ObservableSummary,
+	initials: Map<string, string[]>
+) => {
 	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
 	Object.values(collapsedObservableSummary).forEach((observable) => {
 		// Extract the first part of the reference before the first underscore
-		observable.references = uniq(observable.references.map((r) => r.split('_')[0]));
+		observable.references = uniq(
+			observable.references.map((r) => {
+				const splitReference = r.split('_')[0];
+				return initials.has(splitReference) ? splitReference : r;
+			})
+		);
 	});
 	return collapsedObservableSummary;
 };
@@ -415,7 +434,10 @@ export const convertToIGraph = (
 
 	if (isStratified) {
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
-		observableSummary = collapseObservableReferences(initObservableSummary);
+		observableSummary = collapseObservableReferences(
+			initObservableSummary,
+			collapseInitials(miraModel)
+		);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
 		observableSummary = cloneDeep(initObservableSummary);
