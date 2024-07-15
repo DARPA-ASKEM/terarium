@@ -63,3 +63,12 @@ export function formatTimestamp(timestamp) {
 
 	return formatter.format(date);
 }
+
+/**
+ * Sorts dates in descending order.
+ * Returns the time difference between two dates in milliseconds.
+ * To be used with Array.sort().
+ */
+export function sortDates(a, b) {
+	return new Date(b).getTime() - new Date(a).getTime();
+}
