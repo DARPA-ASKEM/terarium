@@ -76,7 +76,7 @@
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
 					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
-					:title="assetItem.assetName"
+					:title="getElapsedTimeText(assetItem.assetCreatedOn)"
 					class="asset-button"
 					plain
 					text
@@ -169,6 +169,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
+import { getElapsedTimeText } from '@/utils/date';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
