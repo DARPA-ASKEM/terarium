@@ -73,66 +73,6 @@ export async function configureModelFromDatasets(
 	return data;
 }
 
-export async function configureModelFromDocumentBK(
-	documentId: string,
-	modelId: string,
-	handlers: TaskEventHandlers,
-	workflowId?: string,
-	nodeId?: string
-): Promise<TaskHandler | null> {
-	try {
-		const response = await API.get<TaskResponse>('/gollm/configure-model', {
-			params: {
-				'model-id': modelId,
-				'document-id': documentId,
-				'workflow-id': workflowId,
-				'node-id': nodeId
-			}
-		});
-
-		const taskId = response.data.id;
-		return await handleTaskById(taskId, handlers);
-	} catch (err) {
-		const message = `An issue occurred while extracting a model configuration from document. ${err}`;
-		logger.error(message);
-		console.debug(message);
-	}
-
-	return null;
-}
-
-export async function configureModelFromDatasetsBk(
-	modelId: string,
-	datasetIds: string[],
-	matrixStr: string,
-	handlers: TaskEventHandlers,
-	workflowId?: string,
-	nodeId?: string
-): Promise<TaskHandler | null> {
-	try {
-		// FIXME: Using first dataset for now...
-		const response = await API.post<TaskResponse>(
-			'/gollm/configure-from-dataset',
-			{ matrixStr },
-			{
-				params: {
-					'model-id': modelId,
-					'dataset-ids': datasetIds.join(),
-					'workflow-id': workflowId,
-					'node-id': nodeId
-				}
-			}
-		);
-
-		const taskId = response.data.id;
-		return await handleTaskById(taskId, handlers);
-	} catch (err) {
-		logger.error(`An issue occured while exctracting a model configuration from dataset. ${err}`);
-	}
-
-	return null;
-}
-
 export async function compareModels(
 	modelIds: string[],
 	workflowId?: string,

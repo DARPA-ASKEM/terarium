@@ -516,7 +516,7 @@ const configModelEventHandler = (event: ClientEvent<TaskResponse>) => {
 		[ClientEventType.TaskGollmConfigureModel]: modelFromDocumentTaskId,
 		[ClientEventType.TaskGollmConfigureFromDataset]: modelFromDatasetTaskId
 	};
-	if (!event.data || event.data.id !== taskIdRefs[event.type].value) return;
+	if (event.data?.id !== taskIdRefs[event.type].value) return;
 	handleConfigModelResp(event.data, event.type);
 };
 
