@@ -1,6 +1,5 @@
 <template>
 	<tera-variables-metadata
-		:model="model"
 		:variable-list="stateList"
 		:collapsed-variables="collapsedInitials"
 		:disabled-inputs="['concept', 'description']"
