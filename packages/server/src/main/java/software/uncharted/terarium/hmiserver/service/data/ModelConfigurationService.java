@@ -203,10 +203,11 @@ public class ModelConfigurationService
 				// set distributions
 				if (CONSTANT_TYPE.equals(
 						matchingConfigParameter.getDistribution().getType())) {
-					modelParameter.setValue((Double) matchingConfigParameter
-							.getDistribution()
-							.getParameters()
-							.get(VALUE_PARAM));
+					modelParameter.setValue(((Number) matchingConfigParameter
+									.getDistribution()
+									.getParameters()
+									.get(VALUE_PARAM))
+							.doubleValue());
 					modelParameter.setDistribution(null);
 				} else {
 					modelParameter.setDistribution(matchingConfigParameter.getDistribution());

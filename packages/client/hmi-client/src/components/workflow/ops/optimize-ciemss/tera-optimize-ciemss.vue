@@ -320,9 +320,10 @@ import {
 	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
-	PolicyInterventions,
+	OptimizeInterventions,
 	OptimizeQoi,
-	InterventionPolicy
+	InterventionPolicy,
+	Intervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -404,6 +405,14 @@ const isSaveDisabled = computed<boolean>(() =>
 	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
 );
 
+const activePolicyGroups = computed(() =>
+	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === true)
+);
+
+const inactivePolicyGroups = computed(() =>
+	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === false)
+);
+
 const menuItems = computed(() => [
 	{
 		label: 'Save as a new model configuration',
@@ -450,11 +459,13 @@ const outputs = computed(() => {
 const isRunDisabled = computed(() => {
 	if (
 		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
-		props.node.state.interventionPolicyGroups.length === 0
+		props.node.state.interventionPolicyGroups.length === 0 ||
+		activePolicyGroups.value.length <= 0
 	)
 		return true;
 	return false;
 });
+
 const selectedOutputId = ref<string>();
 
 const outputViewSelection = ref(OutputView.Charts);
@@ -573,22 +584,35 @@ const runOptimize = async () => {
 	const startTime: number[] = [];
 	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
-	props.node.state.interventionPolicyGroups.forEach((ele) => {
+	const initialGuess: number[] = [];
+	const objectiveFunctionOption: string[] = [];
+
+	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
+		initialGuess.push(ele.initialGuessValue);
+		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		listInitialGuessInterventions.push(ele.initialGuessValue);
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
-	const optimizeInterventions: PolicyInterventions = {
+	// These are interventions to be optimized over.
+	const optimizeInterventions: OptimizeInterventions = {
 		interventionType,
 		paramNames,
 		startTime,
-		paramValues
+		paramValues,
+		initialGuess,
+		objectiveFunctionOption
 	};
+
+	// These are interventions to be considered but not optimized over.
+	const fixedStaticParameterInterventions: Intervention[] = _.cloneDeep(
+		inactivePolicyGroups.value.map((ele) => ele.intervention)
+	);
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// The method should be a list but pyciemss + pyciemss service is not yet ready for this.
@@ -605,7 +629,8 @@ const runOptimize = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
-		policyInterventions: optimizeInterventions,
+		optimizeInterventions,
+		fixedStaticParameterInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 		initialGuessInterventions: listInitialGuessInterventions,
@@ -620,9 +645,11 @@ const runOptimize = async () => {
 		}
 	};
 
+	// InferredParameters is to link a calibration run to this optimize call.
 	if (inferredParameters.value) {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
+
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

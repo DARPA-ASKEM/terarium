@@ -390,9 +390,9 @@ function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
 	return foundAsset.metadata?.url;
 }
 
-function onAddModel(modelName: string) {
-	if (!modelName || !selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, modelName);
+function onAddModel(model: Model) {
+	if (!model?.name || !selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, model.name);
 }
 
 function onCloseModelModal() {
