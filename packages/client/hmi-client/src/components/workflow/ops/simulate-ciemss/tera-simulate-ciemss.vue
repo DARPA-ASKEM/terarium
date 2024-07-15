@@ -173,14 +173,10 @@ import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
 	parsePyCiemssMap,
-	makeForecastJobCiemss as makeForecastJob
-} from '@/services/models/simulation-service';
-import {
-	chartActionsProxy,
-	drilldownChartSize,
-	nodeMetadata,
+	makeForecastJobCiemss as makeForecastJob,
 	convertToCsvAsset
-} from '@/components/workflow/util';
+} from '@/services/models/simulation-service';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';

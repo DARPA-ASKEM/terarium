@@ -12,7 +12,8 @@ import {
 	OptimizeRequestCiemss,
 	ProgressState,
 	Simulation,
-	SimulationRequest
+	SimulationRequest,
+	CsvAsset
 } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
@@ -361,4 +362,27 @@ export const parsePyCiemssMap = (obj: Record<string, any>) => {
 	});
 
 	return result;
+};
+
+/**
+ * FIXME: This overlaps somewhat with services/dataset#createCsvAssetFromRunResults,
+ *
+ * This is a simpler version
+ * - without dealing with a list/set of runResults, which is now depreated.
+ * - no column stats, which are not used
+ * */
+export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) => {
+	const csvData: CsvAsset = {
+		headers: keys,
+		csv: [],
+		rowCount: data.length
+	};
+	data.forEach((datum) => {
+		const row: any[] = [];
+		keys.forEach((k) => {
+			row.push(datum[k] || '');
+		});
+		csvData.csv.push(row);
+	});
+	return csvData;
 };
