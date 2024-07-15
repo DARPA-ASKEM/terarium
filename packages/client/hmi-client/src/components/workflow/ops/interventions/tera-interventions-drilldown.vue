@@ -210,7 +210,7 @@ const interventionPoliciesFiltered = computed(() =>
 		.filter((policy) =>
 			policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
 		)
-		.sort(sortDates)
+		.sort((a, b) => sortDates(a.updatedOn, b.updatedOn))
 );
 const selectedOutputId = ref<string>('');
 const selectedPolicy = ref<InterventionPolicy | null>(null);
