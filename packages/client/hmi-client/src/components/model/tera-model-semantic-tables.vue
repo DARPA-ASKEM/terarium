@@ -6,9 +6,9 @@
 		:mmt-params="mmtParams"
 		:readonly="readonly"
 		@update-model="$emit('update-model', $event)"
-		@update-state="(e: Event) => onUpdate('state', e)"
-		@update-parameter="(e: Event) => onUpdate('parameter', e)"
-		@update-observable="(e: Event) => onUpdate('observable', e)"
+		@update-state="(e: any) => onUpdate('state', e)"
+		@update-parameter="(e: any) => onUpdate('parameter', e)"
+		@update-observable="(e: any) => onUpdate('observable', e)"
 	/>
 </template>
 

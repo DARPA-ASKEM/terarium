@@ -39,7 +39,7 @@
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<!-- <DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
+			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
 				<Column field="id" header="Symbol">
 					<template #body="slotProps">
 						<span class="latex-font">
@@ -72,7 +72,14 @@
 						<template v-else>--</template>
 					</template>
 				</Column>
-			</DataTable> -->
+			</DataTable>
+			<tera-transitions
+				v-if="!isEmpty(transitions)"
+				:model="model"
+				@mmt="mmt"
+				@transitions="transitions"
+				@update-transition="emit('update-transition', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -89,16 +96,7 @@
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<!-- <DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="units.expression" header="Unit" />
-			</DataTable> -->
+			<tera-time v-if="time" :time="time" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -114,6 +112,10 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import TeraStates from '@/components/model/variables/tera-states.vue';
 import TeraParameters from '@/components/model/variables/tera-parameters.vue';
 import TeraObservables from '@/components/model/variables/tera-observables.vue';
+import TeraTransitions from '@/components/model/variables/tera-transitions.vue';
+import TeraTime from '@/components/model/variables/tera-time.vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
@@ -123,7 +125,14 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-state', 'update-parameter', 'update-observable']);
+const emit = defineEmits([
+	'update-model',
+	'update-state',
+	'update-parameter',
+	'update-observable',
+	'update-transition',
+	'update-time'
+]);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);

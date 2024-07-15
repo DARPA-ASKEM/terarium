@@ -4,7 +4,7 @@
 		:collapsed-variables="collapsedParameters"
 		:disabled-inputs="['concept']"
 		show-matrix
-		@open-matrix="(id) => (matrixModalId = id)"
+		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-variable="emit('update-parameter', $event)"
 	/>
 	<teleport to="body">

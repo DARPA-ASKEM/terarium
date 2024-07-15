@@ -6,6 +6,7 @@
 			placeholder="Add a name"
 			:model-value="variable.name ?? ''"
 			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
+			:disabled="disabledInputs?.includes('name')"
 		/>
 		<tera-input
 			label="Unit"
