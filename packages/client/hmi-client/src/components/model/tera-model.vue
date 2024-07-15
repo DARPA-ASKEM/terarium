@@ -34,7 +34,7 @@
 			:key="model?.id"
 			:model="model"
 			:feature-config="featureConfig"
-			@model-updated="getModelWithConfigurations"
+			@model-updated="fetchModel"
 			@update-model="updateModelContent"
 		/>
 	</tera-asset>
@@ -48,23 +48,14 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import {
-	getModel,
-	getModelConfigurationsForModel,
-	isModelEmpty,
-	updateModel
-} from '@/services/model';
+import { getModel, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	assetId: {
-		type: String,
-		default: ''
-	},
-	highlight: {
 		type: String,
 		default: ''
 	},
@@ -74,23 +65,16 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits([
-	'close-preview',
-	'update-model-configuration',
-	'new-model-configuration'
-]);
+const emit = defineEmits(['close-preview']);
 
 const model = ref<Model | null>(null);
-const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
+const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 
 // User menu
 const optionsMenu = ref();
@@ -149,9 +133,7 @@ async function updateModelContent(updatedModel: Model) {
 	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
-	setTimeout(async () => {
-		await getModelWithConfigurations(); // elastic search might still not update in time
-	}, 800);
+	await fetchModel();
 }
 
 async function updateModelName() {
@@ -163,37 +145,8 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function fetchConfigurations() {
-	if (model.value) {
-		let tempConfigurations = await getModelConfigurationsForModel(model.value.id);
-
-		// Ensure that we always have a "default config" model configuration
-		if (useProjects().hasEditPermission()) {
-			if (
-				(isEmpty(tempConfigurations) ||
-					!tempConfigurations.find((d) => d.name === 'Default config')) &&
-				!isModelEmpty(model.value)
-			) {
-				// await addDefaultConfiguration(model.value);
-				setTimeout(async () => {
-					// elastic search might still not update in time
-					tempConfigurations = await getModelConfigurationsForModel(model.value?.id!);
-					modelConfigurations.value = tempConfigurations;
-				}, 800);
-				return;
-			}
-		}
-		modelConfigurations.value = tempConfigurations;
-	}
-}
-
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-}
-
-async function getModelWithConfigurations() {
-	await fetchModel();
-	await fetchConfigurations();
 }
 
 watch(
@@ -203,7 +156,7 @@ watch(
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
-			await getModelWithConfigurations();
+			await fetchModel();
 			isModelLoading.value = false;
 		}
 	},
