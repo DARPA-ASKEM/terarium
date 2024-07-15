@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -29,10 +30,18 @@ public class ModelConfigurationService
 	public ModelConfigurationService(
 			final ObjectMapper objectMapper,
 			final Config config,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final ModelConfigRepository repository,
 			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, ModelConfiguration.class);
+		super(
+				objectMapper,
+				config,
+				projectService,
+				projectAssetService,
+				repository,
+				s3ClientService,
+				ModelConfiguration.class);
 	}
 
 	private static final String CONSTANT_TYPE = "Constant";
@@ -45,29 +54,32 @@ public class ModelConfigurationService
 
 	@Override
 	@Observed(name = "function_profile")
-	public ModelConfiguration createAsset(final ModelConfiguration asset, final Schema.Permission hasWritePermission)
+	public ModelConfiguration createAsset(
+			final ModelConfiguration asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException {
 		setSemanticDBRelationships(asset);
-		return super.createAsset(asset, hasWritePermission);
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<ModelConfiguration> updateAsset(
-			final ModelConfiguration asset, final Schema.Permission hasWritePermission) throws IOException {
+			final ModelConfiguration asset, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 		setSemanticDBRelationships(asset);
-		return super.updateAsset(asset, hasWritePermission);
+		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
 	public List<ModelConfiguration> createAssets(
-			final List<ModelConfiguration> assets, final Schema.Permission hasWritePermission) throws IOException {
+			final List<ModelConfiguration> assets, final UUID projectId, final Schema.Permission hasWritePermission)
+			throws IOException {
 
 		for (final ModelConfiguration modelConfiguration : assets) {
 			setSemanticDBRelationships(modelConfiguration);
 		}
-		return super.createAssets(assets, hasWritePermission);
+		return super.createAssets(assets, projectId, hasWritePermission);
 	}
 
 	public static ModelConfiguration modelConfigurationFromAMR(
@@ -159,7 +171,8 @@ public class ModelConfigurationService
 			distribution.setParameters(Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0));
 		}
 
-		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we are changing it to
+		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we
+		// are changing it to
 		// StandardUniform1 for consistenty sake
 		if (distribution.getType().equals("Uniform1")) {
 			distribution.setType("StandardUniform1");

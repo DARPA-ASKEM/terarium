@@ -42,10 +42,7 @@
 				</div>
 			</header>
 			<div class="img">
-				<img
-					:src="`src/assets/images/project-thumbnails/${project.thumbnail ?? 'default'}.png`"
-					alt="Artistic representation of the Project statistics"
-				/>
+				<img :src="thumbnail" alt="Artistic representation of the Project statistics" />
 			</div>
 			<section>
 				<div class="title" ref="titleRef">
@@ -100,6 +97,8 @@ import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { Project } from '@/types/Types';
+import DefaultThumbnail from '@/assets/images/project-thumbnails/default.png';
+import getImage from '@/assets/utils';
 import TeraProjectMenu from './tera-project-menu.vue';
 
 const props = defineProps<{
@@ -127,6 +126,11 @@ const stats = computed(() => {
 		workflows: parseInt(metadata['workflows-count'] ?? '0', 10)
 	};
 });
+
+const thumbnail = computed(
+	() =>
+		getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
+);
 </script>
 
 <style scoped>

@@ -307,7 +307,7 @@ public class ExtractionService {
 
 				// update the document
 				document = documentService
-						.updateAsset(document, hasWritePermission)
+						.updateAsset(document, projectId, hasWritePermission)
 						.orElseThrow();
 
 				// if there is text, run variable extraction
@@ -317,7 +317,12 @@ public class ExtractionService {
 					try {
 						notificationInterface.sendMessage("Dispatching variable extraction request...");
 						document = runVariableExtraction(
-								notificationInterface, documentId, new ArrayList<>(), domain, hasWritePermission);
+								notificationInterface,
+								projectId,
+								documentId,
+								new ArrayList<>(),
+								domain,
+								hasWritePermission);
 						notificationInterface.sendMessage("Variable extraction completed");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Variable extraction failed, continuing");
@@ -342,8 +347,8 @@ public class ExtractionService {
 						req.setProjectId(projectId);
 
 						final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
+						props.setProjectId(projectId);
 						props.setDocumentId(documentId);
-						props.setUpdateEmbeddings(true); // update the embeddings using the card
 						req.setAdditionalProperties(props);
 
 						notificationInterface.sendMessage("Sending GoLLM model card request");
@@ -379,6 +384,7 @@ public class ExtractionService {
 
 	private DocumentAsset runVariableExtraction(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -443,7 +449,7 @@ public class ExtractionService {
 				for (final UUID modelId : modelIds) {
 					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
 					try {
-						runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+						runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
 					} catch (final Exception e) {
 						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
@@ -452,7 +458,9 @@ public class ExtractionService {
 			}
 
 			// update the document
-			return documentService.updateAsset(document, hasWritePermission).orElseThrow();
+			return documentService
+					.updateAsset(document, projectId, hasWritePermission)
+					.orElseThrow();
 		} catch (final FeignException e) {
 			final String error = "Transitive service failure";
 			log.error(error, e.contentUTF8(), e);
@@ -469,6 +477,7 @@ public class ExtractionService {
 	}
 
 	public Future<DocumentAsset> extractVariables(
+			final UUID projectId,
 			final UUID documentId,
 			final List<UUID> modelIds,
 			final String domain,
@@ -484,15 +493,18 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Variable extraction task submitted...");
 
 		return executor.submit(() -> {
-			final DocumentAsset doc =
-					runVariableExtraction(notificationInterface, documentId, modelIds, domain, hasWritePermission);
+			final DocumentAsset doc = runVariableExtraction(
+					notificationInterface, projectId, documentId, modelIds, domain, hasWritePermission);
 			notificationInterface.sendFinalMessage("Extraction complete");
 			return doc;
 		});
 	}
 
 	public Future<Model> alignAMR(
-			final UUID documentId, final UUID modelId, final Schema.Permission hasWritePermission) {
+			final UUID projectId,
+			final UUID documentId,
+			final UUID modelId,
+			final Schema.Permission hasWritePermission) {
 
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 				clientEventService,
@@ -505,7 +517,7 @@ public class ExtractionService {
 		notificationInterface.sendMessage("Model alignment task submitted...");
 
 		return executor.submit(() -> {
-			final Model model = runAlignAMR(notificationInterface, documentId, modelId, hasWritePermission);
+			final Model model = runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
 			notificationInterface.sendFinalMessage("Alignment complete");
 			return model;
 		});
@@ -513,6 +525,7 @@ public class ExtractionService {
 
 	public Model runAlignAMR(
 			final NotificationGroupInstance<Properties> notificationInterface,
+			final UUID projectId,
 			final UUID documentId,
 			final UUID modelId,
 			final Schema.Permission hasWritePermission) {
@@ -579,7 +592,7 @@ public class ExtractionService {
 			}
 
 			// update the model
-			modelService.updateAsset(model, hasWritePermission);
+			modelService.updateAsset(model, projectId, hasWritePermission);
 
 			// create provenance
 			final Provenance provenance = new Provenance(

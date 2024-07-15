@@ -51,7 +51,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -153,7 +152,7 @@ public class KnowledgeController {
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR, permission);
+				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a Model asset.", e);
@@ -173,7 +172,7 @@ public class KnowledgeController {
 
 		responseAMR.setId(model.get().getId());
 		try {
-			modelService.updateAsset(responseAMR, permission);
+			modelService.updateAsset(responseAMR, projectId, permission);
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error(String.format("Unable to update the model with id %s.", modelId), e);
@@ -358,7 +357,7 @@ public class KnowledgeController {
 		}
 
 		try {
-			model = modelService.createAsset(model, permission);
+			model = modelService.createAsset(model, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create model", e);
 			throw new ResponseStatusException(
@@ -372,7 +371,7 @@ public class KnowledgeController {
 		code.get().getMetadata().put("model_id", model.getId().toString());
 
 		try {
-			codeService.updateAsset(code.get(), permission);
+			codeService.updateAsset(code.get(), projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code", e);
 			throw new ResponseStatusException(
@@ -425,7 +424,7 @@ public class KnowledgeController {
 		// 1. create code asset from code blocks
 		final Code createdCode;
 		try {
-			createdCode = codeService.createAsset(code, permission);
+			createdCode = codeService.createAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create code asset", e);
 			throw new ResponseStatusException(
@@ -466,7 +465,7 @@ public class KnowledgeController {
 		code.getFiles().put(filename, codeFile);
 
 		try {
-			codeService.updateAsset(code, permission);
+			codeService.updateAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code asset", e);
 			throw new ResponseStatusException(
@@ -475,126 +474,6 @@ public class KnowledgeController {
 
 		// 3. create model from code asset
 		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
-	}
-
-	/**
-	 * Profile a model
-	 *
-	 * @param modelId (String): The ID of the model to profile
-	 * @param documentId (String): The text of the document to profile
-	 * @return the profiled model
-	 */
-	@PostMapping("/profile-model/{model-id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<Model> postProfileModel(
-			@PathVariable("model-id") final UUID modelId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId,
-			@RequestParam(value = "document-id", required = false) final UUID documentId) {
-
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
-		JsonNode gollmCard = null;
-		String documentText = "";
-		if (documentId != null) {
-			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
-			if (documentOptional.isPresent()) {
-				final int MAX_CHAR_LIMIT = 9000;
-
-				final DocumentAsset document = documentOptional.get();
-
-				if (document.getText() != null) {
-					documentText = document.getText()
-							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
-				} else {
-					log.warn("Document text is empty");
-					throw new ResponseStatusException(
-							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
-				}
-				// Try to get TA4 card.
-				if (document.getMetadata() != null) {
-					if (document.getMetadata().get("gollmCard") != null) {
-						gollmCard = document.getMetadata().get("gollmCard").deepCopy();
-					}
-				}
-
-				try {
-					final Provenance provenancePayload = new Provenance(
-							ProvenanceRelationType.EXTRACTED_FROM,
-							modelId,
-							ProvenanceType.MODEL,
-							documentId,
-							ProvenanceType.DOCUMENT);
-					provenanceService.createProvenance(provenancePayload);
-				} catch (final Exception e) {
-					final String error = "Unable to create provenance for profile-model";
-					log.error(error, e);
-				}
-			}
-		}
-
-		final Model model = modelService.getAsset(modelId, permission).orElseThrow();
-
-		final StringMultipartFile textFile = new StringMultipartFile(documentText, "document.txt", "application/text");
-		final StringMultipartFile codeFile = new StringMultipartFile("", "code.txt", "application/text");
-
-		final ResponseEntity<JsonNode> resp;
-		try {
-			resp = mitProxy.modelCard(OPENAI_API_KEY, textFile, codeFile);
-		} catch (final FeignException e) {
-			final String error = "Unable to get model card";
-			log.error(error, e);
-			throw handleMitFeignException(e);
-		}
-
-		if (resp.getStatusCode().is4xxClientError()) {
-			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
-		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("MIT Text-reading is currently unavailable");
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
-		} else if (!resp.getStatusCode().is2xxSuccessful()) {
-			log.error(
-					"An error occurred while MIT Text-reading was trying to produce a model card based on the provided resource");
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
-		}
-
-		// Get TA1 Card:
-		final Card card;
-		try {
-			card = mapper.treeToValue(resp.getBody(), Card.class);
-		} catch (final IOException e) {
-			log.error("Unable to convert response to card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		if (model.getHeader() == null) {
-			model.setHeader(new ModelHeader());
-		}
-
-		if (model.getMetadata() == null) {
-			model.setMetadata(new ModelMetadata());
-		}
-
-		model.getHeader().setDescription(card.getDescription());
-		model.getMetadata().setCard(card);
-		model.getMetadata().setGollmCard(gollmCard);
-
-		final Optional<Model> updatedModel;
-		try {
-			updatedModel = modelService.updateAsset(model, permission);
-		} catch (final IOException e) {
-			log.warn("Unable to update model", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		if (updatedModel.isEmpty()) {
-			log.error("An error occurred while updating the model asset, resulting in an empty model");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
-		}
-
-		return ResponseEntity.ok(updatedModel.get());
 	}
 
 	/**
@@ -719,7 +598,7 @@ public class KnowledgeController {
 
 		final Optional<Dataset> updatedDataset;
 		try {
-			updatedDataset = datasetService.updateAsset(dataset, permission);
+			updatedDataset = datasetService.updateAsset(dataset, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update dataset", e);
 			throw new ResponseStatusException(
@@ -756,8 +635,9 @@ public class KnowledgeController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			return ResponseEntity.ok(
-					extractionService.alignAMR(documentId, modelId, permission).get());
+			return ResponseEntity.ok(extractionService
+					.alignAMR(projectId, documentId, modelId, permission)
+					.get());
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
@@ -782,7 +662,7 @@ public class KnowledgeController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractVariables(
-				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
+				projectId, documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 

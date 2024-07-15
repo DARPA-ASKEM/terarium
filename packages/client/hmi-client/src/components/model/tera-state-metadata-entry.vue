@@ -1,15 +1,17 @@
 <template>
-	<section :class="{ 'has-toggle': isBase, 'no-second-row': isStratified }">
+	<section>
 		<h6>{{ id }}</h6>
 		<tera-input
-			label="Name"
+			title="Name"
+			placeholder="Add a name"
 			:model-value="name ?? ''"
 			@update:model-value="$emit('update-state', { key: 'name', value: $event })"
 		/>
 		<!--FIXME: description property should be added to the state type-->
 		<tera-input
-			label="Description"
+			title="Description"
 			:model-value="''"
+			placeholder="Add a description"
 			@update:model-value="
 				$emit('update-state', {
 					key: 'description',
@@ -18,38 +20,33 @@
 			"
 			disabled
 		/>
-		<template v-if="!isStratified">
-			<Button
-				v-if="isBase"
-				:icon="showStratifiedVariables ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-				text
-				rounded
-				@click="$emit('toggle-stratified-variables')"
-			/>
-			<tera-input
-				label="Unit"
-				:model-value="initial?.expression ?? ''"
-				@update:model-value="$emit('update-state', { key: 'units', value: $event })"
-			/>
-			<!--TODO: Add support for editing concepts-->
-			<tera-input label="Concept" :model-value="grounding?.identifiers[0] ?? ''" disabled />
-		</template>
+		<tera-input
+			label="Unit"
+			placeholder="Add a unit"
+			:model-value="initial?.expression ?? ''"
+			@update:model-value="$emit('update-state', { key: 'units', value: $event })"
+		/>
+		<!--TODO: Add support for editing concepts-->
+		<tera-input
+			label="Concept"
+			placeholder="Select a concept"
+			icon="pi pi-search"
+			:model-value="grounding?.identifiers[0] ?? ''"
+			disabled
+		/>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { PetriNetState, RegNetVertex } from '@/types/Types';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import Button from 'primevue/button';
 
 const props = defineProps<{
 	state: PetriNetState | RegNetVertex;
-	isBase?: boolean;
-	isStratified?: boolean;
 	showStratifiedVariables?: boolean;
 }>();
 
-defineEmits(['update-state', 'toggle-stratified-variables', 'open-matrix']);
+defineEmits(['update-state', 'toggle-stratified-variables']);
 
 const { id, name, grounding, initial } = props.state; // description property should be added to the state type
 </script>
@@ -58,10 +55,10 @@ const { id, name, grounding, initial } = props.state; // description property sh
 section {
 	display: grid;
 	grid-template-areas:
-		'symbol name description description'
-		'unit	unit concept .';
-	grid-template-columns: max-content 30% 30% auto;
-	gap: var(--gap-small);
+		'symbol name unit . concept'
+		'description description description description description';
+	grid-template-columns: max-content max-content max-content auto max-content;
+	gap: var(--gap-2);
 	align-items: center;
 }
 
@@ -71,24 +68,25 @@ section.has-toggle {
 		'toggle	unit concept .';
 }
 
-section.no-second-row {
-	gap: 0 var(--gap-small);
-}
-
 h6 {
 	grid-area: symbol;
-	justify-self: center;
+
+	&::after {
+		content: '|';
+		color: var(--text-color-light);
+		margin-left: var(--gap-2);
+	}
 }
 
 button {
 	grid-area: toggle;
 }
 
-:deep([label='Name']) {
+:deep([title='Name']) {
 	grid-area: name;
 }
 
-:deep([label='Description']) {
+:deep([title='Description']) {
 	grid-area: description;
 }
 

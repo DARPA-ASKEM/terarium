@@ -11,7 +11,7 @@
 			>
 				{{ title ?? node.displayName }}
 				<template #top-header-actions>
-					<div class="input-chips">
+					<aside class="input-chips">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
@@ -21,8 +21,9 @@
 								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
 							</template>
 						</Chip>
-					</div>
+					</aside>
 					<tera-output-dropdown
+						class="ml-auto"
 						v-if="outputOptions && selectedOutputId"
 						:options="outputOptions"
 						:output="selectedOutputId"
@@ -35,40 +36,28 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
-					<tera-operator-output-summary
-						v-if="!isEmpty(outputSummary)"
-						:node="node"
-						@generate-output-summary="
-							(output: WorkflowOutput<any>) => emit('generate-output-summary', output)
-						"
-						@update-output-port="
-							(output: WorkflowOutput<any>) => emit('update-output-port', output)
-						"
-					/>
 					<tera-operator-annotation
-						v-else
 						:state="node.state"
 						@update-state="(state: any) => emit('update-state', state)"
 					/>
 				</template>
 			</tera-drilldown-header>
-			<div class="flex overflow-hidden h-full">
+			<main class="flex overflow-hidden h-full">
 				<slot name="sidebar" />
 				<tera-columnar-panel class="flex-1">
 					<template v-for="(tab, index) in tabs" :key="index">
 						<!--
-						TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
-						if it was in the unselected tab. For now we are using v-if but we may want to
-						use css to hide the unselected tab content instead.
-					-->
+							TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
+							if it was in the unselected tab. For now we are using v-if but we may want to
+							use css to hide the unselected tab content instead.
+						-->
 						<component :is="tab" v-if="selectedViewIndex === index" />
 					</template>
-
 					<section v-if="slots.preview">
 						<slot name="preview" />
 					</section>
 				</tera-columnar-panel>
-			</div>
+			</main>
 			<footer v-if="slots.footer">
 				<slot name="footer" />
 			</footer>
@@ -77,18 +66,17 @@
 </template>
 
 <script setup lang="ts">
-import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
-import { TabViewChangeEvent } from 'primevue/tabview';
-import { computed, ref, useSlots } from 'vue';
-import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
-import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import Chip from 'primevue/chip';
-import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import { isEmpty } from 'lodash';
-import Menu from 'primevue/menu';
+import { computed, ref, useSlots } from 'vue';
 import Button from 'primevue/button';
+import Chip from 'primevue/chip';
+import Menu from 'primevue/menu';
+import { TabViewChangeEvent } from 'primevue/tabview';
+import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
+import TeraDrilldownHeader from '@/components/drilldown/tera-drilldown-header.vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
+import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.vue';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 
 const props = defineProps<{
@@ -97,14 +85,12 @@ const props = defineProps<{
 	title?: string;
 	tooltip?: string;
 	popover?: boolean;
-	outputSummary?: boolean;
 }>();
 
 const emit = defineEmits([
 	'on-close-clicked',
 	'update-state',
 	'update:selection',
-	'generate-output-summary',
 	'update-output-port'
 ]);
 const slots = useSlots();
@@ -141,15 +127,26 @@ const selectedOutputId = computed(() => {
 	return null;
 });
 const outputOptions = computed(() => {
-	if (!isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
+	// We do not display output selection for Asset operators
+	if (
+		[
+			WorkflowOperationTypes.MODEL,
+			WorkflowOperationTypes.DATASET,
+			WorkflowOperationTypes.DOCUMENT,
+			WorkflowOperationTypes.CODE
+		].includes(props.node.operationType)
+	) {
+		return null;
 	}
-	return [];
+
+	if (isEmpty(props.node.outputs)) return [];
+
+	return [
+		{
+			label: 'Select outputs to display in operator',
+			items: props.node.outputs
+		}
+	];
 });
 
 const toggle = (event) => {
@@ -168,7 +165,7 @@ const toggle = (event) => {
 }
 
 /* There is a performance issue with these large modals.
-When scrolling it takes time to render the content, paticularly heavy content such as the LLM integrations. This will show
+When scrolling it takes time to render the content, particularly heavy content such as the LLM integrations. This will show
 us the main application behind the modal temporarily as content loads when scrolling which is a bit of an eye sore.
 An extra div here is used to alleviate the impact of these issues a little by allowing us to see the overlay container rather
 than the main application behind the modal when these render issues come, however this is still an issue regardless.
@@ -195,9 +192,8 @@ footer {
 
 .input-chips {
 	display: flex;
-	gap: var(--gap);
-	margin-right: auto;
-	margin-left: var(--gap);
+	gap: var(--gap-1-5);
+	margin: 0 var(--gap);
 }
 
 .p-chip {

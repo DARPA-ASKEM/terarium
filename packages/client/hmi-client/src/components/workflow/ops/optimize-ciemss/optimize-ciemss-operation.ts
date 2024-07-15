@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention as SimulationIntervention } from '@/types/Types';
+import { Intervention, InterventionSemanticType } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 
 const DOCUMENTATION_URL =
@@ -8,6 +8,14 @@ const DOCUMENTATION_URL =
 export enum InterventionTypes {
 	paramValue = 'param_value',
 	startTime = 'start_time'
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
+	// ,paramValueAndStartTime = 'param_value_and_start_time'
+}
+
+export enum InterventionObjectiveFunctions {
+	lowerBound = 'lower_bound',
+	upperbound = 'upper_bound',
+	initialGuess = 'initial_guess'
 }
 
 export enum ContextMethods {
@@ -15,15 +23,17 @@ export enum ContextMethods {
 	max = 'max'
 }
 
-export interface InterventionPolicyGroup {
-	name: string;
-	parameter: string;
+export interface InterventionPolicyGroupForm {
 	startTime: number;
-	lowerBound: number;
-	upperBound: number;
-	initialGuess: number;
+	endTime: number;
+	startTimeGuess: number;
+	lowerBoundValue: number;
+	upperBoundValue: number;
+	initialGuessValue: number;
 	isActive: boolean;
-	paramValue: number;
+	optimizationType: InterventionTypes;
+	objectiveFunctionOption: InterventionObjectiveFunctions;
+	intervention: Intervention;
 }
 
 export interface ConstraintGroup {
@@ -44,8 +54,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
-	interventionType: InterventionTypes;
-	interventionPolicyGroups: InterventionPolicyGroup[];
+	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
+	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
 	constraintGroups: ConstraintGroup[];
 	// Charts + Outputs:
@@ -60,15 +70,38 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
 
-export const blankInterventionPolicyGroup: InterventionPolicyGroup = {
-	name: 'Policy bounds',
-	parameter: '',
+// This is used as a map between dropdown labels and the inner values used by pyciemss-service.
+export const OPTIMIZATION_TYPE_MAP = [
+	{ label: 'new value', value: InterventionTypes.startTime },
+	{ label: 'start time', value: InterventionTypes.paramValue }
+	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
+	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+];
+
+// This is used as a map between dropdown labels and the inner values used by pyciemss-service.
+export const OBJECTIVE_FUNCTION_MAP = [
+	{ label: 'initial guess', value: InterventionObjectiveFunctions.initialGuess },
+	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
+	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
+];
+
+export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
-	lowerBound: 0,
-	upperBound: 0,
-	initialGuess: 0,
+	endTime: 0,
+	startTimeGuess: 0,
+	lowerBoundValue: 0,
+	upperBoundValue: 0,
+	initialGuessValue: 0,
 	isActive: true,
-	paramValue: 0
+	optimizationType: InterventionTypes.paramValue,
+	objectiveFunctionOption: InterventionObjectiveFunctions.lowerBound,
+	intervention: {
+		name: 'default name',
+		appliedTo: '',
+		type: InterventionSemanticType.Parameter,
+		staticInterventions: [],
+		dynamicInterventions: []
+	}
 };
 
 export const defaultConstraintGroup: ConstraintGroup = {
@@ -88,7 +121,17 @@ export const OptimizeCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+		{
+			type: 'calibrateSimulationId',
+			label: 'Calibration',
+			acceptMultiple: false,
+			isOptional: true
+		},
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -100,8 +143,8 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
-			interventionType: InterventionTypes.paramValue,
-			interventionPolicyGroups: [blankInterventionPolicyGroup],
+			interventionPolicyId: '',
+			interventionPolicyGroups: [],
 			constraintGroups: [defaultConstraintGroup],
 			chartConfigs: [],
 			inProgressOptimizeId: '',
@@ -122,13 +165,13 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	const simulationIntervetions: SimulationIntervention[] =
+	const simulationIntervetions =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
-	const policyInterventions = simulation?.executionPayload?.policy_interventions;
-	const interventionType = policyInterventions.selection ?? '';
-	const paramNames: string[] = policyInterventions.param_names ?? [];
-	const paramValue: number[] = policyInterventions.param_values ?? [];
-	const startTime: number[] = policyInterventions.start_time ?? [];
+	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
+	const interventionType = optimizeInterventions.intervention_type ?? '';
+	const paramNames: string[] = optimizeInterventions.param_names ?? [];
+	const paramValue: number[] = optimizeInterventions.param_values ?? [];
+	const startTime: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
 

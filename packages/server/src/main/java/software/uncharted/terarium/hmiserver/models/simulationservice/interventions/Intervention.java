@@ -11,6 +11,7 @@ public class Intervention {
 
 	private String name;
 	private String appliedTo;
+	private InterventionSemanticType type;
 	private List<StaticIntervention> staticInterventions;
 	private List<DynamicIntervention> dynamicInterventions;
 
@@ -19,6 +20,7 @@ public class Intervention {
 		Intervention intervention = new Intervention();
 		intervention.setName(name);
 		intervention.setAppliedTo(appliedTo);
+		intervention.setType(type);
 		if (staticInterventions != null) {
 			intervention.setStaticInterventions(new ArrayList<>());
 			for (StaticIntervention staticIntervention : staticInterventions) {

@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
@@ -155,7 +155,7 @@ public class DocumentController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -197,42 +197,11 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> originalDocument = documentAssetService.getAsset(id, permission);
-			if (originalDocument.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			// Preserve ownership. This may be coming from KM which doesn't have an
-			// awareness of who owned this document.
-			document.setUserId(originalDocument.get().getUserId());
-
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, permission);
-
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-
-			final DocumentAsset updatedDocument = updated.get();
-
-			if (originalDocument.get().getPublicAsset() != updatedDocument.getPublicAsset()) {
-				if (updatedDocument.getPublicAsset() && !updatedDocument.getTemporary()) {
-					if (updatedDocument.getMetadata() != null
-							&& updatedDocument.getMetadata().containsKey("gollmCard")) {
-						// update embeddings
-						final JsonNode card = document.getMetadata().get("gollmCard");
-						final String cardText = objectMapper.writeValueAsString(card);
-						try {
-							final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
-
-							documentAssetService.uploadEmbeddings(updatedDocument.getId(), embeddings, permission);
-
-						} catch (final Exception e) {
-							log.error("Failed to update embeddings for document {}", updatedDocument.getId(), e);
-						}
-					}
-				}
-			}
-
-			return ResponseEntity.ok(updatedDocument);
+			return ResponseEntity.ok(updated.get());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -389,7 +358,7 @@ public class DocumentController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			documentAssetService.deleteAsset(id, permission);
+			documentAssetService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
@@ -427,7 +396,7 @@ public class DocumentController {
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 
-				documentAssetService.updateAsset(document.get(), permission);
+				documentAssetService.updateAsset(document.get(), projectId, permission);
 			}
 
 			return ResponseEntity.status(status).build();
@@ -652,6 +621,7 @@ public class DocumentController {
 	 */
 	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
+			final UUID projectId,
 			final String userId,
 			final List<Extraction> extractions,
 			final String summary,
@@ -695,7 +665,7 @@ public class DocumentController {
 			documentAsset.getMetadata().put("github_urls", githubUrls);
 		}
 
-		return documentAssetService.createAsset(documentAsset, permission);
+		return documentAssetService.createAsset(documentAsset, projectId, permission);
 	}
 
 	/**

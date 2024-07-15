@@ -70,6 +70,23 @@ public class DocumentAsset extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<DocumentExtraction> assets;
 
+	@Override
+	public List<String> getFileNames() {
+		if (this.fileNames == null) {
+			this.fileNames = new ArrayList<>();
+		}
+
+		// ensure these are included in filenames
+		if (this.assets != null) {
+			for (final DocumentExtraction asset : assets) {
+				if (!this.fileNames.contains(asset.getFileName())) {
+					this.fileNames.add(asset.getFileName());
+				}
+			}
+		}
+		return this.fileNames;
+	}
+
 	/**
 	 * Get the DOI of a document
 	 *
@@ -115,11 +132,6 @@ public class DocumentAsset extends TerariumAsset {
 			clone.assets = new ArrayList<>();
 			for (final DocumentExtraction asset : this.assets) {
 				clone.assets.add(asset.clone());
-
-				// ensure the asset filename is added
-				if (!clone.getFileNames().contains(asset.getFileName())) {
-					clone.getFileNames().add(asset.getFileName());
-				}
 			}
 		}
 

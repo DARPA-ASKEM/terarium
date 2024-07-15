@@ -9,14 +9,13 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
     password: askem-quality-assurance
     ```
 2. Create, or open, project named `QA [Your Name]`
-3. Upload model `input_model.json` to project
+3. Upload model [SIR.json](https://drive.google.com/file/d/1eXlvpBfMmhrfC0xUXfuz0s_19gi-Rird/view?usp=drive_link) to project
 
 ### 2. Configure a model
 1. Make sure the initial and parameter tables appear with expected data
 2. Add a name and a description under the context accordian
 3. In the initial table pick any variable and change the expression and add a source.
 4. In the parameter table pick any variable and make some changes, such as changing between constant and uniform and adding value, min, and max to the respective parameter type
-5. Under the Interventions accordian select any other parameter and add an intervention
 6. Click `Save` and ensure all values that you have filled are still persisting
 
 ### 2a. Add an uncertainty

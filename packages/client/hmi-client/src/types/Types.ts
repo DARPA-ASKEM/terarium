@@ -93,7 +93,6 @@ export interface CsvAsset {
     stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
-    data: { [index: string]: string }[];
 }
 
 export interface CsvColumnStats {
@@ -261,6 +260,10 @@ export interface ParameterSemantic extends Semantic {
 export interface Semantic extends TerariumEntity {
     source: string;
     type: SemanticType;
+}
+
+export interface Author {
+    name: string;
 }
 
 export interface State {
@@ -687,7 +690,7 @@ export interface CalibrationRequestCiemss {
     modelConfigId: string;
     extra: any;
     timespan?: TimeSpan;
-    interventions?: string;
+    policyInterventionId?: string;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -724,8 +727,8 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: string;
+    optimizeInterventions?: OptimizeInterventions;
+    fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
@@ -750,7 +753,7 @@ export interface SimulationRequest {
     timespan: TimeSpan;
     extra: any;
     engine: string;
-    interventions?: string;
+    policyInterventionId?: string;
 }
 
 export interface DynamicIntervention {
@@ -763,6 +766,7 @@ export interface DynamicIntervention {
 export interface Intervention {
     name: string;
     appliedTo: string;
+    type: InterventionSemanticType;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
 }
@@ -773,7 +777,7 @@ export interface InterventionPolicy extends TerariumAsset {
 }
 
 export interface StaticIntervention {
-    threshold: number;
+    timestep: number;
     value: number;
 }
 
@@ -799,16 +803,18 @@ export interface OptimizeExtra {
     solverMethod?: string;
 }
 
-export interface OptimizeQoi {
-    contexts: string[];
-    method: string;
-}
-
-export interface PolicyInterventions {
+export interface OptimizeInterventions {
     interventionType: string;
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
+    objectiveFunctionOption?: string[];
+    initialGuess?: number[];
+}
+
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
 }
 
 export interface TimeSpan {
@@ -1051,7 +1057,7 @@ export interface OdeSemantics {
 
 export interface Annotations {
     license?: string;
-    authors?: string[];
+    authors?: Author[];
     references?: string[];
     locations?: string[];
     pathogens?: string[];
@@ -1408,6 +1414,11 @@ export enum SimulationType {
 export enum SimulationEngine {
     Sciml = "SCIML",
     Ciemss = "CIEMSS",
+}
+
+export enum InterventionSemanticType {
+    Variable = "variable",
+    Parameter = "parameter",
 }
 
 export enum ExtractionAssetType {

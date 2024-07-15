@@ -1,42 +1,62 @@
 <template>
-	<Accordion v-if="isStratified" multiple>
-		<AccordionTab v-for="[key, values] in collapseInitials(props.mmt).entries()" :key="key">
+	<Accordion multiple :active-index="[0]">
+		<AccordionTab>
 			<template #header>
-				<span>{{ key }}</span>
-				<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = key" />
+				<span class="mr-auto"
+					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
+				>
+				<tera-input v-model="filterText" placeholder="Filter" />
 			</template>
-			<div class="flex">
-				<Divider layout="vertical" type="solid" />
-				<ul>
-					<li v-for="initial in values" :key="initial">
-						<tera-initial-entry
-							:model="model"
-							:model-configuration="props.modelConfiguration"
-							:initial-id="initial"
-							@update-expression="emit('update-expression', $event)"
-							@update-source="emit('update-source', $event)"
-						/>
-						<Divider type="solid" />
-					</li>
-				</ul>
-			</div>
+
+			<ul>
+				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
+					<!-- Stratified -->
+					<Accordion v-if="isVirtual" multiple>
+						<AccordionTab>
+							<template #header>
+								<span>{{ baseInitial }}</span>
+								<Button
+									label="Open Matrix"
+									text
+									size="small"
+									@click.stop="matrixModalId = baseInitial"
+								/>
+							</template>
+							<div class="flex">
+								<Divider layout="vertical" type="solid" />
+								<ul>
+									<li v-for="{ target } in childInitials" :key="target">
+										<tera-initial-entry
+											:model="model"
+											:model-configuration="modelConfiguration"
+											:modelConfigurations="modelConfigurations"
+											:initial-id="target"
+											@update-expression="emit('update-expression', $event)"
+											@update-source="emit('update-source', $event)"
+										/>
+										<Divider type="solid" />
+									</li>
+								</ul>
+							</div>
+						</AccordionTab>
+					</Accordion>
+
+					<!-- Unstratified -->
+					<tera-initial-entry
+						v-else
+						class="pl-5"
+						:model="model"
+						:model-configuration="modelConfiguration"
+						:modelConfigurations="modelConfigurations"
+						:initial-id="baseInitial"
+						@update-expression="emit('update-expression', $event)"
+						@update-source="emit('update-source', $event)"
+					/>
+					<Divider type="solid" />
+				</li>
+			</ul>
 		</AccordionTab>
 	</Accordion>
-
-	<!-- Unstratified -->
-	<ul v-else class="flex-grow">
-		<li v-for="{ target } in getInitials(modelConfiguration)" :key="target">
-			<tera-initial-entry
-				:model="model"
-				:model-configuration="modelConfiguration"
-				:initial-id="target"
-				@update-expression="emit('update-expression', $event)"
-				@update-source="emit('update-source', $event)"
-			/>
-			<Divider type="solid" />
-		</li>
-	</ul>
-	<!-- Stratified -->
 
 	<Teleport to="body">
 		<tera-stratified-matrix-modal
@@ -55,21 +75,23 @@
 </template>
 
 <script setup lang="ts">
-import { Model, ModelConfiguration } from '@/types/Types';
+import { InitialSemantic, Model, ModelConfiguration } from '@/types/Types';
 import { getInitials } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { collapseInitials, isStratifiedModel } from '@/model-representation/mira/mira';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 import TeraInitialEntry from './tera-initial-entry.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
@@ -78,8 +100,37 @@ const props = defineProps<{
 const emit = defineEmits(['update-expression', 'update-source']);
 
 const isStratified = isStratifiedModel(props.mmt);
+const initialList = computed<
+	{
+		baseInitial: string;
+		childInitials: InitialSemantic[];
+		isVirtual: boolean;
+	}[]
+>(() => {
+	const collapsedInitials = collapseInitials(props.mmt);
+	const initials = getInitials(props.modelConfiguration);
+	return Array.from(collapsedInitials.keys())
+		.flat()
+		.map((id) => {
+			const childTargets = collapsedInitials.get(id) ?? [];
+			const childInitials = childTargets
+				.map((childTarget) => initials.find((i) => i.target === childTarget))
+				.filter(Boolean) as InitialSemantic[];
+			const isVirtual = childTargets.length > 1;
+			const baseInitial = id;
+
+			return { baseInitial, childInitials, isVirtual };
+		})
+		.filter(({ baseInitial }) =>
+			baseInitial.toLowerCase().includes(filterText.value.toLowerCase())
+		);
+});
 
 const matrixModalId = ref('');
+
+const numInitials = computed(() => initialList.value.length);
+
+const filterText = ref('');
 </script>
 
 <style scoped>

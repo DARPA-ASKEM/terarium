@@ -4,20 +4,96 @@
 			v-for="({ baseParameter, childParameters, isVirtual }, index) in parameterList"
 			:key="index"
 		>
-			<template v-if="isVirtual">
-				<tera-parameter-metadata-entry
-					:parameter="baseParameter"
-					is-base
-					:show-stratified-variables="toggleStates[index]"
-					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-parameter="updateBaseParameter(baseParameter.id, $event)"
-					@open-matrix="matrixModalId = baseParameter.id"
-				/>
-				<ul v-if="toggleStates[index]" class="stratified">
+			<template v-if="isVirtual && !isEmpty(baseOptions)">
+				<section class="base">
+					<span>
+						<Button
+							:icon="baseOptions[index].showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].showChildren = !baseOptions[index].showChildren"
+						/>
+						<h6>{{ baseParameter.id }}</h6>
+					</span>
+					<Button
+						v-if="!baseOptions[index].isEditingChildrenUnits"
+						@click="baseOptions[index].isEditingChildrenUnits = true"
+						label="Add unit to all children"
+						text
+						size="small"
+					/>
+					<span v-else>
+						<tera-input
+							label="Unit"
+							placeholder="Add a unit"
+							v-model="baseOptions[index].childrenUnits"
+						/>
+						<Button
+							icon="pi pi-check"
+							text
+							rounded
+							size="small"
+							@click="
+								() => {
+									updateAllChildren(baseParameter.id, 'units', baseOptions[index].childrenUnits);
+									baseOptions[index].isEditingChildrenUnits = false;
+								}
+							"
+						/>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].isEditingChildrenUnits = false"
+						/>
+					</span>
+					<Button label="Open matrix" text size="small" @click="matrixModalId = baseParameter.id" />
+					<Button
+						v-if="!baseOptions[index].isEditingChildrenConcepts"
+						@click="baseOptions[index].isEditingChildrenConcepts = true"
+						label="Add concept to all children"
+						text
+						size="small"
+					/>
+					<span v-else>
+						<tera-input
+							label="Concept"
+							placeholder="Select a concept"
+							icon="pi pi-search"
+							disabled
+							v-model="baseOptions[index].childrenConcepts"
+						/>
+						<Button
+							icon="pi pi-check"
+							text
+							rounded
+							size="small"
+							@click="
+								() => {
+									updateAllChildren(
+										baseParameter.id,
+										'concept',
+										baseOptions[index].childrenConcepts
+									);
+									baseOptions[index].isEditingChildrenConcepts = false;
+								}
+							"
+						/>
+						<Button
+							icon="pi pi-times"
+							text
+							rounded
+							size="small"
+							@click="baseOptions[index].isEditingChildrenConcepts = false"
+						/>
+					</span>
+				</section>
+				<ul v-if="baseOptions[index].showChildren" class="stratified">
 					<li v-for="childParameter in childParameters" :key="childParameter.id">
 						<tera-parameter-metadata-entry
 							:parameter="childParameter"
-							is-stratified
 							@update-parameter="
 								$emit('update-parameter', { parameterId: childParameter.id, ...$event })
 							"
@@ -46,14 +122,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { isEmpty } from 'lodash';
+import { ref, computed, onMounted } from 'vue';
 import { Model, ModelParameter } from '@/types/Types';
 import { StratifiedMatrix } from '@/types/Model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
 import TeraParameterMetadataEntry from '@/components/model/tera-parameter-metadata-entry.vue';
+import Button from 'primevue/button';
 import TeraStratifiedMatrixModal from './petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import TeraInput from '../widgets/tera-input.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -88,27 +167,43 @@ const parameterList = computed<
 
 const matrixModalId = ref('');
 
-function updateBaseParameter(baseParameter: string, event: any) {
-	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-parameter', { parameterId: baseParameter, isMetadata: true, ...event });
-	// Cascade the change to all children
-	const ids = collapsedParameters.value.get(baseParameter);
-	ids?.forEach((id) => emit('update-parameter', { parameterId: id, ...event }));
-}
+const baseOptions = ref<
+	{
+		showChildren: boolean;
+		isEditingChildrenUnits: boolean;
+		isEditingChildrenConcepts: boolean;
+		childrenUnits: string;
+		childrenConcepts: string;
+	}[]
+>([]);
+onMounted(() => {
+	baseOptions.value = Array.from({ length: collapsedParameters.value.size }, () => ({
+		showChildren: false,
+		isEditingChildrenUnits: false,
+		isEditingChildrenConcepts: false,
+		childrenUnits: '',
+		childrenConcepts: ''
+	}));
+});
 
-const toggleStates = ref<boolean[]>([]);
-watch(
-	() => collapsedParameters.value.size,
-	() => {
-		toggleStates.value = Array.from({ length: collapsedParameters.value.size }, () => false);
-	}
-);
+function updateAllChildren(baseParameter: string, key: string, value: string) {
+	if (isEmpty(value)) return;
+	const ids = collapsedParameters.value.get(baseParameter);
+	ids?.forEach((id) => emit('update-parameter', { parameterId: id, key, value }));
+}
 </script>
 
 <style scoped>
 li {
 	padding-bottom: var(--gap-small);
 	border-bottom: 1px solid var(--surface-border);
+}
+
+.base,
+.base > span {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .stratified {
