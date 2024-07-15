@@ -33,13 +33,9 @@
 			v-if="model"
 			:key="model?.id"
 			:model="model"
-			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
-			:highlight="highlight"
 			@model-updated="getModelWithConfigurations"
 			@update-model="updateModelContent"
-			@update-configuration="updateConfiguration"
-			@fetch-model="fetchModel"
 		/>
 	</tera-asset>
 </template>
@@ -52,7 +48,6 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import { updateModelConfiguration } from '@/services/model-configurations';
 import {
 	getModel,
 	getModelConfigurationsForModel,
@@ -166,18 +161,6 @@ async function updateModelName() {
 		await updateModelContent(modelClone);
 	}
 	isRenaming.value = false;
-}
-
-async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
-	await updateModelConfiguration(updatedConfiguration);
-	setTimeout(async () => {
-		emit('update-model-configuration');
-		const indexToUpdate = modelConfigurations.value.findIndex(
-			({ id }) => id === updatedConfiguration.id
-		);
-		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
-		// await fetchConfigurations(); // elastic search might still not update in time
-	}, 800);
 }
 
 async function fetchConfigurations() {
