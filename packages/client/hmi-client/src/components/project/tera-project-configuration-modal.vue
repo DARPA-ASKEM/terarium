@@ -71,7 +71,7 @@
 						/>
 						<label for="thumbnail-default">
 							<img
-								src="@assets/images/project-thumbnails/default.png"
+								src="../../assets/images/project-thumbnails/default.png"
 								alt="Default thumbnail image"
 							/>
 						</label>
