@@ -656,7 +656,6 @@ const runOptimize = async () => {
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
-	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
@@ -667,7 +666,6 @@ const runOptimize = async () => {
 		startTime.push(ele.startTime);
 		initialGuess.push(ele.initialGuessValue);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		listInitialGuessInterventions.push(ele.initialGuessValue);
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
@@ -707,7 +705,7 @@ const runOptimize = async () => {
 		fixedStaticParameterInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-		initialGuessInterventions: listInitialGuessInterventions,
+		initialGuessInterventions: initialGuess,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: props.node.state.constraintGroups[0].isMinimized,
