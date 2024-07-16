@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
@@ -45,10 +45,8 @@ import {
 	pollAction,
 	getRunResultCiemss,
 	makeForecastJobCiemss,
-	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
 import { SimulationRequest } from '@/types/Types';
 import type { RunResults } from '@/types/SimulateConfig';
@@ -79,36 +77,18 @@ const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperation
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(4000)
-		.setThreshold(350)
+		.setInterval(5000)
+		.setThreshold(100)
 		.setPollAction(async () => pollAction(runId));
+
 	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressPostForecastId = '';
-		state.inProgressOptimizeId = '';
-		poller.stop();
-	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		logger.error(`Optimization: ${runId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.inProgressOptimizeId = '';
-			state.optimizeErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
+		return pollerResults;
 	}
-	emit('update-state', state);
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		console.error(`Optimize: ${runId} has failed`, pollerResults);
+	}
 	return pollerResults;
 };
 
@@ -165,8 +145,10 @@ watch(
 );
 
 watch(
-	() => [props.node.state.inProgressPreForecastId, props.node.state.inProgressPostForecastId],
-	async ([preSimId, postSimId]) => {
+	() => `${props.node.state.inProgressPreForecastId},${props.node.state.inProgressPostForecastId}`,
+	async () => {
+		const preSimId = props.node.state.inProgressPreForecastId;
+		const postSimId = props.node.state.inProgressPostForecastId;
 		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
 		const responseList: Promise<PollerResult<any>>[] = [];
 		responseList.push(pollResult(preSimId));
@@ -174,12 +156,6 @@ watch(
 		const [preResponse, postResponse] = await Promise.all(responseList);
 		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
-			state.inProgressPreForecastId = '';
-			state.preForecastRunId = preSimId;
-			state.inProgressPostForecastId = '';
-			state.postForecastRunId = postSimId;
-			emit('update-state', state);
 
 			// Generate output summary, collect key facts and get agent to summarize
 			const optimizationResult = await getRunResult(
@@ -199,6 +175,13 @@ Provide a consis summary in 100 words or less.
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
 			state.summaryId = summaryResponse?.id;
+
+			state.chartConfigs = [[]];
+			state.inProgressPreForecastId = '';
+			state.preForecastRunId = preSimId;
+			state.inProgressPostForecastId = '';
+			state.postForecastRunId = postSimId;
+			emit('update-state', state);
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
@@ -228,6 +211,10 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	poller.stop();
+});
 </script>
 
 <style scoped></style>
