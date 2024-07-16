@@ -36,14 +36,14 @@ export interface InterventionPolicyGroupForm {
 	intervention: Intervention;
 }
 
-export interface ConstraintGroup {
+export interface CriteriaGroup {
 	name: string; // Title of the group
 	targetVariable: string;
 	qoiMethod: ContextMethods;
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
-	isActive: boolean; // Denotes whether or not this should be used when user hits run.
+	isActive: boolean; // Denotes whether this should be used when user hits run.
 }
 
 export interface OptimizeCiemssOperationState extends BaseState {
@@ -57,7 +57,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
-	constraintGroups: ConstraintGroup[];
+	constraintGroups: CriteriaGroup[];
 	selectedInterventionVariables: string[];
 	selectedSimulationVariables: string[];
 	inProgressOptimizeId: string;
@@ -104,7 +104,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	}
 };
 
-export const defaultCriterionGroup: ConstraintGroup = {
+export const defaultCriterionGroup: CriteriaGroup = {
 	name: 'Criterion',
 	qoiMethod: ContextMethods.max,
 	targetVariable: '',

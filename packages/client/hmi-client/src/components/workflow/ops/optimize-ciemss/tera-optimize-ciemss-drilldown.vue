@@ -403,7 +403,7 @@ import {
 	InterventionPolicyGroupForm,
 	blankInterventionPolicyGroup,
 	defaultCriterionGroup,
-	ConstraintGroup
+	CriteriaGroup
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -584,7 +584,7 @@ const deleteCriterionGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const updateCriterionGroupForm = (index: number, config: ConstraintGroup) => {
+const updateCriterionGroupForm = (index: number, config: CriteriaGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
