@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<h6>{{ variable.id }}</h6>
+		<h6>{{ variable.templateId }} {{ variable.id }}</h6>
 		<tera-input
 			title="Name"
 			placeholder="Add a name"
@@ -8,7 +8,11 @@
 			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
 			:disabled="disabledInputs?.includes('name')"
 		/>
+		<div v-if="variable.input && variable.output">
+			<span>Input:</span> {{ variable.input }} <span>Output:</span> {{ variable.output }}
+		</div>
 		<tera-input
+			v-else
 			label="Unit"
 			placeholder="Add a unit"
 			:model-value="variable.unitExpression ?? ''"
@@ -76,6 +80,10 @@ h6 {
 		color: var(--text-color-light);
 		margin-left: var(--gap-2);
 	}
+}
+
+div > span {
+	color: var(--text-color-subdued);
 }
 
 :deep([title='Name']) {

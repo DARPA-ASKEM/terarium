@@ -39,45 +39,11 @@
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="name" header="Name" />
-				<Column field="input" header="Input">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="output" header="Output">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="expression" header="Expression">
-					<template #body="{ data }">
-						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
-							:throw-on-error="false"
-						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
 			<tera-transitions
-				v-if="!isEmpty(transitions)"
-				:model="model"
-				@mmt="mmt"
-				@transitions="transitions"
+				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				:transitions="transitions"
 				@update-transition="emit('update-transition', $event)"
 			/>
 		</AccordionTab>
@@ -114,8 +80,6 @@ import TeraParameters from '@/components/model/variables/tera-parameters.vue';
 import TeraObservables from '@/components/model/variables/tera-observables.vue';
 import TeraTransitions from '@/components/model/variables/tera-transitions.vue';
 import TeraTime from '@/components/model/variables/tera-time.vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{

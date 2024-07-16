@@ -9,6 +9,8 @@
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
 		@update-observable="(e: any) => onUpdate('observable', e)"
+		@update-transition="(e: any) => onUpdate('transition', e)"
+		@update-time="(e: any) => onUpdate('time', e)"
 	/>
 </template>
 

@@ -22,7 +22,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { StratifiedMatrix, ModelVariable } from '@/types/Model';
+import { StratifiedMatrix } from '@/types/Model';
+import type { ModelVariable } from '@/types/Model';
 import { Model } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';

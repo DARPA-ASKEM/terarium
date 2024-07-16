@@ -28,6 +28,11 @@
 				@click="toggleOptionsMenu"
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<div class="btn-group">
+				<Button label="Reset" severity="secondary" outlined />
+				<Button label="Save as..." severity="secondary" outlined />
+				<Button label="Save" />
+			</div>
 		</template>
 		<tera-model-description
 			v-if="model"
@@ -230,3 +235,12 @@ watch(
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
+}
+</style>
