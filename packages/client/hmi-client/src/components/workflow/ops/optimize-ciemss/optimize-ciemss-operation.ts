@@ -36,14 +36,14 @@ export interface InterventionPolicyGroupForm {
 	intervention: Intervention;
 }
 
-export interface ConstraintGroup {
+export interface Criterion {
 	name: string; // Title of the group
 	targetVariable: string;
 	qoiMethod: ContextMethods;
 	riskTolerance: number;
 	threshold: number;
 	isMinimized: boolean;
-	isActive: boolean; // Denotes whether or not this should be used when user hits run.
+	isActive: boolean; // Denotes whether this should be used when user hits run.
 }
 
 export interface OptimizeCiemssOperationState extends BaseState {
@@ -57,9 +57,9 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
 	// Constraints:
-	constraintGroups: ConstraintGroup[];
-	// Charts + Outputs:
-	chartConfigs: string[][];
+	constraintGroups: Criterion[];
+	selectedInterventionVariables: string[];
+	selectedSimulationVariables: string[];
 	inProgressOptimizeId: string;
 	inProgressPreForecastId: string;
 	preForecastRunId: string;
@@ -104,8 +104,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	}
 };
 
-export const defaultConstraintGroup: ConstraintGroup = {
-	name: 'Constraint',
+export const defaultCriterion: Criterion = {
+	name: 'Criterion',
 	qoiMethod: ContextMethods.max,
 	targetVariable: '',
 	riskTolerance: 5,
@@ -116,8 +116,8 @@ export const defaultConstraintGroup: ConstraintGroup = {
 
 export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
-	displayName: 'Optimize with PyCIEMSS',
-	description: 'Optimize with PyCIEMSS',
+	displayName: 'Optimize intervention policy',
+	description: 'Optimize intervention policy',
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
@@ -129,7 +129,7 @@ export const OptimizeCiemssOperation: Operation = {
 		},
 		{
 			type: 'policyInterventionId',
-			label: 'Interventions',
+			label: 'Intervention Policy',
 			acceptMultiple: false
 		}
 	],
@@ -145,8 +145,9 @@ export const OptimizeCiemssOperation: Operation = {
 			maxfeval: 25,
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
-			constraintGroups: [defaultConstraintGroup],
-			chartConfigs: [],
+			constraintGroups: [defaultCriterion],
+			selectedInterventionVariables: [],
+			selectedSimulationVariables: [],
 			inProgressOptimizeId: '',
 			inProgressPostForecastId: '',
 			inProgressPreForecastId: '',
