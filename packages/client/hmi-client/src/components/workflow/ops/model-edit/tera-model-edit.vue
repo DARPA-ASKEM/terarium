@@ -109,7 +109,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
 import { ModelEditOperationState } from './model-edit-operation';
