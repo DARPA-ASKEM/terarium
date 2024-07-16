@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention, InterventionSemanticType } from '@/types/Types';
+import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { createInterventionPolicy } from '@/services/intervention-policy';
 
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
@@ -166,42 +168,70 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
-	const simulationIntervetions =
+
+	const simulationIntervetions: Intervention[] =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
+
+	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
+	// https://github.com/DARPA-ASKEM/terarium/issues/3909
 	const interventionType = optimizeInterventions.intervention_type ?? '';
 	const paramNames: string[] = optimizeInterventions.param_names ?? [];
-	const paramValue: number[] = optimizeInterventions.param_values ?? [];
-	const startTime: number[] = optimizeInterventions.start_time ?? [];
+	const paramValues: number[] = optimizeInterventions.param_values ?? [];
+	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
 
-	if (interventionType === InterventionTypes.paramValue && startTime.length !== 0) {
-		// intervention type == parameter value
-		console.log(policyResult);
+	const allInterventions: Intervention[] = simulationIntervetions;
+
+	if (interventionType === InterventionTypes.paramValue && startTimes.length !== 0) {
 		for (let i = 0; i < paramNames.length; i++) {
-			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-			// TODO: We will need to fix this for the interventions refactor
-			// simulationIntervetions.push({
-			// 	name: paramNames[i],
-			// 	timestep: startTime[i],
-			// 	value: policyResult[i]
-			// });
+			allInterventions.push({
+				name: `Optimized ${paramNames[i]}`,
+				appliedTo: paramNames[i],
+				type: InterventionSemanticType.Parameter,
+				staticInterventions: [
+					{
+						timestep: policyResult[i],
+						value: paramValues[i]
+					}
+				],
+				dynamicInterventions: []
+			});
 		}
-	} else if (interventionType === InterventionTypes.startTime && paramValue.length !== 0) {
+	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
 		for (let i = 0; i < paramNames.length; i++) {
-			// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-			// TODO: We will need to fix this for the interventions refactor
-			// simulationIntervetions.push({
-			// 	name: paramNames[i],
-			// 	timestep: policyResult[i],
-			// 	value: paramValue[i]
-			// });
+			allInterventions.push({
+				name: `Optimized ${paramNames[i]}`,
+				appliedTo: paramNames[i],
+				type: InterventionSemanticType.Parameter,
+				staticInterventions: [
+					{
+						timestep: startTimes[i],
+						value: policyResult[i]
+					}
+				],
+				dynamicInterventions: []
+			});
 		}
 	} else {
 		// Should realistically not be hit unless we change the interface and do not update
 		console.error(`Unable to find the intevention for optimization run: ${optimizeRunId}`);
 	}
+	return allInterventions;
+}
 
-	return simulationIntervetions;
+export async function createInterventionPolicyFromOptimize(
+	modelConfigId: string,
+	optimizeRunId: string
+) {
+	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
+	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
+
+	const newIntervention: InterventionPolicy = {
+		modelId,
+		interventions: optimizedInterventions
+	};
+	const newInterventionResponse = await createInterventionPolicy(newIntervention);
+	return newInterventionResponse;
 }
