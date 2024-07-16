@@ -23,9 +23,9 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the
-					<strong>{{ knobs.intervention.type }}</strong>
-					<strong>{{ knobs.intervention.appliedTo }}</strong
+					for the {{ knobs.intervention.type }}&nbsp;<strong>{{
+						knobs.intervention.appliedTo
+					}}</strong
 					>.
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">

@@ -2,18 +2,17 @@
 	<div class="policy-group">
 		<div class="form-header">
 			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
-			<div>
-				<!-- TODO: We should be able to utilize dynamic in the future -->
+			<aside>
 				<label for="active">Optimize</label>
 				<InputSwitch
 					v-model="knobs.isActive"
 					:disabled="true"
 					@change="emit('update-self', knobs)"
 				/>
-			</div>
+			</aside>
 		</div>
 		<p>
-			Set the <strong>{{ config.intervention?.type }}</strong>
+			Set the {{ config.intervention?.type }}&nbsp;
 			<strong>{{ config.intervention?.appliedTo }}</strong> to
 			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it
 			<strong>{{
