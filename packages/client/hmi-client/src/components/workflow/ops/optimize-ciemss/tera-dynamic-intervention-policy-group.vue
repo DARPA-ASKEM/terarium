@@ -67,17 +67,21 @@ const knobs = ref({
 
 .policy-group {
 	display: flex;
-	padding: 1rem 1rem 1rem 1.5rem;
+	padding: var(--gap-4);
+	padding-left: var(--gap-5);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	gap: var(--gap-2);
-	border-radius: 0.375rem;
-	background: #fff;
+	border-radius: var(--gap-1-5);
+	background: var(--surface-section);
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
 		0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+.policy-group + .policy-group {
+	margin-top: var(--gap-2);
 }
 </style>
