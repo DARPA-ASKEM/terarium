@@ -250,7 +250,7 @@ const runResults = ref<RunResults>({});
 const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
-const lossValues: { [key: string]: number }[] = [];
+let lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -329,7 +329,7 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	console.log('msg', event.data);
+	// console.log('msg', event.data);
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
 
 	if (drilldownLossPlot.value) {
@@ -445,7 +445,18 @@ watch(
 
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(selectedRunId.value);
-			console.log('!!!', selectedRunId.value, simulationObj);
+			if (simulationObj?.updates) {
+				lossValues = simulationObj?.updates.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
+				if (drilldownLossPlot.value) {
+					renderLossGraph(drilldownLossPlot.value, lossValues, {
+						width: previewChartWidth.value,
+						height: 120
+					});
+				}
+			}
 
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
