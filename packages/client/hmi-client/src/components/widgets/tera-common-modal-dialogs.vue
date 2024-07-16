@@ -34,7 +34,7 @@
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import TeraShareProject from '@/components/widgets/share-project/tera-share-project.vue';
-import TeraProjectConfigurationModal from '@/page/project/components/tera-project-configuration-modal.vue';
+import TeraProjectConfigurationModal from '@/components/project/tera-project-configuration-modal.vue';
 import { logger } from '@/utils/logger';
 import { useRouter } from 'vue-router';
 import { RoutePath, useCurrentRoute } from '@/router/index';

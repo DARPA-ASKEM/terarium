@@ -158,7 +158,7 @@ import '@/ace-config';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import {
 	getCodeAsset,
 	getCodeFileAsText,
