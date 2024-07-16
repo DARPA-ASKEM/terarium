@@ -73,7 +73,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'start time', value: InterventionTypes.paramValue }
+	{ label: 'new start time', value: InterventionTypes.paramValue }
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
 ];
