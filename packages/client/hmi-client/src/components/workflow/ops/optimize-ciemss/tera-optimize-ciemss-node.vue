@@ -63,7 +63,6 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const watchingSimulationFlag = ref(false);
 const runResults = ref<RunResults>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const inferredParameters = computed(() => props.node.inputs[1].value);
@@ -146,17 +145,11 @@ watch(
 );
 
 watch(
-	() => [props.node.state.inProgressPreForecastId, props.node.state.inProgressPostForecastId],
-	async ([preSimId, postSimId]) => {
-		if (
-			!preSimId ||
-			preSimId === '' ||
-			!postSimId ||
-			postSimId === '' ||
-			watchingSimulationFlag.value === true
-		)
-			return;
-		watchingSimulationFlag.value = true;
+	() => `${props.node.state.inProgressPreForecastId},${props.node.state.inProgressPostForecastId}`,
+	async () => {
+		const preSimId = props.node.state.inProgressPreForecastId;
+		const postSimId = props.node.state.inProgressPostForecastId;
+		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
 		const responseList: Promise<PollerResult<any>>[] = [];
 		responseList.push(pollResult(preSimId));
 		responseList.push(pollResult(postSimId));
@@ -198,7 +191,6 @@ Provide a consis summary in 100 words or less.
 				state
 			});
 		}
-		watchingSimulationFlag.value = false;
 	},
 	{ immediate: true }
 );
