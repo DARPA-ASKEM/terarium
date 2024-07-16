@@ -17,11 +17,11 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { cloneDeep } from 'lodash';
-import { InterventionsState } from './tera-interventions-operation';
+import { InterventionPolicyState } from './tera-intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
 const props = defineProps<{
-	node: WorkflowNode<InterventionsState>;
+	node: WorkflowNode<InterventionPolicyState>;
 }>();
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');

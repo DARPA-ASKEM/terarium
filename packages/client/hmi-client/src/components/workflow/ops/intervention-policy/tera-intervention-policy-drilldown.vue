@@ -172,11 +172,14 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import { sortDates } from '@/utils/date';
 import TeraInterventionCard from './tera-intervention-card.vue';
-import { InterventionsOperation, InterventionsState } from './tera-interventions-operation';
-import TeraInterventionsPolicyCard from './tera-interventions-policy-card.vue';
+import {
+	InterventionPolicyOperation,
+	InterventionPolicyState
+} from './tera-intervention-policy-operation';
+import TeraInterventionsPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
-	node: WorkflowNode<InterventionsState>;
+	node: WorkflowNode<InterventionPolicyState>;
 }>();
 const emit = defineEmits([
 	'close',
@@ -276,7 +279,7 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 		// Append this config to the output.
 		state.interventionPolicy = interventionPolicy;
 		emit('append-output', {
-			type: InterventionsOperation.outputs[0].type,
+			type: InterventionPolicyOperation.outputs[0].type,
 			label: interventionPolicy.name,
 			value: interventionPolicy.id,
 			state
