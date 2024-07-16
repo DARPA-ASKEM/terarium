@@ -183,27 +183,22 @@ function createStatisticLayer(
 					domain: statisticalVariables,
 					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
 				},
-				legend: {
-					title: null,
-					orient: 'top',
-					direction: 'horizontal',
-					labelExpr: isPreStatistic
-						? 'datum.value ? "Before Optimization" : ""'
-						: 'datum.value ? "After Optimization" : ""'
-				}
+				legend: options.legend
+					? {
+							title: null,
+							orient: 'top',
+							direction: 'horizontal',
+							labelExpr: isPreStatistic
+								? 'datum.value ? "Before Optimization" : ""'
+								: 'datum.value ? "After Optimization" : ""'
+						}
+					: null
 			},
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 3.5 },
 			tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		}
 	};
-
-	if (options.legend === true) {
-		layerSpec.encoding.color.legend = {
-			strokeColor: null,
-			padding: { value: 5 }
-		};
-	}
 
 	return layerSpec;
 }
@@ -282,6 +277,9 @@ export const createOptimizeForecastChart = (
 		description: '',
 		width: options.width,
 		height: options.height,
+		autosize: {
+			type: 'fit'
+		},
 
 		// layers
 		layer: [],
