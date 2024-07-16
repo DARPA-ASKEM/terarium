@@ -25,8 +25,8 @@
 						:index="index"
 						:constraint="cfg"
 						:model-state-and-obs-options="modelStateAndObsOptions"
-						@update-self="(config) => updateConstraintGroupForm(index, config)"
-						@delete-self="() => deleteConstraintGroupForm(index)"
+						@update-self="(config) => updateCriterionGroupForm(index, config)"
+						@delete-self="() => deleteCriterionGroupForm(index)"
 					/>
 					<Button
 						icon="pi pi-plus"
@@ -502,7 +502,7 @@ const addCriterionGroupForm = () => {
 	emit('update-state', state);
 };
 
-const deleteConstraintGroupForm = (index: number) => {
+const deleteCriterionGroupForm = (index: number) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
@@ -510,7 +510,7 @@ const deleteConstraintGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const updateConstraintGroupForm = (index: number, config: ConstraintGroup) => {
+const updateCriterionGroupForm = (index: number, config: ConstraintGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
