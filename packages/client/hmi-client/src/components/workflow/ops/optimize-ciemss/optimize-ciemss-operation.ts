@@ -116,8 +116,8 @@ export const defaultConstraintGroup: ConstraintGroup = {
 
 export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
-	displayName: 'Optimize model over interventions',
-	description: 'Optimize model over interventions',
+	displayName: 'Optimize intervention policy',
+	description: 'Optimize intervention policy',
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
