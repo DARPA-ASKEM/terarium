@@ -771,8 +771,8 @@ const saveModelConfiguration = async () => {
 };
 
 const setOutputValues = async () => {
-	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
-	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+	const preForecastRunId = knobs.value.preForecastRunId;
+	const postForecastRunId = knobs.value.postForecastRunId;
 
 	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(
 		knobs.value.postForecastRunId,
@@ -825,16 +825,15 @@ onMounted(async () => {
 });
 
 const preparedInterventionsCharts = computed(() => {
-	const state = cloneDeep(props.node.state);
-	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
-	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+	const preForecastRunId = knobs.value.preForecastRunId;
+	const postForecastRunId = knobs.value.postForecastRunId;
 	if (!postForecastRunId || !preForecastRunId) return [];
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return state.selectedInterventionCharts.map((variable) =>
+	return knobs.value.selectedInterventionCharts.map((variable) =>
 		createOptimizeForecastChart(
 			preResult,
 			preResultSummary,
@@ -857,17 +856,15 @@ const preparedInterventionsCharts = computed(() => {
 });
 
 const preparedCharts = computed(() => {
-	const state = cloneDeep(props.node.state);
-	const preForecastRunId = cloneDeep(knobs.value.preForecastRunId);
-	const postForecastRunId = cloneDeep(knobs.value.postForecastRunId);
+	const preForecastRunId = knobs.value.preForecastRunId;
+	const postForecastRunId = knobs.value.postForecastRunId;
 	if (!postForecastRunId || !preForecastRunId) return [];
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
-	// const interventionsData = preProcessedInterventionsData.value[variable];
 
-	return state.selectedSimulationCharts.map((variable) =>
+	return knobs.value.selectedSimulationCharts.map((variable) =>
 		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
 			width: chartSize.value.width,
 			height: chartSize.value.height,

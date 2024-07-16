@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep } from 'lodash';
+import _ from 'lodash';
 import { computed, watch, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -142,7 +142,7 @@ const startForecast = async (simulationIntervetions) => {
 };
 
 const preparedCharts = computed(() => {
-	const state = cloneDeep(props.node.state);
+	const state = props.node.state;
 	const preForecastRunId = state.preForecastRunId;
 	const postForecastRunId = state.postForecastRunId;
 	if (!postForecastRunId || !preForecastRunId) return [];
@@ -200,7 +200,6 @@ watch(
 		const [preResponse, postResponse] = await Promise.all(responseList);
 		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
 			state.inProgressPreForecastId = '';
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
