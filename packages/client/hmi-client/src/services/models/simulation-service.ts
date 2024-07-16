@@ -147,6 +147,8 @@ export async function getCalibrateBlobURL(runId: string) {
 	return resp.data.url;
 }
 
+// @deprecated - The notion of RunResult is a outdated with introduction of Vegalite charts
+// that use a more barebone setups closwer to the raw data
 export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
 	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
@@ -171,20 +173,31 @@ export async function getRunResultCiemss(runId: string, filename = 'result.csv')
 	parsedRawData.forEach((inputRow) => {
 		const outputRowRunResults = { timestamp: inputRow.timepoint_id };
 		Object.keys(inputRow).forEach((key) => {
-			const keyArr = key.split('_');
-			const keySuffix = keyArr.pop();
-			const keyName = keyArr.join('_');
-
-			if (keySuffix === 'param' || keySuffix === 'state') {
-				outputRowRunResults[keyName] = inputRow[key];
-				if (!runConfigs[keyName]) {
-					runConfigs[keyName] = [];
+			if (key.endsWith('_observable_state')) {
+				const newKey = key.replace(/_observable_state$/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
 				}
-				runConfigs[keyName].push(Number(inputRow[key]));
-			} else if (keySuffix === 'sol') {
-				outputRowRunResults[keyName] = inputRow[key];
-			} else if (keySuffix === 'obs') {
-				outputRowRunResults[keyName] = inputRow[key];
+				runConfigs[newKey].push(Number(inputRow[key]));
+				return;
+			}
+			if (key.endsWith('_state')) {
+				const newKey = key.replace(/_state$/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
+				}
+				runConfigs[newKey].push(Number(inputRow[key]));
+				return;
+			}
+			if (key.startsWith('persistent_') && key.endsWith('_param')) {
+				const newKey = key.replace(/_param$/, '').replace(/^persistent_/, '');
+				outputRowRunResults[newKey] = inputRow[key];
+				if (!runConfigs[newKey]) {
+					runConfigs[newKey] = [];
+				}
+				runConfigs[newKey].push(Number(inputRow[key]));
 			}
 		});
 		runResults[inputRow.sample_id as string].push(outputRowRunResults as any);
