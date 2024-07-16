@@ -28,14 +28,12 @@
 						@update-self="(config) => updateConstraintGroupForm(index, config)"
 						@delete-self="() => deleteConstraintGroupForm(index)"
 					/>
-					<div>
-						<Button
-							icon="pi pi-plus"
-							class="p-button-sm p-button-text"
-							label="Add new criterion"
-							@click="addCriterionGroupForm"
-						/>
-					</div>
+					<Button
+						icon="pi pi-plus"
+						class="p-button-sm p-button-text w-max"
+						label="Add new criterion"
+						@click="addCriterionGroupForm"
+					/>
 				</section>
 				<section class="form-section">
 					<h5>
@@ -791,16 +789,15 @@ watch(
 }
 
 .form-section {
-	gap: var(--gap-1);
 	background-color: var(--surface-50);
-	flex-grow: 1;
-	padding: var(--gap);
-	margin: 0 var(--gap) var(--gap) var(--gap);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
 }
 
 .label-and-input {
