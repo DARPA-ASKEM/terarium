@@ -29,19 +29,25 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			<div class="btn-group">
-				<Button label="Reset" severity="secondary" outlined />
-				<Button label="Save as..." severity="secondary" outlined />
+				<!-- <Button label="Reset" severity="secondary" outlined />
+				<Button label="Save as..." severity="secondary" outlined /> -->
 				<Button label="Save" />
 			</div>
 		</template>
-		<tera-model-description
-			v-if="model"
-			:key="model?.id"
-			:model="model"
-			:feature-config="featureConfig"
-			@model-updated="fetchModel"
-			@update-model="updateModelContent"
-		/>
+		<section v-if="model">
+			<tera-model-description
+				:model="model"
+				:feature-config="featureConfig"
+				@model-updated="fetchModel"
+				@update-model="updateModelContent"
+			/>
+			<tera-model-variables
+				:model="model"
+				@update-model="updateModelContent"
+				class="mt-0"
+				:readonly="featureConfig?.isPreview"
+			/>
+		</section>
 	</tera-asset>
 </template>
 
@@ -50,6 +56,7 @@ import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelVariables from '@/components/model/tera-model-variables.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
@@ -73,6 +80,7 @@ const props = defineProps({
 const emit = defineEmits(['close-preview']);
 
 const model = ref<Model | null>(null);
+const transientModel = ref<Model | null>(null);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
@@ -152,6 +160,7 @@ async function updateModelName() {
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
+	transientModel.value = cloneDeep(model.value);
 }
 
 watch(

@@ -118,17 +118,16 @@ watch(
 </script>
 
 <style scoped>
-section {
-	margin-left: 1rem;
-}
-
-.clickable-tag:hover {
-	cursor: pointer;
-}
-
 :deep(.artifact-amount) {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
+}
+
+:deep(.p-accordion-content:empty::before) {
+	content: 'None';
+	color: var(--text-color-secondary);
+	font-size: var(--font-caption);
+	margin-left: 1rem;
 }
 </style>

@@ -131,9 +131,3 @@ function onCellEditComplete() {
 	conceptSearchTerm.value = '';
 }
 </script>
-
-<style scoped>
-section {
-	margin-left: 1rem;
-}
-</style>
