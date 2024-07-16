@@ -148,7 +148,7 @@ export async function getCalibrateBlobURL(runId: string) {
 }
 
 // @deprecated - The notion of RunResult is a outdated with introduction of Vegalite charts
-// that use a more barebone setups closwer to the raw data
+// that use a more barebone setup closer to the raw data
 export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
 	const resultCsv = await getRunResult(runId, filename);
 	const csvData = csvParse(resultCsv);
