@@ -17,8 +17,8 @@
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
-				<div class="form-section">
-					<h5>Success criteria <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
+				<section class="form-section">
+					<h5>Success criteria <i v-tooltip="criteriaToolTip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-criteria-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -36,7 +36,7 @@
 							@click="addConstraintGroupForm"
 						/>
 					</div>
-				</div>
+				</section>
 				<section class="form-section">
 					<h5>
 						Intervention policy
@@ -386,7 +386,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
-const constraintToolTip = 'TODO';
+const criteriaToolTip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
 
