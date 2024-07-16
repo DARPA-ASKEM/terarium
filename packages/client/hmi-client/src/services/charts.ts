@@ -55,7 +55,8 @@ export const createForecastChart = (
 ) => {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
-	const labelFontWeight = 'normal'; // Adjust font weight here
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
 	const titleObj = options.title
 		? {
 				text: options.title,
@@ -94,6 +95,9 @@ export const createForecastChart = (
 		height: options.height,
 		autosize: {
 			type: 'fit'
+		},
+		config: {
+			font: globalFont
 		},
 
 		// layers
@@ -177,17 +181,23 @@ export const createForecastChart = (
 					legend: false
 				},
 				opacity: { value: 1.0 },
-				strokeWidth: { value: 3.5 },
+				strokeWidth: { value: 2 },
 				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 			}
 		};
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: { value: 'Stat. Summary' },
+				title: null,
+				padding: { value: 0 },
 				strokeColor: null,
-				padding: { value: 5 },
-				orient: 'bottom'
+				orient: 'top',
+				direction: 'horizontal',
+				columns: Math.floor(options.width / 120),
+				symbolStrokeWidth: 4,
+				symbolSize: 200,
+				labelFontSize: 12,
+				labelOffset: 4
 			};
 
 			if (labelExpr.length > 0) {
