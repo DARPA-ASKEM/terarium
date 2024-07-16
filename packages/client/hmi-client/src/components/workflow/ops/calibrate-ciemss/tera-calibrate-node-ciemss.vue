@@ -66,7 +66,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
-const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);

@@ -110,13 +110,7 @@
 			<h5>Notebook</h5>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Preview"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && !showSpinner"
 					:summary-id="node.state.summaryId"
@@ -211,6 +205,7 @@ import {
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
+	getSimulation,
 	getRunResultCiemss,
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
@@ -277,29 +272,14 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 100
 });
 
-// EXTRA section: Unused, comment out for now Feb 2023
-/*
-const numSamples = ref(100);
-const method = ref('dopri5');
-const ciemssMethodOptions = ref(['dopri5', 'euler']);
-*/
-
 const disableRunButton = computed(
 	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
-	}
-	return [];
-});
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
@@ -441,6 +421,7 @@ watch(
 	},
 	{ deep: true }
 );
+
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
@@ -461,6 +442,10 @@ watch(
 		// Update selected output
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
+
+			// Fetch saved intermediate state
+			const simulationObj = await getSimulation(selectedRunId.value);
+			console.log('!!!', selectedRunId.value, simulationObj);
 
 			const state = props.node.state;
 			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
