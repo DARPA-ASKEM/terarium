@@ -11,7 +11,7 @@
 			>
 				{{ title ?? node.displayName }}
 				<template #top-header-actions>
-					<aside class="input-chips">
+					<aside class="input-chips mr-auto">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
@@ -22,17 +22,18 @@
 							</template>
 						</Chip>
 					</aside>
-					<tera-output-dropdown
-						class="ml-auto"
-						v-if="outputOptions && selectedOutputId"
-						:options="outputOptions"
-						:output="selectedOutputId"
-						@update:selection="(e) => emit('update:selection', e)"
-					/>
-					<section v-if="!isEmpty(menuItems)" class="mr-3 ml-3">
-						<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
-						<Menu ref="menu" :model="menuItems" :popup="true" />
-					</section>
+					<template v-if="outputOptions && selectedOutputId">
+						<tera-output-dropdown
+							class="mx-2"
+							:options="outputOptions"
+							:output="selectedOutputId"
+							@update:selection="(e) => emit('update:selection', e)"
+						/>
+						<section v-if="!isEmpty(menuItems)" class="mx-2">
+							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
+							<Menu ref="menu" :model="menuItems" :popup="true" />
+						</section>
+					</template>
 				</template>
 				<template #actions>
 					<slot name="header-actions" />

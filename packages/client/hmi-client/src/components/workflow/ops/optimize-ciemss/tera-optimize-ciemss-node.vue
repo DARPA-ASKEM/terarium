@@ -45,14 +45,14 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata } from '@/components/workflow/util';
-import { SimulationRequest } from '@/types/Types';
+import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createOptimizeForecastChart } from '@/utils/optimize';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
-	getOptimizedInterventions
+	createInterventionPolicyFromOptimize
 } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
@@ -93,7 +93,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const startForecast = async (simulationIntervetions) => {
+const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 	const simulationPayload: SimulationRequest = {
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
@@ -106,14 +106,15 @@ const startForecast = async (simulationIntervetions) => {
 		},
 		engine: 'ciemss'
 	};
-	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/4025
-	console.log(
-		`We now need to concat this with the policy intervention provided and make an object in TDS ${simulationIntervetions}`
-	);
-	// if (simulationIntervetions) {
-	// 	simulationPayload.interventions = simulationIntervetions;
-	// }
+
+	if (optimizedInterventions) {
+		// Use the intervention policy ID provided.
+		simulationPayload.policyInterventionId = optimizedInterventions.id;
+	} else {
+		// Use the input interventions provided
+		const inputIntervention = props.node.inputs[2].value?.[0];
+		simulationPayload.policyInterventionId = inputIntervention;
+	}
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
@@ -151,10 +152,14 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getOptimizedInterventions(optId);
+			const newInterventionResponse = await createInterventionPolicyFromOptimize(
+				modelConfigId.value as string,
+				optId
+			);
+
 			const preForecastResponce = await startForecast(undefined);
 			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(simulationIntervetions);
+			const postForecastResponce = await startForecast(newInterventionResponse);
 			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
