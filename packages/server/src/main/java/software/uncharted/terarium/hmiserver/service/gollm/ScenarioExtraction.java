@@ -3,10 +3,8 @@ package software.uncharted.terarium.hmiserver.service.gollm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -56,7 +54,7 @@ public class ScenarioExtraction {
 		}
 	}
 
-	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model modelCopy){
+	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model modelCopy) {
 		final List<ModelParameter> modelParameters = modelCopy.getParameters();
 		modelParameters.forEach((parameter) -> {
 			condition.forEach((conditionParameter) -> {
