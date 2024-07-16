@@ -81,13 +81,13 @@
 							v-if="!showAdditionalOptions"
 							class="p-button-sm p-button-text"
 							label="Show additional options"
-							@click="toggleAdditonalOptions"
+							@click="toggleAdditionalOptions"
 						/>
 						<Button
 							v-if="showAdditionalOptions"
 							class="p-button-sm p-button-text"
 							label="Hide additional options"
-							@click="toggleAdditonalOptions"
+							@click="toggleAdditionalOptions"
 						/>
 					</div>
 					<div v-if="showAdditionalOptions">
@@ -345,8 +345,8 @@
 </template>
 
 <script setup lang="ts">
-import _, { Dictionary, cloneDeep, groupBy } from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
@@ -360,25 +360,25 @@ import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-datase
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import {
-	getModelConfigurationById,
 	createModelConfiguration,
-	getAsConfiguredModel
+	getAsConfiguredModel,
+	getModelConfigurationById
 } from '@/services/model-configurations';
 import {
-	makeOptimizeJobCiemss,
+	convertToCsvAsset,
 	getRunResult,
-	parsePyCiemssMap,
 	getRunResultCSV,
-	convertToCsvAsset
+	makeOptimizeJobCiemss,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import {
-	ModelConfiguration,
-	OptimizeRequestCiemss,
 	CsvAsset,
+	Intervention,
+	InterventionPolicy,
+	ModelConfiguration,
 	OptimizeInterventions,
 	OptimizeQoi,
-	InterventionPolicy,
-	Intervention
+	OptimizeRequestCiemss
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
@@ -399,11 +399,11 @@ import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
-	OptimizeCiemssOperationState,
-	InterventionPolicyGroupForm,
 	blankInterventionPolicyGroup,
+	CriteriaGroup,
 	defaultCriterionGroup,
-	CriteriaGroup
+	InterventionPolicyGroupForm,
+	OptimizeCiemssOperationState
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -475,11 +475,11 @@ const isSaveDisabled = computed<boolean>(() =>
 );
 
 const activePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === true)
+	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive)
 );
 
 const inactivePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive === false)
+	props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive)
 );
 let pyciemssMap: Record<string, string> = {};
 
@@ -522,15 +522,12 @@ const outputs = computed(() => {
 	return [];
 });
 
-const isRunDisabled = computed(() => {
-	if (
+const isRunDisabled = computed(
+	() =>
 		!props.node.state.constraintGroups?.at(0)?.targetVariable ||
 		props.node.state.interventionPolicyGroups.length === 0 ||
 		activePolicyGroups.value.length <= 0
-	)
-		return true;
-	return false;
-});
+);
 
 const selectedOutputId = ref<string>();
 
@@ -592,7 +589,7 @@ const updateCriterionGroupForm = (index: number, config: CriteriaGroup) => {
 	emit('update-state', state);
 };
 
-const toggleAdditonalOptions = () => {
+const toggleAdditionalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
 
@@ -617,10 +614,13 @@ const initialize = async () => {
 	}
 
 	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
-	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id);
-	model?.semantics?.ode.observables
-		?.map((ele) => ele.id)
-		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
+	modelStateAndObsOptions.value = model?.model.states.map((state: any) => state.id);
+
+	/** Until supported by pyciemss-service, do not show observables.
+	if (model?.semantics?.ode.observables) {
+		modelStateAndObsOptions.value.push(...model.semantics.ode.observables.map((observable: any) => observable.id));
+	}
+	*/
 };
 
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
@@ -782,11 +782,10 @@ const setOutputValues = async () => {
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
-	const optimzationResult = await getRunResult(
+	optimizationResult.value = await getRunResult(
 		knobs.value.optimizationRunId,
 		'optimize_results.json'
 	);
-	optimizationResult.value = optimzationResult;
 };
 
 const preProcessedInterventionsData = computed<
