@@ -122,14 +122,8 @@ export const OptimizeCiemssOperation: Operation = {
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		},
-		{
 			type: 'policyInterventionId',
-			label: 'Interventions',
+			label: 'Intervention Policy',
 			acceptMultiple: false
 		}
 	],
