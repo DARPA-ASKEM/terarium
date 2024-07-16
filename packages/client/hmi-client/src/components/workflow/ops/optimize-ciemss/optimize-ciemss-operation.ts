@@ -232,6 +232,7 @@ export async function createInterventionPolicyFromOptimize(
 		modelId,
 		interventions: optimizedInterventions
 	};
-	const newInterventionResponse = await createInterventionPolicy(newIntervention);
+	const newInterventionResponse: InterventionPolicy =
+		await createInterventionPolicy(newIntervention);
 	return newInterventionResponse;
 }

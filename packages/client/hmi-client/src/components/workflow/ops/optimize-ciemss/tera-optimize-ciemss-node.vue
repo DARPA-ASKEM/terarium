@@ -45,14 +45,14 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { nodeMetadata } from '@/components/workflow/util';
-import { SimulationRequest } from '@/types/Types';
+import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createOptimizeForecastChart } from '@/utils/optimize';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
-	getOptimizedInterventions
+	createInterventionPolicyFromOptimize
 } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
@@ -93,7 +93,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const startForecast = async (optimizedInterventions) => {
+const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 	const simulationPayload: SimulationRequest = {
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
@@ -113,10 +113,7 @@ const startForecast = async (optimizedInterventions) => {
 	);
 	const inputIntervention = props.node.inputs?.[2]?.value?.[0];
 	if (optimizedInterventions) {
-		// Create new intervention
-		console.log(inputIntervention);
-		console.log(optimizedInterventions);
-		// simulationPayload.policyInterventionId = optimizedInterventions;
+		simulationPayload.policyInterventionId = optimizedInterventions.id;
 	} else {
 		// Use the input interventions provided.
 		simulationPayload.policyInterventionId = inputIntervention;
@@ -158,10 +155,14 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const optimizedInterventions = await getOptimizedInterventions(optId);
+			const newInterventionResponse = await createInterventionPolicyFromOptimize(
+				modelConfigId.value ?? '',
+				optId
+			);
+
 			const preForecastResponce = await startForecast(undefined);
 			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(optimizedInterventions);
+			const postForecastResponce = await startForecast(newInterventionResponse);
 			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
