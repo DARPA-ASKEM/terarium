@@ -5,17 +5,17 @@
 				<tera-input
 					v-if="isEditing"
 					v-model="config.name"
-					placeholder="Constraint name"
+					placeholder="Criterion"
 					@update:model-value="emit('update-self', config)"
 				/>
-				<h6 v-else>{{ props.constraint.name }}</h6>
+				<h6 v-else>{{ props.criterion.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
 					@click="onEdit"
 				/>
 			</div>
-			<label for="active">Optimize</label>
+			<label for="active">Active</label>
 			<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			<i class="trash-button pi pi-trash" @click="emit('delete-self')" />
 		</div>
@@ -46,8 +46,8 @@
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="[
-					{ label: 'Max', value: ContextMethods.max },
-					{ label: 'Day average', value: ContextMethods.day_average }
+					{ label: 'last timepoint', value: ContextMethods.max },
+					{ label: 'all timepoints', value: ContextMethods.day_average }
 				]"
 				option-label="label"
 				option-value="value"
@@ -78,13 +78,13 @@ import InputSwitch from 'primevue/inputswitch';
 import { ConstraintGroup, ContextMethods } from './optimize-ciemss-operation';
 
 const props = defineProps<{
-	constraint: ConstraintGroup;
+	criterion: ConstraintGroup;
 	modelStateAndObsOptions: string[];
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const config = ref<ConstraintGroup>(_.cloneDeep(props.constraint));
+const config = ref<ConstraintGroup>(_.cloneDeep(props.criterion));
 
 const isEditing = ref<boolean>(false);
 

@@ -10,12 +10,15 @@ const CATEGORICAL_SCHEME = [
 	'#84594D'
 ];
 
-interface ForecastChartOptions {
+export interface ForecastChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
 	groundTruthVariables?: string[];
 
 	legend: boolean;
+
+	translationMap?: Record<string, string>;
+
 	colorscheme?: string[];
 	timeField: string;
 	groupField: string;
@@ -74,12 +77,24 @@ export const createForecastChart = (
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
 
+	const translationMap = options.translationMap;
+	let labelExpr = '';
+	if (translationMap) {
+		Object.keys(translationMap).forEach((key) => {
+			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+		});
+		labelExpr += " 'other'";
+	}
+
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
 		description: '',
 		width: options.width,
 		height: options.height,
+		autosize: {
+			type: 'fit'
+		},
 
 		// layers
 		layer: [],
@@ -126,11 +141,19 @@ export const createForecastChart = (
 	// Build statistical layer
 	if (statisticData && statisticData.length > 0) {
 		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => ({
-			field: d,
-			type: 'quantitative',
-			format: '.4f'
-		}));
+		const tooltipContent = statisticalVariables?.map((d) => {
+			const tip: any = {
+				field: d,
+				type: 'quantitative',
+				format: '.4f'
+			};
+
+			if (options.translationMap && options.translationMap[d]) {
+				tip.title = options.translationMap[d];
+			}
+
+			return tip;
+		});
 
 		const layerSpec: any = {
 			mark: { type: 'line' },
@@ -161,9 +184,15 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
+				title: { value: 'Stat. Summary' },
 				strokeColor: null,
-				padding: { value: 5 }
+				padding: { value: 5 },
+				orient: 'bottom'
 			};
+
+			if (labelExpr.length > 0) {
+				layerSpec.encoding.color.legend.labelExpr = labelExpr;
+			}
 		}
 		spec.layer.push(layerSpec);
 	}
@@ -198,9 +227,14 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
+				title: { value: 'Ground truth' },
 				strokeColor: null,
 				padding: { value: 5 }
 			};
+
+			if (labelExpr.length > 0) {
+				layerSpec.encoding.color.legend.labelExpr = labelExpr;
+			}
 		}
 		spec.layer.push(layerSpec);
 	}
