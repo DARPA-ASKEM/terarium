@@ -233,6 +233,7 @@ export async function createInterventionPolicyFromOptimize(
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 
 	const newIntervention: InterventionPolicy = {
+		name: `Optimize run: ${optimizeRunId}`,
 		modelId,
 		interventions: optimizedInterventions
 	};
