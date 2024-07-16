@@ -153,7 +153,7 @@ watch(
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
 			const newInterventionResponse = await createInterventionPolicyFromOptimize(
-				modelConfigId.value ?? '',
+				modelConfigId.value as string,
 				optId
 			);
 
