@@ -282,10 +282,9 @@
 							<AccordionTab header="Interventions">
 								<ul>
 									<li
-										v-for="(variable, key) of knobs.selectedInterventionVariables"
+										v-for="(_, key) of knobs.selectedInterventionVariables"
 										:key="`intervention_${key}`"
 									>
-										<h5>{{ variable }}</h5>
 										<vega-chart
 											are-embed-actions-visible
 											:visualization-spec="preparedInterventionsCharts[key]"
@@ -296,10 +295,9 @@
 							<AccordionTab header="Simulation plots">
 								<ul>
 									<li
-										v-for="(variable, key) of knobs.selectedSimulationVariables"
+										v-for="(_, key) of knobs.selectedSimulationVariables"
 										:key="`simulation_${key}`"
 									>
-										<h5>{{ variable }}</h5>
 										<vega-chart
 											are-embed-actions-visible
 											:visualization-spec="preparedCharts[key]"
@@ -849,7 +847,8 @@ const preparedInterventionsCharts = computed(() => {
 				groupField: 'sample_id',
 				timeField: 'timepoint_id',
 				xAxisTitle: 'Time',
-				yAxisTitle: variable
+				yAxisTitle: variable,
+				title: variable
 			}
 		)
 	);
@@ -874,7 +873,8 @@ const preparedCharts = computed(() => {
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
 			xAxisTitle: 'Time',
-			yAxisTitle: variable
+			yAxisTitle: variable,
+			title: variable
 		})
 	);
 });

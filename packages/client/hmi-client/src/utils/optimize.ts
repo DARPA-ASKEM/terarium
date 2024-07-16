@@ -1,3 +1,4 @@
+import { ForecastChartOptions } from '@/services/charts';
 import { mean } from 'lodash';
 
 const binCount = 5;
@@ -155,7 +156,7 @@ export const createOptimizeForecastChart = (
 	postSampleRunData: Record<string, any>[],
 	postStatisticData: Record<string, any>[],
 	interventionsData: { name: string; value: number; time: number }[],
-	options: any
+	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
