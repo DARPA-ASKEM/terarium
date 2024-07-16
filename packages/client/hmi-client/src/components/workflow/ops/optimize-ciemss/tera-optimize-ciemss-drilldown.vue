@@ -16,7 +16,7 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<section class="form-section">
-					<h5>Success criteria <i v-tooltip="criteriaToolTip" class="pi pi-info-circle" /></h5>
+					<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle" /></h5>
 					<tera-optimize-criterion-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
@@ -381,8 +381,7 @@ const knobs = ref<BasicKnobs>({
 	optimizationRunId: props.node.state.optimizationRunId ?? ''
 });
 
-// TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
-const criteriaToolTip = 'TODO';
+const criteriaTooltip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
 
