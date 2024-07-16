@@ -150,6 +150,100 @@ function createInterventionChartMarkers(data: { name: string; value: number; tim
 	}));
 }
 
+function createStatisticLayer(
+	data: Record<string, any>[],
+	xaxis,
+	yaxis,
+	options: ForecastChartOptions,
+	isPreStatistic: boolean
+) {
+	const statisticalVariables = options.statisticalVariables?.map((d) => d);
+	const tooltipContent = statisticalVariables?.map((d) => ({
+		field: d,
+		type: 'quantitative',
+		format: '.4f'
+	}));
+
+	const layerSpec: any = {
+		mark: { type: 'line' },
+		data: { values: data },
+		transform: [
+			{
+				fold: statisticalVariables,
+				as: ['stat_variable', 'stat_value']
+			}
+		],
+		encoding: {
+			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'stat_variable',
+				type: 'nominal',
+				scale: {
+					domain: statisticalVariables,
+					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
+				},
+				legend: {
+					title: null,
+					orient: 'top',
+					direction: 'horizontal',
+					labelExpr: isPreStatistic
+						? 'datum.value ? "Before Optimization" : ""'
+						: 'datum.value ? "After Optimization" : ""'
+				}
+			},
+			opacity: { value: 1.0 },
+			strokeWidth: { value: 3.5 },
+			tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+		}
+	};
+
+	if (options.legend === true) {
+		layerSpec.encoding.color.legend = {
+			strokeColor: null,
+			padding: { value: 5 }
+		};
+	}
+
+	return layerSpec;
+}
+
+function createSampleLayer(
+	data: Record<string, any>[],
+	xaxis,
+	yaxis,
+	options: ForecastChartOptions,
+	isPreSample: boolean
+) {
+	const sampleVariables = options.variables?.map((d) => d);
+
+	return {
+		mark: { type: 'line' },
+		data: { values: data },
+		transform: [
+			{
+				fold: sampleVariables,
+				as: ['sample_variable', 'sample_value']
+			}
+		],
+		encoding: {
+			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'sample_variable',
+				type: 'nominal',
+				scale: {
+					domain: sampleVariables,
+					range: [isPreSample ? '#AAB3C6' : '#1B8073']
+				},
+				legend: false // No legend for sampling-layer, too noisy
+			},
+			detail: { field: options.groupField, type: 'nominal' },
+			strokeWidth: { value: 1 },
+			opacity: { value: 0.1 }
+		}
+	};
+}
 export const createOptimizeForecastChart = (
 	preSampleRunData: Record<string, any>[],
 	preStatisticData: Record<string, any>[],
@@ -201,166 +295,23 @@ export const createOptimizeForecastChart = (
 
 	// Build pre sample layer
 	if (preSampleRunData && preSampleRunData.length > 0) {
-		const sampleVariables = options.variables?.map((d) => d);
-
-		spec.layer.push({
-			mark: { type: 'line' },
-			data: { values: preSampleRunData },
-			transform: [
-				{
-					fold: sampleVariables,
-					as: ['sample_variable', 'sample_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'sample_variable',
-					type: 'nominal',
-					scale: {
-						domain: sampleVariables,
-						range: ['#AAB3C6']
-					},
-					legend: false // No legend for sampling-layer, too noisy
-				},
-				detail: { field: options.groupField, type: 'nominal' },
-				strokeWidth: { value: 1 },
-				opacity: { value: 0.1 }
-			}
-		});
+		spec.layer.push(createSampleLayer(preSampleRunData, xaxis, yaxis, options, true));
 	}
 
 	// Build post sample layer
 	if (postSampleRunData && postSampleRunData.length > 0) {
-		const sampleVariables = options.variables?.map((d) => d);
-
-		spec.layer.push({
-			mark: { type: 'line' },
-			data: { values: postSampleRunData },
-			transform: [
-				{
-					fold: sampleVariables,
-					as: ['sample_variable', 'sample_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'sample_variable',
-					type: 'nominal',
-					scale: {
-						domain: sampleVariables,
-						range: ['#1B8073']
-					},
-					legend: false // No legend for sampling-layer, too noisy
-				},
-				detail: { field: options.groupField, type: 'nominal' },
-				strokeWidth: { value: 1 },
-				opacity: { value: 0.1 }
-			}
-		});
+		spec.layer.push(createSampleLayer(postSampleRunData, xaxis, yaxis, options, false));
 	}
 
 	// Build pre statistical layer
 	if (preStatisticData && preStatisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => ({
-			field: d,
-			type: 'quantitative',
-			format: '.4f'
-		}));
-
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: preStatisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: ['#AAB3C6']
-					},
-					legend: {
-						title: null,
-						orient: 'top',
-						direction: 'horizontal',
-						labelExpr: 'datum.value ? "Before Optimization" : ""'
-					}
-				},
-				opacity: { value: 1.0 },
-				strokeWidth: { value: 3.5 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
-
-		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
-				strokeColor: null,
-				padding: { value: 5 }
-			};
-		}
-		spec.layer.push(layerSpec);
+		spec.layer.push(createStatisticLayer(preStatisticData, xaxis, yaxis, options, true));
 	}
 
 	if (postStatisticData && postStatisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => ({
-			field: d,
-			type: 'quantitative',
-			format: '.4f'
-		}));
-
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: postStatisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: ['#1B8073']
-					},
-					legend: {
-						title: null,
-						orient: 'top',
-						direction: 'horizontal',
-						labelExpr: 'datum.value ? "After Optimization" : ""'
-					}
-				},
-				opacity: { value: 1.0 },
-				strokeWidth: { value: 3.5 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
-
-		if (options.legend === true) {
-			layerSpec.encoding.color.legend = {
-				strokeColor: null,
-				padding: { value: 5 }
-			};
-		}
-		spec.layer.push(layerSpec);
+		spec.layer.push(createStatisticLayer(postStatisticData, xaxis, yaxis, options, false));
 	}
+
 	if (interventionsData && interventionsData.length > 0) {
 		createInterventionChartMarkers(interventionsData).forEach((marker) => {
 			spec.layer.push(marker);

@@ -9,8 +9,7 @@
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
-				<template v-for="(variable, index) of node.state.selectedSimulationVariables" :key="index">
-					<h6>{{ variable }}</h6>
+				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
 					<vega-chart
 						:visualization-spec="preparedCharts[index]"
 						:are-embed-actions-visible="false"
@@ -160,7 +159,8 @@ const preparedCharts = computed(() => {
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
 			xAxisTitle: '',
-			yAxisTitle: ''
+			yAxisTitle: '',
+			title: variable
 		})
 	);
 });
