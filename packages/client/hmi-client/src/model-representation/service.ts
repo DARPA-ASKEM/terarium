@@ -286,11 +286,15 @@ export function updateTransition(model: Model, id: string, key: string, value: a
 	transition[key] = value;
 }
 
-export function updateTime(model: Model, id: string, key: string, value: any) {
-	const times: { id: string; unit: ModelUnit }[] = model?.semantics?.ode?.time;
-	const time = times.find((t) => t.id === id);
-	if (!time) return;
-	time[key] = value;
+export function updateTime(model: Model, key: string, value: any) {
+	const time: { id: string; units?: ModelUnit } = model?.semantics?.ode?.time;
+	if (key === 'unitExpression') {
+		if (!time.units) time.units = { expression: '', expression_mathml: '' };
+		time.units.expression = value;
+		time.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		time[key] = value;
+	}
 }
 
 /**

@@ -9,12 +9,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ModelVariable } from '@/types/Model';
+import type { ModelUnit } from '@/types/Types';
 import TeraVariables from '@/components/model/variables/tera-variables.vue';
 
 defineEmits(['update-time']);
 
 const props = defineProps<{
-	time: any;
+	time: { id: string; units: ModelUnit }[];
 }>();
 
 const timeList = computed<

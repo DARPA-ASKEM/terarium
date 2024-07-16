@@ -77,7 +77,7 @@ function onUpdate(property: string, event: any) {
 			updateTransition(transientModel.value, id, key, value);
 			break;
 		case 'time':
-			updateTime(transientModel.value, id, key, value);
+			updateTime(transientModel.value, key, value);
 			break;
 		default:
 			break;
