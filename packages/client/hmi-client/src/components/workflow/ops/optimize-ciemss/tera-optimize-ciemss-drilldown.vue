@@ -347,7 +347,6 @@
 <script setup lang="ts">
 import _, { Dictionary, cloneDeep, groupBy } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
-// components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
@@ -360,8 +359,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-
-// Services:
 import {
 	getModelConfigurationById,
 	createModelConfiguration,
@@ -374,7 +371,6 @@ import {
 	getRunResultCSV,
 	convertToCsvAsset
 } from '@/services/models/simulation-service';
-// Types:
 import {
 	ModelConfiguration,
 	OptimizeRequestCiemss,
@@ -716,7 +712,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // divide alpha by 100 to turn into a percent for pyciemss-service.
+			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100, // Reverse riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};
