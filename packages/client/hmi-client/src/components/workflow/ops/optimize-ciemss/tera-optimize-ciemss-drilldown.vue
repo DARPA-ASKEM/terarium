@@ -15,26 +15,24 @@
 					<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
-				<div class="form-section">
-					<h5>Success criteria <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
-					<tera-optimize-constraint-group-form
+				<section class="form-section">
+					<h5>Success criteria <i v-tooltip="criteriaTooltip" class="pi pi-info-circle" /></h5>
+					<tera-optimize-criterion-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
 						:index="index"
-						:constraint="cfg"
+						:criterion="cfg"
 						:model-state-and-obs-options="modelStateAndObsOptions"
-						@update-self="(config) => updateConstraintGroupForm(index, config)"
-						@delete-self="() => deleteConstraintGroupForm(index)"
+						@update-self="(config) => updateCriterionGroupForm(index, config)"
+						@delete-self="() => deleteCriterionGroupForm(index)"
 					/>
-					<div>
-						<Button
-							icon="pi pi-plus"
-							class="p-button-sm p-button-text"
-							label="Add more constraints"
-							@click="addConstraintGroupForm"
-						/>
-					</div>
-				</div>
+					<Button
+						icon="pi pi-plus"
+						class="p-button-sm p-button-text w-max"
+						label="Add new criterion"
+						@click="addCriterionGroupForm"
+					/>
+				</section>
 				<section class="form-section">
 					<h5>
 						Intervention policy
@@ -332,7 +330,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
+import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
@@ -379,7 +377,7 @@ const knobs = ref<BasicKnobs>({
 	optimizationRunId: props.node.state.optimizationRunId ?? ''
 });
 
-const constraintToolTip = 'TODO';
+const criteriaTooltip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
 
@@ -489,7 +487,7 @@ const updateInterventionPolicyGroupForm = (index: number, config: InterventionPo
 	emit('update-state', state);
 };
 
-const addConstraintGroupForm = () => {
+const addCriterionGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
@@ -497,7 +495,7 @@ const addConstraintGroupForm = () => {
 	emit('update-state', state);
 };
 
-const deleteConstraintGroupForm = (index: number) => {
+const deleteCriterionGroupForm = (index: number) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
@@ -505,7 +503,7 @@ const deleteConstraintGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const updateConstraintGroupForm = (index: number, config: ConstraintGroup) => {
+const updateCriterionGroupForm = (index: number, config: ConstraintGroup) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
@@ -784,16 +782,15 @@ watch(
 }
 
 .form-section {
-	gap: var(--gap-1);
 	background-color: var(--surface-50);
-	flex-grow: 1;
-	padding: var(--gap);
-	margin: 0 var(--gap) var(--gap) var(--gap);
 	border-radius: var(--border-radius-medium);
 	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
 }
 
 .label-and-input {
