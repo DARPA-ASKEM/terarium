@@ -2,7 +2,7 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ states.length }})</span>
+				State variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
 			<tera-states
 				v-if="!isEmpty(mmt.initials)"
@@ -13,7 +13,7 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
 			</template>
 			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"

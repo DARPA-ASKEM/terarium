@@ -271,6 +271,20 @@ export function updateObservable(model: Model, id: string, key: string, value: a
 	observable[key] = value;
 }
 
+export function updateTransition(model: Model, id: string, key: string, value: any) {
+	const transitions = model?.model?.transitions ?? [];
+	const transition = transitions.find((t) => t.id === id);
+	if (!transition) return;
+	transition[key] = value;
+}
+
+export function updateTime(model: Model, id: string, key: string, value: any) {
+	const times = model?.semantics?.ode?.time;
+	const time = times.find((t) => t.id === id);
+	if (!time) return;
+	time[key] = value;
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.

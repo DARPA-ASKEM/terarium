@@ -69,8 +69,6 @@ const transitionsList = computed<
 				})
 				.filter(Boolean) as ModelVariable[];
 
-			console.log(referencedTransitions);
-			console.log(props.transitions);
 			const baseTransition = props.transitions.find((t) => t.id === referencedTransitions[0].name);
 			const base: ModelVariable =
 				isParent || !baseTransition

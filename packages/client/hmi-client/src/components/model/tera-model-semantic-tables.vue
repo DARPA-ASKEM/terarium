@@ -25,7 +25,13 @@ import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
-import { updateState, updateParameter } from '@/model-representation/service';
+import {
+	updateState,
+	updateParameter,
+	updateObservable,
+	updateTransition,
+	updateTime
+} from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
@@ -64,7 +70,13 @@ function onUpdate(property: string, event: any) {
 			updateParameter(transientModel.value, id, key, value);
 			break;
 		case 'observable':
-			updateParameter(transientModel.value, id, key, value);
+			updateObservable(transientModel.value, id, key, value);
+			break;
+		case 'transition':
+			updateTransition(transientModel.value, id, key, value);
+			break;
+		case 'time':
+			updateTime(transientModel.value, id, key, value);
 			break;
 		default:
 			break;
