@@ -155,7 +155,7 @@ const preparedCharts = computed(() => {
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(result, resultSummary, [], {
-			width: 150,
+			width: 180,
 			height: 120,
 			variables: config.map((d) => pyciemssMap[d]),
 			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
