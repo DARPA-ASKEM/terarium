@@ -151,7 +151,7 @@ const preparedCharts = computed(() => {
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 	return state.selectedSimulationVariables.map((variable) =>
 		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
-			width: 150,
+			width: 180,
 			height: 120,
 			variables: [pyciemssMap[variable]],
 			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
