@@ -165,13 +165,26 @@ export const OptimizeCiemssOperation: Operation = {
 
 // Get the intervention output from a given optimization run
 export async function getOptimizedInterventions(optimizeRunId: string) {
+	const allInterventions: Intervention[] = [];
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
 
-	const simulationIntervetions: Intervention[] =
+	const simulationStaticInterventions: any[] =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
+
+	// From snake case -> camel case.
+	simulationStaticInterventions.forEach((inter) => {
+		const newIntervetion: Intervention = {
+			appliedTo: inter.applied_to,
+			dynamicInterventions: inter.dynamic_interventions,
+			name: inter.name,
+			staticInterventions: inter.static_interventions,
+			type: inter.type
+		};
+		allInterventions.push(newIntervetion);
+	});
 
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
@@ -181,8 +194,6 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-
-	const allInterventions: Intervention[] = simulationIntervetions;
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
