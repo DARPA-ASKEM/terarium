@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { AssetItem } from '@/types/common';
 import { useProjects } from '@/composables/project';
 import { isVisibleProjectAssetTypes, listOfVisibleAssetTypes } from '@/types/Project';
@@ -60,7 +60,7 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 export function getNonNullSetOfVisibleItems(map: ProjectAssetItems): number[] {
 	const nonNullSet: number[] = [];
 	map.forEach((value, key) => {
-		if (value !== null && value.length > 0) {
+		if (!isEmpty(value)) {
 			nonNullSet.push(listOfVisibleAssetTypes.findIndex((type) => type === key));
 		}
 	});
