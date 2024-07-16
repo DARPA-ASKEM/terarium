@@ -184,7 +184,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 
 	const allInterventions: Intervention[] = simulationIntervetions;
 
+	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
+	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
 	if (interventionType === InterventionTypes.paramValue && startTimes.length !== 0) {
+		// If we our intervention type is param value our policyResult will provide a timestep.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
@@ -200,6 +203,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			});
 		}
 	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
+		// If we our intervention type is start time our policyResult will provide a value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
