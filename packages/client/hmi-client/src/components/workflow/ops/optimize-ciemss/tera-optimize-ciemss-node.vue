@@ -112,7 +112,7 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		simulationPayload.policyInterventionId = optimizedInterventions.id;
 	} else {
 		// Use the input interventions provided
-		const inputIntervention = props.node.inputs?.[2]?.value?.[0];
+		const inputIntervention = props.node.inputs[2].value?.[0];
 		simulationPayload.policyInterventionId = inputIntervention;
 	}
 	if (inferredParameters.value) {
