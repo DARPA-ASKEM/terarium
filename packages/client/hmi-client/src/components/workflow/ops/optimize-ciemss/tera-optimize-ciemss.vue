@@ -381,8 +381,6 @@ import {
 // Types:
 import {
 	ModelConfiguration,
-	State,
-	ModelParameter,
 	OptimizeRequestCiemss,
 	CsvAsset,
 	OptimizeInterventions,
@@ -556,15 +554,13 @@ const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 
-const modelParameterOptions = ref<ModelParameter[]>([]);
+const modelParameterOptions = ref<string[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
 
-const simulationChartOptions = computed(() => {
-	let params: string[] = [];
-	if (modelParameterOptions.value) params = modelParameterOptions.value.map((ele) => ele.id);
-
-	return [...params, ...modelStateAndObsOptions.value];
-});
+const simulationChartOptions = computed(() => [
+	...modelParameterOptions.value,
+	...modelStateAndObsOptions.value
+]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -629,8 +625,8 @@ const initialize = async () => {
 		);
 	}
 
-	modelParameterOptions.value = model?.semantics?.ode.parameters ?? ([] as ModelParameter[]);
-	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id) ?? ([] as State[]);
+	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
+	modelStateAndObsOptions.value = model?.model.states.map((ele) => ele.id);
 	model?.semantics?.ode.observables
 		?.map((ele) => ele.id)
 		.forEach((obs) => modelStateAndObsOptions.value.push(obs));
