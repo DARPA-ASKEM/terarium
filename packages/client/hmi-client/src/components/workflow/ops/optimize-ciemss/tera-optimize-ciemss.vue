@@ -19,7 +19,7 @@
 				</template>
 				<div class="form-section">
 					<h5>Success criteria <i v-tooltip="constraintToolTip" class="pi pi-info-circle" /></h5>
-					<tera-optimize-constraint-group-form
+					<tera-optimize-criteria-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
 						:index="index"
@@ -338,7 +338,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import teraOptimizeConstraintGroupForm from './tera-optimize-constraint-group-form.vue';
+import teraOptimizeCriteriaGroupForm from './tera-optimize-criteria-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
