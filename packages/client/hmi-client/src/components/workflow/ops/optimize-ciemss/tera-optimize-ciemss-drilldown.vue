@@ -402,7 +402,7 @@ import {
 	OptimizeCiemssOperationState,
 	InterventionPolicyGroupForm,
 	blankInterventionPolicyGroup,
-	defaultConstraintGroup,
+	defaultCriterionGroup,
 	ConstraintGroup
 } from './optimize-ciemss-operation';
 
@@ -572,7 +572,7 @@ const addCriterionGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
-	state.constraintGroups.push(defaultConstraintGroup);
+	state.constraintGroups.push(defaultCriterionGroup);
 	emit('update-state', state);
 };
 

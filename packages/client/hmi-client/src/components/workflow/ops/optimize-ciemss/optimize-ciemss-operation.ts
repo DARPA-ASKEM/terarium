@@ -104,8 +104,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	}
 };
 
-export const defaultConstraintGroup: ConstraintGroup = {
-	name: 'Constraint',
+export const defaultCriterionGroup: ConstraintGroup = {
+	name: 'Criterion',
 	qoiMethod: ContextMethods.max,
 	targetVariable: '',
 	riskTolerance: 5,
@@ -145,7 +145,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxfeval: 25,
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
-			constraintGroups: [defaultConstraintGroup],
+			constraintGroups: [defaultCriterionGroup],
 			selectedInterventionVariables: [],
 			selectedSimulationVariables: [],
 			inProgressOptimizeId: '',
