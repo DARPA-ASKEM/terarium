@@ -23,7 +23,7 @@
 						v-for="(cfg, index) in node.state.constraintGroups"
 						:key="selectedOutputId + ':' + index"
 						:index="index"
-						:constraint="cfg"
+						:criterion="cfg"
 						:model-state-and-obs-options="modelStateAndObsOptions"
 						@update-self="(config) => updateCriterionGroupForm(index, config)"
 						@delete-self="() => deleteCriterionGroupForm(index)"
