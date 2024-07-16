@@ -317,7 +317,7 @@ const preparedCharts = computed(() => {
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
 			xAxisTitle: 'Time',
-			yAxisTitle: ''
+			yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
 		})
 	);
 });
