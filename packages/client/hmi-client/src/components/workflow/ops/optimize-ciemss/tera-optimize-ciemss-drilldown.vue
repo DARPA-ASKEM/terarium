@@ -401,7 +401,7 @@ import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-poli
 import {
 	blankInterventionPolicyGroup,
 	CriteriaGroup,
-	defaultCriterionGroup,
+	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState
 } from './optimize-ciemss-operation';
@@ -569,7 +569,7 @@ const addCriterionGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
-	state.constraintGroups.push(defaultCriterionGroup);
+	state.constraintGroups.push(defaultCriterion);
 	emit('update-state', state);
 };
 
