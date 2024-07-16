@@ -141,15 +141,13 @@ const startForecast = async (simulationIntervetions) => {
 };
 
 const preparedCharts = computed(() => {
-	const state = props.node.state;
-	const preForecastRunId = state.preForecastRunId;
-	const postForecastRunId = state.postForecastRunId;
+	const { preForecastRunId, postForecastRunId, selectedSimulationVariables } = props.node.state;
 	if (!postForecastRunId || !preForecastRunId) return [];
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
-	return state.selectedSimulationVariables.map((variable) =>
+	return selectedSimulationVariables.map((variable) =>
 		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
 			width: 180,
 			height: 120,
