@@ -193,7 +193,7 @@ export const createForecastChart = (
 				strokeColor: null,
 				orient: 'top',
 				direction: 'horizontal',
-				columns: Math.floor(options.width / 120),
+				columns: Math.floor(options.width / 100),
 				symbolStrokeWidth: 4,
 				symbolSize: 200,
 				labelFontSize: 12,

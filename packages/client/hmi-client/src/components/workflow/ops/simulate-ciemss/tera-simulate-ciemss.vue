@@ -104,7 +104,6 @@
 					:summary-id="node.state.summaryId"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
-					What do you want to see?
 					<SelectButton
 						class=""
 						:model-value="view"
