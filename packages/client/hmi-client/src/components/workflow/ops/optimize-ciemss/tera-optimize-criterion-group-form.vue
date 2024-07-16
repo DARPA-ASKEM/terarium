@@ -75,16 +75,16 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { CriteriaGroup, ContextMethods } from './optimize-ciemss-operation';
+import { Criterion, ContextMethods } from './optimize-ciemss-operation';
 
 const props = defineProps<{
-	criterion: CriteriaGroup;
+	criterion: Criterion;
 	modelStateAndObsOptions: string[];
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const config = ref<CriteriaGroup>(_.cloneDeep(props.criterion));
+const config = ref<Criterion>(_.cloneDeep(props.criterion));
 
 const isEditing = ref<boolean>(false);
 

@@ -400,7 +400,7 @@ import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
 	blankInterventionPolicyGroup,
-	CriteriaGroup,
+	Criterion,
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState
@@ -581,7 +581,7 @@ const deleteCriterionGroupForm = (index: number) => {
 	emit('update-state', state);
 };
 
-const updateCriterionGroupForm = (index: number, config: CriteriaGroup) => {
+const updateCriterionGroupForm = (index: number, config: Criterion) => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
