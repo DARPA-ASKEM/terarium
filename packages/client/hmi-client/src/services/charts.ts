@@ -248,5 +248,53 @@ export const createForecastChart = (
 		}
 		spec.layer.push(layerSpec);
 	}
+
+	// Build a transparent layer with fat lines as a better hover target for tooltips
+	// Re-Build statistical layer
+	if (statisticData && statisticData.length > 0) {
+		const statisticalVariables = options.statisticalVariables?.map((d) => d);
+		const tooltipContent = statisticalVariables?.map((d) => {
+			const tip: any = {
+				field: d,
+				type: 'quantitative',
+				format: '.4f'
+			};
+
+			if (options.translationMap && options.translationMap[d]) {
+				tip.title = options.translationMap[d];
+			}
+
+			return tip;
+		});
+
+		const layerSpec: any = {
+			mark: { type: 'line' },
+			data: { values: statisticData },
+			transform: [
+				{
+					fold: statisticalVariables,
+					as: ['stat_variable', 'stat_value']
+				}
+			],
+			encoding: {
+				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
+				color: {
+					field: 'stat_variable',
+					type: 'nominal',
+					scale: {
+						domain: statisticalVariables,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					},
+					legend: false
+				},
+				opacity: { value: 0 },
+				strokeWidth: { value: 16 },
+				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			}
+		};
+		spec.layer.push(layerSpec);
+	}
+
 	return spec;
 };
