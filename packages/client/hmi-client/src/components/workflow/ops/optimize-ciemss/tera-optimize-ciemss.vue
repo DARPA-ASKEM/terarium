@@ -32,8 +32,8 @@
 						<Button
 							icon="pi pi-plus"
 							class="p-button-sm p-button-text"
-							label="Add more constraints"
-							@click="addConstraintGroupForm"
+							label="Add new criterion"
+							@click="addCriterionGroupForm"
 						/>
 					</div>
 				</section>
@@ -338,7 +338,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createInterventionsChart, createOptimizeChart } from '@/utils/optimize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import teraOptimizeCriteriaGroupForm from './tera-optimize-criteria-group-form.vue';
+import teraOptimizeCriteriaGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
 import {
@@ -496,7 +496,7 @@ const updateInterventionPolicyGroupForm = (index: number, config: InterventionPo
 	emit('update-state', state);
 };
 
-const addConstraintGroupForm = () => {
+const addCriterionGroupForm = () => {
 	const state = _.cloneDeep(props.node.state);
 	if (!state.constraintGroups) return;
 
