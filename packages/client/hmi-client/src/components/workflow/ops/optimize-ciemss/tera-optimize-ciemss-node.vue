@@ -106,16 +106,13 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		},
 		engine: 'ciemss'
 	};
-	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/4025
-	console.log(
-		`We now need to concat this with the policy intervention provided and make an object in TDS ${optimizedInterventions}`
-	);
-	const inputIntervention = props.node.inputs?.[2]?.value?.[0];
+
 	if (optimizedInterventions) {
+		// Use the intervention policy ID provided.
 		simulationPayload.policyInterventionId = optimizedInterventions.id;
 	} else {
-		// Use the input interventions provided.
+		// Use the input interventions provided
+		const inputIntervention = props.node.inputs?.[2]?.value?.[0];
 		simulationPayload.policyInterventionId = inputIntervention;
 	}
 	if (inferredParameters.value) {
