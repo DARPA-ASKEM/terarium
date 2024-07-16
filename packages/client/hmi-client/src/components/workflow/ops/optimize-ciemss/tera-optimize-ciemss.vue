@@ -173,7 +173,7 @@
 						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
 					</h5>
 					<MultiSelect
-						v-model="knobs.selectedInterventionCharts"
+						v-model="knobs.selectedInterventionVariables"
 						:options="_.keys(preProcessedInterventionsData)"
 						placeholder="What do you want to see?"
 						filter
@@ -192,7 +192,7 @@
 						<i v-tooltip="outputSettingsToolTip" class="pi pi-info-circle" />
 					</h5>
 					<MultiSelect
-						v-model="knobs.selectedSimulationCharts"
+						v-model="knobs.selectedSimulationVariables"
 						:options="simulationChartOptions"
 						placeholder="What do you want to see?"
 						filter
@@ -282,7 +282,7 @@
 							<AccordionTab header="Interventions">
 								<ul>
 									<li
-										v-for="(variable, key) of knobs.selectedInterventionCharts"
+										v-for="(variable, key) of knobs.selectedInterventionVariables"
 										:key="`intervention_${key}`"
 									>
 										<h5>{{ variable }}</h5>
@@ -296,7 +296,7 @@
 							<AccordionTab header="Simulation plots">
 								<ul>
 									<li
-										v-for="(variable, key) of knobs.selectedSimulationCharts"
+										v-for="(variable, key) of knobs.selectedSimulationVariables"
 										:key="`simulation_${key}`"
 									>
 										<h5>{{ variable }}</h5>
@@ -443,8 +443,8 @@ interface BasicKnobs {
 	preForecastRunId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	selectedInterventionCharts: string[];
-	selectedSimulationCharts: string[];
+	selectedInterventionVariables: string[];
+	selectedSimulationVariables: string[];
 }
 
 const knobs = ref<BasicKnobs>({
@@ -456,8 +456,8 @@ const knobs = ref<BasicKnobs>({
 	preForecastRunId: props.node.state.preForecastRunId ?? '',
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
-	selectedInterventionCharts: props.node.state.selectedInterventionCharts ?? [],
-	selectedSimulationCharts: props.node.state.selectedSimulationCharts ?? []
+	selectedInterventionVariables: props.node.state.selectedInterventionVariables ?? [],
+	selectedSimulationVariables: props.node.state.selectedSimulationVariables ?? []
 });
 
 // TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
@@ -833,7 +833,7 @@ const preparedInterventionsCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return knobs.value.selectedInterventionCharts.map((variable) =>
+	return knobs.value.selectedInterventionVariables.map((variable) =>
 		createOptimizeForecastChart(
 			preResult,
 			preResultSummary,
@@ -864,7 +864,7 @@ const preparedCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return knobs.value.selectedSimulationCharts.map((variable) =>
+	return knobs.value.selectedSimulationVariables.map((variable) =>
 		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -891,8 +891,8 @@ watch(
 		state.preForecastRunId = knobs.value.preForecastRunId;
 		state.postForecastRunId = knobs.value.postForecastRunId;
 		state.optimizationRunId = knobs.value.optimizationRunId;
-		state.selectedInterventionCharts = knobs.value.selectedInterventionCharts;
-		state.selectedSimulationCharts = knobs.value.selectedSimulationCharts;
+		state.selectedInterventionVariables = knobs.value.selectedInterventionVariables;
+		state.selectedSimulationVariables = knobs.value.selectedSimulationVariables;
 		emit('update-state', state);
 	},
 	{ deep: true }

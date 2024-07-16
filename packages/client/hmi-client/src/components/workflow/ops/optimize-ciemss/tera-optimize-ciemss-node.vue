@@ -9,7 +9,7 @@
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
-				<template v-for="(variable, index) of node.state.selectedSimulationCharts" :key="index">
+				<template v-for="(variable, index) of node.state.selectedSimulationVariables" :key="index">
 					<h6>{{ variable }}</h6>
 					<vega-chart
 						:visualization-spec="preparedCharts[index]"
@@ -150,7 +150,7 @@ const preparedCharts = computed(() => {
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
-	return state.selectedSimulationCharts.map((variable) =>
+	return state.selectedSimulationVariables.map((variable) =>
 		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
 			width: 150,
 			height: 120,
