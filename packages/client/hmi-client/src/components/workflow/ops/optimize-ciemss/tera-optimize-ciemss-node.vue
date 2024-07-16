@@ -9,15 +9,12 @@
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
-				<tera-simulate-chart
-					v-for="(cfg, idx) in node.state.chartConfigs"
-					:key="idx"
-					:run-results="runResults"
-					:chartConfig="{ selectedRun: props.node.state.postForecastRunId, selectedVariable: cfg }"
-					has-mean-line
-					:size="{ width: 190, height: 120 }"
-					@configuration-change="chartProxy.configurationChange(idx, $event)"
-				/>
+				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
+					<vega-chart
+						:visualization-spec="preparedCharts[index]"
+						:are-embed-actions-visible="false"
+					/>
+				</template>
 			</div>
 			<div class="flex gap-2">
 				<Button
@@ -37,24 +34,25 @@ import _ from 'lodash';
 import { computed, watch, ref, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { Poller, PollerResult, PollerState } from '@/api/api';
 import {
 	pollAction,
-	getRunResultCiemss,
 	makeForecastJobCiemss,
-	getRunResult
+	getRunResult,
+	getRunResultCSV,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
-import { SimulationRequest } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
+import { nodeMetadata } from '@/components/workflow/util';
+import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { createOptimizeForecastChart } from '@/utils/optimize';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
-	getOptimizedInterventions
+	createInterventionPolicyFromOptimize
 } from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
@@ -63,16 +61,19 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const runResults = ref<RunResults>({});
+const runResults = ref<any>({});
+const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+
+let pyciemssMap: Record<string, string> = {};
+
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
 	() =>
-		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
+		props.node.state.inProgressOptimizeId !== '' ||
+		props.node.state.inProgressPostForecastId !== '' ||
+		props.node.state.inProgressPreForecastId !== ''
 );
-const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -92,7 +93,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const startForecast = async (simulationIntervetions) => {
+const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 	const simulationPayload: SimulationRequest = {
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
@@ -105,19 +106,43 @@ const startForecast = async (simulationIntervetions) => {
 		},
 		engine: 'ciemss'
 	};
-	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
-	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/4025
-	console.log(
-		`We now need to concat this with the policy intervention provided and make an object in TDS ${simulationIntervetions}`
-	);
-	// if (simulationIntervetions) {
-	// 	simulationPayload.interventions = simulationIntervetions;
-	// }
+
+	if (optimizedInterventions) {
+		// Use the intervention policy ID provided.
+		simulationPayload.policyInterventionId = optimizedInterventions.id;
+	} else {
+		// Use the input interventions provided
+		const inputIntervention = props.node.inputs[2].value?.[0];
+		simulationPayload.policyInterventionId = inputIntervention;
+	}
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
+
+const preparedCharts = computed(() => {
+	const { preForecastRunId, postForecastRunId, selectedSimulationVariables } = props.node.state;
+	if (!postForecastRunId || !preForecastRunId) return [];
+	const preResult = runResults.value[preForecastRunId];
+	const preResultSummary = runResultsSummary.value[preForecastRunId];
+	const postResult = runResults.value[postForecastRunId];
+	const postResultSummary = runResultsSummary.value[postForecastRunId];
+	return selectedSimulationVariables.map((variable) =>
+		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
+			width: 180,
+			height: 120,
+			variables: [pyciemssMap[variable]],
+			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: '',
+			title: variable
+		})
+	);
+});
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
@@ -127,10 +152,14 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getOptimizedInterventions(optId);
+			const newInterventionResponse = await createInterventionPolicyFromOptimize(
+				modelConfigId.value as string,
+				optId
+			);
+
 			const preForecastResponce = await startForecast(undefined);
 			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(simulationIntervetions);
+			const postForecastResponce = await startForecast(newInterventionResponse);
 			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
@@ -176,7 +205,6 @@ Provide a consis summary in 100 words or less.
 			const summaryResponse = await createLLMSummary(prompt);
 			state.summaryId = summaryResponse?.id;
 
-			state.chartConfigs = [[]];
 			state.inProgressPreForecastId = '';
 			state.preForecastRunId = preSimId;
 			state.inProgressPostForecastId = '';
@@ -201,13 +229,23 @@ watch(
 		const active = props.node.active;
 		const state = props.node.state;
 		if (!active) return;
-		if (!state.postForecastRunId) return;
+		if (!state.postForecastRunId || !state.preForecastRunId) return;
 
+		const preForecastRunId = state.preForecastRunId;
 		const postForecastRunId = state.postForecastRunId;
 
-		// Simulate
-		const result = await getRunResultCiemss(postForecastRunId, 'result.csv');
-		runResults.value = result.runResults;
+		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+		const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(postResult[0]);
+
+		runResults.value[preForecastRunId] = preResult;
+		runResults.value[postForecastRunId] = postResult;
+
+		const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+		const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
+
+		runResultsSummary.value[preForecastRunId] = preResultSummary;
+		runResultsSummary.value[postForecastRunId] = postResultSummary;
 	},
 	{ immediate: true }
 );

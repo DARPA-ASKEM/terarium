@@ -131,6 +131,7 @@ export type AssetRoute = {
 export interface AssetItem extends AssetRoute {
 	icon?: string;
 	assetName?: string;
+	assetCreatedOn?: string;
 }
 
 export type CodeRequest = {

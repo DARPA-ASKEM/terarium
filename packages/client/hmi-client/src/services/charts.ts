@@ -10,7 +10,7 @@ const CATEGORICAL_SCHEME = [
 	'#84594D'
 ];
 
-interface ForecastChartOptions {
+export interface ForecastChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
 	groundTruthVariables?: string[];
