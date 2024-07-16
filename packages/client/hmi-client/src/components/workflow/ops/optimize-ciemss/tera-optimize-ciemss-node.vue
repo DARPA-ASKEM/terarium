@@ -93,7 +93,7 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const startForecast = async (simulationIntervetions) => {
+const startForecast = async (optimizedInterventions) => {
 	const simulationPayload: SimulationRequest = {
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
@@ -109,11 +109,18 @@ const startForecast = async (simulationIntervetions) => {
 	// Explicitly add interventions provided. Interventions within the model config will still be utilized either way
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/4025
 	console.log(
-		`We now need to concat this with the policy intervention provided and make an object in TDS ${simulationIntervetions}`
+		`We now need to concat this with the policy intervention provided and make an object in TDS ${optimizedInterventions}`
 	);
-	// if (simulationIntervetions) {
-	// 	simulationPayload.interventions = simulationIntervetions;
-	// }
+	const inputIntervention = props.node.inputs?.[2]?.value?.[0];
+	if (optimizedInterventions) {
+		// Create new intervention
+		console.log(inputIntervention);
+		console.log(optimizedInterventions);
+		// simulationPayload.policyInterventionId = optimizedInterventions;
+	} else {
+		// Use the input interventions provided.
+		simulationPayload.policyInterventionId = inputIntervention;
+	}
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
@@ -151,10 +158,10 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getOptimizedInterventions(optId);
+			const optimizedInterventions = await getOptimizedInterventions(optId);
 			const preForecastResponce = await startForecast(undefined);
 			const preForecastId = preForecastResponce.id;
-			const postForecastResponce = await startForecast(simulationIntervetions);
+			const postForecastResponce = await startForecast(optimizedInterventions);
 			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
