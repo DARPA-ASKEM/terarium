@@ -284,7 +284,6 @@
 <script setup lang="ts">
 import _, { Dictionary, cloneDeep, groupBy } from 'lodash';
 import { computed, ref, onMounted, watch } from 'vue';
-// components:
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
@@ -298,8 +297,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-
-// Services:
 import {
 	getModelConfigurationById,
 	createModelConfiguration,
@@ -311,7 +308,6 @@ import {
 	getRunResult
 } from '@/services/models/simulation-service';
 import { createCsvAssetFromRunResults } from '@/services/dataset';
-// Types:
 import {
 	ModelConfiguration,
 	State,
@@ -383,7 +379,6 @@ const knobs = ref<BasicKnobs>({
 	optimizationRunId: props.node.state.optimizationRunId ?? ''
 });
 
-// TODO https://github.com/DARPA-ASKEM/terarium/issues/3915
 const constraintToolTip = 'TODO';
 const interventionPolicyToolTip = 'TODO';
 const optimizeSettingsToolTip = 'TODO';
