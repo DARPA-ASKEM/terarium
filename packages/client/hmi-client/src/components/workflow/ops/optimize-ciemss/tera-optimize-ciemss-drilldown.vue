@@ -662,7 +662,7 @@ const runOptimize = async () => {
 	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.intervention.staticInterventions[0].timestep);
+		startTime.push(ele.startTime);
 		initialGuess.push(ele.initialGuessValue);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		listInitialGuessInterventions.push(ele.initialGuessValue);
