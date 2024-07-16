@@ -107,7 +107,7 @@
 						<tera-input
 							type="nist"
 							label="Initial guess"
-							v-model="knobs.startTimeGuess"
+							v-model="knobs.startTime"
 							@update:model-value="emit('update-self', knobs)"
 						/>
 					</div>

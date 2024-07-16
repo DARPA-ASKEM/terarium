@@ -639,6 +639,8 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTime = intervention.staticInterventions[0].timestep;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}

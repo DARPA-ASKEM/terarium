@@ -26,7 +26,6 @@ export enum ContextMethods {
 export interface InterventionPolicyGroupForm {
 	startTime: number;
 	endTime: number;
-	startTimeGuess: number;
 	lowerBoundValue: number;
 	upperBoundValue: number;
 	initialGuessValue: number;
@@ -88,7 +87,6 @@ export const OBJECTIVE_FUNCTION_MAP = [
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
-	startTimeGuess: 0,
 	lowerBoundValue: 0,
 	upperBoundValue: 0,
 	initialGuessValue: 0,
