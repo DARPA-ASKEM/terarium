@@ -46,8 +46,8 @@
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="[
-					{ label: 'last timepoint', value: ContextMethods.max },
-					{ label: 'all timepoints', value: ContextMethods.day_average }
+					{ label: 'all timepoints', value: ContextMethods.max },
+					{ label: 'last timepoint', value: ContextMethods.day_average }
 				]"
 				option-label="label"
 				option-value="value"
