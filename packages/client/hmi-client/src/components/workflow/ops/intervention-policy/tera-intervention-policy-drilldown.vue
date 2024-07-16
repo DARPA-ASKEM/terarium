@@ -18,7 +18,7 @@
 						</div>
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
-								<tera-interventions-policy-card
+								<tera-intervention-policy-card
 									:interventionPolicy="policy"
 									:selected="selectedPolicy?.id === policy.id"
 									@click="onReplacePolicy(policy)"
@@ -38,7 +38,7 @@
 				</template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy"></Button>
-					<Button @click="onRunInterventions" label="Run" />
+					<Button @click="onSaveInterventions" label="Save" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li
@@ -154,7 +154,7 @@ import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
-import { Intervention, InterventionPolicy, InterventionSemanticType, Model } from '@/types/Types';
+import { Intervention, InterventionPolicy, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -171,16 +171,18 @@ import Textarea from 'primevue/textarea';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import { sortDates } from '@/utils/date';
+import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
 	InterventionPolicyState
 } from './tera-intervention-policy-operation';
-import TeraInterventionsPolicyCard from './tera-intervention-policy-card.vue';
+import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
+
 const emit = defineEmits([
 	'close',
 	'update-state',
@@ -190,6 +192,7 @@ const emit = defineEmits([
 ]);
 
 const confirm = useConfirm();
+
 interface BasicKnobs {
 	transientInterventionPolicy: InterventionPolicy;
 }
@@ -322,14 +325,7 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 
 const onAddIntervention = () => {
 	// by default add the first parameter with a static intervention
-	const intervention: Intervention = {
-		name: 'New Intervention',
-		appliedTo: '',
-		type: InterventionSemanticType.Parameter,
-		staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
-		dynamicInterventions: []
-	};
-	knobs.value.transientInterventionPolicy.interventions.push(intervention);
+	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
 };
 
 const onDeleteIntervention = (index: number) => {
@@ -350,7 +346,7 @@ const onChangeName = async (name: string) => {
 	updateNodeLabel(selectedOutputId.value, name);
 	if (selectedPolicy.value.id)
 		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	fetchInterventionPolicies(selectedPolicy.value.modelId);
+	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
 const onEditDescription = () => {
@@ -365,10 +361,10 @@ const onConfirmEditDescription = async () => {
 	await updateInterventionPolicy(selectedPolicy.value);
 	if (selectedPolicy.value.id)
 		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
-	fetchInterventionPolicies(selectedPolicy.value.modelId);
+	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
-const onRunInterventions = async () => {
+const onSaveInterventions = async () => {
 	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
 	policy.name = 'New Intervention Policy';
 	policy.description = 'This is a new intervention policy.';
