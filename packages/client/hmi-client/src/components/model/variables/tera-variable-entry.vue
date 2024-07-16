@@ -1,6 +1,8 @@
 <template>
 	<section>
-		<h6>{{ variable.templateId }} {{ variable.id }}</h6>
+		<h6>
+			<template v-if="variable.templateId">{{ variable.templateId }},</template> {{ variable.id }}
+		</h6>
 		<tera-input
 			title="Name"
 			placeholder="Add a name"
@@ -8,8 +10,9 @@
 			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
 			:disabled="disabledInputs?.includes('name')"
 		/>
-		<div v-if="variable.input && variable.output">
-			<span>Input:</span> {{ variable.input }} <span>Output:</span> {{ variable.output }}
+		<div v-if="variable.input && variable.output" label="Unit">
+			<span><span>Input:</span> {{ variable.input }}</span>
+			<span><span>Output:</span> {{ variable.output }}</span>
 		</div>
 		<tera-input
 			v-else
@@ -28,6 +31,7 @@
 			:model-value="''"
 		/>
 		<katex-element
+			class="expression"
 			v-if="variable.expression"
 			:expression="variable.expression"
 			:throw-on-error="false"
@@ -66,6 +70,7 @@ section {
 	display: grid;
 	grid-template-areas:
 		'symbol name unit . concept'
+		'expression expression expression expression expression'
 		'description description description description description';
 	grid-template-columns: max-content max-content max-content auto max-content;
 	gap: var(--gap-2);
@@ -82,8 +87,13 @@ h6 {
 	}
 }
 
-div > span {
-	color: var(--text-color-subdued);
+div {
+	display: flex;
+	gap: var(--gap-2);
+	font-size: var(--font-caption);
+	& > span > span {
+		color: var(--text-color-subdued);
+	}
 }
 
 :deep([title='Name']) {
@@ -100,5 +110,9 @@ div > span {
 
 :deep([label='Concept']) {
 	grid-area: concept;
+}
+
+.expression {
+	grid-area: expression;
 }
 </style>

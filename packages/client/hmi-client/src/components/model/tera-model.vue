@@ -29,7 +29,8 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			<div class="btn-group">
-				<!-- <Button label="Reset" severity="secondary" outlined />
+				<!-- TODO: Reset and Save as buttons
+				<Button label="Reset" severity="secondary" outlined />
 				<Button label="Save as..." severity="secondary" outlined /> -->
 				<Button label="Save" />
 			</div>
@@ -42,9 +43,9 @@
 				@update-model="updateModelContent"
 			/>
 			<tera-model-variables
+				class="mt-0"
 				:model="model"
 				@update-model="updateModelContent"
-				class="mt-0"
 				:readonly="featureConfig?.isPreview"
 			/>
 		</section>
