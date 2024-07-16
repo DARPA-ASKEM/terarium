@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
@@ -32,6 +32,7 @@ import {
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	model: Model;
@@ -93,17 +94,22 @@ function updateMMT() {
 // Apply changes to the model when the component unmounts or the user navigates away
 function saveChanges() {
 	emit('update-model', transientModel.value);
+	logger.info('Saved changes');
 }
+defineExpose({ saveChanges });
 
-onMounted(() => {
-	window.addEventListener('beforeunload', saveChanges);
-	updateMMT();
-});
+onMounted(() => updateMMT());
 
-onUnmounted(() => {
-	saveChanges();
-	window.removeEventListener('beforeunload', saveChanges);
-});
+// TODO: Do we still want autosave? It worked onUnmount but on staging the onbeforemount wasn't triggering
+// onMounted(() => {
+// 	window.addEventListener('beforeunload', saveChanges);
+// 	updateMMT();
+// });
+
+// onUnmounted(() => {
+// 	saveChanges();
+// 	window.removeEventListener('beforeunload', saveChanges);
+// });
 
 // Meant to run when we want to view a different model, like when we swtich outputs in the stratify operator
 // This is not to be used a refresh when saving a model

@@ -32,7 +32,7 @@
 				<!-- TODO: Reset and Save as buttons
 				<Button label="Reset" severity="secondary" outlined />
 				<Button label="Save as..." severity="secondary" outlined /> -->
-				<Button label="Save" />
+				<Button label="Save" @click="teraModelVariablesRef?.saveChanges()" />
 			</div>
 		</template>
 		<section v-if="model">
@@ -43,6 +43,7 @@
 				@update-model="updateModelContent"
 			/>
 			<tera-model-variables
+				ref="teraModelVariablesRef"
 				class="mt-0"
 				:model="model"
 				@update-model="updateModelContent"
@@ -79,6 +80,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview']);
+
+const teraModelVariablesRef = ref();
 
 const model = ref<Model | null>(null);
 const transientModel = ref<Model | null>(null);

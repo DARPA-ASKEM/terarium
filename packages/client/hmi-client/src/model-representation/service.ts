@@ -3,7 +3,15 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter, PetriNetState, RegNetVertex } from '@/types/Types';
+import type {
+	Initial,
+	Model,
+	ModelParameter,
+	ModelUnit,
+	PetriNetState,
+	RegNetVertex,
+	Transition
+} from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
@@ -272,14 +280,14 @@ export function updateObservable(model: Model, id: string, key: string, value: a
 }
 
 export function updateTransition(model: Model, id: string, key: string, value: any) {
-	const transitions = model?.model?.transitions ?? [];
+	const transitions: Transition[] = model?.model?.transitions ?? [];
 	const transition = transitions.find((t) => t.id === id);
 	if (!transition) return;
 	transition[key] = value;
 }
 
 export function updateTime(model: Model, id: string, key: string, value: any) {
-	const times = model?.semantics?.ode?.time;
+	const times: { id: string; unit: ModelUnit }[] = model?.semantics?.ode?.time;
 	const time = times.find((t) => t.id === id);
 	if (!time) return;
 	time[key] = value;

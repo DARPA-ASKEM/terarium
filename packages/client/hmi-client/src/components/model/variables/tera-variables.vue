@@ -19,43 +19,46 @@
 						/>
 						<h6>{{ base.id }}</h6>
 					</span>
-					<Button
-						v-if="!parentEditingState[index].isEditingChildrenUnits"
-						@click="parentEditingState[index].isEditingChildrenUnits = true"
-						label="Add unit to all children"
-						text
-						size="small"
-					/>
-					<span v-else>
-						<tera-input
-							label="Unit"
-							placeholder="Add a unit"
-							v-model="parentEditingState[index].childrenUnits"
-						/>
+					<!--N/A if it's a transition-->
+					<template v-if="!children[0].input || !children[0].output">
 						<Button
-							icon="pi pi-check"
+							v-if="!parentEditingState[index].isEditingChildrenUnits"
+							@click="parentEditingState[index].isEditingChildrenUnits = true"
+							label="Add unit to all children"
 							text
-							rounded
 							size="small"
-							@click="
-								() => {
-									updateAllChildren(
-										base.id,
-										'unitExpression',
-										parentEditingState[index].childrenUnits
-									);
-									parentEditingState[index].isEditingChildrenUnits = false;
-								}
-							"
 						/>
-						<Button
-							icon="pi pi-times"
-							text
-							rounded
-							size="small"
-							@click="parentEditingState[index].isEditingChildrenUnits = false"
-						/>
-					</span>
+						<span v-else>
+							<tera-input
+								label="Unit"
+								placeholder="Add a unit"
+								v-model="parentEditingState[index].childrenUnits"
+							/>
+							<Button
+								icon="pi pi-check"
+								text
+								rounded
+								size="small"
+								@click="
+									() => {
+										updateAllChildren(
+											base.id,
+											'unitExpression',
+											parentEditingState[index].childrenUnits
+										);
+										parentEditingState[index].isEditingChildrenUnits = false;
+									}
+								"
+							/>
+							<Button
+								icon="pi pi-times"
+								text
+								rounded
+								size="small"
+								@click="parentEditingState[index].isEditingChildrenUnits = false"
+							/>
+						</span>
+					</template>
 					<Button
 						v-if="showMatrix"
 						label="Open matrix"
