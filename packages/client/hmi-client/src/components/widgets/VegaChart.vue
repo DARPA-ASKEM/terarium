@@ -127,3 +127,34 @@ watch([vegaContainer, () => props.visualizationSpec], () => {
 	updateVegaVisualization(vegaContainer.value, spec);
 });
 </script>
+<style scoped>
+.vega-chart-container {
+	background: var(--surface-a);
+	border-radius: var(--border-radius-medium);
+	border: 1px solid var(--surface-border-light);
+	margin-bottom: var(--gap-4);
+	padding-top: var(--gap-2);
+}
+
+/* adjust style, position and rotation of action button */
+:deep(.vega-embed.has-actions) {
+	padding-right: 0px;
+	position: relative;
+}
+:deep(.vega-embed summary) {
+	border: 1px solid transparent;
+	opacity: 1;
+	box-shadow: none;
+}
+:deep(.vega-embed summary):hover {
+	border: 1px solid transparent;
+	background: var(--surface-hover);
+}
+:deep(.vega-embed summary svg) {
+	transform: rotate(90deg);
+}
+:deep(.vega-embed .vega-actions a) {
+	font-family: 'Figtree', sans-serif;
+	font-weight: 400;
+}
+</style>
