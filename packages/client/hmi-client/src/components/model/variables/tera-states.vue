@@ -32,38 +32,36 @@ const stateList = computed<
 		isParent: boolean;
 	}[]
 >(() =>
-	Array.from(collapsedInitials.value.keys())
-		.flat()
-		.map((id) => {
-			const childTargets = collapsedInitials.value.get(id) ?? [];
-			const isParent = childTargets.length > 1;
-			const children = childTargets
-				.map((childTarget) => {
-					const s = states.value.find((state) => state.id === childTarget); // FIXME: states should have units instead of initial
-					if (!s) return null;
-					return {
-						id: s.id,
-						name: s.name,
-						description: s.description,
-						grounding: s.grounding,
-						unitExpression: s.units?.expression // FIXME: states should have units instead of initial
+	Array.from(collapsedInitials.value.keys()).map((id) => {
+		const childTargets = collapsedInitials.value.get(id) ?? [];
+		const isParent = childTargets.length > 1;
+		const children = childTargets
+			.map((childTarget) => {
+				const s = states.value.find((state) => state.id === childTarget);
+				if (!s) return null;
+				return {
+					id: s.id,
+					name: s.name,
+					description: s.description,
+					grounding: s.grounding,
+					unitExpression: s.units?.expression
+				};
+			})
+			.filter(Boolean) as ModelVariable[];
+
+		const baseState: any = states.value.find((s) => s.id === id);
+		const base: ModelVariable =
+			isParent || !baseState
+				? { id }
+				: {
+						id,
+						name: baseState.name,
+						description: baseState.description,
+						grounding: baseState.grounding,
+						unitExpression: baseState.units?.expression
 					};
-				})
-				.filter(Boolean) as ModelVariable[];
 
-			const baseState: any = states.value.find((s) => s.id === id); // FIXME: states should have units instead of initial
-			const base: ModelVariable =
-				isParent || !baseState
-					? { id }
-					: {
-							id,
-							name: baseState.name,
-							description: baseState.description,
-							grounding: baseState.grounding,
-							unitExpression: baseState.units?.expression // FIXME: states should have units instead of initial
-						};
-
-			return { base, children, isParent };
-		})
+		return { base, children, isParent };
+	})
 );
 </script>

@@ -46,47 +46,45 @@ const transitionsList = computed<
 		isParent: boolean;
 	}[]
 >(() =>
-	Array.from(collapsedTemplates.value.matrixMap.keys())
-		.flat()
-		.map((templateId) => {
-			const referencedTransitions = collapsedTemplates.value.matrixMap.get(templateId) ?? [];
-			const isParent = referencedTransitions.length > 1;
-			const children = referencedTransitions
-				.map((referencedTransition) => {
-					const t = props.transitions.find(
-						(transition) => transition.id === referencedTransition.name
-					);
-					// console.log(t);
-					if (!t) return null;
-					return {
-						id: t.id,
-						name: t.name,
-						description: t.description,
-						grounding: t.grounding,
-						expression: t.expression,
-						input: t.input,
-						output: t.output
+	Array.from(collapsedTemplates.value.matrixMap.keys()).map((templateId) => {
+		const referencedTransitions = collapsedTemplates.value.matrixMap.get(templateId) ?? [];
+		const isParent = referencedTransitions.length > 1;
+		const children = referencedTransitions
+			.map((referencedTransition) => {
+				const t = props.transitions.find(
+					(transition) => transition.id === referencedTransition.name
+				);
+				// console.log(t);
+				if (!t) return null;
+				return {
+					id: t.id,
+					name: t.name,
+					description: t.description,
+					grounding: t.grounding,
+					expression: t.expression,
+					input: t.input,
+					output: t.output
+				};
+			})
+			.filter(Boolean) as ModelVariable[];
+
+		const baseTransition = props.transitions.find((t) => t.id === referencedTransitions[0].name);
+		const base: ModelVariable =
+			isParent || !baseTransition
+				? { id: templateId }
+				: {
+						id: baseTransition.id,
+						name: baseTransition.name,
+						description: baseTransition.description,
+						grounding: baseTransition.grounding,
+						expression: baseTransition.expression,
+						templateId,
+						input: baseTransition.input,
+						output: baseTransition.output
 					};
-				})
-				.filter(Boolean) as ModelVariable[];
 
-			const baseTransition = props.transitions.find((t) => t.id === referencedTransitions[0].name);
-			const base: ModelVariable =
-				isParent || !baseTransition
-					? { id: templateId }
-					: {
-							id: baseTransition.id,
-							name: baseTransition.name,
-							description: baseTransition.description,
-							grounding: baseTransition.grounding,
-							expression: baseTransition.expression,
-							templateId,
-							input: baseTransition.input,
-							output: baseTransition.output
-						};
-
-			return { base, children, isParent };
-		})
+		return { base, children, isParent };
+	})
 );
 
 const matrixModalId = ref('');

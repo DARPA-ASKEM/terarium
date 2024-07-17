@@ -48,39 +48,37 @@ const parameterList = computed<
 		isParent: boolean;
 	}[]
 >(() =>
-	Array.from(collapsedParameters.value.keys())
-		.flat()
-		.map((id) => {
-			const childIds = collapsedParameters.value.get(id) ?? [];
-			const isParent = childIds.length > 1;
-			const children = childIds
-				.map((childId) => {
-					const p = parameters.value.find((param) => param.id === childId);
-					if (!p) return null;
-					return {
-						id: p.id,
-						name: p.name,
-						description: p.description,
-						grounding: p.grounding,
-						unitExpression: p.units?.expression
+	Array.from(collapsedParameters.value.keys()).map((id) => {
+		const childIds = collapsedParameters.value.get(id) ?? [];
+		const isParent = childIds.length > 1;
+		const children = childIds
+			.map((childId) => {
+				const p = parameters.value.find((param) => param.id === childId);
+				if (!p) return null;
+				return {
+					id: p.id,
+					name: p.name,
+					description: p.description,
+					grounding: p.grounding,
+					unitExpression: p.units?.expression
+				};
+			})
+			.filter(Boolean) as ModelVariable[];
+
+		const baseParameter = parameters.value.find((p) => p.id === id);
+		const base: ModelVariable =
+			isParent || !baseParameter
+				? { id }
+				: {
+						id,
+						name: baseParameter.name,
+						description: baseParameter.description,
+						grounding: baseParameter.grounding,
+						unitExpression: baseParameter.units?.expression
 					};
-				})
-				.filter(Boolean) as ModelVariable[];
 
-			const baseParameter = parameters.value.find((p) => p.id === id);
-			const base: ModelVariable =
-				isParent || !baseParameter
-					? { id }
-					: {
-							id,
-							name: baseParameter.name,
-							description: baseParameter.description,
-							grounding: baseParameter.grounding,
-							unitExpression: baseParameter.units?.expression
-						};
-
-			return { base, children, isParent };
-		})
+		return { base, children, isParent };
+	})
 );
 
 const matrixModalId = ref('');
