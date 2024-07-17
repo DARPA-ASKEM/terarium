@@ -9,9 +9,9 @@
 				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
-				@onFocusOut="emit('on-focus-out')"
 				:style="inputStyle"
 				@blur="unmask"
+				@focusout="$emit('focusout', $event)"
 				:type="getType"
 				:placeholder="placeholder"
 			/>
@@ -36,7 +36,7 @@ const props = defineProps<{
 	autoWidth?: boolean;
 }>();
 
-const emit = defineEmits(['update:model-value', 'on-focus-out']);
+const emit = defineEmits(['update:model-value', 'focusout']);
 const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
