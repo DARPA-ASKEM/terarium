@@ -163,7 +163,10 @@ export const OptimizeCiemssOperation: Operation = {
 	}
 };
 
-// Get the intervention output from a given optimization run
+// Get the simulation object that ran the optimize.
+// Get the fixed static interventions from this, as well as some details about the optimization interevntions
+// Get the optimization result file
+// Concat the optimization result file with the optimization interventions from simulation object
 export async function getOptimizedInterventions(optimizeRunId: string) {
 	const allInterventions: Intervention[] = [];
 	// Get the interventionPolicyGroups from the simulation object.
@@ -236,6 +239,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	return allInterventions;
 }
 
+/**
+ *
+ * 1) Get optimize interventions
+ *
+ *
+ */
 export async function createInterventionPolicyFromOptimize(
 	modelConfigId: string,
 	optimizeRunId: string
