@@ -7,8 +7,7 @@ import type {
 	Initial,
 	Model,
 	ModelParameter,
-	ModelUnit,
-	PetriNetState,
+	State,
 	RegNetVertex,
 	Transition
 } from '@/types/Types';
@@ -248,7 +247,7 @@ export function updateObservable(model: Model, id: string, key: string, value: a
 	const observables = model?.semantics?.ode?.observables ?? [];
 	const observable = observables.find((o) => o.id === id);
 	if (!observable) return;
-	observable[key] = value;
+	updateVariableProperty(observable, key, value);
 }
 
 export function updateTransition(model: Model, id: string, key: string, value: any) {
@@ -256,15 +255,18 @@ export function updateTransition(model: Model, id: string, key: string, value: a
 	const transition = transitions.find((t) => t.id === id);
 	if (!transition) return;
 	transition[key] = value;
+	if (transition.properties && key === 'name') {
+		transition.properties.name = value;
+	}
 }
 
 export function updateTime(model: Model, key: string, value: any) {
-	const time: { id: string; units?: ModelUnit } = model?.semantics?.ode?.time;
+	const time: State = model?.semantics?.ode?.time;
 	updateVariableProperty(time, key, value);
 }
 
 // Gets states, vertices, stocks (no stock type yet)
-export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
+export function getStates(model: Model): (State & RegNetVertex)[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:

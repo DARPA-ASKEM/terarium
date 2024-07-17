@@ -1,7 +1,7 @@
 <template>
 	<tera-variables
 		:variable-list="transitionsList"
-		:disabled-inputs="['concept', 'description', 'name', 'unitExpression']"
+		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-variable="$emit('update-transition', $event)"
@@ -23,7 +23,7 @@
 import { ref, computed } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
 import type { ModelVariable } from '@/types/Model';
-// import type { Transition } from '@/types/Types';
+import type { Transition } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseTemplates } from '@/model-representation/mira/mira';
 import TeraVariables from '@/components/model/variables/tera-variables.vue';
@@ -32,7 +32,7 @@ import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configu
 const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
-	transitions: any[]; // Support for Transition type needs work, missing expression, description and name
+	transitions: Transition[];
 }>();
 
 defineEmits(['update-transition']);
@@ -57,12 +57,12 @@ const transitionsList = computed<
 				if (!t) return null;
 				return {
 					id: t.id,
-					name: t.id,
-					description: '', // t.description doesn't exist yet
+					name: t.name,
+					description: t.description,
 					grounding: t.grounding,
 					expression: t.expression,
-					input: t.input,
-					output: t.output
+					input: t.input.join(', '),
+					output: t.output.join(', ')
 				};
 			})
 			.filter(Boolean) as ModelVariable[];
@@ -73,13 +73,13 @@ const transitionsList = computed<
 				? { id: templateId }
 				: {
 						id: baseTransition.id,
-						name: baseTransition.id, // baseTransition.name appears in the data but Transition type doesn't support it yet
-						description: '', // baseTransition.description doesn't exist yet
+						name: baseTransition.name,
+						description: baseTransition.description,
 						grounding: baseTransition.grounding,
 						expression: baseTransition.expression,
 						templateId,
-						input: baseTransition.input,
-						output: baseTransition.output
+						input: baseTransition.input.join(', '),
+						output: baseTransition.output.join(', ')
 					};
 
 		return { base, children, isParent };
