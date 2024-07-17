@@ -392,7 +392,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/utils/optimize';
+import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -403,7 +403,8 @@ import {
 	Criterion,
 	defaultCriterion,
 	InterventionPolicyGroupForm,
-	OptimizeCiemssOperationState
+	OptimizeCiemssOperationState,
+	InterventionTypes
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -639,6 +640,8 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -654,7 +657,6 @@ const runOptimize = async () => {
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
-	const listInitialGuessInterventions: number[] = [];
 	const listBoundsInterventions: number[][] = [];
 	const initialGuess: number[] = [];
 	const objectiveFunctionOption: string[] = [];
@@ -663,11 +665,17 @@ const runOptimize = async () => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
-		initialGuess.push(ele.initialGuessValue);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		listInitialGuessInterventions.push(ele.initialGuessValue);
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
+
+		if (ele.optimizationType === InterventionTypes.paramValue) {
+			initialGuess.push(ele.startTimeGuess);
+		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			initialGuess.push(ele.initialGuessValue);
+		} else {
+			console.error(`invalid optimization type used:${ele.optimizationType}`);
+		}
 	});
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
@@ -707,7 +715,6 @@ const runOptimize = async () => {
 		fixedStaticParameterInterventions,
 		qoi,
 		riskBound: props.node.state.constraintGroups[0].threshold, // TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
-		initialGuessInterventions: listInitialGuessInterventions,
 		boundsInterventions: listBoundsInterventions,
 		extra: {
 			isMinimized: props.node.state.constraintGroups[0].isMinimized,

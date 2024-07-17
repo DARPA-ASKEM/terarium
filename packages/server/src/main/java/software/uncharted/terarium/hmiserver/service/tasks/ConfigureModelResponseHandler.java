@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -12,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -78,41 +76,22 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				modelCopy.setId(model.getId());
 
 				// Map the parameters values to the model
-				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
 					final List<ModelParameter> modelParameters =
 							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
-					if (modelCopy.isRegnet()) {
-						modelCopy
-								.getModel()
-								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-					}
-					final ArrayNode parameters = condition.get("parameters").deepCopy();
-					gollmExtractions.addAll(parameters);
+					modelCopy.getSemantics().getOde().setParameters(modelParameters);
 				}
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
 					final List<Initial> modelInitials =
 							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
-					if (modelCopy.isRegnet()) {
-						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
-					}
-					final ArrayNode initials = condition.get("initials").deepCopy();
-					gollmExtractions.addAll(initials);
+					modelCopy.getSemantics().getOde().setInitials(modelInitials);
 				}
-
-				// Set the all the GoLLM extractions into the model metadata
-				// FIXME - It is not what we should do, this is a hack for the March 2024
-				// Evaluation
-				if (model.getMetadata() == null) {
-					model.setMetadata(new ModelMetadata());
-				}
-				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
 				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
-						model,
+						modelCopy,
 						condition.get("name").asText(),
 						condition.get("description").asText());
 

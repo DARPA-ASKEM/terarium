@@ -730,7 +730,6 @@ export interface OptimizeRequestCiemss {
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
-    initialGuessInterventions: number[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
