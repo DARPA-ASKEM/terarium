@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -23,6 +24,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 			final Config config,
 			final ElasticsearchConfiguration elasticConfig,
 			final ElasticsearchService elasticService,
+			final ProjectService projectService,
 			final ProjectAssetService projectAssetService,
 			final S3ClientService s3ClientService,
 			final WorkflowRepository repository) {
@@ -31,6 +33,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				config,
 				elasticConfig,
 				elasticService,
+				projectService,
 				projectAssetService,
 				s3ClientService,
 				repository,
@@ -51,7 +54,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 	@Override
 	@Observed(name = "function_profile")
-	public Workflow createAsset(final Workflow asset, Schema.Permission hasWritePermission)
+	public Workflow createAsset(final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
@@ -64,12 +67,13 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.createAsset(asset, hasWritePermission);
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Workflow> updateAsset(final Workflow asset, Schema.Permission hasWritePermission)
+	public Optional<Workflow> updateAsset(
+			final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
 			throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
@@ -82,7 +86,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.updateAsset(asset, hasWritePermission);
+		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override

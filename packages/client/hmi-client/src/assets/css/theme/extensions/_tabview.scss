@@ -6,7 +6,7 @@
             .p-tabview-nav-link {
                 display: flex;
                 font-size: $fontBodyMedium;
-                gap: 0.5rem;
+                gap: var(--gap-2);
                 transition: background-color $transitionDuration;
                 border-radius: 0;
 

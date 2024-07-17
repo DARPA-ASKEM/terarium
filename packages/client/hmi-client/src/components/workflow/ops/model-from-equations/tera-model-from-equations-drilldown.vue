@@ -21,7 +21,7 @@
 				class="hidden"
 			/>
 		</template>
-		<section :tabName="DrilldownTabs.Wizard">
+		<tera-columnar-panel :tabName="DrilldownTabs.Wizard">
 			<tera-drilldown-section :is-loading="assetLoading">
 				<template #header-controls-left>
 					<div class="flex align-items-center font-bold pl-3 text-lg">Equation conversions</div>
@@ -129,10 +129,10 @@
 					style="height: 100%"
 				/>
 			</tera-drilldown-preview>
-		</section>
-		<section :tabName="DrilldownTabs.Notebook">
+		</tera-columnar-panel>
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
-		</section>
+		</tera-drilldown-section>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="selectedModel"
@@ -158,17 +158,18 @@ import Image from 'primevue/image';
 import { equationsToAMR } from '@/services/knowledge';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import { generateModelCard, getModel, updateModel } from '@/services/model';
+import { getModel, updateModel } from '@/services/model';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
-import { DrilldownTabs, ModelServiceType } from '@/types/common';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
+import { DrilldownTabs } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { modelCard } from '@/services/goLLM';
 import * as textUtils from '@/utils/text';
 import {
 	EquationBlock,
@@ -250,8 +251,7 @@ const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
 	text: '',
 	modelFramework: ModelFramework.PetriNet,
-	modelId: null,
-	modelService: ModelServiceType.TA1
+	modelId: null
 });
 const document = ref<DocumentAsset | null>();
 const assetLoading = ref(false);
@@ -337,7 +337,7 @@ async function onRun() {
 	const modelId = await equationsToAMR(equations, clonedState.value.modelFramework);
 	if (!modelId) return;
 
-	generateCard(document.value?.id, modelId);
+	if (document.value?.id) await generateCard(document.value.id);
 
 	clonedState.value.modelId = modelId;
 	emit('append-output', {
@@ -374,7 +374,9 @@ async function fetchModel() {
 			model.metadata.gollmCard = goLLMCard.value;
 		}
 
-		model = await updateModel(model);
+		if (useProjects().hasEditPermission()) {
+			model = await updateModel(model);
+		}
 	}
 	card.value = model?.metadata?.card ?? null;
 	selectedModel.value = model;
@@ -388,9 +390,9 @@ function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
 	return foundAsset.metadata?.url;
 }
 
-function onAddModel(modelName: string) {
-	if (!modelName || !selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, modelName);
+function onAddModel(model: Model) {
+	if (!model?.name || !selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, model.name);
 }
 
 function onCloseModelModal() {
@@ -483,22 +485,12 @@ function toggleIncludedEquations() {
 }
 
 // generates the model card and fetches the model when finished
-async function generateCard(docId, modelId) {
-	if (!docId || !modelId) return;
-	//
-	// if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
-	// 	return;
-	// }
-	//
-	// if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
-	// 	return;
-	// }
-
+async function generateCard(docId: string) {
+	if (!docId) return;
 	isGeneratingCard.value = true;
-	// await generateModelCard(docId, modelId, clonedState.value.modelService);
-	await generateModelCard(docId, modelId, ModelServiceType.TA1);
+	await modelCard(docId);
 	isGeneratingCard.value = false;
-	fetchModel();
+	await fetchModel();
 }
 
 watch(

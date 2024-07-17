@@ -3,7 +3,10 @@ package software.uncharted.terarium.hmiserver.service.data;
 import io.micrometer.observation.annotation.Observed;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAndAssetAggregate;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -43,7 +48,47 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getActiveProjects(final List<UUID> ids) {
-		return projectRepository.findAllByIdInAndDeletedOnIsNull(ids);
+		Map<UUID, Project> projectMap = new HashMap<>();
+		List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findByIdsWithAssets(ids);
+		for (ProjectAndAssetAggregate aggregate : projectAggregates) {
+			if (projectMap.containsKey(aggregate.getId())) {
+				Project project = projectMap.get(aggregate.getId());
+				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
+			} else {
+				Project project = new Project();
+				project.setId(aggregate.getId());
+				project.setCreatedOn(aggregate.getCreatedOn());
+				project.setUpdatedOn(aggregate.getUpdatedOn());
+				project.setDeletedOn(aggregate.getDeletedOn());
+				project.setDescription(aggregate.getDescription());
+				project.setFileNames(aggregate.getFileNames());
+				project.setPublicAsset(aggregate.getPublicAsset());
+				project.setName(aggregate.getName());
+				project.setOverviewContent(aggregate.getOverviewContent());
+				project.setTemporary(aggregate.getTemporary());
+				project.setThumbnail(aggregate.getThumbnail());
+				project.setUserId(aggregate.getUserId());
+				project.setMetadata(new HashMap<>());
+				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
+				projectMap.put(project.getId(), project);
+			}
+		}
+		return new ArrayList<>(projectMap.values());
+	}
+
+	private void addAssetCount(Project project, String assetTypeName, Integer assetCount) {
+		if (AssetType.DATASET.name().equals(assetTypeName)) {
+			project.getMetadata().put("datasets-count", assetCount.toString());
+		}
+		if (AssetType.DOCUMENT.name().equals(assetTypeName)) {
+			project.getMetadata().put("document-count", assetCount.toString());
+		}
+		if (AssetType.MODEL.name().equals(assetTypeName)) {
+			project.getMetadata().put("models-count", assetCount.toString());
+		}
+		if (AssetType.WORKFLOW.name().equals(assetTypeName)) {
+			project.getMetadata().put("workflows-count", assetCount.toString());
+		}
 	}
 
 	@Observed(name = "function_profile")
@@ -83,6 +128,14 @@ public class ProjectService {
 		project.get().setDeletedOn(Timestamp.from(Instant.now()));
 		projectRepository.save(project.get());
 		return true;
+	}
+
+	public boolean isProjectPublic(final UUID id) {
+		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
+		if (isPublic.isEmpty()) {
+			return false;
+		}
+		return isPublic.get();
 	}
 
 	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)

@@ -1,10 +1,21 @@
 <template>
 	<div class="flex flex-column flex-1">
 		<header>
-			<strong>{{ parameterId }}</strong>
-			<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
-			<span v-if="units" class="ml-2">({{ units }})</span>
-			<span v-if="description" class="ml-4">{{ description }}</span>
+			<div>
+				<strong>{{ parameterId }}</strong>
+				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
+				<template v-if="units">
+					<label class="ml-2">Unit</label>
+					<span class="ml-1">{{ units }}</span>
+				</template>
+
+				<template v-if="concept">
+					<label class="ml-auto">Concept</label>
+					<span class="ml-1">{{ concept }}</span>
+				</template>
+			</div>
+
+			<span v-if="description">{{ description }}</span>
 		</header>
 		<main>
 			<span class="flex gap-2">
@@ -72,39 +83,61 @@
 					/>
 				</template>
 			</span>
-			<Button
-				:label="getSourceLabel(parameterId)"
-				text
-				size="small"
-				@click="isSourceOpen = !isSourceOpen"
-			/>
+			<section>
+				<Button
+					:label="getSourceLabel(parameterId)"
+					text
+					size="small"
+					@click="isSourceOpen = !isSourceOpen"
+				/>
+				<Button
+					:label="getOtherValuesLabel"
+					text
+					size="small"
+					@click="showOtherConfigValueModal = true"
+				/>
+			</section>
 		</main>
 		<footer v-if="isSourceOpen">
 			<tera-input
-				label="Source / notes / etc"
+				placeholder="Add a source"
 				:model-value="getParameterSource(modelConfiguration, parameterId)"
 				@update:model-value="emit('update-source', { id: parameterId, value: $event })"
 			/>
 		</footer>
 	</div>
+	<Teleport to="body">
+		<tera-paramenter-other-value-modal
+			v-if="showOtherConfigValueModal"
+			:id="parameterId"
+			:otherValueList="otherValueList"
+			@modal-mask-clicked="showOtherConfigValueModal = false"
+			@update-parameter="emit('update-parameter', $event)"
+			@update-source="emit('update-source', $event)"
+			@close-modal="showOtherConfigValueModal = false"
+		/>
+	</Teleport>
 </template>
 
 <script setup lang="ts">
-import { ModelConfigurationLegacy, Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import {
 	getParameterSource,
-	getParameterDistribution
-} from '@/services/model-configurations-legacy';
+	getParameterDistribution,
+	getOtherValues
+} from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
+import TeraParamenterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfiguration: ModelConfigurationLegacy;
+	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	parameterId: string;
 }>();
 
@@ -113,8 +146,19 @@ const emit = defineEmits(['update-parameter', 'update-source']);
 const name = getParameter(props.model, props.parameterId)?.name;
 const units = getParameter(props.model, props.parameterId)?.units?.expression;
 const description = getParameter(props.model, props.parameterId)?.description;
+const concept = getParameter(props.model, props.parameterId)?.grounding?.identifiers[0];
 
 const isSourceOpen = ref(false);
+const showOtherConfigValueModal = ref(false);
+
+const otherValueList = ref(
+	getOtherValues(
+		props.modelConfigurations,
+		props.parameterId,
+		'referenceId',
+		'parameterSemanticList'
+	)
+);
 
 function getSourceLabel(initialId) {
 	if (isSourceOpen.value) return 'Hide source';
@@ -141,11 +185,15 @@ function formatPayloadFromTypeChange(type: DistributionType) {
 	distribution.parameters = {};
 	return distribution;
 }
+
+const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
 </script>
 
 <style scoped>
 header {
 	display: flex;
+	flex-direction: column;
+	gap: var(--gap-small);
 	padding-bottom: var(--gap-small);
 }
 main {
@@ -156,5 +204,9 @@ main {
 
 :deep(.p-dropdown-label) {
 	min-width: 10rem;
+}
+
+label {
+	color: var(--text-color-subdued);
 }
 </style>

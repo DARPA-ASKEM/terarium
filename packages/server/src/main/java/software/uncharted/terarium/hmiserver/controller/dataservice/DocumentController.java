@@ -68,6 +68,7 @@ import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -101,6 +102,7 @@ public class DocumentController {
 
 	final ObjectMapper objectMapper;
 	final ExtractionService extractionService;
+	final EmbeddingService embeddingService;
 
 	@Value("${xdd.api-key}")
 	String apikey;
@@ -166,7 +168,7 @@ public class DocumentController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(documentAsset, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -208,17 +210,11 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> originalDocument = documentAssetService.getAsset(id, permission);
-			if (originalDocument.isEmpty()) {
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
+			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			// Preserve ownership. This may be coming from KM which doesn't have an
-			// awareness of who owned this document.
-			document.setUserId(originalDocument.get().getUserId());
-
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, permission);
-			return updated.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			return ResponseEntity.ok(updated.get());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -281,9 +277,6 @@ public class DocumentController {
 				log.error("Unable to extract S3 url for assets or extract equations", e);
 			}
 		});
-
-		// Update data-service with the updated metadata
-		// documentAssetService.updateAsset(document.get()); // Why?
 
 		// Return the updated document
 		return ResponseEntity.ok(document.get());
@@ -378,7 +371,7 @@ public class DocumentController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			documentAssetService.deleteAsset(id, permission);
+			documentAssetService.deleteAsset(id, projectId, permission);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
@@ -416,7 +409,7 @@ public class DocumentController {
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
 
-				documentAssetService.updateAsset(document.get(), permission);
+				documentAssetService.updateAsset(document.get(), projectId, permission);
 			}
 
 			return ResponseEntity.status(status).build();
@@ -554,13 +547,13 @@ public class DocumentController {
 			// create a new document asset from the metadata in the xdd document and write
 			// it to the db
 			DocumentAsset documentAsset = createDocumentAssetFromXDDDocument(
-					document, userId, extractionResponse.getSuccess().getData(), summaries, permission);
+					document, projectId, userId, extractionResponse.getSuccess().getData(), summaries, permission);
 			if (filename != null) {
 				if (!documentAsset.getFileNames().contains(filename)) {
 					documentAsset.getFileNames().add(filename);
 				}
 				documentAsset = documentAssetService
-						.updateAsset(documentAsset, permission)
+						.updateAsset(documentAsset, projectId, permission)
 						.orElseThrow();
 			}
 
@@ -662,10 +655,7 @@ public class DocumentController {
 
 		try {
 			final Optional<byte[]> bytes = documentAssetService.fetchFileAsBytes(id, filename);
-			if (bytes.isEmpty()) {
-				return null;
-			}
-			return ResponseEntity.ok(bytes.get());
+			return bytes.map(ResponseEntity::ok).orElse(null);
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
@@ -699,10 +689,7 @@ public class DocumentController {
 
 		try {
 			final Optional<String> file = documentAssetService.fetchFileAsString(documentId, filename);
-			if (file.isEmpty()) {
-				return null;
-			}
-			return ResponseEntity.ok(file.get());
+			return file.map(ResponseEntity::ok).orElse(null);
 		} catch (final Exception e) {
 
 			final String error = "Unable to download document as text";
@@ -779,6 +766,7 @@ public class DocumentController {
 	 */
 	private DocumentAsset createDocumentAssetFromXDDDocument(
 			final Document document,
+			final UUID projectId,
 			final String userId,
 			final List<Extraction> extractions,
 			final String summary,
@@ -822,7 +810,7 @@ public class DocumentController {
 			documentAsset.getMetadata().put("github_urls", githubUrls);
 		}
 
-		return documentAssetService.createAsset(documentAsset, permission);
+		return documentAssetService.createAsset(documentAsset, projectId, permission);
 	}
 
 	/**
@@ -843,7 +831,7 @@ public class DocumentController {
 		try {
 			final byte[] fileAsBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 
-			// if this service fails, return ok with errors
+			// if this service fails, return ok with errors.
 			if (fileAsBytes == null || fileAsBytes.length == 0) {
 				log.debug("Document has not data, empty bytes, exit early.");
 				return;

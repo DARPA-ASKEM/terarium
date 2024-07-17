@@ -74,13 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-	alignModel,
-	extractPDF,
-	extractVariables,
-	profileDataset,
-	profileModel
-} from '@/services/knowledge';
+import { extractPDF, extractVariables, profileDataset } from '@/services/knowledge';
 import {
 	RelationshipType,
 	createProvenance,
@@ -97,6 +91,7 @@ import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
 import { computed, onMounted, ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
+import { modelCard } from '@/services/goLLM';
 import TeraAssetLink from './tera-asset-link.vue';
 
 const props = defineProps<{
@@ -169,7 +164,7 @@ const sendForEnrichment = async () => {
 	isLoading.value = true;
 	// Build enrichment job ids list (profile asset, align model, etc...)
 	if (props.assetType === AssetType.Model) {
-		await profileModel(props.assetId, selectedResourceId);
+		await modelCard(selectedResourceId);
 	} else if (props.assetType === AssetType.Dataset) {
 		await profileDataset(props.assetId, selectedResourceId);
 	}
@@ -201,13 +196,7 @@ const sendForExtractions = async () => {
 	// Model extraction
 	if (props.assetType === AssetType.Model && selectedResourceId) {
 		await extractVariables(selectedResourceId, [props.assetId]);
-		const isAligned = await alignModel(props.assetId, selectedResourceId);
-		if (isAligned) {
-			logger.success('Model aligned after variable extraction.');
-			emit('enriched');
-		} else {
-			logger.warn('Model was not aligned after variable extraction. Please try again.');
-		}
+		emit('enriched');
 	}
 
 	isLoading.value = false;

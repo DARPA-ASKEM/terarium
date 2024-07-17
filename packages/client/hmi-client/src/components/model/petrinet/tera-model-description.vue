@@ -3,11 +3,6 @@
 		<Accordion multiple :active-index="[0, 1, 2, 3, 4]" v-bind:lazy="true" class="mb-0">
 			<AccordionTab header="Description">
 				<section v-if="!isGeneratingCard" class="description">
-					<SelectButton
-						v-model="descriptionType"
-						class="p-button-xsm"
-						:options="descriptionOptions"
-					/>
 					<tera-show-more-text :text="description" :lines="5" />
 					<p v-if="modelType"><label>Model type</label>{{ modelType }}</p>
 					<p v-if="fundedBy"><label>Funded by</label>{{ fundedBy }}</p>
@@ -33,12 +28,6 @@
 							{{ link }}
 						</a>
 					</p>
-					<p v-if="!isEmpty(provenance)"><label>Provenance</label>{{ provenance }}</p>
-					<p v-if="!isEmpty(schema)"><label>Schema</label>{{ schema }}</p>
-					<p v-if="!isEmpty(sourceDataset)"><label>Source dataset</label>{{ sourceDataset }}</p>
-					<p v-if="!isEmpty(usage)"><label>Usage</label>{{ usage }}</p>
-					<p v-if="!isEmpty(strengths)"><label>Strengths</label>{{ strengths }}</p>
-					<p v-if="!isEmpty(assumptions)"><label>Assumptions</label>{{ assumptions }}</p>
 				</section>
 				<section v-else>
 					<tera-progress-spinner is-centered>Generating description... </tera-progress-spinner>
@@ -49,17 +38,6 @@
 					ref="teraModelDiagramRef"
 					:model="model"
 					:is-editable="!featureConfig?.isPreview"
-					:model-configuration="modelConfigurations?.[0]"
-					@update-configuration="updateConfiguration"
-				/>
-			</AccordionTab>
-			<AccordionTab header="Provenance">
-				<tera-related-documents
-					class="m-2"
-					:documents="documents"
-					:asset-type="AssetType.Model"
-					:assetId="model.id"
-					@enriched="fetchAsset"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Model equations">
@@ -98,11 +76,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
-import type { Dataset, Model, ModelConfigurationLegacy, ProjectAsset } from '@/types/Types';
-import { AssetType } from '@/types/Types';
-import SelectButton from 'primevue/selectbutton';
-import TeraRelatedDocuments from '@/components/widgets/tera-related-documents.vue';
-import { useProjects } from '@/composables/project';
+import type { Author, Dataset, Model } from '@/types/Types';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
@@ -112,44 +86,16 @@ import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tabl
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfigurationLegacy[];
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'fetch-model', 'update-configuration', 'model-updated']);
-
+const emit = defineEmits(['update-model', 'model-updated']);
 const teraModelDiagramRef = ref();
-const descriptionType = ref('TA1');
-const descriptionOptions = ref(['TA1', 'TA4']);
 
-// FIXME: expand Card typing definition?
-const card = computed<any>(() => {
-	// Display the GoLLM card if the description is set to TA4 (true).
-	if (descriptionType.value === 'TA4' && props.model.metadata?.gollmCard) {
-		return props.model.metadata?.gollmCard;
-	}
-
-	if (props.model.metadata?.card) {
-		const cardWithUnknowns = props.model.metadata?.card;
-		const cardWithUnknownsArr = Object.entries(cardWithUnknowns);
-
-		for (let i = 0; i < cardWithUnknownsArr.length; i++) {
-			const key = cardWithUnknownsArr[i][0];
-			if (cardWithUnknowns[key] === 'UNKNOWN') {
-				cardWithUnknowns[key] = null;
-			}
-		}
-		return cardWithUnknowns;
-	}
-	return null;
-});
+const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
 const description = computed(
-	() =>
-		card.value?.ModelDetails?.model_description ??
-		card.value?.description ??
-		props.model?.header?.description ??
-		''
+	() => card.value?.ModelDetails?.model_description ?? props.model?.header?.description ?? ''
 );
 
 const biasAndRiskLimitations = computed(
@@ -167,33 +113,16 @@ const glossary = computed(() => card.value?.Glossary?.terms ?? []);
 const moreInformation = computed(() => card.value?.MoreInformation?.links ?? []);
 
 const uses = computed(() => card.value?.Uses ?? null);
-const usage = computed(() => card.value?.usage ?? '');
-const strengths = computed(() => card.value?.strengths ?? '');
-const assumptions = computed(() => card.value?.assumptions ?? '');
-const sourceDataset = computed(() => card.value?.dataset ?? '');
-const provenance = computed(() => card.value?.provenance ?? '');
-const schema = computed(() => card.value?.schema ?? '');
 const authors = computed(() => {
 	const authorsSet: Set<string> = new Set();
 	if (props.model?.metadata?.annotations?.authors)
-		props.model.metadata.annotations.authors.forEach((ele) => authorsSet.add(ele));
+		props.model.metadata.annotations.authors.forEach((author: Author) =>
+			authorsSet.add(author.name)
+		);
 	if (card.value?.ModelCardAuthors)
-		card.value.ModelCardAuthors.forEach((ele) => authorsSet.add(ele));
-	if (card.value?.authorAuthor)
-		card.value.authorAuthor.split(',').forEach((ele) => authorsSet.add(ele));
-	const authorsList = [...authorsSet];
-	return authorsList.join(', ');
+		card.value.ModelCardAuthors.forEach((author: string) => authorsSet.add(author));
+	return [...authorsSet].join(', ');
 });
-
-const documents = computed<{ name: string; id: string }[]>(
-	() =>
-		useProjects()
-			.getActiveProjectAssets(AssetType.Document)
-			.map((projectAsset: ProjectAsset) => ({
-				name: projectAsset.assetName,
-				id: projectAsset.assetId
-			})) ?? []
-);
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const relatedTerariumModels = computed(
@@ -205,14 +134,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
-
-function fetchAsset() {
-	emit('fetch-model');
-}
-
-function updateConfiguration(updatedConfiguration: ModelConfigurationLegacy) {
-	emit('update-configuration', updatedConfiguration);
-}
 </script>
 
 <style scoped>

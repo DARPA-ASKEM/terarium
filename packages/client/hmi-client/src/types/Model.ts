@@ -7,6 +7,17 @@ export type ModelSearchParams = {
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related models
 };
 
+// These are common properties among states, parameters, transitions, observables, etc
+// Useful for UI components that need to display these properties
+export type ModelVariable = {
+	id: string;
+	name?: string;
+	description?: string;
+	grounding?: any;
+	unitExpression?: string;
+	expression?: string;
+};
+
 export enum StratifiedMatrix {
 	Initials = 'initials',
 	Parameters = 'parameters',

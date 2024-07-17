@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
-import ProjectView from '@/page/project/tera-project.vue';
+import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
 import UserAdminView from '@/components/navbar/tera-useradmin.vue';
 
@@ -17,6 +17,7 @@ import PyodideTest from '@/temp/PyodideTest.vue';
 import JupyterTest from '@/temp/JupyterTest.vue';
 import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
+import VegaliteTest from '@/temp/Vegalite.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -69,7 +70,8 @@ const routes = [
 	{ path: '/pyodide-test', component: PyodideTest },
 	{ path: '/jupyter-test', component: JupyterTest },
 	{ path: '/custom-input-test', component: CustomInputTest },
-	{ path: '/clipboard', component: ClipboardTest }
+	{ path: '/clipboard', component: ClipboardTest },
+	{ path: '/vegalite', component: VegaliteTest }
 ];
 
 const router = createRouter({

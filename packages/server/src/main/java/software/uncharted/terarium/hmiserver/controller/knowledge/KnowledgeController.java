@@ -51,7 +51,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
@@ -99,8 +98,8 @@ public class KnowledgeController {
 
 	final Messages messages;
 
-	@Value("${mit-openai-api-key:}")
-	String MIT_OPENAI_API_KEY;
+	@Value("${openai-api-key:}")
+	String OPENAI_API_KEY;
 
 	/**
 	 * Send the equations to the skema unified service to get the AMR
@@ -126,6 +125,7 @@ public class KnowledgeController {
 				// Get the model id if it is a valid UUID
 				modelId = UUID.fromString(modelIdString);
 			} catch (final IllegalArgumentException e) {
+				log.warn(String.format("Invalid model UUID supplied: %s", modelIdString), e);
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
 			}
 		}
@@ -134,26 +134,28 @@ public class KnowledgeController {
 		try {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 			if (responseAMR == null) {
+				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
 			}
 		} catch (final FeignException e) {
-			final String error = "Skema Unified Service did not return a valid AMR based on the provided Equations";
-			log.error(error, e);
-
+			log.error(
+					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e);
 			throw handleSkemaFeignException(e);
 		} catch (final Exception e) {
-			final String error = "An unhandled error occurred while processing the AMR from equations.";
-			log.error(error, e);
+			log.error(
+					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
 		// If no model id is provided, create a new model asset
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR, permission);
+				final Model model = modelService.createAsset(responseAMR, projectId, permission);
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
-				log.error("Unable to create a model", e);
+				log.error("An error occurred while trying to create a Model asset.", e);
 				throw new ResponseStatusException(
 						HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
@@ -164,17 +166,16 @@ public class KnowledgeController {
 
 		model = modelService.getAsset(modelId, permission);
 		if (model.isEmpty()) {
-			final String errorMessage = String.format("The model id %s does not exist.", modelId);
-			log.error(errorMessage);
+			log.error(String.format("The model id %s does not exist.", modelId));
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
 		}
 
 		responseAMR.setId(model.get().getId());
 		try {
-			modelService.updateAsset(responseAMR, permission);
+			modelService.updateAsset(responseAMR, projectId, permission);
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
-			log.error("Unable to update the model with id {}.", modelId, e);
+			log.error(String.format("Unable to update the model with id %s.", modelId), e);
 			throw new ResponseStatusException(
 					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
@@ -186,9 +187,7 @@ public class KnowledgeController {
 		try {
 			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToAMR(req).getBody());
 		} catch (final FeignException e) {
-			final String error = "Error with Skema Unified Service while converting base64 equations to AMR";
-			log.error(error, e);
-
+			log.error("Error with Skema Unified Service while converting base64 equations to AMR", e);
 			throw handleSkemaFeignException(e);
 		}
 	}
@@ -200,9 +199,7 @@ public class KnowledgeController {
 			return ResponseEntity.ok(
 					skemaUnifiedProxy.base64EquationsToLatex(req).getBody());
 		} catch (final FeignException e) {
-			final String error = "Error with Skema Unified Service while converting base64 equations to Latex";
-			log.error(error, e);
-
+			log.error("Error with Skema Unified Service while converting base64 equations to Latex", e);
 			throw handleSkemaFeignException(e);
 		}
 	}
@@ -230,7 +227,7 @@ public class KnowledgeController {
 
 		final Optional<Code> code = codeService.getAsset(codeId, permission);
 		if (code.isEmpty()) {
-			log.error("Unable to fetch the requested code asset with codeId: {}", codeId);
+			log.error(String.format("Unable to fetch the requested code asset with codeId: %s", codeId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
 		}
 
@@ -320,10 +317,14 @@ public class KnowledgeController {
 		}
 
 		if (resp.getStatusCode().is4xxClientError()) {
+			log.warn("Skema Unified Service did not return a valid AMR because the provided code was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.bad-code"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("Skema Unified Service is currently unavailable");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			log.error(
+					"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided code");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.internal-error"));
 		}
 
@@ -356,7 +357,7 @@ public class KnowledgeController {
 		}
 
 		try {
-			model = modelService.createAsset(model, permission);
+			model = modelService.createAsset(model, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create model", e);
 			throw new ResponseStatusException(
@@ -370,7 +371,7 @@ public class KnowledgeController {
 		code.get().getMetadata().put("model_id", model.getId().toString());
 
 		try {
-			codeService.updateAsset(code.get(), permission);
+			codeService.updateAsset(code.get(), projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code", e);
 			throw new ResponseStatusException(
@@ -423,7 +424,7 @@ public class KnowledgeController {
 		// 1. create code asset from code blocks
 		final Code createdCode;
 		try {
-			createdCode = codeService.createAsset(code, permission);
+			createdCode = codeService.createAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create code asset", e);
 			throw new ResponseStatusException(
@@ -442,6 +443,7 @@ public class KnowledgeController {
 		final String filename = input.getOriginalFilename();
 
 		if (filename == null) {
+			log.warn("Filename is missing from the file");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("code.filename-needed"));
 		}
 
@@ -463,7 +465,7 @@ public class KnowledgeController {
 		code.getFiles().put(filename, codeFile);
 
 		try {
-			codeService.updateAsset(code, permission);
+			codeService.updateAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code asset", e);
 			throw new ResponseStatusException(
@@ -472,120 +474,6 @@ public class KnowledgeController {
 
 		// 3. create model from code asset
 		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
-	}
-
-	/**
-	 * Profile a model
-	 *
-	 * @param modelId (String): The ID of the model to profile
-	 * @param documentId (String): The text of the document to profile
-	 * @return the profiled model
-	 */
-	@PostMapping("/profile-model/{model-id}")
-	@Secured(Roles.USER)
-	public ResponseEntity<Model> postProfileModel(
-			@PathVariable("model-id") final UUID modelId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId,
-			@RequestParam(value = "document-id", required = false) final UUID documentId) {
-
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
-		JsonNode gollmCard = null;
-		String documentText = "";
-		if (documentId != null) {
-			final Optional<DocumentAsset> documentOptional = documentService.getAsset(documentId, permission);
-			if (documentOptional.isPresent()) {
-				final int MAX_CHAR_LIMIT = 9000;
-
-				final DocumentAsset document = documentOptional.get();
-
-				if (document.getText() != null) {
-					documentText = document.getText()
-							.substring(0, Math.min(document.getText().length(), MAX_CHAR_LIMIT));
-				} else {
-					throw new ResponseStatusException(
-							HttpStatus.BAD_REQUEST, messages.get("document.extraction.not-done"));
-				}
-				// Try to get TA4 card.
-				if (document.getMetadata() != null) {
-					if (document.getMetadata().get("gollmCard") != null) {
-						gollmCard = document.getMetadata().get("gollmCard").deepCopy();
-					}
-				}
-
-				try {
-					final Provenance provenancePayload = new Provenance(
-							ProvenanceRelationType.EXTRACTED_FROM,
-							modelId,
-							ProvenanceType.MODEL,
-							documentId,
-							ProvenanceType.DOCUMENT);
-					provenanceService.createProvenance(provenancePayload);
-				} catch (final Exception e) {
-					final String error = "Unable to create provenance for profile-model";
-					log.error(error, e);
-				}
-			}
-		}
-
-		final Model model = modelService.getAsset(modelId, permission).orElseThrow();
-
-		final StringMultipartFile textFile = new StringMultipartFile(documentText, "document.txt", "application/text");
-		final StringMultipartFile codeFile = new StringMultipartFile("", "code.txt", "application/text");
-
-		final ResponseEntity<JsonNode> resp;
-		try {
-			resp = mitProxy.modelCard(MIT_OPENAI_API_KEY, textFile, codeFile);
-		} catch (final FeignException e) {
-			final String error = "Unable to get model card";
-			log.error(error, e);
-			throw handleMitFeignException(e);
-		}
-
-		if (resp.getStatusCode().is4xxClientError()) {
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
-		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
-		} else if (!resp.getStatusCode().is2xxSuccessful()) {
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
-		}
-
-		// Get TA1 Card:
-		final Card card;
-		try {
-			card = mapper.treeToValue(resp.getBody(), Card.class);
-		} catch (final IOException e) {
-			log.error("Unable to convert response to card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		if (model.getHeader() == null) {
-			model.setHeader(new ModelHeader());
-		}
-
-		if (model.getMetadata() == null) {
-			model.setMetadata(new ModelMetadata());
-		}
-
-		model.getHeader().setDescription(card.getDescription());
-		model.getMetadata().setCard(card);
-		model.getMetadata().setGollmCard(gollmCard);
-
-		final Optional<Model> updatedModel;
-		try {
-			updatedModel = modelService.updateAsset(model, permission);
-		} catch (final IOException e) {
-			log.error("Unable to update model", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		if (updatedModel.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("model.unable-to-update"));
-		}
-
-		return ResponseEntity.ok(updatedModel.get());
 	}
 
 	/**
@@ -633,6 +521,7 @@ public class KnowledgeController {
 		final Dataset dataset = datasetService.getAsset(datasetId, permission).orElseThrow();
 
 		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
+			log.warn("There are no files associated with this dataset");
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("dataset.files.not-found"));
 		}
 		final String filename = dataset.getFileNames().get(0);
@@ -648,20 +537,23 @@ public class KnowledgeController {
 
 		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
-		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(MIT_OPENAI_API_KEY, csvFile, documentFile);
+		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
+			log.warn("MIT Text-reading did not return a valid dataset card because a provided resource was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIT Text-reading is currently unavailable");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
+			log.error(
+					"An error occurred while MIT Text-reading was trying to produce a dataset card based on the provided resource");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.internal-error"));
 		}
 
 		final JsonNode card = resp.getBody();
 		final JsonNode profilingResult = card.get("DATA_PROFILING_RESULT");
 
-		final List<DatasetColumn> columns = new ArrayList<>();
 		for (final DatasetColumn col : dataset.getColumns()) {
 
 			final JsonNode annotation = profilingResult.get(col.getName());
@@ -693,19 +585,10 @@ public class KnowledgeController {
 			// remove groundings from annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
-			final DatasetColumn newCol = new DatasetColumn();
-			newCol.setName(col.getName());
-			newCol.setDataType(col.getDataType());
-			newCol.setFormatStr(col.getFormatStr());
-			newCol.setGrounding(groundings);
-			newCol.setAnnotations(col.getAnnotations());
-			newCol.setDescription(annotation.get("description").asText());
-			newCol.setMetadata(col.getMetadata());
-			newCol.updateMetadata(annotation);
-			columns.add(newCol);
+			col.setGrounding(groundings);
+			col.setDescription(annotation.get("description").asText());
+			col.updateMetadata(annotation);
 		}
-
-		dataset.setColumns(columns);
 
 		// add card to metadata
 		if (dataset.getMetadata() == null) {
@@ -715,7 +598,7 @@ public class KnowledgeController {
 
 		final Optional<Dataset> updatedDataset;
 		try {
-			updatedDataset = datasetService.updateAsset(dataset, permission);
+			updatedDataset = datasetService.updateAsset(dataset, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update dataset", e);
 			throw new ResponseStatusException(
@@ -723,6 +606,7 @@ public class KnowledgeController {
 		}
 
 		if (updatedDataset.isEmpty()) {
+			log.error("An error occurred while updating the dataset asset, resulting in an empty dataset");
 			throw new ResponseStatusException(
 					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
 		}
@@ -751,8 +635,9 @@ public class KnowledgeController {
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			return ResponseEntity.ok(
-					extractionService.alignAMR(documentId, modelId, permission).get());
+			return ResponseEntity.ok(extractionService
+					.alignAMR(projectId, documentId, modelId, permission)
+					.get());
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
@@ -777,7 +662,7 @@ public class KnowledgeController {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		extractionService.extractVariables(
-				documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
+				projectId, documentId, modelIds == null ? new ArrayList<>() : modelIds, domain, permission);
 		return ResponseEntity.accepted().build();
 	}
 
@@ -808,24 +693,36 @@ public class KnowledgeController {
 	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn("Skema Unified Service did not return a valid AMR based on the provided resources");
 			return new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("Skema Unified Service is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
+			log.error(
+					"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources");
 			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 		}
+		log.error(
+				"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources");
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 
 	private ResponseStatusException handleMitFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
+			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
 			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+			log.warn("MIT Text-reading is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
+			log.error(
+					"An error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
+			return new ResponseStatusException(statusCode, messages.get("mit.internal-error"));
 		}
+		log.error(
+				"An unknown error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }

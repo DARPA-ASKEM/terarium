@@ -11,7 +11,7 @@ import { useProjects } from '@/composables/project';
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
 
-	const parentContainerWidth = (element as HTMLElement).clientWidth - 48;
+	const parentContainerWidth = (element as HTMLElement).clientWidth - 24;
 	return { width: parentContainerWidth, height: 270 };
 };
 

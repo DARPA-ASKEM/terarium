@@ -1,16 +1,15 @@
 <template>
 	<tera-drilldown
+		ref="drilldownRef"
 		:node="node"
 		:menu-items="menuItems"
-		:output-summary="true"
 		@update:selection="onSelection"
 		@on-close-clicked="onDrilldownClose"
 		@update-state="(state: any) => emit('update-state', state)"
 		@update-output-port="(output: any) => emit('update-output-port', output)"
-		@generate-output-summary="(output: any) => emit('generate-output-summary', output)"
 		v-bind="$attrs"
 	>
-		<div :tabName="ModelEditTabs.Wizard">
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
 			<tera-model-template-editor
 				v-if="amr"
 				:model="amr"
@@ -20,65 +19,62 @@
 				@save-new-model-output="createOutput"
 				@reset="resetModel"
 			/>
-		</div>
-		<div :tabName="ModelEditTabs.Notebook">
-			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<Suspense>
-						<tera-notebook-jupyter-input
-							:kernel-manager="kernelManager"
-							:default-options="sampleAgentQuestions"
-							:context-language="contextLanguage"
-							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => llmThoughts.push(data)"
-							@question-asked="updateLlmQuery"
-						>
-							<template #toolbar-right-side>
-								<Button
-									label="Reset"
-									outlined
-									severity="secondary"
-									size="small"
-									@click="resetModel"
-								/>
-								<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
-							</template>
-						</tera-notebook-jupyter-input>
-					</Suspense>
-					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
-				</div>
-				<v-ace-editor
-					v-model:value="codeText"
-					@init="initializeAceEditor"
-					lang="python"
-					theme="chrome"
-					style="flex-grow: 1; width: 100%"
-					class="ace-editor"
-					:options="{ showPrintMargin: false }"
-				/>
-			</tera-drilldown-section>
-			<div class="preview-container">
-				<tera-drilldown-preview
-					title="Preview"
-					v-model:output="selectedOutputId"
-					@update:selection="onSelection"
-					:options="outputs"
-					is-selectable
-					class="h-full"
-				>
-					<tera-notebook-error
-						v-if="executeResponse.status === OperatorStatus.ERROR"
-						:name="executeResponse.name"
-						:value="executeResponse.value"
-						:traceback="executeResponse.traceback"
-					/>
-					<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
-					<div v-else>
-						<img src="@assets/svg/plants.svg" alt="" draggable="false" />
-					</div>
-				</tera-drilldown-preview>
+		</tera-drilldown-section>
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
+			<div class="toolbar">
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:default-options="sampleAgentQuestions"
+						:context-language="contextLanguage"
+						@llm-output="(data: any) => appendCode(data, 'code')"
+						@llm-thought-output="(data: any) => llmThoughts.push(data)"
+						@question-asked="updateLlmQuery"
+					>
+						<template #toolbar-right-side>
+							<Button
+								label="Reset"
+								outlined
+								severity="secondary"
+								size="small"
+								@click="resetModel"
+							/>
+							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
+						</template>
+					</tera-notebook-jupyter-input>
+				</Suspense>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 			</div>
-		</div>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initializeAceEditor"
+				lang="python"
+				theme="chrome"
+				style="flex-grow: 1; width: 100%"
+				class="ace-editor"
+				:options="{ showPrintMargin: false }"
+			/>
+		</tera-drilldown-section>
+		<template #preview v-if="drilldownRef?.selectedTab === DrilldownTabs.Notebook">
+			<tera-drilldown-preview
+				title="Preview"
+				v-model:output="selectedOutputId"
+				@update:selection="onSelection"
+				:options="outputs"
+				is-selectable
+			>
+				<tera-notebook-error
+					v-if="executeResponse.status === OperatorStatus.ERROR"
+					:name="executeResponse.name"
+					:value="executeResponse.value"
+					:traceback="executeResponse.traceback"
+				/>
+				<tera-model-diagram v-else-if="amr" :model="amr" :is-editable="true" />
+				<div v-else>
+					<img src="@assets/svg/plants.svg" alt="" draggable="false" />
+				</div>
+			</tera-drilldown-preview>
+		</template>
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="amr"
@@ -112,9 +108,10 @@ import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-inp
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { KernelSessionManager } from '@/services/jupyter';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations-legacy';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
+import { DrilldownTabs } from '@/types/common';
 import { ModelEditOperationState } from './model-edit-operation';
 
 const props = defineProps<{
@@ -125,14 +122,8 @@ const emit = defineEmits([
 	'update-state',
 	'close',
 	'select-output',
-	'generate-output-summary',
 	'update-output-port'
 ]);
-
-enum ModelEditTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -151,6 +142,7 @@ const isReadyToCreateDefaultOutput = computed(
 		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
 );
 
+const drilldownRef = ref();
 const selectedOutputId = ref<string>('');
 const activeOutput = ref<WorkflowOutput<ModelEditOperationState> | null>(null);
 
@@ -378,7 +370,7 @@ const onSelection = (id: string) => {
 
 // Updates output selection
 watch(
-	() => props.node.active,
+	() => [props.node.active],
 	async () => {
 		// Update selected output
 		if (props.node.active) {
@@ -435,18 +427,13 @@ onUnmounted(() => {
 	flex-direction: column;
 }
 
-.notebook-section:deep(main) {
-	gap: var(--gap-small);
-	position: relative;
-}
-
 .notebook-section:deep(main .toolbar) {
 	padding-left: var(--gap-medium);
 }
 
-.preview-container {
-	display: flex;
-	flex-direction: column;
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
 }
 
 :deep(.diagram-container) {

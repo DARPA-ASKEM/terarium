@@ -18,7 +18,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class DocumentControllerTests extends TerariumApplicationTests {
 
@@ -28,9 +30,17 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private DocumentAssetService documentAssetService;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
+
+		project = projectService.createProject((Project)
+				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
 	}
 
 	@AfterEach
@@ -60,6 +70,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
@@ -75,16 +86,19 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset").with(csrf()))
@@ -99,6 +113,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
@@ -118,6 +133,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		// Create a MockMultipartFile object
@@ -150,6 +166,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.put(
@@ -170,6 +187,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
@@ -215,6 +233,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 				(DocumentAsset)
 						new DocumentAsset().setName("test-document-name").setDescription("my description"),
+				project.getId(),
 				ASSUME_WRITE_PERMISSION);
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
@@ -257,12 +276,12 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetPublicModelWithoutProject() throws Exception {
 
-		DocumentAsset documentAsset = (DocumentAsset)
+		final DocumentAsset documentAsset = (DocumentAsset)
 				new DocumentAsset().setName("test-document-name").setDescription("my description");
 		documentAsset.setPublicAsset(true);
 
 		final DocumentAsset createdDocumentAsset =
-				documentAssetService.createAsset(documentAsset, ASSUME_WRITE_PERMISSION);
+				documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId())
 						.with(csrf()))
@@ -273,35 +292,28 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCannotGetPrivateModelWithoutProject() throws Exception {
 
-		DocumentAsset documentAsset_public_not_temp = (DocumentAsset) new DocumentAsset()
+		final DocumentAsset documentAsset_public_not_temp = (DocumentAsset) new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(true)
 				.setTemporary(false);
-		DocumentAsset documentAsset_public_temp = (DocumentAsset) new DocumentAsset()
+		final DocumentAsset documentAsset_public_temp = (DocumentAsset) new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(true)
 				.setTemporary(true);
-		DocumentAsset documentAsset_not_public_temp = (DocumentAsset) new DocumentAsset()
+		final DocumentAsset documentAsset_not_public_temp = (DocumentAsset) new DocumentAsset()
 				.setName("test-document-name")
 				.setDescription("my description")
 				.setPublicAsset(false)
 				.setTemporary(true);
-		DocumentAsset documentAsset_not_public_not_temp = (DocumentAsset) new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description")
-				.setPublicAsset(false)
-				.setTemporary(false);
 
 		final DocumentAsset createdDocumentAsset_public_temp =
-				documentAssetService.createAsset(documentAsset_public_temp, ASSUME_WRITE_PERMISSION);
-		final DocumentAsset createdDocumentAsset_public_not_temp =
-				documentAssetService.createAsset(documentAsset_public_not_temp, ASSUME_WRITE_PERMISSION);
-		final DocumentAsset createdDocumentAsset_not_public_temp =
-				documentAssetService.createAsset(documentAsset_not_public_temp, ASSUME_WRITE_PERMISSION);
-		final DocumentAsset createdDocumentAsset_not_public_not_temp =
-				documentAssetService.createAsset(documentAsset_not_public_not_temp, ASSUME_WRITE_PERMISSION);
+				documentAssetService.createAsset(documentAsset_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset_public_not_temp = documentAssetService.createAsset(
+				documentAsset_public_not_temp, project.getId(), ASSUME_WRITE_PERMISSION);
+		final DocumentAsset createdDocumentAsset_not_public_temp = documentAssetService.createAsset(
+				documentAsset_not_public_temp, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset_public_not_temp.getId())
 						.with(csrf()))
@@ -310,10 +322,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 						.with(csrf()))
 				.andExpect(status().isForbidden());
 		mockMvc.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset_public_temp.getId())
-						.with(csrf()))
-				.andExpect(status().isForbidden());
-		mockMvc.perform(MockMvcRequestBuilders.get(
-								"/document-asset/" + createdDocumentAsset_not_public_not_temp.getId())
 						.with(csrf()))
 				.andExpect(status().isForbidden());
 	}

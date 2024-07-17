@@ -1,5 +1,6 @@
 <template>
 	<tera-asset
+		:id="assetId"
 		:name="model?.header.name"
 		:feature-config="featureConfig"
 		:is-naming-asset="isNaming"
@@ -16,33 +17,25 @@
 				@keyup.esc="updateModelName"
 				v-focus
 			/>
-
 			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
 				<Button icon="pi pi-check" rounded text @click="updateModelName" />
 			</div>
 		</template>
-		<template #edit-buttons>
-			<span v-if="model" class="ml-auto">{{ model.header.schema_name }}</span>
-			<template v-if="!featureConfig.isPreview">
-				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleOptionsMenu"
-				/>
-				<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
-			</template>
+		<template #edit-buttons v-if="!featureConfig.isPreview">
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="toggleOptionsMenu"
+			/>
+			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
 		<tera-model-description
 			v-if="model"
 			:key="model?.id"
 			:model="model"
-			:model-configurations="modelConfigurations"
 			:feature-config="featureConfig"
-			:highlight="highlight"
-			@model-updated="getModelWithConfigurations"
+			@model-updated="fetchModel"
 			@update-model="updateModelContent"
-			@update-configuration="updateConfiguration"
-			@fetch-model="fetchModel"
 		/>
 	</tera-asset>
 </template>
@@ -55,22 +48,14 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import {
-	addDefaultConfiguration,
-	updateModelConfiguration
-} from '@/services/model-configurations-legacy';
-import { getModel, getModelConfigurations, isModelEmpty, updateModel } from '@/services/model';
+import { getModel, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { AssetType, type Model, type ModelConfigurationLegacy } from '@/types/Types';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	assetId: {
-		type: String,
-		default: ''
-	},
-	highlight: {
 		type: String,
 		default: ''
 	},
@@ -80,23 +65,16 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits([
-	'close-preview',
-	'update-model-configuration',
-	'new-model-configuration'
-]);
+const emit = defineEmits(['close-preview']);
 
 const model = ref<Model | null>(null);
-const modelConfigurations = ref<ModelConfigurationLegacy[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
+const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 
 // User menu
 const optionsMenu = ref();
@@ -147,17 +125,15 @@ const optionsMenuItems = computed(() => [
 			emit('close-preview');
 		}
 	}
-
-	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
 async function updateModelContent(updatedModel: Model) {
+	if (!useProjects().hasEditPermission()) {
+		return;
+	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
-	setTimeout(async () => {
-		await getModelWithConfigurations(); // elastic search might still not update in time
-	}, 800);
+	await fetchModel();
 }
 
 async function updateModelName() {
@@ -169,47 +145,8 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfigurationLegacy) {
-	await updateModelConfiguration(updatedConfiguration);
-	setTimeout(async () => {
-		emit('update-model-configuration');
-		const indexToUpdate = modelConfigurations.value.findIndex(
-			({ id }) => id === updatedConfiguration.id
-		);
-		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
-		// await fetchConfigurations(); // elastic search might still not update in time
-	}, 800);
-}
-
-async function fetchConfigurations() {
-	if (model.value) {
-		let tempConfigurations = await getModelConfigurations(model.value.id);
-
-		// Ensure that we always have a "default config" model configuration
-		if (
-			(isEmpty(tempConfigurations) ||
-				!tempConfigurations.find((d) => d.name === 'Default config')) &&
-			!isModelEmpty(model.value)
-		) {
-			await addDefaultConfiguration(model.value);
-			setTimeout(async () => {
-				// elastic search might still not update in time
-				tempConfigurations = await getModelConfigurations(model.value?.id!);
-				modelConfigurations.value = tempConfigurations;
-			}, 800);
-			return;
-		}
-		modelConfigurations.value = tempConfigurations;
-	}
-}
-
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-}
-
-async function getModelWithConfigurations() {
-	await fetchModel();
-	await fetchConfigurations();
 }
 
 watch(
@@ -219,7 +156,7 @@ watch(
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
-			await getModelWithConfigurations();
+			await fetchModel();
 			isModelLoading.value = false;
 		}
 	},

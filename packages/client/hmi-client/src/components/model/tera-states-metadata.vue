@@ -1,40 +1,20 @@
 <template>
-	<ul>
-		<li v-for="({ baseState, childStates, isVirtual }, index) in stateList" :key="baseState.id">
-			<template v-if="isVirtual">
-				<tera-state-metadata-entry
-					:state="baseState"
-					is-base
-					:show-stratified-variables="toggleStates[index]"
-					@toggle-stratified-variables="toggleStates[index] = !toggleStates[index]"
-					@update-state="updateBaseState(baseState.id, $event)"
-				/>
-				<ul v-if="toggleStates[index]" class="stratified">
-					<li v-for="childState in childStates" :key="childState.id">
-						<tera-state-metadata-entry
-							:state="childState"
-							is-stratified
-							@update-state="$emit('update-state', { id: childState.id, ...$event })"
-						/>
-					</li>
-				</ul>
-			</template>
-			<tera-state-metadata-entry
-				v-else
-				:state="baseState"
-				@update-state="$emit('update-state', { id: baseState.id, ...$event })"
-			/>
-		</li>
-	</ul>
+	<tera-variables-metadata
+		:variable-list="stateList"
+		:collapsed-variables="collapsedInitials"
+		:disabled-inputs="['concept', 'description']"
+		@update-variable="emit('update-state', $event)"
+	/>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed } from 'vue';
+import { ModelVariable } from '@/types/Model';
 import { Model } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
-import TeraStateMetadataEntry from '@/components/model/tera-state-metadata-entry.vue';
+import TeraVariablesMetadata from './tera-variables-metadata.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -43,52 +23,47 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-state']);
 
-const states = getStates(props.model); // could be states, vertices, and stocks type
+const states = computed(() => getStates(props.model)); // could be states, vertices, and stocks type
+const collapsedInitials = computed(() => collapseInitials(props.mmt));
+const stateList = computed<
+	{
+		base: ModelVariable;
+		children: ModelVariable[];
+		isParent: boolean;
+	}[]
+>(() =>
+	Array.from(collapsedInitials.value.keys())
+		.flat()
+		.map((id) => {
+			const childTargets = collapsedInitials.value.get(id) ?? [];
+			const isParent = childTargets.length > 1;
+			const children = childTargets
+				.map((childTarget) => {
+					const s = states.value.find((state) => state.id === childTarget);
+					if (!s) return null;
+					return {
+						id: s.id,
+						name: s.name,
+						description: '', // s.description doesn't exist yet
+						grounding: s.grounding,
+						unitExpression: s.initial?.expression
+					};
+				})
+				.filter(Boolean) as ModelVariable[];
 
-const collapsedInitials = collapseInitials(props.mmt);
-const stateList = Array.from(collapsedInitials.keys())
-	.flat()
-	.map((id) => {
-		const childTargets = collapsedInitials.get(id) ?? [];
-		const childStates = childTargets
-			.map((childTarget) => states.find((i: any) => i.id === childTarget))
-			.filter(Boolean);
-		const isVirtual = childTargets.length > 1;
+			const baseState = states.value.find((s) => s.id === id);
+			const base: ModelVariable =
+				isParent || !baseState
+					? { id }
+					: {
+							id,
+							name: baseState.name,
+							description: '', // baseState.description doesn't exist yet
+							grounding: baseState.grounding,
+							unitExpression: baseState.initial?.expression
+						};
 
-		// If the initial is virtual, we need to get it from model.metadata
-		const baseState = isVirtual
-			? props.model.metadata?.initials?.[id] ?? { id } // If we haven't saved it in the metadata yet, create it
-			: states.find((i: any) => i.id === id);
-
-		return { baseState, childStates, isVirtual };
-	});
-
-const toggleStates = ref(Array.from({ length: collapsedInitials.size }, () => false));
-
-function updateBaseState(baseId: string, event: any) {
-	// In order to modify the base we need to do it within the model's metadata since it doesn't actually exist in the model
-	emit('update-state', { id: baseId, isMetadata: true, ...event });
-	// Cascade the change to all children
-	const targets = collapsedInitials.get(baseId);
-	targets?.forEach((target) => emit('update-state', { id: target, ...event }));
-}
+			return { base, children, isParent };
+		})
+);
 </script>
-
-<style scoped>
-li {
-	padding-bottom: var(--gap-small);
-	border-bottom: 1px solid var(--surface-border);
-}
-
-.stratified {
-	gap: var(--gap-small);
-	margin: var(--gap-small) 0 0 var(--gap-medium);
-
-	& > li {
-		border-left: 2px solid var(--primary-color-dark);
-		padding-left: var(--gap);
-		padding-bottom: 0;
-		border-bottom: none;
-	}
-}
-</style>

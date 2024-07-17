@@ -30,12 +30,7 @@
 									v-if="model && isStratified"
 									class="p-button-sm"
 									:model-value="stratifiedView"
-									@change="
-										if ($event.value) {
-											stratifiedView = $event.value;
-											toggleCollapsedView();
-										}
-									"
+									@change="$event.value && toggleCollapsedView($event.value)"
 									:options="stratifiedViewOptions"
 									option-value="value"
 								>
@@ -48,18 +43,14 @@
 						</template>
 					</Toolbar>
 					<template v-if="model">
-						<tera-model-type-legend class="legend-anchor" :model="model" />
 						<div class="graph-container">
 							<div ref="graphElement" class="graph-element" />
-							<div class="legend">
-								<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-									<div
-										class="legend-circle"
-										:style="`background: ${graphLegendColors[index]}`"
-									></div>
+							<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+								<li v-for="(label, index) in graphLegendLabels" :key="index">
+									<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
 									{{ label }}
-								</div>
-							</div>
+								</li>
+							</ul>
 						</div>
 					</template>
 				</section>
@@ -78,10 +69,6 @@
 					:mmt-params="mmtParams"
 					:stratified-matrix-type="StratifiedMatrix.Rates"
 					@close-modal="selectedTransitionId = ''"
-					@update-configuration="
-						(configToUpdate: ModelConfigurationLegacy) =>
-							emit('update-configuration', configToUpdate)
-					"
 				/>
 			</Teleport>
 		</main>
@@ -104,38 +91,36 @@ import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfigurationLegacy } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import {
+	MiraModel,
+	MiraTemplateParams,
+	ObservableSummary
+} from '@/model-representation/mira/mira-common';
 import {
 	isStratifiedModel,
 	emptyMiraModel,
-	convertToIGraph,
-	collapseTemplates,
-	rawTemplatesSummary
+	convertToIGraph
 } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
-import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import { NodeType } from '@/services/graph';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfiguration?: ModelConfigurationLegacy;
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-configuration']);
-
-const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
@@ -144,6 +129,7 @@ const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
+let observableSummary: ObservableSummary = {};
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
 const tooltipContentRef = ref();
@@ -168,13 +154,17 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
-	const { templatesSummary } = collapseTemplates(mmt.value);
-	const rawTemplates = rawTemplatesSummary(mmt.value);
-
-	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	renderer = getModelRenderer(
+		mmt.value,
+		graphElement.value as HTMLDivElement,
+		stratifiedView.value === StratifiedView.Collapsed
+	);
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
+	} else {
+		graphLegendLabels.value = [];
+		graphLegendColors.value = [];
 	}
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
@@ -221,10 +211,11 @@ async function renderGraph() {
 	});
 
 	// Render graph
-	const graphData =
-		isCollapsed.value && isStratified.value
-			? convertToIGraph(templatesSummary)
-			: convertToIGraph(rawTemplates);
+	const graphData = convertToIGraph(
+		mmt.value,
+		observableSummary,
+		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
+	);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -233,9 +224,9 @@ async function renderGraph() {
 	}
 }
 
-async function toggleCollapsedView() {
-	isCollapsed.value = !isCollapsed.value;
-	renderGraph();
+async function toggleCollapsedView(view: StratifiedView) {
+	stratifiedView.value = view;
+	await renderGraph();
 }
 
 watch(
@@ -246,6 +237,7 @@ watch(
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
+		observableSummary = response.observable_summary;
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
@@ -353,7 +345,7 @@ kbd {
 	font-weight: var(--font-weight-semibold);
 }
 
-.legend {
+ul.legend {
 	background-color: var(--surface-transparent);
 	backdrop-filter: blur(4px);
 	padding: var(--gap-xsmall) var(--gap-small);
@@ -366,32 +358,19 @@ kbd {
 	margin-bottom: var(--gap);
 	gap: var(--gap);
 	pointer-events: none;
+
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-xsmall);
+	}
 }
-.legend-item {
-	display: flex;
-	align-items: center;
-	gap: var(--gap-xsmall);
-}
+
 .legend-circle {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
 	border-radius: 50%;
-}
-
-.legend-anchor {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-glass);
-	backdrop-filter: blur(5px);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-	max-width: 95%;
 }
 
 .modal-input-container {

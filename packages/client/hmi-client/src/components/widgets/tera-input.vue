@@ -1,15 +1,19 @@
 <template>
-	<div class="flex" :label="label">
-		<label @click.self.stop="focusInput">{{ label }}</label>
+	<div class="flex" :label="label" :title="title">
+		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
+			<i v-if="icon" :class="icon" />
 			<input
+				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
 				:value="getValue()"
 				@input="updateValue"
-				:style="{ 'text-align': textAlign }"
+				@onFocusOut="emit('on-focus-out')"
+				:style="inputStyle"
 				@blur="unmask"
 				:type="getType"
+				:placeholder="placeholder"
 			/>
 		</main>
 	</div>
@@ -18,29 +22,51 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { InputTypeHTMLAttribute, computed, onMounted, ref, useAttrs, watch } from 'vue';
+import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
-	modelValue: string | number;
+	modelValue: string | number | undefined;
 	label?: string;
+	title?: string;
+	icon?: string;
 	errorMessage?: string;
 	disabled?: boolean;
+	type?: InputTypeHTMLAttribute | 'nist';
+	placeholder?: string;
+	autoWidth?: boolean;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:model-value', 'on-focus-out']);
 const inputField = ref<HTMLInputElement | null>(null);
-const attrs = useAttrs();
 const error = ref('');
 const maskedValue = ref('');
 
-const isNistType = attrs.type === 'nist';
-const textAlign = attrs.type === 'number' || isNistType ? 'right' : 'left';
-const getType = isNistType ? 'text' : (attrs.type as InputTypeHTMLAttribute);
+const isNistType = props.type === 'nist';
+const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
 const focusInput = () => {
 	inputField.value?.focus();
 };
+
+// Computed property to dynamically adjust the input's style based on the autoWidth prop
+const inputStyle = computed(() => {
+	const style: CSSProperties = {
+		'text-align': props.type === 'number' || props.type === 'nist' ? 'right' : 'left' // Set textAlign based on type
+	};
+
+	if (props.autoWidth) {
+		const textToMeasure = maskedValue.value?.length > 0 ? maskedValue.value : props.placeholder;
+		// Estimate the width based on the length of the value. Adjust the multiplier as needed for your font.
+		// Use the length of the text to measure as the width in ch units
+		// Estimate the width based on the length of the text to measure. Adjust the multiplier as needed for your font.
+		const width = (textToMeasure?.length || 1) * 8 + 4; // 8px per character + 4px padding
+		style.width = `${width}px`; // Dynamically set the width
+		style['min-width'] = '20px'; // Ensure a minimum width
+	}
+
+	return style; // Return the combined style object
+});
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
@@ -59,8 +85,10 @@ const updateValue = (event: Event) => {
 		} else {
 			error.value = 'Invalid number';
 		}
+	} else if (props.type === 'number') {
+		emit('update:model-value', parseFloat(value));
 	} else {
-		emit('update:modelValue', value);
+		emit('update:model-value', value);
 	}
 };
 
@@ -82,7 +110,7 @@ onMounted(() => {
 const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
-		emit('update:modelValue', nistToNumber(maskedValue.value));
+		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 };
 </script>
@@ -111,7 +139,12 @@ main {
 	&.error {
 		border-color: var(--error-border-color);
 	}
-	input {
+
+	& > i {
+		margin-right: var(--gap-1);
+	}
+
+	& > input {
 		min-width: 0;
 	}
 }
@@ -120,7 +153,8 @@ label {
 	background-color: none;
 	color: var(--text-color-secondary);
 	cursor: text;
-	padding-right: var(--gap-xsmall);
+	padding-right: var(--gap-1-5);
+	font-size: var(--font-caption);
 }
 
 input {

@@ -276,13 +276,10 @@ async function createDatasetFromSimulationResult(
 	datasetName: string | null
 ): Promise<boolean> {
 	try {
-		const response: AxiosResponse<Response> = await API.get(
+		const response: AxiosResponse<Response> = await API.post(
 			`/simulations/${simulationId}/add-result-as-dataset-to-project/${projectId}?dataset-name=${datasetName}`
 		);
-		if (response && response.status === 201) {
-			return true;
-		}
-		return false;
+		return response && response.status === 201;
 	} catch (error) {
 		logger.error(
 			`/simulations/{id}/add-result-as-dataset-to-project/{projectId} not responding:  ${error}`,
@@ -319,7 +316,6 @@ const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): C
 	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
 	let csvData: CsvAsset = {
 		headers: csvColHeaders,
-		data: [],
 		csv: [csvColHeaders],
 		rowCount: 0,
 		stats: []
@@ -330,7 +326,6 @@ const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): C
 	runIdList.forEach((id) => {
 		csvData = {
 			...csvData,
-			data: [...csvData.data, ...(runResult[id] as any)],
 			rowCount: csvData.rowCount + runResult[id].length
 		};
 		runResult[id].forEach((row) => {

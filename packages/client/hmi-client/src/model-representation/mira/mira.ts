@@ -1,5 +1,6 @@
-import _ from 'lodash';
+import _, { isEmpty, cloneDeep, uniq } from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
+import { NodeType } from '@/services/graph';
 import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
@@ -12,8 +13,10 @@ import type {
 	MiraModel,
 	MiraTemplate,
 	MiraTemplateParams,
-	TemplateSummary
+	TemplateSummary,
+	ObservableSummary
 } from './mira-common';
+import type { NodeData } from '../petrinet/petrinet-renderer';
 
 export const emptyMiraModel = () => {
 	const newModel: MiraModel = {
@@ -163,6 +166,17 @@ export const collapseInitials = (miraModel: MiraModel) => {
 			map.set(rootName, [name]);
 		}
 	}
+
+	// when a key only has one child, we will rename the key of the root to the child.
+	// this is to avoid renaming when a single entry key has an underscore
+	[...map.keys()].forEach((key) => {
+		const newKey = map.get(key)?.[0];
+		if (newKey && map.get(key)?.length === 1 && newKey !== key) {
+			map.set(newKey, [newKey]);
+			map.delete(key);
+		}
+	});
+
 	return map;
 };
 
@@ -281,6 +295,23 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
+export const collapseObservableReferences = (
+	observableSummary: ObservableSummary,
+	initials: Map<string, string[]>
+) => {
+	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
+	Object.values(collapsedObservableSummary).forEach((observable) => {
+		// Extract the first part of the reference before the first underscore
+		observable.references = uniq(
+			observable.references.map((r) => {
+				const splitReference = r.split('_')[0];
+				return initials.has(splitReference) ? splitReference : r;
+			})
+		);
+	});
+	return collapsedObservableSummary;
+};
+
 export const createInitialMatrix = (miraModel: MiraModel, key: string) => {
 	const initialsMap = collapseInitials(miraModel);
 	const childrenInitials = initialsMap.get(key);
@@ -393,7 +424,25 @@ export const createParameterMatrix = (
 };
 
 // const genKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-export const convertToIGraph = (templates: TemplateSummary[]) => {
+export const convertToIGraph = (
+	miraModel: MiraModel,
+	initObservableSummary: ObservableSummary,
+	isStratified: boolean
+) => {
+	const templates: TemplateSummary[] = [];
+	let observableSummary: ObservableSummary = {};
+
+	if (isStratified) {
+		templates.push(...collapseTemplates(miraModel).templatesSummary);
+		observableSummary = collapseObservableReferences(
+			initObservableSummary,
+			collapseInitials(miraModel)
+		);
+	} else {
+		templates.push(...rawTemplatesSummary(miraModel));
+		observableSummary = cloneDeep(initObservableSummary);
+	}
+
 	const graph: IGraph<any, any> = {
 		nodes: [],
 		edges: [],
@@ -419,15 +468,15 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			y: 0,
 			width: 50,
 			height: 50,
-			data: { type: 'state' },
+			data: { type: NodeType.State },
 			nodes: []
 		});
 	});
 
 	// templates
 	templates.forEach((t) => {
-		const nodeData: any = {
-			type: 'transition',
+		const nodeData: NodeData = {
+			type: NodeType.Transition,
 			expression: t.expression
 		};
 
@@ -480,6 +529,37 @@ export const convertToIGraph = (templates: TemplateSummary[]) => {
 			});
 		}
 	});
+
+	// observables
+	if (!isEmpty(observableSummary)) {
+		Object.keys(observableSummary).forEach((key) => {
+			const observable = observableSummary[key];
+			graph.nodes.push({
+				id: key,
+				label: observable.name,
+				x: 0,
+				y: 0,
+				width: 50,
+				height: 50,
+				data: {
+					type: NodeType.Observable,
+					expression: observable.expression,
+					references: observable.references
+				},
+				nodes: []
+			});
+
+			observable.references.forEach((reference: string) => {
+				graph.edges.push({
+					id: observable.expression,
+					source: reference,
+					target: key,
+					points: [],
+					data: { isObservable: true }
+				});
+			});
+		});
+	}
 
 	return graph;
 };

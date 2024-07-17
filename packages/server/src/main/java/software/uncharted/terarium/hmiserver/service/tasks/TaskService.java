@@ -86,6 +86,17 @@ public class TaskService {
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 		}
+
+		public TaskResponse createResponse(final TaskStatus status) {
+			return new TaskResponse()
+					.setId(id)
+					.setStatus(status)
+					.setUserId(userId)
+					.setProjectId(projectId)
+					.setScript(getScript())
+					.setAdditionalProperties(getAdditionalProperties())
+					.setRequestSHA256(getSHA256());
+		}
 	}
 
 	// This private subclass exists to prevent anything outside of this service from
@@ -101,10 +112,12 @@ public class TaskService {
 			this.id = id;
 			this.future = new CompletableFuture<>();
 			this.future.complete(resp);
+			this.latestResponse = resp;
 		}
 
 		public synchronized void complete(final TaskResponse resp) {
-			future.complete(resp);
+			this.latestResponse = resp;
+			this.future.complete(resp);
 		}
 	}
 
@@ -143,6 +156,10 @@ public class TaskService {
 	// The queue name that the taskrunner will consume on for requests.
 	@Value("${terarium.taskrunner.request-queue}")
 	private String TASK_RUNNER_REQUEST_QUEUE;
+
+	// The exchange that the task responses are published to.
+	@Value("${terarium.taskrunner.response-exchange}")
+	private String TASK_RUNNER_RESPONSE_EXCHANGE;
 
 	// Once a single instance of the hmi-server has processed a task response, it
 	// will publish to this exchange to broadcast the response to all other
@@ -253,6 +270,12 @@ public class TaskService {
 
 				} else {
 					log.info("Did not find promise for task id: {}", resp.getId());
+				}
+			} else {
+				final CompletableTaskFuture future = futures.get(resp.getId());
+				if (future != null) {
+					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
+					future.setLatest(resp);
 				}
 			}
 
@@ -483,8 +506,14 @@ public class TaskService {
 			final String jsonStr = objectMapper.writeValueAsString(req);
 			rabbitTemplate.convertAndSend(requestQueue, jsonStr);
 
+			// publish the queued task response
+			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED);
+			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
+
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());
+			future.setLatest(queuedResponse);
 			log.info("Adding future for task id: {} to the futures map", req.getId());
 			futures.put(req.getId(), future);
 			return future;
@@ -505,7 +534,7 @@ public class TaskService {
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.get(req.getTimeoutMinutes(), TimeUnit.MINUTES);
+			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
@@ -536,8 +565,7 @@ public class TaskService {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {
-			// return the latest received response held in the future
-			return runTaskAsync(req).get();
+			return runTaskAsync(req).getLatest();
 		} else {
 			throw new IllegalArgumentException("Invalid task mode: " + mode);
 		}

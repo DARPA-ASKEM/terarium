@@ -82,14 +82,14 @@ class Parent {
 class Child {
 
     @Id
-    private UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
 
     @ManyToOne
     @JsonBackReference
     @NotNull
     private Parent parent;
 
-};
+}
 ```
 
 **Note:** When storing the relationships, BOTH SIDES NEED TO BE SET!
@@ -127,11 +127,11 @@ How the `@JoinColumn` annotation is used is based on the type of relationship, a
 class Parent {
 
     @Id
-    private UUID id = UUID.randomUUID();
+    private final UUID id = UUID.randomUUID();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id") // <--- because this is a @OneToMany uni-directional relationship, it's referencing the column on the child, not the parent.
-    private List<Child> children = new ArrayList<>();
+    private final List<Child> children = new ArrayList<>();
 
 };
 
@@ -142,7 +142,6 @@ class Child {
     @Id
     private final UUID id = UUID.randomUUID();
 
-}
 ```
 
 ## Migrations:
@@ -182,3 +181,54 @@ public class V8__Some_java_migration extends BaseJavaMigration {
 ```
 
 Only use a java based migration if it is not possible to achieve via a `.sql` one.
+
+## Error messages sent to client:
+
+Error messages sent to the client should be easy to understand and provide meaningful information to the user. Below are some suggestions for adding to and maintaining these going forward.
+
+### General tips
+* Use informal conversational language wherever possible.
+* Use contractions ("can't" instead of "cannot").
+* Use active voice instead of passive (instead of "the service was terminated…" try "We terminated the service…").
+* Avoid software development jargon that users may not understand ("UUID," "curies").
+* Don't introduce backend terms that users never see in the UI. For example, avoid terms like "artifacts" and "assets" if users only see "resources" in the UI.
+* Consider whether it's necessary to name a backend service that users never see. Instead of referencing "SKEMA," determine whether it would be clearer to refer to our "model service."
+
+### Terms
+
+#### Curie
+Not typically familiar to an end user. Replace with "ID" or "unique ID."
+
+#### Error
+Avoid negative terms. Simply state the results of the error. Instead of "An error occurred while trying to set project permissions…" try "We couldn't set project permissions…"
+
+#### Fail
+Avoid negative terms. Simply state the results of the failure. Instead of "the service failed to perform the task…" try "the service couldn't perform the task…"
+
+#### Please
+Only use "please" when we're asking the user to take an action as a result of a system error. If the error is a result of a user action (for example, trying to upload a file that's too big), state the corrective action without saying "please."
+
+#### Provide
+Avoid this verb when describing user actions. Be more descriptive about the action that triggered the error message, such as "selected" or "entered."
+
+#### Return
+Avoid this verb when describing search results or application outputs. Instead of "Our service didn't return any results…" try "Our service didn't find any results."
+
+#### Request
+Avoid this verb when describing user actions. Be more descriptive about the action that triggered the error message, such as "selected" or "entered."
+
+#### Supply
+Avoid this verb when describing user actions. Be more descriptive about the action that triggered the error message, such as "selected" or "entered."
+
+#### Terarium
+Don't repeat the name of the application in error messages; users know what tool they're using. Replace with first person plural (instead of "Terarium's model service is unavailable" try "Our model service is unavailable.")
+
+#### Unable
+Instead of saying we "were unable to…," simply state "we couldn't…"
+
+#### UUID
+Not typically familiar to an end user. Replace with "ID" or "unique ID."
+
+
+## Permissions with Services:
+When a service needs access to a controller that controller's end point will need to be added to the list in applications.properties under the Application configuration section with the other terarium.serviceRequestPatterns

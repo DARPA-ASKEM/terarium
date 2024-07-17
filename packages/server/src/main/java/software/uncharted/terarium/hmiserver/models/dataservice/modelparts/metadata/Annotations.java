@@ -24,7 +24,7 @@ public class Annotations extends SupportAdditionalProperties implements Serializ
 	private String license;
 
 	@TSOptional
-	private List<String> authors;
+	private List<Author> authors;
 
 	@TSOptional
 	private List<String> references;
@@ -59,7 +59,7 @@ public class Annotations extends SupportAdditionalProperties implements Serializ
 
 	@Override
 	public Annotations clone() {
-		Annotations clone = (Annotations) super.clone();
+		final Annotations clone = (Annotations) super.clone();
 
 		clone.license = this.license;
 		if (authors != null) {
