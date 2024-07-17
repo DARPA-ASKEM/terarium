@@ -392,7 +392,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/utils/optimize';
+import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
