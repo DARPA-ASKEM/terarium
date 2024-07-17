@@ -112,7 +112,7 @@ export const defaultCriterion: Criterion = {
 	name: 'Criterion',
 	qoiMethod: ContextMethods.max,
 	targetVariable: '',
-	riskTolerance: 5,
+	riskTolerance: 95,
 	threshold: 1,
 	isMinimized: true,
 	isActive: true

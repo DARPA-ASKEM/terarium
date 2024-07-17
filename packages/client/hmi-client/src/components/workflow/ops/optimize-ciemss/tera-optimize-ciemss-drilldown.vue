@@ -818,7 +818,6 @@ const preProcessedInterventionsData = computed<
 });
 
 onMounted(async () => {
-	console.log(props.node.state);
 	initialize();
 });
 
