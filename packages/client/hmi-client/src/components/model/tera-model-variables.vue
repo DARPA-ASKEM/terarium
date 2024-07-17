@@ -85,11 +85,9 @@ function onUpdate(property: string, event: any) {
 }
 
 function updateMMT() {
-	console.log(props.model);
 	getMMT(props.model).then((response) => {
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
-		console.log(mmt.value);
 	});
 }
 
