@@ -248,7 +248,7 @@ export function updateObservable(model: Model, id: string, key: string, value: a
 	const observables = model?.semantics?.ode?.observables ?? [];
 	const observable = observables.find((o) => o.id === id);
 	if (!observable) return;
-	observable[key] = value;
+	updateVariableProperty(observable, key, value);
 }
 
 export function updateTransition(model: Model, id: string, key: string, value: any) {

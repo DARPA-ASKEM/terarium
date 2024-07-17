@@ -278,6 +278,9 @@ export interface Transition {
     id: string;
     input: string[];
     output: string[];
+    name?: string;
+    description?: string;
+    expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
 }
@@ -1135,6 +1138,8 @@ export interface Observable {
     id: string;
     name?: string;
     states?: string[];
+    description?: string;
+    units?: ModelUnit;
     expression?: string;
     expression_mathml?: string;
 }

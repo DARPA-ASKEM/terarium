@@ -19,8 +19,8 @@ export type ModelVariable = {
 	expression_mathml?: string;
 	// Transition/rate
 	templateId?: string;
-	input?: string;
-	output?: string;
+	input?: string[];
+	output?: string[];
 };
 
 export enum StratifiedMatrix {

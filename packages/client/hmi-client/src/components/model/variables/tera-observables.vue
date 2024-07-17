@@ -1,7 +1,7 @@
 <template>
 	<tera-variables
 		:variable-list="observablesList"
-		:disabled-inputs="['concept', 'description', 'unitExpression']"
+		:disabled-inputs="['concept']"
 		@update-observable="emit('update-observable', $event)"
 	/>
 </template>
@@ -29,10 +29,16 @@ const observablesList = computed<
 	}[]
 >(() =>
 	props.observables.map((observable) => {
-		const { id, name, expression } = observable;
+		const { id, name, expression, description, units } = observable;
 		return {
-			// Observables are missing units and description
-			base: { id, name, expression, expression_mathml: observable.expression_mathml },
+			base: {
+				id,
+				name,
+				description,
+				unitExpression: units?.expression,
+				expression,
+				expression_mathml: observable.expression_mathml
+			},
 			// Observables can't be stratified therefore don't have children
 			children: [],
 			isParent: false

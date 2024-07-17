@@ -2,7 +2,7 @@
 	<tera-variables
 		:variable-list="stateList"
 		:collapsed-variables="collapsedInitials"
-		:disabled-inputs="['concept', 'description']"
+		:disabled-inputs="['concept']"
 		@update-variable="emit('update-state', $event)"
 	/>
 </template>
