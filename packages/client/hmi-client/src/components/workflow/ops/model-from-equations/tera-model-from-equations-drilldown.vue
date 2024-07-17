@@ -164,7 +164,7 @@ import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { DrilldownTabs } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
