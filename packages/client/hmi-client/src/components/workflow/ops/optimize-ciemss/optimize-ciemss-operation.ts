@@ -232,7 +232,8 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			});
 		}
 	} else if (interventionType === InterventionTypes.paramValueAndStartTime) {
-		// If we our intervention type is start time our policyResult will provide a parameter value.
+		// If we our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
+		// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
