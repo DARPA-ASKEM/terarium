@@ -41,9 +41,6 @@ public class OptimizeRequestCiemss implements Serializable {
 	@JsonAlias("risk_bound")
 	private Double riskBound;
 
-	@JsonAlias("initial_guess_interventions")
-	private List<Double> initialGuessInterventions;
-
 	@JsonAlias("bounds_interventions")
 	private List<List<Double>> boundsInterventions;
 

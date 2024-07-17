@@ -8,8 +8,8 @@ const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum InterventionTypes {
-	paramValue = 'param_value',
-	startTime = 'start_time'
+	paramValue = 'param_value', // provide a parameter value to get a better start time.
+	startTime = 'start_time' // provide a statr time to get a better parameter value.
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
 	// ,paramValueAndStartTime = 'param_value_and_start_time'
 }
@@ -165,15 +165,31 @@ export const OptimizeCiemssOperation: Operation = {
 	}
 };
 
-// Get the intervention output from a given optimization run
+// Get the simulation object that ran the optimize.
+// Get the fixed static interventions from this, as well as some details about the optimization interevntions
+// Get the optimization result file
+// Concat the optimization result file with the optimization interventions from simulation object
 export async function getOptimizedInterventions(optimizeRunId: string) {
+	const allInterventions: Intervention[] = [];
 	// Get the interventionPolicyGroups from the simulation object.
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
 
-	const simulationIntervetions: Intervention[] =
+	const simulationStaticInterventions: any[] =
 		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
+
+	// From snake case -> camel case.
+	simulationStaticInterventions.forEach((inter) => {
+		const newIntervetion: Intervention = {
+			appliedTo: inter.applied_to,
+			dynamicInterventions: inter.dynamic_interventions,
+			name: inter.name,
+			staticInterventions: inter.static_interventions,
+			type: inter.type
+		};
+		allInterventions.push(newIntervetion);
+	});
 
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
@@ -183,8 +199,6 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-
-	const allInterventions: Intervention[] = simulationIntervetions;
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
@@ -205,7 +219,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			});
 		}
 	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
-		// If we our intervention type is start time our policyResult will provide a value.
+		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
@@ -227,6 +241,12 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	return allInterventions;
 }
 
+/**
+ *
+ * 1) Get optimize interventions
+ *
+ *
+ */
 export async function createInterventionPolicyFromOptimize(
 	modelConfigId: string,
 	optimizeRunId: string
