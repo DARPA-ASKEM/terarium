@@ -74,9 +74,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'new start time', value: InterventionTypes.paramValue }
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+	{ label: 'new start time', value: InterventionTypes.paramValue },
+	{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
 ];
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -198,7 +197,6 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
 	if (interventionType === InterventionTypes.paramValue && startTimes.length !== 0) {
@@ -233,9 +231,25 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
+	} else if (interventionType === InterventionTypes.paramValueAndStartTime) {
+		// If we our intervention type is start time our policyResult will provide a parameter value.
+		for (let i = 0; i < paramNames.length; i++) {
+			allInterventions.push({
+				name: `Optimized ${paramNames[i]}`,
+				appliedTo: paramNames[i],
+				type: InterventionSemanticType.Parameter,
+				staticInterventions: [
+					{
+						timestep: policyResult[i * 2],
+						value: policyResult[i * 2 + 1]
+					}
+				],
+				dynamicInterventions: []
+			});
+		}
 	} else {
 		// Should realistically not be hit unless we change the interface and do not update
-		console.error(`Unable to find the intevention for optimization run: ${optimizeRunId}`);
+		console.error(`Unable to find the intevention type for optimization run: ${optimizeRunId}`);
 	}
 	return allInterventions;
 }
