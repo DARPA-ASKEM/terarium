@@ -110,13 +110,7 @@
 			<h5>Notebook</h5>
 		</section>
 		<template #preview>
-			<tera-drilldown-preview
-				title="Preview"
-				:options="outputs"
-				v-model:output="selectedOutputId"
-				@update:selection="onSelection"
-				is-selectable
-			>
+			<tera-drilldown-preview>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && !showSpinner"
 					:summary-id="node.state.summaryId"
@@ -130,22 +124,19 @@
 						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
 						ref="outputPanel"
 					>
-						<tera-simulate-chart
-							v-for="(config, index) of node.state.chartConfigs"
-							:key="index"
-							:run-results="runResults"
-							:chartConfig="{
-								selectedRun: props.node.state.forecastId,
-								selectedVariable: config
-							}"
-							:initial-data="csvAsset"
-							:mapping="mapping"
-							has-mean-line
-							@configuration-change="chartProxy.configurationChange(index, $event)"
-							@remove="chartProxy.removeChart(index)"
-							show-remove-button
-							:size="chartSize"
-						/>
+						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
+							<tera-chart-control
+								:variables="Object.keys(pyciemssMap)"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:show-remove-button="true"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@remove="chartProxy.removeChart(index)"
+							/>
+							<vega-chart
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[index]"
+							/>
+						</template>
 						<Button
 							class="add-chart"
 							text
@@ -174,6 +165,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { csvParse, autoType } from 'd3';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -186,7 +178,6 @@ import {
 	setupDatasetInput,
 	setupModelInput
 } from '@/services/calibrate-workflow';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -211,14 +202,18 @@ import {
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
-	getRunResultCiemss,
+	getSimulation,
+	getRunResultCSV,
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
-	unsubscribeToUpdateMessages
+	unsubscribeToUpdateMessages,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 
-import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -250,12 +245,12 @@ const cancelRunId = computed(
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
-const runResults = ref<RunResults>({});
+const runResult = ref<any>(null);
 
 const previewChartWidth = ref(120);
 
 const showSpinner = ref(false);
-const lossValues: { [key: string]: number }[] = [];
+let lossValues: { [key: string]: number }[] = [];
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -277,28 +272,78 @@ const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 100
 });
 
-// EXTRA section: Unused, comment out for now Feb 2023
-/*
-const numSamples = ref(100);
-const method = ref('dopri5');
-const ciemssMethodOptions = ref(['dopri5', 'euler']);
-*/
-
 const disableRunButton = computed(
 	() => !currentDatasetFileName.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const selectedOutputId = ref<string>();
-const outputs = computed(() => {
-	if (!_.isEmpty(props.node.outputs)) {
-		return [
-			{
-				label: 'Select outputs to display in operator',
-				items: props.node.outputs
-			}
-		];
+const selectedRunId = computed(
+	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
+);
+
+let pyciemssMap: Record<string, string> = {};
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const state = props.node.state;
+	const result = runResult.value;
+
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}`] = key;
+	});
+
+	// Add dataset mappings to lookup as well
+	state.mapping.forEach((mapObj) => {
+		reverseMap[mapObj.datasetVariable] = mapObj.modelVariable;
+	});
+
+	// FIXME: Hacky re-parse CSV with correct data types
+	let groundTruth: Record<string, any>[] = [];
+	if (csvAsset.value) {
+		const csv = csvAsset.value.csv;
+		const csvRaw = csv.map((d) => d.join(',')).join('\n');
+		groundTruth = csvParse(csvRaw, autoType);
 	}
-	return [];
+
+	// Need to get the dataset's time field
+	const datasetTimeField = state.mapping.find(
+		(d) => d.modelVariable === 'timestamp'
+	)?.datasetVariable;
+
+	return state.chartConfigs.map((config) => {
+		const datasetVariables: string[] = [];
+		config.forEach((variableName) => {
+			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
+			if (mapObj) {
+				datasetVariables.push(mapObj.datasetVariable);
+			}
+		});
+
+		return createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			null,
+			{
+				dataset: groundTruth,
+				variables: datasetVariables,
+				timeField: datasetTimeField as string,
+				groupField: 'sample_id'
+			},
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: 'Time',
+				yAxisTitle: ''
+			}
+		);
+	});
 });
 
 const outputPanel = ref(null);
@@ -319,6 +364,10 @@ const runCalibrate = async () => {
 		});
 	}
 
+	// Reset loss buffer
+	lossValues = [];
+
+	// Create request
 	const calibrationRequest: CalibrationRequestCiemss = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
@@ -349,7 +398,6 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	console.log('msg', event.data);
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
 
 	if (drilldownLossPlot.value) {
@@ -441,6 +489,7 @@ watch(
 	},
 	{ deep: true }
 );
+
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
@@ -462,9 +511,26 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
+			// Fetch saved intermediate state
+			const simulationObj = await getSimulation(selectedRunId.value);
+			if (simulationObj?.updates) {
+				lossValues = simulationObj?.updates.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
+				if (drilldownLossPlot.value) {
+					renderLossGraph(drilldownLossPlot.value, lossValues, {
+						width: previewChartWidth.value,
+						height: 120
+					});
+				}
+			}
+
 			const state = props.node.state;
-			const output = await getRunResultCiemss(state.forecastId, 'result.csv');
-			runResults.value = output.runResults;
+			const result = await getRunResultCSV(state.forecastId, 'result.csv');
+			pyciemssMap = parsePyCiemssMap(result[0]);
+
+			runResult.value = result;
 		}
 	},
 	{ immediate: true }

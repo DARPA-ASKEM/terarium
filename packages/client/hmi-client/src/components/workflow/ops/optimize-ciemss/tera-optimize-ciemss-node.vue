@@ -48,7 +48,7 @@ import { nodeMetadata } from '@/components/workflow/util';
 import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createOptimizeForecastChart } from '@/utils/optimize';
+import { createOptimizeForecastChart } from '@/services/charts';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
