@@ -305,20 +305,29 @@ const preparedCharts = computed(() => {
 	});
 
 	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(result, resultSummary, [], {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: config.map((d) => pyciemssMap[d]),
-			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
-
-			legend: true,
-			translationMap: reverseMap,
-
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
-		})
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				timeField: 'timepoint_id'
+			},
+			null,
+			// options
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: 'Time',
+				yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+			}
+		)
 	);
 });
 
