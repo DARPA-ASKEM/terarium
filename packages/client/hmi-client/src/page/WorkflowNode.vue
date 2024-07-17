@@ -1,4 +1,5 @@
 <template>
+	{{ activeProjectId }}
 	<template v-if="node">
 		<tera-model-workflow-wrapper v-if="isNodeOfOperationType(OperationType.MODEL)" :node="node" />
 		<tera-stratify-mira
@@ -67,6 +68,7 @@ import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensem
 import TeraFunman from '@/components/workflow/ops/funman/tera-funman.vue';
 import teraStratifyMira from '@/components/workflow/ops/stratify-mira/tera-stratify-mira.vue';
 import TeraCodeAssetWrapper from '@/components/workflow/ops/code-asset/tera-code-asset-wrapper.vue';
+import { activeProjectId } from '../composables/activeProject';
 
 const props = defineProps<{
 	nodeId: WorkflowNode<any>['id'];

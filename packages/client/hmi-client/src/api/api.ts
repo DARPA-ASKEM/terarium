@@ -14,6 +14,15 @@ function getProjectIdFromUrl(): string | null {
 	return match ? match[1] : null;
 }
 
+function getProjectId(): string | null {
+	return (
+		activeProjectId.value ??
+		localStorage.getItem('activeProjectId') ??
+		getProjectIdFromUrl() ??
+		null
+	);
+}
+
 const API = axios.create({
 	baseURL: '/api',
 	headers: new AxiosHeaders()
@@ -27,7 +36,8 @@ API.interceptors.request.use(
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
 		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
-		const projectId = activeProjectId.value || getProjectIdFromUrl();
+		const projectId = getProjectId();
+		console.log('projectId', projectId);
 		if (projectId) {
 			if (config.params) {
 				config.params['project-id'] = projectId;
