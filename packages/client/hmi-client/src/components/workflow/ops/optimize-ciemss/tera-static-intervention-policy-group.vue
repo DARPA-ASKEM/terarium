@@ -67,7 +67,7 @@
 				</section>
 
 				<section v-if="showNewValueOptions">
-					<h6 class="pt-4, pb-3">New Value</h6>
+					<h6 class="pt-4, pb-3">Intervention Value</h6>
 					<div class="input-row">
 						<tera-input
 							type="nist"
@@ -90,7 +90,7 @@
 					</div>
 				</section>
 				<section v-if="showStartTimeOptions">
-					<h6 class="pt-4, pb-3">Start Time</h6>
+					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
 						<tera-input
 							type="nist"
