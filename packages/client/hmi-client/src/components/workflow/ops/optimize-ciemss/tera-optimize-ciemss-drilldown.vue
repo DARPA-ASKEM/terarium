@@ -670,9 +670,9 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.upperBoundValue]);
 
 		if (ele.optimizationType === InterventionTypes.paramValue) {
-			initialGuess.push(ele.initialGuessValue);
-		} else if (ele.optimizationType === InterventionTypes.startTime) {
 			initialGuess.push(ele.startTimeGuess);
+		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			initialGuess.push(ele.initialGuessValue);
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
