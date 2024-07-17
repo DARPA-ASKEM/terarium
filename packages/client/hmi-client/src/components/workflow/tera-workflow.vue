@@ -231,7 +231,7 @@ import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
-import * as InterventionsOp from '@/components/workflow/ops/interventions/mod';
+import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -257,7 +257,7 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(RegriddingOp);
-registry.registerOp(InterventionsOp);
+registry.registerOp(InterventionPolicyOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -517,8 +517,8 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(StratifyMiraOp)
 			},
 			{
-				label: InterventionsOp.operation.displayName,
-				command: addOperatorToWorkflow(InterventionsOp)
+				label: InterventionPolicyOp.operation.displayName,
+				command: addOperatorToWorkflow(InterventionPolicyOp)
 			}
 		]
 	},
