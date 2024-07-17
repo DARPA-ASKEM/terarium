@@ -666,8 +666,12 @@ const runOptimize = async () => {
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		listBoundsInterventions.push([ele.lowerBoundValue]);
-		listBoundsInterventions.push([ele.upperBoundValue]);
+		// TODO FIXME
+		listBoundsInterventions.push([ele.startTime]);
+		listBoundsInterventions.push([ele.endTime]);
+
+		// listBoundsInterventions.push([ele.lowerBoundValue]);
+		// listBoundsInterventions.push([ele.upperBoundValue]);
 
 		if (ele.optimizationType === InterventionTypes.paramValue) {
 			initialGuess.push(ele.startTimeGuess);
@@ -721,7 +725,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100, // Reverse riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};
@@ -814,6 +818,7 @@ const preProcessedInterventionsData = computed<
 });
 
 onMounted(async () => {
+	console.log(props.node.state);
 	initialize();
 });
 

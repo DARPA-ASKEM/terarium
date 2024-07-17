@@ -8,8 +8,8 @@ const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum InterventionTypes {
-	paramValue = 'param_value', // provide a parameter value to get a better start time.
-	startTime = 'start_time' // provide a statr time to get a better parameter value.
+	paramValue = 'start_time', // provide a parameter value to get a better start time.
+	startTime = 'param_value' // provide a statr time to get a better parameter value.
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
 	// ,paramValueAndStartTime = 'param_value_and_start_time'
 }
