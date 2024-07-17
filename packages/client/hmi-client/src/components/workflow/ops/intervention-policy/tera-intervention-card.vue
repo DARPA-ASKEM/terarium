@@ -27,7 +27,6 @@
 			<Button class="ml-3" icon="pi pi-trash" text @click="emit('delete')" />
 		</header>
 		<section>
-			<!-- Static -->
 			<div class="flex align-items-center flex-wrap gap-2">
 				Set
 				<Dropdown
@@ -45,9 +44,12 @@
 					option-value="value"
 					placeholder="Select"
 				/>
-				<span>to<span v-if="intervention.staticInterventions.length > 1">...</span></span>
+
+				<!-- Static -->
 				<template v-if="interventionType === 'static'">
-					<template v-if="intervention.staticInterventions.length === 1">
+					to
+					<template v-if="intervention.staticInterventions.length > 1">...</template>
+					<template v-else-if="intervention.staticInterventions.length === 1">
 						<tera-input
 							type="nist"
 							auto-width
@@ -99,6 +101,7 @@
 
 				<!-- Dynamic -->
 				<template v-else>
+					to
 					<tera-input
 						type="nist"
 						auto-width
