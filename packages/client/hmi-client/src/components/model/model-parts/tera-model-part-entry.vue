@@ -43,7 +43,6 @@
 			:expression="variable.expression"
 			:throw-on-error="false"
 		/>
-		<!--FIXME: description property should be added to the state type-->
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
