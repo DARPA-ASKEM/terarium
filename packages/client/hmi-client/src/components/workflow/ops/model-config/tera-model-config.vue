@@ -464,13 +464,10 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
-	console.group('Extracting configurations from inputs');
 	if (!model.value?.id) {
-		console.debug('Model not loaded yet, try later.');
 		return;
 	}
 	if (documentId.value) {
-		console.debug('Configuring model from document', documentId.value);
 		const resp = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
@@ -480,7 +477,6 @@ const extractConfigurationsFromInputs = async () => {
 		documentModelConfigTaskId.value = resp.id;
 	}
 	if (datasetIds.value) {
-		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 		const resp = await configureModelFromDatasets(
 			model.value.id,
@@ -491,7 +487,6 @@ const extractConfigurationsFromInputs = async () => {
 		);
 		datasetModelConfigTaskId.value = resp.id;
 	}
-	console.groupEnd();
 };
 
 const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
@@ -499,7 +494,6 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
 		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
 	};
-	console.debug('Model config task event received', event);
 	if (event.data?.id !== taskIdRefs[event.type].value) return;
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 		taskIdRefs[event.type].value = '';
