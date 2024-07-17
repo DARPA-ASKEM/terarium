@@ -11,7 +11,7 @@
 			>
 				{{ title ?? node.displayName }}
 				<template #top-header-actions>
-					<aside class="input-chips mr-auto">
+					<aside class="flex gap-1 ml-3 mr-auto">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
@@ -191,18 +191,12 @@ footer {
 	gap: 0.5rem;
 }
 
-.input-chips {
-	display: flex;
-	gap: var(--gap-1-5);
-	margin: 0 var(--gap);
-}
-
 .p-chip {
 	background-color: var(--surface-section);
 	color: var(--text-color-primary);
 }
 
 :deep(.p-chip .p-chip-text) {
-	font-size: var(--font-caption);
+	font-size: var(--font-body-small);
 }
 </style>
