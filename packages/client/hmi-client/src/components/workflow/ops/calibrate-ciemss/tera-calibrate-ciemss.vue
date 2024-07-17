@@ -137,24 +137,6 @@
 								:visualization-spec="preparedCharts[index]"
 							/>
 						</template>
-						<!--
-						<tera-simulate-chart
-							v-for="(config, index) of node.state.chartConfigs"
-							:key="index"
-							:run-results="runResult"
-							:chartConfig="{
-								selectedRun: props.node.state.forecastId,
-								selectedVariable: config
-							}"
-							:initial-data="csvAsset"
-							:mapping="mapping"
-							has-mean-line
-							@configuration-change="chartProxy.configurationChange(index, $event)"
-							@remove="chartProxy.removeChart(index)"
-							show-remove-button
-							:size="chartSize"
-						/>
-						-->
 						<Button
 							class="add-chart"
 							text
@@ -196,7 +178,6 @@ import {
 	setupDatasetInput,
 	setupModelInput
 } from '@/services/calibrate-workflow';
-// import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -311,20 +292,33 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}`] = key;
 	});
 
-	// hacky re-parse CSV with correct data types
+	// FIXME: Hacky re-parse CSV with correct data types
 	let groundTruth: Record<string, any>[] = [];
 	if (csvAsset.value) {
 		const csv = csvAsset.value.csv;
-		csv[0][0] = 'timepoint_id';
 		const csvRaw = csv.map((d) => d.join(',')).join('\n');
 		console.log(csvRaw);
 
 		groundTruth = csvParse(csvRaw, autoType);
-		console.log('!!!!!!!!!!!!!', groundTruth);
 	}
 
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(
+	const state = props.node.state;
+
+	// Need to get the dataset's time field
+	const datasetTimeField = state.mapping.find(
+		(d) => d.modelVariable === 'timestamp'
+	)?.datasetVariable;
+
+	return state.chartConfigs.map((config) => {
+		const datasetVariables: string[] = [];
+		config.forEach((variableName) => {
+			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
+			if (mapObj) {
+				datasetVariables.push(mapObj.datasetVariable);
+			}
+		});
+
+		return createForecastChart(
 			{
 				dataset: result,
 				variables: config.map((d) => pyciemssMap[d]),
@@ -334,8 +328,8 @@ const preparedCharts = computed(() => {
 			null,
 			{
 				dataset: groundTruth,
-				variables: ['noninf'],
-				timeField: 'timepoint_id',
+				variables: datasetVariables,
+				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
 			},
 			{
@@ -346,8 +340,8 @@ const preparedCharts = computed(() => {
 				xAxisTitle: 'Time',
 				yAxisTitle: ''
 			}
-		)
-	);
+		);
+	});
 });
 
 const outputPanel = ref(null);

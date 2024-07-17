@@ -1,6 +1,6 @@
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-const CATEGORICAL_SCHEME = [
+export const CATEGORICAL_SCHEME = [
 	'#5F9E3E',
 	'#4375B0',
 	'#8F69B9',

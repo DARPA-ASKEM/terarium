@@ -1,19 +1,11 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResults && csvAsset">
-			<tera-simulate-chart
-				v-for="(config, index) of props.node.state.chartConfigs"
+		<template v-if="!inProgressCalibrationId && runResult && csvAsset">
+			<vega-chart
+				v-for="(_config, index) of props.node.state.chartConfigs"
 				:key="index"
-				:run-results="runResults"
-				:chartConfig="{
-					selectedRun: props.node.state.forecastId,
-					selectedVariable: config
-				}"
-				:mapping="props.node.state.mapping as any"
-				:initial-data="csvAsset"
-				:size="{ width: 190, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(index, $event)"
+				:are-embed-actions-visible="false"
+				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
 
@@ -39,26 +31,28 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { csvParse, autoType } from 'd3';
 import { computed, watch, ref, shallowRef } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
-	getRunResultCiemss,
+	getRunResultCSV,
 	pollAction,
 	getCalibrateBlobURL,
 	makeForecastJobCiemss,
-	getSimulation
+	getSimulation,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CsvAsset } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 
 const props = defineProps<{
@@ -68,14 +62,70 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-const runResults = ref<RunResults>({});
+const runResult = ref<any>(null);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
-const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationStateCiemss) => {
-	emit('update-state', state);
+let pyciemssMap: Record<string, string> = {};
+const preparedCharts = computed(() => {
+	const state = props.node.state;
+
+	if (!runResult.value || !csvAsset.value) return [];
+
+	const result = runResult.value;
+
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}`] = key;
+	});
+
+	// FIXME: Hacky re-parse CSV with correct data types
+	let groundTruth: Record<string, any>[] = [];
+	const csv = csvAsset.value.csv;
+	const csvRaw = csv.map((d) => d.join(',')).join('\n');
+	console.log(csvRaw);
+	groundTruth = csvParse(csvRaw, autoType);
+
+	// Need to get the dataset's time field
+	const datasetTimeField = state.mapping.find(
+		(d) => d.modelVariable === 'timestamp'
+	)?.datasetVariable;
+
+	return state.chartConfigs.map((config) => {
+		const datasetVariables: string[] = [];
+		config.forEach((variableName) => {
+			const mapObj = state.mapping.find((d) => d.modelVariable === variableName);
+			if (mapObj) {
+				datasetVariables.push(mapObj.datasetVariable);
+			}
+		});
+
+		return createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			null,
+			{
+				dataset: groundTruth,
+				variables: datasetVariables,
+				timeField: datasetTimeField as string,
+				groupField: 'sample_id'
+			},
+			{
+				width: 180,
+				height: 120,
+				legend: false,
+				translationMap: reverseMap,
+				xAxisTitle: '',
+				yAxisTitle: ''
+			}
+		);
+	});
 });
 
 const poller = new Poller();
@@ -209,11 +259,10 @@ watch(
 		if (!active) return;
 		if (!state.forecastId) return;
 
-		const forecastId = state.forecastId;
-
 		// Simulate
-		const result = await getRunResultCiemss(forecastId, 'result.csv');
-		runResults.value = result.runResults;
+		const result = await getRunResultCSV(state.forecastId, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(result[0]);
+		runResult.value = result;
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];
