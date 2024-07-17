@@ -14,6 +14,7 @@
 			<span><span>Input:</span> {{ variable.input }}</span>
 			<span><span>Output:</span> {{ variable.output }}</span>
 		</div>
+		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 		<tera-input
 			v-else
 			label="Unit"
