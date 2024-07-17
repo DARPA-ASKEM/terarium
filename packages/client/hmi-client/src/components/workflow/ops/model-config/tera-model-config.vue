@@ -355,7 +355,7 @@ const buildJupyterContext = () => {
 		return null;
 	}
 	return {
-		context: 'model_configuration',
+		context: 'mira_config_edit',
 		language: 'python3',
 		context_info: {
 			id: contextId
@@ -375,7 +375,7 @@ const executeResponse = ref({
 });
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
-	'Update parameter gamma to constant 0.13'
+	'update the parameters {gamma: 0.13}'
 ];
 const contextLanguage = ref<string>('python3');
 
@@ -423,7 +423,7 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('model_configuration_preview', (data) => {
+		.register('model_preview', (data) => {
 			if (!data.content) return;
 			handleModelPreview(data);
 
