@@ -531,8 +531,6 @@ watch(
 			pyciemssMap = parsePyCiemssMap(result[0]);
 
 			runResult.value = result;
-
-			// const output = await getRunResultCiemss(state.forecastId, 'result.csv');
 		}
 	},
 	{ immediate: true }
