@@ -155,12 +155,12 @@ const knobs = ref<InterventionPolicyGroupForm>({
 const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.paramValue
+	() => knobs.value.optimizationType === InterventionTypes.startTime
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.startTime
+	() => knobs.value.optimizationType === InterventionTypes.paramValue
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
 );

@@ -403,7 +403,8 @@ import {
 	Criterion,
 	defaultCriterion,
 	InterventionPolicyGroupForm,
-	OptimizeCiemssOperationState
+	OptimizeCiemssOperationState,
+	InterventionTypes
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -639,6 +640,8 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -662,10 +665,17 @@ const runOptimize = async () => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
-		initialGuess.push(ele.initialGuessValue);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
+
+		if (ele.optimizationType === InterventionTypes.paramValue) {
+			initialGuess.push(ele.initialGuessValue);
+		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			initialGuess.push(ele.startTimeGuess);
+		} else {
+			console.error(`invalid optimization type used:${ele.optimizationType}`);
+		}
 	});
 	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
 	// https://github.com/DARPA-ASKEM/terarium/issues/3909
