@@ -84,7 +84,6 @@ const emit = defineEmits(['close-preview']);
 const teraModelVariablesRef = ref();
 
 const model = ref<Model | null>(null);
-const transientModel = ref<Model | null>(null);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
@@ -164,7 +163,6 @@ async function updateModelName() {
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-	transientModel.value = cloneDeep(model.value);
 }
 
 watch(
