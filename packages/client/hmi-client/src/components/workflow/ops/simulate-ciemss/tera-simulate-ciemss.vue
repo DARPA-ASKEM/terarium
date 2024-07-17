@@ -104,7 +104,6 @@
 					:summary-id="node.state.summaryId"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
-					What do you want to see?
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -318,7 +317,7 @@ const preparedCharts = computed(() => {
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
 			xAxisTitle: 'Time',
-			yAxisTitle: ''
+			yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
 		})
 	);
 });

@@ -55,7 +55,8 @@ export const createForecastChart = (
 ) => {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
-	const labelFontWeight = 'normal'; // Adjust font weight here
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
 	const titleObj = options.title
 		? {
 				text: options.title,
@@ -94,6 +95,9 @@ export const createForecastChart = (
 		height: options.height,
 		autosize: {
 			type: 'fit'
+		},
+		config: {
+			font: globalFont
 		},
 
 		// layers
@@ -177,17 +181,23 @@ export const createForecastChart = (
 					legend: false
 				},
 				opacity: { value: 1.0 },
-				strokeWidth: { value: 3.5 },
+				strokeWidth: { value: 2 },
 				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 			}
 		};
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: { value: 'Stat. Summary' },
+				title: null,
+				padding: { value: 0 },
 				strokeColor: null,
-				padding: { value: 5 },
-				orient: 'bottom'
+				orient: 'top',
+				direction: 'horizontal',
+				columns: Math.floor(options.width / 100),
+				symbolStrokeWidth: 4,
+				symbolSize: 200,
+				labelFontSize: 12,
+				labelOffset: 4
 			};
 
 			if (labelExpr.length > 0) {
@@ -238,5 +248,53 @@ export const createForecastChart = (
 		}
 		spec.layer.push(layerSpec);
 	}
+
+	// Build a transparent layer with fat lines as a better hover target for tooltips
+	// Re-Build statistical layer
+	if (statisticData && statisticData.length > 0) {
+		const statisticalVariables = options.statisticalVariables?.map((d) => d);
+		const tooltipContent = statisticalVariables?.map((d) => {
+			const tip: any = {
+				field: d,
+				type: 'quantitative',
+				format: '.4f'
+			};
+
+			if (options.translationMap && options.translationMap[d]) {
+				tip.title = options.translationMap[d];
+			}
+
+			return tip;
+		});
+
+		const layerSpec: any = {
+			mark: { type: 'line' },
+			data: { values: statisticData },
+			transform: [
+				{
+					fold: statisticalVariables,
+					as: ['stat_variable', 'stat_value']
+				}
+			],
+			encoding: {
+				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
+				color: {
+					field: 'stat_variable',
+					type: 'nominal',
+					scale: {
+						domain: statisticalVariables,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					},
+					legend: false
+				},
+				opacity: { value: 0 },
+				strokeWidth: { value: 16 },
+				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+			}
+		};
+		spec.layer.push(layerSpec);
+	}
+
 	return spec;
 };

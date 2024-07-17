@@ -669,6 +669,8 @@ const runOptimize = async () => {
 		listBoundsInterventions.push([ele.lowerBoundValue]);
 		listBoundsInterventions.push([ele.upperBoundValue]);
 	});
+	// At the moment we only accept one intervention type. Pyciemss, pyciemss-service and this will all need to be updated.
+	// https://github.com/DARPA-ASKEM/terarium/issues/3909
 	const interventionType = props.node.state.interventionPolicyGroups[0].optimizationType;
 
 	// These are interventions to be optimized over.

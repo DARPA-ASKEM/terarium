@@ -54,7 +54,7 @@
 						<div class="flex align-items-center w-full">
 							<template v-if="type === AssetType.Document">Documents</template>
 							<template v-else>{{ capitalize(type) }}</template>
-							<aside>({{ assetItems.size }})</aside>
+							<aside>({{ assetItems.length }})</aside>
 						</div>
 						<!-- New asset buttons for some types -->
 						<Button
@@ -76,7 +76,7 @@
 					v-for="assetItem in assetItems"
 					:key="assetItem.assetId"
 					:active="assetItem.assetId === assetId && assetItem.pageType === pageType"
-					:title="assetItem.assetName"
+					:title="getElapsedTimeText(assetItem.assetCreatedOn)"
 					class="asset-button"
 					plain
 					text
@@ -119,7 +119,7 @@
 						"
 					/>
 				</Button>
-				<section v-if="assetItems.size == 0" class="empty-resource">Empty</section>
+				<section v-if="assetItems.length == 0" class="empty-resource">Empty</section>
 			</AccordionTab>
 		</Accordion>
 
@@ -169,6 +169,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Skeleton from 'primevue/skeleton';
 import { computed, ref } from 'vue';
+import { getElapsedTimeText } from '@/utils/date';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
