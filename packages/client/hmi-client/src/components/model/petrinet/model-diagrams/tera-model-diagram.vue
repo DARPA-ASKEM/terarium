@@ -69,9 +69,6 @@
 					:mmt-params="mmtParams"
 					:stratified-matrix-type="StratifiedMatrix.Rates"
 					@close-modal="selectedTransitionId = ''"
-					@update-configuration="
-						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-					"
 				/>
 			</Teleport>
 		</main>
@@ -96,7 +93,7 @@ import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
@@ -123,8 +120,6 @@ const props = defineProps<{
 	isEditable: boolean;
 	isPreview?: boolean;
 }>();
-
-const emit = defineEmits(['update-configuration']);
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
@@ -231,7 +226,7 @@ async function renderGraph() {
 
 async function toggleCollapsedView(view: StratifiedView) {
 	stratifiedView.value = view;
-	renderGraph();
+	await renderGraph();
 }
 
 watch(
