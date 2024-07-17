@@ -22,12 +22,7 @@ import { AMRSchemaNames } from '@/types/common';
 import { getModelType, getMMT } from '@/services/model';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
-import {
-	updateState,
-	updateInitialMetadata,
-	updateParameter,
-	updateParameterMetadata
-} from '@/model-representation/service';
+import { updateState, updateParameter } from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
@@ -55,22 +50,15 @@ const tables = computed(() => {
 	}
 });
 
+// states don't have units yet and don't worry about concept yet
 function onUpdateState(event: any) {
-	const { id, key, value, isMetadata } = event;
-	if (isMetadata) {
-		updateInitialMetadata(transientModel.value, id, key, value); // For now we only have metadata for initials so just save it there
-	} else {
-		updateState(transientModel.value, id, key, value);
-	}
+	const { id, key, value } = event;
+	updateState(transientModel.value, id, key, value);
 }
 
 function onUpdateParameter(event: any) {
-	const { parameterId, key, value, isMetadata } = event;
-	if (isMetadata) {
-		updateParameterMetadata(transientModel.value, parameterId, key, value);
-	} else {
-		updateParameter(transientModel.value, parameterId, key, value);
-	}
+	const { id, key, value } = event;
+	updateParameter(transientModel.value, id, key, value);
 }
 
 function updateMMT() {

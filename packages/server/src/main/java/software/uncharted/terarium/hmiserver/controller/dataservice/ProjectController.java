@@ -10,16 +10,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -512,31 +508,13 @@ public class ProjectController {
 		try {
 			final ProjectExport export = cloneService.exportProject(id);
 
-			final byte[] exportBytes = objectMapper.writeValueAsBytes(export);
+			final HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.parseMediaType("application/zip"));
+			final String filename = "project-" + id + ".zip";
+			headers.setContentDispositionFormData(filename, filename);
+			headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
-			try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-					ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-
-				final ZipEntry zipEntry = new ZipEntry("project.json");
-				zipOutputStream.putNextEntry(zipEntry);
-				zipOutputStream.write(exportBytes);
-				zipOutputStream.closeEntry();
-
-				zipOutputStream.finish();
-				zipOutputStream.close();
-
-				final HttpHeaders headers = new HttpHeaders();
-				headers.setContentType(MediaType.parseMediaType("application/zip"));
-				final String filename = "project-" + id + ".zip";
-				headers.setContentDispositionFormData(filename, filename);
-				headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-
-				return new ResponseEntity<>(byteArrayOutputStream.toByteArray(), headers, HttpStatus.OK);
-			} catch (final IOException e) {
-				e.printStackTrace();
-				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-
+			return new ResponseEntity<>(export.getAsZipFile(), headers, HttpStatus.OK);
 		} catch (final Exception e) {
 			log.error("Error exporting project", e);
 			throw new ResponseStatusException(
@@ -578,29 +556,12 @@ public class ProjectController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		final ProjectExport projectExport;
+		final ProjectExport projectExport = new ProjectExport();
 		try {
-			final ZipInputStream zipInputStream = new ZipInputStream(input.getInputStream());
-			final ZipEntry zipEntry = zipInputStream.getNextEntry();
-			final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-			final byte[] buffer = new byte[1024];
-			int length;
-			while ((zipEntry != null) && (length = zipInputStream.read(buffer)) > 0) {
-				outputStream.write(buffer, 0, length);
-			}
-
-			final byte[] unzippedBytes = outputStream.toByteArray();
-
-			zipInputStream.closeEntry();
-			zipInputStream.close();
-			outputStream.close();
-
-			projectExport = objectMapper.readValue(unzippedBytes, ProjectExport.class);
-
-		} catch (final IOException e) {
-			e.printStackTrace();
-			return ResponseEntity.internalServerError().build();
+			projectExport.loadFromZipFile(input.getInputStream());
+		} catch (final Exception e) {
+			log.error("Error parsing project", e);
+			return ResponseEntity.badRequest().build();
 		}
 
 		final String userId = currentUserService.get().getId();

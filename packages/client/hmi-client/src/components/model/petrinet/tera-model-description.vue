@@ -44,8 +44,6 @@
 					ref="teraModelDiagramRef"
 					:model="model"
 					:is-editable="!featureConfig?.isPreview"
-					:model-configuration="modelConfigurations?.[0]"
-					@update-configuration="updateConfiguration"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Model equations">
@@ -84,7 +82,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import { FeatureConfig, ResultType } from '@/types/common';
-import type { Author, Dataset, Model, ModelConfiguration } from '@/types/Types';
+import type { Author, Dataset, Model } from '@/types/Types';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
@@ -96,12 +94,11 @@ import { useProjects } from '@/composables/project';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
 	featureConfig?: FeatureConfig;
 	isGeneratingCard?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-configuration', 'model-updated']);
+const emit = defineEmits(['update-model', 'model-updated']);
 const teraModelDiagramRef = ref();
 
 const card = computed<any>(() => props.model.metadata?.gollmCard ?? null);
@@ -145,10 +142,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
-
-function updateConfiguration(updatedConfiguration: ModelConfiguration) {
-	emit('update-configuration', updatedConfiguration);
-}
 
 // Editor for the description
 const { activeProject } = useProjects();

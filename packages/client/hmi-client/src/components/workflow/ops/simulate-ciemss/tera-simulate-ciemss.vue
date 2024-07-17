@@ -104,7 +104,6 @@
 					:summary-id="node.state.summaryId"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
-					What do you want to see?
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -121,18 +120,20 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.chartConfigs"
-							:key="idx"
-							:run-results="runResults[selectedRunId]"
-							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-							has-mean-line
-							@configuration-change="chartProxy.configurationChange(idx, $event)"
-							@remove="chartProxy.removeChart(idx)"
-							show-remove-button
-							:size="chartSize"
-							class="mb-2"
-						/>
+						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
+							<tera-chart-control
+								:variables="Object.keys(pyciemssMap)"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:show-remove-button="true"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@remove="chartProxy.removeChart(index)"
+							/>
+							<vega-chart
+								:are-embed-actions-visible="true"
+								:visualization-spec="preparedCharts[index]"
+							/>
+						</template>
+
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart()"
@@ -167,16 +168,15 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import {
-	getRunResultCiemss,
-	makeForecastJobCiemss as makeForecastJob
+	getRunResultCSV,
+	parsePyCiemssMap,
+	makeForecastJobCiemss as makeForecastJob,
+	convertToCsvAsset
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -194,7 +194,10 @@ import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraChartControl from '../../tera-chart-control.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -258,9 +261,11 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: RunResults }>({});
-
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+
+let pyciemssMap: Record<string, string> = {};
 
 const kernelManager = new KernelSessionManager();
 
@@ -286,6 +291,35 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
+});
+
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(result, resultSummary, [], {
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			variables: config.map((d) => pyciemssMap[d]),
+			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
+
+			legend: true,
+			translationMap: reverseMap,
+
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: 'Time',
+			yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+		})
+	);
 });
 
 const updateState = () => {
@@ -335,9 +369,13 @@ const makeForecastRequest = async () => {
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId] && rawContent.value[runId]) return;
 
-	const output = await getRunResultCiemss(runId);
-	runResults.value[runId] = output.runResults;
-	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
+	const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+	pyciemssMap = parsePyCiemssMap(result[0]);
+	runResults.value[selectedRunId.value] = result;
+	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
+
+	const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+	runResultsSummary.value[selectedRunId.value] = resultSummary;
 };
 
 const onSelection = (id: string) => {

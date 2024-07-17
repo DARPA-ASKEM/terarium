@@ -5,17 +5,17 @@
 				<tera-input
 					v-if="isEditing"
 					v-model="config.name"
-					placeholder="Constraint name"
-					@on-focus-out="emit('update-self', config)"
+					placeholder="Criterion"
+					@update:model-value="emit('update-self', config)"
 				/>
-				<h6 v-else>{{ props.constraint.name }}</h6>
+				<h6 v-else>{{ props.criterion.name }}</h6>
 				<i
 					:class="{ 'pi pi-check i': isEditing, 'pi pi-pencil i': !isEditing }"
 					:style="'cursor: pointer'"
 					@click="onEdit"
 				/>
 			</div>
-			<label for="active">Optimize</label>
+			<label for="active">Active</label>
 			<InputSwitch v-model="config.isActive" @change="emit('update-self', config)" />
 			<i class="trash-button pi pi-trash" @click="emit('delete-self')" />
 		</div>
@@ -41,13 +41,13 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			a threshold of
-			<tera-input v-model="config.threshold" @on-focus-out="emit('update-self', config)" />
+			<tera-input v-model="config.threshold" @update:model-value="emit('update-self', config)" />
 			at
 			<Dropdown
 				class="p-inputtext-sm"
 				:options="[
-					{ label: 'Max', value: ContextMethods.max },
-					{ label: 'Day average', value: ContextMethods.day_average }
+					{ label: 'all timepoints', value: ContextMethods.max },
+					{ label: 'last timepoint', value: ContextMethods.day_average }
 				]"
 				option-label="label"
 				option-value="value"
@@ -55,8 +55,10 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			in
-			<tera-input v-model="config.riskTolerance" @on-focus-out="emit('update-self', config)" />% of
-			simulate outcomes
+			<tera-input
+				v-model="config.riskTolerance"
+				@update:model-value="emit('update-self', config)"
+			/>% of simulate outcomes
 		</div>
 		<div v-else class="section-row">
 			Ensure <b>{{ config.targetVariable }}</b> is
@@ -73,16 +75,16 @@ import { ref } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import teraInput from '@/components/widgets/tera-input.vue';
 import InputSwitch from 'primevue/inputswitch';
-import { ConstraintGroup, ContextMethods } from './optimize-ciemss-operation';
+import { Criterion, ContextMethods } from './optimize-ciemss-operation';
 
 const props = defineProps<{
-	constraint: ConstraintGroup;
+	criterion: Criterion;
 	modelStateAndObsOptions: string[];
 }>();
 
 const emit = defineEmits(['update-self', 'delete-self']);
 
-const config = ref<ConstraintGroup>(_.cloneDeep(props.constraint));
+const config = ref<Criterion>(_.cloneDeep(props.criterion));
 
 const isEditing = ref<boolean>(false);
 

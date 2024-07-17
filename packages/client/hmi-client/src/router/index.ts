@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
-import ProjectView from '@/page/project/tera-project.vue';
+import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
 import UserAdminView from '@/components/navbar/tera-useradmin.vue';
 

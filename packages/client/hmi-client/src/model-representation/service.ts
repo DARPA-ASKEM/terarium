@@ -3,7 +3,7 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelParameter, PetriNetState, RegNetVertex } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
@@ -206,32 +206,33 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 	}
 }
 
-export function updateParameter(model: Model, parameterId: string, key: string, value: any) {
-	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
+export function updateParameter(model: Model, id: string, key: string, value: any) {
+	function updateParameterProperty(p: ModelParameter) {
 		// TODO: Add support for editing concept/grounding
-		if (key === 'units') {
-			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
-			obj.units.expression = value;
-			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else if (obj[key]) {
-			obj[key] = value;
+		// Consider checking if the key passed is a valid property within the acceptable types?
+		if (key === 'unitExpression') {
+			if (!p.units) p.units = { expression: '', expression_mathml: '' };
+			p.units.expression = value;
+			p.units.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			p[key] = value;
 		}
 	}
 
 	const parameters = getParameters(model);
-	const parameter = parameters.find((p: ModelParameter) => p.id === parameterId);
+	const parameter = parameters.find((p: ModelParameter) => p.id === id);
 	if (!parameter) return;
-	updateProperty(parameter);
+	updateParameterProperty(parameter);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
-	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
+	const auxiliary = auxiliaries.find((a) => a.id === id);
 	if (!auxiliary) return;
-	updateProperty(auxiliary);
+	updateParameterProperty(auxiliary);
 }
 
-// Gets states, vertices, stocks
-export function getStates(model: Model): any[] {
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -246,20 +247,21 @@ export function getStates(model: Model): any[] {
 }
 
 export function updateState(model: Model, id: string, key: string, value: any) {
-	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
-		// TODO: Add support for editing concept/grounding
-		if (key === 'initial') {
-			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
-			obj.initial.expression = value;
-			obj.initial.expression_mathml = `<ci>${value}</ci>`;
-		} else if (obj[key]) {
-			obj[key] = value;
+	function updateStateProperty(s: PetriNetState & RegNetVertex) {
+		// TODO: Add support for editing concept/grounding and description
+		// Consider checking if the key passed is a valid property within the acceptable types?
+		if (key === 'unitExpression') {
+			if (!s.initial) s.initial = { expression: '', expression_mathml: '' };
+			s.initial.expression = value;
+			s.initial.expression_mathml = `<ci>${value}</ci>`;
+		} else {
+			s[key] = value;
 		}
 	}
 	const states = getStates(model);
 	const state = states.find((i: any) => i.id === id);
 	if (!state) return;
-	updateProperty(state);
+	updateStateProperty(state);
 }
 
 /**
@@ -335,67 +337,6 @@ export function getInitial(model: Model, target: string): Initial | undefined {
 		case AMRSchemaNames.STOCKFLOW:
 		default:
 			return model.semantics?.ode?.initials?.find((i) => i.target === target);
-	}
-}
-
-// TODO: These updateMetadata functions and even the updateParameter function share similar logic and can be refactored
-/**
- * Updates the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateParameterMetadata(
-	model: Model,
-	parameterId: string,
-	key: string,
-	value: any
-) {
-	if (!model.metadata?.parameters?.[parameterId]) {
-		model.metadata ??= {};
-		model.metadata.parameters ??= {};
-		model.metadata.parameters[parameterId] ??= {};
-		model.metadata.parameters[parameterId].id = parameterId;
-	}
-	const parameterMetadata = model.metadata.parameters[parameterId];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'units') {
-		if (!parameterMetadata.units)
-			parameterMetadata.units = { expression: '', expression_mathml: '' };
-		parameterMetadata.units.expression = value;
-		parameterMetadata.units.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		parameterMetadata[key] = value;
-	}
-}
-
-/**
- * Updates the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} target - The target of the initial.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateInitialMetadata(model: Model, target: string, key: string, value: any) {
-	if (!model.metadata?.initials?.[target]) {
-		model.metadata ??= {};
-		model.metadata.initials ??= {};
-		model.metadata.initials[target] ??= {};
-		model.metadata.initials[target].id = target;
-	}
-
-	const initialMetadata = model.metadata.initials[target];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'initial') {
-		if (!initialMetadata.initial)
-			initialMetadata.initial = { expression: '', expression_mathml: '' };
-		initialMetadata.initial.expression = value;
-		initialMetadata.initial.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		initialMetadata[key] = value;
 	}
 }
 

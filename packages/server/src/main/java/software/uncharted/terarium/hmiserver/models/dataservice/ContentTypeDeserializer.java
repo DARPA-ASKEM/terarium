@@ -20,7 +20,7 @@ public class ContentTypeDeserializer extends JsonDeserializer<ContentType> {
 		final JsonNode node = mapper.readTree(jp);
 
 		final String mimeTypeStr = node.get("mimeType").asText();
-		if (!node.has("charset")) {
+		if (!node.hasNonNull("charset")) {
 			return ContentType.create(mimeTypeStr);
 		}
 
