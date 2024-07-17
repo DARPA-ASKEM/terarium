@@ -110,7 +110,6 @@ const initialList = computed<
 	const collapsedInitials = collapseInitials(props.mmt);
 	const initials = getInitials(props.modelConfiguration);
 	return Array.from(collapsedInitials.keys())
-		.flat()
 		.map((id) => {
 			const childTargets = collapsedInitials.get(id) ?? [];
 			const childInitials = childTargets
