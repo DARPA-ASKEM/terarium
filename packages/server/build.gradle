@@ -13,7 +13,7 @@ plugins {
     id 'org.springframework.boot' version '3.1.5'
     id 'org.hibernate.orm' version '6.2.7.Final'
     id 'org.graalvm.buildtools.native' version '0.9.28'
-    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.diffplug.spotless' version '7.0.0.BETA1'
 }
 
 ext {
@@ -149,7 +149,6 @@ spotless {
     java {
         target 'src/**/*.java'
         importOrder('*,|,javax.**,java.**,|,$*')
-        palantirJavaFormat('2.43.0').formatJavadoc(true)
         indentWithTabs()
         formatAnnotations()
         removeUnusedImports()
