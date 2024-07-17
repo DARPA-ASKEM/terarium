@@ -107,8 +107,7 @@ public class WorkflowController {
 						content = @Content)
 			})
 	public ResponseEntity<Workflow> getWorkflow(
-			@PathVariable("id") final UUID id,
-			@RequestParam(name = "project-id") final UUID projectId) {
+			@PathVariable("id") final UUID id, @RequestParam(name = "project-id") final UUID projectId) {
 		final Schema.Permission permission =
 				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
