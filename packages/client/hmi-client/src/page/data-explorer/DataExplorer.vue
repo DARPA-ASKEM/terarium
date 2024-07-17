@@ -151,11 +151,11 @@ const assetOptions = ref([
 // This is here now for preservation of the hacky services/data.ts
 // Child components should be updated to accept AssetType instead of ResourceType
 const resourceType = computed(() => {
-	if (assetType.value === AssetType.Model) {
-		return ResourceType.MODEL;
-	}
 	if (assetType.value === AssetType.Document) {
 		return ResourceType.DOCUMENT;
+	}
+	if (assetType.value === AssetType.Model) {
+		return ResourceType.MODEL;
 	}
 	return ResourceType.DATASET;
 });
@@ -326,7 +326,7 @@ const executeSearch = async () => {
 	// the list of results displayed in the data explorer is always the final filtered data
 	dataItems.value = mergeResultsKeepRecentDuplicates(dataItems.value, allDataFilteredWithFacets);
 	// final step: cache the facets and filteredFacets objects
-	calculateFacets(allData, allDataFilteredWithFacets);
+	// calculateFacets(allData, allDataFilteredWithFacets);
 
 	let total = 0;
 	allData.forEach((res) => {

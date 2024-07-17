@@ -17,7 +17,6 @@
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 				:rescale-after-select="true"
-				:formatter-fn="facet.formatter"
 			/>
 		</div>
 	</div>
@@ -41,7 +40,7 @@ import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-ca
 import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
 import { FacetBucket, Facets, ResourceType } from '@/types/common';
-import { getFacetNameFormatter, getFacetsDisplayNames } from '@/utils/facets';
+import { getFacetsDisplayNames } from '@/utils/facets';
 import type { XDDFacetsItemResponse } from '@/types/Types';
 
 const BUCKETS = 'buckets';
@@ -121,7 +120,6 @@ const formattedFacets = computed(() => {
 			id: key,
 			label: getFacetsDisplayNames(props.resultType, key),
 			isNumerical: false,
-			formatter: getFacetNameFormatter(props.resultType, key),
 			baseData,
 			filteredData
 		};
