@@ -192,9 +192,16 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: { value: 'Ground truth' },
+				title: null,
+				padding: { value: 0 },
 				strokeColor: null,
-				padding: { value: 5 }
+				orient: 'top',
+				direction: 'horizontal',
+				columns: Math.floor(options.width / 100),
+				symbolStrokeWidth: 4,
+				symbolSize: 200,
+				labelFontSize: 12,
+				labelOffset: 4
 			};
 
 			if (labelExpr.length > 0) {

@@ -285,6 +285,7 @@ let pyciemssMap: Record<string, string> = {};
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
 
+	const state = props.node.state;
 	const result = runResult.value;
 
 	const reverseMap: Record<string, string> = {};
@@ -292,17 +293,18 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}`] = key;
 	});
 
+	// Add dataset mappings to lookup as well
+	state.mapping.forEach((mapObj) => {
+		reverseMap[mapObj.datasetVariable] = mapObj.modelVariable;
+	});
+
 	// FIXME: Hacky re-parse CSV with correct data types
 	let groundTruth: Record<string, any>[] = [];
 	if (csvAsset.value) {
 		const csv = csvAsset.value.csv;
 		const csvRaw = csv.map((d) => d.join(',')).join('\n');
-		console.log(csvRaw);
-
 		groundTruth = csvParse(csvRaw, autoType);
 	}
-
-	const state = props.node.state;
 
 	// Need to get the dataset's time field
 	const datasetTimeField = state.mapping.find(
@@ -527,6 +529,7 @@ watch(
 			const state = props.node.state;
 			const result = await getRunResultCSV(state.forecastId, 'result.csv');
 			pyciemssMap = parsePyCiemssMap(result[0]);
+
 			runResult.value = result;
 
 			// const output = await getRunResultCiemss(state.forecastId, 'result.csv');

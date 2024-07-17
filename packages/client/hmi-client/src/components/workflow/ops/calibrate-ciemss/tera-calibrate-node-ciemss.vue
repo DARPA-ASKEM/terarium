@@ -85,7 +85,6 @@ const preparedCharts = computed(() => {
 	let groundTruth: Record<string, any>[] = [];
 	const csv = csvAsset.value.csv;
 	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	console.log(csvRaw);
 	groundTruth = csvParse(csvRaw, autoType);
 
 	// Need to get the dataset's time field
