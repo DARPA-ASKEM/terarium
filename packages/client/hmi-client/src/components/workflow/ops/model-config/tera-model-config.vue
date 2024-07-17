@@ -499,13 +499,13 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
 		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
 	};
+	console.debug('Model config task event received', event);
 	if (event.data?.id !== taskIdRefs[event.type].value) return;
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 		taskIdRefs[event.type].value = '';
 	}
-	if (event.data.status !== TaskStatus.Success) return;
-	console.debug('Model configured successfully', event);
-	if (model.value?.id) await fetchConfigurations(model.value.id);
+	if (event.data.status === TaskStatus.Success && model.value?.id)
+		await fetchConfigurations(model.value.id);
 };
 
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
