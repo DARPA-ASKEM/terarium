@@ -87,6 +87,14 @@ export const OBJECTIVE_FUNCTION_MAP = [
 	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
 ];
 
+export const blankIntervention: Intervention = {
+	name: 'New Intervention',
+	appliedTo: '',
+	type: InterventionSemanticType.Parameter,
+	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
+	dynamicInterventions: []
+};
+
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
 	endTime: 0,
@@ -96,14 +104,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	initialGuessValue: 0,
 	isActive: true,
 	optimizationType: InterventionTypes.paramValue,
-	objectiveFunctionOption: InterventionObjectiveFunctions.lowerBound,
-	intervention: {
-		name: 'default name',
-		appliedTo: '',
-		type: InterventionSemanticType.Parameter,
-		staticInterventions: [],
-		dynamicInterventions: []
-	}
+	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
+	intervention: blankIntervention
 };
 
 export const defaultCriterion: Criterion = {
