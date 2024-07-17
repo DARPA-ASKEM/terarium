@@ -125,7 +125,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
-import { ModelPartItem } from '@/types/Model';
+import type { ModelPartItem } from '@/types/Model';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';

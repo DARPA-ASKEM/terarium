@@ -60,7 +60,6 @@ const partsComponent = computed(() => {
 	}
 });
 
-// states don't have units yet and don't worry about concept yet
 function onUpdate(property: string, event: any) {
 	const { id, key, value } = event;
 	switch (property) {
