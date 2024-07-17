@@ -4,7 +4,7 @@
 			<MultiSelect
 				v-model="selectedVariable"
 				:options="variables"
-				placeholder="What do you want to see?"
+				placeholder="Select variables to display"
 				@update:model-value="updateSelectedVariable"
 				filter
 			>
@@ -53,11 +53,9 @@ const updateSelectedVariable = () => {
 
 <style scoped>
 .chart-control {
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: var(--gap-small);
 	position: relative;
+	margin-top: var(--gap-2);
+	margin-bottom: var(--gap-2);
 }
 
 .multiselect-title {
