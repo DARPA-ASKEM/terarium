@@ -34,10 +34,6 @@ apply plugin: 'com.diffplug.spotless'
 group = 'software.uncharted'
 version = '1.0.0-SNAPSHOT'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-}
-
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
