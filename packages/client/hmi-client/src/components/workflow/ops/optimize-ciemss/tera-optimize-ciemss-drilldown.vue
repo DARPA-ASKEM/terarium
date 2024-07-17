@@ -404,7 +404,7 @@ import {
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState,
-	InterventionTypes
+	OptimizationTypes
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -666,17 +666,15 @@ const runOptimize = async () => {
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		// TODO FIXME
-		listBoundsInterventions.push([ele.startTime]);
-		listBoundsInterventions.push([ele.endTime]);
 
-		// listBoundsInterventions.push([ele.lowerBoundValue]);
-		// listBoundsInterventions.push([ele.upperBoundValue]);
-
-		if (ele.optimizationType === InterventionTypes.paramValue) {
+		if (ele.optimizationType === OptimizationTypes.paramValue) {
 			initialGuess.push(ele.startTimeGuess);
-		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			listBoundsInterventions.push([ele.startTime]);
+			listBoundsInterventions.push([ele.endTime]);
+		} else if (ele.optimizationType === OptimizationTypes.startTime) {
 			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
@@ -735,6 +733,7 @@ const runOptimize = async () => {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
 
+	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;

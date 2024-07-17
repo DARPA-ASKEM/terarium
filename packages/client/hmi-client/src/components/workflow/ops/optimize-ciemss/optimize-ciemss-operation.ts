@@ -7,7 +7,7 @@ import { createInterventionPolicy } from '@/services/intervention-policy';
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
-export enum InterventionTypes {
+export enum OptimizationTypes {
 	paramValue = 'start_time', // provide a parameter value to get a better start time.
 	startTime = 'param_value' // provide a statr time to get a better parameter value.
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
@@ -33,7 +33,7 @@ export interface InterventionPolicyGroupForm {
 	upperBoundValue: number;
 	initialGuessValue: number;
 	isActive: boolean;
-	optimizationType: InterventionTypes;
+	optimizationType: OptimizationTypes;
 	objectiveFunctionOption: InterventionObjectiveFunctions;
 	intervention: Intervention;
 }
@@ -74,10 +74,10 @@ export interface OptimizeCiemssOperationState extends BaseState {
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
-	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'new start time', value: InterventionTypes.paramValue }
+	{ label: 'new value', value: OptimizationTypes.startTime },
+	{ label: 'new start time', value: OptimizationTypes.paramValue }
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+	// ,{ label: 'new value and start time', value: OptimizationTypes.paramValueAndStartTime }
 ];
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -103,7 +103,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBoundValue: 0,
 	initialGuessValue: 0,
 	isActive: true,
-	optimizationType: InterventionTypes.paramValue,
+	optimizationType: OptimizationTypes.paramValue,
 	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
 	intervention: blankIntervention
 };
@@ -202,7 +202,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
-	if (interventionType === InterventionTypes.paramValue && startTimes.length !== 0) {
+	if (interventionType === OptimizationTypes.paramValue && startTimes.length !== 0) {
 		// If we our intervention type is param value our policyResult will provide a timestep.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
@@ -218,7 +218,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
-	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
+	} else if (interventionType === OptimizationTypes.startTime && paramValues.length !== 0) {
 		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
