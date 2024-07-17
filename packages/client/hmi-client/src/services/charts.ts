@@ -287,10 +287,16 @@ function formatSuccessChartData(
 	const maxValue = Math.max(...data);
 	const stepSize = (maxValue - minValue) / binCount;
 	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
-	const binLabels: string[] = [];
 	for (let i = binCount; i > 0; i--) {
-		const rangeStart = minValue + stepSize * (i - 1);
-		const rangeEnd = minValue + stepSize * i;
+		let rangeStart = minValue + stepSize * (i - 1);
+		let rangeEnd = minValue + stepSize * i;
+
+		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
+		if (stepSize === 0) {
+			rangeStart = minValue - 1;
+			rangeEnd = maxValue + 1;
+		}
+
 		let tag;
 		if (isMinimized) {
 			tag = rangeEnd < threshold ? 'in' : 'out';
@@ -303,11 +309,12 @@ function formatSuccessChartData(
 			count: 0,
 			tag
 		});
-		binLabels.push(`${rangeStart.toFixed(4)} - ${rangeEnd.toFixed(4)}`);
 	}
 
 	const toBinIndex = (value: number) => {
 		if (value < minValue || value > maxValue) return -1;
+		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
+		if (stepSize === 0 || value === maxValue) return 0;
 		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
 		return index;
 	};
