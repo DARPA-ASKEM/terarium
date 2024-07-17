@@ -39,12 +39,12 @@ const stateList = computed<
 			const isParent = childTargets.length > 1;
 			const children = childTargets
 				.map((childTarget) => {
-					const s: any = states.value.find((state) => state.id === childTarget); // FIXME: states should have units instead of initial
+					const s = states.value.find((state) => state.id === childTarget); // FIXME: states should have units instead of initial
 					if (!s) return null;
 					return {
 						id: s.id,
 						name: s.name,
-						description: '', // s.description doesn't exist yet
+						description: s.description,
 						grounding: s.grounding,
 						unitExpression: s.units?.expression // FIXME: states should have units instead of initial
 					};
@@ -58,7 +58,7 @@ const stateList = computed<
 					: {
 							id,
 							name: baseState.name,
-							description: '', // baseState.description doesn't exist yet
+							description: baseState.description,
 							grounding: baseState.grounding,
 							unitExpression: baseState.units?.expression // FIXME: states should have units instead of initial
 						};

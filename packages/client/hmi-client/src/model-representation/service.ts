@@ -8,7 +8,7 @@ import type {
 	Model,
 	ModelParameter,
 	ModelUnit,
-	PetriNetState,
+	State,
 	RegNetVertex,
 	Transition
 } from '@/types/Types';
@@ -264,7 +264,7 @@ export function updateTime(model: Model, key: string, value: any) {
 }
 
 // Gets states, vertices, stocks (no stock type yet)
-export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
+export function getStates(model: Model): (State & RegNetVertex)[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:

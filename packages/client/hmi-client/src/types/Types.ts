@@ -421,11 +421,6 @@ export interface NotebookSession extends TerariumAsset {
     data: any;
 }
 
-export interface PetriNetModel {
-    states: PetriNetState[];
-    transitions: PetriNetTransition[];
-}
-
 export interface Project extends TerariumAsset {
     userId: string;
     thumbnail: string;
@@ -971,21 +966,6 @@ export interface Properties {
     description?: string;
 }
 
-export interface PetriNetState {
-    id: string;
-    name: string;
-    grounding: ModelGrounding;
-    initial: ModelExpression;
-}
-
-export interface PetriNetTransition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties: PetriNetTransitionProperties;
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1091,17 +1071,6 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
-}
-
-export interface ModelExpression {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface PetriNetTransitionProperties {
-    name: string;
-    description: string;
-    grounding?: ModelGrounding;
 }
 
 export interface XDDFacetBucket {
