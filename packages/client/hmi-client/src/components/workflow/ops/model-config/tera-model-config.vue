@@ -280,8 +280,7 @@ import {
 	setInitialExpression,
 	setParameterSource,
 	setParameterDistributions,
-	getAsConfiguredModel,
-	amrToModelConfiguration
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
@@ -354,7 +353,7 @@ const buildJupyterContext = () => {
 		return null;
 	}
 	return {
-		context: 'mira_config_edit',
+		context: 'model_configuration',
 		language: 'python3',
 		context_info: {
 			id: contextId
@@ -374,7 +373,8 @@ const executeResponse = ref({
 });
 const sampleAgentQuestions = [
 	'What are the current parameters values?',
-	'update the parameters {gamma: 0.13}'
+	'Update parameter gamma to constant 0.13',
+	'Update parameter beta to a uniform distribution with max 0.5 and min 0.2'
 ];
 const contextLanguage = ref<string>('python3');
 
@@ -422,9 +422,9 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('model_preview', (data) => {
+		.register('model_configuration_preview', (data) => {
 			if (!data.content) return;
-			handleModelPreview(data);
+			knobs.value.transientModelConfig = data.content;
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
@@ -504,14 +504,6 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
-
-const handleModelPreview = async (data: any) => {
-	if (!model.value) return;
-	// Only update the keys provided in the model preview (not ID, temporary ect)
-	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	const modelConfig = await amrToModelConfiguration(model.value);
-	knobs.value.transientModelConfig = modelConfig;
-};
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(
