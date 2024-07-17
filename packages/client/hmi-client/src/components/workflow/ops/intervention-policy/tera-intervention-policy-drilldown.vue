@@ -32,9 +32,9 @@
 			</tera-slider-panel>
 		</template>
 		<tera-columnar-panel>
-			<tera-drilldown-section class="pl-3 pr-3">
+			<tera-drilldown-section class="px-3">
 				<template #header-controls-left>
-					<span>Select an intervention policy or create a new one here.</span>
+					Select an intervention policy or create a new one here.
 				</template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy"></Button>
@@ -235,7 +235,7 @@ const parameterOptions = computed(() => {
 const stateOptions = computed(() => {
 	if (!model.value) return [];
 	return getStates(model.value).map((state) => ({
-		label: state.name ?? state.id,
+		label: !isEmpty(state.name) ? state.name : state.id,
 		value: state.id
 	}));
 });
