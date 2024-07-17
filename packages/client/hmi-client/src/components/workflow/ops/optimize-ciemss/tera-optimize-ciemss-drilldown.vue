@@ -667,11 +667,11 @@ const runOptimize = async () => {
 		startTime.push(ele.startTime);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 
-		if (ele.optimizationType === OptimizationTypes.paramValue) {
+		if (ele.optimizationType === OptimizationTypes.getStartTime) {
 			initialGuess.push(ele.startTimeGuess);
 			listBoundsInterventions.push([ele.startTime]);
 			listBoundsInterventions.push([ele.endTime]);
-		} else if (ele.optimizationType === OptimizationTypes.startTime) {
+		} else if (ele.optimizationType === OptimizationTypes.getParamValue) {
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);
