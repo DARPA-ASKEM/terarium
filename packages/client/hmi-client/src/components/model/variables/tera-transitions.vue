@@ -32,7 +32,7 @@ import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configu
 const props = defineProps<{
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
-	transitions: Transition[]; // Support for Transition type needs work, missing expression, description and name
+	transitions: Transition[];
 }>();
 
 defineEmits(['update-transition']);

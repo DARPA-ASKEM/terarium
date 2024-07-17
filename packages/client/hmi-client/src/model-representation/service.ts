@@ -7,7 +7,6 @@ import type {
 	Initial,
 	Model,
 	ModelParameter,
-	ModelUnit,
 	State,
 	RegNetVertex,
 	Transition
@@ -259,7 +258,7 @@ export function updateTransition(model: Model, id: string, key: string, value: a
 }
 
 export function updateTime(model: Model, key: string, value: any) {
-	const time: { id: string; units?: ModelUnit } = model?.semantics?.ode?.time;
+	const time: State = model?.semantics?.ode?.time;
 	updateVariableProperty(time, key, value);
 }
 
