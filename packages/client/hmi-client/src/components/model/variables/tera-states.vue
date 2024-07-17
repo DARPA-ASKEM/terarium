@@ -39,19 +39,19 @@ const stateList = computed<
 			const isParent = childTargets.length > 1;
 			const children = childTargets
 				.map((childTarget) => {
-					const s = states.value.find((state) => state.id === childTarget);
+					const s: any = states.value.find((state) => state.id === childTarget); // FIXME: states should have units instead of initial
 					if (!s) return null;
 					return {
 						id: s.id,
 						name: s.name,
 						description: '', // s.description doesn't exist yet
 						grounding: s.grounding,
-						unitExpression: s.initial?.expression
+						unitExpression: s.units?.expression // FIXME: states should have units instead of initial
 					};
 				})
 				.filter(Boolean) as ModelVariable[];
 
-			const baseState = states.value.find((s) => s.id === id);
+			const baseState: any = states.value.find((s) => s.id === id); // FIXME: states should have units instead of initial
 			const base: ModelVariable =
 				isParent || !baseState
 					? { id }
@@ -60,7 +60,7 @@ const stateList = computed<
 							name: baseState.name,
 							description: '', // baseState.description doesn't exist yet
 							grounding: baseState.grounding,
-							unitExpression: baseState.initial?.expression
+							unitExpression: baseState.units?.expression // FIXME: states should have units instead of initial
 						};
 
 			return { base, children, isParent };

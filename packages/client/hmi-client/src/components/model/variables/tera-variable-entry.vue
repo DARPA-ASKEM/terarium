@@ -19,8 +19,14 @@
 			label="Unit"
 			placeholder="Add a unit"
 			:model-value="variable.unitExpression ?? ''"
-			@update:model-value="$emit('update-variable', { key: 'unitExpression', value: $event })"
+			@update:model-value="
+				($event) => {
+					const value = $event.replace(/[\s.]+/g, '');
+					$emit('update-variable', { key: 'unitExpression', value });
+				}
+			"
 			:disabled="disabledInputs?.includes('unitExpression')"
+			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
 		<!--TODO: Add support for editing concepts-->
 		<tera-input

@@ -214,62 +214,34 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 	}
 }
 
-export function updateParameter(model: Model, id: string, key: string, value: any) {
-	function updateParameterProperty(p: ModelParameter) {
-		// TODO: Add support for editing concept/grounding
-		// Consider checking if the key passed is a valid property within the acceptable types?
-		if (key === 'unitExpression') {
-			if (!p.units) p.units = { expression: '', expression_mathml: '' };
-			p.units.expression = value;
-			p.units.expression_mathml = `<ci>${value}</ci>`;
-		} else {
-			p[key] = value;
-		}
+export function updateVariableProperty(v: any, key: string, value: any) {
+	if (key === 'unitExpression') {
+		if (!v.units) v.units = { expression: '', expression_mathml: '' };
+		v.units.expression = value;
+		v.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		v[key] = value;
 	}
+}
 
+export function updateParameter(model: Model, id: string, key: string, value: any) {
 	const parameters = getParameters(model);
 	const parameter = parameters.find((p: ModelParameter) => p.id === id);
 	if (!parameter) return;
-	updateParameterProperty(parameter);
+	updateVariableProperty(parameter, key, value);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
 	const auxiliary = auxiliaries.find((a) => a.id === id);
 	if (!auxiliary) return;
-	updateParameterProperty(auxiliary);
-}
-
-// Gets states, vertices, stocks (no stock type yet)
-export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			return model.model?.vertices ?? [];
-		case AMRSchemaNames.PETRINET:
-			return model.model?.states ?? [];
-		case AMRSchemaNames.STOCKFLOW:
-			return model.model?.stocks ?? [];
-		default:
-			return [];
-	}
+	updateVariableProperty(auxiliary, key, value);
 }
 
 export function updateState(model: Model, id: string, key: string, value: any) {
-	function updateStateProperty(s: PetriNetState & RegNetVertex) {
-		// TODO: Add support for editing concept/grounding and description
-		// Consider checking if the key passed is a valid property within the acceptable types?
-		if (key === 'unitExpression') {
-			if (!s.initial) s.initial = { expression: '', expression_mathml: '' };
-			s.initial.expression = value;
-			s.initial.expression_mathml = `<ci>${value}</ci>`;
-		} else {
-			s[key] = value;
-		}
-	}
 	const states = getStates(model);
 	const state = states.find((i: any) => i.id === id);
 	if (!state) return;
-	updateStateProperty(state);
+	updateVariableProperty(state, key, value);
 }
 
 export function updateObservable(model: Model, id: string, key: string, value: any) {
@@ -288,12 +260,21 @@ export function updateTransition(model: Model, id: string, key: string, value: a
 
 export function updateTime(model: Model, key: string, value: any) {
 	const time: { id: string; units?: ModelUnit } = model?.semantics?.ode?.time;
-	if (key === 'unitExpression') {
-		if (!time.units) time.units = { expression: '', expression_mathml: '' };
-		time.units.expression = value;
-		time.units.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		time[key] = value;
+	updateVariableProperty(time, key, value);
+}
+
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (PetriNetState & RegNetVertex)[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
 	}
 }
 
