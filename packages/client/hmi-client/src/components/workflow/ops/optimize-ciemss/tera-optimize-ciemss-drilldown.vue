@@ -733,7 +733,6 @@ const runOptimize = async () => {
 		optimizePayload.extra.inferredParameters = inferredParameters.value[0];
 	}
 
-	console.log(optimizePayload);
 	const optResult = await makeOptimizeJobCiemss(optimizePayload, nodeMetadata(props.node));
 	const state = _.cloneDeep(props.node.state);
 	state.inProgressOptimizeId = optResult.simulationId;
