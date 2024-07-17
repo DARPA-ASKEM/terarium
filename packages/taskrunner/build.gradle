@@ -6,7 +6,10 @@ plugins {
 
 group = 'software.uncharted'
 version = '1.0.0-SNAPSHOT'
-sourceCompatibility = '17'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
 
 buildDir = project.hasProperty('customBuildDir') ? project.getProperty('customBuildDir') : buildDir
 
