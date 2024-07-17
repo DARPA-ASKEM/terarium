@@ -11,17 +11,9 @@ const CATEGORICAL_SCHEME = [
 ];
 
 export interface ForecastChartOptions {
-	variables?: string[];
-	statisticalVariables?: string[];
-	groundTruthVariables?: string[];
-
 	legend: boolean;
-
 	translationMap?: Record<string, string>;
-
 	colorscheme?: string[];
-	timeField: string;
-	groupField: string;
 
 	title?: string;
 	xAxisTitle: string;
@@ -31,8 +23,18 @@ export interface ForecastChartOptions {
 	height: number;
 }
 
+export interface ForecastChartLayer {
+	dataset: Record<string, any>[];
+	variables: string[];
+	timeField: string;
+	groupField?: string;
+}
+
 /**
- * Generate Vegalite specs for simulation/forecast charts
+ * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
+ *  - sampling layer: multiple forecast runsk
+ *  - statistics layer: statistical aggregate of the sampling layer
+ *  - ground truth layer: any grounding data
  *
  * Data comes in as a list of multi-variate objects:
  *   [ { time: 1, var1: 0.2, var2: 0.5, var3: 0.1 }, ... ]
@@ -48,9 +50,9 @@ export interface ForecastChartOptions {
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
 export const createForecastChart = (
-	sampleRunData: Record<string, any>[],
-	statisticData: Record<string, any>[],
-	groundTruthData: Record<string, any>[],
+	samplingLayer: ForecastChartLayer | null,
+	statisticsLayer: ForecastChartLayer | null,
+	groundTruthLayer: ForecastChartLayer | null,
 	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
@@ -110,81 +112,58 @@ export const createForecastChart = (
 		}
 	};
 
-	// Build sample layer
-	if (sampleRunData && sampleRunData.length > 0) {
-		const sampleVariables = options.variables?.map((d) => d);
-
-		spec.layer.push({
-			mark: { type: 'line' },
-			data: { values: sampleRunData },
+	// Helper function to capture common layer structure
+	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const header = {
+			mark: { type: markType },
+			data: { values: layer.dataset },
 			transform: [
 				{
-					fold: sampleVariables,
-					as: ['sample_variable', 'sample_value']
+					fold: layer.variables,
+					as: ['variableField', 'valueField']
 				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'sample_variable',
-					type: 'nominal',
-					scale: {
-						domain: sampleVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false // No legend for sampling-layer, too noisy
+			]
+		};
+		const encoding = {
+			x: { field: layer.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'variableField',
+				type: 'nominal',
+				scale: {
+					domain: layer.variables,
+					range: options.colorscheme || CATEGORICAL_SCHEME
 				},
-				detail: { field: options.groupField, type: 'nominal' },
-				strokeWidth: { value: 1 },
-				opacity: { value: 0.1 }
+				legend: false
 			}
+		};
+
+		return {
+			...header,
+			encoding
+		} as any;
+	};
+
+	// Build sample layer
+	if (samplingLayer) {
+		const layerSpec = newLayer(samplingLayer, 'line');
+
+		Object.assign(layerSpec.encoding, {
+			detail: { field: samplingLayer.groupField, type: 'nominal' },
+			strokeWidth: { value: 1 },
+			opacity: { value: 0.1 }
 		});
+
+		spec.layer.push(layerSpec);
 	}
 
 	// Build statistical layer
-	if (statisticData && statisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => {
-			const tip: any = {
-				field: d,
-				type: 'quantitative',
-				format: '.4f'
-			};
-
-			if (options.translationMap && options.translationMap[d]) {
-				tip.title = options.translationMap[d];
-			}
-
-			return tip;
+	if (statisticsLayer) {
+		const layerSpec = newLayer(statisticsLayer, 'line');
+		Object.assign(layerSpec.encoding, {
+			opacity: { value: 1.0 },
+			strokeWidth: { value: 2 }
 		});
-
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: statisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				},
-				opacity: { value: 1.0 },
-				strokeWidth: { value: 2 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
@@ -208,32 +187,8 @@ export const createForecastChart = (
 	}
 
 	// Build ground truth layer
-	if (groundTruthData && groundTruthData.length > 0) {
-		const groundTruthVariables = options.groundTruthVariables?.map((d) => d);
-
-		const layerSpec: any = {
-			mark: { type: 'point' },
-			data: { values: groundTruthData },
-			transform: [
-				{
-					fold: groundTruthVariables,
-					as: ['ground_variable', 'ground_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'ground_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'ground_variable',
-					type: 'nominal',
-					scale: {
-						domain: groundTruthVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				}
-			}
-		};
+	if (groundTruthLayer) {
+		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
@@ -251,9 +206,8 @@ export const createForecastChart = (
 
 	// Build a transparent layer with fat lines as a better hover target for tooltips
 	// Re-Build statistical layer
-	if (statisticData && statisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => {
+	if (statisticsLayer) {
+		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
 				type: 'quantitative',
@@ -267,32 +221,15 @@ export const createForecastChart = (
 			return tip;
 		});
 
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: statisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				},
-				opacity: { value: 0 },
-				strokeWidth: { value: 16 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
+		const layerSpec = newLayer(statisticsLayer, 'line');
+		Object.assign(layerSpec.encoding, {
+			opacity: { value: 0 },
+			strokeWidth: { value: 16 },
+			tooltip: [
+				{ field: statisticsLayer.timeField, type: 'quantitative' },
+				...(tooltipContent || [])
+			]
+		});
 		spec.layer.push(layerSpec);
 	}
 

@@ -324,21 +324,29 @@ const preparedCharts = computed(() => {
 	}
 
 	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(result, [], groundTruth, {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: config.map((d) => pyciemssMap[d]),
-			statisticalVariables: [],
-			groundTruthVariables: ['noninf'],
-
-			legend: true,
-			translationMap: reverseMap,
-
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: ''
-		})
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			null,
+			{
+				dataset: groundTruth,
+				variables: ['noninf'],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: 'Time',
+				yAxisTitle: ''
+			}
+		)
 	);
 });
 
