@@ -1,29 +1,29 @@
 <template>
 	<section>
 		<h6>
-			<template v-if="variable.templateId">{{ variable.templateId }},</template> {{ variable.id }}
+			<template v-if="item.templateId">{{ item.templateId }},</template> {{ item.id }}
 		</h6>
 		<tera-input
 			title="Name"
 			placeholder="Add a name"
-			:model-value="variable.name ?? ''"
-			@update:model-value="$emit('update-variable', { key: 'name', value: $event })"
+			:model-value="item.name ?? ''"
+			@update:model-value="$emit('update-item', { key: 'name', value: $event })"
 			:disabled="disabledInputs?.includes('name')"
 		/>
-		<div v-if="variable.input && variable.output" label="Unit">
-			<span><span>Input:</span> {{ variable.input }}</span>
-			<span><span>Output:</span> {{ variable.output }}</span>
+		<div v-if="item.input && item.output" label="Unit">
+			<span><span>Input:</span> {{ item.input }}</span>
+			<span><span>Output:</span> {{ item.output }}</span>
 		</div>
 		<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 		<tera-input
 			v-else
 			label="Unit"
 			placeholder="Add a unit"
-			:model-value="variable.unitExpression ?? ''"
+			:model-value="item.unitExpression ?? ''"
 			@update:model-value="
 				($event) => {
 					const value = $event.replace(/[\s.]+/g, '');
-					$emit('update-variable', { key: 'unitExpression', value });
+					$emit('update-item', { key: 'unitExpression', value });
 				}
 			"
 			:disabled="disabledInputs?.includes('unitExpression')"
@@ -39,15 +39,15 @@
 		/>
 		<katex-element
 			class="expression"
-			v-if="variable.expression"
-			:expression="variable.expression"
+			v-if="item.expression"
+			:expression="item.expression"
 			:throw-on-error="false"
 		/>
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
-			:model-value="variable.description ?? ''"
-			@update:model-value="$emit('update-variable', { key: 'description', value: $event })"
+			:model-value="item.description ?? ''"
+			@update:model-value="$emit('update-item', { key: 'description', value: $event })"
 			:disabled="disabledInputs?.includes('description')"
 		/>
 	</section>
@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import TeraInput from '@/components/widgets/tera-input.vue';
-import type { ModelVariable } from '@/types/Model';
+import type { ModelPartItem } from '@/types/Model';
 
 // import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 // getNameOfCurieCached(
@@ -64,11 +64,11 @@ import type { ModelVariable } from '@/types/Model';
 // 	)
 
 defineProps<{
-	variable: ModelVariable;
+	item: ModelPartItem;
 	disabledInputs?: string[];
 }>();
 
-defineEmits(['update-variable']);
+defineEmits(['update-item']);
 </script>
 
 <style scoped>

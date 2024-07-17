@@ -1,15 +1,15 @@
 <template>
 	<tera-model-part
-		:variable-list="stateList"
-		:collapsed-variables="collapsedInitials"
+		:model-part-items="stateList"
+		:collapsed-items="collapsedInitials"
 		:disabled-inputs="['concept']"
-		@update-variable="emit('update-state', $event)"
+		@update-item="emit('update-state', $event)"
 	/>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ModelVariable } from '@/types/Model';
+import { ModelPartItem } from '@/types/Model';
 import { Model } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
@@ -27,8 +27,8 @@ const states = computed(() => getStates(props.model)); // could be states, verti
 const collapsedInitials = computed(() => collapseInitials(props.mmt));
 const stateList = computed<
 	{
-		base: ModelVariable;
-		children: ModelVariable[];
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[]
 >(() =>
@@ -47,10 +47,10 @@ const stateList = computed<
 					unitExpression: s.units?.expression
 				};
 			})
-			.filter(Boolean) as ModelVariable[];
+			.filter(Boolean) as ModelPartItem[];
 
 		const baseState: any = states.value.find((s) => s.id === id);
-		const base: ModelVariable =
+		const base: ModelPartItem =
 			isParent || !baseState
 				? { id }
 				: {

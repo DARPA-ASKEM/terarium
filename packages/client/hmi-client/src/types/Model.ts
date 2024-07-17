@@ -9,7 +9,7 @@ export type ModelSearchParams = {
 
 // These are common properties among states, parameters, transitions, observables, etc
 // Useful for UI components that need to display these properties
-export type ModelVariable = {
+export type ModelPartItem = {
 	id: string;
 	name?: string;
 	description?: string;

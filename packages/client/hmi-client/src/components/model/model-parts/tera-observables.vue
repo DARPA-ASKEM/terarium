@@ -1,6 +1,6 @@
 <template>
 	<tera-model-part
-		:variable-list="observablesList"
+		:model-part-items="observablesList"
 		:disabled-inputs="['concept']"
 		@update-observable="emit('update-observable', $event)"
 	/>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ModelVariable } from '@/types/Model';
+import { ModelPartItem } from '@/types/Model';
 import { Model, Observable } from '@/types/Types';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
@@ -23,8 +23,8 @@ const emit = defineEmits(['update-observable']);
 
 const observablesList = computed<
 	{
-		base: ModelVariable;
-		children: ModelVariable[];
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[]
 >(() =>

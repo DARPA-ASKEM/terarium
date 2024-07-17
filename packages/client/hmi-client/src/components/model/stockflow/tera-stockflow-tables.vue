@@ -32,7 +32,7 @@
 				:model="model"
 				:mmt="mmt"
 				:observables="observables"
-				@update-variable="emit('update-observable', $event)"
+				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>

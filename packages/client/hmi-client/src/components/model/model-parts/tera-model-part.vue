@@ -1,6 +1,6 @@
 <template>
 	<ul>
-		<li v-for="({ base, children, isParent }, index) in variableList" :key="index">
+		<li v-for="({ base, children, isParent }, index) in modelPartItems" :key="index">
 			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
@@ -105,18 +105,18 @@
 				<ul v-if="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
 						<tera-model-part-entry
-							:variable="child"
+							:item="child"
 							:disabled-inputs="disabledInputs"
-							@update-variable="$emit('update-variable', { id: child.id, ...$event })"
+							@update-item="$emit('update-item', { id: child.id, ...$event })"
 						/>
 					</li>
 				</ul>
 			</template>
 			<tera-model-part-entry
 				v-else
-				:variable="base"
+				:item="base"
 				:disabled-inputs="disabledInputs"
-				@update-variable="$emit('update-variable', { id: base.id, ...$event })"
+				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -125,23 +125,23 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
-import { ModelVariable } from '@/types/Model';
+import { ModelPartItem } from '@/types/Model';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
-	variableList: {
-		base: ModelVariable;
-		children: ModelVariable[];
+	modelPartItems: {
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[];
-	collapsedVariables?: Map<string, string[]>;
+	collapsedItems?: Map<string, string[]>;
 	disabledInputs?: string[];
 	showMatrix?: boolean;
 }>();
 
-const emit = defineEmits(['update-variable', 'open-matrix']);
+const emit = defineEmits(['update-item', 'open-matrix']);
 
 const parentEditingState = ref<
 	{
@@ -153,7 +153,7 @@ const parentEditingState = ref<
 	}[]
 >([]);
 onMounted(() => {
-	parentEditingState.value = Array.from({ length: props.variableList.length }, () => ({
+	parentEditingState.value = Array.from({ length: props.modelPartItems.length }, () => ({
 		showChildren: false,
 		isEditingChildrenUnits: false,
 		isEditingChildrenConcepts: false,
@@ -163,9 +163,9 @@ onMounted(() => {
 });
 
 function updateAllChildren(base: string, key: string, value: string) {
-	if (isEmpty(value) || !props.collapsedVariables) return;
-	const ids = props.collapsedVariables.get(base);
-	ids?.forEach((id) => emit('update-variable', { id, key, value }));
+	if (isEmpty(value) || !props.collapsedItems) return;
+	const ids = props.collapsedItems.get(base);
+	ids?.forEach((id) => emit('update-item', { id, key, value }));
 }
 </script>
 

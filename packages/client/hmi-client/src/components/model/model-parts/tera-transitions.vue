@@ -1,10 +1,10 @@
 <template>
 	<tera-model-part
-		:variable-list="transitionsList"
+		:model-part-items="transitionsList"
 		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
-		@update-variable="$emit('update-transition', $event)"
+		@update-item="$emit('update-transition', $event)"
 	/>
 	<teleport to="body">
 		<tera-stratified-matrix-modal
@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
-import type { ModelVariable } from '@/types/Model';
+import type { ModelPartItem } from '@/types/Model';
 import type { Transition } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseTemplates } from '@/model-representation/mira/mira';
@@ -41,8 +41,8 @@ const collapsedTemplates = computed(() => collapseTemplates(props.mmt));
 
 const transitionsList = computed<
 	{
-		base: ModelVariable;
-		children: ModelVariable[];
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[]
 >(() =>
@@ -65,10 +65,10 @@ const transitionsList = computed<
 					output: t.output.join(', ')
 				};
 			})
-			.filter(Boolean) as ModelVariable[];
+			.filter(Boolean) as ModelPartItem[];
 
 		const baseTransition = props.transitions.find((t) => t.id === referencedTransitions[0].name);
-		const base: ModelVariable =
+		const base: ModelPartItem =
 			isParent || !baseTransition
 				? { id: templateId }
 				: {

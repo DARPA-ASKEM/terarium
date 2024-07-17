@@ -1,11 +1,11 @@
 <template>
 	<tera-model-part
-		:variable-list="parameterList"
-		:collapsed-variables="collapsedParameters"
+		:model-part-items="parameterList"
+		:collapsed-items="collapsedParameters"
 		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
-		@update-variable="emit('update-parameter', $event)"
+		@update-item="emit('update-parameter', $event)"
 	/>
 	<teleport to="body">
 		<tera-stratified-matrix-modal
@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { StratifiedMatrix } from '@/types/Model';
-import type { ModelVariable } from '@/types/Model';
+import type { ModelPartItem } from '@/types/Model';
 import { Model } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
@@ -43,8 +43,8 @@ const parameters = computed(() => getParameters(props.model));
 const collapsedParameters = computed(() => collapseParameters(props.mmt, props.mmtParams));
 const parameterList = computed<
 	{
-		base: ModelVariable;
-		children: ModelVariable[];
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[]
 >(() =>
@@ -63,10 +63,10 @@ const parameterList = computed<
 					unitExpression: p.units?.expression
 				};
 			})
-			.filter(Boolean) as ModelVariable[];
+			.filter(Boolean) as ModelPartItem[];
 
 		const baseParameter = parameters.value.find((p) => p.id === id);
-		const base: ModelVariable =
+		const base: ModelPartItem =
 			isParent || !baseParameter
 				? { id }
 				: {

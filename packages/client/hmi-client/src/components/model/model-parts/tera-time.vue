@@ -1,14 +1,14 @@
 <template>
 	<tera-model-part
-		:variable-list="timeList"
+		:model-part-items="timeList"
 		:disabled-inputs="['concept']"
-		@update-variable="$emit('update-time', $event)"
+		@update-item="$emit('update-time', $event)"
 	/>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ModelVariable } from '@/types/Model';
+import { ModelPartItem } from '@/types/Model';
 import type { State } from '@/types/Types';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 
@@ -20,8 +20,8 @@ const props = defineProps<{
 
 const timeList = computed<
 	{
-		base: ModelVariable;
-		children: ModelVariable[];
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[]
 >(() =>
