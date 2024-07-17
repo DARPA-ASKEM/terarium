@@ -104,7 +104,6 @@
 					:summary-id="node.state.summaryId"
 				/>
 				<div class="flex flex-row align-items-center gap-2">
-					What do you want to see?
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -300,19 +299,35 @@ const preparedCharts = computed(() => {
 	const result = runResults.value[selectedRunId.value];
 	const resultSummary = runResultsSummary.value[selectedRunId.value];
 
-	return props.node.state.chartConfigs.map((config) =>
-		createForecastChart(result, resultSummary, [], {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: config.map((d) => pyciemssMap[d]),
-			statisticalVariables: config.map((d) => `${pyciemssMap[d]}_mean`),
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
 
-			legend: false,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: ''
-		})
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				timeField: 'timepoint_id'
+			},
+			null,
+			// options
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: 'Time',
+				yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+			}
+		)
 	);
 });
 

@@ -1,15 +1,10 @@
 <template>
 	<div class="policy-card" :class="{ 'card-selected': selected }">
 		<div>
-			<span class="flex align-items-center"
-				><h6>{{ interventionPolicy.name }}</h6>
-				<Button
-					class="ml-auto"
-					text
-					icon="pi pi-ellipsis-v"
-					@click.stop="toggleContextMenu"
-				></Button
-			></span>
+			<span class="flex align-items-center">
+				<h6>{{ interventionPolicy.name }}</h6>
+				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
+			</span>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
 			<p>{{ interventionPolicy.description }}</p>
 			<p>{{ formatTimestamp(interventionPolicy.createdOn) }}</p>
