@@ -139,10 +139,10 @@ import type {
 	MiraTemplateParams,
 	ObservableSummary
 } from '@/model-representation/mira/mira-common';
-import TeraStates from '@/components/model/variables/tera-states.vue';
-import TeraParameters from '@/components/model/variables/tera-parameters.vue';
-import TeraObservables from '@/components/model/variables/tera-observables.vue';
-import TeraTime from '@/components/model/variables/tera-time.vue';
+import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraTime from '@/components/model/model-parts/tera-time.vue';
 
 const props = defineProps<{
 	model: Model;

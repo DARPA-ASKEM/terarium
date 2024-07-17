@@ -1,5 +1,5 @@
 <template>
-	<tera-variables
+	<tera-model-part
 		:variable-list="parameterList"
 		:collapsed-variables="collapsedParameters"
 		:disabled-inputs="['concept']"
@@ -28,7 +28,7 @@ import { Model } from '@/types/Types';
 import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { getParameters } from '@/model-representation/service';
 import { collapseParameters } from '@/model-representation/mira/mira';
-import TeraVariables from '@/components/model/variables/tera-variables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{

@@ -1,5 +1,5 @@
 <template>
-	<tera-variables
+	<tera-model-part
 		:variable-list="stateList"
 		:collapsed-variables="collapsedInitials"
 		:disabled-inputs="['concept']"
@@ -14,7 +14,7 @@ import { Model } from '@/types/Types';
 import { getStates } from '@/model-representation/service';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { collapseInitials } from '@/model-representation/mira/mira';
-import TeraVariables from '@/components/model/variables/tera-variables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 
 const props = defineProps<{
 	model: Model;

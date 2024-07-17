@@ -75,11 +75,11 @@ import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import TeraStates from '@/components/model/variables/tera-states.vue';
-import TeraParameters from '@/components/model/variables/tera-parameters.vue';
-import TeraObservables from '@/components/model/variables/tera-observables.vue';
-import TeraTransitions from '@/components/model/variables/tera-transitions.vue';
-import TeraTime from '@/components/model/variables/tera-time.vue';
+import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
+import TeraTime from '@/components/model/model-parts/tera-time.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{

@@ -1,5 +1,5 @@
 <template>
-	<tera-variables
+	<tera-model-part
 		:variable-list="observablesList"
 		:disabled-inputs="['concept']"
 		@update-observable="emit('update-observable', $event)"
@@ -11,7 +11,7 @@ import { computed } from 'vue';
 import { ModelVariable } from '@/types/Model';
 import { Model, Observable } from '@/types/Types';
 import { MiraModel } from '@/model-representation/mira/mira-common';
-import TeraVariables from '@/components/model/variables/tera-variables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 
 const props = defineProps<{
 	model: Model;

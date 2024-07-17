@@ -32,7 +32,7 @@
 				<!-- TODO: Reset and Save as buttons
 				<Button label="Reset" severity="secondary" outlined />
 				<Button label="Save as..." severity="secondary" outlined /> -->
-				<Button label="Save" @click="teraModelVariablesRef?.saveChanges()" />
+				<Button label="Save" @click="teraModelPartsRef?.saveChanges()" />
 			</div>
 		</template>
 		<section v-if="model">
@@ -42,8 +42,8 @@
 				@model-updated="fetchModel"
 				@update-model="updateModelContent"
 			/>
-			<tera-model-variables
-				ref="teraModelVariablesRef"
+			<tera-model-parts
+				ref="teraModelPartsRef"
 				class="mt-0"
 				:model="model"
 				@update-model="updateModelContent"
@@ -58,7 +58,7 @@ import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelVariables from '@/components/model/tera-model-variables.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
@@ -81,7 +81,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close-preview']);
 
-const teraModelVariablesRef = ref();
+const teraModelPartsRef = ref();
 
 const model = ref<Model | null>(null);
 const newName = ref('New Model');

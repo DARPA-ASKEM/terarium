@@ -1,5 +1,5 @@
 <template>
-	<tera-variables
+	<tera-model-part
 		:variable-list="timeList"
 		:disabled-inputs="['concept']"
 		@update-variable="$emit('update-time', $event)"
@@ -10,7 +10,7 @@
 import { computed } from 'vue';
 import { ModelVariable } from '@/types/Model';
 import type { State } from '@/types/Types';
-import TeraVariables from '@/components/model/variables/tera-variables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 
 defineEmits(['update-time']);
 

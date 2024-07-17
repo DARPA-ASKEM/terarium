@@ -1,6 +1,6 @@
 <template>
 	<component
-		:is="variablesComponent"
+		:is="partsComponent"
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
@@ -47,7 +47,7 @@ const transientModel = ref(cloneDeep(props.model));
 
 const modelType = computed(() => getModelType(props.model));
 
-const variablesComponent = computed(() => {
+const partsComponent = computed(() => {
 	switch (modelType.value) {
 		case AMRSchemaNames.PETRINET:
 			return TeraPetrinetTables;

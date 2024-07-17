@@ -1,5 +1,5 @@
 <template>
-	<tera-variables
+	<tera-model-part
 		:variable-list="transitionsList"
 		:disabled-inputs="['concept']"
 		show-matrix
@@ -26,7 +26,7 @@ import type { ModelVariable } from '@/types/Model';
 import type { Transition } from '@/types/Types';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseTemplates } from '@/model-representation/mira/mira';
-import TeraVariables from '@/components/model/variables/tera-variables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 
 const props = defineProps<{

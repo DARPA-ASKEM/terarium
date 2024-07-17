@@ -95,7 +95,7 @@ import type {
 	MiraTemplateParams,
 	ObservableSummary
 } from '@/model-representation/mira/mira-common';
-import TeraParameters from '@/components/model/variables/tera-parameters.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 
 const props = defineProps<{
 	model: Model;

@@ -85,7 +85,7 @@
 					/>
 					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
-						<tera-model-variables :model="stratifiedAmr" :is-editable="false" />
+						<tera-model-parts :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
@@ -111,7 +111,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelVariables from '@/components/model/tera-model-variables.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
