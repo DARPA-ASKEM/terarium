@@ -1,6 +1,6 @@
 <template>
 	<tera-model-part
-		:model-part-items="observablesList"
+		:items="observablesList"
 		:disabled-inputs="['concept']"
 		@update-observable="emit('update-observable', $event)"
 	/>

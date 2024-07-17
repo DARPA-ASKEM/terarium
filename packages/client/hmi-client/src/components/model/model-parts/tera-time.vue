@@ -1,6 +1,6 @@
 <template>
 	<tera-model-part
-		:model-part-items="timeList"
+		:items="timeList"
 		:disabled-inputs="['concept']"
 		@update-item="$emit('update-time', $event)"
 	/>

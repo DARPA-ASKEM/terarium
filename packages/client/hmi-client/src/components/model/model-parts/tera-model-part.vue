@@ -1,6 +1,6 @@
 <template>
 	<ul>
-		<li v-for="({ base, children, isParent }, index) in modelPartItems" :key="index">
+		<li v-for="({ base, children, isParent }, index) in items" :key="index">
 			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
@@ -131,7 +131,7 @@ import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
-	modelPartItems: {
+	items: {
 		base: ModelPartItem;
 		children: ModelPartItem[];
 		isParent: boolean;
@@ -153,7 +153,7 @@ const parentEditingState = ref<
 	}[]
 >([]);
 onMounted(() => {
-	parentEditingState.value = Array.from({ length: props.modelPartItems.length }, () => ({
+	parentEditingState.value = Array.from({ length: props.items.length }, () => ({
 		showChildren: false,
 		isEditingChildrenUnits: false,
 		isEditingChildrenConcepts: false,

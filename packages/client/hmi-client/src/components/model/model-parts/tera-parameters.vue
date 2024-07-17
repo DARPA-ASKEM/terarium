@@ -1,6 +1,6 @@
 <template>
 	<tera-model-part
-		:model-part-items="parameterList"
+		:items="parameterList"
 		:collapsed-items="collapsedParameters"
 		:disabled-inputs="['concept']"
 		show-matrix

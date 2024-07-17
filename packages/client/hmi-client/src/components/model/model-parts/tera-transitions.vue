@@ -1,6 +1,6 @@
 <template>
 	<tera-model-part
-		:model-part-items="transitionsList"
+		:items="transitionsList"
 		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
