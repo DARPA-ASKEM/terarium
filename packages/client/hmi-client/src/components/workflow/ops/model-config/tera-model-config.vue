@@ -290,7 +290,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import { isModelMissingMetadata } from '@/model-representation/service';
-import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -464,22 +463,6 @@ const initializeEditor = (editorInstance: any) => {
 	editor = editorInstance;
 };
 
-const handleConfigModelResp = async (resp: TaskResponse, type: ClientEventType) => {
-	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: modelFromDocumentTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: modelFromDatasetTaskId
-	};
-	taskIdRefs[type].value = [TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(
-		resp.status
-	)
-		? ''
-		: resp.id;
-	if (resp.status !== TaskStatus.Success) return;
-	const outputJSON = JSON.parse(b64DecodeUnicode(resp.output));
-	console.debug('Task success', outputJSON);
-	if (model.value?.id) fetchConfigurations(model.value.id);
-};
-
 const extractConfigurationsFromInputs = async () => {
 	console.group('Extracting configurations from inputs');
 	if (!model.value?.id) {
@@ -494,7 +477,7 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		handleConfigModelResp(resp, ClientEventType.TaskGollmConfigureModel);
+		documentModelConfigTaskId.value = resp.id;
 	}
 	if (datasetIds.value) {
 		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
@@ -506,18 +489,23 @@ const extractConfigurationsFromInputs = async () => {
 			props.node.workflowId,
 			props.node.id
 		);
-		handleConfigModelResp(resp, ClientEventType.TaskGollmConfigureFromDataset);
+		datasetModelConfigTaskId.value = resp.id;
 	}
 	console.groupEnd();
 };
 
-const configModelEventHandler = (event: ClientEvent<TaskResponse>) => {
+const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 	const taskIdRefs = {
-		[ClientEventType.TaskGollmConfigureModel]: modelFromDocumentTaskId,
-		[ClientEventType.TaskGollmConfigureFromDataset]: modelFromDatasetTaskId
+		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
+		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
 	};
 	if (event.data?.id !== taskIdRefs[event.type].value) return;
-	handleConfigModelResp(event.data, event.type);
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		taskIdRefs[event.type].value = '';
+	}
+	if (event.data.status !== TaskStatus.Success) return;
+	console.debug('Model configured successfully', event);
+	if (model.value?.id) await fetchConfigurations(model.value.id);
 };
 
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
@@ -549,10 +537,13 @@ const suggestedConfigurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentTaskId = ref('');
-const modelFromDatasetTaskId = ref('');
+const documentModelConfigTaskId = ref('');
+const datasetModelConfigTaskId = ref('');
 const isLoading = computed(
-	() => modelFromDocumentTaskId.value || modelFromDatasetTaskId.value || isFetching.value
+	() =>
+		documentModelConfigTaskId.value !== '' ||
+		datasetModelConfigTaskId.value !== '' ||
+		isFetching.value
 );
 
 const model = ref<Model | null>(null);
