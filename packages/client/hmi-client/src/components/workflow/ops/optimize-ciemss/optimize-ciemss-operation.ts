@@ -8,8 +8,8 @@ const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum InterventionTypes {
-	paramValue = 'param_value',
-	startTime = 'start_time'
+	paramValue = 'param_value', // provide a parameter value to get a better start time.
+	startTime = 'start_time' // provide a statr time to get a better parameter value.
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
 	// ,paramValueAndStartTime = 'param_value_and_start_time'
 }
@@ -219,7 +219,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			});
 		}
 	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
-		// If we our intervention type is start time our policyResult will provide a value.
+		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
 				name: `Optimized ${paramNames[i]}`,
