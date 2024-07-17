@@ -42,10 +42,9 @@ public class ScenarioExtraction {
 				parameter.setValue(value);
 			}
 			if (conditionParameter.has("distribution")) {
-				ObjectMapper mapper = new ObjectMapper();
-				ModelDistribution distribution;
 				try {
-					distribution = mapper.treeToValue(conditionParameter.get("distribution"), ModelDistribution.class);
+					ObjectMapper mapper = new ObjectMapper();
+					ModelDistribution distribution = mapper.treeToValue(conditionParameter.get("distribution"), ModelDistribution.class);
 					parameter.setDistribution(distribution);
 				} catch (JsonProcessingException e) {
 					log.error("Failed to parse distribution for parameter: {}", parameter.getId());
