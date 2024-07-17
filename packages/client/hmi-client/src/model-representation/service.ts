@@ -255,6 +255,9 @@ export function updateTransition(model: Model, id: string, key: string, value: a
 	const transition = transitions.find((t) => t.id === id);
 	if (!transition) return;
 	transition[key] = value;
+	if (transition.properties && key === 'name') {
+		transition.properties.name = value;
+	}
 }
 
 export function updateTime(model: Model, key: string, value: any) {

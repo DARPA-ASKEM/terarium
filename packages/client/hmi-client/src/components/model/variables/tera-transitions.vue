@@ -54,7 +54,6 @@ const transitionsList = computed<
 				const t = props.transitions.find(
 					(transition) => transition.id === referencedTransition.name
 				);
-				// console.log(t);
 				if (!t) return null;
 				return {
 					id: t.id,
@@ -62,8 +61,8 @@ const transitionsList = computed<
 					description: t.description,
 					grounding: t.grounding,
 					expression: t.expression,
-					input: t.input,
-					output: t.output
+					input: t.input.join(', '),
+					output: t.output.join(', ')
 				};
 			})
 			.filter(Boolean) as ModelVariable[];
@@ -79,8 +78,8 @@ const transitionsList = computed<
 						grounding: baseTransition.grounding,
 						expression: baseTransition.expression,
 						templateId,
-						input: baseTransition.input,
-						output: baseTransition.output
+						input: baseTransition.input.join(', '),
+						output: baseTransition.output.join(', ')
 					};
 
 		return { base, children, isParent };

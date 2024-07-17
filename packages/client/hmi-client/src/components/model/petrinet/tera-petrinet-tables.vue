@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Model } from '@/types/Types';
+import type { Model, Transition, State } from '@/types/Types';
 import { groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -107,25 +107,14 @@ const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const states = computed(() => props.model?.model?.states ?? []);
-const transitions = computed(() => {
-	const results: any[] = [];
-	if (props.model?.model?.transitions) {
-		props.model.model.transitions.forEach((t) => {
-			results.push({
-				id: t.id,
-				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
-				expression:
-					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
-					null,
-				extractions: extractions?.[t.id] ?? null
-			});
-		});
-	}
-	return results;
-});
+const states = computed<State[]>(() => props.model?.model?.states ?? []);
+const transitions = computed<Transition[]>(() =>
+	props.model.model.transitions?.map((transition: Transition) => ({
+		...transition,
+		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)
+			?.expression
+	}))
+);
 const otherConcepts = computed(() => {
 	const ids = [
 		...(states.value?.map((s) => s.id) ?? []),
