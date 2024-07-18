@@ -2,3 +2,6 @@
 # Move to Spotless formatting with Palantir's Java format
 437cb30c390af85d330a4bbcece634c55e0ab5aa
 bf85395f0471c427d13acfdfd726f7f667d4ed63
+
+# Move to Prettier formatting
+e987b962a587a358c86b3dfcd42b84520bfc6040
