@@ -283,7 +283,7 @@ function formatSuccessChartData(
 ) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
-if (isEmpty(data)) {
+	if (isEmpty(data)) {
 		return [];
 	}
 
