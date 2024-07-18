@@ -43,16 +43,16 @@ export function numberToNist(num: string) {
 /**
  * Converts a NIST number form to string form.
  *
- * @param {string} number - The number in NIST form to convert.
+ * @param {string} nist - The number in NIST form to convert.
  * @returns {string} The number in string form.
  */
-export function nistToString(number: string): string {
+export function nistToString(nist: string): string {
 	// test if the value is formatted as NIST (contained digits and whitespace between them)
-	if (/^\d+(\s\d+)*$/.test(number)) {
+	if (/^\d+(\s\d+)*$/.test(nist)) {
 		// remove all whitespace
-		return number.replace(/\s/g, '');
+		return nist.replace(/\s/g, '');
 	}
-	return number;
+	return nist;
 }
 
 /**
