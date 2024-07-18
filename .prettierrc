@@ -3,6 +3,6 @@
 bracketSpacing: true
 printWidth: 100
 plugins:
-	- prettier-plugin-java
+ - prettier-plugin-java
 singleQuote: true
 trailingComma: "none"
