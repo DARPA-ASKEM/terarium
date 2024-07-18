@@ -1390,7 +1390,7 @@ export enum SimulationEngine {
 }
 
 export enum InterventionSemanticType {
-    Variable = "variable",
+    State = "state",
     Parameter = "parameter",
 }
 
