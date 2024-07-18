@@ -44,7 +44,7 @@ import {
 	getRunResultCSV,
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
-import { nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -213,7 +213,7 @@ Provide a consis summary in 100 words or less.
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
-				label: `Simulation output - ${props.node.outputs.length + 1}`,
+				label: nodeOutputLabel(props.node, `Simulation output`),
 				value: [postSimId],
 				isSelected: false,
 				state
