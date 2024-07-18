@@ -15,8 +15,8 @@
 			<span class="expression">
 				<tera-input
 					label="Expression"
-					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
 					:model-value="getInitialExpression(modelConfiguration, initialId)"
+					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
 				/>
 			</span>
 			<Button
