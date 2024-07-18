@@ -31,11 +31,7 @@ public class AuthorityInstance {
 	}
 
 	private static byte authorityLevelsToMask(final List<AuthorityLevel> authorityLevels) {
-		return authorityLevels
-			.stream()
-			.map(AuthorityLevel::getMask)
-			.reduce((l1, l2) -> (byte) (l1 | l2))
-			.orElse((byte) 0);
+		return authorityLevels.stream().map(AuthorityLevel::getMask).reduce((l1, l2) -> (byte) (l1 | l2)).orElse((byte) 0);
 	}
 
 	@TSIgnore
@@ -50,9 +46,7 @@ public class AuthorityInstance {
 	@TSIgnore
 	@JsonIgnore
 	public List<AuthorityLevel> getAuthoriyLevels() {
-		return Arrays.stream(AuthorityLevel.values())
-			.filter(this::hasAuthorityLevel)
-			.collect(Collectors.toList());
+		return Arrays.stream(AuthorityLevel.values()).filter(this::hasAuthorityLevel).collect(Collectors.toList());
 	}
 
 	private boolean hasAuthorityLevel(final AuthorityLevel level) {

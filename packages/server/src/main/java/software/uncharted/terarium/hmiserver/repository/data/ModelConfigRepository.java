@@ -8,10 +8,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.configurat
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 
 @Repository
-public interface ModelConfigRepository
-	extends PSCrudSoftDeleteRepository<ModelConfiguration, UUID> {
-	List<ModelConfiguration> findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
-		UUID modelId,
-		Pageable pageable
-	);
+public interface ModelConfigRepository extends PSCrudSoftDeleteRepository<ModelConfiguration, UUID> {
+	List<ModelConfiguration> findByModelIdAndDeletedOnIsNullAndTemporaryFalse(UUID modelId, Pageable pageable);
 }

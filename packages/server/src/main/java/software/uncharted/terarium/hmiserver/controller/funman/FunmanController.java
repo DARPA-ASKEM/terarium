@@ -70,16 +70,8 @@ public class FunmanController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "400",
-				description = "Invalid input or bad request",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue dispatching the request",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
 	public ResponseEntity<Simulation> createValidationRequest(
@@ -101,10 +93,7 @@ public class FunmanController {
 			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("generic.io-error.write")
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
 		final Simulation sim = new Simulation();
@@ -119,10 +108,7 @@ public class FunmanController {
 			newSimulation = simulationService.createAsset(sim, projectId, permission);
 		} catch (final Exception e) {
 			log.error("An error occurred while trying to create a simulation asset.", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
@@ -134,22 +120,13 @@ public class FunmanController {
 			taskService.runTask(TaskMode.ASYNC, taskRequest);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("task.funman.json-processing")
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("task.funman.timeout")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.funman.timeout"));
 		} catch (final InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(
-				HttpStatus.UNPROCESSABLE_ENTITY,
-				messages.get("task.funman.interrupted")
-			);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.funman.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(

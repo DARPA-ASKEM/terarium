@@ -39,9 +39,7 @@ public class FrameworkController {
 				description = "Model framework created.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ModelFramework.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class)
 				)
 			)
 		}
@@ -62,25 +60,16 @@ public class FrameworkController {
 				description = "Model framework found.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ModelFramework.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no framework found",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content)
 		}
 	)
 	ResponseEntity<ModelFramework> getFramework(@PathVariable("id") final UUID id) {
 		final Optional<ModelFramework> framework = frameworkService.getFramework(id);
 		if (framework.isEmpty()) {
-			throw new ResponseStatusException(
-				HttpStatus.NOT_FOUND,
-				String.format("Framework %s not found", id)
-			);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Framework %s not found", id));
 		}
 		return ResponseEntity.ok(framework.get());
 	}
@@ -95,16 +84,10 @@ public class FrameworkController {
 				description = "Model framework updated.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ModelFramework.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelFramework.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no framework found",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "There was no framework found", content = @Content)
 		}
 	)
 	ResponseEntity<ModelFramework> updateFramework(
@@ -130,9 +113,7 @@ public class FrameworkController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			)

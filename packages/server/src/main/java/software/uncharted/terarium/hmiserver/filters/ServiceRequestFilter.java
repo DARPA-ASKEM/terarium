@@ -32,9 +32,7 @@ public class ServiceRequestFilter extends GenericFilterBean {
 		final ServletResponse servletResponse,
 		final FilterChain filterChain
 	) throws IOException, ServletException {
-		final HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper(
-			(HttpServletRequest) servletRequest
-		);
+		final HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper((HttpServletRequest) servletRequest);
 
 		// Get the authorization header from the wrappedRequest
 		final String authorizationHeader = wrappedRequest.getHeader("Authorization");

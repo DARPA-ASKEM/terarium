@@ -62,10 +62,7 @@ public class FlywayConfiguration {
 	 */
 	@Bean
 	@DependsOn("entityManagerFactory")
-	FlywayVoid delayedFlywayInitializer(
-		final Flyway flyway,
-		final FlywayProperties flywayProperties
-	) {
+	FlywayVoid delayedFlywayInitializer(final Flyway flyway, final FlywayProperties flywayProperties) {
 		Flyway flywayWithCorrectBaseline = flyway;
 		if (flywayProperties.isEnabled() && !isFlywayInitialized()) {
 			// get all migration names

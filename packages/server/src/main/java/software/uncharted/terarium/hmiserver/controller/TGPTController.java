@@ -36,12 +36,7 @@ public class TGPTController {
 	@Secured(Roles.USER)
 	public ResponseEntity<ObjectNode> getConfiguration() {
 		return ResponseEntity.ok(
-			mapper
-				.createObjectNode()
-				.put("baseUrl", baseUrl)
-				.put("appUrl", appUrl)
-				.put("wsUrl", wsUrl)
-				.put("token", token)
+			mapper.createObjectNode().put("baseUrl", baseUrl).put("appUrl", appUrl).put("wsUrl", wsUrl).put("token", token)
 		);
 	}
 }

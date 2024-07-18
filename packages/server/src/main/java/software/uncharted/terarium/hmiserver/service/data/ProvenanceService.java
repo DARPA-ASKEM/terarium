@@ -57,9 +57,7 @@ public class ProvenanceService {
 		if (left == null || right == null || relationType == null) {
 			return false;
 		}
-		final List<List<String>> relationshipAllowedTypes = graphValidations.get(
-			relationType.toString()
-		);
+		final List<List<String>> relationshipAllowedTypes = graphValidations.get(relationType.toString());
 		if (relationshipAllowedTypes == null) {
 			return false;
 		}
@@ -76,13 +74,7 @@ public class ProvenanceService {
 
 	@Observed(name = "function_profile")
 	public Provenance createProvenance(final Provenance provenance) {
-		if (
-			!validateRelationship(
-				provenance.getLeftType(),
-				provenance.getRightType(),
-				provenance.getRelationType()
-			)
-		) {
+		if (!validateRelationship(provenance.getLeftType(), provenance.getRightType(), provenance.getRelationType())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid relationship");
 		}
 

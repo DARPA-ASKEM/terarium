@@ -33,9 +33,7 @@ public class RelatedController {
 	) {
 		try {
 			final XDDRelatedDocumentsResponse response = proxy.getRelatedDocuments(set, docid);
-			if (
-				response.getData() == null || response.getData().isEmpty()
-			) return ResponseEntity.noContent().build();
+			if (response.getData() == null || response.getData().isEmpty()) return ResponseEntity.noContent().build();
 
 			return ResponseEntity.ok(response);
 		} catch (final FeignException e) {

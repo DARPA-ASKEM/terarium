@@ -78,10 +78,7 @@ public class HypersistenceJsonSerializerSupplier implements JsonSerializerSuppli
 
 		@SuppressWarnings("unchecked")
 		private <T> T jsonClone(final T object) {
-			return objectMapperWrapper.fromBytes(
-				objectMapperWrapper.toBytes(object),
-				(Class<T>) object.getClass()
-			);
+			return objectMapperWrapper.fromBytes(objectMapperWrapper.toBytes(object), (Class<T>) object.getClass());
 		}
 	}
 

@@ -58,11 +58,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			);
 			if (!sim.isEmpty()) {
 				sim.get().setProgress(progress);
-				simulationService.updateAsset(
-					sim.get(),
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
@@ -102,11 +98,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(
-				sim.get(),
-				props.projectId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

@@ -102,10 +102,7 @@ public class ExtractionController {
 			);
 		} catch (final Exception e) {
 			log.error("Unable to find xdd Autocompletes", e);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				"Unable to find xdd Autocompletes"
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find xdd Autocompletes");
 		}
 	}
 }

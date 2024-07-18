@@ -35,9 +35,7 @@ public class SimulationRequest implements Serializable {
 
 		clone.modelConfigId = this.modelConfigId;
 		clone.setTimespan(
-			this.timespan != null
-				? new TimeSpan().setStart(timespan.getStart()).setEnd(timespan.getEnd())
-				: null
+			this.timespan != null ? new TimeSpan().setStart(timespan.getStart()).setEnd(timespan.getEnd()) : null
 		);
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);

@@ -36,9 +36,7 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 		try {
 			final Response modelResp = objectMapper.readValue(resp.getOutput(), Response.class);
 			Model model = modelResp.getResponse();
-			final ConversionAdditionalProperties props = resp.getAdditionalProperties(
-				ConversionAdditionalProperties.class
-			);
+			final ConversionAdditionalProperties props = resp.getAdditionalProperties(ConversionAdditionalProperties.class);
 			// override the default stockflow name / description
 			model.setName(props.getFileName());
 			model.getHeader().setName(props.getFileName());
@@ -54,11 +52,7 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 					}
 				});
 
-			model = modelService.createAsset(
-				model,
-				props.getProjectId(),
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			model = modelService.createAsset(model, props.getProjectId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

@@ -35,10 +35,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -47,11 +44,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateModel() {
 		final Model before = (Model) createModel("0").setId(UUID.randomUUID());
 		try {
-			final Model after = modelService.createAsset(
-				before,
-				project.getId(),
-				ASSUME_WRITE_PERMISSION
-			);
+			final Model after = modelService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -89,11 +82,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelById() throws IOException {
-		final Model model = modelService.createAsset(
-			createModel("0"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Model model = modelService.createAsset(createModel("0"), project.getId(), ASSUME_WRITE_PERMISSION);
 		final Model fetchedModel = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(model, fetchedModel);
@@ -106,16 +95,10 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModel() throws Exception {
-		final Model model = modelService.createAsset(
-			createModel("A"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Model model = modelService.createAsset(createModel("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		model.setName("new name");
 
-		final Model updatedModel = modelService
-			.updateAsset(model, project.getId(), ASSUME_WRITE_PERMISSION)
-			.orElseThrow();
+		final Model updatedModel = modelService.updateAsset(model, project.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(model, updatedModel);
 		Assertions.assertNotNull(updatedModel.getUpdatedOn());
@@ -124,11 +107,7 @@ public class ModelServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModel() throws Exception {
-		final Model model = modelService.createAsset(
-			createModel("B"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Model model = modelService.createAsset(createModel("B"), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		modelService.deleteAsset(model.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 

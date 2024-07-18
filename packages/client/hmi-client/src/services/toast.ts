@@ -20,12 +20,7 @@ export enum ToastSeverity {
 }
 
 export const useToastService = () => {
-	const showToast = (
-		severity: ToastSeverity,
-		summary: string,
-		detail: string,
-		life: number = 4000
-	) => {
+	const showToast = (severity: ToastSeverity, summary: string, detail: string, life: number = 4000) => {
 		ToastEventBus.emit('add', {
 			severity,
 			summary,
@@ -44,11 +39,7 @@ export const useToastService = () => {
 		});
 	};
 
-	const error = (
-		summary: string | undefined,
-		detail: string,
-		life: number = DEFAULT_DURATION * 3
-	) => {
+	const error = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION * 3) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
@@ -58,11 +49,7 @@ export const useToastService = () => {
 		});
 	};
 
-	const success = (
-		summary: string | undefined,
-		detail: string,
-		life: number = DEFAULT_DURATION
-	) => {
+	const success = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.success,
 			summary: summary || ToastSummaries.SUCCESS,

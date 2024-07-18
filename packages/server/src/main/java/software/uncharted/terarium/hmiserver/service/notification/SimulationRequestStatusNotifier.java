@@ -87,19 +87,12 @@ public class SimulationRequestStatusNotifier {
 		final NotificationGroupInstance<SimulationNotificationData> notificationInterface,
 		final Simulation simulation
 	) {
-		final String statusMessage = simulation.getStatusMessage() != null
-			? simulation.getStatusMessage()
-			: "";
+		final String statusMessage = simulation.getStatusMessage() != null ? simulation.getStatusMessage() : "";
 		final ProgressState status = simulation.getStatus();
 		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
-			throw new RuntimeException(
-				"Failed running simulation " + simulation.getId() + "\n" + statusMessage
-			);
+			throw new RuntimeException("Failed running simulation " + simulation.getId() + "\n" + statusMessage);
 		} else if (status.equals(ProgressState.CANCELLED)) {
-			notificationInterface.sendFinalMessage(
-				"Simulation has been cancelled.",
-				ProgressState.CANCELLED
-			);
+			notificationInterface.sendFinalMessage("Simulation has been cancelled.", ProgressState.CANCELLED);
 			this.executor.shutdown();
 		} else if (status.equals(ProgressState.COMPLETE)) {
 			notificationInterface.sendFinalMessage("Simulation has completed.", ProgressState.COMPLETE);
@@ -108,43 +101,30 @@ public class SimulationRequestStatusNotifier {
 			notificationInterface.sendMessage("Simulation is queued...", ProgressState.QUEUED);
 		} else {
 			notificationInterface.sendMessage(
-				(statusMessage == null || statusMessage.isEmpty())
-					? "Simulation is running..."
-					: statusMessage
+				(statusMessage == null || statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage
 			);
 		}
 	}
 
 	public void startPolling() {
-		final Optional<Simulation> simAsset = simulationService.getAsset(
-			this.simulationId,
-			this.permission
-		);
+		final Optional<Simulation> simAsset = simulationService.getAsset(this.simulationId, this.permission);
 		if (simAsset.isEmpty()) {
 			throw new RuntimeException("Simulation object is empty.");
 		}
 		final Simulation sim = simAsset.get();
 
-		final NotificationGroupInstance<SimulationNotificationData> notificationInterface =
-			new NotificationGroupInstance<SimulationNotificationData>(
-				clientEventService,
-				notificationService,
-				ClientEventType.SIMULATION_NOTIFICATION,
-				this.projectId,
-				new SimulationNotificationData(
-					this.simulationId,
-					sim.getType(),
-					sim.getEngine(),
-					this.metadata
-				),
-				this.halfTimeSeconds,
-				sim.getId()
-			);
-		log.info(
-			"Starting polling for simulation {} every {} seconds",
-			this.simulationId,
-			this.interval
+		final NotificationGroupInstance<SimulationNotificationData> notificationInterface = new NotificationGroupInstance<
+			SimulationNotificationData
+		>(
+			clientEventService,
+			notificationService,
+			ClientEventType.SIMULATION_NOTIFICATION,
+			this.projectId,
+			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
+			this.halfTimeSeconds,
+			sim.getId()
 		);
+		log.info("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);
 
 		final Runnable poller = () -> {
@@ -153,10 +133,7 @@ public class SimulationRequestStatusNotifier {
 				if (pollAttempts > this.threshold) {
 					throw new RuntimeException("Timeout while waiting for simulation to complete.");
 				}
-				final Optional<Simulation> result = simulationService.getAsset(
-					this.simulationId,
-					this.permission
-				);
+				final Optional<Simulation> result = simulationService.getAsset(this.simulationId, this.permission);
 				if (result.isEmpty()) {
 					throw new RuntimeException("Simulation object is empty.");
 				}

@@ -5,16 +5,7 @@
 <script lang="ts">
 import _ from 'lodash';
 import { PropType } from 'vue';
-import {
-	select,
-	extent,
-	scaleLinear,
-	scaleSymlog,
-	scaleTime,
-	axisBottom,
-	axisLeft,
-	NumberValue
-} from 'd3';
+import { select, extent, scaleLinear, scaleSymlog, scaleTime, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -250,10 +241,7 @@ export default {
 			formatAxis(xAxis);
 
 			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
-			const yAxis = this.svg
-				.append('g')
-				.attr('transform', `translate(${leftMargin},${topMargin})`)
-				.call(yAxisGen);
+			const yAxis = this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxisGen);
 			formatAxis(yAxis);
 
 			const numRows = 4;
@@ -281,19 +269,11 @@ export default {
 			const rangeText = `From ${this.labelColFormatFn(
 				_.first(this.labelColSelected as NumberValue[]) as NumberValue,
 				1
-			)} to ${this.labelColFormatFn(
-				_.last(this.labelColSelected as NumberValue[]) as NumberValue,
-				1
-			)}`;
+			)} to ${this.labelColFormatFn(_.last(this.labelColSelected as NumberValue[]) as NumberValue, 1)}`;
 			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 
-		renderLine(
-			svg: D3SvgSelection,
-			parameter: string,
-			yValueArray: number[],
-			xValueArray: number[] | Date[]
-		) {
+		renderLine(svg: D3SvgSelection, parameter: string, yValueArray: number[], xValueArray: number[] | Date[]) {
 			const dataLength = yValueArray.length;
 
 			let path = 'M';

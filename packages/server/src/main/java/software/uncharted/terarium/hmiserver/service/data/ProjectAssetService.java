@@ -43,10 +43,7 @@ public class ProjectAssetService {
 		final Collection<@NotNull AssetType> types,
 		final Schema.Permission hasReadPermission
 	) {
-		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(
-			projectId,
-			types
-		);
+		return projectAssetRepository.findAllByProjectIdAndAssetTypeInAndDeletedOnIsNullAndTemporaryFalse(projectId, types);
 	}
 
 	@Observed(name = "function_profile")
@@ -145,11 +142,7 @@ public class ProjectAssetService {
 		final Schema.Permission hasReadPermission
 	) {
 		return Optional.ofNullable(
-			projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(
-				projectId,
-				assetName,
-				assetType
-			)
+			projectAssetRepository.findByProjectIdAndAssetNameAndAssetTypeAndDeletedOnIsNull(projectId, assetName, assetType)
 		);
 	}
 
@@ -163,10 +156,7 @@ public class ProjectAssetService {
 	}
 
 	@Observed(name = "function_profile")
-	public List<ProjectAsset> getProjectAssets(
-		final UUID projectId,
-		final Schema.Permission hasReadPermission
-	) {
+	public List<ProjectAsset> getProjectAssets(final UUID projectId, final Schema.Permission hasReadPermission) {
 		return projectAssetRepository.findAllByProjectIdAndDeletedOnIsNullAndTemporaryFalse(projectId);
 	}
 

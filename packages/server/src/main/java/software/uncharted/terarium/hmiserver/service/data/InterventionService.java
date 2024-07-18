@@ -8,8 +8,7 @@ import software.uncharted.terarium.hmiserver.repository.data.InterventionReposit
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
-public class InterventionService
-	extends TerariumAssetServiceWithoutSearch<InterventionPolicy, InterventionRepository> {
+public class InterventionService extends TerariumAssetServiceWithoutSearch<InterventionPolicy, InterventionRepository> {
 
 	public InterventionService(
 		final ObjectMapper objectMapper,

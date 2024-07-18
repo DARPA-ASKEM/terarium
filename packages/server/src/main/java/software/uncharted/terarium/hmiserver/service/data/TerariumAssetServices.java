@@ -65,11 +65,7 @@ public class TerariumAssetServices {
 			case DOCUMENT:
 				return documentAssetService.updateAsset((DocumentAsset) asset, projectId, permission);
 			case MODEL_CONFIGURATION:
-				return modelConfigurationService.updateAsset(
-					(ModelConfiguration) asset,
-					projectId,
-					permission
-				);
+				return modelConfigurationService.updateAsset((ModelConfiguration) asset, projectId, permission);
 			case MODEL:
 				return modelService.updateAsset((Model) asset, projectId, permission);
 			case WORKFLOW:

@@ -84,18 +84,12 @@ public class SimulationEventService {
 	}
 
 	public void unsubscribe(final List<String> simulationIds, final User user) {
-		for (final String simulationId : simulationIds) simulationIdToUserIds
-			.get(simulationId)
-			.remove(user.getId());
+		for (final String simulationId : simulationIds) simulationIdToUserIds.get(simulationId).remove(user.getId());
 	}
 
 	@RabbitListener(queues = "${terarium.sciml-queue}", concurrency = "1")
-	private void onScimlUpdateOneInstanceReceives(final Message message, final Channel channel)
-		throws IOException {
-		final ScimlStatusUpdate update = ClientEventService.decodeMessage(
-			message,
-			ScimlStatusUpdate.class
-		);
+	private void onScimlUpdateOneInstanceReceives(final Message message, final Channel channel) throws IOException {
+		final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
 		if (update == null) {
 			return;
 		}
@@ -103,11 +97,7 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(
-				UUID.fromString(update.getId()),
-				simulationUpdate,
-				assumedPermission
-			);
+			simulationService.appendUpdateToSimulation(UUID.fromString(update.getId()), simulationUpdate, assumedPermission);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}
@@ -137,10 +127,7 @@ public class SimulationEventService {
 	)
 	private void onScimlAllInstanceReceive(final Message message) {
 		try {
-			final ScimlStatusUpdate update = ClientEventService.decodeMessage(
-				message,
-				ScimlStatusUpdate.class
-			);
+			final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
 			if (update == null) {
 				return;
 			}
@@ -163,12 +150,8 @@ public class SimulationEventService {
 	}
 
 	@RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
-	private void onPyciemssOneInstanceReceives(final Message message, final Channel channel)
-		throws IOException {
-		final CiemssStatusUpdate update = ClientEventService.decodeMessage(
-			message,
-			CiemssStatusUpdate.class
-		);
+	private void onPyciemssOneInstanceReceives(final Message message, final Channel channel) throws IOException {
+		final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
 		if (update == null) {
 			return;
 		}
@@ -210,10 +193,7 @@ public class SimulationEventService {
 	)
 	private void onPyciemssAllInstanceReceive(final Message message) {
 		try {
-			final CiemssStatusUpdate update = ClientEventService.decodeMessage(
-				message,
-				CiemssStatusUpdate.class
-			);
+			final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
 			if (update == null) {
 				return;
 			}

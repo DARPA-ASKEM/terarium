@@ -39,25 +39,16 @@ public class TransformController {
 		} catch (final FeignException error) {
 			final HttpStatus statusCode = HttpStatus.resolve(error.status());
 			if (statusCode != null && statusCode.is4xxClientError()) {
-				log.warn(
-					String.format("SKEMA can't transform MathML equations to an ACSet: %s", list),
-					error
-				);
+				log.warn(String.format("SKEMA can't transform MathML equations to an ACSet: %s", list), error);
 				throw new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
 			} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 				log.warn("SKEMA is currently unavailable");
 				throw new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
 			} else if (statusCode != null && statusCode.is5xxServerError()) {
-				log.error(
-					"an error occurred while SKEMA was transforming MathML equations to an ACSet",
-					error
-				);
+				log.error("an error occurred while SKEMA was transforming MathML equations to an ACSet", error);
 				throw new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
 			}
-			log.error(
-				"an error occurred while SKEMA was transforming MathML equations to an ACSet",
-				error
-			);
+			log.error("an error occurred while SKEMA was transforming MathML equations to an ACSet", error);
 			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 		}
 	}
@@ -76,20 +67,11 @@ public class TransformController {
 				log.warn("SciML is currently unavailable");
 				throw new ResponseStatusException(statusCode, messages.get("sciml.service-unavailable"));
 			} else if (statusCode != null && statusCode.is5xxServerError()) {
-				log.error(
-					String.format(
-						"An error occurred while SciML was extract LaTeX equations for model: %s",
-						id
-					),
-					error
-				);
+				log.error(String.format("An error occurred while SciML was extract LaTeX equations for model: %s", id), error);
 				throw new ResponseStatusException(statusCode, messages.get("sciml.internal-error"));
 			}
 			log.error(
-				String.format(
-					"an unknown error occurred while SciML was extract LaTeX equations for model: %s",
-					id
-				),
+				String.format("an unknown error occurred while SciML was extract LaTeX equations for model: %s", id),
 				error
 			);
 			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));

@@ -104,10 +104,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 	@Test
 	public void testTaskLargeInputOutput() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("test_input.json");
-		final String input = new String(
-			FileCopyUtils.copyToByteArray(resource.getInputStream()),
-			StandardCharsets.UTF_8
-		);
+		final String input = new String(FileCopyUtils.copyToByteArray(resource.getInputStream()), StandardCharsets.UTF_8);
 
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());

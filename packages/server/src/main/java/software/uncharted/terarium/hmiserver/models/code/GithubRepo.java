@@ -25,9 +25,7 @@ public class GithubRepo {
 	);
 
 	@TSIgnore
-	private static final List<String> DOCUMENT_TYPES = new ArrayList<>(
-		List.of(".pdf", ".txt", ".md")
-	);
+	private static final List<String> DOCUMENT_TYPES = new ArrayList<>(List.of(".pdf", ".txt", ".md"));
 
 	/** Categories of files */
 	public Map<FileCategory, List<GithubFile>> files;

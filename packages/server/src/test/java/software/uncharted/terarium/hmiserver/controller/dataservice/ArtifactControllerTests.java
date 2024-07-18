@@ -48,10 +48,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getArtifactIndex());
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -63,9 +60,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateArtifact() throws Exception {
-		final Artifact artifact = (Artifact) new Artifact()
-			.setName("test-artifact-name")
-			.setDescription("my description");
+		final Artifact artifact = (Artifact) new Artifact().setName("test-artifact-name").setDescription("my description");
 
 		mockMvc
 			.perform(
@@ -115,10 +110,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf()))
-			.andExpect(status().isOk())
-			.andReturn();
+		mockMvc.perform(MockMvcRequestBuilders.get("/artifacts").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
@@ -138,9 +130,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -187,9 +177,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 		mockMvc
 			.perform(
-				MockMvcRequestBuilders.put(
-					"/artifacts/" + artifact.getId() + "/upload-artifact-from-github"
-				)
+				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
 					.with(csrf())
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
 					.param("path", "README.md")

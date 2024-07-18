@@ -34,10 +34,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -63,10 +60,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateFramework() throws Exception {
 		final ModelFramework framework = frameworkService.createFramework(
-			new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics")
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
 		);
 
 		mockMvc
@@ -83,10 +77,7 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetFramework() throws Exception {
 		final ModelFramework framework = frameworkService.createFramework(
-			new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics")
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
 		);
 
 		mockMvc
@@ -98,16 +89,11 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteFramework() throws Exception {
 		final ModelFramework framework = frameworkService.createFramework(
-			new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics")
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
 		);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId()).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId()).with(csrf()))
 			.andExpect(status().isOk());
 
 		Assertions.assertTrue(frameworkService.getFramework(framework.getId()).isEmpty());

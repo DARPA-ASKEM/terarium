@@ -63,22 +63,15 @@ public class SecurityConfig {
 				.authenticated();
 		});
 		http.oauth2ResourceServer(configurer ->
-			configurer.jwt(jwtConfigurer ->
-				jwtConfigurer.jwtAuthenticationConverter(authenticationConverter)
-			)
+			configurer.jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(authenticationConverter))
 		);
-		http.addFilterBefore(
-			new ServiceRequestFilter(applicationContext),
-			AbstractPreAuthenticatedProcessingFilter.class
-		);
+		http.addFilterBefore(new ServiceRequestFilter(applicationContext), AbstractPreAuthenticatedProcessingFilter.class);
 
 		// Disable session management and CSRF. Since we do not use cookies for any
 		// authentication, we do not need to worry about CSRF.
 		http
 			.sessionManagement(httpSecuritySessionManagementConfigurer ->
-				httpSecuritySessionManagementConfigurer.sessionCreationPolicy(
-					SessionCreationPolicy.STATELESS
-				)
+				httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 			)
 			.csrf(AbstractHttpConfigurer::disable)
 			.exceptionHandling(httpSecurityExceptionHandlingConfigurer ->

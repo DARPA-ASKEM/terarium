@@ -52,10 +52,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getCodeIndex());
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -67,9 +64,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateCode() throws Exception {
-		final Code codeAsset = (Code) new Code()
-			.setName("test-code-name")
-			.setDescription("my description");
+		final Code codeAsset = (Code) new Code().setName("test-code-name").setDescription("my description");
 
 		mockMvc
 			.perform(
@@ -105,16 +100,11 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	}
 
 	Dynamics createDynamics() {
-		return new Dynamics()
-			.setName("dynamics_name")
-			.setDescription("description")
-			.setBlock(List.of("a", "b", "c"));
+		return new Dynamics().setName("dynamics_name").setDescription("description").setBlock(List.of("a", "b", "c"));
 	}
 
 	CodeFile createCodeFile() {
-		return new CodeFile()
-			.setFileNameAndProgrammingLanguage("test.py")
-			.setDynamics(createDynamics());
+		return new CodeFile().setFileNameAndProgrammingLanguage("test.py").setDynamics(createDynamics());
 	}
 
 	@Test
@@ -150,10 +140,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf()))
-			.andExpect(status().isOk())
-			.andReturn();
+		mockMvc.perform(MockMvcRequestBuilders.get("/code-asset").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
@@ -177,9 +164,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			codeAssetService.getAsset(codeAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(codeAssetService.getAsset(codeAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -224,10 +209,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadCodeFromGithub() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setName("test-code-name")
-				.setDescription("my description"),
+			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
@@ -249,19 +231,14 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUploadCodeFromGithubRepo() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setName("test-code-name")
-				.setDescription("my description"),
+			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
 
 		mockMvc
 			.perform(
-				MockMvcRequestBuilders.put(
-					"/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo"
-				)
+				MockMvcRequestBuilders.put("/code-asset/" + codeAsset.getId() + "/upload-code-from-github-repo")
 					.param("project-id", PROJECT_ID.toString())
 					.with(csrf())
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
@@ -275,10 +252,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadCodeAsText() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
-			(Code) new Code()
-				.setMetadata(createMetadata())
-				.setName("test-code-name")
-				.setDescription("my description"),
+			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);

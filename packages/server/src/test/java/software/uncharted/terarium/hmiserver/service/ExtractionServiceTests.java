@@ -55,10 +55,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -75,20 +72,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(
-				project.getId(),
-				documentAsset.getId(),
-				new ArrayList<>(),
-				"epi",
-				ASSUME_WRITE_PERMISSION
-			)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 			.get();
 	}
 
@@ -103,11 +90,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource2 = new ClassPathResource("knowledge/extraction_amr.json");
 		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
@@ -116,13 +99,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(
-				project.getId(),
-				documentAsset.getId(),
-				List.of(model.getId()),
-				"epi",
-				ASSUME_WRITE_PERMISSION
-			)
+			.extractVariables(project.getId(), documentAsset.getId(), List.of(model.getId()), "epi", ASSUME_WRITE_PERMISSION)
 			.get();
 	}
 
@@ -134,20 +111,10 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(
-				project.getId(),
-				documentAsset.getId(),
-				new ArrayList<>(),
-				"epi",
-				ASSUME_WRITE_PERMISSION
-			)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 			.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
@@ -167,26 +134,17 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-		final HttpEntity pdfFileEntity = new ByteArrayEntity(
-			content,
-			ContentType.create("application/pdf")
-		);
+		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 			.setFileNames(List.of("paper.pdf"))
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
-		documentAsset = extractionService
-			.extractPDF(documentAsset.getId(), "epi", null, ASSUME_WRITE_PERMISSION)
-			.get();
+		documentAsset = extractionService.extractPDF(documentAsset.getId(), "epi", null, ASSUME_WRITE_PERMISSION).get();
 	}
 }

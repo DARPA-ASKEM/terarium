@@ -49,11 +49,7 @@ public class TaskRunnerService {
 		final String routingKey
 	) {
 		// Declare a direct exchange
-		final DirectExchange exchange = new DirectExchange(
-			exchangeName,
-			config.getDurableQueues(),
-			false
-		);
+		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
 
 		// Declare a queue
@@ -88,8 +84,7 @@ public class TaskRunnerService {
 		queues = { "${terarium.taskrunner.request-queue}-${terarium.taskrunner.request-type}" },
 		concurrency = "${terarium.taskrunner.request-concurrency}"
 	)
-	void onTaskRequest(final Message message, final Channel channel)
-		throws IOException, InterruptedException {
+	void onTaskRequest(final Message message, final Channel channel) throws IOException, InterruptedException {
 		final TaskRequest req = decodeMessage(message, TaskRequest.class);
 		if (req == null) {
 			return;
@@ -99,8 +94,7 @@ public class TaskRunnerService {
 		dispatchSingleInputSingleOutputTask(req);
 	}
 
-	private void dispatchSingleInputSingleOutputTask(final TaskRequest req)
-		throws IOException, InterruptedException {
+	private void dispatchSingleInputSingleOutputTask(final TaskRequest req) throws IOException, InterruptedException {
 		Task task;
 		SimpleMessageListenerContainer cancellationConsumer;
 
@@ -201,11 +195,7 @@ public class TaskRunnerService {
 		final String queueName = req.getId().toString();
 		final String routingKey = req.getId().toString();
 
-		declareAndBindTransientQueueWithRoutingKey(
-			TASK_RUNNER_CANCELLATION_EXCHANGE,
-			queueName,
-			routingKey
-		);
+		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
 	}
 
 	private boolean checkForCancellation(final TaskRequest req) {
@@ -253,11 +243,7 @@ public class TaskRunnerService {
 		} catch (final Exception e) {
 			try {
 				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error(
-					"Unable to parse message as {}. Message: {}",
-					clazz.getName(),
-					jsonMessage.toPrettyString()
-				);
+				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
 				return null;
 			} catch (final Exception e1) {
 				log.error(

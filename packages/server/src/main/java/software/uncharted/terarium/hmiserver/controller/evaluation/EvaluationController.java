@@ -54,8 +54,7 @@ public class EvaluationController {
 	@GetMapping("/scenarios")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
-		final Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary =
-			new HashMap<>();
+		final Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
 
 		// Find the first event for each summary
 		final List<Event> events = eventService.findEvents(
@@ -73,10 +72,7 @@ public class EvaluationController {
 				final Long timestampMillis = event.getTimestampMillis();
 				final Map<String, EvaluationScenarioSummary> scenarioNameToSummary =
 					usernameToScenarioNameToSummary.getOrDefault(userId, new HashMap<>());
-				final EvaluationScenarioSummary summary = scenarioNameToSummary.getOrDefault(
-					scenarioName,
-					null
-				);
+				final EvaluationScenarioSummary summary = scenarioNameToSummary.getOrDefault(scenarioName, null);
 
 				// If this event is earlier than the current one, store it
 				if (summary == null || summary.getTimestampMillis() < timestampMillis) {
@@ -171,9 +167,7 @@ public class EvaluationController {
 			.toList();
 
 		if (scenarioEvents.size() == 1) {
-			return ResponseEntity.ok(
-				Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis()
-			);
+			return ResponseEntity.ok(Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis());
 		}
 
 		long runtime = 0L;
@@ -184,8 +178,7 @@ public class EvaluationController {
 			try {
 				final JsonNode currentValue = mapper.readValue(currentEvent.getValue(), JsonNode.class);
 				if (
-					currentValue.at("/action").asText().equals("started") ||
-					currentValue.at("/action").asText().equals("resumed")
+					currentValue.at("/action").asText().equals("started") || currentValue.at("/action").asText().equals("resumed")
 				) {
 					runtime += nextEvent.getTimestampMillis() - currentEvent.getTimestampMillis();
 				}
@@ -225,9 +218,7 @@ public class EvaluationController {
 			.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
 			.toList();
 
-		final List<String> headers = new ArrayList<>(
-			Arrays.asList("timestamp", "projectId", "userId", "type", "value")
-		);
+		final List<String> headers = new ArrayList<>(Arrays.asList("timestamp", "projectId", "userId", "type", "value"));
 
 		// Iterate through the events and calculate the top level field access for the
 		// value type in jackson format
@@ -248,9 +239,7 @@ public class EvaluationController {
 		headers.addAll(topLevelFields);
 
 		final StringWriter sw = new StringWriter();
-		final CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
-			.setHeader(headers.toArray(new String[0]))
-			.build();
+		final CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
 
 		// Write the CSV, filtering out events that occurred outside of the scenario
 		// runtime
@@ -320,14 +309,8 @@ public class EvaluationController {
 
 			try {
 				final JsonNode currentValue = mapper.readValue(currentEvent.getValue(), JsonNode.class);
-				if (
-					currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString())
-				) {
-					ranges.add(
-						new Range()
-							.setStart(currentEvent.getTimestampMillis())
-							.setEnd(nextEvent.getTimestampMillis())
-					);
+				if (currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString())) {
+					ranges.add(new Range().setStart(currentEvent.getTimestampMillis()).setEnd(nextEvent.getTimestampMillis()));
 				}
 			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);

@@ -8,12 +8,7 @@
 					:src="'data:image/jpeg;base64,' + shownImage"
 					alt="Paper image"
 				/>
-				<img
-					v-else
-					class="card-image"
-					:src="'data:image/jpeg;base64,' + getRandomImage()"
-					alt="Paper image"
-				/>
+				<img v-else class="card-image" :src="'data:image/jpeg;base64,' + getRandomImage()" alt="Paper image" />
 			</div>
 			<section class="journal">
 				<span class="journal-name">{{ document?.journal }}</span> | {{ document?.year }}

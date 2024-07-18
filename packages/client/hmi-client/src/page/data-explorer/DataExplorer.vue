@@ -1,12 +1,7 @@
 <template>
 	<main>
 		<section class="flex h-full relative overflow-hidden">
-			<tera-slider-panel
-				content-width="240px"
-				direction="left"
-				header="Filters"
-				v-model:is-open="isSliderFacetsOpen"
-			>
+			<tera-slider-panel content-width="240px" direction="left" header="Filters" v-model:is-open="isSliderFacetsOpen">
 				<template v-slot:content>
 					<tera-facets-panel
 						v-if="viewType === ViewType.LIST"
@@ -183,9 +178,7 @@ const topicOptions = ref([
 const sourceOptions = ref<Source[]>(Object.values(DocumentSource));
 const chosenSource = ref<Source>(DocumentSource.XDD);
 
-const sliderWidth = computed(() =>
-	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
-);
+const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'));
 
 // Chooses source for search
 const resultsToShow = computed(() => {
@@ -223,18 +216,13 @@ const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchRe
 	filteredFacets.value = getFacets(filteredData, resourceType.value);
 };
 
-const mergeResultsKeepRecentDuplicates = (
-	existingResults: SearchResults[],
-	newResults: SearchResults[]
-) => {
+const mergeResultsKeepRecentDuplicates = (existingResults: SearchResults[], newResults: SearchResults[]) => {
 	const mergeId = 'searchSubsystem';
 	const mergedResults = unionBy(existingResults, newResults, mergeId);
 	// replace existing old results with new ones, if any
 	const overlapping = intersectionBy(existingResults, newResults, mergeId);
 	overlapping.forEach((res) => {
-		const existingOldIndex = mergedResults.findIndex(
-			(u) => u.searchSubsystem === res.searchSubsystem
-		);
+		const existingOldIndex = mergedResults.findIndex((u) => u.searchSubsystem === res.searchSubsystem);
 		const newResult = newResults.find((u) => u.searchSubsystem === res.searchSubsystem);
 		// remove the old one and insert the new updated result
 		if (newResult) {
@@ -257,8 +245,7 @@ const executeSearch = async () => {
 
 	let searchWords = searchTerm.value;
 
-	const matchAll =
-		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
+	const matchAll = !isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
 	const allSearchTerms = searchWords.split(' ');
 	if (matchAll && !isEmpty(allSearchTerms)) {
 		// multiple words are provided as search term and the user requested to match all of them

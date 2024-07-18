@@ -28,9 +28,7 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 		// different from one that is returned via `new ObjectMapper()`
 		mapper = mapper
 			.copy()
-			.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy())
-			);
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override

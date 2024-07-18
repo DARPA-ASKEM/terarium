@@ -7,8 +7,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 public class ProjectSpecification {
 
 	public static Specification<Project> hasNameLike(String name) {
-		return (root, query, criteriaBuilder) ->
-			criteriaBuilder.like(root.get("name"), "%" + name + "%");
+		return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), "%" + name + "%");
 	}
 
 	public static Specification<Project> hasName(String name) {

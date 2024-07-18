@@ -35,14 +35,10 @@ public class SnakeCaseRequestControllerAdvice extends RequestBodyAdviceAdapter {
 		// different from one that is returned via `new ObjectMapper()`
 		camelcaseMapper = camelcaseMapper
 			.copy()
-			.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy())
-			);
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.LowerCamelCaseStrategy()));
 		snakecaseMapper = snakecaseMapper
 			.copy()
-			.setPropertyNamingStrategy(
-				new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy())
-			);
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override

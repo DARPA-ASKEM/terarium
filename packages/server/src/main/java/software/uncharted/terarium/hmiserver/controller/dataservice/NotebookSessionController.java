@@ -63,9 +63,7 @@ public class NotebookSessionController {
 				description = "NotebookSessions found.",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = NotebookSession.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
 					)
 				)
 			),
@@ -85,10 +83,7 @@ public class NotebookSessionController {
 		} catch (final Exception e) {
 			final String error = "Unable to get sessions";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -108,16 +103,10 @@ public class NotebookSessionController {
 				description = "NotebookSession created.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = NotebookSession.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the session",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the session", content = @Content)
 		}
 	)
 	ResponseEntity<NotebookSession> createNotebookSession(
@@ -135,10 +124,7 @@ public class NotebookSessionController {
 		} catch (final IOException e) {
 			final String error = "Unable to create session";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -158,16 +144,10 @@ public class NotebookSessionController {
 				description = "NotebookSession found.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = NotebookSession.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no session found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no session found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the session from the data store",
@@ -190,10 +170,7 @@ public class NotebookSessionController {
 		} catch (final Exception e) {
 			final String error = "Unable to get notebook session";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -214,21 +191,11 @@ public class NotebookSessionController {
 				description = "NotebookSession updated.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = NotebookSession.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "NotebookSession could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the session",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "NotebookSession could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the session", content = @Content)
 		}
 	)
 	ResponseEntity<NotebookSession> updateNotebookSession(
@@ -243,19 +210,12 @@ public class NotebookSessionController {
 
 		try {
 			session.setId(id);
-			final Optional<NotebookSession> updated = sessionService.updateAsset(
-				session,
-				projectId,
-				permission
-			);
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update notebook session";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -269,16 +229,10 @@ public class NotebookSessionController {
 				description = "NotebookSession cloned.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = NotebookSession.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotebookSession.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue cloning the session",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue cloning the session", content = @Content)
 		}
 	)
 	ResponseEntity<NotebookSession> cloneNotebookSession(
@@ -298,10 +252,7 @@ public class NotebookSessionController {
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -322,17 +273,11 @@ public class NotebookSessionController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	ResponseEntity<ResponseDeleted> deleteNotebookSession(
@@ -350,10 +295,7 @@ public class NotebookSessionController {
 		} catch (final IOException e) {
 			final String error = "Unable to delete noteboko session";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

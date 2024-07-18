@@ -80,10 +80,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getDocumentIndex());
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -302,11 +299,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc
 			.perform(
@@ -327,11 +320,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
@@ -359,20 +348,10 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-document-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAsset = extractionService
-			.extractVariables(
-				project.getId(),
-				documentAsset.getId(),
-				new ArrayList<>(),
-				"epi",
-				ASSUME_WRITE_PERMISSION
-			)
+			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), "epi", ASSUME_WRITE_PERMISSION)
 			.get();
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
@@ -403,21 +382,14 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		final ClassPathResource resource = new ClassPathResource("knowledge/paper.pdf");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 
-		final HttpEntity pdfFileEntity = new ByteArrayEntity(
-			content,
-			ContentType.create("application/pdf")
-		);
+		final HttpEntity pdfFileEntity = new ByteArrayEntity(content, ContentType.create("application/pdf"));
 
 		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
 			.setFileNames(List.of("paper.pdf"))
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		documentAssetService.uploadFile(documentAsset.getId(), "paper.pdf", pdfFileEntity);
 
@@ -460,11 +432,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
@@ -547,11 +515,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		mockMvc
 			.perform(

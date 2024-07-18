@@ -21,15 +21,12 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRe
 public class ReBACFunctions {
 
 	private static final String HAS_PERMISSION = "PERMISSIONSHIP_HAS_PERMISSION";
-	private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP =
-		"ALREADY_EXISTS: could not CREATE relationship";
+	private static final String ALREADY_EXISTS_CREATE_RELATIONSHIP = "ALREADY_EXISTS: could not CREATE relationship";
 
 	final PermissionsServiceGrpc.PermissionsServiceBlockingStub permissionsService;
 
 	public ReBACFunctions(final ManagedChannel channel, final BearerToken bearerToken) {
-		this.permissionsService = PermissionsServiceGrpc.newBlockingStub(channel).withCallCredentials(
-			bearerToken
-		);
+		this.permissionsService = PermissionsServiceGrpc.newBlockingStub(channel).withCallCredentials(bearerToken);
 	}
 
 	private static ObjectReference createObject(final String type, final String id) {
@@ -64,17 +61,14 @@ public class ReBACFunctions {
 		final String resourceId,
 		final Consistency consistency
 	) throws Exception {
-		final PermissionService.CheckPermissionRequest request =
-			PermissionService.CheckPermissionRequest.newBuilder()
-				.setConsistency(consistency)
-				.setResource(createObject(resourceType, resourceId))
-				.setSubject(createSubject(subjectType, subjectId))
-				.setPermission(permission)
-				.build();
+		final PermissionService.CheckPermissionRequest request = PermissionService.CheckPermissionRequest.newBuilder()
+			.setConsistency(consistency)
+			.setResource(createObject(resourceType, resourceId))
+			.setSubject(createSubject(subjectType, subjectId))
+			.setPermission(permission)
+			.build();
 
-		final PermissionService.CheckPermissionResponse response = permissionsService.checkPermission(
-			request
-		);
+		final PermissionService.CheckPermissionResponse response = permissionsService.checkPermission(request);
 		return response.getPermissionship().name().equalsIgnoreCase(HAS_PERMISSION);
 	}
 
@@ -99,25 +93,23 @@ public class ReBACFunctions {
 		final String targetType,
 		final String targetId
 	) throws Exception, RelationshipAlreadyExistsException {
-		final PermissionService.WriteRelationshipsRequest request =
-			PermissionService.WriteRelationshipsRequest.newBuilder()
-				.addUpdates(
-					RelationshipUpdate.newBuilder()
-						.setOperation(RelationshipUpdate.Operation.OPERATION_CREATE)
-						.setRelationship(
-							Relationship.newBuilder()
-								.setResource(createObject(targetType, targetId))
-								.setRelation(relationship)
-								.setSubject(createSubject(subjectType, subjectId))
-								.build()
-						)
-						.build()
-				)
-				.build();
+		final PermissionService.WriteRelationshipsRequest request = PermissionService.WriteRelationshipsRequest.newBuilder()
+			.addUpdates(
+				RelationshipUpdate.newBuilder()
+					.setOperation(RelationshipUpdate.Operation.OPERATION_CREATE)
+					.setRelationship(
+						Relationship.newBuilder()
+							.setResource(createObject(targetType, targetId))
+							.setRelation(relationship)
+							.setSubject(createSubject(subjectType, subjectId))
+							.build()
+					)
+					.build()
+			)
+			.build();
 
 		try {
-			final PermissionService.WriteRelationshipsResponse response =
-				permissionsService.writeRelationships(request);
+			final PermissionService.WriteRelationshipsResponse response = permissionsService.writeRelationships(request);
 			return response.getWrittenAt().getToken();
 		} catch (final Exception e) {
 			if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
@@ -166,8 +158,7 @@ public class ReBACFunctions {
 				.build();
 
 		try {
-			final PermissionService.DeleteRelationshipsResponse response =
-				permissionsService.deleteRelationships(request);
+			final PermissionService.DeleteRelationshipsResponse response = permissionsService.deleteRelationships(request);
 			return response.getDeletedAt().getToken();
 		} catch (final Exception e) {
 			if (e.getMessage().startsWith(ALREADY_EXISTS_CREATE_RELATIONSHIP)) {
@@ -177,25 +168,19 @@ public class ReBACFunctions {
 		}
 	}
 
-	public List<RebacPermissionRelationship> getRelationship(
-		final SchemaObject resource,
-		final Consistency consistency
-	) throws Exception {
-		final PermissionService.ReadRelationshipsRequest request =
-			PermissionService.ReadRelationshipsRequest.newBuilder()
-				.setConsistency(consistency)
-				.setRelationshipFilter(
-					RelationshipFilter.newBuilder()
-						.setResourceType(resource.type.toString())
-						.setOptionalResourceId(resource.id)
-				)
-				.build();
+	public List<RebacPermissionRelationship> getRelationship(final SchemaObject resource, final Consistency consistency)
+		throws Exception {
+		final PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+			.setConsistency(consistency)
+			.setRelationshipFilter(
+				RelationshipFilter.newBuilder().setResourceType(resource.type.toString()).setOptionalResourceId(resource.id)
+			)
+			.build();
 		return getRelationship(request);
 	}
 
-	public List<RebacPermissionRelationship> getRelationship(
-		final PermissionService.ReadRelationshipsRequest request
-	) throws Exception {
+	public List<RebacPermissionRelationship> getRelationship(final PermissionService.ReadRelationshipsRequest request)
+		throws Exception {
 		final List<RebacPermissionRelationship> relationships = new ArrayList<>();
 
 		final Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
@@ -220,16 +205,15 @@ public class ReBACFunctions {
 		final SchemaObject what,
 		final Consistency consistency
 	) throws Exception {
-		final PermissionService.ReadRelationshipsRequest request =
-			PermissionService.ReadRelationshipsRequest.newBuilder()
-				.setConsistency(consistency)
-				.setRelationshipFilter(
-					RelationshipFilter.newBuilder()
-						.setResourceType(what.type.toString())
-						.setOptionalResourceId(what.id)
-						.setOptionalRelation(relationship.toString())
-				)
-				.build();
+		final PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+			.setConsistency(consistency)
+			.setRelationshipFilter(
+				RelationshipFilter.newBuilder()
+					.setResourceType(what.type.toString())
+					.setOptionalResourceId(what.id)
+					.setOptionalRelation(relationship.toString())
+			)
+			.build();
 		final List<RebacPermissionRelationship> relationships = getRelationship(request);
 		for (final RebacPermissionRelationship permissionRelationship : relationships) {
 			if (
@@ -250,13 +234,12 @@ public class ReBACFunctions {
 	) throws Exception {
 		final List<UUID> results = new ArrayList<>();
 
-		final PermissionService.LookupResourcesRequest request =
-			PermissionService.LookupResourcesRequest.newBuilder()
-				.setConsistency(consistency)
-				.setResourceObjectType(resourceType.toString())
-				.setSubject(createSubject(who.type.toString(), who.id))
-				.setPermission(permission.toString())
-				.build();
+		final PermissionService.LookupResourcesRequest request = PermissionService.LookupResourcesRequest.newBuilder()
+			.setConsistency(consistency)
+			.setResourceObjectType(resourceType.toString())
+			.setSubject(createSubject(who.type.toString(), who.id))
+			.setPermission(permission.toString())
+			.build();
 
 		final Iterator<LookupResourcesResponse> iter = permissionsService.lookupResources(request);
 		while (iter.hasNext()) {
@@ -277,19 +260,17 @@ public class ReBACFunctions {
 		return results;
 	}
 
-	public List<UUID> lookupResources(final Schema.Type resourceType, final Consistency consistency)
-		throws Exception {
+	public List<UUID> lookupResources(final Schema.Type resourceType, final Consistency consistency) throws Exception {
 		final Set<UUID> results = new HashSet<>();
 
 		PermissionService.RelationshipFilter filter = PermissionService.RelationshipFilter.newBuilder()
 			.setResourceType("project")
 			.build();
 
-		final PermissionService.ReadRelationshipsRequest request =
-			PermissionService.ReadRelationshipsRequest.newBuilder()
-				.setConsistency(consistency)
-				.setRelationshipFilter(filter)
-				.build();
+		final PermissionService.ReadRelationshipsRequest request = PermissionService.ReadRelationshipsRequest.newBuilder()
+			.setConsistency(consistency)
+			.setRelationshipFilter(filter)
+			.build();
 
 		final Iterator<ReadRelationshipsResponse> iter = permissionsService.readRelationships(request);
 		while (iter.hasNext()) {

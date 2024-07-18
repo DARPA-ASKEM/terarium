@@ -29,9 +29,7 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 					assetId: asset.assetId.toString(),
 					assetName:
 						asset.assetName ??
-						`${asset.assetId.substring(0, 3)} - ${formatShort(
-							asset?.updatedOn ?? asset?.createdOn
-						)}`,
+						`${asset.assetId.substring(0, 3)} - ${formatShort(asset?.updatedOn ?? asset?.createdOn)}`,
 					assetCreatedOn: asset.createdOn,
 					pageType: asset.assetType
 				}) as AssetItem
@@ -47,9 +45,7 @@ export const generateProjectAssetsMap = (searchAsset: string): ProjectAssetItems
 	Object.entries(_.groupBy(cleanAssets, 'pageType')).forEach(([type, assetList]) =>
 		assetItemsMap.set(
 			type,
-			[...new Set(assetList as AssetItem[])].sort((a, b) =>
-				sortDatesAsc(a.assetCreatedOn, b.assetCreatedOn)
-			)
+			[...new Set(assetList as AssetItem[])].sort((a, b) => sortDatesAsc(a.assetCreatedOn, b.assetCreatedOn))
 		)
 	);
 

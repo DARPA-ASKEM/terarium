@@ -12,8 +12,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectA
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
-public interface ProjectRepository
-	extends PSCrudRepository<Project, UUID>, JpaSpecificationExecutor<Project> {
+public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaSpecificationExecutor<Project> {
 	List<Project> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
 
 	Optional<Project> getByIdAndDeletedOnIsNull(final UUID id);

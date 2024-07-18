@@ -37,9 +37,7 @@ public class RebacProject extends RebacObject {
 	}
 
 	public boolean isPublic() throws Exception {
-		List<RebacPermissionRelationship> relationships = reBACService.getRelationships(
-			getSchemaObject()
-		);
+		List<RebacPermissionRelationship> relationships = reBACService.getRelationships(getSchemaObject());
 		for (RebacPermissionRelationship relationship : relationships) {
 			if (
 				relationship.getSubjectType().equals(Schema.Type.GROUP) &&

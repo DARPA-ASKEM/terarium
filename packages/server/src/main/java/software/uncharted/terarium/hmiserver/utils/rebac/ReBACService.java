@@ -133,10 +133,7 @@ public class ReBACService {
 				final SchemaObject publicGroup = new SchemaObject(Schema.Type.GROUP, PUBLIC_GROUP_ID);
 				final SchemaObject adminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
 
-				for (final RoleRepresentation roleRepresentation : userResource
-					.roles()
-					.getAll()
-					.getRealmMappings()) {
+				for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
 					if (roleRepresentation.getDescription().isBlank()) {
 						switch (roleRepresentation.getName()) {
 							case "user":
@@ -167,15 +164,9 @@ public class ReBACService {
 			ASKEM_ADMIN_GROUP_ID = getGroupId(ASKEM_ADMIN_GROUP_NAME);
 
 			// Ensure ASKEM_ADMIN_GROUP can write to all Projects
-			final SchemaObject askemAdminGroup = new SchemaObject(
-				Schema.Type.GROUP,
-				ASKEM_ADMIN_GROUP_ID
-			);
+			final SchemaObject askemAdminGroup = new SchemaObject(Schema.Type.GROUP, ASKEM_ADMIN_GROUP_ID);
 			final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-			final List<UUID> projectIds = rebac.lookupResources(
-				Schema.Type.PROJECT,
-				getCurrentConsistency()
-			);
+			final List<UUID> projectIds = rebac.lookupResources(Schema.Type.PROJECT, getCurrentConsistency());
 			for (final UUID projectId : projectIds) {
 				final SchemaObject project = new SchemaObject(Schema.Type.PROJECT, projectId.toString());
 				try {
@@ -263,10 +254,7 @@ public class ReBACService {
 			final UserResource userResource = usersResource.get(userRepresentation.getId());
 
 			final List<PermissionRole> roles = new ArrayList<>();
-			for (final RoleRepresentation roleRepresentation : userResource
-				.roles()
-				.getAll()
-				.getRealmMappings()) {
+			for (final RoleRepresentation roleRepresentation : userResource.roles().getAll().getRealmMappings()) {
 				if (roleRepresentation.getDescription().isBlank()) {
 					final PermissionRole role = new PermissionRole(
 						roleRepresentation.getId(),
@@ -310,11 +298,7 @@ public class ReBACService {
 					}
 				}
 
-				final PermissionRole role = new PermissionRole(
-					roleRepresentation.getId(),
-					roleRepresentation.getName(),
-					users
-				);
+				final PermissionRole role = new PermissionRole(roleRepresentation.getId(), roleRepresentation.getName(), users);
 				response.add(role);
 			}
 		}
@@ -327,10 +311,7 @@ public class ReBACService {
 
 		final List<GroupRepresentation> groups = keycloak.realm(REALM_NAME).groups().groups();
 		for (final GroupRepresentation groupRepresentation : groups) {
-			final PermissionGroup group = new PermissionGroup(
-				groupRepresentation.getId(),
-				groupRepresentation.getName()
-			);
+			final PermissionGroup group = new PermissionGroup(groupRepresentation.getId(), groupRepresentation.getName());
 			response.add(group);
 		}
 
@@ -357,11 +338,8 @@ public class ReBACService {
 	 * @return true if resource grants permission for user, otherwise false
 	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is unavailable
 	 */
-	public boolean can(
-		final SchemaObject who,
-		final Schema.Permission permission,
-		final SchemaObject what
-	) throws Exception {
+	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what)
+		throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		if (SPICEDB_LAUNCHMODE.equals("TEST")) {
 			return true;
@@ -405,8 +383,7 @@ public class ReBACService {
 		return Consistency.newBuilder().setAtLeastAsFresh(zedToken).build();
 	}
 
-	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what)
-		throws Exception {
+	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.getRelationship(what, getCurrentConsistency());
 	}
@@ -503,11 +480,8 @@ public class ReBACService {
 		}
 	}
 
-	public List<UUID> lookupResources(
-		final SchemaObject who,
-		final Schema.Permission permission,
-		final Schema.Type type
-	) throws Exception {
+	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
+		throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}

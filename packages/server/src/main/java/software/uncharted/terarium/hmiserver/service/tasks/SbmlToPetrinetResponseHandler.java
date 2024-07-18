@@ -47,9 +47,7 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 					}
 				});
 
-			final ConversionAdditionalProperties props = resp.getAdditionalProperties(
-				ConversionAdditionalProperties.class
-			);
+			final ConversionAdditionalProperties props = resp.getAdditionalProperties(ConversionAdditionalProperties.class);
 			model = modelService.createAsset(
 				modelResp.getResponse(),
 				props.getProjectId(),

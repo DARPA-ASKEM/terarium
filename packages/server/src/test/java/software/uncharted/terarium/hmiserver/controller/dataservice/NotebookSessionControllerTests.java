@@ -45,10 +45,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getNotebookSessionIndex());
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -60,8 +57,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotebookSession() throws Exception {
-		final NotebookSession notebookSession = (NotebookSession) new NotebookSession()
-			.setName("test-notebook-name");
+		final NotebookSession notebookSession = (NotebookSession) new NotebookSession().setName("test-notebook-name");
 
 		mockMvc
 			.perform(
@@ -111,10 +107,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/sessions").with(csrf()))
-			.andExpect(status().isOk())
-			.andReturn();
+		mockMvc.perform(MockMvcRequestBuilders.get("/sessions").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
@@ -134,8 +127,6 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			notebookSessionService.getAsset(notebookSession.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(notebookSessionService.getAsset(notebookSession.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 }

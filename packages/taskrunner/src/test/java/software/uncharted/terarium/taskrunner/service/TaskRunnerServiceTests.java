@@ -194,11 +194,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			responses.add(resp);
 			if (resp.getStatus() == TaskStatus.RUNNING) {
 				// send the cancellation after we know the task has started
-				rabbitTemplate.convertAndSend(
-					taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-					req.getId().toString(),
-					""
-				);
+				rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, req.getId().toString(), "");
 			}
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				break;
@@ -212,8 +208,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	}
 
 	@Test
-	public void testRunTaskCancelledBeforeStart()
-		throws InterruptedException, JsonProcessingException {
+	public void testRunTaskCancelledBeforeStart() throws InterruptedException, JsonProcessingException {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
@@ -233,11 +228,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		// send the cancellation BEFORE we send the request, this simulates a taskrunner
 		// under
 		// contention that could receive a cancellation before it processes a request
-		rabbitTemplate.convertAndSend(
-			taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE,
-			req.getId().toString(),
-			""
-		);
+		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, req.getId().toString(), "");
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -257,12 +248,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 		final ConcurrentHashMap<UUID, List<TaskResponse>> responsesPerReq = new ConcurrentHashMap<>();
-		final ConcurrentHashMap<UUID, List<List<TaskStatus>>> expectedResponses =
-			new ConcurrentHashMap<>();
+		final ConcurrentHashMap<UUID, List<List<TaskStatus>>> expectedResponses = new ConcurrentHashMap<>();
 
 		final List<Future<?>> requestFutures = new ArrayList<>();
-		final ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures =
-			new ConcurrentHashMap<>();
+		final ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures = new ConcurrentHashMap<>();
 
 		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 			rabbitTemplate.getConnectionFactory()
@@ -318,18 +307,12 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 						case 0:
 							// success
 							req.setInput(new String(TEST_INPUT).getBytes());
-							expectedResponses.put(
-								req.getId(),
-								List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS))
-							);
+							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
 							break;
 						case 1:
 							// failure
 							req.setInput(new String(FAILURE_INPUT).getBytes());
-							expectedResponses.put(
-								req.getId(),
-								List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED))
-							);
+							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED)));
 							break;
 						case 2:
 							// cancellation
@@ -418,10 +401,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				for (int i = 0; i < expected.size(); i++) {
 					if (expected.get(i) != responses.get(i).getStatus()) {
 						if (responses.get(i).getOutput() != null) {
-							Assertions.assertArrayEquals(
-								"{\"result\":\"ok\"}".getBytes(),
-								responses.get(i).getOutput()
-							);
+							Assertions.assertArrayEquals("{\"result\":\"ok\"}".getBytes(), responses.get(i).getOutput());
 						}
 						break;
 					}

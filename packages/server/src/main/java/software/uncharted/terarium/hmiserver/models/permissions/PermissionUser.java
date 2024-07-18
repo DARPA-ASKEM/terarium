@@ -22,13 +22,7 @@ public class PermissionUser {
 	@TSOptional
 	private String relationship;
 
-	public PermissionUser(
-		String id,
-		String firstName,
-		String lastName,
-		String email,
-		List<PermissionRole> roles
-	) {
+	public PermissionUser(String id, String firstName, String lastName, String email, List<PermissionRole> roles) {
 		this.id = id;
 		this.firstName = firstName;
 		this.lastName = lastName;

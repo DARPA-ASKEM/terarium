@@ -110,10 +110,7 @@ public class KeycloakTokenService {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// Add a buffer of a second for the request to get to the server
-			return (
-				jwt.getExpiresAt() != null &&
-				jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS))
-			);
+			return (jwt.getExpiresAt() != null && jwt.getExpiresAt().isAfter(Instant.now().minus(1, ChronoUnit.SECONDS)));
 		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;
@@ -131,9 +128,7 @@ public class KeycloakTokenService {
 		try {
 			final Jwt jwt = jwtDecoder.decode(token);
 			// noinspection unchecked
-			return (
-				(List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>())
-			).contains(role);
+			return ((List<String>) jwt.getClaimAsMap("realm_access").getOrDefault("roles", new ArrayList<>())).contains(role);
 		} catch (final Exception e) {
 			log.error("Error decoding token", e);
 			return false;

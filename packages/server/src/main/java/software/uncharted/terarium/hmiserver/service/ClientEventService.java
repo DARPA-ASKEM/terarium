@@ -133,9 +133,7 @@ public class ClientEventService {
 	 */
 	public <T> void sendToUser(final ClientEvent<T> event, final String userId) {
 		try {
-			final String jsonStr = mapper.writeValueAsString(
-				new UserClientEvent<T>().setEvent(event).setUserId(userId)
-			);
+			final String jsonStr = mapper.writeValueAsString(new UserClientEvent<T>().setEvent(event).setUserId(userId));
 			rabbitTemplate.convertAndSend(CLIENT_USER_EVENT_EXCHANGE, "", jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error sending all users message", e);
@@ -239,11 +237,7 @@ public class ClientEventService {
 		} catch (final Exception e) {
 			try {
 				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error(
-					"Unable to parse message as {}. Message: {}",
-					clazz.getName(),
-					jsonMessage.toPrettyString()
-				);
+				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
 				return null;
 			} catch (final Exception e1) {
 				log.error(

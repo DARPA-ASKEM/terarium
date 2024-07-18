@@ -61,9 +61,7 @@ public class InterventionController {
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = InterventionPolicy.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
 					)
 				)
 			),
@@ -80,17 +78,10 @@ public class InterventionController {
 		}
 	)
 	public ResponseEntity<List<InterventionPolicy>> getInterventions(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
-		final List<InterventionPolicy> interventions = interventionService.getPublicNotTemporaryAssets(
-			page,
-			pageSize
-		);
+		final List<InterventionPolicy> interventions = interventionService.getPublicNotTemporaryAssets(page, pageSize);
 		if (interventions.isEmpty()) {
 			return ResponseEntity.noContent().build();
 		}
@@ -107,16 +98,10 @@ public class InterventionController {
 				description = "Intervention found.",
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = InterventionPolicy.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There was no intervention found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "There was no intervention found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the intervention from the data store",
@@ -147,9 +132,7 @@ public class InterventionController {
 				description = "Intervention created.",
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = InterventionPolicy.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
 				)
 			),
 			@ApiResponse(
@@ -188,16 +171,10 @@ public class InterventionController {
 				description = "Intervention updated.",
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = InterventionPolicy.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Intervention could not be found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "Intervention could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue updating the intervention",
@@ -216,11 +193,7 @@ public class InterventionController {
 		);
 		try {
 			intervention.setId(id);
-			final Optional<InterventionPolicy> updated = interventionService.updateAsset(
-				intervention,
-				projectId,
-				permission
-			);
+			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update intervention";
@@ -244,9 +217,7 @@ public class InterventionController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),

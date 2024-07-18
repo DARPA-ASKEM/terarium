@@ -37,10 +37,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflowService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -90,10 +87,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		workflowService.createAsset(workflow2, project.getId(), ASSUME_WRITE_PERMISSION);
 		workflowService.createAsset(workflow3, project.getId(), ASSUME_WRITE_PERMISSION);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/workflows").with(csrf()))
-			.andExpect(status().isOk())
-			.andReturn();
+		mockMvc.perform(MockMvcRequestBuilders.get("/workflows").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
@@ -148,8 +142,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			workflowService.getAsset(workflow.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(workflowService.getAsset(workflow.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 }

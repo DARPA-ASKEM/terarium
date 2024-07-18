@@ -60,9 +60,7 @@ public class WorkflowController {
 				description = "Workflows found.",
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
-					)
+					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class))
 				)
 			),
 			@ApiResponse(
@@ -78,11 +76,7 @@ public class WorkflowController {
 		}
 	)
 	public ResponseEntity<List<Workflow>> getWorkflows(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		final List<Workflow> workflows = workflowService.getPublicNotTemporaryAssets(page, pageSize);
@@ -105,11 +99,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There was no workflow found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "There was no workflow found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the workflow from the data store",
@@ -143,11 +133,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the workflow",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the workflow", content = @Content)
 		}
 	)
 	public ResponseEntity<Workflow> createWorkflow(
@@ -159,16 +145,11 @@ public class WorkflowController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				workflowService.createAsset(item, projectId, permission)
-			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -185,16 +166,8 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Workflow could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the workflow",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
 	public ResponseEntity<Workflow> updateWorkflow(
@@ -208,19 +181,12 @@ public class WorkflowController {
 		);
 		try {
 			workflow.setId(id);
-			final Optional<Workflow> updated = workflowService.updateAsset(
-				workflow,
-				projectId,
-				permission
-			);
+			final Optional<Workflow> updated = workflowService.updateAsset(workflow, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update workflow";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		} catch (final IllegalArgumentException e) {
 			final String error = "ID does not match Workflow object ID";
 			log.error(error, e);
@@ -239,17 +205,11 @@ public class WorkflowController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue deleting the workflow",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the workflow", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteWorkflow(
@@ -267,10 +227,7 @@ public class WorkflowController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

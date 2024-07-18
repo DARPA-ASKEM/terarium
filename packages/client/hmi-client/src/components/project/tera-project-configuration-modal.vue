@@ -62,33 +62,15 @@
 
 				<ul>
 					<li>
-						<input
-							type="radio"
-							name="thumbnail"
-							id="thumbnail-default"
-							v-model="thumbnail"
-							value="default"
-						/>
+						<input type="radio" name="thumbnail" id="thumbnail-default" v-model="thumbnail" value="default" />
 						<label for="thumbnail-default">
-							<img
-								src="@assets/images/project-thumbnails/default.png"
-								alt="Default thumbnail image"
-							/>
+							<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
 						</label>
 					</li>
 					<li v-for="i in 5" :key="i">
-						<input
-							type="radio"
-							name="thumbnail"
-							:id="`thumbnail-0${i}`"
-							v-model="thumbnail"
-							:value="`0${i}`"
-						/>
+						<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
 						<label :for="`thumbnail-0${i}`">
-							<img
-								:src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail"
-								:alt="`Thumbnail image 0{$i}`"
-							/>
+							<img :src="getImage(`project-thumbnails/0${i}.png`) ?? DefaultThumbnail" :alt="`Thumbnail image 0{$i}`" />
 						</label>
 					</li>
 				</ul>
@@ -102,13 +84,7 @@
 				size="large"
 				:disabled="isTitleInvalid"
 			/>
-			<Button
-				severity="secondary"
-				outlined
-				@click="emit('close-modal')"
-				label="Cancel"
-				size="large"
-			/>
+			<Button severity="secondary" outlined @click="emit('close-modal')" label="Cancel" size="large" />
 		</template>
 	</tera-modal>
 </template>

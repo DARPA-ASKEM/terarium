@@ -83,11 +83,7 @@ public class SimulationController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the simulation",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the simulation", content = @Content)
 		}
 	)
 	public ResponseEntity<Simulation> createSimulation(
@@ -106,10 +102,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation.";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -159,14 +152,14 @@ public class SimulationController {
 				// so that its available for the front end to display forever.
 				if (
 					sim.getStatus() != null &&
-					(sim.getStatus().equals(ProgressState.FAILED) ||
-						sim.getStatus().equals(ProgressState.ERROR)) &&
+					(sim.getStatus().equals(ProgressState.FAILED) || sim.getStatus().equals(ProgressState.ERROR)) &&
 					(sim.getStatusMessage() == null || sim.getStatusMessage().isEmpty())
 				) {
 					if (sim.getEngine().equals(SimulationEngine.CIEMSS)) {
 						// Pyciemss can give us a nice error message. Attempt to get it.
-						final ResponseEntity<SimulationStatusMessage> statusResponse =
-							simulationCiemssServiceProxy.getRunStatus(sim.getId().toString());
+						final ResponseEntity<SimulationStatusMessage> statusResponse = simulationCiemssServiceProxy.getRunStatus(
+							sim.getId().toString()
+						);
 						if (
 							statusResponse == null ||
 							statusResponse.getBody() == null ||
@@ -192,10 +185,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -213,11 +203,7 @@ public class SimulationController {
 				)
 			),
 			@ApiResponse(responseCode = "404", description = "Simulation not found", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the simulation",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the simulation", content = @Content)
 		}
 	)
 	public ResponseEntity<Simulation> updateSimulation(
@@ -232,19 +218,12 @@ public class SimulationController {
 
 		try {
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(
-				simulation,
-				projectId,
-				permission
-			);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to update simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -258,11 +237,7 @@ public class SimulationController {
 				description = "Simulation deleted.",
 				content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue deleting the simulation",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the simulation", content = @Content)
 		}
 	)
 	public String deleteSimulation(
@@ -280,10 +255,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -317,10 +289,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -333,9 +302,7 @@ public class SimulationController {
 	 */
 	@PostMapping("/{id}/add-result-as-dataset-to-project/{project-id}")
 	@Secured(Roles.USER)
-	@Operation(
-		summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset"
-	)
+	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -375,9 +342,7 @@ public class SimulationController {
 			final Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
 			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
-			dataset.setMetadata(
-				mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class)
-			);
+			dataset.setMetadata(mapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());
 			dataset.setDataSourceDate(sim.get().getCompletedTime());
 			dataset.setColumns(new ArrayList<>());
@@ -409,16 +374,9 @@ public class SimulationController {
 				return ResponseEntity.internalServerError().build();
 			}
 		} catch (final IOException e) {
-			final String error = String.format(
-				"Failed to add simulation %s result as dataset to project %s",
-				id,
-				projectId
-			);
+			final String error = String.format("Failed to add simulation %s result as dataset to project %s", id, projectId);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -451,10 +409,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -493,10 +448,7 @@ public class SimulationController {
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -517,9 +469,7 @@ public class SimulationController {
 			)
 		}
 	)
-	public ResponseEntity<Void> subscribe(
-		@RequestParam("simulation-ids") final List<String> simulationIds
-	) {
+	public ResponseEntity<Void> subscribe(@RequestParam("simulation-ids") final List<String> simulationIds) {
 		simulationEventService.subscribe(simulationIds, currentUserService.get());
 		return ResponseEntity.ok().build();
 	}
@@ -541,9 +491,7 @@ public class SimulationController {
 			)
 		}
 	)
-	public ResponseEntity<Void> unsubscribe(
-		@RequestParam("simulation-ids") final List<String> simulationIds
-	) {
+	public ResponseEntity<Void> unsubscribe(@RequestParam("simulation-ids") final List<String> simulationIds) {
 		simulationEventService.unsubscribe(simulationIds, currentUserService.get());
 		return ResponseEntity.ok().build();
 	}

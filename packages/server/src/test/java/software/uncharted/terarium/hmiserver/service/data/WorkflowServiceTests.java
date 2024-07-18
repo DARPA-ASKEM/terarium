@@ -41,10 +41,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	public void setup() throws IOException {
 		workflowService.setupIndexAndAliasAndEnsureEmpty();
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -97,11 +94,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateWorkflow() throws Exception {
 		final Workflow before = (Workflow) createWorkflow().setId(UUID.randomUUID());
-		final Workflow after = workflowService.createAsset(
-			before,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Workflow after = workflowService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
@@ -146,15 +139,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetWorkflow() throws Exception {
-		final Workflow workflow = workflowService.createAsset(
-			createWorkflow(),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Workflow fetchedWorkflow = workflowService
-			.getAsset(workflow.getId(), Schema.Permission.READ)
-			.get();
+		final Workflow fetchedWorkflow = workflowService.getAsset(workflow.getId(), Schema.Permission.READ).get();
 
 		Assertions.assertEquals(workflow, fetchedWorkflow);
 		Assertions.assertEquals(workflow.getId(), fetchedWorkflow.getId());
@@ -167,11 +154,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateWorkflow() throws Exception {
-		final Workflow workflow = workflowService.createAsset(
-			createWorkflow(),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 		workflow.setName("new name");
 
 		final Workflow updatedWorkflow = workflowService
@@ -185,18 +168,11 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteWorkflow() throws Exception {
-		final Workflow workflow = workflowService.createAsset(
-			createWorkflow(),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Workflow workflow = workflowService.createAsset(createWorkflow(), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		workflowService.deleteAsset(workflow.getId(), project.getId(), Schema.Permission.WRITE);
 
-		final Optional<Workflow> deleted = workflowService.getAsset(
-			workflow.getId(),
-			Schema.Permission.READ
-		);
+		final Optional<Workflow> deleted = workflowService.getAsset(workflow.getId(), Schema.Permission.READ);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -211,63 +187,21 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(0).getId(),
-			cloned.getNodes().get(0).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(0).getWorkflowId(),
-			cloned.getNodes().get(0).getWorkflowId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(1).getId(),
-			cloned.getNodes().get(1).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(1).getWorkflowId(),
-			cloned.getNodes().get(1).getWorkflowId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(2).getId(),
-			cloned.getNodes().get(2).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(2).getWorkflowId(),
-			cloned.getNodes().get(2).getWorkflowId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(3).getId(),
-			cloned.getNodes().get(3).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(3).getWorkflowId(),
-			cloned.getNodes().get(3).getWorkflowId()
-		);
+		Assertions.assertNotEquals(workflow.getNodes().get(0).getId(), cloned.getNodes().get(0).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(0).getWorkflowId(), cloned.getNodes().get(0).getWorkflowId());
+		Assertions.assertNotEquals(workflow.getNodes().get(1).getId(), cloned.getNodes().get(1).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(1).getWorkflowId(), cloned.getNodes().get(1).getWorkflowId());
+		Assertions.assertNotEquals(workflow.getNodes().get(2).getId(), cloned.getNodes().get(2).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(2).getWorkflowId(), cloned.getNodes().get(2).getWorkflowId());
+		Assertions.assertNotEquals(workflow.getNodes().get(3).getId(), cloned.getNodes().get(3).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(3).getWorkflowId(), cloned.getNodes().get(3).getWorkflowId());
 		Assertions.assertEquals(workflow.getEdges().size(), cloned.getEdges().size());
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(0).getId(),
-			cloned.getEdges().get(0).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(0).getWorkflowId(),
-			cloned.getEdges().get(0).getWorkflowId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(1).getId(),
-			cloned.getEdges().get(1).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(1).getWorkflowId(),
-			cloned.getEdges().get(1).getWorkflowId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(2).getId(),
-			cloned.getEdges().get(2).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(2).getWorkflowId(),
-			cloned.getEdges().get(2).getWorkflowId()
-		);
+		Assertions.assertNotEquals(workflow.getEdges().get(0).getId(), cloned.getEdges().get(0).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(0).getWorkflowId(), cloned.getEdges().get(0).getWorkflowId());
+		Assertions.assertNotEquals(workflow.getEdges().get(1).getId(), cloned.getEdges().get(1).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(1).getWorkflowId(), cloned.getEdges().get(1).getWorkflowId());
+		Assertions.assertNotEquals(workflow.getEdges().get(2).getId(), cloned.getEdges().get(2).getId());
+		Assertions.assertNotEquals(workflow.getEdges().get(2).getWorkflowId(), cloned.getEdges().get(2).getWorkflowId());
 	}
 
 	@Test
@@ -318,19 +252,10 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 
 		Assertions.assertNotEquals(workflow.getId(), cloned.getId());
 		Assertions.assertEquals(workflow.getNodes().size(), cloned.getNodes().size());
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(0).getId(),
-			cloned.getNodes().get(0).getId()
-		);
-		Assertions.assertNotEquals(
-			workflow.getNodes().get(1).getId(),
-			cloned.getNodes().get(1).getId()
-		);
+		Assertions.assertNotEquals(workflow.getNodes().get(0).getId(), cloned.getNodes().get(0).getId());
+		Assertions.assertNotEquals(workflow.getNodes().get(1).getId(), cloned.getNodes().get(1).getId());
 		Assertions.assertEquals(workflow.getEdges().size(), cloned.getEdges().size());
-		Assertions.assertNotEquals(
-			workflow.getEdges().get(0).getId(),
-			cloned.getEdges().get(0).getId()
-		);
+		Assertions.assertNotEquals(workflow.getEdges().get(0).getId(), cloned.getEdges().get(0).getId());
 
 		// ensure additional fields are preserved on clone
 		raw = mapper.valueToTree(workflow);
@@ -376,10 +301,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			Assertions.assertEquals(workflows.get(i).getDeletedOn(), results.get(i).getDeletedOn());
 			Assertions.assertEquals(workflows.get(i).getNodes().size(), results.get(i).getNodes().size());
 			for (int j = 0; j < results.get(i).getNodes().size(); j++) {
-				Assertions.assertEquals(
-					workflows.get(i).getNodes().get(j).getId(),
-					results.get(i).getNodes().get(j).getId()
-				);
+				Assertions.assertEquals(workflows.get(i).getNodes().get(j).getId(), results.get(i).getNodes().get(j).getId());
 				Assertions.assertEquals(
 					workflows.get(i).getNodes().get(j).getWorkflowId(),
 					results.get(i).getNodes().get(j).getWorkflowId()
@@ -387,10 +309,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			}
 			Assertions.assertEquals(workflows.get(i).getEdges().size(), results.get(i).getEdges().size());
 			for (int j = 0; j < results.get(i).getEdges().size(); j++) {
-				Assertions.assertEquals(
-					workflows.get(i).getEdges().get(j).getId(),
-					results.get(i).getEdges().get(j).getId()
-				);
+				Assertions.assertEquals(workflows.get(i).getEdges().get(j).getId(), results.get(i).getEdges().get(j).getId());
 				Assertions.assertEquals(
 					workflows.get(i).getEdges().get(j).getWorkflowId(),
 					results.get(i).getEdges().get(j).getWorkflowId()

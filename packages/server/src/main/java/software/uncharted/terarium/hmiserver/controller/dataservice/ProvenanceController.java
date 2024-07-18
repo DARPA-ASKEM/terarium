@@ -43,11 +43,7 @@ public class ProvenanceController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Provenance.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the provenance",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the provenance", content = @Content)
 		}
 	)
 	public ResponseEntity<Provenance> createProvenance(@RequestBody Provenance provenance) {
@@ -65,9 +61,7 @@ public class ProvenanceController {
 				description = "Provenance results found.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ProvenanceSearchResult.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ProvenanceSearchResult.class)
 				)
 			),
 			@ApiResponse(
@@ -82,9 +76,7 @@ public class ProvenanceController {
 			)
 		}
 	)
-	public ResponseEntity<ProvenanceSearchResult> searchConnectedNodes(
-		@RequestBody final ProvenanceQueryParam body
-	) {
+	public ResponseEntity<ProvenanceSearchResult> searchConnectedNodes(@RequestBody final ProvenanceQueryParam body) {
 		// TODO: This function should return the objects listed in the ProvenanceSearchResults and not simply the ids,
 		//  the client pulls these objects with a distinct request per object,
 		//  this would cut down on many inefficient network requests

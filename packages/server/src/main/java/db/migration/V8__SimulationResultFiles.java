@@ -26,9 +26,7 @@ public class V8__SimulationResultFiles extends BaseJavaMigration {
 				final String dataType = typeResultSet.getString("data_type");
 				if (!"json".equals(dataType)) {
 					// type is not `json`
-					statement.execute(
-						"ALTER TABLE simulation ALTER COLUMN result_files TYPE json USING result_files::json;"
-					);
+					statement.execute("ALTER TABLE simulation ALTER COLUMN result_files TYPE json USING result_files::json;");
 				}
 			}
 

@@ -27,8 +27,7 @@ public class DownloadService {
 	 * @return a fully qualified url
 	 * @throws URISyntaxException if the url is not a valid URI
 	 */
-	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl)
-		throws URISyntaxException {
+	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
 		final URI uri = new URI(baseUrl);
 		return uri.getScheme() + "://" + uri.getHost() + relativeUrl;
 	}
@@ -96,10 +95,7 @@ public class DownloadService {
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
-		if (
-			response.getStatusLine().getStatusCode() >= 300 &&
-			response.getStatusLine().getStatusCode() <= 310
-		) {
+		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
 			final String redirect = response.getFirstHeader("Location").getValue();
 			if (!redirect.startsWith("http")) {
 				return getPDF(normalizeRelativeUrl(redirect, url));
@@ -112,10 +108,7 @@ public class DownloadService {
 			// it
 			final String contentType = response.getEntity().getContentType().getValue();
 			if (contentType.contains("html")) {
-				final String html = IOUtils.toString(
-					response.getEntity().getContent(),
-					StandardCharsets.UTF_8
-				);
+				final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
 				final String pdfUrl = links
@@ -158,10 +151,7 @@ public class DownloadService {
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
-		if (
-			response.getStatusLine().getStatusCode() >= 300 &&
-			response.getStatusLine().getStatusCode() <= 310
-		) {
+		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
 			final String redirect = response.getFirstHeader("Location").getValue();
 			if (!redirect.startsWith("http")) {
 				return getPDFURL(normalizeRelativeUrl(redirect, url));
@@ -174,10 +164,7 @@ public class DownloadService {
 			// it
 			final String contentType = response.getEntity().getContentType().getValue();
 			if (contentType.contains("html")) {
-				final String html = IOUtils.toString(
-					response.getEntity().getContent(),
-					StandardCharsets.UTF_8
-				);
+				final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
 				final String pdfUrl = links

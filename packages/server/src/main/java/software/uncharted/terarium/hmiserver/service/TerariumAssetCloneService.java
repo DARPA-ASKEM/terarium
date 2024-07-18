@@ -49,12 +49,8 @@ public class TerariumAssetCloneService {
 	 * @throws IOException
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public List<TerariumAsset> cloneAndPersistAsset(final UUID projectId, final UUID assetId)
-		throws IOException {
-		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(
-			projectId,
-			Schema.Permission.READ
-		);
+	public List<TerariumAsset> cloneAndPersistAsset(final UUID projectId, final UUID assetId) throws IOException {
+		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(projectId, Schema.Permission.READ);
 		final Map<UUID, ProjectAsset> projectAssetsById = new HashMap<>();
 		final Set<UUID> projectAssetIds = new HashSet<>();
 
@@ -94,21 +90,14 @@ public class TerariumAssetCloneService {
 
 			if (currentAssetOptional.isEmpty()) {
 				// asset is missing or deleted, skip
-				log.warn(
-					"Asset {} on project {} not longer exists, omitting from export",
-					currentAssetId,
-					projectId
-				);
+				log.warn("Asset {} on project {} not longer exists, omitting from export", currentAssetId, projectId);
 				oldToNewIds.put(currentAssetId, currentAssetId); // map to the same id to prevent an exception later
 				continue;
 			}
 
 			final TerariumAsset currentAsset = currentAssetOptional.get();
 
-			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
-				projectAssetIds,
-				currentAsset
-			);
+			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
 
 			for (final UUID dependencyId : dependencies.getIds()) {
 				assetsToClone.push(dependencyId);
@@ -139,17 +128,11 @@ public class TerariumAssetCloneService {
 			final AssetDependencyMap dependencies = assetDependencies.get(clonedAsset.getId());
 
 			// update any referenced dependencies
-			final TerariumAsset resolved = AssetDependencyUtil.swapAssetDependencies(
-				clonedAsset,
-				oldToNewIds,
-				dependencies
-			);
+			final TerariumAsset resolved = AssetDependencyUtil.swapAssetDependencies(clonedAsset, oldToNewIds, dependencies);
 
 			final AssetType assetType = assetTypes.get(clonedAsset.getId());
 
-			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(
-				assetType
-			);
+			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
 			// persist the clone
 			final TerariumAsset created = (TerariumAsset) terariumAssetService.createAsset(
@@ -187,10 +170,7 @@ public class TerariumAssetCloneService {
 			throw new RuntimeException("Project " + projectId + " not found");
 		}
 
-		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(
-			projectId,
-			Schema.Permission.READ
-		);
+		final List<ProjectAsset> projectAssets = projectAssetService.getProjectAssets(projectId, Schema.Permission.READ);
 
 		final List<AssetExport> exportedAssets = new ArrayList<>();
 
@@ -247,11 +227,8 @@ public class TerariumAssetCloneService {
 	 * @throws IOException
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Project importProject(
-		final String userId,
-		final String userName,
-		final ProjectExport export
-	) throws IOException {
+	public Project importProject(final String userId, final String userName, final ProjectExport export)
+		throws IOException {
 		final ProjectExport projectExport = export.clone(); // clone in case it has been imported already
 
 		// set the current user id
@@ -264,9 +241,7 @@ public class TerariumAssetCloneService {
 		for (final AssetExport assetExport : projectExport.getAssets()) {
 			final AssetType assetType = assetExport.getType();
 
-			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(
-				assetType
-			);
+			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
 			TerariumAsset asset = assetExport.getAsset();
 
@@ -274,12 +249,7 @@ public class TerariumAssetCloneService {
 			for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
 				final String fileName = entry.getKey();
 				final FileExport fileExport = entry.getValue();
-				terariumAssetService.uploadFile(
-					asset.getId(),
-					fileName,
-					fileExport.getContentType(),
-					fileExport.getBytes()
-				);
+				terariumAssetService.uploadFile(asset.getId(), fileName, fileExport.getContentType(), fileExport.getBytes());
 			}
 
 			// create the asset

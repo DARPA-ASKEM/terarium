@@ -56,18 +56,13 @@ public class ProjectExport {
 		// iterate on assets
 		while ((zipEntry = zipInputStream.getNextEntry()) != null) {
 			// read the asset json
-			final AssetExport asset = objectMapper.readValue(
-				readZipEntry(zipInputStream),
-				AssetExport.class
-			);
+			final AssetExport asset = objectMapper.readValue(readZipEntry(zipInputStream), AssetExport.class);
 
 			// read in the file payloads
 			for (final Map.Entry<String, FileExport> entry : asset.getFiles().entrySet()) {
 				zipEntry = zipInputStream.getNextEntry();
 				if (zipEntry == null) {
-					throw new IllegalArgumentException(
-						"Invalid project export file, expected a asset file payload"
-					);
+					throw new IllegalArgumentException("Invalid project export file, expected a asset file payload");
 				}
 				final FileExport file = entry.getValue();
 				file.setBytes(readZipEntry(zipInputStream));
@@ -133,10 +128,7 @@ public class ProjectExport {
 			final TerariumAsset currentAsset = assetExport.getAsset();
 
 			// determine any dependencies each asset has
-			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
-				projectAssetIds,
-				currentAsset
-			);
+			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
 
 			// clone the asset
 			final TerariumAsset clonedAsset = currentAsset.clone();

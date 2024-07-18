@@ -29,8 +29,7 @@ import software.uncharted.terarium.hmiserver.service.UserService;
 
 @Service
 @RequiredArgsConstructor
-public class KeycloakJwtAuthenticationConverter
-	implements Converter<Jwt, AbstractAuthenticationToken> {
+public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
 	private final UserService userService;
 
@@ -86,9 +85,7 @@ public class KeycloakJwtAuthenticationConverter
 			.flatMap(Collection::stream)
 			.collect(toSet());
 
-		final List<Role> roles = roleService.getAllByTypes(
-			roleTypes.stream().map(Enum::name).collect(toSet())
-		);
+		final List<Role> roles = roleService.getAllByTypes(roleTypes.stream().map(Enum::name).collect(toSet()));
 
 		user.setRoles(roles);
 

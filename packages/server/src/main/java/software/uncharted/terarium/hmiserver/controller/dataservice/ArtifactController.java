@@ -79,11 +79,7 @@ public class ArtifactController {
 		}
 	)
 	public ResponseEntity<List<Artifact>> getArtifacts(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
@@ -91,10 +87,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "An error occurred while retrieving artifacts";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -111,11 +104,7 @@ public class ArtifactController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Artifact.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the artifact",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the artifact", content = @Content)
 		}
 	)
 	public ResponseEntity<Artifact> createArtifact(
@@ -133,10 +122,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -154,11 +140,7 @@ public class ArtifactController {
 				)
 			),
 			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue retrieving the artifact",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue retrieving the artifact", content = @Content)
 		}
 	)
 	public ResponseEntity<Artifact> getArtifact(
@@ -175,10 +157,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "An error occurred while retrieving artifact";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -196,11 +175,7 @@ public class ArtifactController {
 				)
 			),
 			@ApiResponse(responseCode = "404", description = "Artifact not found", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the artifact",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the artifact", content = @Content)
 		}
 	)
 	public ResponseEntity<Artifact> updateArtifact(
@@ -215,19 +190,12 @@ public class ArtifactController {
 
 		try {
 			artifact.setId(artifactId);
-			final Optional<Artifact> updated = artifactService.updateAsset(
-				artifact,
-				projectId,
-				permission
-			);
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "An error occurred while updating artifact";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -241,16 +209,10 @@ public class ArtifactController {
 				description = "Artifact deleted.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseDeleted.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue deleting the artifact",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the artifact", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteArtifact(
@@ -268,10 +230,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "Unable to delete artifact";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -304,10 +263,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -324,11 +280,7 @@ public class ArtifactController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Presigned url not found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "Presigned url not found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the presigned url",
@@ -346,10 +298,7 @@ public class ArtifactController {
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -363,11 +312,7 @@ public class ArtifactController {
 				description = "File downloaded.",
 				content = @Content(mediaType = "text/plain")
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue downloading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<String> downloadFileAsText(
@@ -375,13 +320,8 @@ public class ArtifactController {
 		@RequestParam("filename") final String filename
 	) {
 		try {
-			final Optional<String> textFileAsString = artifactService.fetchFileAsString(
-				artifactId,
-				filename
-			);
-			return textFileAsString
-				.map(ResponseEntity::ok)
-				.orElseGet(() -> ResponseEntity.notFound().build());
+			final Optional<String> textFileAsString = artifactService.fetchFileAsString(artifactId, filename);
+			return textFileAsString.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
@@ -401,11 +341,7 @@ public class ArtifactController {
 				description = "File downloaded.",
 				content = @Content(mediaType = "application/octet-stream")
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue downloading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue downloading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<byte[]> downloadFile(
@@ -439,11 +375,7 @@ public class ArtifactController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<Integer> uploadFile(
@@ -454,10 +386,7 @@ public class ArtifactController {
 		log.debug("Uploading artifact {} to project", artifactId);
 
 		final byte[] fileAsBytes = input.getBytes();
-		final HttpEntity fileEntity = new ByteArrayEntity(
-			fileAsBytes,
-			ContentType.APPLICATION_OCTET_STREAM
-		);
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 	}
 
@@ -476,11 +405,7 @@ public class ArtifactController {
 				)
 			),
 			@ApiResponse(responseCode = "404", description = "File not found", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<Integer> uploadArtifactFromGithub(

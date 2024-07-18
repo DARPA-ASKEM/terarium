@@ -28,19 +28,16 @@ public interface MIRAProxy {
 	) throws FeignException;
 
 	@GetMapping("/entities/{curies}")
-	ResponseEntity<List<DKG>> getEntities(@PathVariable("curies") final String curies)
-		throws FeignException;
+	ResponseEntity<List<DKG>> getEntities(@PathVariable("curies") final String curies) throws FeignException;
 
 	// This returns a MIRANet, not an AMR
 	@PostMapping("/reconstruct_ode_semantics")
-	ResponseEntity<JsonNode> reconstructODESemantics(@RequestBody final Object amr)
-		throws FeignException;
+	ResponseEntity<JsonNode> reconstructODESemantics(@RequestBody final Object amr) throws FeignException;
 
 	// This converts MIRANet (Petrinet) to AMR
 	@PostMapping("/to_petrinet")
 	ResponseEntity<Model> toPetrinet(@RequestBody Object obj) throws FeignException;
 
 	@PostMapping("/entity_similarity")
-	ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody Curies obj)
-		throws FeignException;
+	ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody Curies obj) throws FeignException;
 }

@@ -24,18 +24,13 @@ public class RoleService {
 
 	private final AuthorityRepository authorityRepository;
 
-	public Role createRole(
-		final RoleType type,
-		final Map<AuthorityType, List<AuthorityLevel>> authorities
-	) {
+	public Role createRole(final RoleType type, final Map<AuthorityType, List<AuthorityLevel>> authorities) {
 		final Role role = new Role().setName(type.name());
 		final Set<AuthorityInstance> authorityInstances = role.getAuthorities();
 		authorities.forEach((authorityType, authorityLevels) -> {
 			authorityRepository
 				.findFirstByName(authorityType.toString())
-				.ifPresent(authority ->
-					authorityInstances.add(new AuthorityInstance(authority, authorityLevels))
-				);
+				.ifPresent(authority -> authorityInstances.add(new AuthorityInstance(authority, authorityLevels)));
 		});
 		return roleRepository.save(role);
 	}

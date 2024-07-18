@@ -1,10 +1,6 @@
 import * as mmt from '@/examples/mmt.json';
 import { describe, expect, it } from 'vitest';
-import {
-	collapseParameters,
-	collapseTemplates,
-	createParameterMatrix
-} from '@/model-representation/mira/mira';
+import { collapseParameters, collapseTemplates, createParameterMatrix } from '@/model-representation/mira/mira';
 
 const miraTemplateParams = {
 	t1: {

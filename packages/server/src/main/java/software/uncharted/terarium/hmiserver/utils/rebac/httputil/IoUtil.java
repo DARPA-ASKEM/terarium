@@ -118,9 +118,7 @@ public class IoUtil {
 			} else if (supportedViews.contains("acl")) {
 				setWindowsPermissions(parent);
 			} else {
-				throw new IOException(
-					"Failed to restrict access permissions on .keycloak directory: " + parent
-				);
+				throw new IOException("Failed to restrict access permissions on .keycloak directory: " + parent);
 			}
 		}
 		if (!isRegularFile(path)) {

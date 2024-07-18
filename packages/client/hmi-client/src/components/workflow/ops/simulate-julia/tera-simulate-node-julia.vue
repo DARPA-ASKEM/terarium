@@ -14,13 +14,7 @@
 			/>
 		</template>
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
 		</tera-operator-placeholder>

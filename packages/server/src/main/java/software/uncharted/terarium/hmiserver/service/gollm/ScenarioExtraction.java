@@ -34,14 +34,9 @@ public class ScenarioExtraction {
 	}
 
 	// Replace parameter values in the model with the values from the condition
-	public static void replaceParameter(
-		final ModelParameter parameter,
-		final JsonNode conditionParameter
-	) {
+	public static void replaceParameter(final ModelParameter parameter, final JsonNode conditionParameter) {
 		final String id = conditionParameter.get("id").asText();
-		if (
-			parameter.getId().equals(id) || parameter.getId().equals(GreekDictionary.englishToGreek(id))
-		) {
+		if (parameter.getId().equals(id) || parameter.getId().equals(GreekDictionary.englishToGreek(id))) {
 			if (conditionParameter.has("value")) {
 				final double value = conditionParameter.get("value").doubleValue();
 				parameter.setValue(value);
@@ -61,18 +56,12 @@ public class ScenarioExtraction {
 		}
 	}
 
-	public static List<ModelParameter> getModelParameters(
-		final JsonNode condition,
-		final Model modelCopy
-	) {
+	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model modelCopy) {
 		final List<ModelParameter> modelParameters = modelCopy.getParameters();
 		modelParameters.forEach(parameter -> {
 			condition.forEach(conditionParameter -> {
 				// Test if type exist and is parameter for Dataset extraction
-				if (
-					conditionParameter.has("type") &&
-					conditionParameter.get("type").asText().equals("initial")
-				) {
+				if (conditionParameter.has("type") && conditionParameter.get("type").asText().equals("initial")) {
 					return;
 				}
 				replaceParameter(parameter, conditionParameter);
@@ -86,9 +75,7 @@ public class ScenarioExtraction {
 		modelInitials.forEach(initial -> {
 			final String target = initial.getTarget();
 			condition.forEach(conditionInitial -> {
-				if (
-					conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")
-				) return;
+				if (conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")) return;
 				replaceInitial(initial, conditionInitial);
 			});
 		});

@@ -163,8 +163,7 @@ public class TestReBACService extends ReBACService {
 	) throws Exception, RelationshipAlreadyExistsException {}
 
 	@Override
-	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what)
-		throws Exception {
+	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
 		return new ArrayList<>();
 	}
 
@@ -212,21 +211,14 @@ public class TestReBACService extends ReBACService {
 		final PermissionUser user = users.get(userId);
 		user.getRoles().add(new PermissionRole(roleId, roleName));
 
-		role
-			.getUsers()
-			.add(
-				new PermissionUser(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail())
-			);
+		role.getUsers().add(new PermissionUser(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail()));
 
 		return ResponseEntity.ok().build();
 	}
 
 	@Override
-	public List<UUID> lookupResources(
-		final SchemaObject who,
-		final Schema.Permission permission,
-		final Schema.Type type
-	) throws Exception {
+	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
+		throws Exception {
 		return new ArrayList<>();
 	}
 }

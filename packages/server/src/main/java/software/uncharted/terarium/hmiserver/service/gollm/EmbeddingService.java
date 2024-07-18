@@ -70,10 +70,7 @@ public class EmbeddingService {
 		final byte[] outputBytes = resp.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
 
-		final EmbeddingsResponse embeddingResp = objectMapper.convertValue(
-			output,
-			EmbeddingsResponse.class
-		);
+		final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
 
 		final Embeddings embeddingChunk = new Embeddings();
 		embeddingChunk.setVector(embeddingResp.response);
