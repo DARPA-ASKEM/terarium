@@ -126,13 +126,6 @@ export async function getRunResultCSV(runId: string, filename: string): Promise<
 			params: { filename }
 		});
 		const output = csvParse(resp.data, autoType);
-
-		// FIXME: summary need to have time
-		if (filename === 'result_summary.csv') {
-			output.forEach((d: any, idx) => {
-				d.timepoint_id = idx;
-			});
-		}
 		return output;
 	} catch (err) {
 		logger.error(err);

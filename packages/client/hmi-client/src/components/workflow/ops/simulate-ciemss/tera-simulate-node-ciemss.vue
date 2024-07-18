@@ -158,22 +158,18 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	const fields = {
-		timeField: 'timepoint_id',
-		groupField: 'sample_id'
-	};
-
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
 				dataset: result,
 				variables: config.map((d) => pyciemssMap[d]),
-				...fields
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
 				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
-				...fields
+				timeField: 'timepoint_id'
 			},
 			null,
 			// options
