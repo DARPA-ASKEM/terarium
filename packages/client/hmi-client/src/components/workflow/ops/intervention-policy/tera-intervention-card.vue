@@ -68,8 +68,8 @@
 						.
 					</template>
 
-					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
-						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
+					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
+						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								<tera-input
 									type="nist"
