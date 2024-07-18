@@ -21,7 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
+import { isString } from 'lodash';
+import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -42,6 +43,10 @@ const error = ref('');
 const maskedValue = ref('');
 
 const isNistType = props.type === 'nist';
+// If the input is a string composed only of digits, display as NIST number
+const isTextContainingOnlyDigits =
+	isString(props.modelValue) && /^\d+(\.\d+)?$/.test(props.modelValue);
+
 const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
@@ -70,7 +75,10 @@ const inputStyle = computed(() => {
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
-const getValue = () => (isNistType ? maskedValue.value : props.modelValue);
+function getValue() {
+	if (isNistType || isTextContainingOnlyDigits) return maskedValue.value;
+	return props.modelValue;
+}
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
@@ -85,6 +93,8 @@ const updateValue = (event: Event) => {
 		} else {
 			error.value = 'Invalid number';
 		}
+	} else if (isTextContainingOnlyDigits) {
+		maskedValue.value = numberToNist(value);
 	} else if (props.type === 'number') {
 		emit('update:model-value', parseFloat(value));
 	} else {
@@ -95,14 +105,14 @@ const updateValue = (event: Event) => {
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isNistType) {
+		if (isNistType || isTextContainingOnlyDigits) {
 			maskedValue.value = numberToNist(newValue?.toString() ?? '');
 		}
 	}
 );
 
 onMounted(() => {
-	if (isNistType) {
+	if (isNistType || isTextContainingOnlyDigits) {
 		maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
 	}
 });
@@ -111,6 +121,10 @@ const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
 		emit('update:model-value', nistToNumber(maskedValue.value));
+	}
+
+	if (isTextContainingOnlyDigits) {
+		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
 </script>
