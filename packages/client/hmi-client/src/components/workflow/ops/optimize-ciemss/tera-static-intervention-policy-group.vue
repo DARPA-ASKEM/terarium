@@ -25,8 +25,7 @@
 					/>
 					for the {{ knobs.intervention.type }}&nbsp;<strong>{{
 						knobs.intervention.appliedTo
-					}}</strong
-					>.
+					}}</strong>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
