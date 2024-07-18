@@ -45,7 +45,7 @@ import {
 	parsePyCiemssMap
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -235,7 +235,7 @@ watch(
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
-				label: `${portLabel} Result`,
+				label: nodeOutputLabel(props.node, `${portLabel} Result`),
 				value: [state.calibrationId],
 				state: {
 					calibrationId: state.calibrationId,
