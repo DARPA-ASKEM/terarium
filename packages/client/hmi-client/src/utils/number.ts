@@ -42,6 +42,9 @@ export function numberToNist(num: string) {
 
 /**
  * Converts a NIST number form to string form.
+ *
+ * @param {string} number - The number in NIST form to convert.
+ * @returns {string} The number in string form.
  */
 export function nistToString(number: string): string {
 	// test if the value is formatted as NIST (contained digits and whitespace between them)
