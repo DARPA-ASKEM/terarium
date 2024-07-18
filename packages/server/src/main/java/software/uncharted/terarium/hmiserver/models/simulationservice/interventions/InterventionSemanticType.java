@@ -3,8 +3,8 @@ package software.uncharted.terarium.hmiserver.models.simulationservice.intervent
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum InterventionSemanticType {
-	@JsonProperty("variable")
-	VARIABLE,
+	@JsonProperty("state")
+	STATE,
 
 	@JsonProperty("parameter")
 	PARAMETER
