@@ -1,5 +1,3 @@
-import { mean } from 'lodash';
-
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = [
@@ -282,59 +280,57 @@ function formatSuccessChartData(
 ) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
-
-	const minValue = Math.min(...data);
-	const maxValue = Math.max(...data);
-	const stepSize = (maxValue - minValue) / binCount;
-	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
-	for (let i = binCount; i > 0; i--) {
-		let rangeStart = minValue + stepSize * (i - 1);
-		let rangeEnd = minValue + stepSize * i;
-
-		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
-		if (stepSize === 0) {
-			rangeStart = minValue - 1;
-			rangeEnd = maxValue + 1;
-		}
-
-		let tag;
-		if (isMinimized) {
-			tag = rangeEnd < threshold ? 'in' : 'out';
-		} else {
-			tag = rangeStart > threshold ? 'in' : 'out';
-		}
-
-		bins.push({
-			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
-			count: 0,
-			tag
-		});
+	if (data.length === 0) {
+		return [];
 	}
 
-	const toBinIndex = (value: number) => {
-		if (value < minValue || value > maxValue) return -1;
-		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
-		if (stepSize === 0 || value === maxValue) return 0;
-		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
-		return index;
-	};
+	const min = Math.min(...data);
+	const max = Math.max(...data);
+	const ranges: { range: string; count: number; tag: 'in' | 'out' }[] = [];
 
-	const avgArray: number[] = [];
-
-	// Fill bins:
-	data.forEach((ele) => {
-		const index = toBinIndex(ele);
-		if (index !== -1) {
-			bins[index].count += 1;
-			if (bins[index].tag === 'out') {
-				avgArray.push(ele);
-			}
+	// see whether ranges are in or out of the threshold
+	const determineTag = (
+		start: number,
+		end: number,
+		thresholdValue: number,
+		isMinimizedValue: boolean
+	): 'in' | 'out' => {
+		if (isMinimizedValue) {
+			return end < thresholdValue ? 'in' : 'out';
 		}
-	});
+		return start > thresholdValue ? 'in' : 'out';
+	};
+	if (min === max) {
+		// case where there is only one value or all values are the same. we want to give the bar some thickness so that the user can see it.
+		const start = min - 1;
+		const end = min + 1;
+		const count = data.length;
 
-	const avg = mean(avgArray);
+		ranges.push({
+			range: `${start.toFixed(4)} - ${end.toFixed(4)}`,
+			count,
+			tag: determineTag(start, end, threshold, isMinimized)
+		});
+	} else {
+		const rangeSize = (max - min) / binCount;
 
-	return { data: bins, avg };
+		for (let i = 0; i < binCount; i++) {
+			const start = min + i * rangeSize;
+			const end = i === binCount - 1 ? max : start + rangeSize;
+			// count the number of values in the range, some logic here to handle the last bin which is inclusive of the max value
+			const count = data.filter(
+				(num) => num >= start && (i === binCount - 1 ? num <= end : num < end)
+			).length;
+
+			ranges.push({
+				range: `${start.toFixed(4)}-${end.toFixed(4)}`,
+				count,
+				tag: determineTag(start, end, threshold, isMinimized)
+			});
+		}
+	}
+
+	return ranges;
 }
 
 export function createOptimizeChart(
@@ -343,7 +339,7 @@ export function createOptimizeChart(
 	threshold: number,
 	isMinimized: boolean
 ): any {
-	const { data } = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
+	const data = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -374,14 +370,14 @@ export function createOptimizeChart(
 					y: {
 						field: 'start',
 						type: 'quantitative',
-						title: 'Min value at all times'
+						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all times`
 					},
 					y2: { field: 'end' },
 					x: {
 						aggregate: 'sum',
 						field: 'count',
 						type: 'quantitative',
-						title: 'Count'
+						title: 'Number of samples'
 					},
 					color: {
 						field: 'tag',
