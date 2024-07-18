@@ -111,7 +111,7 @@ const states = computed<State[]>(() => props.model?.model?.states ?? []);
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
 		...transition,
-		name: transition.name ?? transition?.properties?.name ?? transition.id,
+		name: transition.name ?? transition.properties?.name ?? transition.id,
 		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)
 			?.expression
 	}))
