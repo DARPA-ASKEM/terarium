@@ -9,9 +9,8 @@ const DOCUMENTATION_URL =
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
-	paramValue = 'param_value' // provide a statr time to get a better parameter value.
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
-	// ,paramValueAndStartTime = 'param_value_and_start_time'
+	paramValue = 'param_value', // provide a statr time to get a better parameter value.
+	paramValueAndStartTime = 'param_value_and_start_time'
 }
 
 export enum InterventionObjectiveFunctions {
@@ -75,9 +74,11 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: OptimizationInterventionObjective.paramValue },
-	{ label: 'new start time', value: OptimizationInterventionObjective.startTime }
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// ,{ label: 'new value and start time', value: OptimizationInterventionObjective.paramValueAndStartTime }
+	{ label: 'new start time', value: OptimizationInterventionObjective.startTime },
+	{
+		label: 'new value and start time',
+		value: OptimizationInterventionObjective.paramValueAndStartTime
+	}
 ];
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -236,7 +237,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
-	} else if (interventionType === InterventionTypes.paramValueAndStartTime) {
+	} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
 		// If we our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
 		// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
 		for (let i = 0; i < paramNames.length; i++) {
