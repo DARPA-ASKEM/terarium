@@ -48,6 +48,11 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 	};
 };
 
+export const nodeOutputLabel = (node: WorkflowNode<any>, prefix: string) => {
+	const outputNumber = node.outputs.filter((d) => d.value).length;
+	return `${prefix} - ${outputNumber + 1}`;
+};
+
 export const nodeMetadata = (node: WorkflowNode<any>) => ({
 	workflowId: node.workflowId,
 	workflowName: useProjects().getAssetName(node.workflowId),
