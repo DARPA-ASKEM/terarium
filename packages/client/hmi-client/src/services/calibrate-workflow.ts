@@ -68,9 +68,9 @@ export const renderLossGraph = (
 	data: any[],
 	options: { width: number; height: number }
 ) => {
-	const marginTop = 10;
-	const marginBottom = 20;
-	const marginLeft = 50;
+	const marginTop = 16;
+	const marginBottom = 45;
+	const marginLeft = 70;
 	const marginRight = 20;
 
 	const { width, height } = options;
@@ -102,7 +102,12 @@ export const renderLossGraph = (
 		.curve(d3.curveBasis);
 
 	// Update the data and path
-	path.datum(data).attr('d', pathFn(data)).style('stroke', '#888').style('fill', 'none');
+	path
+		.datum(data)
+		.attr('d', pathFn(data))
+		.style('stroke', '#1B8073')
+		.style('stroke-width', '2px')
+		.style('fill', 'none');
 
 	// Add x-axis
 	const xAxis = d3.axisBottom(xScale).ticks(5);
@@ -110,7 +115,25 @@ export const renderLossGraph = (
 	if (xAxisGroup.empty()) {
 		xAxisGroup = svg.append('g').attr('class', 'x-axis');
 	}
-	xAxisGroup.attr('transform', `translate(0, ${height - marginBottom})`).call(xAxis);
+	xAxisGroup
+		.attr('transform', `translate(0, ${height - marginBottom})`)
+		.call(xAxis)
+		.selectAll('text')
+		.style('fill', '#6A7682')
+		.style('font-family', 'Figtree');
+	xAxisGroup.select('.domain').style('stroke', '#EAEAEA');
+	xAxisGroup.selectAll('.tick line').style('stroke', '#EAEAEA');
+	xAxisGroup
+		.append('text')
+		.attr('class', 'axis-label')
+		.attr('x', width / 2)
+		.attr('y', 35)
+		.style('text-anchor', 'middle')
+		.style('fill', '#101828')
+		.style('font-family', 'Figtree')
+		.style('font-size', '12')
+		.style('font-weight', '600')
+		.text('Solver iterations');
 
 	// Add y-axis
 	const yAxis = d3.axisLeft(yScale).ticks(3).tickFormat(d3.format('.1e'));
@@ -118,5 +141,24 @@ export const renderLossGraph = (
 	if (yAxisGroup.empty()) {
 		yAxisGroup = svg.append('g').attr('class', 'y-axis');
 	}
-	yAxisGroup.attr('transform', `translate(${marginLeft}, 0)`).call(yAxis);
+	yAxisGroup
+		.attr('transform', `translate(${marginLeft}, 0)`)
+		.call(yAxis)
+		.selectAll('text')
+		.style('fill', '#6A7682')
+		.style('font-family', 'Figtree');
+	yAxisGroup.select('.domain').style('stroke', '#EAEAEA');
+	yAxisGroup.selectAll('.tick line').style('stroke', '#EAEAEA');
+	yAxisGroup
+		.append('text')
+		.attr('class', 'axis-label')
+		.attr('transform', 'rotate(-90)')
+		.attr('y', -50) // Adjust this value to move the label within bounds
+		.attr('x', -(height / 2.5))
+		.style('text-anchor', 'middle')
+		.style('fill', '#101828')
+		.style('font-family', 'Figtree')
+		.style('font-size', '12')
+		.style('font-weight', '600')
+		.text('Loss');
 };
