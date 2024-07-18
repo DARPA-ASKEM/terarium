@@ -37,11 +37,11 @@
 			:disabled="disabledInputs?.includes('concept')"
 			:model-value="''"
 		/>
-		<tera-math-editor
+		<katex-element
 			class="expression"
 			v-if="item.expression"
-			:latex-equation="item.expression"
-			:is-editable="false"
+			:expression="stringToLatex(item.expression)"
+			:throw-on-error="false"
 		/>
 		<tera-input
 			title="Description"
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import TeraInput from '@/components/widgets/tera-input.vue';
 import type { ModelPartItem } from '@/types/Model';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
+import { stringToLatex } from '@/services/model';
 
 // import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 // getNameOfCurieCached(
