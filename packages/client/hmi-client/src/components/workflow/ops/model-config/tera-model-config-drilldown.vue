@@ -267,16 +267,16 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
+	amrToModelConfiguration,
 	createModelConfiguration,
-	setInitialSource,
-	setInitialExpression,
-	setParameterSource,
-	setParameterDistributions,
 	getAsConfiguredModel,
-	amrToModelConfiguration
+	setInitialExpression,
+	setInitialSource,
+	setParameterDistributions,
+	setParameterSource
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
+import type { ClientEvent, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
 import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -289,6 +289,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -501,8 +502,7 @@ const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	const modelConfig = await amrToModelConfiguration(model.value);
-	knobs.value.transientModelConfig = modelConfig;
+	knobs.value.transientModelConfig = await amrToModelConfiguration(model.value);
 };
 
 const selectedOutputId = ref<string>('');
@@ -597,7 +597,7 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 
 	if (!state.transientModelConfig.id) {
-		// apply a configuration if one hasnt been applied yet
+		// apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -608,8 +608,8 @@ const initialize = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				// when coming from output dropdown change we should shut down first
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
