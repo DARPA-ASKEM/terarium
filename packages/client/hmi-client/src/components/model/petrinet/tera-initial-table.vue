@@ -2,9 +2,7 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				<span class="mr-auto"
-					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
-				>
+				Initials <span class="artifact-amount">({{ numInitials }})</span>
 				<tera-input v-model="filterText" placeholder="Filter" />
 			</template>
 
@@ -143,7 +141,8 @@ ul {
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
+	margin-right: auto;
 }
 
 :deep(.p-divider) {
