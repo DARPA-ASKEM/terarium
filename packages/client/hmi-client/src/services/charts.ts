@@ -1,4 +1,4 @@
-import { mean } from 'lodash';
+import { mean, isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
@@ -161,7 +161,7 @@ export const createForecastChart = (
 	};
 
 	// Build sample layer
-	if (samplingLayer) {
+	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
 
 		Object.assign(layerSpec.encoding, {
@@ -174,7 +174,7 @@ export const createForecastChart = (
 	}
 
 	// Build statistical layer
-	if (statisticsLayer) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		Object.assign(layerSpec.encoding, {
 			opacity: { value: 1.0 },
@@ -194,11 +194,12 @@ export const createForecastChart = (
 	}
 
 	// Build ground truth layer
-	if (groundTruthLayer) {
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
 		layerSpec.encoding.color.scale.range = ['#333'];
+		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
@@ -214,7 +215,7 @@ export const createForecastChart = (
 
 	// Build a transparent layer with fat lines as a better hover target for tooltips
 	// Re-Build statistical layer
-	if (statisticsLayer) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,

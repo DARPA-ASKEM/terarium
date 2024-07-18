@@ -7,11 +7,10 @@ import { createInterventionPolicy } from '@/services/intervention-policy';
 const DOCUMENTATION_URL =
 	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
-export enum InterventionTypes {
-	paramValue = 'param_value', // provide a parameter value to get a better start time.
-	startTime = 'start_time' // provide a statr time to get a better parameter value.
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
-	// ,paramValueAndStartTime = 'param_value_and_start_time'
+export enum OptimizationInterventionObjective {
+	startTime = 'start_time', // provide a parameter value to get a better start time.
+	paramValue = 'param_value', // provide a start time to get a better parameter value.
+	paramValueAndStartTime = 'start_time_param_value'
 }
 
 export enum InterventionObjectiveFunctions {
@@ -33,7 +32,7 @@ export interface InterventionPolicyGroupForm {
 	upperBoundValue: number;
 	initialGuessValue: number;
 	isActive: boolean;
-	optimizationType: InterventionTypes;
+	optimizationType: OptimizationInterventionObjective;
 	objectiveFunctionOption: InterventionObjectiveFunctions;
 	intervention: Intervention;
 }
@@ -74,10 +73,12 @@ export interface OptimizeCiemssOperationState extends BaseState {
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
-	{ label: 'new value', value: InterventionTypes.startTime },
-	{ label: 'new start time', value: InterventionTypes.paramValue }
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// ,{ label: 'new value and start time', value: InterventionTypes.paramValueAndStartTime }
+	{ label: 'new value', value: OptimizationInterventionObjective.paramValue },
+	{ label: 'new start time', value: OptimizationInterventionObjective.startTime },
+	{
+		label: 'new value and start time',
+		value: OptimizationInterventionObjective.paramValueAndStartTime
+	}
 ];
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -103,7 +104,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBoundValue: 0,
 	initialGuessValue: 0,
 	isActive: true,
-	optimizationType: InterventionTypes.paramValue,
+	optimizationType: OptimizationInterventionObjective.startTime,
 	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
 	intervention: blankIntervention
 };
@@ -112,7 +113,7 @@ export const defaultCriterion: Criterion = {
 	name: 'Criterion',
 	qoiMethod: ContextMethods.max,
 	targetVariable: '',
-	riskTolerance: 5,
+	riskTolerance: 95,
 	threshold: 1,
 	isMinimized: true,
 	isActive: true
@@ -199,10 +200,9 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
-	if (interventionType === InterventionTypes.paramValue && startTimes.length !== 0) {
+	if (interventionType === OptimizationInterventionObjective.startTime && startTimes.length !== 0) {
 		// If we our intervention type is param value our policyResult will provide a timestep.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
@@ -218,7 +218,10 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
-	} else if (interventionType === InterventionTypes.startTime && paramValues.length !== 0) {
+	} else if (
+		interventionType === OptimizationInterventionObjective.paramValue &&
+		paramValues.length !== 0
+	) {
 		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
@@ -234,9 +237,26 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
+	} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
+		// If our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
+		// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
+		for (let i = 0; i < paramNames.length; i++) {
+			allInterventions.push({
+				name: `Optimized ${paramNames[i]}`,
+				appliedTo: paramNames[i],
+				type: InterventionSemanticType.Parameter,
+				staticInterventions: [
+					{
+						timestep: policyResult[i * 2],
+						value: policyResult[i * 2 + 1]
+					}
+				],
+				dynamicInterventions: []
+			});
+		}
 	} else {
 		// Should realistically not be hit unless we change the interface and do not update
-		console.error(`Unable to find the intevention for optimization run: ${optimizeRunId}`);
+		console.error(`Unable to find the intevention type for optimization run: ${optimizeRunId}`);
 	}
 	return allInterventions;
 }

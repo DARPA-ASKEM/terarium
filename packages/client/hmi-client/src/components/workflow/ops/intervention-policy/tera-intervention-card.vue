@@ -68,8 +68,8 @@
 						.
 					</template>
 
-					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
-						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
+					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
+						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								<tera-input
 									type="nist"
@@ -169,11 +169,11 @@ const props = defineProps<{
 
 const interventionSemanticOptions = [
 	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
-	{ label: 'Variable', value: InterventionSemanticType.Variable }
+	{ label: 'State', value: InterventionSemanticType.State }
 ];
 
 const semanticOptions = computed(() => {
-	if (props.intervention.type === InterventionSemanticType.Variable) {
+	if (props.intervention.type === InterventionSemanticType.State) {
 		return props.stateOptions;
 	}
 	return props.parameterOptions;
@@ -281,7 +281,7 @@ const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
 const onSemanticChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.type = event.value;
-	if (event.value === InterventionSemanticType.Variable) {
+	if (event.value === InterventionSemanticType.State) {
 		intervention.appliedTo = '';
 	} else {
 		intervention.appliedTo = '';
