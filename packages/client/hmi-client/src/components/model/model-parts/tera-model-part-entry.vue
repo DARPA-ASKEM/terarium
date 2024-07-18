@@ -35,7 +35,7 @@
 			placeholder="Select a concept"
 			icon="pi pi-search"
 			:disabled="disabledInputs?.includes('concept')"
-			:model-value="''"
+			v-model="query"
 		/>
 		<katex-element
 			class="expression"
@@ -54,19 +54,33 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import type { ModelPartItem } from '@/types/Model';
-
-// import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import type { DKG } from '@/types/Types';
+import {
+	// getCurieFromGroundingIdentifier,
+	// getNameOfCurieCached,
+	searchCuriesEntities
+} from '@/services/concept';
 // getNameOfCurieCached(
 // 		new Map<string, string>(),
 // 		getCurieFromGroundingIdentifier(grounding.identifiers)
 // 	)
 
-defineProps<{
+const props = defineProps<{
 	item: ModelPartItem;
 	disabledInputs?: string[];
 }>();
+
+if (!props.disabledInputs) console.log(props.item);
+
+const query = ref('');
+const results = ref<DKG[]>([]);
+
+watch(query, async (value) => {
+	results.value = await searchCuriesEntities(value);
+});
 
 defineEmits(['update-item']);
 </script>
