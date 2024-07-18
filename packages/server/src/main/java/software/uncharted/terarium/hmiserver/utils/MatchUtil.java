@@ -14,9 +14,9 @@ public class MatchUtil {
 	 */
 	public static long matchCount(final String searchTerm, final String text) {
 		return Pattern.compile("(" + searchTerm + ")")
-				.matcher(text)
-				.results()
-				.map(MatchResult::group)
-				.count();
+			.matcher(text)
+			.results()
+			.map(MatchResult::group)
+			.count();
 	}
 }

@@ -24,13 +24,18 @@ public class RoleService {
 
 	private final AuthorityRepository authorityRepository;
 
-	public Role createRole(final RoleType type, final Map<AuthorityType, List<AuthorityLevel>> authorities) {
+	public Role createRole(
+		final RoleType type,
+		final Map<AuthorityType, List<AuthorityLevel>> authorities
+	) {
 		final Role role = new Role().setName(type.name());
 		final Set<AuthorityInstance> authorityInstances = role.getAuthorities();
 		authorities.forEach((authorityType, authorityLevels) -> {
 			authorityRepository
-					.findFirstByName(authorityType.toString())
-					.ifPresent(authority -> authorityInstances.add(new AuthorityInstance(authority, authorityLevels)));
+				.findFirstByName(authorityType.toString())
+				.ifPresent(authority ->
+					authorityInstances.add(new AuthorityInstance(authority, authorityLevels))
+				);
 		});
 		return roleRepository.save(role);
 	}
@@ -48,12 +53,15 @@ public class RoleService {
 	public static List<String> getAuthorities(final Collection<Role> roles) {
 		final List<String> authorities = new ArrayList<>();
 		authorities.addAll(roles.stream().map(r -> "ROLE_" + r.getName()).toList());
-		authorities.addAll(roles.stream()
+		authorities.addAll(
+			roles
+				.stream()
 				.map(Role::getAuthorities)
 				.flatMap(Collection::stream)
 				.map(AuthorityInstance::getAuthoritiesAsStrings)
 				.flatMap(Collection::stream)
-				.toList());
+				.toList()
+		);
 		return authorities;
 	}
 }

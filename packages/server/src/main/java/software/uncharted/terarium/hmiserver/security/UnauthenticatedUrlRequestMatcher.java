@@ -22,9 +22,13 @@ public class UnauthenticatedUrlRequestMatcher implements RequestMatcher {
 
 	@PostConstruct
 	public void init() {
-		this.pathMatcher = new OrRequestMatcher(config.getUnauthenticatedUrlPatterns().stream()
+		this.pathMatcher = new OrRequestMatcher(
+			config
+				.getUnauthenticatedUrlPatterns()
+				.stream()
 				.map(p -> new AntPathRequestMatcher(p))
-				.collect(Collectors.toList()));
+				.collect(Collectors.toList())
+		);
 	}
 
 	@Override

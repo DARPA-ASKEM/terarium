@@ -32,21 +32,28 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private CurrentUserService currentUserService;
 
-	ClientEvent<StatusUpdate<Object>> produceClientEvent(final Double t, final String message, final String error) {
-		final StatusUpdate<Object> update =
-				StatusUpdate.builder().progress(t).message(message).error(error).build();
+	ClientEvent<StatusUpdate<Object>> produceClientEvent(
+		final Double t,
+		final String message,
+		final String error
+	) {
+		final StatusUpdate<Object> update = StatusUpdate.builder()
+			.progress(t)
+			.message(message)
+			.error(error)
+			.build();
 		return ClientEvent.<StatusUpdate<Object>>builder()
-				.type(ClientEventType.HEARTBEAT)
-				.data(update)
-				.build();
+			.type(ClientEventType.HEARTBEAT)
+			.data(update)
+			.build();
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotificationGroup() throws Exception {
-
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService.createNotificationGroup(
+			new NotificationGroup().setType("test")
+		);
 
 		Assertions.assertNotNull(group.getId());
 		Assertions.assertNotNull(group.getCreatedOn());
@@ -55,22 +62,32 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateNotificationEvent() throws Exception {
-
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService.createNotificationGroup(
+			new NotificationGroup().setType("test")
+		);
 
 		notificationService.createNotificationEvent(
-				group.getId(),
-				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.QUEUED));
+			group.getId(),
+			new NotificationEvent()
+				.setData(produceClientEvent(1.0, "", ""))
+				.setState(ProgressState.QUEUED)
+		);
 		notificationService.createNotificationEvent(
-				group.getId(),
-				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.RUNNING));
+			group.getId(),
+			new NotificationEvent()
+				.setData(produceClientEvent(1.0, "", ""))
+				.setState(ProgressState.RUNNING)
+		);
 		notificationService.createNotificationEvent(
-				group.getId(),
-				new NotificationEvent().setData(produceClientEvent(1.0, "", "")).setState(ProgressState.CANCELLED));
+			group.getId(),
+			new NotificationEvent()
+				.setData(produceClientEvent(1.0, "", ""))
+				.setState(ProgressState.CANCELLED)
+		);
 
-		final NotificationGroup after =
-				notificationService.getNotificationGroup(group.getId()).orElseThrow();
+		final NotificationGroup after = notificationService
+			.getNotificationGroup(group.getId())
+			.orElseThrow();
 
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
@@ -81,19 +98,26 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanAckNotificationGroup() throws Exception {
-
-		final NotificationGroup group =
-				notificationService.createNotificationGroup(new NotificationGroup().setType("test"));
+		final NotificationGroup group = notificationService.createNotificationGroup(
+			new NotificationGroup().setType("test")
+		);
 
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+			group.getId(),
+			new NotificationEvent().setData(produceClientEvent(1.0, "", ""))
+		);
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+			group.getId(),
+			new NotificationEvent().setData(produceClientEvent(1.0, "", ""))
+		);
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+			group.getId(),
+			new NotificationEvent().setData(produceClientEvent(1.0, "", ""))
+		);
 
-		final NotificationGroup after =
-				notificationService.getNotificationGroup(group.getId()).orElseThrow();
+		final NotificationGroup after = notificationService
+			.getNotificationGroup(group.getId())
+			.orElseThrow();
 
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
@@ -107,11 +131,15 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		}
 
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(2);
-		final Timestamp since =
-				Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final Timestamp since = Timestamp.from(
+			sinceDateTime.atZone(ZoneId.systemDefault()).toInstant()
+		);
 
-		final List<NotificationGroup> resp1 = notificationService.getUnAckedNotificationGroupsCreatedSince(
-				currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp1 =
+			notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(),
+				since
+			);
 
 		Assertions.assertEquals(1, resp1.size());
 		Assertions.assertNotNull(resp1.get(0).getNotificationEvents());
@@ -120,17 +148,25 @@ public class NotificationServiceTests extends TerariumApplicationTests {
 		// ack the group
 		notificationService.acknowledgeNotificationGroup(group.getId());
 
-		final List<NotificationGroup> resp2 = notificationService.getUnAckedNotificationGroupsCreatedSince(
-				currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp2 =
+			notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(),
+				since
+			);
 
 		Assertions.assertEquals(0, resp2.size());
 
 		// create a new event
 		notificationService.createNotificationEvent(
-				group.getId(), new NotificationEvent().setData(produceClientEvent(1.0, "", "")));
+			group.getId(),
+			new NotificationEvent().setData(produceClientEvent(1.0, "", ""))
+		);
 
-		final List<NotificationGroup> resp3 = notificationService.getUnAckedNotificationGroupsCreatedSince(
-				currentUserService.get().getId(), since);
+		final List<NotificationGroup> resp3 =
+			notificationService.getUnAckedNotificationGroupsCreatedSince(
+				currentUserService.get().getId(),
+				since
+			);
 
 		Assertions.assertEquals(1, resp3.size());
 		Assertions.assertNotNull(resp3.get(0).getNotificationEvents());

@@ -20,24 +20,26 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ElasticsearchConfiguration elasticConfig,
-			final ElasticsearchService elasticService,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final WorkflowRepository repository) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ElasticsearchConfiguration elasticConfig,
+		final ElasticsearchService elasticService,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final S3ClientService s3ClientService,
+		final WorkflowRepository repository
+	) {
 		super(
-				objectMapper,
-				config,
-				elasticConfig,
-				elasticService,
-				projectService,
-				projectAssetService,
-				s3ClientService,
-				repository,
-				Workflow.class);
+			objectMapper,
+			config,
+			elasticConfig,
+			elasticService,
+			projectService,
+			projectAssetService,
+			s3ClientService,
+			repository,
+			Workflow.class
+		);
 	}
 
 	@Override
@@ -54,8 +56,11 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 	@Override
 	@Observed(name = "function_profile")
-	public Workflow createAsset(final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
+	public Workflow createAsset(
+		final Workflow asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -73,8 +78,10 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<Workflow> updateAsset(
-			final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
+		final Workflow asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {

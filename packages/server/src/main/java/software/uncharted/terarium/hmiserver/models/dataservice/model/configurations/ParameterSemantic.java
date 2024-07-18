@@ -34,7 +34,8 @@ public class ParameterSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@TSIgnore
-	@NotNull private ModelConfiguration modelConfiguration;
+	@NotNull
+	private ModelConfiguration modelConfiguration;
 
 	@Override
 	public ParameterSemantic clone() {

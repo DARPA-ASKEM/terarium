@@ -9,15 +9,26 @@ import software.uncharted.terarium.hmiserver.repository.data.ArtifactRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 
 @Service
-public class ArtifactService extends TerariumAssetServiceWithoutSearch<Artifact, ArtifactRepository> {
+public class ArtifactService
+	extends TerariumAssetServiceWithoutSearch<Artifact, ArtifactRepository> {
+
 	public ArtifactService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final ArtifactRepository repository,
-			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Artifact.class);
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final ArtifactRepository repository,
+		final S3ClientService s3ClientService
+	) {
+		super(
+			objectMapper,
+			config,
+			projectService,
+			projectAssetService,
+			repository,
+			s3ClientService,
+			Artifact.class
+		);
 	}
 
 	@Override

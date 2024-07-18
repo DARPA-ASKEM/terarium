@@ -30,24 +30,26 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
 
 	public DatasetService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ElasticsearchConfiguration elasticConfig,
-			final ElasticsearchService elasticService,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final DatasetRepository repository) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ElasticsearchConfiguration elasticConfig,
+		final ElasticsearchService elasticService,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final S3ClientService s3ClientService,
+		final DatasetRepository repository
+	) {
 		super(
-				objectMapper,
-				config,
-				elasticConfig,
-				elasticService,
-				projectService,
-				projectAssetService,
-				s3ClientService,
-				repository,
-				Dataset.class);
+			objectMapper,
+			config,
+			elasticConfig,
+			elasticService,
+			projectService,
+			projectAssetService,
+			s3ClientService,
+			repository,
+			Dataset.class
+		);
 	}
 
 	@Override
@@ -69,9 +71,11 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 	@Override
 	@Observed(name = "function_profile")
-	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+	public Dataset createAsset(
+		final Dataset asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		extractColumnsForFreshCreate(asset);
 
 		if (asset.getColumns() != null) {
@@ -85,8 +89,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Override
 	@Observed(name = "function_profile")
 	public List<Dataset> createAssets(
-			final List<Dataset> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		final List<Dataset> assets,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		for (final Dataset asset : assets) {
 			if (asset.getColumns() != null) {
 				for (final DatasetColumn column : asset.getColumns()) {
@@ -101,8 +107,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<Dataset> updateAsset(
-			final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
+		final Dataset asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
 		if (asset.getColumns() != null) {
 			for (final DatasetColumn column : asset.getColumns()) {
 				column.setDataset(asset);
@@ -138,7 +146,6 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 	@Observed(name = "function_profile")
 	private Dataset extractColumnsForFreshCreate(final Dataset dataset) throws IOException {
-
 		if (dataset.getFileNames() != null || dataset.getFileNames().isEmpty()) {
 			// no file names to extract columns from
 			return dataset;
@@ -163,21 +170,30 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	}
 
 	@Observed(name = "function_profile")
-	public void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
+	public void addDatasetColumns(
+		final Dataset dataset,
+		final String fileName,
+		final List<String> headers
+	) {
 		if (dataset.getColumns() == null) {
 			dataset.setColumns(new ArrayList<>());
 		}
 		for (final String header : headers) {
-			final DatasetColumn column =
-					new DatasetColumn().setName(header).setFileName(fileName).setAnnotations(new ArrayList<>());
+			final DatasetColumn column = new DatasetColumn()
+				.setName(header)
+				.setFileName(fileName)
+				.setAnnotations(new ArrayList<>());
 			column.setDataset(dataset);
 			dataset.getColumns().add(column);
 		}
 	}
 
 	@Observed(name = "function_profile")
-	public List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit)
-			throws IOException {
+	public List<List<String>> getCSVFile(
+		final String filename,
+		final UUID datasetId,
+		final Integer limit
+	) throws IOException {
 		String rawCSV = "";
 
 		final Optional<byte[]> bytes = fetchFileAsBytes(datasetId, filename);
@@ -185,7 +201,9 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			return null;
 		}
 
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes.get())));
+		final BufferedReader reader = new BufferedReader(
+			new InputStreamReader(new ByteArrayInputStream(bytes.get()))
+		);
 
 		String line = null;
 		Integer count = 0;
@@ -205,7 +223,9 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
 		final List<List<String>> records = new ArrayList<>();
-		try (final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
+		try (
+			final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)
+		) {
 			for (final CSVRecord csvRecord : parser) {
 				final List<String> values = new ArrayList<>();
 				csvRecord.forEach(values::add);

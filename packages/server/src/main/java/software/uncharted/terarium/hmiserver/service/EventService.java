@@ -20,23 +20,43 @@ public class EventService {
 	final EventRepository eventRepository;
 
 	public List<Event> findEvents(
-			final EventType type,
-			final UUID projectId,
-			final String currentUserId,
-			final String like,
-			final int limit) {
-		final Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestampMillis"));
+		final EventType type,
+		final UUID projectId,
+		final String currentUserId,
+		final String like,
+		final int limit
+	) {
+		final Pageable pageable = PageRequest.of(
+			0,
+			limit,
+			Sort.by(Sort.Direction.DESC, "timestampMillis")
+		);
 		if (like != null && !like.isEmpty()) {
 			final String likeQuery = "%" + like + "%";
 			if (projectId != null) {
 				return eventRepository.findAllByTypeAndProjectIdAndUserIdAndValueLike(
-						type, projectId, currentUserId, likeQuery, pageable);
+					type,
+					projectId,
+					currentUserId,
+					likeQuery,
+					pageable
+				);
 			} else {
-				return eventRepository.findAllByTypeAndUserIdAndValueLike(type, currentUserId, likeQuery, pageable);
+				return eventRepository.findAllByTypeAndUserIdAndValueLike(
+					type,
+					currentUserId,
+					likeQuery,
+					pageable
+				);
 			}
 		} else {
 			if (projectId != null) {
-				return eventRepository.findAllByTypeAndProjectIdAndUserId(type, projectId, currentUserId, pageable);
+				return eventRepository.findAllByTypeAndProjectIdAndUserId(
+					type,
+					projectId,
+					currentUserId,
+					pageable
+				);
 			} else {
 				return eventRepository.findAllByTypeAndUserId(type, currentUserId, pageable);
 			}

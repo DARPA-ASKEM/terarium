@@ -74,12 +74,14 @@ public class MiraController {
 
 	@Data
 	public static class ModelConversionRequest {
+
 		UUID artifactId;
 		UUID projectId;
 	}
 
 	@Data
 	public static class ModelConversionResponse {
+
 		public Model response;
 	}
 
@@ -94,6 +96,7 @@ public class MiraController {
 
 	@Data
 	public static class ConversionAdditionalProperties {
+
 		UUID projectId;
 		String fileName;
 	}
@@ -109,21 +112,22 @@ public class MiraController {
 	@Secured(Roles.USER)
 	@Operation(summary = "convert AMR to MIRA model template")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue dispatching the request",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<JsonNode> convertAMRtoMMT(@RequestBody final JsonNode model) {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
@@ -132,7 +136,10 @@ public class MiraController {
 			req.setInput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("generic.io-error.write")
+			);
 		}
 
 		req.setScript(AMRToMMTResponseHandler.NAME);
@@ -145,17 +152,27 @@ public class MiraController {
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("task.mira.json-processing")
+			);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("task.mira.timeout")
+			);
 		} catch (final InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+			throw new ResponseStatusException(
+				HttpStatus.UNPROCESSABLE_ENTITY,
+				messages.get("task.mira.interrupted")
+			);
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("task.mira.execution-failure")
+			);
 		}
 
 		final JsonNode mmtInfo;
@@ -163,7 +180,10 @@ public class MiraController {
 			mmtInfo = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("generic.io-error.read")
+			);
 		}
 
 		return ResponseEntity.ok().body(mmtInfo);
@@ -173,26 +193,34 @@ public class MiraController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
-	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue dispatching the request",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Model> convertAndCreateModel(
+		@RequestBody final ModelConversionRequest conversionRequest
+	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
-				currentUserService.get().getId(), conversionRequest.getProjectId());
+			currentUserService.get().getId(),
+			conversionRequest.getProjectId()
+		);
 
-		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
+		final Optional<Artifact> artifact = artifactService.getAsset(
+			conversionRequest.artifactId,
+			permission
+		);
 		if (artifact.isEmpty()) {
 			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
@@ -200,8 +228,15 @@ public class MiraController {
 
 		if (artifact.get().getFileNames().isEmpty()) {
 			log.error(
-					String.format("The files associated with artifact %s are missing.", conversionRequest.artifactId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.files.not-found"));
+				String.format(
+					"The files associated with artifact %s are missing.",
+					conversionRequest.artifactId
+				)
+			);
+			throw new ResponseStatusException(
+				HttpStatus.NOT_FOUND,
+				messages.get("artifact.files.not-found")
+			);
 		}
 
 		final String filename = artifact.get().getFileNames().get(0);
@@ -210,17 +245,31 @@ public class MiraController {
 		try {
 			fileContents = artifactService.fetchFileAsString(conversionRequest.artifactId, filename);
 		} catch (final IOException e) {
-			log.error(String.format("Unable to read file contents for artifact %s.", conversionRequest.artifactId), e);
+			log.error(
+				String.format(
+					"Unable to read file contents for artifact %s.",
+					conversionRequest.artifactId
+				),
+				e
+			);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("artifact.file.unable-to-read"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("artifact.file.unable-to-read")
+			);
 		}
 
 		if (fileContents.isEmpty()) {
-			log.error(String.format("The file contents for artifact %s is empty.", conversionRequest.artifactId));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file.content.empty"));
+			log.error(
+				String.format("The file contents for artifact %s is empty.", conversionRequest.artifactId)
+			);
+			throw new ResponseStatusException(
+				HttpStatus.BAD_REQUEST,
+				messages.get("artifact.file.content.empty")
+			);
 		}
 
-		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
+		final ConversionAdditionalProperties additionalProperties =
+			new ConversionAdditionalProperties();
 		additionalProperties.setProjectId(conversionRequest.projectId);
 		additionalProperties.setFileName(filename);
 
@@ -231,7 +280,10 @@ public class MiraController {
 			req.setInput(fileContents.get().getBytes());
 		} catch (final Exception e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("generic.io-error.write")
+			);
 		}
 		req.setAdditionalProperties(additionalProperties);
 		req.setUserId(currentUserService.get().getId());
@@ -243,7 +295,12 @@ public class MiraController {
 		} else if (endsWith(filename, List.of(".sbml", ".xml"))) {
 			req.setScript(SbmlToPetrinetResponseHandler.NAME);
 		} else {
-			log.error(String.format("Unable to determine the artifact type from the supplied filename: %s", filename));
+			log.error(
+				String.format(
+					"Unable to determine the artifact type from the supplied filename: %s",
+					filename
+				)
+			);
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("artifact.file-type"));
 		}
 
@@ -254,17 +311,27 @@ public class MiraController {
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("task.mira.json-processing")
+			);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+			throw new ResponseStatusException(
+				HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("task.mira.timeout")
+			);
 		} catch (final InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+			throw new ResponseStatusException(
+				HttpStatus.UNPROCESSABLE_ENTITY,
+				messages.get("task.mira.interrupted")
+			);
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("task.mira.execution-failure")
+			);
 		}
 
 		final Model model;
@@ -272,11 +339,18 @@ public class MiraController {
 			model = objectMapper.readValue(resp.getOutput(), Model.class);
 			// create a default configuration
 			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
-			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
+				ModelConfigurationService.modelConfigurationFromAMR(model, null, null);
+			modelConfigurationService.createAsset(
+				modelConfiguration,
+				conversionRequest.projectId,
+				permission
+			);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+			throw new ResponseStatusException(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("generic.io-error.read")
+			);
 		}
 
 		return ResponseEntity.ok().body(model);
@@ -285,21 +359,22 @@ public class MiraController {
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a Mira task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched cancellation successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Void.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the cancellation",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched cancellation successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue dispatching the cancellation",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();
@@ -321,9 +396,10 @@ public class MiraController {
 	@GetMapping("/search")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<DKG>> search(
-			@RequestParam("q") final String q,
-			@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
-			@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset) {
+		@RequestParam("q") final String q,
+		@RequestParam(required = false, name = "limit", defaultValue = "10") final Integer limit,
+		@RequestParam(required = false, name = "offset", defaultValue = "0") final Integer offset
+	) {
 		final ResponseEntity<List<DKG>> response;
 		try {
 			response = proxy.search(q, limit, offset);
@@ -353,39 +429,60 @@ public class MiraController {
 
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
-	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
+	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(
+		@RequestBody final Curies obj
+	) {
 		final ResponseEntity<List<EntitySimilarityResult>> response;
 		try {
 			response = proxy.entitySimilarity(obj);
 		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
+			throw handleMiraFeignException(
+				e,
+				"entity similarities",
+				"curies",
+				"",
+				"mira.similarity.bad-curies"
+			);
 		}
 
 		return new ResponseEntity(response.getBody(), response.getStatusCode());
 	}
 
 	private ResponseStatusException handleMiraFeignException(
-			final FeignException e,
-			final String returnType,
-			final String inputType,
-			final String input,
-			final String errorMessageCode) {
+		final FeignException e,
+		final String returnType,
+		final String inputType,
+		final String input,
+		final String errorMessageCode
+	) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn(String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input));
+			log.warn(
+				String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input)
+			);
 			return new ResponseStatusException(statusCode, messages.get(errorMessageCode));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("MIRA is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error(String.format(
+			log.error(
+				String.format(
 					"An error occurred while MIRA was trying to determine %s based on %s: %s",
-					returnType, inputType, input));
+					returnType,
+					inputType,
+					input
+				)
+			);
 			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
 		}
-		log.error(String.format(
+		log.error(
+			String.format(
 				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
-				returnType, inputType, input));
+				returnType,
+				inputType,
+				input
+			)
+		);
 		return new ResponseStatusException(statusCode, messages.get("generic.unknown"));
 	}
 }

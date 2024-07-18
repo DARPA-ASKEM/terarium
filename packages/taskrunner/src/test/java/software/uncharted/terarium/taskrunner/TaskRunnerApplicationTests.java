@@ -9,7 +9,5 @@ import org.springframework.test.context.ActiveProfiles;
 public class TaskRunnerApplicationTests {
 
 	@Test
-	void contextLoads() {
-	}
-
+	void contextLoads() {}
 }

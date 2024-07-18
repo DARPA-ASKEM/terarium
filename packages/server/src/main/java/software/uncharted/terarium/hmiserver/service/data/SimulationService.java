@@ -15,7 +15,8 @@ import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
+public class SimulationService
+	extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
 
@@ -28,14 +29,23 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	 * @param s3ClientService S3 client service
 	 */
 	public SimulationService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final SimulationRepository repository,
-			final S3ClientService s3ClientService,
-			final SimulationUpdateRepository simulationUpdateRepository) {
-		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Simulation.class);
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final SimulationRepository repository,
+		final S3ClientService s3ClientService,
+		final SimulationUpdateRepository simulationUpdateRepository
+	) {
+		super(
+			objectMapper,
+			config,
+			projectService,
+			projectAssetService,
+			repository,
+			s3ClientService,
+			Simulation.class
+		);
 		this.simulationUpdateRepository = simulationUpdateRepository;
 	}
 
@@ -53,8 +63,10 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	}
 
 	public SimulationUpdate appendUpdateToSimulation(
-			final UUID simulationId, final SimulationUpdate update, final Schema.Permission hasReadPermission) {
-
+		final UUID simulationId,
+		final SimulationUpdate update,
+		final Schema.Permission hasReadPermission
+	) {
 		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
 
 		update.setSimulation(simulation);
@@ -74,12 +86,13 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 				final String srcPath = getResultsPath(simId, filename);
 				final String destPath = getDatasetPath(dataset.getId(), filename);
 				s3ClientService
-						.getS3Service()
-						.copyObject(
-								config.getFileStorageS3BucketName(),
-								srcPath,
-								config.getFileStorageS3BucketName(),
-								destPath);
+					.getS3Service()
+					.copyObject(
+						config.getFileStorageS3BucketName(),
+						srcPath,
+						config.getFileStorageS3BucketName(),
+						destPath
+					);
 			}
 		}
 	}

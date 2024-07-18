@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Slf4j
 @TSModel
 public class CsvColumnStats implements Serializable {
+
 	List<Integer> bins;
 	double minValue;
 	double maxValue;
@@ -19,7 +20,14 @@ public class CsvColumnStats implements Serializable {
 	double median;
 	double sd;
 
-	public CsvColumnStats(List<Integer> bins, double minValue, double maxValue, double mean, double median, double sd) {
+	public CsvColumnStats(
+		List<Integer> bins,
+		double minValue,
+		double maxValue,
+		double mean,
+		double median,
+		double sd
+	) {
 		this.bins = bins;
 		this.minValue = minValue;
 		this.maxValue = maxValue;

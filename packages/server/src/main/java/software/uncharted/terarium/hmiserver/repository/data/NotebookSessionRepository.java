@@ -6,4 +6,5 @@ import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 
 @Repository
-public interface NotebookSessionRepository extends PSCrudSoftDeleteRepository<NotebookSession, UUID> {}
+public interface NotebookSessionRepository
+	extends PSCrudSoftDeleteRepository<NotebookSession, UUID> {}

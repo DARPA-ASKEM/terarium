@@ -74,6 +74,7 @@ public class TaskService {
 	@Data
 	@EqualsAndHashCode(callSuper = true)
 	private static class TaskRequestWithId extends TaskRequest {
+
 		private UUID id;
 
 		TaskRequestWithId(final TaskRequest req) {
@@ -89,13 +90,13 @@ public class TaskService {
 
 		public TaskResponse createResponse(final TaskStatus status) {
 			return new TaskResponse()
-					.setId(id)
-					.setStatus(status)
-					.setUserId(userId)
-					.setProjectId(projectId)
-					.setScript(getScript())
-					.setAdditionalProperties(getAdditionalProperties())
-					.setRequestSHA256(getSHA256());
+				.setId(id)
+				.setStatus(status)
+				.setUserId(userId)
+				.setProjectId(projectId)
+				.setScript(getScript())
+				.setAdditionalProperties(getAdditionalProperties())
+				.setRequestSHA256(getSHA256());
 		}
 	}
 
@@ -197,9 +198,16 @@ public class TaskService {
 	}
 
 	private void declareAndBindTransientQueueWithRoutingKey(
-			final String exchangeName, final String queueName, final String routingKey) {
+		final String exchangeName,
+		final String queueName,
+		final String routingKey
+	) {
 		// Declare a direct exchange
-		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
+		final DirectExchange exchange = new DirectExchange(
+			exchangeName,
+			config.getDurableQueues(),
+			false
+		);
 		rabbitAdmin.declareExchange(exchange);
 
 		// Declare a queue
@@ -231,21 +239,22 @@ public class TaskService {
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											autoDelete = "true",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.taskrunner.response-broadcast-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+		bindings = @QueueBinding(
+			value = @org.springframework.amqp.rabbit.annotation.Queue(
+				autoDelete = "true",
+				exclusive = "false",
+				durable = "${terarium.taskrunner.durable-queues}"
+			),
+			exchange = @Exchange(
+				value = "${terarium.taskrunner.response-broadcast-exchange}",
+				durable = "${terarium.taskrunner.durable-queues}",
+				autoDelete = "false",
+				type = ExchangeTypes.DIRECT
+			),
+			key = ""
+		),
+		concurrency = "1"
+	)
 	private void onTaskResponseAllInstanceReceive(final Message message) {
 		try {
 			final TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -255,30 +264,42 @@ public class TaskService {
 
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
 			if (resp.getOutput() != null) {
-				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
+				log.info(
+					"Received response output {} for task {}",
+					new String(resp.getOutput()),
+					resp.getId()
+				);
 			}
 
-			if (resp.getStatus() == TaskStatus.SUCCESS
-					|| resp.getStatus() == TaskStatus.CANCELLED
-					|| resp.getStatus() == TaskStatus.FAILED) {
+			if (
+				resp.getStatus() == TaskStatus.SUCCESS ||
+				resp.getStatus() == TaskStatus.CANCELLED ||
+				resp.getStatus() == TaskStatus.FAILED
+			) {
 				final CompletableTaskFuture future = futures.remove(resp.getId());
 				if (future != null) {
 					log.info("Found promise for task id: {}", resp.getId());
 					// complete the future
-					log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
+					log.info(
+						"Completing future for task id {} with status {}",
+						resp.getId(),
+						resp.getStatus()
+					);
 					future.complete(resp);
-
 				} else {
 					log.info("Did not find promise for task id: {}", resp.getId());
 				}
 			} else {
 				final CompletableTaskFuture future = futures.get(resp.getId());
 				if (future != null) {
-					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
+					log.info(
+						"Updating latest response on task id: {} future to {}",
+						resp.getId(),
+						resp.getStatus()
+					);
 					future.setLatest(resp);
 				}
 			}
-
 		} catch (final Exception e) {
 			log.error("Error processing task response message", e);
 		}
@@ -288,22 +309,23 @@ public class TaskService {
 	// the hmi-server. Any operation that must occur once and only once should be
 	// triggered here.
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											value = "${terarium.taskrunner.response-queue}",
-											autoDelete = "false",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.taskrunner.response-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+		bindings = @QueueBinding(
+			value = @org.springframework.amqp.rabbit.annotation.Queue(
+				value = "${terarium.taskrunner.response-queue}",
+				autoDelete = "false",
+				exclusive = "false",
+				durable = "${terarium.taskrunner.durable-queues}"
+			),
+			exchange = @Exchange(
+				value = "${terarium.taskrunner.response-exchange}",
+				durable = "${terarium.taskrunner.durable-queues}",
+				autoDelete = "false",
+				type = ExchangeTypes.DIRECT
+			),
+			key = ""
+		),
+		concurrency = "1"
+	)
 	private void onTaskResponseOneInstanceReceives(final Message message) {
 		try {
 			TaskResponse resp = decodeMessage(message, TaskResponse.class);
@@ -331,16 +353,18 @@ public class TaskService {
 				try {
 					// add to the response cache
 					log.info(
-							"Writing SUCCESS response for task id {} to cache under SHA: {}",
-							resp.getId(),
-							resp.getRequestSHA256());
+						"Writing SUCCESS response for task id {} to cache under SHA: {}",
+						resp.getId(),
+						resp.getRequestSHA256()
+					);
 					responseCache.put(
-							resp.getRequestSHA256(),
-							resp,
-							CACHE_TTL_SECONDS,
-							TimeUnit.SECONDS,
-							CACHE_MAX_IDLE_SECONDS,
-							TimeUnit.SECONDS);
+						resp.getRequestSHA256(),
+						resp,
+						CACHE_TTL_SECONDS,
+						TimeUnit.SECONDS,
+						CACHE_MAX_IDLE_SECONDS,
+						TimeUnit.SECONDS
+					);
 				} catch (final Exception e) {
 					log.error("Failed to write response to response cache {}", resp.getId(), e);
 				}
@@ -354,24 +378,28 @@ public class TaskService {
 				log.info("Creating notification event under group id: {}", resp.getId());
 
 				notificationService.createNotificationEvent(resp.getId(), event);
-
 			} catch (final Exception e) {
 				log.error("Failed to persist notification event for for task {}", resp.getId(), e);
 			}
 
 			try {
 				// send the client event
-				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
-				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
+				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(
+					resp.getScript()
+				);
+				log.info(
+					"Sending client event with type {} for task {} ",
+					clientEventType.toString(),
+					resp.getId()
+				);
 
 				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
-						.notificationGroupId(resp.getId())
-						.projectId(resp.getProjectId())
-						.type(clientEventType)
-						.data(resp)
-						.build();
+					.notificationGroupId(resp.getId())
+					.projectId(resp.getProjectId())
+					.type(clientEventType)
+					.data(resp)
+					.build();
 				clientEventService.sendToUser(clientEvent, resp.getUserId());
-
 			} catch (final Exception e) {
 				log.error("Failed to send client event for for task {}", resp.getId(), e);
 			}
@@ -392,12 +420,15 @@ public class TaskService {
 				}
 			}
 
-			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
+			log.info(
+				"Broadcasting task response for task id {} and status {}",
+				resp.getId(),
+				resp.getStatus()
+			);
 
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
 			broadcastTaskResponseToAllInstances(resp);
-
 		} catch (final Exception e) {
 			log.error("Error processing task response message", e);
 		}
@@ -420,14 +451,19 @@ public class TaskService {
 		} catch (final Exception e) {
 			try {
 				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
+				log.error(
+					"Unable to parse message as {}. Message: {}",
+					clazz.getName(),
+					jsonMessage.toPrettyString()
+				);
 				return null;
 			} catch (final Exception e1) {
 				log.error(
-						"Error decoding message as either {} or {}. Raw message is: {}",
-						clazz.getName(),
-						JsonNode.class.getName(),
-						message.getBody());
+					"Error decoding message as either {} or {}. Raw message is: {}",
+					clazz.getName(),
+					JsonNode.class.getName(),
+					message.getBody()
+				);
 				log.error("", e1);
 				return null;
 			}
@@ -435,7 +471,6 @@ public class TaskService {
 	}
 
 	public TaskFuture runTaskAsync(final TaskRequest r) throws JsonProcessingException {
-
 		if (r.getType() == null) {
 			throw new RuntimeException("TaskRequest must have a type set");
 		}
@@ -475,20 +510,23 @@ public class TaskService {
 			group.setProjectId(req.getProjectId());
 
 			notificationService.createNotificationGroup(group);
-
 		} catch (final Exception e) {
 			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
 		}
 
 		// now send request
-		final String requestQueue =
-				String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
+		final String requestQueue = String.format(
+			"%s-%s",
+			TASK_RUNNER_REQUEST_QUEUE,
+			req.getType().toString()
+		);
 
 		log.info(
-				"Readying task: {} with SHA: {} to send on queue: {}",
-				req.getId(),
-				hash,
-				req.getType().toString());
+			"Readying task: {} with SHA: {} to send on queue: {}",
+			req.getId(),
+			hash,
+			req.getType().toString()
+		);
 
 		// ensure the request queue exists
 		declareQueue(requestQueue);
@@ -498,7 +536,11 @@ public class TaskService {
 		// there is contention. We need this queue to exist to hold the message.
 		final String queueName = req.getId().toString();
 		final String routingKey = req.getId().toString();
-		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+		declareAndBindTransientQueueWithRoutingKey(
+			TASK_RUNNER_CANCELLATION_EXCHANGE,
+			queueName,
+			routingKey
+		);
 
 		try {
 			// send the request to the task runner
@@ -517,7 +559,6 @@ public class TaskService {
 			log.info("Adding future for task id: {} to the futures map", req.getId());
 			futures.put(req.getId(), future);
 			return future;
-
 		} catch (final Exception e) {
 			// ensure cancellation queue is removed on failure
 			rabbitAdmin.deleteQueue(queueName);
@@ -526,8 +567,7 @@ public class TaskService {
 	}
 
 	public TaskResponse runTaskSync(final TaskRequest req)
-			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
-
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 		// send the request
 		final TaskFuture future = runTaskAsync(req);
 
@@ -555,13 +595,18 @@ public class TaskService {
 			} catch (final Exception ee) {
 				log.warn("Failed to cancel task: {}", future.getId(), ee);
 			}
-			throw new TimeoutException("Task " + future.getId().toString() + " did not complete within "
-					+ req.getTimeoutMinutes() + " minutes");
+			throw new TimeoutException(
+				"Task " +
+				future.getId().toString() +
+				" did not complete within " +
+				req.getTimeoutMinutes() +
+				" minutes"
+			);
 		}
 	}
 
 	public TaskResponse runTask(final TaskMode mode, final TaskRequest req)
-			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 		if (mode == TaskMode.SYNC) {
 			return runTaskSync(req);
 		} else if (mode == TaskMode.ASYNC) {

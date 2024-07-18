@@ -50,9 +50,11 @@ public class TerariumAssetServices {
 	}
 
 	public Optional<? extends TerariumAsset> updateAsset(
-			final TerariumAsset asset, final UUID projectId, final AssetType type, final Permission permission)
-			throws IOException {
-
+		final TerariumAsset asset,
+		final UUID projectId,
+		final AssetType type,
+		final Permission permission
+	) throws IOException {
 		switch (type) {
 			case ARTIFACT:
 				return artifactService.updateAsset((Artifact) asset, projectId, permission);
@@ -63,7 +65,11 @@ public class TerariumAssetServices {
 			case DOCUMENT:
 				return documentAssetService.updateAsset((DocumentAsset) asset, projectId, permission);
 			case MODEL_CONFIGURATION:
-				return modelConfigurationService.updateAsset((ModelConfiguration) asset, projectId, permission);
+				return modelConfigurationService.updateAsset(
+					(ModelConfiguration) asset,
+					projectId,
+					permission
+				);
 			case MODEL:
 				return modelService.updateAsset((Model) asset, projectId, permission);
 			case WORKFLOW:

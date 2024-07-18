@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesContext extends TerariumAsset {
+
 	@Serial
 	private static final long serialVersionUID = 3350707308342727832L;
 

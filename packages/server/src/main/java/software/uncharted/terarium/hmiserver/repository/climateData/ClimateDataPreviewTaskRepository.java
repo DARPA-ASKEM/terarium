@@ -7,7 +7,12 @@ import software.uncharted.terarium.hmiserver.models.climateData.ClimateDataPrevi
 import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
-public interface ClimateDataPreviewTaskRepository extends PSCrudRepository<ClimateDataPreviewTask, UUID> {
+public interface ClimateDataPreviewTaskRepository
+	extends PSCrudRepository<ClimateDataPreviewTask, UUID> {
 	ClimateDataPreviewTask findByEsgfIdAndVariableIdAndTimestampsAndTimeIndex(
-			@NotNull String esgfId, @NotNull String variableId, String timestamps, String timeIndex);
+		@NotNull String esgfId,
+		@NotNull String variableId,
+		String timestamps,
+		String timeIndex
+	);
 }

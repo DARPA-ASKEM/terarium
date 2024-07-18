@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @NoArgsConstructor
 @TSModel
 public class S3Object {
+
 	private String key;
 
 	@TSOptional

@@ -51,17 +51,22 @@ public class HeadersBodyStatus extends HeadersBody {
 			Map<String, String> error = null;
 			try {
 				error = JsonSerialization.readValue(content, Map.class);
-			} catch (Exception ignored) {
-			}
+			} catch (Exception ignored) {}
 
 			String message = null;
 			if (error != null) {
 				String description = error.get("error_description");
 				String err = error.get("error");
 				String msg = error.get("errorMessage");
-				message = msg != null ? msg : err != null ? (description + " [" + error.get("error") + "]") : null;
+				message = msg != null
+					? msg
+					: err != null ? (description + " [" + error.get("error") + "]") : null;
 			}
-			throw new HttpResponseException(getStatusCodeAndReason(), message, new RuntimeException(content));
+			throw new HttpResponseException(
+				getStatusCodeAndReason(),
+				message,
+				new RuntimeException(content)
+			);
 		}
 	}
 

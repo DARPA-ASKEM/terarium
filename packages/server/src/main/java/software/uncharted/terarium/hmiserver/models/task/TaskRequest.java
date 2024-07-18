@@ -76,13 +76,19 @@ public class TaskRequest implements Serializable {
 			objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
 			final String encodedInput = Base64.getEncoder().encodeToString(input);
-			final String encodedAdditionalProperties =
-					Base64.getEncoder().encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
+			final String encodedAdditionalProperties = Base64.getEncoder()
+				.encodeToString(objectMapper.writeValueAsBytes(additionalProperties));
 
-			final String strHash =
-					String.format("%s-%s-%s-%s", type, script, encodedInput, encodedAdditionalProperties);
+			final String strHash = String.format(
+				"%s-%s-%s-%s",
+				type,
+				script,
+				encodedInput,
+				encodedAdditionalProperties
+			);
 			final MessageDigest md = MessageDigest.getInstance("SHA-256");
-			return Base64.getEncoder().encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
+			return Base64.getEncoder()
+				.encodeToString(md.digest(strHash.getBytes(StandardCharsets.UTF_8)));
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

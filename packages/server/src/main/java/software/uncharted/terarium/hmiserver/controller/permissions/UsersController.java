@@ -18,27 +18,34 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UsersController {
+
 	private final ReBACService reBACService;
 
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionUser>> getUsers(
-			@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
+		@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0") final Integer page
+	) {
 		return ResponseEntity.ok(reBACService.getUsers());
 	}
 
 	@DeleteMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> deleteRoleFromUser(
-			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
+		@PathVariable("userId") final String userId,
+		@PathVariable("roleName") final String roleName
+	) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}
 
 		try {
 			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
-				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				final RebacGroup adminGroup = new RebacGroup(
+					ReBACService.ASKEM_ADMIN_GROUP_ID,
+					reBACService
+				);
 				final RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
@@ -58,14 +65,19 @@ public class UsersController {
 	@PostMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> addRoleToUser(
-			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
+		@PathVariable("userId") final String userId,
+		@PathVariable("roleName") final String roleName
+	) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}
 
 		try {
 			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
-				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				final RebacGroup adminGroup = new RebacGroup(
+					ReBACService.ASKEM_ADMIN_GROUP_ID,
+					reBACService
+				);
 				final RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);

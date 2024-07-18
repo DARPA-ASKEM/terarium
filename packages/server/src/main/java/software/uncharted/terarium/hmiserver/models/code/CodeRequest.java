@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class CodeRequest implements Serializable {
+
 	private List<String> files = List.of("test");
 	private List<String> blobs;
 

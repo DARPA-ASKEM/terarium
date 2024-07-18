@@ -103,7 +103,9 @@ public class Simulation extends TerariumAsset {
 		clone.setStatus(ProgressState.valueOf(this.status.name()));
 		clone.setStatusMessage(this.statusMessage);
 		clone.setStartTime(this.startTime != null ? new Timestamp(this.startTime.getTime()) : null);
-		clone.setCompletedTime(this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null);
+		clone.setCompletedTime(
+			this.completedTime != null ? new Timestamp(this.completedTime.getTime()) : null
+		);
 		clone.setEngine(SimulationEngine.valueOf(this.engine.name()));
 		clone.setUserId(this.userId);
 		clone.setExecutionPayload(this.executionPayload.deepCopy());

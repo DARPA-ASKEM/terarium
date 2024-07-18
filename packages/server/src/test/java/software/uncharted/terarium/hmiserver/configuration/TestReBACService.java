@@ -40,7 +40,6 @@ public class TestReBACService extends ReBACService {
 
 	@PostConstruct
 	void init() {
-
 		for (final User user : USERS) {
 			final List<PermissionRole> roles = new ArrayList<>();
 			for (final Role role : user.getRoles()) {
@@ -48,18 +47,26 @@ public class TestReBACService extends ReBACService {
 				roles.add(r);
 			}
 
-			final PermissionUser permissionUser =
-					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail(), roles);
+			final PermissionUser permissionUser = new PermissionUser(
+				user.getId(),
+				user.getGivenName(),
+				user.getFamilyName(),
+				user.getEmail(),
+				roles
+			);
 
 			users.put(user.getId(), permissionUser);
 		}
 
 		for (final User user : USERS) {
-			final PermissionUser permissionUser =
-					new PermissionUser(user.getId(), user.getGivenName(), user.getFamilyName(), user.getEmail());
+			final PermissionUser permissionUser = new PermissionUser(
+				user.getId(),
+				user.getGivenName(),
+				user.getFamilyName(),
+				user.getEmail()
+			);
 
 			for (final Role r : user.getRoles()) {
-
 				PermissionRole role;
 				if (roles.containsKey(r.getId().toString())) {
 					role = roles.get(r.getId().toString());
@@ -143,22 +150,26 @@ public class TestReBACService extends ReBACService {
 
 	@Override
 	public void createRelationship(
-			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {}
+		final SchemaObject who,
+		final SchemaObject what,
+		final Schema.Relationship relationship
+	) throws Exception, RelationshipAlreadyExistsException {}
 
 	@Override
 	public void removeRelationship(
-			final SchemaObject who, final SchemaObject what, final Schema.Relationship relationship)
-			throws Exception, RelationshipAlreadyExistsException {}
+		final SchemaObject who,
+		final SchemaObject what,
+		final Schema.Relationship relationship
+	) throws Exception, RelationshipAlreadyExistsException {}
 
 	@Override
-	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
+	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what)
+		throws Exception {
 		return new ArrayList<>();
 	}
 
 	@Override
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
-
 		if (!users.containsKey(userId)) {
 			return ResponseEntity.notFound().build();
 		}
@@ -166,8 +177,7 @@ public class TestReBACService extends ReBACService {
 		for (final Map.Entry<String, PermissionRole> entry : roles.entrySet()) {
 			final PermissionRole role = entry.getValue();
 			if (role.getName().equals(roleName)) {
-				final boolean removed =
-						role.getUsers().removeIf(user -> user.getId().equals(userId));
+				final boolean removed = role.getUsers().removeIf(user -> user.getId().equals(userId));
 				if (removed) {
 					return ResponseEntity.ok().build();
 				}
@@ -179,7 +189,6 @@ public class TestReBACService extends ReBACService {
 
 	@Override
 	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
-
 		if (!users.containsKey(userId)) {
 			return ResponseEntity.notFound().build();
 		}
@@ -203,15 +212,21 @@ public class TestReBACService extends ReBACService {
 		final PermissionUser user = users.get(userId);
 		user.getRoles().add(new PermissionRole(roleId, roleName));
 
-		role.getUsers().add(new PermissionUser(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail()));
+		role
+			.getUsers()
+			.add(
+				new PermissionUser(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail())
+			);
 
 		return ResponseEntity.ok().build();
 	}
 
 	@Override
 	public List<UUID> lookupResources(
-			final SchemaObject who, final Schema.Permission permission, final Schema.Type type) throws Exception {
-
+		final SchemaObject who,
+		final Schema.Permission permission,
+		final Schema.Type type
+	) throws Exception {
 		return new ArrayList<>();
 	}
 }

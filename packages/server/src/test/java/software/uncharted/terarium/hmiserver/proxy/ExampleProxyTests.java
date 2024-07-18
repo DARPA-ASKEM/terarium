@@ -10,13 +10,16 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class ExampleProxyTests extends TerariumApplicationTests {
+
 	@Autowired
 	private ExampleProxy proxy;
 
 	@Test
 	public void testItCanGetExample() {
 		final String example = proxy.getExample();
-		Assertions.assertTrue(example.contains("This domain is for use in illustrative examples in documents"));
+		Assertions.assertTrue(
+			example.contains("This domain is for use in illustrative examples in documents")
+		);
 	}
 
 	@Test

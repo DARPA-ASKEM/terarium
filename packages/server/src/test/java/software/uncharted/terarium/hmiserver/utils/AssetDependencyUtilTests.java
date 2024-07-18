@@ -18,7 +18,6 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetGetAssetDependencies() throws Exception {
-
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();
 		final UUID c = UUID.randomUUID();
@@ -29,27 +28,30 @@ public class AssetDependencyUtilTests {
 		assetIds.add(c);
 
 		final JsonNode node = objectMapper.readTree(
-				"""
-					{
-						"values": {
-							"a": "%s",
-							"b": "%s",
-							"c": "%s"
-						},
-						"keys": {
-							"%s": "a",
-							"%s": "b",
-							"%s": "c"
-						},
-						"array": [
-							"%s",
-							"%s",
-							"%s"
-						]
-				}"""
-						.formatted(a, b, c, a, b, c, a, b, c));
+			"""
+				{
+					"values": {
+						"a": "%s",
+						"b": "%s",
+						"c": "%s"
+					},
+					"keys": {
+						"%s": "a",
+						"%s": "b",
+						"%s": "c"
+					},
+					"array": [
+						"%s",
+						"%s",
+						"%s"
+					]
+			}""".formatted(a, b, c, a, b, c, a, b, c)
+		);
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
+			assetIds,
+			node
+		);
 
 		// assert that the asset id is in the dependencies
 
@@ -64,26 +66,25 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetSwapAssetIdsSimple() throws Exception {
-
 		final String format =
-				"""
-					{
-						"values": {
-							"a": "%s",
-							"b": "%s",
-							"c": "%s"
-						},
-						"keys": {
-							"%s": "a",
-							"%s": "b",
-							"%s": "c"
-						},
-						"array": [
-							"%s",
-							"%s",
-							"%s"
-						]
-				}""";
+			"""
+				{
+					"values": {
+						"a": "%s",
+						"b": "%s",
+						"c": "%s"
+					},
+					"keys": {
+						"%s": "a",
+						"%s": "b",
+						"%s": "c"
+					},
+					"array": [
+						"%s",
+						"%s",
+						"%s"
+					]
+			}""";
 
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();
@@ -93,7 +94,10 @@ public class AssetDependencyUtilTests {
 
 		final JsonNode node = objectMapper.readTree(format.formatted(a, b, c, a, b, c, a, b, c));
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
+			assetIds,
+			node
+		);
 
 		// assert that the asset id is in the dependencies
 
@@ -112,13 +116,20 @@ public class AssetDependencyUtilTests {
 		final Set<UUID> newAssetIds = Set.of(d, e, f);
 		final Map<UUID, UUID> assetIdMap = Map.of(a, d, b, e, c, f);
 
-		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(node, assetIdMap, dependencies);
+		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(
+			node,
+			assetIdMap,
+			dependencies
+		);
 
 		final JsonNode newNode = objectMapper.readTree(format.formatted(d, e, f, d, e, f, d, e, f));
 
 		Assertions.assertEquals(newNode, swapped);
 
-		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(newAssetIds, swapped);
+		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(
+			newAssetIds,
+			swapped
+		);
 
 		Assertions.assertEquals(3, swappedDependencies.getIds().size());
 		Assertions.assertTrue(swappedDependencies.getIds().contains(d));
@@ -131,48 +142,47 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetSwapAssetIdsComplicated() throws Exception {
-
 		final String format =
-				"""
-					{
-						"values": {
-							"nested": [
-								{
-									"deep": "%s"
-								},
-								"%s"
-							],
-							"some": {
-								"other": {
-									"value": "%s"
-								}
-							}
-						},
-						"keys": {
-							"nested": {
-								"array": [
-									{
-										"%s": "a"
-									},
-									{
-										"%s": "b"
-									}
-								]
+			"""
+				{
+					"values": {
+						"nested": [
+							{
+								"deep": "%s"
 							},
-							"%s": "c"
-						},
-						"array": [
-							[
-								"%s",
-								[
-									"%s"
-								]
-							],
-							[
-								[ 0, 2, ["%s"]]
+							"%s"
+						],
+						"some": {
+							"other": {
+								"value": "%s"
+							}
+						}
+					},
+					"keys": {
+						"nested": {
+							"array": [
+								{
+									"%s": "a"
+								},
+								{
+									"%s": "b"
+								}
 							]
+						},
+						"%s": "c"
+					},
+					"array": [
+						[
+							"%s",
+							[
+								"%s"
+							]
+						],
+						[
+							[ 0, 2, ["%s"]]
 						]
-				}""";
+					]
+			}""";
 
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();
@@ -182,7 +192,10 @@ public class AssetDependencyUtilTests {
 
 		final JsonNode node = objectMapper.readTree(format.formatted(a, b, c, a, b, c, a, b, c));
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
+			assetIds,
+			node
+		);
 
 		// assert that the asset id is in the dependencies
 
@@ -201,13 +214,20 @@ public class AssetDependencyUtilTests {
 		final Set<UUID> newAssetIds = Set.of(d, e, f);
 		final Map<UUID, UUID> assetIdMap = Map.of(a, d, b, e, c, f);
 
-		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(node, assetIdMap, dependencies);
+		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(
+			node,
+			assetIdMap,
+			dependencies
+		);
 
 		final JsonNode newNode = objectMapper.readTree(format.formatted(d, e, f, d, e, f, d, e, f));
 
 		Assertions.assertEquals(newNode, swapped);
 
-		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(newAssetIds, swapped);
+		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(
+			newAssetIds,
+			swapped
+		);
 
 		Assertions.assertEquals(3, swappedDependencies.getIds().size());
 		Assertions.assertTrue(swappedDependencies.getIds().contains(d));

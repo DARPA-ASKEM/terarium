@@ -4,6 +4,7 @@ import java.util.UUID;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 public abstract class RebacObject {
+
 	private String id;
 
 	public RebacObject(String id) {

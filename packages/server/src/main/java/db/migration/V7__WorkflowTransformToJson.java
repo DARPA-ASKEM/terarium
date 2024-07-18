@@ -16,10 +16,11 @@ public class V7__WorkflowTransformToJson extends BaseJavaMigration {
 	@Override
 	public void migrate(final Context context) throws Exception {
 		try (var statement = context.getConnection().createStatement()) {
-
 			// Check the type of the transform column
-			final ResultSet typeResultSet = statement.executeQuery("SELECT data_type FROM information_schema.columns "
-					+ "WHERE table_name = 'workflow' AND column_name = 'transform';");
+			final ResultSet typeResultSet = statement.executeQuery(
+				"SELECT data_type FROM information_schema.columns " +
+				"WHERE table_name = 'workflow' AND column_name = 'transform';"
+			);
 
 			if (typeResultSet.next()) {
 				final String dataType = typeResultSet.getString("data_type");
@@ -39,8 +40,9 @@ public class V7__WorkflowTransformToJson extends BaseJavaMigration {
 			final ResultSet resultSet = statement.executeQuery("SELECT id, transform_old FROM workflow;");
 
 			// Prepare the update statement
-			final PreparedStatement preparedStatement =
-					context.getConnection().prepareStatement("UPDATE workflow SET transform = ?::json WHERE id = ?;");
+			final PreparedStatement preparedStatement = context
+				.getConnection()
+				.prepareStatement("UPDATE workflow SET transform = ?::json WHERE id = ?;");
 
 			// Iterate through the result set
 			while (resultSet.next()) {

@@ -18,14 +18,16 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(
-		indexes = {
-			@Index(columnList = "timestampmillis"),
-			@Index(columnList = "projectid"),
-			@Index(columnList = "userid"),
-			@Index(columnList = "type"),
-			@Index(columnList = "value")
-		})
+	indexes = {
+		@Index(columnList = "timestampmillis"),
+		@Index(columnList = "projectid"),
+		@Index(columnList = "userid"),
+		@Index(columnList = "type"),
+		@Index(columnList = "value")
+	}
+)
 public class Event implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 7337142167492880031L;
 
