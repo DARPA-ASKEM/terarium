@@ -9,7 +9,7 @@ const DOCUMENTATION_URL =
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
-	paramValue = 'param_value', // provide a statr time to get a better parameter value.
+	paramValue = 'param_value', // provide a start time to get a better parameter value.
 	paramValueAndStartTime = 'start_time_param_value'
 }
 
