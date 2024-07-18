@@ -131,6 +131,7 @@ import type { Model } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
@@ -286,7 +287,7 @@ const handleModelPreview = async (data: any) => {
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: `Output ${Date.now()}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		type: 'modelId',
 		state: {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
