@@ -16,7 +16,7 @@
 				<tera-input
 					label="Expression"
 					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
-					:model-value="expression"
+					:model-value="getInitialExpression(modelConfiguration, initialId)"
 				/>
 			</span>
 			<Button
@@ -89,7 +89,6 @@ const emit = defineEmits(['update-expression', 'update-source']);
 const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
-const expression = getInitialExpression(props.modelConfiguration, props.initialId);
 
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
