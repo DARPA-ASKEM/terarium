@@ -58,7 +58,7 @@
 			<tera-input
 				v-model="config.riskTolerance"
 				@update:model-value="emit('update-self', config)"
-			/>% of simulate outcomes
+			/>% of simulated outcomes
 		</div>
 		<div v-else class="section-row">
 			Ensure <b>{{ config.targetVariable }}</b> is
