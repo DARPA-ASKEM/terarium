@@ -67,7 +67,7 @@
 				</section>
 
 				<section v-if="showNewValueOptions">
-					<h6 class="pt-4, pb-3">New Value</h6>
+					<h6 class="pt-4, pb-3">Intervention Value</h6>
 					<div class="input-row">
 						<tera-input
 							type="nist"
@@ -90,7 +90,7 @@
 					</div>
 				</section>
 				<section v-if="showStartTimeOptions">
-					<h6 class="pt-4, pb-3">Start Time</h6>
+					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
 						<tera-input
 							type="nist"
@@ -133,7 +133,7 @@ import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
-	InterventionTypes,
+	OptimizationInterventionObjective,
 	OPTIMIZATION_TYPE_MAP,
 	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
@@ -155,14 +155,14 @@ const knobs = ref<InterventionPolicyGroupForm>({
 const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.paramValue
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.startTime
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
-	() => knobs.value.optimizationType === InterventionTypes.startTime
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValue
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 </script>
 

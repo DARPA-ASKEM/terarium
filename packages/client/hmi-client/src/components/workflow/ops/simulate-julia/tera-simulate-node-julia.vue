@@ -39,7 +39,7 @@ import { getRunResult, pollAction } from '@/services/models/simulation-service';
 import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import { SimulateJuliaOperation, SimulateJuliaOperationState } from './simulate-julia-operation';
 
 const props = defineProps<{
@@ -86,7 +86,7 @@ const processResult = async (runId: string) => {
 
 	emit('append-output', {
 		type: SimulateJuliaOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan

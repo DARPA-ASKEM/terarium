@@ -195,7 +195,6 @@ const parameterList = computed<
 	const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
 	const parameters = getParameters(props.modelConfiguration);
 	return Array.from(collapsedParameters.keys())
-		.flat()
 		.map((id) => {
 			const childIds = collapsedParameters.get(id) ?? [];
 			const childParameters = childIds

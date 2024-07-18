@@ -51,7 +51,7 @@ import {
 	makeEnsembleCiemssSimulation
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata } from '@/components/workflow/util';
+import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 
 import { Poller, PollerState } from '@/api/api';
@@ -158,7 +158,7 @@ watch(
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
-				label: `${portLabel} Result`,
+				label: nodeOutputLabel(props.node, `${portLabel} Result`),
 				value: [state.calibrationId]
 			});
 		}
