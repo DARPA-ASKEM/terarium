@@ -15,8 +15,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3Service;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class SimulationService
-	extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
+public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
 
@@ -37,15 +36,7 @@ public class SimulationService
 		final S3ClientService s3ClientService,
 		final SimulationUpdateRepository simulationUpdateRepository
 	) {
-		super(
-			objectMapper,
-			config,
-			projectService,
-			projectAssetService,
-			repository,
-			s3ClientService,
-			Simulation.class
-		);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Simulation.class);
 		this.simulationUpdateRepository = simulationUpdateRepository;
 	}
 
@@ -87,12 +78,7 @@ public class SimulationService
 				final String destPath = getDatasetPath(dataset.getId(), filename);
 				s3ClientService
 					.getS3Service()
-					.copyObject(
-						config.getFileStorageS3BucketName(),
-						srcPath,
-						config.getFileStorageS3BucketName(),
-						destPath
-					);
+					.copyObject(config.getFileStorageS3BucketName(), srcPath, config.getFileStorageS3BucketName(), destPath);
 			}
 		}
 	}

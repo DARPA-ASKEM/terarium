@@ -71,11 +71,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 	@Override
 	@Observed(name = "function_profile")
-	public Dataset createAsset(
-		final Dataset asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException {
 		extractColumnsForFreshCreate(asset);
 
 		if (asset.getColumns() != null) {
@@ -170,11 +167,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	}
 
 	@Observed(name = "function_profile")
-	public void addDatasetColumns(
-		final Dataset dataset,
-		final String fileName,
-		final List<String> headers
-	) {
+	public void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
 		if (dataset.getColumns() == null) {
 			dataset.setColumns(new ArrayList<>());
 		}
@@ -189,11 +182,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	}
 
 	@Observed(name = "function_profile")
-	public List<List<String>> getCSVFile(
-		final String filename,
-		final UUID datasetId,
-		final Integer limit
-	) throws IOException {
+	public List<List<String>> getCSVFile(final String filename, final UUID datasetId, final Integer limit)
+		throws IOException {
 		String rawCSV = "";
 
 		final Optional<byte[]> bytes = fetchFileAsBytes(datasetId, filename);
@@ -201,9 +191,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			return null;
 		}
 
-		final BufferedReader reader = new BufferedReader(
-			new InputStreamReader(new ByteArrayInputStream(bytes.get()))
-		);
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes.get())));
 
 		String line = null;
 		Integer count = 0;
@@ -223,9 +211,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	private static List<List<String>> csvToRecords(final String rawCsvString) throws IOException {
 		final List<List<String>> records = new ArrayList<>();
-		try (
-			final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)
-		) {
+		try (final CSVParser parser = new CSVParser(new StringReader(rawCsvString), CSVFormat.DEFAULT)) {
 			for (final CSVRecord csvRecord : parser) {
 				final List<String> values = new ArrayList<>();
 				csvRecord.forEach(values::add);

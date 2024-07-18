@@ -4,8 +4,7 @@ import { getRunResult, getSimulation } from '@/services/models/simulation-servic
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy } from '@/services/intervention-policy';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
@@ -176,8 +175,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
 
-	const simulationStaticInterventions: any[] =
-		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
+	const simulationStaticInterventions: any[] = simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
 
 	// From snake case -> camel case.
@@ -218,10 +216,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
-	} else if (
-		interventionType === OptimizationInterventionObjective.paramValue &&
-		paramValues.length !== 0
-	) {
+	} else if (interventionType === OptimizationInterventionObjective.paramValue && paramValues.length !== 0) {
 		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
@@ -267,10 +262,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
  *
  *
  */
-export async function createInterventionPolicyFromOptimize(
-	modelConfigId: string,
-	optimizeRunId: string
-) {
+export async function createInterventionPolicyFromOptimize(modelConfigId: string, optimizeRunId: string) {
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 

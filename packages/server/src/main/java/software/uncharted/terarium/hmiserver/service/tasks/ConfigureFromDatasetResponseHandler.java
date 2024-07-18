@@ -82,28 +82,20 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			final Model modelCopy = (Model) model.clone();
 			modelCopy.setId(model.getId());
 			final JsonNode condition = configurations.getResponse().get("values");
-			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(
-				condition,
-				modelCopy
-			);
+			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
 
 			if (modelCopy.isRegnet()) {
-				modelCopy
-					.getModel()
-					.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-				modelCopy
-					.getModel()
-					.put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
+				modelCopy.getModel().put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
+				modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
 			}
 
 			// Create the new configuration
-			final ModelConfiguration modelConfiguration =
-				ModelConfigurationService.modelConfigurationFromAMR(
-					modelCopy,
-					"New configuration from dataset",
-					""
-				);
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				modelCopy,
+				"New configuration from dataset",
+				""
+			);
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {

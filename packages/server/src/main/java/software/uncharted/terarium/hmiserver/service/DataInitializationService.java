@@ -51,19 +51,9 @@ public class DataInitializationService {
 					RoleType.ADMIN,
 					Map.of(
 						AuthorityType.GRANT_AUTHORITY,
-						List.of(
-							AuthorityLevel.READ,
-							AuthorityLevel.CREATE,
-							AuthorityLevel.UPDATE,
-							AuthorityLevel.DELETE
-						),
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE),
 						AuthorityType.USERS,
-						List.of(
-							AuthorityLevel.READ,
-							AuthorityLevel.CREATE,
-							AuthorityLevel.UPDATE,
-							AuthorityLevel.DELETE
-						)
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
 					)
 				);
 				case USER -> roleService.createRole(
@@ -90,12 +80,7 @@ public class DataInitializationService {
 						AuthorityType.GRANT_AUTHORITY,
 						List.of(AuthorityLevel.READ),
 						AuthorityType.USERS,
-						List.of(
-							AuthorityLevel.READ,
-							AuthorityLevel.CREATE,
-							AuthorityLevel.UPDATE,
-							AuthorityLevel.DELETE
-						)
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
 					)
 				);
 				case SERVICE -> roleService.createRole(
@@ -104,12 +89,7 @@ public class DataInitializationService {
 						AuthorityType.GRANT_AUTHORITY,
 						List.of(AuthorityLevel.READ),
 						AuthorityType.USERS,
-						List.of(
-							AuthorityLevel.READ,
-							AuthorityLevel.CREATE,
-							AuthorityLevel.UPDATE,
-							AuthorityLevel.DELETE
-						)
+						List.of(AuthorityLevel.READ, AuthorityLevel.CREATE, AuthorityLevel.UPDATE, AuthorityLevel.DELETE)
 					)
 				);
 			}

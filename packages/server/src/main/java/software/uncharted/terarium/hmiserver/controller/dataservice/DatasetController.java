@@ -90,9 +90,7 @@ public class DatasetController {
 				responseCode = "200",
 				description = "Datasets found.",
 				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)
-					)
+					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class))
 				)
 			),
 			@ApiResponse(
@@ -103,11 +101,7 @@ public class DatasetController {
 		}
 	)
 	public ResponseEntity<List<Dataset>> getDatasets(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page,
 		@RequestParam(name = "terms", defaultValue = "", required = false) final String terms
 	) {
@@ -130,10 +124,7 @@ public class DatasetController {
 				final List<TermsQuery> shouldQueries = new ArrayList<>();
 
 				for (final String field : SEARCH_FIELDS) {
-					final TermsQuery termsQuery = new TermsQuery.Builder()
-						.field(field)
-						.terms(termsQueryField)
-						.build();
+					final TermsQuery termsQuery = new TermsQuery.Builder().field(field).terms(termsQueryField).build();
 
 					shouldQueries.add(termsQuery);
 				}
@@ -154,10 +145,7 @@ public class DatasetController {
 		} catch (final IOException e) {
 			final String error = "Unable to get datasets";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -174,11 +162,7 @@ public class DatasetController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the dataset",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the dataset", content = @Content)
 		}
 	)
 	public ResponseEntity<Dataset> createDataset(
@@ -191,16 +175,11 @@ public class DatasetController {
 		);
 
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				datasetService.createAsset(dataset, projectId, permission)
-			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -217,11 +196,7 @@ public class DatasetController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no dataset found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no dataset found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the dataset from the data store",
@@ -246,23 +221,16 @@ public class DatasetController {
 			}
 			// GETs not associated to a projectId cannot read private or temporary assets
 			if (
-				permission.equals(Schema.Permission.NONE) &&
-				(!dataset.get().getPublicAsset() || dataset.get().getTemporary())
+				permission.equals(Schema.Permission.NONE) && (!dataset.get().getPublicAsset() || dataset.get().getTemporary())
 			) {
-				throw new ResponseStatusException(
-					HttpStatus.FORBIDDEN,
-					messages.get("rebac.unauthorized-read")
-				);
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -277,17 +245,11 @@ public class DatasetController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteDataset(
@@ -305,10 +267,7 @@ public class DatasetController {
 		} catch (final IOException e) {
 			final String error = "Unable to delete dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -325,16 +284,8 @@ public class DatasetController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Dataset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Dataset could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the dataset",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "Dataset could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the dataset", content = @Content)
 		}
 	)
 	ResponseEntity<Dataset> updateDataset(
@@ -354,10 +305,7 @@ public class DatasetController {
 		} catch (final IOException e) {
 			final String error = "Unable to update a dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -384,11 +332,7 @@ public class DatasetController {
 	public ResponseEntity<CsvAsset> getCsv(
 		@PathVariable("id") final UUID datasetId,
 		@RequestParam("filename") final String filename,
-		@RequestParam(
-			name = "limit",
-			defaultValue = "" + DEFAULT_CSV_LIMIT,
-			required = false
-		) final Integer limit
+		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
 		final List<List<String>> csv;
 		try {
@@ -396,18 +340,12 @@ public class DatasetController {
 			if (csv == null) {
 				final String error = "Unable to get CSV";
 				log.error(error);
-				throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error
-				);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		} catch (final IOException e) {
 			final String error = "Unable to parse CSV";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
 		final List<String> headers = csv.get(0);
@@ -495,18 +433,12 @@ public class DatasetController {
 		try {
 			dataset = datasetService.getAsset(id, permission);
 			if (dataset.isEmpty()) {
-				throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.NOT_FOUND,
-					"Dataset not found"
-				);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Dataset not found");
 			}
 		} catch (final Exception e) {
 			final String error = "Unable to get dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
 		if (
@@ -538,10 +470,7 @@ public class DatasetController {
 			} catch (final Exception e) {
 				final String error = "Unable to get download url";
 				log.error(error, e);
-				throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					error
-				);
+				throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 			}
 		}
 	}
@@ -557,16 +486,10 @@ public class DatasetController {
 				description = "Uploaded the CSV file.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseStatus.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the CSV",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseStatus> uploadCsvFromGithub(
@@ -589,23 +512,13 @@ public class DatasetController {
 		if (csvString == null) {
 			final String error = "Unable to download csv from github";
 			log.error(error);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
 		final String[] csvRows = csvString.split("\\R");
 		final String[] headers = csvRows[0].split(",");
-		return uploadCSVAndUpdateColumns(
-			datasetId,
-			projectId,
-			filename,
-			csvEntity,
-			headers,
-			permission
-		);
+		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 	}
 
 	/**
@@ -625,16 +538,10 @@ public class DatasetController {
 				description = "Uploaded the CSV file.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseStatus.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the CSV",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseStatus> uploadCsv(
@@ -653,10 +560,7 @@ public class DatasetController {
 
 			final byte[] csvBytes = input.getBytes();
 
-			final HttpEntity csvEntity = new ByteArrayEntity(
-				csvBytes,
-				ContentType.APPLICATION_OCTET_STREAM
-			);
+			final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
 			final String csvString = new String(csvBytes);
 			final String[] csvRows = csvString.split("\\R");
 			final String[] headers = csvRows[0].split(",");
@@ -665,21 +569,11 @@ public class DatasetController {
 				// strings.
 				headers[i] = headers[i].replaceAll("^\"|\"$", "");
 			}
-			return uploadCSVAndUpdateColumns(
-				datasetId,
-				projectId,
-				filename,
-				csvEntity,
-				headers,
-				permission
-			);
+			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -693,16 +587,10 @@ public class DatasetController {
 				description = "Uploaded the file.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseStatus.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<Void> uploadData(
@@ -726,10 +614,7 @@ public class DatasetController {
 				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
-					throw new ResponseStatusException(
-						org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-						error
-					);
+					throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 				}
 
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
@@ -737,9 +622,7 @@ public class DatasetController {
 				}
 
 				try {
-					updatedDataset = Optional.of(
-						datasetService.extractColumnsFromFiles(updatedDataset.get())
-					);
+					updatedDataset = Optional.of(datasetService.extractColumnsFromFiles(updatedDataset.get()));
 				} catch (final IOException e) {
 					final String error = "Unable to extract columns from dataset";
 					log.error(error, e);
@@ -754,10 +637,7 @@ public class DatasetController {
 		} catch (final IOException e) {
 			final String error = "Unable to upload file to dataset";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -790,10 +670,7 @@ public class DatasetController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -824,15 +701,9 @@ public class DatasetController {
 
 			// update dataset with headers if the previous upload was successful
 			if (status == HttpStatus.OK.value()) {
-				log.debug(
-					"Successfully uploaded CSV file to dataset {}. Now updating TDS with headers",
-					datasetId
-				);
+				log.debug("Successfully uploaded CSV file to dataset {}. Now updating TDS with headers", datasetId);
 
-				final Optional<Dataset> updatedDataset = datasetService.getAsset(
-					datasetId,
-					hasWritePermission
-				);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, hasWritePermission);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
@@ -880,10 +751,7 @@ public class DatasetController {
 			// set up row as numbers. may fail here.
 			// List<Integer> numberList = aCol.stream().map(String s ->
 			// Integer.parseInt(s.trim()));
-			final List<Double> numberList = aCol
-				.stream()
-				.map(Double::valueOf)
-				.collect(Collectors.toList());
+			final List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
 			Collections.sort(numberList);
 			final double minValue = numberList.get(0);
 			final double maxValue = numberList.get(numberList.size() - 1);
@@ -895,8 +763,7 @@ public class DatasetController {
 			for (int i = 0; i < binCount; i++) {
 				bins.add(0);
 			}
-			final double stepSize =
-				(numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
+			final double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
 
 			// Fill bins:
 			for (final Double aDouble : numberList) {
@@ -925,16 +792,8 @@ public class DatasetController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "415",
-				description = "Dataset cannot be previewed",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue generating the preview",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "415", description = "Dataset cannot be previewed", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the preview", content = @Content)
 		}
 	)
 	public ResponseEntity<JsonNode> getPreview(

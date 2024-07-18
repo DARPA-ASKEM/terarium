@@ -43,10 +43,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -59,18 +56,14 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final Grounding grounding = new Grounding();
-		grounding.setContext(
-			mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key)
-		);
+		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
 		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
 		return grounding;
 	}
 
 	static DocumentExtraction createDocExtraction() {
-		return new DocumentExtraction()
-			.setFileName("Hello World.pdf")
-			.setAssetType(ExtractionAssetType.FIGURE);
+		return new DocumentExtraction().setFileName("Hello World.pdf").setAssetType(ExtractionAssetType.FIGURE);
 	}
 
 	static DocumentAsset createDocument() throws Exception {
@@ -97,11 +90,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateDocument() throws Exception {
 		final DocumentAsset before = (DocumentAsset) createDocument().setId(UUID.randomUUID());
-		final DocumentAsset after = documentAssetService.createAsset(
-			before,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final DocumentAsset after = documentAssetService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
@@ -140,10 +129,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAssetService.createAsset(createDocument("1"), project.getId(), ASSUME_WRITE_PERMISSION);
 		documentAssetService.createAsset(createDocument("2"), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final List<DocumentAsset> documentAssets = documentAssetService.getPublicNotTemporaryAssets(
-			0,
-			3
-		);
+		final List<DocumentAsset> documentAssets = documentAssetService.getPublicNotTemporaryAssets(0, 3);
 
 		Assertions.assertEquals(3, documentAssets.size());
 	}
@@ -196,11 +182,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		documentAssetService.deleteAsset(
-			documentAsset.getId(),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAssetService.deleteAsset(documentAsset.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Optional<DocumentAsset> deleted = documentAssetService.getAsset(
 			documentAsset.getId(),
@@ -214,23 +196,13 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCloneDocumentAsset() throws Exception {
 		DocumentAsset documentAsset = createDocument();
-		documentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final DocumentAsset cloned = documentAsset.clone();
 
 		Assertions.assertNotEquals(documentAsset.getId(), cloned.getId());
-		Assertions.assertEquals(
-			documentAsset.getGrounding().getIdentifiers(),
-			cloned.getGrounding().getIdentifiers()
-		);
-		Assertions.assertEquals(
-			documentAsset.getGrounding().getContext(),
-			cloned.getGrounding().getContext()
-		);
+		Assertions.assertEquals(documentAsset.getGrounding().getIdentifiers(), cloned.getGrounding().getIdentifiers());
+		Assertions.assertEquals(documentAsset.getGrounding().getContext(), cloned.getGrounding().getContext());
 	}
 
 	@Test
@@ -242,11 +214,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		for (int i = 0; i < NUM; i++) {
 			documentAssets.add(createDocument(String.valueOf(i)));
 		}
-		documentAssets = documentAssetService.createAssets(
-			documentAssets,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		documentAssets = documentAssetService.createAssets(documentAssets, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final List<DocumentAsset> results = documentAssetService.searchAssets(0, NUM, null);
 
@@ -254,10 +222,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 		for (int i = 0; i < results.size(); i++) {
 			Assertions.assertEquals(documentAssets.get(i).getName(), results.get(i).getName());
-			Assertions.assertEquals(
-				documentAssets.get(i).getDescription(),
-				results.get(i).getDescription()
-			);
+			Assertions.assertEquals(documentAssets.get(i).getDescription(), results.get(i).getDescription());
 			Assertions.assertEquals(
 				documentAssets.get(i).getGrounding().getIdentifiers(),
 				results.get(i).getGrounding().getIdentifiers()

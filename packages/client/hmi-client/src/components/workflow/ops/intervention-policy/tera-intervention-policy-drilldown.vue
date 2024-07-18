@@ -6,11 +6,7 @@
 		@update:selection="onSelection"
 	>
 		<template #sidebar>
-			<tera-slider-panel
-				v-model:is-open="isSidebarOpen"
-				content-width="360px"
-				header="Intervention policies"
-			>
+			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
 				<template #content>
 					<div class="m-3">
 						<div class="flex flex-column gap-1">
@@ -33,18 +29,13 @@
 		</template>
 		<tera-columnar-panel>
 			<tera-drilldown-section class="px-3">
-				<template #header-controls-left>
-					Select an intervention policy or create a new one here.
-				</template>
+				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy"></Button>
 					<Button @click="onSaveInterventions" label="Save" />
 				</template>
 				<ul class="flex flex-column gap-2">
-					<li
-						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
-						:key="index"
-					>
+					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
 						<tera-intervention-card
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
@@ -55,13 +46,7 @@
 					</li>
 				</ul>
 				<span>
-					<Button
-						text
-						label="Add intervention"
-						@click="onAddIntervention"
-						icon="pi pi-plus"
-						size="small"
-					/>
+					<Button text label="Add intervention" @click="onAddIntervention" icon="pi pi-plus" size="small" />
 				</span>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
@@ -76,12 +61,7 @@
 						<AccordionTab>
 							<template #header>
 								Description
-								<Button
-									v-if="!isEditingDescription"
-									icon="pi pi-pencil"
-									text
-									@click.stop="onEditDescription"
-								/>
+								<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
 								<template v-else>
 									<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 									<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
@@ -90,12 +70,7 @@
 							<p class="description text" v-if="!isEditingDescription">
 								{{ selectedPolicy?.description }}
 							</p>
-							<Textarea
-								v-else
-								class="w-full"
-								placeholder="Enter a description"
-								v-model="newDescription"
-							/>
+							<Textarea v-else class="w-full" placeholder="Enter a description" v-model="newDescription" />
 						</AccordionTab>
 						<AccordionTab header="Charts">
 							<ul class="flex flex-column gap-2">
@@ -111,8 +86,7 @@
 													:key="staticIntervention.timestep"
 												>
 													<p>
-														Set {{ intervention.type }} {{ appliedTo }} to
-														{{ staticIntervention.value }} at time step
+														Set {{ intervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time step
 														{{ staticIntervention.timestep }}.
 													</p>
 												</li>
@@ -173,23 +147,14 @@ import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
 import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import TeraInterventionCard from './tera-intervention-card.vue';
-import {
-	InterventionPolicyOperation,
-	InterventionPolicyState
-} from './tera-intervention-policy-operation';
+import { InterventionPolicyOperation, InterventionPolicyState } from './tera-intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<InterventionPolicyState>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-state',
-	'select-output',
-	'append-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
 
 const confirm = useConfirm();
 
@@ -213,9 +178,7 @@ const isFetchingPolicies = ref(false);
 const interventionsPolicyList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
 	interventionsPolicyList.value
-		.filter((policy) =>
-			policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase())
-		)
+		.filter((policy) => policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase()))
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 const selectedOutputId = ref<string>('');
@@ -240,9 +203,7 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const groupedOutputParameters = computed(() =>
-	groupBy(selectedPolicy.value?.interventions, 'appliedTo')
-);
+const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
 
 const initialize = async () => {
 	const state = props.node.state;
@@ -330,9 +291,7 @@ const onAddIntervention = () => {
 
 const onDeleteIntervention = (index: number) => {
 	// Create a new array excluding the intervention at the specified index
-	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
-		(_, i) => i !== index
-	);
+	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter((_, i) => i !== index);
 
 	// Reassign the updated interventions array back to the transientInterventionPolicy
 	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
@@ -344,8 +303,7 @@ const onChangeName = async (name: string) => {
 	selectedPolicy.value.name = name;
 	await updateInterventionPolicy(selectedPolicy.value);
 	updateNodeLabel(selectedOutputId.value, name);
-	if (selectedPolicy.value.id)
-		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
+	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
@@ -359,8 +317,7 @@ const onConfirmEditDescription = async () => {
 	selectedPolicy.value.description = newDescription.value;
 	isEditingDescription.value = false;
 	await updateInterventionPolicy(selectedPolicy.value);
-	if (selectedPolicy.value.id)
-		selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
+	if (selectedPolicy.value.id) selectedPolicy.value = await getInterventionPolicyById(selectedPolicy.value.id);
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
@@ -385,8 +342,7 @@ const onResetPolicy = () => {
 		header: 'Are you sure you want to reset the policy?',
 		message: 'This action cannot be undone.',
 		accept: () => {
-			if (selectedPolicy.value)
-				knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
+			if (selectedPolicy.value) knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'

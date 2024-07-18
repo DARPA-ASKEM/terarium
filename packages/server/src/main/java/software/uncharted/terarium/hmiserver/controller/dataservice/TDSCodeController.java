@@ -88,9 +88,7 @@ public class TDSCodeController {
 				responseCode = "200",
 				description = "code found.",
 				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class)
-					)
+					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class))
 				)
 			),
 			@ApiResponse(
@@ -106,11 +104,7 @@ public class TDSCodeController {
 		}
 	)
 	public ResponseEntity<List<Code>> getCodes(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "1", required = false) final Integer page
 	) {
 		try {
@@ -191,11 +185,7 @@ public class TDSCodeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no code resource found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the code resource from the data store",
@@ -244,11 +234,7 @@ public class TDSCodeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Code.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Code resource could not be found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "Code resource could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue updating the code resource",
@@ -275,10 +261,7 @@ public class TDSCodeController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
 		} catch (final IOException e) {
 			log.error("Unable to update code resource", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 	}
 
@@ -298,9 +281,7 @@ public class TDSCodeController {
 				description = "Code resource deleted.",
 				content = @Content(
 					mediaType = MediaType.APPLICATION_JSON_VALUE,
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseDeleted.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 				)
 			),
 			@ApiResponse(
@@ -385,11 +366,7 @@ public class TDSCodeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no code resource found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no code resource found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the presigned url",
@@ -407,10 +384,7 @@ public class TDSCodeController {
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -443,10 +417,7 @@ public class TDSCodeController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -472,11 +443,7 @@ public class TDSCodeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<Integer> uploadFile(
@@ -493,19 +460,14 @@ public class TDSCodeController {
 		log.debug("Uploading code {} to project", codeId);
 
 		final byte[] fileAsBytes = input.getBytes();
-		final HttpEntity fileEntity = new ByteArrayEntity(
-			fileAsBytes,
-			ContentType.APPLICATION_OCTET_STREAM
-		);
+		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
 	@PutMapping("/{id}/upload-code-from-github")
 	@Secured(Roles.USER)
-	@Operation(
-		summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project"
-	)
+	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -553,9 +515,7 @@ public class TDSCodeController {
 	 */
 	@PutMapping("/{id}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
-	@Operation(
-		summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project"
-	)
+	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -566,11 +526,7 @@ public class TDSCodeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the file",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
 		}
 	)
 	public ResponseEntity<Integer> uploadCodeFromGithubRepo(
@@ -592,10 +548,7 @@ public class TDSCodeController {
 			final HttpResponse response = httpClient.execute(httpGet);
 			final byte[] zipBytes = response.getEntity().getContent().readAllBytes();
 
-			final HttpEntity fileEntity = new ByteArrayEntity(
-				zipBytes,
-				ContentType.APPLICATION_OCTET_STREAM
-			);
+			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 			return uploadCodeHelper(codeId, projectId, repoName, fileEntity, permission);
 		} catch (final Exception e) {

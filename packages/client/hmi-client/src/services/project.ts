@@ -116,11 +116,7 @@ async function addAsset(projectId: string, assetType: string, assetId: string) {
  * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return boolean
  */
-async function deleteAsset(
-	projectId: Project['id'],
-	assetType: AssetType,
-	assetId: string | number
-): Promise<boolean> {
+async function deleteAsset(projectId: Project['id'], assetType: AssetType, assetId: string | number): Promise<boolean> {
 	try {
 		const url = `/projects/${projectId}/assets/${assetType}/${assetId}`;
 		const { status } = await API.delete(url);
@@ -170,15 +166,9 @@ async function getPermissions(projectId: Project['id']): Promise<PermissionRelat
 	}
 }
 
-async function setPermissions(
-	projectId: Project['id'],
-	userId: string,
-	relationship: string
-): Promise<boolean> {
+async function setPermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
-		const { status } = await API.post(
-			`projects/${projectId}/permissions/user/${userId}/${relationship}`
-		);
+		const { status } = await API.post(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
 		if (status !== 200) {
 			return false;
 		}
@@ -189,15 +179,9 @@ async function setPermissions(
 	}
 }
 
-async function removePermissions(
-	projectId: Project['id'],
-	userId: string,
-	relationship: string
-): Promise<boolean> {
+async function removePermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
-		const { status } = await API.delete(
-			`projects/${projectId}/permissions/user/${userId}/${relationship}`
-		);
+		const { status } = await API.delete(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
 		if (status !== 200) {
 			return false;
 		}
@@ -215,9 +199,7 @@ async function updatePermissions(
 	to: string
 ): Promise<boolean> {
 	try {
-		const { status } = await API.put(
-			`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`
-		);
+		const { status } = await API.put(`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`);
 		if (status !== 200) {
 			return false;
 		}

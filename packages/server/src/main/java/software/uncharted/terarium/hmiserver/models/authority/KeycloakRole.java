@@ -23,10 +23,6 @@ public enum KeycloakRole {
 	}
 
 	public static List<KeycloakRole> get(final List<String> roles) {
-		return roles
-			.stream()
-			.map(KeycloakRole::get)
-			.filter(Objects::nonNull)
-			.collect(Collectors.toList());
+		return roles.stream().map(KeycloakRole::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 }

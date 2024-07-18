@@ -18,15 +18,11 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 	*/
 
 	@Override
-	public Species deserialize(final JsonParser p, final DeserializationContext ctxt)
-		throws IOException {
+	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
 		JsonNode node = p.getCodec().readTree(p);
 
 		final Species species = new Species();
-		species
-			.setSname(node.get("sname").asText())
-			.setMiraIds(new ArrayList<>())
-			.setMiraContext(new ArrayList<>());
+		species.setSname(node.get("sname").asText()).setMiraIds(new ArrayList<>()).setMiraContext(new ArrayList<>());
 
 		if (node.get("mira_ids") != null) {
 			final String nodeMiraIds = node.get("mira_ids").asText();

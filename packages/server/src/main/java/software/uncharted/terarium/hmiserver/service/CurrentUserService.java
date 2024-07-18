@@ -30,10 +30,7 @@ public class CurrentUserService {
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication.getPrincipal() instanceof User) {
 			return (User) authentication.getPrincipal();
-		} else if (
-			authentication.getPrincipal() instanceof
-			final org.springframework.security.core.userdetails.User u
-		) {
+		} else if (authentication.getPrincipal() instanceof final org.springframework.security.core.userdetails.User u) {
 			// Used in tests
 			final User user = new User();
 			final List<SimpleGrantedAuthority> auths = new ArrayList<>();

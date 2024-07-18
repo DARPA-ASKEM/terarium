@@ -97,9 +97,7 @@ public class ModelConfigurationService
 	) {
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name != null ? name : "Default Configuration");
-		modelConfiguration.setDescription(
-			description != null ? description : "This is a default configuration."
-		);
+		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
 		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model));
@@ -181,9 +179,7 @@ public class ModelConfigurationService
 		if (distribution == null || distribution.getType() == null) {
 			distribution = new ModelDistribution();
 			distribution.setType("Constant");
-			distribution.setParameters(
-				Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0)
-			);
+			distribution.setParameters(Map.of("value", parameter.getValue() != null ? parameter.getValue() : 0));
 		}
 
 		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we
@@ -195,10 +191,7 @@ public class ModelConfigurationService
 		return distribution;
 	}
 
-	public static Model createAMRFromConfiguration(
-		final Model model,
-		final ModelConfiguration modelConfiguration
-	) {
+	public static Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
 		setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
 		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
 		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
@@ -218,17 +211,12 @@ public class ModelConfigurationService
 		// Iterate through the list of ModelParameter objects
 		for (final ModelParameter modelParameter : modelParameters) {
 			// Look up the corresponding ConfigParameter in the map
-			final ParameterSemantic matchingConfigParameter = configParameterMap.get(
-				modelParameter.getId()
-			);
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
 			if (matchingConfigParameter != null) {
 				// set distributions
 				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
 					modelParameter.setValue(
-						((Number) matchingConfigParameter
-								.getDistribution()
-								.getParameters()
-								.get(VALUE_PARAM)).doubleValue()
+						((Number) matchingConfigParameter.getDistribution().getParameters().get(VALUE_PARAM)).doubleValue()
 					);
 					modelParameter.setDistribution(null);
 				} else {
@@ -238,10 +226,7 @@ public class ModelConfigurationService
 		}
 	}
 
-	private static void setModelInitials(
-		final List<Initial> modelInitials,
-		final List<InitialSemantic> configInitials
-	) {
+	private static void setModelInitials(final List<Initial> modelInitials, final List<InitialSemantic> configInitials) {
 		final Map<String, InitialSemantic> configInitialMap = new HashMap<>();
 		for (final InitialSemantic configInitial : configInitials) {
 			configInitialMap.put(configInitial.getTarget(), configInitial);
@@ -266,9 +251,7 @@ public class ModelConfigurationService
 		}
 
 		for (final Observable modelObservable : modelObservables) {
-			final ObservableSemantic matchingConfigObservable = configObservableMap.get(
-				modelObservable.getId()
-			);
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
 			if (matchingConfigObservable != null) {
 				modelObservable.setStates(matchingConfigObservable.getStates());
 				modelObservable.setExpression(matchingConfigObservable.getExpression());

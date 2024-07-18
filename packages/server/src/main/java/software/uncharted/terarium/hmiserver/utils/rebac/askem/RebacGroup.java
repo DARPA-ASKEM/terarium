@@ -23,29 +23,15 @@ public class RebacGroup extends RebacObject {
 	}
 
 	public boolean canAdministrate(RebacObject rebacObject) throws Exception {
-		return reBACService.can(
-			getSchemaObject(),
-			Schema.Permission.ADMINISTRATE,
-			rebacObject.getSchemaObject()
-		);
+		return reBACService.can(getSchemaObject(), Schema.Permission.ADMINISTRATE, rebacObject.getSchemaObject());
 	}
 
-	public void createWriterRelationship(RebacObject rebacObject)
-		throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(
-			getSchemaObject(),
-			rebacObject.getSchemaObject(),
-			Schema.Relationship.WRITER
-		);
+	public void createWriterRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.WRITER);
 	}
 
-	public void createCreatorRelationship(RebacObject rebacObject)
-		throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(
-			getSchemaObject(),
-			rebacObject.getSchemaObject(),
-			Schema.Relationship.CREATOR
-		);
+	public void createCreatorRelationship(RebacObject rebacObject) throws Exception, RelationshipAlreadyExistsException {
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
 	public void setPermissionRelationships(RebacObject who, String relationship)

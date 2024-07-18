@@ -14,8 +14,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 public class AssetExportDeserializer extends JsonDeserializer<AssetExport> {
 
 	@Override
-	public AssetExport deserialize(final JsonParser jp, final DeserializationContext ctxt)
-		throws IOException {
+	public AssetExport deserialize(final JsonParser jp, final DeserializationContext ctxt) throws IOException {
 		final ObjectMapper mapper = (ObjectMapper) jp.getCodec();
 		final JsonNode node = mapper.readTree(jp);
 
@@ -26,10 +25,7 @@ public class AssetExportDeserializer extends JsonDeserializer<AssetExport> {
 
 		Map<String, FileExport> files = new HashMap<>();
 		if (node.hasNonNull("files")) {
-			files = mapper.convertValue(
-				node.get("files"),
-				new TypeReference<Map<String, FileExport>>() {}
-			);
+			files = mapper.convertValue(node.get("files"), new TypeReference<Map<String, FileExport>>() {});
 		}
 
 		final AssetExport export = new AssetExport();

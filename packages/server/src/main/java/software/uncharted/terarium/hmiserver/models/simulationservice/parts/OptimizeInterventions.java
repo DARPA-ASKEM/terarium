@@ -38,8 +38,6 @@ public class OptimizeInterventions {
 
 	@Override
 	public String toString() {
-		return (
-			" { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } "
-		);
+		return (" { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ");
 	}
 }

@@ -25,13 +25,7 @@ public class ClimateDataSubsetTask {
 	private String timestamps;
 	private String thinFactor;
 
-	public ClimateDataSubsetTask(
-		String statusId,
-		String esgfId,
-		String envelope,
-		String timestamps,
-		String thinFactor
-	) {
+	public ClimateDataSubsetTask(String statusId, String esgfId, String envelope, String timestamps, String thinFactor) {
 		this.statusId = statusId;
 		this.esgfId = esgfId;
 		this.envelope = envelope;

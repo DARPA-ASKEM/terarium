@@ -51,10 +51,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -66,9 +63,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateDataset() throws Exception {
-		final Dataset dataset = (Dataset) new Dataset()
-			.setName("test-dataset-name")
-			.setDescription("my description");
+		final Dataset dataset = (Dataset) new Dataset().setName("test-dataset-name").setDescription("my description");
 
 		mockMvc
 			.perform(
@@ -120,10 +115,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/datasets").with(csrf()))
-			.andExpect(status().isOk())
-			.andReturn();
+		mockMvc.perform(MockMvcRequestBuilders.get("/datasets").with(csrf())).andExpect(status().isOk()).andReturn();
 	}
 
 	@Test
@@ -143,9 +135,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
 	}
 
 	@Test
@@ -362,17 +352,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk())
 			.andReturn();
 
-		final PresignedURL url = objectMapper.readValue(
-			res.getResponse().getContentAsString(),
-			PresignedURL.class
-		);
+		final PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(), PresignedURL.class);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 		final byte[] csvBytes = content.getBytes();
-		final HttpEntity csvEntity = new ByteArrayEntity(
-			csvBytes,
-			ContentType.APPLICATION_OCTET_STREAM
-		);
+		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
 
@@ -403,17 +387,11 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk())
 			.andReturn();
 
-		PresignedURL url = objectMapper.readValue(
-			res.getResponse().getContentAsString(),
-			PresignedURL.class
-		);
+		PresignedURL url = objectMapper.readValue(res.getResponse().getContentAsString(), PresignedURL.class);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
 		final byte[] csvBytes = content.getBytes();
-		final HttpEntity csvEntity = new ByteArrayEntity(
-			csvBytes,
-			ContentType.APPLICATION_OCTET_STREAM
-		);
+		final HttpEntity csvEntity = new ByteArrayEntity(csvBytes, ContentType.APPLICATION_OCTET_STREAM);
 
 		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
 
@@ -477,23 +455,13 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId()).with(
-					csrf()
-				)
-			)
+			.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId()).with(csrf()))
 			.andExpect(status().isOk());
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_temp.getId()).with(
-					csrf()
-				)
-			)
+			.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_not_public_temp.getId()).with(csrf()))
 			.andExpect(status().is5xxServerError());
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_temp.getId()).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_temp.getId()).with(csrf()))
 			.andExpect(status().is5xxServerError());
 	}
 }

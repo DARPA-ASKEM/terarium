@@ -1,10 +1,7 @@
 <template>
 	<main>
 		<tera-operator-model-preview v-if="model" :model="model" />
-		<tera-operator-placeholder
-			v-else
-			:operation-type="WorkflowOperationTypes.MODEL_FROM_EQUATIONS"
-		/>
+		<tera-operator-placeholder v-else :operation-type="WorkflowOperationTypes.MODEL_FROM_EQUATIONS" />
 		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</main>
 </template>

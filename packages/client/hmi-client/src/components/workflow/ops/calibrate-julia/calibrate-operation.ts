@@ -1,7 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-const DOCUMENTATION_URL =
-	'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L245';
+const DOCUMENTATION_URL = 'https://github.com/DARPA-ASKEM/sciml-service/blob/main/src/operations.jl#L245';
 
 export interface CalibrateMap {
 	modelVariable: string;

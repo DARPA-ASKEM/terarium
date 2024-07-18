@@ -55,10 +55,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -67,11 +64,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateArtifact() {
 		final Artifact before = (Artifact) createArtifact("0").setId(UUID.randomUUID());
 		try {
-			final Artifact after = artifactService.createAsset(
-				before,
-				project.getId(),
-				ASSUME_WRITE_PERMISSION
-			);
+			final Artifact after = artifactService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -114,9 +107,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
-		final Artifact fetchedArtifact = artifactService
-			.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION)
-			.get();
+		final Artifact fetchedArtifact = artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(artifact, fetchedArtifact);
 		Assertions.assertEquals(artifact.getId(), fetchedArtifact.getId());
@@ -154,10 +145,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 
 		artifactService.deleteAsset(artifact.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Artifact> deleted = artifactService.getAsset(
-			artifact.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Optional<Artifact> deleted = artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}

@@ -163,11 +163,7 @@ public class Task {
 
 	public void writeInputWithTimeout(final byte[] bytes, final int timeoutMinutes)
 		throws IOException, InterruptedException, TimeoutException {
-		log.info(
-			"Dispatching write thread for input pipe: {} for task: {}",
-			inputPipeName,
-			req.getId()
-		);
+		log.info("Dispatching write thread for input pipe: {} for task: {}", inputPipeName, req.getId());
 
 		final CompletableFuture<Void> future = new CompletableFuture<>();
 		new Thread(() -> {
@@ -203,20 +199,14 @@ public class Task {
 			if (getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
-			throw new InterruptedException(
-				"Process for task " + req.getId() + " exited early with code " + result
-			);
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
 		}
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
 	}
 
 	public byte[] readOutputWithTimeout(final int timeoutMinutes)
 		throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.info(
-			"Dispatching read thread for output pipe: {} for task: {}",
-			outputPipeName,
-			req.getId()
-		);
+		log.info("Dispatching read thread for output pipe: {} for task: {}", outputPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
@@ -227,12 +217,7 @@ public class Task {
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.info(
-						"Read {} bytes from output pipe: {} for task: {}",
-						bytesRead,
-						outputPipeName,
-						req.getId()
-					);
+					log.info("Read {} bytes from output pipe: {} for task: {}", bytesRead, outputPipeName, req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
@@ -262,9 +247,7 @@ public class Task {
 			if (getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
-			throw new InterruptedException(
-				"Process for task " + req.getId() + " exited early with code " + result
-			);
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
 		}
 
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
@@ -272,29 +255,18 @@ public class Task {
 
 	public byte[] readProgressWithTimeout(final int timeoutMinutes)
 		throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		log.info(
-			"Dispatching read thread for progress pipe: {} for task: {}",
-			progressPipeName,
-			req.getId()
-		);
+		log.info("Dispatching read thread for progress pipe: {} for task: {}", progressPipeName, req.getId());
 
 		final CompletableFuture<byte[]> future = new CompletableFuture<>();
 		new Thread(() -> {
 			log.info("Opening progress pipe: {} for task: {}", progressPipeName, req.getId());
-			try (
-				BufferedInputStream bis = new BufferedInputStream(new FileInputStream(progressPipeName))
-			) {
+			try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(progressPipeName))) {
 				log.info("Reading from progress pipe: {} for task: {}", progressPipeName, req.getId());
 				final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				final byte[] buffer = new byte[BYTES_PER_READ]; // buffer size
 				int bytesRead;
 				while ((bytesRead = bis.read(buffer)) != -1) {
-					log.info(
-						"Read {} bytes from progress pipe: {} for task: {}",
-						bytesRead,
-						progressPipeName,
-						req.getId()
-					);
+					log.info("Read {} bytes from progress pipe: {} for task: {}", bytesRead, progressPipeName, req.getId());
 					bos.write(buffer, 0, bytesRead);
 				}
 				future.complete(bos.toByteArray());
@@ -333,9 +305,7 @@ public class Task {
 			if (getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
-			throw new InterruptedException(
-				"Process for task " + req.getId() + " exited early with code " + result
-			);
+			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
 		}
 
 		throw new RuntimeException("Unexpected result type: " + result.getClass());
@@ -459,8 +429,7 @@ public class Task {
 		}
 	}
 
-	public void waitFor(final int timeoutMinutes)
-		throws InterruptedException, TimeoutException, ExecutionException {
+	public void waitFor(final int timeoutMinutes) throws InterruptedException, TimeoutException, ExecutionException {
 		final boolean hasExited = process.waitFor((long) timeoutMinutes, TimeUnit.MINUTES);
 		if (hasExited) {
 			// if we have exited, lets wait on the future to resolve and the status to be

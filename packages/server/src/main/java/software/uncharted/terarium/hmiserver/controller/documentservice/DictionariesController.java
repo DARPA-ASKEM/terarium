@@ -35,9 +35,8 @@ public class DictionariesController {
 				return ResponseEntity.internalServerError().build();
 			}
 
-			if (
-				response.getSuccess() == null || response.getSuccess().getData().isEmpty()
-			) return ResponseEntity.noContent().build();
+			if (response.getSuccess() == null || response.getSuccess().getData().isEmpty()) return ResponseEntity.noContent()
+				.build();
 
 			return ResponseEntity.ok(response);
 		} catch (final FeignException e) {

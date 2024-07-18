@@ -128,10 +128,7 @@ public class KnowledgeController {
 				modelId = UUID.fromString(modelIdString);
 			} catch (final IllegalArgumentException e) {
 				log.warn(String.format("Invalid model UUID supplied: %s", modelIdString), e);
-				throw new ResponseStatusException(
-					HttpStatus.BAD_REQUEST,
-					messages.get("generic.invalid-uuid")
-				);
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
 			}
 		}
 
@@ -139,13 +136,8 @@ public class KnowledgeController {
 		try {
 			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(req).getBody();
 			if (responseAMR == null) {
-				log.warn(
-					"Skema Unified Service did not return a valid AMR based on the provided equations"
-				);
-				throw new ResponseStatusException(
-					HttpStatus.UNPROCESSABLE_ENTITY,
-					messages.get("skema.bad-equations")
-				);
+				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
 			}
 		} catch (final FeignException e) {
 			log.error(
@@ -158,10 +150,7 @@ public class KnowledgeController {
 				"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
 				e
 			);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("skema.internal-error")
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
 		}
 
 		// If no model id is provided, create a new model asset
@@ -171,10 +160,7 @@ public class KnowledgeController {
 				return ResponseEntity.ok(model.getId());
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a Model asset.", e);
-				throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE,
-					messages.get("postgres.service-unavailable")
-				);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
 		}
 
@@ -193,10 +179,7 @@ public class KnowledgeController {
 			return ResponseEntity.ok(model.get().getId());
 		} catch (final IOException e) {
 			log.error(String.format("Unable to update the model with id %s.", modelId), e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 	}
 
@@ -237,21 +220,9 @@ public class KnowledgeController {
 		@RequestParam("code-id") final UUID codeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "name", required = false, defaultValue = "") final String name,
-		@RequestParam(
-			name = "description",
-			required = false,
-			defaultValue = ""
-		) final String description,
-		@RequestParam(
-			name = "dynamics-only",
-			required = false,
-			defaultValue = "false"
-		) Boolean dynamicsOnly,
-		@RequestParam(
-			name = "llm-assisted",
-			required = false,
-			defaultValue = "false"
-		) final Boolean llmAssisted
+		@RequestParam(name = "description", required = false, defaultValue = "") final String description,
+		@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
+		@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -277,15 +248,10 @@ public class KnowledgeController {
 				content = codeService.fetchFileAsString(codeId, filename).orElseThrow();
 			} catch (final IOException e) {
 				log.error("Unable to fetch code as a string", e);
-				throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE,
-					messages.get("postgres.service-unavailable")
-				);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
 
-			if (
-				dynamicsOnly && codeFile.getDynamics() != null && codeFile.getDynamics().getBlock() != null
-			) {
+			if (dynamicsOnly && codeFile.getDynamics() != null && codeFile.getDynamics().getBlock() != null) {
 				final List<String> blocks = codeFile.getDynamics().getBlock();
 				for (final String block : blocks) {
 					final String[] parts = block.split("-");
@@ -332,44 +298,27 @@ public class KnowledgeController {
 				}
 			} catch (final IOException e) {
 				log.error("Unable to write to zip file", e);
-				throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR,
-					messages.get("generic.io-error.write")
-				);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 			} finally {
 				try {
 					zipf.close();
 				} catch (final IOException e) {
 					log.error("Unable to close zip file", e);
-					throw new ResponseStatusException(
-						HttpStatus.INTERNAL_SERVER_ERROR,
-						messages.get("generic.io-error.write")
-					);
+					throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 				}
 			}
 
-			final ByteMultipartFile file = new ByteMultipartFile(
-				zipBuffer.toByteArray(),
-				"zip_file.zip",
-				"application/zip"
-			);
+			final ByteMultipartFile file = new ByteMultipartFile(zipBuffer.toByteArray(), "zip_file.zip", "application/zip");
 
-			resp = llmAssisted
-				? skemaUnifiedProxy.llmCodebaseToAMR(file)
-				: skemaUnifiedProxy.codebaseToAMR(file);
+			resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file) : skemaUnifiedProxy.codebaseToAMR(file);
 		}
 
 		if (resp.getStatusCode().is4xxClientError()) {
-			log.warn(
-				"Skema Unified Service did not return a valid AMR because the provided code was not valid"
-			);
+			log.warn("Skema Unified Service did not return a valid AMR because the provided code was not valid");
 			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.bad-code"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("Skema Unified Service is currently unavailable");
-			throw new ResponseStatusException(
-				resp.getStatusCode(),
-				messages.get("skema.service-unavailable")
-			);
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
 			log.error(
 				"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided code"
@@ -382,10 +331,7 @@ public class KnowledgeController {
 			model = mapper.treeToValue(resp.getBody(), Model.class);
 		} catch (final IOException e) {
 			log.error("Unable to convert response to model", e);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("generic.unknown")
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
 		}
 
 		if (model.getMetadata() == null) {
@@ -412,10 +358,7 @@ public class KnowledgeController {
 			model = modelService.createAsset(model, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create model", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		// update the code
@@ -428,10 +371,7 @@ public class KnowledgeController {
 			codeService.updateAsset(code.get(), projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		// set the provenance
@@ -456,9 +396,7 @@ public class KnowledgeController {
 				description = "Return the extraction job for code to amr",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ExtractionResponse.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class)
 				)
 			),
 			@ApiResponse(
@@ -466,11 +404,7 @@ public class KnowledgeController {
 				description = "Invalid input - code file may be missing name",
 				content = @Content
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "Error running code blocks to model",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
 		}
 	)
 	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -491,10 +425,7 @@ public class KnowledgeController {
 			createdCode = codeService.createAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to create code asset", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		// 2. upload file to code asset
@@ -503,30 +434,21 @@ public class KnowledgeController {
 			fileAsBytes = input.getBytes();
 		} catch (final IOException e) {
 			log.error("Unable to read file", e);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("generic.io-error.read")
-			);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
 		final String filename = input.getOriginalFilename();
 
 		if (filename == null) {
 			log.warn("Filename is missing from the file");
-			throw new ResponseStatusException(
-				HttpStatus.BAD_REQUEST,
-				messages.get("code.filename-needed")
-			);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("code.filename-needed"));
 		}
 
 		try {
 			codeService.uploadFile(code.getId(), filename, fileEntity);
 		} catch (final IOException e) {
 			log.error("Unable to upload file to code asset", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		// add the code file to the code asset
@@ -542,21 +464,11 @@ public class KnowledgeController {
 			codeService.updateAsset(code, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update code asset", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		// 3. create model from code asset
-		return postCodeToAMR(
-			createdCode.getId(),
-			projectId,
-			"temp model",
-			"temp model description",
-			false,
-			false
-		);
+		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
 	}
 
 	/**
@@ -581,14 +493,8 @@ public class KnowledgeController {
 		// Provenance call if a document id is provided
 		StringMultipartFile documentFile = null;
 		if (documentId.isPresent()) {
-			final DocumentAsset document = documentService
-				.getAsset(documentId.get(), permission)
-				.orElseThrow();
-			documentFile = new StringMultipartFile(
-				document.getText(),
-				documentId.get() + ".txt",
-				"application/text"
-			);
+			final DocumentAsset document = documentService.getAsset(documentId.get(), permission).orElseThrow();
+			documentFile = new StringMultipartFile(document.getText(), documentId.get() + ".txt", "application/text");
 
 			try {
 				final Provenance provenancePayload = new Provenance(
@@ -615,10 +521,7 @@ public class KnowledgeController {
 
 		if (dataset.getFileNames() == null || dataset.getFileNames().isEmpty()) {
 			log.warn("There are no files associated with this dataset");
-			throw new ResponseStatusException(
-				HttpStatus.BAD_REQUEST,
-				messages.get("dataset.files.not-found")
-			);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("dataset.files.not-found"));
 		}
 		final String filename = dataset.getFileNames().get(0);
 
@@ -627,34 +530,19 @@ public class KnowledgeController {
 			csvContents = datasetService.fetchFileAsString(datasetId, filename).orElseThrow();
 		} catch (final IOException e) {
 			log.error("Unable to fetch file as string", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		final StringMultipartFile csvFile = new StringMultipartFile(
-			csvContents,
-			filename,
-			"application/csv"
-		);
+		final StringMultipartFile csvFile = new StringMultipartFile(csvContents, filename, "application/csv");
 
 		final ResponseEntity<JsonNode> resp = mitProxy.dataCard(OPENAI_API_KEY, csvFile, documentFile);
 
 		if (resp.getStatusCode().is4xxClientError()) {
-			log.warn(
-				"MIT Text-reading did not return a valid dataset card because a provided resource was not valid"
-			);
-			throw new ResponseStatusException(
-				resp.getStatusCode(),
-				messages.get("mit.file.unable-to-read")
-			);
+			log.warn("MIT Text-reading did not return a valid dataset card because a provided resource was not valid");
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.file.unable-to-read"));
 		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("MIT Text-reading is currently unavailable");
-			throw new ResponseStatusException(
-				resp.getStatusCode(),
-				messages.get("mit.service-unavailable")
-			);
+			throw new ResponseStatusException(resp.getStatusCode(), messages.get("mit.service-unavailable"));
 		} else if (!resp.getStatusCode().is2xxSuccessful()) {
 			log.error(
 				"An error occurred while MIT Text-reading was trying to produce a dataset card based on the provided resource"
@@ -709,20 +597,12 @@ public class KnowledgeController {
 			updatedDataset = datasetService.updateAsset(dataset, projectId, permission);
 		} catch (final IOException e) {
 			log.error("Unable to update dataset", e);
-			throw new ResponseStatusException(
-				HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		if (updatedDataset.isEmpty()) {
-			log.error(
-				"An error occurred while updating the dataset asset, resulting in an empty dataset"
-			);
-			throw new ResponseStatusException(
-				HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("dataset.unable-to-update")
-			);
+			log.error("An error occurred while updating the dataset asset, resulting in an empty dataset");
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("dataset.unable-to-update"));
 		}
 
 		return ResponseEntity.ok(updatedDataset.get());
@@ -732,11 +612,7 @@ public class KnowledgeController {
 	@Secured(Roles.USER)
 	@ApiResponses(
 		value = {
-			@ApiResponse(
-				responseCode = "204",
-				description = "Model as been align with document",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "Error aligning model with variable extracted from document",
@@ -755,9 +631,7 @@ public class KnowledgeController {
 		);
 
 		try {
-			return ResponseEntity.ok(
-				extractionService.alignAMR(projectId, documentId, modelId, permission).get()
-			);
+			return ResponseEntity.ok(extractionService.alignAMR(projectId, documentId, modelId, permission).get());
 		} catch (final InterruptedException | ExecutionException e) {
 			log.error("Error aligning model with document", e);
 			throw new ResponseStatusException(
@@ -804,21 +678,11 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
-	@Operation(
-		summary = "Extracts information from the first PDF associated with the given document id"
-	)
+	@Operation(summary = "Extracts information from the first PDF associated with the given document id")
 	@ApiResponses(
 		value = {
-			@ApiResponse(
-				responseCode = "202",
-				description = "Extraction started on PDF",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "Error running PDF extraction",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),
+			@ApiResponse(responseCode = "500", description = "Error running PDF extraction", content = @Content)
 		}
 	)
 	public ResponseEntity<Void> pdfExtractions(
@@ -857,17 +721,13 @@ public class KnowledgeController {
 	private ResponseStatusException handleMitFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn(
-				"MIT Text-reading did not return a valid card because a provided resource was not valid"
-			);
+			log.warn("MIT Text-reading did not return a valid card because a provided resource was not valid");
 			return new ResponseStatusException(statusCode, messages.get("mit.file.unable-to-read"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("MIT Text-reading is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mit.service-unavailable"));
 		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error(
-				"An error occurred while MIT Text-reading was trying to produce a card based on the provided resource"
-			);
+			log.error("An error occurred while MIT Text-reading was trying to produce a card based on the provided resource");
 			return new ResponseStatusException(statusCode, messages.get("mit.internal-error"));
 		}
 		log.error(

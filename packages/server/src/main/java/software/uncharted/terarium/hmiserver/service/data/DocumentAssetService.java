@@ -20,8 +20,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
-public class DocumentAssetService
-	extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
+public class DocumentAssetService extends TerariumAssetServiceWithSearch<DocumentAsset, DocumentRepository> {
 
 	private final EmbeddingService embeddingService;
 
@@ -95,11 +94,7 @@ public class DocumentAssetService
 		// awareness of who owned this document.
 		asset.setUserId(original.getUserId());
 
-		final Optional<DocumentAsset> updatedOptional = super.updateAsset(
-			asset,
-			projectId,
-			hasWritePermission
-		);
+		final Optional<DocumentAsset> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();
 		}
@@ -114,9 +109,7 @@ public class DocumentAssetService
 
 				new Thread(() -> {
 					try {
-						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(
-							cardText
-						);
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
 						// Execute the update request
 						uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);

@@ -19,15 +19,7 @@ public class CodeService extends TerariumAssetServiceWithoutSearch<Code, CodeRep
 		final CodeRepository repository,
 		final S3ClientService s3ClientService
 	) {
-		super(
-			objectMapper,
-			config,
-			projectService,
-			projectAssetService,
-			repository,
-			s3ClientService,
-			Code.class
-		);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Code.class);
 	}
 
 	@Override

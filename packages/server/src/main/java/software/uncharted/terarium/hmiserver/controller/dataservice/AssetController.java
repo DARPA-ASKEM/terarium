@@ -59,14 +59,8 @@ public class AssetController {
 		value = {
 			@ApiResponse(responseCode = "204", description = "Asset name is available"),
 			@ApiResponse(responseCode = "409", description = "Asset name is not available"),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Project id provided, but project not found"
-			),
-			@ApiResponse(
-				responseCode = "403",
-				description = "User does not have permission to access this project"
-			),
+			@ApiResponse(responseCode = "404", description = "Project id provided, but project not found"),
+			@ApiResponse(responseCode = "403", description = "User does not have permission to access this project"),
 			@ApiResponse(responseCode = "500", description = "Unable to verify project permissions")
 		}
 	)
@@ -93,18 +87,14 @@ public class AssetController {
 			try {
 				final Optional<Project> project = projectService.getProject(projectId);
 				if (project.isPresent()) {
-					final Optional<ProjectAsset> asset =
-						projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
-							projectId,
-							assetName,
-							assetType,
-							assumedPermission
-						);
+					final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
+						projectId,
+						assetName,
+						assetType,
+						assumedPermission
+					);
 					if (asset.isPresent()) {
-						throw new ResponseStatusException(
-							HttpStatus.CONFLICT,
-							"Asset name is not available in this project"
-						);
+						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is not available in this project");
 					} else {
 						return ResponseEntity.noContent().build();
 					}

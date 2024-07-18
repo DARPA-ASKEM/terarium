@@ -56,11 +56,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 	@Override
 	@Observed(name = "function_profile")
-	public Workflow createAsset(
-		final Workflow asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
+	public Workflow createAsset(final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {

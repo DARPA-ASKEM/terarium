@@ -98,10 +98,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to get result of simulation %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -151,11 +148,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(
-				sim,
-				projectId,
-				permission
-			);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -163,10 +156,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -223,11 +213,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		}
 
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(
-				sim,
-				projectId,
-				permission
-			);
+			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -235,10 +221,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 

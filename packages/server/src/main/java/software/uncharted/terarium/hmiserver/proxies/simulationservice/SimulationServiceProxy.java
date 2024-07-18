@@ -12,10 +12,7 @@ public interface SimulationServiceProxy {
 	ResponseEntity<JobResponse> makeForecastRun(@RequestBody JsonNode request);
 
 	@PostMapping("/calibrate")
-	ResponseEntity<JobResponse> makeCalibrateJob(
-		@RequestParam("queue") String queue,
-		@RequestBody JsonNode request
-	);
+	ResponseEntity<JobResponse> makeCalibrateJob(@RequestParam("queue") String queue, @RequestBody JsonNode request);
 
 	@GetMapping("/runs/{runId}/status")
 	ResponseEntity<JsonNode> getRunStatus(@PathVariable("runId") String runId);

@@ -103,9 +103,7 @@ public class ModelController {
 				description = "Model descriptions found.",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ModelDescription.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
 					)
 				)
 			),
@@ -117,11 +115,7 @@ public class ModelController {
 		}
 	)
 	public ResponseEntity<List<ModelDescription>> listModels(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
@@ -129,10 +123,7 @@ public class ModelController {
 		} catch (final IOException e) {
 			final String error = "Unable to get model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -146,16 +137,10 @@ public class ModelController {
 				description = "Model description found.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ModelDescription.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no description found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the description from the data store",
@@ -178,10 +163,7 @@ public class ModelController {
 		} catch (final IOException e) {
 			final String error = "Unable to get model description";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -221,14 +203,8 @@ public class ModelController {
 				return ResponseEntity.noContent().build();
 			}
 			// GETs not associated to a projectId cannot read private or temporary assets
-			if (
-				permission.equals(Schema.Permission.NONE) &&
-				(!model.get().getPublicAsset() || model.get().getTemporary())
-			) {
-				throw new ResponseStatusException(
-					HttpStatus.FORBIDDEN,
-					messages.get("rebac.unauthorized-read")
-				);
+			if (permission.equals(Schema.Permission.NONE) && (!model.get().getPublicAsset() || model.get().getTemporary())) {
+				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			// Find the Document Assets linked via provenance to the model
@@ -269,10 +245,7 @@ public class ModelController {
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
 							} else {
-								log.error(
-									"No attributes added to Model as DocumentAsset ({}) has no attributes.",
-									documentId
-								);
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
 							}
 						}
 					} catch (final Exception e) {
@@ -280,9 +253,7 @@ public class ModelController {
 					}
 				});
 			} else {
-				log.debug(
-					"Unable to get the, or empty, provenance search models_from_document for model " + id
-				);
+				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
 			}
 
 			// Return the model
@@ -290,10 +261,7 @@ public class ModelController {
 		} catch (final Exception e) {
 			final String error = "Unable to get model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -306,9 +274,7 @@ public class ModelController {
 				responseCode = "200",
 				description = "Models found.",
 				content = @Content(
-					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
-					)
+					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))
 				)
 			),
 			@ApiResponse(
@@ -320,11 +286,7 @@ public class ModelController {
 	)
 	public ResponseEntity<List<Model>> searchModels(
 		@RequestBody final JsonNode queryJson,
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
@@ -358,10 +320,7 @@ public class ModelController {
 		} catch (final IOException e) {
 			final String error = "Unable to search models";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -378,16 +337,8 @@ public class ModelController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Model could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the model",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
 		}
 	)
 	ResponseEntity<Model> updateModel(
@@ -420,10 +371,7 @@ public class ModelController {
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -438,17 +386,11 @@ public class ModelController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	ResponseEntity<ResponseDeleted> deleteModel(
@@ -466,10 +408,7 @@ public class ModelController {
 		} catch (final IOException e) {
 			final String error = "Unable to delete model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -486,11 +425,7 @@ public class ModelController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the model",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
 		}
 	)
 	ResponseEntity<Model> createModel(
@@ -510,18 +445,18 @@ public class ModelController {
 			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
-			final ModelConfiguration modelConfiguration =
-				ModelConfigurationService.modelConfigurationFromAMR(created, null, null);
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				created,
+				null,
+				null
+			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {
 			final String error = "Unable to create model";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -535,9 +470,7 @@ public class ModelController {
 				description = "Model configurations found",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ModelConfiguration.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)
 					)
 				)
 			),
@@ -561,19 +494,13 @@ public class ModelController {
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
-				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
-					id,
-					PageRequest.of(page, pageSize)
-				);
+				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -587,9 +514,7 @@ public class ModelController {
 				description = "Interventions policies found.",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = InterventionPolicy.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
 					)
 				)
 			),
@@ -608,19 +533,13 @@ public class ModelController {
 	) {
 		try {
 			final List<InterventionPolicy> interventionPolicies =
-				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
-					id,
-					PageRequest.of(page, pageSize)
-				);
+				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(interventionPolicies);
 		} catch (final Exception e) {
 			final String error = "Unable to get intervention policies";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -634,9 +553,7 @@ public class ModelController {
 				description = "Model configurations found.",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ModelConfiguration.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)
 					)
 				)
 			),
@@ -652,20 +569,16 @@ public class ModelController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		try {
-			final ModelConfiguration modelConfiguration =
-				ModelConfigurationService.modelConfigurationFromAMR(
-					model,
-					model.getName(),
-					model.getDescription()
-				);
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				model,
+				model.getName(),
+				model.getDescription()
+			);
 			return ResponseEntity.ok(modelConfiguration);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

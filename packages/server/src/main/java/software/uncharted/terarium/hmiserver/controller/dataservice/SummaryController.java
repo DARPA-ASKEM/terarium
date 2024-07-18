@@ -64,11 +64,7 @@ public class SummaryController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There was no summary found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the summaries from the data store",
@@ -112,11 +108,7 @@ public class SummaryController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There was no summary found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "There was no summary found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the summary from the data store",
@@ -150,11 +142,7 @@ public class SummaryController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the summary",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the summary", content = @Content)
 		}
 	)
 	public ResponseEntity<Summary> createSummary(
@@ -166,16 +154,11 @@ public class SummaryController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				summaryService.createAsset(item, projectId, permission)
-			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, projectId, permission));
 		} catch (final IOException e) {
 			final String error = "Unable to create summary";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -192,16 +175,8 @@ public class SummaryController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Summary.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Summary could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the summary",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "Summary could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the summary", content = @Content)
 		}
 	)
 	public ResponseEntity<Summary> updateSummary(
@@ -220,10 +195,7 @@ public class SummaryController {
 		} catch (final IOException e) {
 			final String error = "Unable to update summary";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		} catch (final IllegalArgumentException e) {
 			final String error = "ID does not match Summary object ID";
 			log.error(error, e);
@@ -242,17 +214,11 @@ public class SummaryController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue deleting the summary",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue deleting the summary", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteSummary(
@@ -270,10 +236,7 @@ public class SummaryController {
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete summary %s", id);
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

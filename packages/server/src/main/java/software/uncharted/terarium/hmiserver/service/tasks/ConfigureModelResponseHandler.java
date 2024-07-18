@@ -90,20 +90,16 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(
-						condition.get("initials"),
-						modelCopy
-					);
+					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					modelCopy.getSemantics().getOde().setInitials(modelInitials);
 				}
 
 				// Create the new configuration
-				final ModelConfiguration configuration =
-					ModelConfigurationService.modelConfigurationFromAMR(
-						modelCopy,
-						condition.get("name").asText(),
-						condition.get("description").asText()
-					);
+				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
+					modelCopy,
+					condition.get("name").asText(),
+					condition.get("description").asText()
+				);
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					configuration,

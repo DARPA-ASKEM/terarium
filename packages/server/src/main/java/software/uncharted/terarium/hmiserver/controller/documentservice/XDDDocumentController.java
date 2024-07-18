@@ -55,11 +55,7 @@ public class XDDDocumentController {
 		@RequestParam(required = false, name = "known_entities") final String known_entities,
 		@RequestParam(required = false, name = "github_url") final String github_url,
 		@RequestParam(required = false, name = "similar_to") final String similar_to,
-		@RequestParam(
-			required = false,
-			name = "askem_object_limit",
-			defaultValue = "5"
-		) final String askem_object_limit
+		@RequestParam(required = false, name = "askem_object_limit", defaultValue = "5") final String askem_object_limit
 	) {
 		// only go ahead with the query if at least one param is present
 		if (docid != null || doi != null || term != null || github_url != null || similar_to != null) {

@@ -49,15 +49,7 @@ public abstract class TerariumAssetServiceWithSearch<
 		final R repository,
 		final Class<T> assetClass
 	) {
-		super(
-			objectMapper,
-			config,
-			projectService,
-			projectAssetService,
-			repository,
-			s3ClientService,
-			assetClass
-		);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, assetClass);
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
 	}
@@ -122,8 +114,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	@Observed(name = "function_profile")
-	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query)
-		throws IOException {
+	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query) throws IOException {
 		return searchAssets(page, pageSize, query, null);
 	}
 
@@ -137,16 +128,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	@Observed(name = "function_profile")
-	public List<T> searchAssets(
-		final Integer page,
-		final Integer pageSize,
-		final Query query,
-		final SourceConfig source
-	) throws IOException {
-		final SearchRequest.Builder builder = new SearchRequest.Builder()
-			.index(getAssetAlias())
-			.from(page)
-			.size(pageSize);
+	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
+		throws IOException {
+		final SearchRequest.Builder builder = new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
@@ -168,11 +152,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(
-		final UUID id,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException {
 		final Optional<T> deleted = super.deleteAsset(id, projectId, hasWritePermission);
 
 		if (deleted.isPresent()) {
@@ -191,11 +172,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(
-		final T asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException {
 		final T created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
@@ -215,11 +193,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
-	public List<T> createAssets(
-		final List<T> assets,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException {
 		final List<T> created = super.createAssets(assets, projectId, hasWritePermission);
 
 		if (created.size() > 0) {
@@ -240,11 +215,8 @@ public abstract class TerariumAssetServiceWithSearch<
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(
-		final T asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
+	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException, IllegalArgumentException {
 		final Optional<T> updated = super.updateAsset(asset, projectId, hasWritePermission);
 
 		if (updated.isEmpty()) {
@@ -301,11 +273,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	}
 
 	private static String generateNextIndexName(final String previousIndex) {
-		return (
-			getIndexNameWithoutVersion(previousIndex) +
-			"_" +
-			incrementVersion(getVersionFromIndex(previousIndex))
-		);
+		return (getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex)));
 	}
 
 	public String getCurrentAssetIndex() throws IOException {

@@ -112,14 +112,11 @@ public class ElasticsearchService {
 	public void init() {
 		log.info("Connecting elasticsearch client to: {}", config.getUrl());
 
-		final RestClientBuilder httpClientBuilder = RestClient.builder(
-			HttpHost.create(config.getUrl())
-		);
+		final RestClientBuilder httpClientBuilder = RestClient.builder(HttpHost.create(config.getUrl()));
 
 		if (config.isAuthEnabled()) {
 			final String auth = config.getUsername() + ":" + config.getPassword();
-			final String encodedAuth = Base64.getEncoder()
-				.encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+			final String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
 			final Header header = new BasicHeader("Authorization", "Basic " + encodedAuth);
 
 			httpClientBuilder.setDefaultHeaders(new Header[] { header });
@@ -128,10 +125,7 @@ public class ElasticsearchService {
 		final RestClient httpClient = httpClientBuilder.build();
 
 		// Now you can create an ElasticsearchTransport object using the RestClient
-		final ElasticsearchTransport transport = new RestClientTransport(
-			httpClient,
-			new JacksonJsonpMapper(mapper)
-		);
+		final ElasticsearchTransport transport = new RestClientTransport(httpClient, new JacksonJsonpMapper(mapper));
 
 		client = new ElasticsearchClient(transport);
 
@@ -245,9 +239,7 @@ public class ElasticsearchService {
 	 */
 	public boolean containsIndexTemplate(final String name) throws IOException {
 		try {
-			final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder()
-				.name(name)
-				.build();
+			final ExistsIndexTemplateRequest req = new ExistsIndexTemplateRequest.Builder().name(name).build();
 
 			return client.indices().existsIndexTemplate(req).value();
 		} catch (final ElasticsearchException e) {
@@ -307,9 +299,7 @@ public class ElasticsearchService {
 	 * @return True if the component template is contained in the cluster, false otherwise
 	 */
 	public boolean containsComponentTemplate(final String name) throws IOException {
-		final ExistsComponentTemplateRequest req = new ExistsComponentTemplateRequest.Builder()
-			.name(name)
-			.build();
+		final ExistsComponentTemplateRequest req = new ExistsComponentTemplateRequest.Builder().name(name).build();
 
 		return client.cluster().existsComponentTemplate(req).value();
 	}
@@ -334,23 +324,13 @@ public class ElasticsearchService {
 	 * @param indexName The index to put the object in
 	 * @return True if the object was successfully added, false otherwise
 	 */
-	private boolean putTyped(
-		final String name,
-		final String typedJson,
-		final String typeName,
-		final String indexName
-	) {
+	private boolean putTyped(final String name, final String typedJson, final String typeName, final String indexName) {
 		try {
 			final HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			final HttpEntity<String> entity = new HttpEntity<>(typedJson, headers);
 			final ResponseEntity<JsonNode> response = getRestTemplate()
-				.exchange(
-					new URI(config.getUrl() + "/" + indexName + "/" + name),
-					HttpMethod.PUT,
-					entity,
-					JsonNode.class
-				);
+				.exchange(new URI(config.getUrl() + "/" + indexName + "/" + name), HttpMethod.PUT, entity, JsonNode.class);
 			final JsonNode body = response.getBody();
 			if (body != null) {
 				return body.at("/acknowledged").asBoolean();
@@ -392,8 +372,7 @@ public class ElasticsearchService {
 	 * @param tClass The class of the document
 	 * @return A list of found documents.
 	 */
-	public <T> SearchResponse<T> searchWithResponse(final SearchRequest req, final Class<T> tClass)
-		throws IOException {
+	public <T> SearchResponse<T> searchWithResponse(final SearchRequest req, final Class<T> tClass) throws IOException {
 		try {
 			return client.search(req, tClass);
 		} catch (final ElasticsearchException e) {
@@ -436,11 +415,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Deleting: {} from {}", id, index);
 
-			final DeleteRequest req = new DeleteRequest.Builder()
-				.index(index)
-				.id(id)
-				.refresh(Refresh.WaitFor)
-				.build();
+			final DeleteRequest req = new DeleteRequest.Builder().index(index).id(id).refresh(Refresh.WaitFor).build();
 
 			client.delete(req);
 		} catch (final ElasticsearchException e) {
@@ -454,8 +429,7 @@ public class ElasticsearchService {
 	 * @param index The index to remove the document from
 	 * @param id The id of the document to remove
 	 */
-	public <T, Partial> void update(final String index, final String id, final Partial partial)
-		throws IOException {
+	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
 			log.info("Updating: {} from {}", id, index);
 
@@ -481,9 +455,7 @@ public class ElasticsearchService {
 		try {
 			log.info("Deleting index: {}", index);
 
-			final DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder()
-				.index(index)
-				.build();
+			final DeleteIndexRequest deleteRequest = new DeleteIndexRequest.Builder().index(index).build();
 
 			client.indices().delete(deleteRequest);
 		} catch (final ElasticsearchException e) {
@@ -536,9 +508,7 @@ public class ElasticsearchService {
 
 			if (knn != null) {
 				if (knn.numCandidates() < knn.k()) {
-					throw new IllegalArgumentException(
-						"Number of candidates must be greater than or equal to k"
-					);
+					throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
 				}
 				builder.knn(knn);
 			}
@@ -562,8 +532,7 @@ public class ElasticsearchService {
 		private long took;
 	}
 
-	public BulkOpResponse bulkIndex(final String index, final List<TerariumAsset> docs)
-		throws IOException {
+	public BulkOpResponse bulkIndex(final String index, final List<TerariumAsset> docs) throws IOException {
 		try {
 			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -571,9 +540,7 @@ public class ElasticsearchService {
 				if (doc.getId() == null) {
 					throw new RuntimeException("Document id cannot be null");
 				}
-				bulkRequest.operations(op ->
-					op.index(idx -> idx.index(index).id(doc.getId().toString()).document(doc))
-				);
+				bulkRequest.operations(op -> op.index(idx -> idx.index(index).id(doc.getId().toString()).document(doc)));
 			}
 
 			final BulkResponse bulkResponse = client.bulk(bulkRequest.build());
@@ -597,8 +564,7 @@ public class ElasticsearchService {
 		}
 	}
 
-	public BulkOpResponse bulkUpdate(final String index, final List<TerariumAsset> docs)
-		throws IOException {
+	public BulkOpResponse bulkUpdate(final String index, final List<TerariumAsset> docs) throws IOException {
 		try {
 			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
 
@@ -643,8 +609,7 @@ public class ElasticsearchService {
 		}
 	}
 
-	public void transferAlias(final String alias, final String oldIndex, final String newIndex)
-		throws IOException {
+	public void transferAlias(final String alias, final String oldIndex, final String newIndex) throws IOException {
 		try {
 			log.info("Transfering alias {} from index {} to index {}", alias, oldIndex, newIndex);
 			// Remove alias from old index
@@ -655,10 +620,7 @@ public class ElasticsearchService {
 			client.indices().deleteAlias(deleteAliasRequest);
 
 			// Add alias to new index
-			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder()
-				.index(newIndex)
-				.name(alias)
-				.build();
+			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(newIndex).name(alias).build();
 			client.indices().putAlias(putAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -668,10 +630,7 @@ public class ElasticsearchService {
 	public void createAlias(final String index, final String alias) throws IOException {
 		try {
 			log.info("Creating alias {} for index {}", alias, index);
-			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder()
-				.index(index)
-				.name(alias)
-				.build();
+			final PutAliasRequest putAliasRequest = new PutAliasRequest.Builder().index(index).name(alias).build();
 			client.indices().putAlias(putAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
@@ -681,10 +640,7 @@ public class ElasticsearchService {
 	public void deleteAlias(final String index, final String alias) throws IOException {
 		try {
 			log.info("Deleting alias {} for index {}", alias, index);
-			final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder()
-				.index(index)
-				.name(alias)
-				.build();
+			final DeleteAliasRequest deleteAliasRequest = new DeleteAliasRequest.Builder().index(index).name(alias).build();
 			client.indices().deleteAlias(deleteAliasRequest);
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);

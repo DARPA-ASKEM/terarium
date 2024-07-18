@@ -28,9 +28,7 @@ public class CacheControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void afterEach() {
-		cacheManager
-			.getCacheNames()
-			.forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
 	}
 
 	// @Test
@@ -38,16 +36,11 @@ public class CacheControllerTests extends TerariumApplicationTests {
 	public void testItCanClearACache(final CapturedOutput output) throws Exception {
 		testService.cachedMethod();
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.delete("/cache").with(csrf()))
-			.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.delete("/cache").with(csrf())).andExpect(status().isOk());
 
 		testService.cachedMethod();
 
-		Assertions.assertEquals(
-			2L,
-			MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut())
-		);
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
 	}
 
 	// @Test
@@ -55,15 +48,10 @@ public class CacheControllerTests extends TerariumApplicationTests {
 	public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
 		testService.cachedMethod();
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.delete("/cache").param("name", CacheName.EXAMPLE).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.delete("/cache").param("name", CacheName.EXAMPLE).with(csrf()))
 			.andExpect(status().isOk());
 		testService.cachedMethod();
 
-		Assertions.assertEquals(
-			2L,
-			MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut())
-		);
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
 	}
 }

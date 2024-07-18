@@ -37,16 +37,10 @@ public class DecapodesContextController {
 				description = "Decapodes context found.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = DecapodesContext.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesContext.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no decapodes context found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no decapodes context found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the decapodes context from the data store",
@@ -62,10 +56,7 @@ public class DecapodesContextController {
 		} catch (final IOException e) {
 			final String error = "Unable to get decapodes context";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -79,9 +70,7 @@ public class DecapodesContextController {
 				description = "Decapodes context updated.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = DecapodesContext.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesContext.class)
 				)
 			),
 			@ApiResponse(
@@ -97,17 +86,12 @@ public class DecapodesContextController {
 	) {
 		try {
 			context.setId(id);
-			final Optional<DecapodesContext> updated = decapodesContextService.updateDecapodesContext(
-				context
-			);
+			final Optional<DecapodesContext> updated = decapodesContextService.updateDecapodesContext(context);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update decapodes context";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -122,17 +106,11 @@ public class DecapodesContextController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	ResponseEntity<ResponseDeleted> deleteDecapodesContext(@PathVariable("id") final UUID id) {
@@ -142,10 +120,7 @@ public class DecapodesContextController {
 		} catch (final IOException e) {
 			final String error = "Unable to delete decapodes context";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -159,9 +134,7 @@ public class DecapodesContextController {
 				description = "Decapodes context created.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = DecapodesContext.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesContext.class)
 				)
 			),
 			@ApiResponse(
@@ -178,10 +151,7 @@ public class DecapodesContextController {
 		} catch (final IOException e) {
 			final String error = "Unable to create decapodes context";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

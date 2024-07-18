@@ -49,10 +49,7 @@ public class AssetDependencyUtil {
 	 * @param asset
 	 * @return
 	 */
-	public static <T> AssetDependencyMap getAssetDependencies(
-		final Set<UUID> assetIds,
-		final T asset
-	) {
+	public static <T> AssetDependencyMap getAssetDependencies(final Set<UUID> assetIds, final T asset) {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final JsonNode assetJson = mapper.valueToTree(asset);
@@ -163,10 +160,7 @@ public class AssetDependencyUtil {
 		return node;
 	}
 
-	private static Pair<JsonNode, String> traversePathAndGetParent(
-		JsonNode node,
-		final List<String> path
-	) {
+	private static Pair<JsonNode, String> traversePathAndGetParent(JsonNode node, final List<String> path) {
 		for (int i = 0; i < path.size() - 1; i++) {
 			final String key = path.get(i);
 			if (node.isArray()) {

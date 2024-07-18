@@ -164,9 +164,7 @@ public class ProvenanceSearchService {
 	 */
 	public Set<String> modelsFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
-			throw new IllegalArgumentException(
-				"Document used for model extraction can only be found by providing a Model"
-			);
+			throw new IllegalArgumentException("Document used for model extraction can only be found by providing a Model");
 		}
 
 		try (final Session session = neo4jService.getSession()) {
@@ -190,16 +188,11 @@ public class ProvenanceSearchService {
 
 	// Util methods
 
-	public ProvenanceSearchResult nodesEdges(
-		final Result response,
-		final ProvenanceQueryParam payload
-	) {
+	public ProvenanceSearchResult nodesEdges(final Result response, final ProvenanceQueryParam payload) {
 		final boolean includeEdges = payload.getEdges() != null ? payload.getEdges() : false;
 		final boolean includeNodes = payload.getNodes() != null ? payload.getNodes() : true;
 		final boolean includeVersions = payload.getVersions() != null ? payload.getVersions() : false;
-		final List<ProvenanceType> types = payload.getTypes() != null
-			? payload.getTypes()
-			: new ArrayList<>();
+		final List<ProvenanceType> types = payload.getTypes() != null ? payload.getTypes() : new ArrayList<>();
 
 		final Graph graph = new Graph(response);
 
@@ -272,11 +265,7 @@ public class ProvenanceSearchService {
 		for (final ProvenanceEdge relation : relationships) {
 			final ProvenanceNode left = relation.getLeft();
 			final ProvenanceNode right = relation.getRight();
-			if (
-				!left.equals(right) &&
-				includedTypes.contains(left.getType()) &&
-				includedTypes.contains(right.getType())
-			) {
+			if (!left.equals(right) && includedTypes.contains(left.getType()) && includedTypes.contains(right.getType())) {
 				clipped.add(relation);
 			}
 		}
@@ -318,10 +307,7 @@ public class ProvenanceSearchService {
 		return nodes;
 	}
 
-	public static String dynamicRelationshipDirection(
-		final String direction,
-		final String relationshipType
-	) {
+	public static String dynamicRelationshipDirection(final String direction, final String relationshipType) {
 		switch (direction) {
 			case "all":
 				return String.format("-['%s']-", relationshipType);

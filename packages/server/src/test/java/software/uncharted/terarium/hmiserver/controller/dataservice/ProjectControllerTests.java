@@ -66,21 +66,15 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetProject() throws Exception {
-		final Project project = projectService.createProject(
-			(Project) new Project().setName("test-name")
-		);
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/projects/" + project.getId()).with(csrf()))
-			.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/projects/" + project.getId()).with(csrf())).andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateProject() throws Exception {
-		final Project project = projectService.createProject(
-			(Project) new Project().setName("test-name")
-		);
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		mockMvc
 			.perform(
@@ -95,9 +89,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProject() throws Exception {
-		final Project project = projectService.createProject(
-			(Project) new Project().setName("test-name")
-		);
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.delete("/projects/" + project.getId()).with(csrf()))
@@ -109,14 +101,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateProjectAsset() throws Exception {
-		final Project project = projectService.createProject(
-			(Project) new Project().setName("test-name")
-		);
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"),
+			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
@@ -129,12 +117,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post(
-					"/projects/" +
-					project.getId() +
-					"/assets/" +
-					AssetType.DOCUMENT.name() +
-					"/" +
-					documentAsset.getId()
+					"/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset.getId()
 				)
 					.with(csrf())
 					.contentType("application/json")
@@ -152,10 +135,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk())
 			.andReturn();
 
-		final DocumentAsset results = objectMapper.readValue(
-			res.getResponse().getContentAsString(),
-			DocumentAsset.class
-		);
+		final DocumentAsset results = objectMapper.readValue(res.getResponse().getContentAsString(), DocumentAsset.class);
 
 		Assertions.assertNotNull(results);
 	}
@@ -163,34 +143,20 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteProjectAsset() throws Exception {
-		final Project project = projectService.createProject(
-			(Project) new Project().setName("test-name")
-		);
+		final Project project = projectService.createProject((Project) new Project().setName("test-name"));
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset()
-				.setName("test-document-name")
-				.setDescription("my description"),
+			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
 
-		projectAssetService.createProjectAsset(
-			project,
-			AssetType.DOCUMENT,
-			documentAsset,
-			ASSUME_WRITE_PERMISSION
-		);
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete(
-					"/projects/" +
-					project.getId() +
-					"/assets/" +
-					AssetType.DOCUMENT.name() +
-					"/" +
-					documentAsset.getId()
+					"/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset.getId()
 				).with(csrf())
 			)
 			.andExpect(status().isOk());

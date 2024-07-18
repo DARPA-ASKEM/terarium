@@ -198,9 +198,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		project = projectService.createProject((Project) new Project().setName("test-proj-1"));
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset()
-				.setName(TEST_ASSET_NAME_1)
-				.setDescription("my description"),
+			(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
@@ -213,12 +211,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post(
-					"/projects/" +
-					project.getId() +
-					"/assets/" +
-					AssetType.DOCUMENT.name() +
-					"/" +
-					documentAsset.getId()
+					"/projects/" + project.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset.getId()
 				)
 					.with(csrf())
 					.contentType("application/json")
@@ -229,9 +222,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		project2 = projectService.createProject((Project) new Project().setName("test-proj-2"));
 
 		final DocumentAsset documentAsset2 = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset()
-				.setName(TEST_ASSET_NAME_2)
-				.setDescription("my description"),
+			(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"),
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
@@ -244,12 +235,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post(
-					"/projects/" +
-					project2.getId() +
-					"/assets/" +
-					AssetType.DOCUMENT.name() +
-					"/" +
-					documentAsset2.getId()
+					"/projects/" + project2.getId() + "/assets/" + AssetType.DOCUMENT.name() + "/" + documentAsset2.getId()
 				)
 					.with(csrf())
 					.contentType("application/json")

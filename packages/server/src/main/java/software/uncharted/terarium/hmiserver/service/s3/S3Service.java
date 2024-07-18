@@ -117,10 +117,7 @@ public class S3Service {
 	 */
 	public boolean doesObjectExist(final String bucketName, final String key) {
 		try {
-			final HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-				.bucket(bucketName)
-				.key(key)
-				.build();
+			final HeadObjectRequest headObjectRequest = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 			client.headObject(headObjectRequest);
 			return true;
 		} catch (final NoSuchKeyException e) {
@@ -161,10 +158,7 @@ public class S3Service {
 	 */
 	public S3Object getObjectInformation(final String bucketName, final String key) {
 		log.debug("Getting object {} from bucket {}", key, bucketName);
-		final HeadObjectRequest request = HeadObjectRequest.builder()
-			.bucket(bucketName)
-			.key(key)
-			.build();
+		final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 		try {
 			final HeadObjectResponse response = client.headObject(request);
 			return new S3Object()
@@ -223,10 +217,7 @@ public class S3Service {
 	 * @param key The key of the object
 	 * @return The response from the create multipart upload request
 	 */
-	public CreateMultipartUploadResponse createMultipartUpload(
-		final String bucketName,
-		final String key
-	) {
+	public CreateMultipartUploadResponse createMultipartUpload(final String bucketName, final String key) {
 		log.debug("Creating multipart upload for object {} in bucket {}", key, bucketName);
 		final CreateMultipartUploadRequest request = CreateMultipartUploadRequest.builder()
 			.bucket(bucketName)
@@ -244,21 +235,14 @@ public class S3Service {
 	 * @param key The key of the object
 	 * @param stream The input stream to read from
 	 */
-	public void putObject(
-		final String uploadId,
-		final String bucketName,
-		final String key,
-		final InputStream stream
-	) {
+	public void putObject(final String uploadId, final String bucketName, final String key, final InputStream stream) {
 		log.debug("Putting multipart object {} in bucket {}", key, bucketName);
 		try {
 			int partNumber = 1;
 			final List<CompletedPart> completedParts = new ArrayList<>();
 			final List<byte[]> buffers = new ArrayList<>();
 			long totalBytesWritten = 0L;
-			try (
-				final BufferedInputStream bufferedStream = new BufferedInputStream(stream, BUFFER_SIZE)
-			) {
+			try (final BufferedInputStream bufferedStream = new BufferedInputStream(stream, BUFFER_SIZE)) {
 				int bytesRead;
 				final byte[] buffer = new byte[BUFFER_SIZE];
 				int totalBuffersSize = 0;
@@ -270,9 +254,7 @@ public class S3Service {
 					buffers.add(bufferCopy);
 					totalBuffersSize += bytesRead;
 					if (totalBuffersSize > BUFFER_SIZE) {
-						completedParts.add(
-							writePart(totalBuffersSize, buffers, bucketName, uploadId, key, partNumber)
-						);
+						completedParts.add(writePart(totalBuffersSize, buffers, bucketName, uploadId, key, partNumber));
 						log.info("Total bytes written: " + FileUtils.byteCountToDisplaySize(totalBytesWritten));
 						partNumber++;
 						buffers.clear();
@@ -282,9 +264,7 @@ public class S3Service {
 				}
 
 				if (!buffers.isEmpty()) {
-					completedParts.add(
-						writePart(totalBuffersSize, buffers, bucketName, uploadId, key, partNumber)
-					);
+					completedParts.add(writePart(totalBuffersSize, buffers, bucketName, uploadId, key, partNumber));
 					log.info("Total bytes written: " + FileUtils.byteCountToDisplaySize(totalBytesWritten));
 				}
 			}
@@ -354,10 +334,7 @@ public class S3Service {
 	 * @param key The key of the object
 	 * @return The response from the put object request
 	 */
-	public ResponseInputStream<GetObjectResponse> getObject(
-		final String bucketName,
-		final String key
-	) {
+	public ResponseInputStream<GetObjectResponse> getObject(final String bucketName, final String key) {
 		log.debug("Getting object {} from bucket {}", key, bucketName);
 		final GetObjectRequest request = GetObjectRequest.builder().bucket(bucketName).key(key).build();
 		return client.getObject(request);
@@ -372,10 +349,7 @@ public class S3Service {
 	 */
 	public boolean objectExists(final String bucketName, final String key) {
 		log.debug("Checking if object {} exists in bucket {}", key, bucketName);
-		final HeadObjectRequest request = HeadObjectRequest.builder()
-			.bucket(bucketName)
-			.key(key)
-			.build();
+		final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
 		try {
 			client.headObject(request);
 			log.debug("Object {} exists in bucket {}", key, bucketName);
@@ -395,10 +369,7 @@ public class S3Service {
 	 */
 	public DeleteObjectResponse deleteObject(final String bucketName, final String key) {
 		log.debug("Deleting object {} from bucket {}", key, bucketName);
-		final DeleteObjectRequest request = DeleteObjectRequest.builder()
-			.bucket(bucketName)
-			.key(key)
-			.build();
+		final DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
 		return client.deleteObject(request);
 	}
 
@@ -411,10 +382,7 @@ public class S3Service {
 	 */
 	public S3ObjectListing listObjects(final String bucketName, final String prefix) {
 		log.debug("Listing objects in bucket {} with prefix {}", bucketName, prefix);
-		final ListObjectsRequest request = ListObjectsRequest.builder()
-			.bucket(bucketName)
-			.prefix(prefix)
-			.build();
+		final ListObjectsRequest request = ListObjectsRequest.builder().bucket(bucketName).prefix(prefix).build();
 		final ListObjectsResponse response = client.listObjects(request);
 		final S3ObjectListing listing = new S3ObjectListing();
 		listing
@@ -487,11 +455,7 @@ public class S3Service {
 	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
-	public Optional<String> getS3PreSignedGetUrl(
-		final String bucket,
-		final String key,
-		final long expirationMinutes
-	) {
+	public Optional<String> getS3PreSignedGetUrl(final String bucket, final String key, final long expirationMinutes) {
 		if (!doesObjectExist(bucket, key)) {
 			return Optional.empty();
 		}
@@ -513,11 +477,7 @@ public class S3Service {
 	 * @param expirationMinutes The number of minutes the signature is valid for
 	 * @return The pre-signed URL
 	 */
-	public String getS3PreSignedPutUrl(
-		final String bucket,
-		final String key,
-		final long expirationMinutes
-	) {
+	public String getS3PreSignedPutUrl(final String bucket, final String key, final long expirationMinutes) {
 		final PutObjectPresignRequest request = PutObjectPresignRequest.builder()
 			.signatureDuration(Duration.ofMinutes(expirationMinutes))
 			.putObjectRequest(PutObjectRequest.builder().bucket(bucket).key(key).build())
@@ -526,11 +486,8 @@ public class S3Service {
 		return presignedPutObjectRequest.url().toString();
 	}
 
-	public ResponseEntity<Void> getUploadStream(
-		final String bucket,
-		final String key,
-		final MultipartFile file
-	) throws IOException {
+	public ResponseEntity<Void> getUploadStream(final String bucket, final String key, final MultipartFile file)
+		throws IOException {
 		if (!bucketExists(bucket)) {
 			return ResponseEntity.notFound().build();
 		}
@@ -552,10 +509,7 @@ public class S3Service {
 		return ResponseEntity.ok().build();
 	}
 
-	public ResponseEntity<StreamingResponseBody> getDownloadStream(
-		final String bucket,
-		final String key
-	) {
+	public ResponseEntity<StreamingResponseBody> getDownloadStream(final String bucket, final String key) {
 		if (!bucketExists(bucket)) {
 			return ResponseEntity.notFound().build();
 		}

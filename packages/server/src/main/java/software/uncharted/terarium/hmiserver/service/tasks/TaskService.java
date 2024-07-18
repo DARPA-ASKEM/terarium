@@ -203,11 +203,7 @@ public class TaskService {
 		final String routingKey
 	) {
 		// Declare a direct exchange
-		final DirectExchange exchange = new DirectExchange(
-			exchangeName,
-			config.getDurableQueues(),
-			false
-		);
+		final DirectExchange exchange = new DirectExchange(exchangeName, config.getDurableQueues(), false);
 		rabbitAdmin.declareExchange(exchange);
 
 		// Declare a queue
@@ -264,11 +260,7 @@ public class TaskService {
 
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
 			if (resp.getOutput() != null) {
-				log.info(
-					"Received response output {} for task {}",
-					new String(resp.getOutput()),
-					resp.getId()
-				);
+				log.info("Received response output {} for task {}", new String(resp.getOutput()), resp.getId());
 			}
 
 			if (
@@ -280,11 +272,7 @@ public class TaskService {
 				if (future != null) {
 					log.info("Found promise for task id: {}", resp.getId());
 					// complete the future
-					log.info(
-						"Completing future for task id {} with status {}",
-						resp.getId(),
-						resp.getStatus()
-					);
+					log.info("Completing future for task id {} with status {}", resp.getId(), resp.getStatus());
 					future.complete(resp);
 				} else {
 					log.info("Did not find promise for task id: {}", resp.getId());
@@ -292,11 +280,7 @@ public class TaskService {
 			} else {
 				final CompletableTaskFuture future = futures.get(resp.getId());
 				if (future != null) {
-					log.info(
-						"Updating latest response on task id: {} future to {}",
-						resp.getId(),
-						resp.getStatus()
-					);
+					log.info("Updating latest response on task id: {} future to {}", resp.getId(), resp.getStatus());
 					future.setLatest(resp);
 				}
 			}
@@ -384,14 +368,8 @@ public class TaskService {
 
 			try {
 				// send the client event
-				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(
-					resp.getScript()
-				);
-				log.info(
-					"Sending client event with type {} for task {} ",
-					clientEventType.toString(),
-					resp.getId()
-				);
+				final ClientEventType clientEventType = TaskNotificationEventTypes.getTypeFor(resp.getScript());
+				log.info("Sending client event with type {} for task {} ", clientEventType.toString(), resp.getId());
 
 				final ClientEvent<TaskResponse> clientEvent = ClientEvent.<TaskResponse>builder()
 					.notificationGroupId(resp.getId())
@@ -420,11 +398,7 @@ public class TaskService {
 				}
 			}
 
-			log.info(
-				"Broadcasting task response for task id {} and status {}",
-				resp.getId(),
-				resp.getStatus()
-			);
+			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
 
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
@@ -451,11 +425,7 @@ public class TaskService {
 		} catch (final Exception e) {
 			try {
 				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error(
-					"Unable to parse message as {}. Message: {}",
-					clazz.getName(),
-					jsonMessage.toPrettyString()
-				);
+				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
 				return null;
 			} catch (final Exception e1) {
 				log.error(
@@ -515,18 +485,9 @@ public class TaskService {
 		}
 
 		// now send request
-		final String requestQueue = String.format(
-			"%s-%s",
-			TASK_RUNNER_REQUEST_QUEUE,
-			req.getType().toString()
-		);
+		final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-		log.info(
-			"Readying task: {} with SHA: {} to send on queue: {}",
-			req.getId(),
-			hash,
-			req.getType().toString()
-		);
+		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType().toString());
 
 		// ensure the request queue exists
 		declareQueue(requestQueue);
@@ -536,11 +497,7 @@ public class TaskService {
 		// there is contention. We need this queue to exist to hold the message.
 		final String queueName = req.getId().toString();
 		final String routingKey = req.getId().toString();
-		declareAndBindTransientQueueWithRoutingKey(
-			TASK_RUNNER_CANCELLATION_EXCHANGE,
-			queueName,
-			routingKey
-		);
+		declareAndBindTransientQueueWithRoutingKey(TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
 
 		try {
 			// send the request to the task runner
@@ -596,11 +553,7 @@ public class TaskService {
 				log.warn("Failed to cancel task: {}", future.getId(), ee);
 			}
 			throw new TimeoutException(
-				"Task " +
-				future.getId().toString() +
-				" did not complete within " +
-				req.getTimeoutMinutes() +
-				" minutes"
+				"Task " + future.getId().toString() + " did not complete within " + req.getTimeoutMinutes() + " minutes"
 			);
 		}
 	}

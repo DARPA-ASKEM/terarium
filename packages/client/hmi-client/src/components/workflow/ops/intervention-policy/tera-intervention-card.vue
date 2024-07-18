@@ -87,12 +87,7 @@
 									placeholder="timestep"
 								/>
 								.
-								<Button
-									class="ml-auto"
-									icon="pi pi-times"
-									text
-									@click="onRemoveStaticIntervention(index)"
-								/>
+								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
 							</div>
 							<Divider />
 						</li>

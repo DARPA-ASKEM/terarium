@@ -120,9 +120,7 @@ public class DocumentController {
 				description = "Documents found.",
 				content = @Content(
 					array = @ArraySchema(
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = DocumentAsset.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
 					)
 				)
 			),
@@ -134,11 +132,7 @@ public class DocumentController {
 		}
 	)
 	public ResponseEntity<List<DocumentAsset>> getDocuments(
-		@RequestParam(
-			name = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
 	) {
 		try {
@@ -146,10 +140,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to get documents";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -166,11 +157,7 @@ public class DocumentController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating the document",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the document", content = @Content)
 		}
 	)
 	public ResponseEntity<DocumentAsset> createDocument(
@@ -183,19 +170,12 @@ public class DocumentController {
 		);
 
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(
-				documentAsset,
-				projectId,
-				permission
-			);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -212,16 +192,8 @@ public class DocumentController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Document could not be found",
-				content = @Content
-			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue updating the document",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the document", content = @Content)
 		}
 	)
 	public ResponseEntity<DocumentAsset> updateDocument(
@@ -240,11 +212,7 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(
-				document,
-				projectId,
-				permission
-			);
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
 			if (updated.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -252,10 +220,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -272,11 +237,7 @@ public class DocumentController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DocumentAsset.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "There was no document found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "There was no document found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the document from the data store",
@@ -299,13 +260,9 @@ public class DocumentController {
 		}
 		// GETs not associated to a projectId cannot read private or temporary assets
 		if (
-			permission.equals(Schema.Permission.NONE) &&
-			(!document.get().getPublicAsset() || document.get().getTemporary())
+			permission.equals(Schema.Permission.NONE) && (!document.get().getPublicAsset() || document.get().getTemporary())
 		) {
-			throw new ResponseStatusException(
-				HttpStatus.FORBIDDEN,
-				messages.get("rebac.unauthorized-read")
-			);
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
 		// Test if the document as any assets
@@ -319,10 +276,7 @@ public class DocumentController {
 			.forEach(asset -> {
 				try {
 					// Add the S3 bucket url to each asset metadata
-					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(
-						id,
-						asset.getFileName()
-					);
+					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
 					if (url.isEmpty()) {
 						return;
 					}
@@ -366,10 +320,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to get upload url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -386,11 +337,7 @@ public class DocumentController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PresignedURL.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "404",
-				description = "Document could not be found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "404", description = "Document could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the presigned url",
@@ -408,10 +355,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to get download url";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -426,17 +370,11 @@ public class DocumentController {
 				content = {
 					@Content(
 						mediaType = "application/json",
-						schema = @io.swagger.v3.oas.annotations.media.Schema(
-							implementation = ResponseDeleted.class
-						)
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
 					)
 				}
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteDocument(
@@ -454,10 +392,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -486,10 +421,7 @@ public class DocumentController {
 			// if the fileEntity is not a PDF, then we need to extract the text and update
 			// the document asset
 			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(
-					documentId,
-					permission
-				);
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
 				if (document.isEmpty()) {
 					return ResponseEntity.notFound().build();
 				}
@@ -503,10 +435,7 @@ public class DocumentController {
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -521,16 +450,10 @@ public class DocumentController {
 				description = "Uploaded the document.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseStatus.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the document",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 		}
 	)
 	public ResponseEntity<Void> uploadDocument(
@@ -541,18 +464,12 @@ public class DocumentController {
 	) {
 		try {
 			final byte[] fileAsBytes = file.getBytes();
-			final HttpEntity fileEntity = new ByteArrayEntity(
-				fileAsBytes,
-				ContentType.APPLICATION_OCTET_STREAM
-			);
+			final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
 			return uploadDocumentHelper(id, filename, fileEntity, projectId);
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -567,16 +484,10 @@ public class DocumentController {
 				description = "Uploaded the document.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = ResponseStatus.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the document",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 		}
 	)
 	public ResponseEntity<Void> uploadDocumentFromGithub(
@@ -593,10 +504,7 @@ public class DocumentController {
 		if (fileString == null) {
 			final String error = "Unable to download document from github";
 			log.error(error);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadDocumentHelper(documentId, filename, fileEntity, projectId);
@@ -612,21 +520,13 @@ public class DocumentController {
 				description = "Uploaded the document.",
 				content = @Content(
 					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(
-						implementation = AddDocumentAssetFromXDDResponse.class
-					)
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AddDocumentAssetFromXDDResponse.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue uploading the document",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
 		}
 	)
-	public ResponseEntity<Void> createDocumentFromXDD(
-		@RequestBody final AddDocumentAssetFromXDDRequest body
-	) {
+	public ResponseEntity<Void> createDocumentFromXDD(@RequestBody final AddDocumentAssetFromXDDRequest body) {
 		final Document document = body.getDocument();
 		final UUID projectId = body.getProjectId();
 
@@ -648,8 +548,14 @@ public class DocumentController {
 			final String fileUrl = DownloadService.getPDFURL("https://unpaywall.org/" + doi);
 			final String filename = DownloadService.pdfNameFromUrl(fileUrl);
 
-			final XDDResponse<XDDExtractionsResponseOK> extractionResponse =
-				extractionProxy.getExtractions(doi, null, null, null, null, apikey);
+			final XDDResponse<XDDExtractionsResponseOK> extractionResponse = extractionProxy.getExtractions(
+				doi,
+				null,
+				null,
+				null,
+				null,
+				apikey
+			);
 
 			final String summaries = getSummaries(doi);
 
@@ -667,37 +573,20 @@ public class DocumentController {
 				if (!documentAsset.getFileNames().contains(filename)) {
 					documentAsset.getFileNames().add(filename);
 				}
-				documentAsset = documentAssetService
-					.updateAsset(documentAsset, projectId, permission)
-					.orElseThrow();
+				documentAsset = documentAssetService.updateAsset(documentAsset, projectId, permission).orElseThrow();
 			}
 
 			// add asset to project
-			projectAssetService.createProjectAsset(
-				project.get(),
-				AssetType.DOCUMENT,
-				documentAsset,
-				permission
-			);
+			projectAssetService.createProjectAsset(project.get(), AssetType.DOCUMENT, documentAsset, permission);
 
 			// Upload the PDF from unpaywall
-			uploadPDFFileToDocumentThenExtract(
-				doi,
-				filename,
-				documentAsset.getId(),
-				body.getDomain(),
-				projectId,
-				permission
-			);
+			uploadPDFFileToDocumentThenExtract(doi, filename, documentAsset.getId(), body.getDomain(), projectId, permission);
 
 			return ResponseEntity.accepted().build();
 		} catch (final IOException | URISyntaxException e) {
 			final String error = "Unable to upload document from xdd";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -740,23 +629,13 @@ public class DocumentController {
 
 		if (xddSummaries.getSuccess().getData().size() > 0) {
 			if (xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().size() > 0) {
-				return xddSummaries
-					.getSuccess()
-					.getData()
-					.get(0)
-					.getKnownEntities()
-					.getSummaries()
-					.get(0)
-					.toString();
+				return xddSummaries.getSuccess().getData().get(0).getKnownEntities().getSummaries().get(0).toString();
 			}
 		}
 		return null;
 	}
 
-	@GetMapping(
-		value = "/{id}/download-document",
-		produces = MediaType.APPLICATION_OCTET_STREAM_VALUE
-	)
+	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Downloads a document")
 	@ApiResponses(
@@ -786,10 +665,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to download document";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -825,10 +701,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to download document as text";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -852,11 +725,7 @@ public class DocumentController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue creating equation",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue creating equation", content = @Content)
 		}
 	)
 	public ResponseEntity<String> postImageToEquation(
@@ -888,10 +757,7 @@ public class DocumentController {
 		} catch (final Exception e) {
 			final String error = "Unable to convert image to equation";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 
@@ -929,16 +795,11 @@ public class DocumentController {
 					extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString()) ||
 					extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())
 				) {
-					final DocumentExtraction documentExtraction = new DocumentExtraction()
-						.setMetadata(new HashMap<>());
-					documentExtraction.setAssetType(
-						ExtractionAssetType.fromString(extraction.getAskemClass())
-					);
+					final DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
+					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
 					documentExtraction.setFileName("extraction_" + i + ".png");
 					documentExtraction.getMetadata().put("title", extraction.getProperties().getTitle());
-					documentExtraction
-						.getMetadata()
-						.put("description", extraction.getProperties().getCaption());
+					documentExtraction.getMetadata().put("description", extraction.getProperties().getCaption());
 					documentAsset.getAssets().add(documentExtraction);
 				}
 			}

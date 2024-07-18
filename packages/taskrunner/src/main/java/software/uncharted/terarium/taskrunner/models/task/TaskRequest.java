@@ -22,11 +22,7 @@ public class TaskRequest implements Serializable {
 	protected UUID projectId;
 	protected String requestSHA256;
 
-	public TaskResponse createResponse(
-		final TaskStatus status,
-		final String stdout,
-		final String stderr
-	) {
+	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 		return new TaskResponse()
 			.setId(id)
 			.setStatus(status)

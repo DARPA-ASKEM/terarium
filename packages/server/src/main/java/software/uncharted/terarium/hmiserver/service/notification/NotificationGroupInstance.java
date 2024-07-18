@@ -46,9 +46,9 @@ public class NotificationGroupInstance<T> {
 		this.data = data;
 
 		this.notificationGroup = notificationService.createNotificationGroup(
-			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(
-					type.name()
-				).setProjectId(projectId)
+			((NotificationGroup) new NotificationGroup().setId(notificationGroupId)).setType(type.name()).setProjectId(
+					projectId
+				)
 		);
 	}
 
@@ -60,15 +60,7 @@ public class NotificationGroupInstance<T> {
 		final T data,
 		final Double halfTimeSeconds
 	) {
-		this(
-			clientEventService,
-			notificationService,
-			type,
-			projectId,
-			data,
-			DEFAULT_HALF_TIME_SECONDS,
-			UUID.randomUUID()
-		);
+		this(clientEventService, notificationService, type, projectId, data, DEFAULT_HALF_TIME_SECONDS, UUID.randomUUID());
 	}
 
 	private Double estimateT() {
@@ -80,12 +72,7 @@ public class NotificationGroupInstance<T> {
 		return (System.currentTimeMillis() / 1000.0) - startSeconds;
 	}
 
-	private void sendNotification(
-		final String message,
-		final String error,
-		final Double t,
-		final ProgressState state
-	) {
+	private void sendNotification(final String message, final String error, final Double t, final ProgressState state) {
 		final StatusUpdate<T> statusUpdate = StatusUpdate.<T>builder()
 			.progress(t)
 			.message(message)

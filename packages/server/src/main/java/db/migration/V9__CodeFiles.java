@@ -50,9 +50,7 @@ public class V9__CodeFiles extends BaseJavaMigration {
 					final CodeFile file = entry.getValue();
 					file.setFileName(fileName);
 
-					final Timestamp createdOn = Timestamp.from(
-						ZonedDateTime.now(ZoneId.systemDefault()).toInstant()
-					);
+					final Timestamp createdOn = Timestamp.from(ZonedDateTime.now(ZoneId.systemDefault()).toInstant());
 
 					// Set the parameters for the update statement
 					preparedStatement.setObject(1, file.getId());
@@ -63,10 +61,7 @@ public class V9__CodeFiles extends BaseJavaMigration {
 						file.getDynamics() != null ? objectMapper.writeValueAsString(file.getDynamics()) : null
 					);
 					preparedStatement.setString(5, fileName);
-					preparedStatement.setObject(
-						6,
-						file.getLanguage() != null ? file.getLanguage().ordinal() : null
-					);
+					preparedStatement.setObject(6, file.getLanguage() != null ? file.getLanguage().ordinal() : null);
 					preparedStatement.setObject(7, codeId);
 
 					// Execute the update statement

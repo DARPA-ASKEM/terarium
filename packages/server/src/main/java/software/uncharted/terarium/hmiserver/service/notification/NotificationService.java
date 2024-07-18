@@ -28,21 +28,12 @@ public class NotificationService {
 		return notificationGroupRepository.findAllByUserIdOrderByCreatedOnDesc(userId);
 	}
 
-	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(
-		final String userId,
-		final Timestamp since
-	) {
+	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
 		return notificationGroupRepository.findAllUnackedByUserReturnAllEvents(userId, since);
 	}
 
-	public List<NotificationGroup> getNotificationGroupsCreatedSince(
-		final String userId,
-		final Timestamp since
-	) {
-		return notificationGroupRepository.findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(
-			userId,
-			since
-		);
+	public List<NotificationGroup> getNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
+		return notificationGroupRepository.findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(userId, since);
 	}
 
 	public Optional<NotificationGroup> getNotificationGroup(final UUID id) {
@@ -61,10 +52,7 @@ public class NotificationService {
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
-	public NotificationEvent createNotificationEvent(
-		final UUID groupId,
-		final NotificationEvent notificationEvent
-	) {
+	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
 
 		notificationEvent.setNotificationGroup(group);
@@ -77,10 +65,7 @@ public class NotificationService {
 	}
 
 	public void acknowledgeNotificationGroup(final UUID groupId) {
-		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(
-			groupId,
-			Timestamp.from(Instant.now())
-		);
+		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(groupId, Timestamp.from(Instant.now()));
 	}
 
 	public Optional<NotificationGroup> delete(final UUID id) {

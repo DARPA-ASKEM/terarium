@@ -48,10 +48,7 @@ public class AssetDependencyUtilTests {
 			}""".formatted(a, b, c, a, b, c, a, b, c)
 		);
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
-			assetIds,
-			node
-		);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
 
 		// assert that the asset id is in the dependencies
 
@@ -94,10 +91,7 @@ public class AssetDependencyUtilTests {
 
 		final JsonNode node = objectMapper.readTree(format.formatted(a, b, c, a, b, c, a, b, c));
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
-			assetIds,
-			node
-		);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
 
 		// assert that the asset id is in the dependencies
 
@@ -116,20 +110,13 @@ public class AssetDependencyUtilTests {
 		final Set<UUID> newAssetIds = Set.of(d, e, f);
 		final Map<UUID, UUID> assetIdMap = Map.of(a, d, b, e, c, f);
 
-		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(
-			node,
-			assetIdMap,
-			dependencies
-		);
+		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(node, assetIdMap, dependencies);
 
 		final JsonNode newNode = objectMapper.readTree(format.formatted(d, e, f, d, e, f, d, e, f));
 
 		Assertions.assertEquals(newNode, swapped);
 
-		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(
-			newAssetIds,
-			swapped
-		);
+		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(newAssetIds, swapped);
 
 		Assertions.assertEquals(3, swappedDependencies.getIds().size());
 		Assertions.assertTrue(swappedDependencies.getIds().contains(d));
@@ -192,10 +179,7 @@ public class AssetDependencyUtilTests {
 
 		final JsonNode node = objectMapper.readTree(format.formatted(a, b, c, a, b, c, a, b, c));
 
-		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(
-			assetIds,
-			node
-		);
+		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
 
 		// assert that the asset id is in the dependencies
 
@@ -214,20 +198,13 @@ public class AssetDependencyUtilTests {
 		final Set<UUID> newAssetIds = Set.of(d, e, f);
 		final Map<UUID, UUID> assetIdMap = Map.of(a, d, b, e, c, f);
 
-		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(
-			node,
-			assetIdMap,
-			dependencies
-		);
+		final JsonNode swapped = AssetDependencyUtil.swapAssetDependencies(node, assetIdMap, dependencies);
 
 		final JsonNode newNode = objectMapper.readTree(format.formatted(d, e, f, d, e, f, d, e, f));
 
 		Assertions.assertEquals(newNode, swapped);
 
-		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(
-			newAssetIds,
-			swapped
-		);
+		final AssetDependencyMap swappedDependencies = AssetDependencyUtil.getAssetDependencies(newAssetIds, swapped);
 
 		Assertions.assertEquals(3, swappedDependencies.getIds().size());
 		Assertions.assertTrue(swappedDependencies.getIds().contains(d));

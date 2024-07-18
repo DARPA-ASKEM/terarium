@@ -3,11 +3,7 @@
 		<div class="input-row">
 			<div class="label-and-input">
 				<label>Name of strata</label>
-				<InputText
-					v-model="strataName"
-					placeholder="e.g., Age group"
-					@focusout="emit('update-self', updatedConfig)"
-				/>
+				<InputText v-model="strataName" placeholder="e.g., Age group" @focusout="emit('update-self', updatedConfig)" />
 			</div>
 			<div class="label-and-input">
 				<label>Select variables and parameters to stratify</label>
@@ -26,11 +22,7 @@
 					Enter a comma separated list of labels for each group.
 					<span class="subdued-text">(Max 100)</span>
 				</label>
-				<InputText
-					v-model="labels"
-					placeholder="e.g., Young, Old"
-					@focusout="emit('update-self', updatedConfig)"
-				/>
+				<InputText v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
 			</div>
 		</div>
 		<div class="input-row justify-space-between">

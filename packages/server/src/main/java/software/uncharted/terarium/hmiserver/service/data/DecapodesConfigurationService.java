@@ -25,18 +25,14 @@ public class DecapodesConfigurationService {
 	private final ElasticsearchConfiguration elasticConfig;
 
 	@Observed(name = "function_profile")
-	public List<DecapodesConfiguration> getDecapodesConfigurations(
-		final Integer page,
-		final Integer pageSize
-	) throws IOException {
+	public List<DecapodesConfiguration> getDecapodesConfigurations(final Integer page, final Integer pageSize)
+		throws IOException {
 		final SearchRequest req = new SearchRequest.Builder()
 			.index(elasticConfig.getDecapodesConfigurationIndex())
 			.size(pageSize)
 			.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
 			.sort(
-				new SortOptions.Builder()
-					.field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build())
-					.build()
+				new SortOptions.Builder().field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build()
 			)
 			.build();
 
@@ -44,8 +40,7 @@ public class DecapodesConfigurationService {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<DecapodesConfiguration> getDecapodesConfiguration(final UUID id)
-		throws IOException {
+	public Optional<DecapodesConfiguration> getDecapodesConfiguration(final UUID id) throws IOException {
 		final DecapodesConfiguration doc = elasticService.get(
 			elasticConfig.getDecapodesConfigurationIndex(),
 			id.toString(),
@@ -68,9 +63,8 @@ public class DecapodesConfigurationService {
 	}
 
 	@Observed(name = "function_profile")
-	public DecapodesConfiguration createDecapodesConfiguration(
-		final DecapodesConfiguration decapodesConfiguration
-	) throws IOException {
+	public DecapodesConfiguration createDecapodesConfiguration(final DecapodesConfiguration decapodesConfiguration)
+		throws IOException {
 		decapodesConfiguration.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(
 			elasticConfig.getDecapodesConfigurationIndex(),

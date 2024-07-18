@@ -82,18 +82,14 @@ public class S3ClientService {
 			final S3Presigner preSigner;
 			if (s3Config.getUrl() != null && !s3Config.getUrl().isEmpty()) {
 				preSigner = S3Presigner.builder()
-					.credentialsProvider(
-						StaticCredentialsProvider.create(getAwsCredentials(s3Config.getCredentialsId()))
-					)
+					.credentialsProvider(StaticCredentialsProvider.create(getAwsCredentials(s3Config.getCredentialsId())))
 					.endpointOverride(URI.create(s3Config.getUrl()))
 					.serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
 					.region(Region.of(s3Config.getRegion()))
 					.build();
 			} else {
 				preSigner = S3Presigner.builder()
-					.credentialsProvider(
-						StaticCredentialsProvider.create(getAwsCredentials(s3Config.getCredentialsId()))
-					)
+					.credentialsProvider(StaticCredentialsProvider.create(getAwsCredentials(s3Config.getCredentialsId())))
 					.region(Region.of(s3Config.getRegion()))
 					.build();
 			}

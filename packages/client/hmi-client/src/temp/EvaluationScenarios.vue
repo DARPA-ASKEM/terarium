@@ -13,12 +13,7 @@
 		</Column>
 		<Column field="download" header="Download">
 			<template #body="slotProps">
-				<Button
-					icon="pi pi-download"
-					label="Download"
-					size="small"
-					@click="downloadCSV(slotProps.data)"
-				></Button>
+				<Button icon="pi pi-download" label="Download" size="small" @click="downloadCSV(slotProps.data)"></Button>
 			</template>
 		</Column>
 	</DataTable>

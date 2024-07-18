@@ -52,10 +52,7 @@ public class ClimateDataService {
 			if (response.getBody() != null && response.getBody() instanceof final IntNode intNode) {
 				if (intNode.intValue() >= 400) {
 					log.error("Failed to extract png");
-					final ClimateDataPreview preview = new ClimateDataPreview(
-						previewTask,
-						"Failed to extract PNG"
-					);
+					final ClimateDataPreview preview = new ClimateDataPreview(previewTask, "Failed to extract PNG");
 					climateDataPreviewRepository.save(preview);
 					climateDataPreviewTaskRepository.delete(previewTask);
 					continue;
@@ -71,9 +68,7 @@ public class ClimateDataService {
 					climateDataResponse.getResult().getJobResult(),
 					ClimateDataResultPreviews.class
 				);
-				if (
-					previews != null && previews.getPreviews() != null && previews.getPreviews().size() > 0
-				) {
+				if (previews != null && previews.getPreviews() != null && previews.getPreviews().size() > 0) {
 					try {
 						final ClimateDataResultPreviews.Preview preview = previews.getPreviews().get(0);
 						final int index = preview.getImage().indexOf(',');
@@ -82,10 +77,7 @@ public class ClimateDataService {
 							final byte[] pngBytes = Base64.getDecoder().decode(pngBase64);
 
 							final String bucket = config.getFileStorageS3BucketName();
-							final String key = getPreviewFilename(
-								previewTask.getEsgfId(),
-								previewTask.getVariableId()
-							);
+							final String key = getPreviewFilename(previewTask.getEsgfId(), previewTask.getVariableId());
 
 							s3ClientService.getS3Service().putObject(bucket, key, pngBytes);
 
@@ -152,16 +144,11 @@ public class ClimateDataService {
 						);
 						climateDataSubsetRepository.save(subset);
 					} else if (result.getStatus().equals("ok")) {
-						final ClimateDataSubset subset = new ClimateDataSubset(
-							subsetTask,
-							result.getDatasetId()
-						);
+						final ClimateDataSubset subset = new ClimateDataSubset(subsetTask, result.getDatasetId());
 
 						climateDataSubsetRepository.save(subset);
 					} else {
-						log.error(
-							"Unexpected status extract subset: " + climateDataResponse.getResult().getJobResult()
-						);
+						log.error("Unexpected status extract subset: " + climateDataResponse.getResult().getJobResult());
 						final ClimateDataSubset subset = new ClimateDataSubset(
 							subsetTask,
 							"Unexpected error during subset operation"
@@ -174,8 +161,7 @@ public class ClimateDataService {
 					log.error("Failed to extract subset");
 					final ClimateDataSubset subset = new ClimateDataSubset(
 						subsetTask,
-						"Failed to extract subset from Result: " +
-						climateDataResponse.getResult().getJobResult()
+						"Failed to extract subset from Result: " + climateDataResponse.getResult().getJobResult()
 					);
 					climateDataSubsetRepository.save(subset);
 
@@ -209,13 +195,7 @@ public class ClimateDataService {
 		final String timeIndex,
 		final String statusId
 	) {
-		final ClimateDataPreviewTask task = new ClimateDataPreviewTask(
-			statusId,
-			esgfId,
-			variableId,
-			timestamps,
-			timeIndex
-		);
+		final ClimateDataPreviewTask task = new ClimateDataPreviewTask(statusId, esgfId, variableId, timestamps, timeIndex);
 		climateDataPreviewTaskRepository.save(task);
 	}
 
@@ -281,13 +261,7 @@ public class ClimateDataService {
 		final String thinFactor,
 		final String statusId
 	) {
-		final ClimateDataSubsetTask task = new ClimateDataSubsetTask(
-			statusId,
-			esgfId,
-			envelope,
-			timestamps,
-			thinFactor
-		);
+		final ClimateDataSubsetTask task = new ClimateDataSubsetTask(statusId, esgfId, envelope, timestamps, thinFactor);
 		climateDataSubsetTaskRepository.save(task);
 	}
 

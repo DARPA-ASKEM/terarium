@@ -45,10 +45,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -77,11 +74,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateSimulation() {
 		final Simulation before = (Simulation) createSimulation("0").setId(UUID.randomUUID());
 		try {
-			final Simulation after = simulationService.createAsset(
-				before,
-				project.getId(),
-				ASSUME_WRITE_PERMISSION
-			);
+			final Simulation after = simulationService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -124,9 +117,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 			project.getId(),
 			ASSUME_WRITE_PERMISSION
 		);
-		final Simulation fetchedSimulation = simulationService
-			.getAsset(simulation.getId(), ASSUME_WRITE_PERMISSION)
-			.get();
+		final Simulation fetchedSimulation = simulationService.getAsset(simulation.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(simulation, fetchedSimulation);
 		Assertions.assertEquals(simulation.getId(), fetchedSimulation.getId());
@@ -166,10 +157,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 
 		simulationService.deleteAsset(simulation.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
-		final Optional<Simulation> deleted = simulationService.getAsset(
-			simulation.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Optional<Simulation> deleted = simulationService.getAsset(simulation.getId(), ASSUME_WRITE_PERMISSION);
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -179,11 +167,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneSimulation() throws Exception {
 		Simulation simulation = createSimulation("A");
 
-		simulation = simulationService.createAsset(
-			simulation,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		simulation = simulationService.createAsset(simulation, project.getId(), ASSUME_WRITE_PERMISSION);
 
 		final Simulation cloned = simulation.clone();
 
@@ -200,11 +184,7 @@ public class SimulationServiceTests extends TerariumApplicationTests {
 		final Simulation before = (Simulation) createSimulation("0").setId(UUID.randomUUID());
 
 		try {
-			Simulation after = simulationService.createAsset(
-				before,
-				project.getId(),
-				ASSUME_WRITE_PERMISSION
-			);
+			Simulation after = simulationService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
 
 			final String jsonString = "{\"key\":\"value\"}";
 			final JsonNode data = objectMapper.readTree(jsonString);

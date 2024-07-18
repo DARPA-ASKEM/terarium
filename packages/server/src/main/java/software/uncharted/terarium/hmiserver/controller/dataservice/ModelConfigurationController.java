@@ -63,9 +63,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "200",
 				description = "model configurations found.",
-				content = @Content(
-					array = @ArraySchema(schema = @Schema(implementation = ModelConfiguration.class))
-				)
+				content = @Content(array = @ArraySchema(schema = @Schema(implementation = ModelConfiguration.class)))
 			),
 			@ApiResponse(
 				responseCode = "204",
@@ -84,8 +82,10 @@ public class ModelConfigurationController {
 		@RequestParam(name = "page", defaultValue = "1") final Integer page
 	) {
 		try {
-			final List<ModelConfiguration> modelConfigurations =
-				modelConfigurationService.getPublicNotTemporaryAssets(pageSize, page);
+			final List<ModelConfiguration> modelConfigurations = modelConfigurationService.getPublicNotTemporaryAssets(
+				pageSize,
+				page
+			);
 			if (modelConfigurations.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -115,10 +115,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "200",
 				description = "model configuration found.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = ModelConfiguration.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
 			),
 			@ApiResponse(
 				responseCode = "404",
@@ -141,20 +138,11 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(
-				id,
-				permission
-			);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
 			if (modelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(
-					HttpStatus.NOT_FOUND,
-					messages.get("modelconfig.not-found")
-				);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
 			return ResponseEntity.ok(modelConfiguration.get());
 		} catch (final Exception e) {
@@ -181,10 +169,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "200",
 				description = "Configured model created",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = Model.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = Model.class))
 			),
 			@ApiResponse(
 				responseCode = "404",
@@ -207,25 +192,13 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(
-				id,
-				permission
-			);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
 			if (modelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(
-					HttpStatus.NOT_FOUND,
-					messages.get("modelconfig.not-found")
-				);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			final Optional<Model> model = modelService.getAsset(
-				modelConfiguration.get().getModelId(),
-				permission
-			);
+			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -248,10 +221,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "201",
 				description = "Model configuration created from model.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = ModelConfiguration.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
 			),
 			@ApiResponse(
 				responseCode = "503",
@@ -266,13 +236,13 @@ public class ModelConfigurationController {
 		@RequestParam(name = "description", required = false) final String description,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		final ModelConfiguration modelConfiguration =
-			ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+			configuredModel,
+			name,
+			description
+		);
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -295,10 +265,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "201",
 				description = "Model configuration created from model.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = ModelConfiguration.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
 			),
 			@ApiResponse(
 				responseCode = "503",
@@ -314,24 +281,24 @@ public class ModelConfigurationController {
 		@RequestParam(name = "description", required = false) final String description,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
-		final ModelConfiguration modelConfiguration =
-			ModelConfigurationService.modelConfigurationFromAMR(configuredModel, name, description);
+		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+			configuredModel,
+			name,
+			description
+		);
 
 		modelConfiguration.setId(id);
 
 		try {
-			final Optional<ModelConfiguration> optionalModelConfiguration =
-				modelConfigurationService.updateAsset(modelConfiguration, projectId, permission);
+			final Optional<ModelConfiguration> optionalModelConfiguration = modelConfigurationService.updateAsset(
+				modelConfiguration,
+				projectId,
+				permission
+			);
 			if (optionalModelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(
-					HttpStatus.NOT_FOUND,
-					messages.get("modelconfig.not-found")
-				);
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
 			return ResponseEntity.status(HttpStatus.CREATED).body(optionalModelConfiguration.get());
 		} catch (final IOException e) {
@@ -358,10 +325,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "201",
 				description = "Model configuration created.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = ModelConfiguration.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
 			),
 			@ApiResponse(
 				responseCode = "503",
@@ -406,10 +370,7 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "200",
 				description = "Model configuration updated.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @Schema(implementation = ModelConfiguration.class)
-				)
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
 			),
 			@ApiResponse(
 				responseCode = "404",
@@ -432,11 +393,7 @@ public class ModelConfigurationController {
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(
-				config,
-				projectId,
-				permission
-			);
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId, permission);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update model configuration in postgres db", e);
@@ -462,18 +419,9 @@ public class ModelConfigurationController {
 			@ApiResponse(
 				responseCode = "200",
 				description = "Deleted configuration",
-				content = {
-					@Content(
-						mediaType = "application/json",
-						schema = @Schema(implementation = ResponseDeleted.class)
-					)
-				}
+				content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ResponseDeleted.class)) }
 			),
-			@ApiResponse(
-				responseCode = "503",
-				description = "An error occurred while deleting",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "503", description = "An error occurred while deleting", content = @Content)
 		}
 	)
 	public ResponseEntity<ResponseDeleted> deleteModelConfiguration(

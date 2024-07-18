@@ -101,14 +101,7 @@ public class User implements UserDetails {
 	 */
 	private static int hash(final User user) {
 		return (
-			user.id +
-			user.username +
-			user.email +
-			user.givenName +
-			user.familyName +
-			user.name +
-			user.enabled +
-			user.roles
+			user.id + user.username + user.email + user.givenName + user.familyName + user.name + user.enabled + user.roles
 		).hashCode();
 	}
 

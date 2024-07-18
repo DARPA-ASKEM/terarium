@@ -75,11 +75,7 @@ public class SearchByAssetTypeController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class)
 				)
 			),
-			@ApiResponse(
-				responseCode = "204",
-				description = "There was no concept found",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the concept from the data store",
@@ -89,11 +85,7 @@ public class SearchByAssetTypeController {
 	)
 	public ResponseEntity<List<JsonNode>> searchByAssetType(
 		@PathVariable("asset-type") final String assetTypeName,
-		@RequestParam(
-			value = "page-size",
-			defaultValue = "100",
-			required = false
-		) final Integer pageSize,
+		@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
 		@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
 		@RequestParam(value = "text", defaultValue = "") final String text,
 		@RequestParam(value = "k", defaultValue = "100") final int k,
@@ -165,10 +157,7 @@ public class SearchByAssetTypeController {
 		} catch (final Exception e) {
 			final String error = "Unable to get execute knn search";
 			log.error(error, e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				error
-			);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
 	}
 }

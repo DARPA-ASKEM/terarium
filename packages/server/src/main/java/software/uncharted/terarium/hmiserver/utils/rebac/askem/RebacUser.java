@@ -26,8 +26,7 @@ public class RebacUser extends RebacObject {
 		return new SchemaObject(Schema.Type.USER, getId());
 	}
 
-	public boolean can(final RebacObject rebacObject, final Schema.Permission permission)
-		throws Exception {
+	public boolean can(final RebacObject rebacObject, final Schema.Permission permission) throws Exception {
 		if (serviceUser) return true;
 		if (rebacObject.getId().isEmpty()) return false;
 		return reBACService.can(getSchemaObject(), permission, rebacObject.getSchemaObject());
@@ -39,15 +38,10 @@ public class RebacUser extends RebacObject {
 
 	public void createCreatorRelationship(final RebacObject rebacObject)
 		throws Exception, RelationshipAlreadyExistsException {
-		reBACService.createRelationship(
-			getSchemaObject(),
-			rebacObject.getSchemaObject(),
-			Schema.Relationship.CREATOR
-		);
+		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
-	public PermissionGroup createGroup(final String name)
-		throws Exception, RelationshipAlreadyExistsException {
+	public PermissionGroup createGroup(final String name) throws Exception, RelationshipAlreadyExistsException {
 		final PermissionGroup group = reBACService.createGroup(name);
 		reBACService.createRelationship(
 			getSchemaObject(),
@@ -71,10 +65,6 @@ public class RebacUser extends RebacObject {
 	}
 
 	public List<UUID> lookupProjects() throws Exception {
-		return reBACService.lookupResources(
-			getSchemaObject(),
-			Schema.Permission.READ,
-			Schema.Type.PROJECT
-		);
+		return reBACService.lookupResources(getSchemaObject(), Schema.Permission.READ, Schema.Type.PROJECT);
 	}
 }

@@ -53,11 +53,7 @@ public class GroupsController {
 	public ResponseEntity<PermissionGroup> getGroup(@PathVariable("groupId") final String groupId) {
 		try {
 			final RebacGroup rebacGroup = new RebacGroup(groupId, reBACService);
-			if (
-				new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).isMemberOf(
-					rebacGroup
-				)
-			) {
+			if (new RebacUser(CurrentUserService.getToken().getSubject(), reBACService).isMemberOf(rebacGroup)) {
 				final List<RebacPermissionRelationship> relationships = reBACService.getRelationships(
 					rebacGroup.getSchemaObject()
 				);
@@ -67,14 +63,10 @@ public class GroupsController {
 						final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
 						permissions.addUser(user, permissionRelationship.getRelationship());
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
-						final PermissionGroup group = reBACService.getGroup(
-							permissionRelationship.getSubjectId()
-						);
+						final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
 						permissions.addGroup(group, permissionRelationship.getRelationship());
 					} else if (permissionRelationship.getSubjectType().equals(Schema.Type.PROJECT)) {
-						final PermissionProject project = new PermissionProject(
-							permissionRelationship.getSubjectId()
-						);
+						final PermissionProject project = new PermissionProject(permissionRelationship.getSubjectId());
 						permissions.addProject(project, permissionRelationship.getRelationship());
 					}
 				}
@@ -92,14 +84,9 @@ public class GroupsController {
 
 	@PostMapping
 	@Secured({ Roles.GROUP, Roles.ADMIN })
-	public ResponseEntity<PermissionGroup> createGroup(
-		@RequestParam(name = "name") final String name
-	) {
+	public ResponseEntity<PermissionGroup> createGroup(@RequestParam(name = "name") final String name) {
 		try {
-			final RebacUser rebacUser = new RebacUser(
-				CurrentUserService.getToken().getSubject(),
-				reBACService
-			);
+			final RebacUser rebacUser = new RebacUser(CurrentUserService.getToken().getSubject(), reBACService);
 			try {
 				final PermissionGroup permissionGroup = rebacUser.createGroup(name);
 				return ResponseEntity.ok(permissionGroup);

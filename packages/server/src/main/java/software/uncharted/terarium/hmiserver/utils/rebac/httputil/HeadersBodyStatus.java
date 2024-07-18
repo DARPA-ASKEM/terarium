@@ -58,15 +58,9 @@ public class HeadersBodyStatus extends HeadersBody {
 				String description = error.get("error_description");
 				String err = error.get("error");
 				String msg = error.get("errorMessage");
-				message = msg != null
-					? msg
-					: err != null ? (description + " [" + error.get("error") + "]") : null;
+				message = msg != null ? msg : err != null ? (description + " [" + error.get("error") + "]") : null;
 			}
-			throw new HttpResponseException(
-				getStatusCodeAndReason(),
-				message,
-				new RuntimeException(content)
-			);
+			throw new HttpResponseException(getStatusCodeAndReason(), message, new RuntimeException(content));
 		}
 	}
 

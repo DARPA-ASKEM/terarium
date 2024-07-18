@@ -34,30 +34,18 @@ public interface DocumentProxy {
 		@RequestParam(required = false, name = "known_entities") String known_entities,
 		@RequestParam(required = false, name = "github_url") String github_url,
 		@RequestParam(required = false, name = "similar_to") String similar_to,
-		@RequestParam(
-			required = false,
-			name = "askem_object_limit",
-			defaultValue = "5"
-		) String askem_object_limit
+		@RequestParam(required = false, name = "askem_object_limit", defaultValue = "5") String askem_object_limit
 	);
 
 	@GetMapping("/sets")
 	XDDSetsResponse getAvailableSets();
 
 	@GetMapping("/api/v2/dictionaries")
-	XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(
-		@RequestParam("all") @DefaultValue("") String all
-	);
+	XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(@RequestParam("all") @DefaultValue("") String all);
 
 	@GetMapping("/sets/{set}/doc2vec/api/similar")
-	XDDRelatedDocumentsResponse getRelatedDocuments(
-		@PathVariable("set") String set,
-		@RequestParam("docid") String docid
-	);
+	XDDRelatedDocumentsResponse getRelatedDocuments(@PathVariable("set") String set, @RequestParam("docid") String docid);
 
 	@GetMapping("/sets/{set}/word2vec/api/most_similar")
-	XDDRelatedWordsResponse getRelatedWords(
-		@PathVariable("set") String set,
-		@RequestParam("word") String word
-	);
+	XDDRelatedWordsResponse getRelatedWords(@PathVariable("set") String set, @RequestParam("word") String word);
 }

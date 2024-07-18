@@ -53,12 +53,7 @@
 						<Button label="Save" @click="$emit('save-new-model-output', model)" />
 					</span>
 				</section>
-				<tera-progress-spinner
-					v-if="isDecomposedLoading"
-					class="spinner"
-					is-centered
-					:font-size="2"
-				>
+				<tera-progress-spinner v-if="isDecomposedLoading" class="spinner" is-centered :font-size="2">
 					Please wait...
 				</tera-progress-spinner>
 			</template>
@@ -90,9 +85,7 @@
 								)
 						"
 						@port-selected="(portId: string) => createNewEdge(card.id, portId)"
-						@port-mouseover="
-							(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)
-						"
+						@port-mouseover="(event: MouseEvent, cardWidth: number) => onPortMouseover(event, card, cardWidth)"
 						@port-mouseleave="onPortMouseleave"
 						@remove="
 							() =>
@@ -194,9 +187,7 @@ const modelFormatOptions = ref([EditorFormat.Decomposed, EditorFormat.Flattened]
 const currentModelFormat = ref(EditorFormat.Decomposed);
 
 const currentCanvas = computed(() =>
-	currentModelFormat.value === EditorFormat.Decomposed
-		? decomposedCanvas.value
-		: flattenedCanvas.value
+	currentModelFormat.value === EditorFormat.Decomposed ? decomposedCanvas.value : flattenedCanvas.value
 );
 const cards = computed<ModelTemplateCard[]>(() => currentCanvas.value.cards);
 const junctions = computed<ModelTemplateJunction[]>(() => currentCanvas.value.junctions);
@@ -205,9 +196,7 @@ const sidebarTemplateToAdd = ref<ModelTemplateCard | null>(null);
 const newEdge = ref();
 
 const isDecomposedLoading = computed(() => props.model && isEmpty(decomposedCanvas.value.cards));
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function collisionFn(p: Position): boolean {
 	const buffer = 50;
@@ -374,10 +363,7 @@ function onDrop(event) {
 	else {
 		// If we are in the flattened view just add it in the UI - it will be added in kernel once linked to the flattened model
 		// Cards that aren't linked in the flattened view will be removed once the view switches to decomposed
-		modelTemplatingService.prepareDecomposedTemplateAddition(
-			flattenedCanvas.value,
-			sidebarTemplateToAdd.value
-		);
+		modelTemplatingService.prepareDecomposedTemplateAddition(flattenedCanvas.value, sidebarTemplateToAdd.value);
 		modelTemplatingService.addTemplateInView(flattenedCanvas.value, sidebarTemplateToAdd.value);
 	}
 
@@ -454,15 +440,10 @@ function onEditorFormatSwitch(newFormat: EditorFormat) {
 		// When switching to the flattened view, we save the decomposed port positions
 		// so that edges can be drawn correctly when relecting flattened edits to the decomposed view
 		decomposedPortOffsetValues.clear();
-		const decomposedPortElements = document.getElementsByClassName(
-			'port selectable'
-		) as HTMLCollectionOf<HTMLElement>;
+		const decomposedPortElements = document.getElementsByClassName('port selectable') as HTMLCollectionOf<HTMLElement>;
 
 		Array.from(decomposedPortElements).forEach((element) =>
-			decomposedPortOffsetValues.set(
-				element.id,
-				modelTemplatingService.getElementOffsetValues(element)
-			)
+			decomposedPortOffsetValues.set(element.id, modelTemplatingService.getElementOffsetValues(element))
 		);
 	}
 }

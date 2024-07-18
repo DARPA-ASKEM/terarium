@@ -42,10 +42,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -68,12 +65,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 
 		for (final String filename : code.getFileNames()) {
 			try {
-				codeService.uploadFile(
-					code.getId(),
-					filename,
-					ContentType.TEXT_PLAIN,
-					new String("Test content").getBytes()
-				);
+				codeService.uploadFile(code.getId(), filename, ContentType.TEXT_PLAIN, new String("Test content").getBytes());
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -125,11 +117,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
-		final Code code = codeService.createAsset(
-			createCode("0"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Code code = codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
 		final Code fetchedCode = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
 
 		Assertions.assertEquals(code, fetchedCode);
@@ -139,25 +127,16 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(code.getDeletedOn(), fetchedCode.getDeletedOn());
 		Assertions.assertEquals(code.getRepoUrl(), fetchedCode.getRepoUrl());
 		Assertions.assertEquals(code.getFiles().size(), fetchedCode.getFiles().size());
-		Assertions.assertEquals(
-			code.getMetadata().keySet().size(),
-			fetchedCode.getMetadata().keySet().size()
-		);
+		Assertions.assertEquals(code.getMetadata().keySet().size(), fetchedCode.getMetadata().keySet().size());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateCode() throws Exception {
-		final Code code = codeService.createAsset(
-			createCode("A"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Code code = codeService.createAsset(createCode("A"), project.getId(), ASSUME_WRITE_PERMISSION);
 		code.setName("new name");
 
-		final Code updatedCode = codeService
-			.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION)
-			.orElseThrow();
+		final Code updatedCode = codeService.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());
@@ -166,11 +145,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteCode() throws Exception {
-		final Code code = codeService.createAsset(
-			createCode("B"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Code code = codeService.createAsset(createCode("B"), project.getId(), ASSUME_WRITE_PERMISSION);
 
 		codeService.deleteAsset(code.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
 
@@ -192,9 +167,6 @@ public class CodeServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(code.getName(), cloned.getName());
 		Assertions.assertEquals(code.getRepoUrl(), cloned.getRepoUrl());
 		Assertions.assertEquals(code.getFiles().size(), cloned.getFiles().size());
-		Assertions.assertEquals(
-			code.getMetadata().keySet().size(),
-			cloned.getMetadata().keySet().size()
-		);
+		Assertions.assertEquals(code.getMetadata().keySet().size(), cloned.getMetadata().keySet().size());
 	}
 }

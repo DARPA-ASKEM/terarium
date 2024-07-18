@@ -42,10 +42,7 @@ public class UsersController {
 
 		try {
 			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
-				final RebacGroup adminGroup = new RebacGroup(
-					ReBACService.ASKEM_ADMIN_GROUP_ID,
-					reBACService
-				);
+				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				final RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.removePermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
@@ -74,10 +71,7 @@ public class UsersController {
 
 		try {
 			if (roleName.equals(RoleType.ADMIN.name().toLowerCase())) {
-				final RebacGroup adminGroup = new RebacGroup(
-					ReBACService.ASKEM_ADMIN_GROUP_ID,
-					reBACService
-				);
+				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
 				final RebacUser who = new RebacUser(userId, reBACService);
 				adminGroup.setPermissionRelationships(who, Schema.Relationship.ADMIN.toString());
 				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);

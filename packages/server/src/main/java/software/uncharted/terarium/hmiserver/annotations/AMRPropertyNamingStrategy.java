@@ -24,11 +24,7 @@ public class AMRPropertyNamingStrategy extends PropertyNamingStrategy {
 	}
 
 	@Override
-	public String nameForGetterMethod(
-		MapperConfig<?> config,
-		AnnotatedMethod method,
-		String defaultName
-	) {
+	public String nameForGetterMethod(MapperConfig<?> config, AnnotatedMethod method, String defaultName) {
 		if (method.getDeclaringClass().isAnnotationPresent(AMRSchemaType.class)) {
 			// don't mess with how the keys are named in the schema
 			return defaultName;
@@ -38,11 +34,7 @@ public class AMRPropertyNamingStrategy extends PropertyNamingStrategy {
 	}
 
 	@Override
-	public String nameForSetterMethod(
-		MapperConfig<?> config,
-		AnnotatedMethod method,
-		String defaultName
-	) {
+	public String nameForSetterMethod(MapperConfig<?> config, AnnotatedMethod method, String defaultName) {
 		if (method.getDeclaringClass().isAnnotationPresent(AMRSchemaType.class)) {
 			// don't mess with how the keys are named in the schema
 			return defaultName;

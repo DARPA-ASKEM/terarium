@@ -117,9 +117,7 @@ public class S3FileController {
 			defaultValue = "${terarium.file-storage-s3-client-name:default}"
 		) final String s3Id
 	) {
-		return ResponseEntity.ok(
-			S3Service.getSignature(bucket, key, s3Id, config.getPresignedUrlEncryptionKey())
-		);
+		return ResponseEntity.ok(S3Service.getSignature(bucket, key, s3Id, config.getPresignedUrlEncryptionKey()));
 	}
 
 	/**
@@ -337,10 +335,7 @@ public class S3FileController {
 		}
 		final String contentLengthStr = request.getHeader("Content-Length");
 		if (contentLengthStr == null) {
-			throw new ResponseStatusException(
-				HttpStatus.BAD_REQUEST,
-				"Content-Length header is required"
-			);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content-Length header is required");
 		}
 
 		// Create a progress listener

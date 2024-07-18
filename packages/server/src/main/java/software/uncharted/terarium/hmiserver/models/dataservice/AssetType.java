@@ -50,10 +50,7 @@ public enum AssetType {
 			return objectMapper.convertValue(assetTypeName, AssetType.class);
 		} catch (final IllegalArgumentException iae) {
 			log.error("Error converting the string assetTypeName into a valid AssetType", iae);
-			throw new ResponseStatusException(
-				HttpStatus.BAD_REQUEST,
-				"Failed to convert an AssetTypeName into an AssetType"
-			);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to convert an AssetTypeName into an AssetType");
 		}
 	}
 

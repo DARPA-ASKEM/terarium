@@ -46,10 +46,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelConfigurationIndex());
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -138,9 +135,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 			.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-			modelConfigurationService
-				.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION)
-				.isEmpty()
+			modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
 		);
 	}
 }

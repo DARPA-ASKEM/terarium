@@ -38,10 +38,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 		modelService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
-			(Project) new Project()
-				.setPublicAsset(true)
-				.setName("test-project-name")
-				.setDescription("my description")
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
 		);
 	}
 
@@ -93,9 +90,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 
 		mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/models/" + model.getId())
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
+				MockMvcRequestBuilders.get("/models/" + model.getId()).param("project-id", PROJECT_ID.toString()).with(csrf())
 			)
 			.andExpect(status().isOk());
 	}
@@ -199,9 +194,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			ASSUME_WRITE_PERMISSION
 		);
 
-		mockMvc
-			.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf()))
-			.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.get("/models/descriptions").with(csrf())).andExpect(status().isOk());
 	}
 
 	@Test
@@ -258,19 +251,13 @@ public class ModelControllerTests extends TerariumApplicationTests {
 		);
 
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId()).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId()).with(csrf()))
 			.andExpect(status().is5xxServerError());
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/models/" + createdModel_public_not_temp.getId()).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_not_temp.getId()).with(csrf()))
 			.andExpect(status().isOk());
 		mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/models/" + createdModel_public_temp.getId()).with(csrf())
-			)
+			.perform(MockMvcRequestBuilders.get("/models/" + createdModel_public_temp.getId()).with(csrf()))
 			.andExpect(status().is5xxServerError());
 	}
 }

@@ -27,8 +27,7 @@ public class JsonResourceLoaderProcessor implements ResourceLoaderAware, BeanPos
 	private ResourceLoader resourceLoader;
 
 	@Override
-	public Object postProcessBeforeInitialization(final Object bean, final String beanName)
-		throws BeansException {
+	public Object postProcessBeforeInitialization(final Object bean, final String beanName) throws BeansException {
 		final Field[] fields = bean.getClass().getDeclaredFields();
 		for (final Field field : fields) {
 			if (field.isAnnotationPresent(JsonResource.class)) {
@@ -51,28 +50,20 @@ public class JsonResourceLoaderProcessor implements ResourceLoaderAware, BeanPos
 						);
 						for (int i = 0; i < resources.length; i++) {
 							final String resourceString = loadResourceToString(resources[i].getURI().toString());
-							Array.set(
-								deserializedResources,
-								i,
-								mapper.readValue(resourceString, field.getType().getComponentType())
-							);
+							Array.set(deserializedResources, i, mapper.readValue(resourceString, field.getType().getComponentType()));
 						}
 						setField(deserializedResources, field, bean);
 					}
 				} catch (final IllegalAccessException | IOException e) {
 					e.printStackTrace();
-					throw new BeanInitializationException(
-						"Exception loading resource: " + annotation.value(),
-						e
-					);
+					throw new BeanInitializationException("Exception loading resource: " + annotation.value(), e);
 				}
 			}
 		}
 		return bean;
 	}
 
-	private static void setField(final Object value, final Field field, final Object bean)
-		throws IllegalAccessException {
+	private static void setField(final Object value, final Field field, final Object bean) throws IllegalAccessException {
 		if (!field.canAccess(bean)) {
 			field.setAccessible(true);
 			field.set(bean, value);

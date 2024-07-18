@@ -127,8 +127,7 @@ public class HttpUtil {
 		return doRequest("delete", url, request);
 	}
 
-	public static HeadersBodyStatus doRequest(String type, String url, HeadersBody request)
-		throws IOException {
+	public static HeadersBodyStatus doRequest(String type, String url, HeadersBody request) throws IOException {
 		HttpRequestBase req;
 		switch (type) {
 			case "get":
@@ -206,8 +205,7 @@ public class HttpUtil {
 		return doRequest(authorization, request);
 	}
 
-	private static InputStream doRequest(String authorization, HttpRequestBase request)
-		throws IOException {
+	private static InputStream doRequest(String authorization, HttpRequestBase request) throws IOException {
 		addAuth(request, authorization);
 
 		HttpResponse response = getHttpClient().execute(request);
@@ -241,9 +239,7 @@ public class HttpUtil {
 			throw new RuntimeException(
 				message != null
 					? message
-					: response.getStatusLine().getStatusCode() +
-					" " +
-					response.getStatusLine().getReasonPhrase()
+					: response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
 			);
 		}
 	}
@@ -257,10 +253,7 @@ public class HttpUtil {
 	public static HttpClient getHttpClient() {
 		if (httpClient == null) {
 			if (sslsf != null) {
-				httpClient = HttpClientBuilder.create()
-					.useSystemProperties()
-					.setSSLSocketFactory(sslsf)
-					.build();
+				httpClient = HttpClientBuilder.create().useSystemProperties().setSSLSocketFactory(sslsf).build();
 			} else {
 				httpClient = HttpClientBuilder.create().useSystemProperties().build();
 			}
@@ -283,11 +276,7 @@ public class HttpUtil {
 		}
 		SSLContext theContext = SSLContexts.custom()
 			.setProtocol("TLS")
-			.loadTrustMaterial(
-				file,
-				password == null ? null : password.toCharArray(),
-				TrustSelfSignedStrategy.INSTANCE
-			)
+			.loadTrustMaterial(file, password == null ? null : password.toCharArray(), TrustSelfSignedStrategy.INSTANCE)
 			.build();
 		sslsf = new SSLConnectionSocketFactory(theContext);
 	}
@@ -301,9 +290,7 @@ public class HttpUtil {
 			// prevent this warning from appearing multiple times. That's why we need to
 			// guard it with a boolean.
 			log.error("The server is configured to use TLS but there is no truststore specified.");
-			log.error(
-				"The tool will skip certificate validation. This is highly discouraged for production use cases"
-			);
+			log.error("The tool will skip certificate validation. This is highly discouraged for production use cases");
 		}
 
 		SSLContextBuilder builder = new SSLContextBuilder();
@@ -329,9 +316,7 @@ public class HttpUtil {
 		}
 
 		if (queryParams.length % 2 != 0) {
-			throw new RuntimeException(
-				"Value missing for query parameter: " + queryParams[queryParams.length - 1]
-			);
+			throw new RuntimeException("Value missing for query parameter: " + queryParams[queryParams.length - 1]);
 		}
 
 		Map<String, String> params = new LinkedHashMap<>();
@@ -352,14 +337,9 @@ public class HttpUtil {
 				if (query.length() > 0) {
 					query.append("&");
 				}
-				query
-					.append(params.getKey())
-					.append("=")
-					.append(URLEncoder.encode(params.getValue(), "utf-8"));
+				query.append(params.getKey()).append("=").append(URLEncoder.encode(params.getValue(), "utf-8"));
 			} catch (Exception e) {
-				throw new RuntimeException(
-					"Failed to encode query params: " + params.getKey() + "=" + params.getValue()
-				);
+				throw new RuntimeException("Failed to encode query params: " + params.getKey() + "=" + params.getValue());
 			}
 		}
 
@@ -437,16 +417,9 @@ public class HttpUtil {
 		}
 
 		try {
-			response = HttpUtil.doRequest(
-				"post",
-				resourceUrl,
-				new HeadersBody(headers, new ByteArrayInputStream(body))
-			);
+			response = HttpUtil.doRequest("post", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
 		} catch (IOException e) {
-			throw new RuntimeException(
-				"HTTP request failed: POST " + resourceUrl + "\n" + new String(body),
-				e
-			);
+			throw new RuntimeException("HTTP request failed: POST " + resourceUrl + "\n" + new String(body), e);
 		}
 
 		checkSuccess(resourceUrl, response);
@@ -469,16 +442,9 @@ public class HttpUtil {
 		}
 
 		try {
-			response = HttpUtil.doRequest(
-				"delete",
-				resourceUrl,
-				new HeadersBody(headers, new ByteArrayInputStream(body))
-			);
+			response = HttpUtil.doRequest("delete", resourceUrl, new HeadersBody(headers, new ByteArrayInputStream(body)));
 		} catch (IOException e) {
-			throw new RuntimeException(
-				"HTTP request failed: DELETE " + resourceUrl + "\n" + new String(body),
-				e
-			);
+			throw new RuntimeException("HTTP request failed: DELETE " + resourceUrl + "\n" + new String(body), e);
 		}
 
 		checkSuccess(resourceUrl, response);

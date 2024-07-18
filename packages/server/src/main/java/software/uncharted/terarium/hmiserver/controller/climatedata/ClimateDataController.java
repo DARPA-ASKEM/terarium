@@ -99,21 +99,13 @@ public class ClimateDataController {
 	@Operation(summary = "Generates a PNG for a given ESGF id")
 	@ApiResponses(
 		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "URL for the generated PNG",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "200", description = "URL for the generated PNG", content = @Content),
 			@ApiResponse(
 				responseCode = "202",
 				description = "A PNG generation request has been accepted and is being worked on",
 				content = @Content
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue generating the PNG",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the PNG", content = @Content)
 		}
 	)
 	public ResponseEntity<String> previewEsgf(
@@ -123,21 +115,11 @@ public class ClimateDataController {
 		@RequestParam(value = "time-index", required = false) final String timeIndex
 	) {
 		try {
-			final String previewResponse = climateDataService.getPreview(
-				esgfId,
-				variableId,
-				timestamps,
-				timeIndex
-			);
+			final String previewResponse = climateDataService.getPreview(esgfId, variableId, timestamps, timeIndex);
 			if (previewResponse != null) {
 				return ResponseEntity.ok(previewResponse);
 			}
-			final boolean successfulFetch = climateDataService.fetchPreview(
-				esgfId,
-				variableId,
-				timestamps,
-				timeIndex
-			);
+			final boolean successfulFetch = climateDataService.fetchPreview(esgfId, variableId, timestamps, timeIndex);
 			if (successfulFetch) {
 				return ResponseEntity.accepted().build();
 			}
@@ -160,13 +142,7 @@ public class ClimateDataController {
 			response.getBody(),
 			ClimateDataResponse.class
 		);
-		climateDataService.addPreviewJob(
-			esgfId,
-			variableId,
-			timestamps,
-			timeIndex,
-			climateDataResponse.getId()
-		);
+		climateDataService.addPreviewJob(esgfId, variableId, timestamps, timeIndex, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();
 	}
@@ -186,21 +162,13 @@ public class ClimateDataController {
 	@Operation(summary = "Generates a subset for a given ESGF id")
 	@ApiResponses(
 		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "DatasetId for the subset",
-				content = @Content
-			),
+			@ApiResponse(responseCode = "200", description = "DatasetId for the subset", content = @Content),
 			@ApiResponse(
 				responseCode = "202",
 				description = "A subset generation request has been accepted and is being worked on",
 				content = @Content
 			),
-			@ApiResponse(
-				responseCode = "500",
-				description = "There was an issue generating the subset",
-				content = @Content
-			)
+			@ApiResponse(responseCode = "500", description = "There was an issue generating the subset", content = @Content)
 		}
 	)
 	public ResponseEntity<String> subsetEsgf(
@@ -221,13 +189,7 @@ public class ClimateDataController {
 		}
 		final ResponseEntity<JsonNode> response;
 		try {
-			response = climateDataProxy.subsetEsgf(
-				esgfId,
-				parentDatasetId,
-				timestamps,
-				envelope,
-				thinFactor
-			);
+			response = climateDataProxy.subsetEsgf(esgfId, parentDatasetId, timestamps, envelope, thinFactor);
 		} catch (final FeignException e) {
 			final String error = "Unable to generate subset";
 			final int status = e.status() >= 400 ? e.status() : 500;
@@ -239,13 +201,7 @@ public class ClimateDataController {
 			response.getBody(),
 			ClimateDataResponse.class
 		);
-		climateDataService.addSubsetJob(
-			esgfId,
-			envelope,
-			timestamps,
-			thinFactor,
-			climateDataResponse.getId()
-		);
+		climateDataService.addSubsetJob(esgfId, envelope, timestamps, thinFactor, climateDataResponse.getId());
 
 		return ResponseEntity.accepted().build();
 	}

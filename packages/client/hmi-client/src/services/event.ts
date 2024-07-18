@@ -11,12 +11,7 @@ import { logger } from '@/utils/logger';
  * @param like				(optional) string matching event values (eg/ for autocomplete)
  * @param limit				(optional) maximum number of events to return (default = 10)
  */
-async function get(
-	type: EventType,
-	projectId?: string,
-	like?: string,
-	limit?: number
-): Promise<Event[]> {
+async function get(type: EventType, projectId?: string, like?: string, limit?: number): Promise<Event[]> {
 	const params = { type, projectId, like, limit };
 	try {
 		const response = await API.get(`/events?${toQueryString(params)}`);

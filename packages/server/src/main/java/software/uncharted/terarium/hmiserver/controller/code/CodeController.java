@@ -91,9 +91,7 @@ public class CodeController {
 			final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
 			final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
-			return ResponseEntity.ok(
-				new StoredModel().setId(modelId).setInputs(odiResponseStr).setOutputs(odoResponseStr)
-			);
+			return ResponseEntity.ok(new StoredModel().setId(modelId).setInputs(odiResponseStr).setOutputs(odoResponseStr));
 		} catch (final FeignException e) {
 			final String error = "transforming code to model failed";
 			final int status = e.status() >= 400 ? e.status() : 500;

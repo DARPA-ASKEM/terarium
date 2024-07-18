@@ -26,9 +26,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void afterEach() {
-		cacheManager
-			.getCacheNames()
-			.forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
 	}
 
 	// @Test
@@ -39,10 +37,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
 		final String cachedValue = testService.cachedMethod();
 		Assertions.assertEquals(cachedValue, CacheableTestService.RETURN_VALUE);
 
-		Assertions.assertEquals(
-			1L,
-			MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut())
-		);
+		Assertions.assertEquals(1L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
 	}
 
 	// @Test
@@ -55,10 +50,7 @@ public class CacheServiceTests extends TerariumApplicationTests {
 		final String secondValue = testService.cachedMethod();
 		Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
 
-		Assertions.assertEquals(
-			2L,
-			MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut())
-		);
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
 	}
 
 	// @Test
@@ -71,9 +63,6 @@ public class CacheServiceTests extends TerariumApplicationTests {
 		final String secondValue = testService.cachedMethod();
 		Assertions.assertEquals(secondValue, CacheableTestService.RETURN_VALUE);
 
-		Assertions.assertEquals(
-			2L,
-			MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut())
-		);
+		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));
 	}
 }

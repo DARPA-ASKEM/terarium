@@ -24,13 +24,7 @@
 			style="height: 100%"
 		/>
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -125,10 +119,7 @@ watch(
 					inferred_parameters: id
 				}
 			};
-			const simulationResponse = await makeEnsembleCiemssSimulation(
-				params,
-				nodeMetadata(props.node)
-			);
+			const simulationResponse = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 			const forecastId = simulationResponse.simulationId;
 
 			const state = _.cloneDeep(props.node.state);
