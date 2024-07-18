@@ -45,7 +45,7 @@ import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -110,7 +110,7 @@ const processResult = async (simulationId: string) => {
 
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
-		label: `${portLabel} Result`,
+		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		value: [simulationId],
 		state: {
 			mapping: state.mapping,

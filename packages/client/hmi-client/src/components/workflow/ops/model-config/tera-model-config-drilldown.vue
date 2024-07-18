@@ -72,7 +72,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
 			<template #header-controls-left>
 				<tera-toggleable-edit
 					v-if="knobs.transientModelConfig.name"
@@ -90,7 +90,7 @@
 				/>
 			</template>
 
-			<Accordion multiple :active-index="[0, 1, 2, 3]">
+			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
 						Description
@@ -119,10 +119,10 @@
 					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 				</AccordionTab>
 			</Accordion>
-			<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
-				>Some metadata is missing from these values. This information can be added manually to the
-				attached model.</Message
-			>
+			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">
+				Some metadata is missing from these values. This information can be added manually to the
+				attached model.
+			</Message>
 
 			<tera-initial-table
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
@@ -136,6 +136,7 @@
 				"
 				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
+
 			<tera-parameter-table
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
 				:model="model"
@@ -146,12 +147,6 @@
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-
-			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
-			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
-				<div>Model config id: {{ selectedConfigId }}</div>
-				<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
-			</div>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
@@ -250,7 +245,6 @@ import Textarea from 'primevue/textarea';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -260,10 +254,8 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
-// import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
-
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
@@ -275,16 +267,16 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
+	amrToModelConfiguration,
 	createModelConfiguration,
-	setInitialSource,
-	setInitialExpression,
-	setParameterSource,
-	setParameterDistributions,
 	getAsConfiguredModel,
-	amrToModelConfiguration
+	setInitialExpression,
+	setInitialSource,
+	setParameterDistributions,
+	setParameterSource
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
+import type { ClientEvent, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
 import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -297,6 +289,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
+import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -509,8 +502,7 @@ const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
 	// Only update the keys provided in the model preview (not ID, temporary ect)
 	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	const modelConfig = await amrToModelConfiguration(model.value);
-	knobs.value.transientModelConfig = modelConfig;
+	knobs.value.transientModelConfig = await amrToModelConfiguration(model.value);
 };
 
 const selectedOutputId = ref<string>('');
@@ -605,7 +597,7 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 
 	if (!state.transientModelConfig.id) {
-		// apply a configuration if one hasnt been applied yet
+		// apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -616,8 +608,8 @@ const initialize = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				// when coming from output dropdown change we should shut down first
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
@@ -738,63 +730,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* This is for the box around the suggested configurations section */
-.box-container {
-	border: solid 1px var(--surface-border);
-	border-radius: var(--border-radius);
-	background-color: var(--surface-50);
-}
-
-.box-container:deep(.p-accordion .p-accordion-content) {
-	padding: 0;
-	background-color: transparent;
-}
-
-.box-container:deep(.p-datatable .p-datatable-tbody > tr) {
-	background-color: transparent;
-}
-
-.box-container:deep(.p-paginator) {
-	background-color: transparent;
-}
-
-.box-container:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
-	background-color: transparent;
-}
-
-.box-container:deep(
-		.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link
-	) {
-	background-color: transparent;
-}
-.box-container:deep(.p-datatable .p-sortable-column.p-highlight) {
-	background-color: transparent;
-}
-.box-container:deep(table > thead > tr > th:nth-child(1)) {
-	padding-left: var(--gap);
-}
-.box-container:deep(.p-button .p-button-label) {
-	text-align: left;
-}
-
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
 
-.form-section {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap);
-}
-
-.artifact-amount {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
-}
-.empty-section {
-	color: var(--text-color-subdued);
-}
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
 }
@@ -824,10 +763,6 @@ onUnmounted(() => {
 	padding-left: var(--gap-medium);
 }
 
-.use-button {
-	white-space: nowrap;
-}
-
 #matrix-canvas {
 	position: fixed;
 	top: 0;
@@ -839,15 +774,6 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
-}
-
-.footer {
-	display: flex;
-	justify-content: space-between;
-	width: 100%;
-	padding-top: var(--gap-small);
-	padding-bottom: var(--gap-small);
-	border-top: 1px solid var(--surface-border-light);
 }
 
 .sort-by-label {
