@@ -109,15 +109,19 @@
 		<section :tabName="CalibrateTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
+
+		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-preview>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && !showSpinner"
 					:summary-id="node.state.summaryId"
 				/>
-
+				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot"></div>
+				<div ref="drilldownLossPlot" class="loss-chart"></div>
+
+				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
 					<section
@@ -603,5 +607,11 @@ img {
 	& > * {
 		flex: 1;
 	}
+}
+
+.loss-chart {
+	background: var(--surface-a);
+	border-radius: var(--border-radius-medium);
+	border: 1px solid var(--surface-border-light);
 }
 </style>
