@@ -19,11 +19,6 @@
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteMapping"
-						/>
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -63,24 +58,31 @@
 							</template>
 						</Column>
 					</DataTable>
-					<div>
+					<div class="flex justify-content-between">
+						<div>
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-plus"
+								label="Add mapping"
+								@click="addMapping"
+							/>
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-sparkles"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
+						</div>
 						<Button
 							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
+							label="Delete all mapping"
+							@click="deleteMapping"
 						/>
 					</div>
 				</div>
 
-				<div class="form-section">
-					<h4>Calibration settings</h4>
+				<div class="form-section mt-4">
+					<h5>Calibration settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
@@ -561,6 +563,7 @@ th {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
+	padding-top: var(--gap-2);
 }
 
 .emptyState {
