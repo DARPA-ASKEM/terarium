@@ -30,12 +30,21 @@
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
 		<!--TODO: Add support for editing concepts-->
-		<tera-input
+		<!-- <tera-input
 			label="Concept"
 			placeholder="Select a concept"
 			icon="pi pi-search"
 			:disabled="disabledInputs?.includes('concept')"
-			v-model="query"
+			v-model="query"@complete="$emit('update-item', { key: 'concept', value: $event.value?.curie })"
+		/> -->
+		<AutoComplete
+			label="Concept"
+			placeholder="Select a concept"
+			v-model="q"
+			@suggestions="results"
+			@complete="searchConcepts"
+			option-label="name"
+			:disabled="disabledInputs?.includes('concept')"
 		/>
 		<katex-element
 			class="expression"
@@ -54,8 +63,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import {
@@ -75,12 +85,16 @@ const props = defineProps<{
 
 if (!props.disabledInputs) console.log(props.item);
 
-const query = ref('');
+const q = ref('');
 const results = ref<DKG[]>([]);
 
-watch(query, async (value) => {
-	results.value = await searchCuriesEntities(value);
-});
+async function searchConcepts(event: AutoCompleteCompleteEvent) {
+	const query = event.query;
+	if (query.length > 2) {
+		results.value = await searchCuriesEntities(query);
+		console.log(results.value);
+	}
+}
 
 defineEmits(['update-item']);
 </script>
