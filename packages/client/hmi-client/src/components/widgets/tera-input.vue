@@ -85,11 +85,7 @@ const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 
-	console.group('updateValue');
-	console.log(value);
-
 	if (isNistType) {
-		console.log('nist');
 		maskedValue.value = value;
 		if (scrubAndParse(maskedValue.value)) {
 			// update the model value only when the value is a valid nist
@@ -99,17 +95,12 @@ const updateValue = (event: Event) => {
 			error.value = 'Invalid number';
 		}
 	} else if (isTextContainingOnlyDigits(value)) {
-		console.log('text containing only digits');
 		maskedValue.value = numberToNist(value);
 	} else if (props.type === 'number') {
-		console.log('number');
 		emit('update:model-value', parseFloat(value));
 	} else {
-		console.log('text');
 		emit('update:model-value', value);
 	}
-
-	console.groupEnd();
 };
 
 watch(
