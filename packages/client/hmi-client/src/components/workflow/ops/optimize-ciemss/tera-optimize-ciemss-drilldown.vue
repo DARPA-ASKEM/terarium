@@ -664,7 +664,7 @@ const runOptimize = async () => {
 	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.startTime);
+		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
@@ -672,6 +672,11 @@ const runOptimize = async () => {
 			listBoundsInterventions.push([ele.startTime]);
 			listBoundsInterventions.push([ele.endTime]);
 		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
+			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime) {
+			initialGuess.push(ele.startTimeGuess);
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);
