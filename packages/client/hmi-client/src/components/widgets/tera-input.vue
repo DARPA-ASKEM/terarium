@@ -43,10 +43,6 @@ const error = ref('');
 const maskedValue = ref('');
 
 const isNistType = props.type === 'nist';
-// If the input is a string composed only of digits, display as NIST number
-const isTextContainingOnlyDigits =
-	isString(props.modelValue) && /^\d+(\.\d+)?$/.test(props.modelValue);
-
 const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
@@ -75,8 +71,13 @@ const inputStyle = computed(() => {
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
+// If the input is a string composed only of digits, display as NIST number
+function isTextContainingOnlyDigits(value: string | number | undefined): boolean {
+	return isString(value) && /^\d+(\s\d+)?$/.test(value);
+}
+
 function getValue() {
-	if (isNistType || isTextContainingOnlyDigits) return maskedValue.value;
+	if (isNistType || isTextContainingOnlyDigits(props.modelValue)) return maskedValue.value;
 	return props.modelValue;
 }
 
@@ -84,7 +85,11 @@ const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 
+	console.group('updateValue');
+	console.log(value);
+
 	if (isNistType) {
+		console.log('nist');
 		maskedValue.value = value;
 		if (scrubAndParse(maskedValue.value)) {
 			// update the model value only when the value is a valid nist
@@ -93,26 +98,31 @@ const updateValue = (event: Event) => {
 		} else {
 			error.value = 'Invalid number';
 		}
-	} else if (isTextContainingOnlyDigits) {
+	} else if (isTextContainingOnlyDigits(value)) {
+		console.log('text containing only digits');
 		maskedValue.value = numberToNist(value);
 	} else if (props.type === 'number') {
+		console.log('number');
 		emit('update:model-value', parseFloat(value));
 	} else {
+		console.log('text');
 		emit('update:model-value', value);
 	}
+
+	console.groupEnd();
 };
 
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isNistType || isTextContainingOnlyDigits) {
+		if (isNistType || isTextContainingOnlyDigits(newValue)) {
 			maskedValue.value = numberToNist(newValue?.toString() ?? '');
 		}
 	}
 );
 
 onMounted(() => {
-	if (isNistType || isTextContainingOnlyDigits) {
+	if (isNistType || isTextContainingOnlyDigits(props.modelValue)) {
 		maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
 	}
 });
@@ -123,7 +133,7 @@ const unmask = () => {
 		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 
-	if (isTextContainingOnlyDigits) {
+	if (isTextContainingOnlyDigits(props.modelValue)) {
 		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
