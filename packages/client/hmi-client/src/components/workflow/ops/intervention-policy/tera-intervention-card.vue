@@ -68,35 +68,37 @@
 						.
 					</template>
 
-					<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
-						<li v-for="(i, index) in intervention.staticInterventions" :key="index">
-							<div class="flex align-items-center pt-2 pb-2 gap-2">
-								<tera-input
-									type="nist"
-									auto-width
-									:model-value="i.value"
-									@update:model-value="(val) => onUpdateValue(val, index)"
-									placeholder="value"
-								/>
-								starting at
-								<tera-input
-									type="nist"
-									auto-width
-									:model-value="i.timestep"
-									@update:model-value="(val) => onUpdateThreshold(val, index)"
-									placeholder="timestep"
-								/>
-								.
-								<Button
-									class="ml-auto"
-									icon="pi pi-times"
-									text
-									@click="onRemoveStaticIntervention(index)"
-								/>
-							</div>
-							<Divider />
-						</li>
-					</ul>
+					<div class="w-full">
+						<ul v-if="intervention.staticInterventions.length > 1" class="flex-1">
+							<li v-for="(i, index) in intervention.staticInterventions" :key="index">
+								<div class="flex align-items-center pt-2 pb-2 gap-2">
+									<tera-input
+										type="nist"
+										auto-width
+										:model-value="i.value"
+										@update:model-value="(val) => onUpdateValue(val, index)"
+										placeholder="value"
+									/>
+									starting at
+									<tera-input
+										type="nist"
+										auto-width
+										:model-value="i.timestep"
+										@update:model-value="(val) => onUpdateThreshold(val, index)"
+										placeholder="timestep"
+									/>
+									.
+									<Button
+										class="ml-auto"
+										icon="pi pi-times"
+										text
+										@click="onRemoveStaticIntervention(index)"
+									/>
+								</div>
+								<Divider />
+							</li>
+						</ul>
+					</div>
 				</template>
 
 				<!-- Dynamic -->
