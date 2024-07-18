@@ -208,7 +208,7 @@
 	>
 		<tera-drilldown-section class="p-2">
 			<!-- Redo this to show model configs-->
-			<tera-model-semantic-tables v-if="model" readonly :model="model" />
+			<tera-model-parts v-if="model" readonly :model="model" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 
@@ -251,6 +251,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
+import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -258,12 +259,11 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
-import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 // import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
-import { FatalError } from '@/api/api';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import {
@@ -284,13 +284,12 @@ import {
 	amrToModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration } from '@/types/Types';
-import { TaskStatus } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
+import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import { isModelMissingMetadata } from '@/model-representation/service';
-import { b64DecodeUnicode } from '@/utils/binary';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -465,83 +464,46 @@ const initializeEditor = (editorInstance: any) => {
 };
 
 const extractConfigurationsFromInputs = async () => {
-	console.group('Extracting configurations from inputs');
 	if (!model.value?.id) {
-		console.debug('Model not loaded yet, try later.');
 		return;
 	}
 	if (documentId.value) {
-		console.debug('Configuring model from document', documentId.value);
-		modelFromDocumentHandler.value = await configureModelFromDocument(
+		const resp = await configureModelFromDocument(
 			documentId.value,
 			model.value.id,
-			{
-				ondata(data, closeConnection) {
-					if (data?.status === TaskStatus.Failed) {
-						closeConnection();
-						console.debug('Task failed');
-						throw new FatalError('Configs from document(s) - Task failed');
-					}
-					if (data?.status === TaskStatus.Success) {
-						logger.success('Model configured from document(s)');
-						const outputJSON = JSON.parse(b64DecodeUnicode(data.output));
-						console.debug('Task success', outputJSON);
-						closeConnection();
-					}
-					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
-						console.debug('Task running');
-						closeConnection();
-					}
-				},
-				onclose() {
-					if (model.value?.id) {
-						fetchConfigurations(model.value.id);
-					}
-				}
-			},
 			props.node.workflowId,
 			props.node.id
 		);
+		documentModelConfigTaskId.value = resp.id;
 	}
 	if (datasetIds.value) {
-		console.debug('Configuring model from dataset(s)', datasetIds.value?.toString());
-
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
-
-		modelFromDatasetHandler.value = await configureModelFromDatasets(
+		const resp = await configureModelFromDatasets(
 			model.value.id,
 			datasetIds.value,
 			matrixStr,
-			{
-				ondata(data, closeConnection) {
-					if (data?.status === TaskStatus.Failed) {
-						closeConnection();
-						console.debug('Task failed');
-						throw new FatalError('Configs from dataset(s) - Task failed');
-					}
-					if (data.status === TaskStatus.Success) {
-						logger.success('Model configured from dataset(s)');
-						const outputJSON = JSON.parse(new TextDecoder().decode(data.output));
-						console.debug('Task success', outputJSON);
-						closeConnection();
-					}
-					if (![TaskStatus.Failed, TaskStatus.Success].includes(data?.status)) {
-						console.debug('Task running');
-						closeConnection();
-					}
-				},
-				onclose() {
-					if (model.value?.id) {
-						fetchConfigurations(model.value.id);
-					}
-				}
-			},
 			props.node.workflowId,
 			props.node.id
 		);
+		datasetModelConfigTaskId.value = resp.id;
 	}
-	console.groupEnd();
 };
+
+const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	const taskIdRefs = {
+		[ClientEventType.TaskGollmConfigureModel]: documentModelConfigTaskId,
+		[ClientEventType.TaskGollmConfigureFromDataset]: datasetModelConfigTaskId
+	};
+	if (event.data?.id !== taskIdRefs[event.type].value) return;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		taskIdRefs[event.type].value = '';
+	}
+	if (event.data.status === TaskStatus.Success && model.value?.id)
+		await fetchConfigurations(model.value.id);
+};
+
+useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
+useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const handleModelPreview = async (data: any) => {
 	if (!model.value) return;
@@ -569,12 +531,12 @@ const suggestedConfigurationContext = ref<{
 	modelConfiguration: null
 });
 const isFetching = ref(false);
-const modelFromDocumentHandler = ref();
-const modelFromDatasetHandler = ref();
+const documentModelConfigTaskId = ref('');
+const datasetModelConfigTaskId = ref('');
 const isLoading = computed(
 	() =>
-		modelFromDocumentHandler.value?.isRunning ||
-		modelFromDatasetHandler.value?.isRunning ||
+		documentModelConfigTaskId.value !== '' ||
+		datasetModelConfigTaskId.value !== '' ||
 		isFetching.value
 );
 

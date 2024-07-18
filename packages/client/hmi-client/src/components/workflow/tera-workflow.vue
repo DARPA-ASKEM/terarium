@@ -64,8 +64,8 @@
 				style="white-space: nowrap; width: auto"
 			/>
 			<tera-canvas-item
-				v-for="(node, index) in wf.nodes"
-				:key="index"
+				v-for="node in wf.nodes"
+				:key="node.id"
 				:style="{
 					width: `${node.width}px`,
 					top: `${node.y}px`,
@@ -74,7 +74,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
-					ref="teraOperatorRef"
+					ref="teraOperatorRefs"
 					:node="node"
 					@resize="resizeHandler"
 					@port-selected="
@@ -147,12 +147,12 @@
 				fill="none"
 			/>
 			<path
-				v-for="(edge, index) of wf.edges"
+				v-for="edge of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
-				:key="index"
+				:key="edge.id"
 				fill="none"
 			/>
 		</template>
@@ -302,7 +302,7 @@ const optionsMenuItems = ref([
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
-const teraOperatorRef = ref();
+const teraOperatorRefs = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -849,7 +849,7 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	const teraNode = teraOperatorRef.value.find((operatorNode) => operatorNode.id === node.id);
+	const teraNode = teraOperatorRefs.value.find((operatorNode) => operatorNode.id === node.id);
 	if (teraNode.isEditing ?? false) {
 		return;
 	}

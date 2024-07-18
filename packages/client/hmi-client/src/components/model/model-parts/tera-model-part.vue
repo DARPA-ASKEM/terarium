@@ -1,6 +1,6 @@
 <template>
 	<ul>
-		<li v-for="({ base, children, isParent }, index) in variableList" :key="index">
+		<li v-for="({ base, children, isParent }, index) in items" :key="index">
 			<template v-if="isParent && !isEmpty(parentEditingState)">
 				<section class="parent">
 					<span>
@@ -19,43 +19,46 @@
 						/>
 						<h6>{{ base.id }}</h6>
 					</span>
-					<Button
-						v-if="!parentEditingState[index].isEditingChildrenUnits"
-						@click="parentEditingState[index].isEditingChildrenUnits = true"
-						label="Add unit to all children"
-						text
-						size="small"
-					/>
-					<span v-else>
-						<tera-input
-							label="Unit"
-							placeholder="Add a unit"
-							v-model="parentEditingState[index].childrenUnits"
-						/>
+					<!--N/A if it's a transition-->
+					<template v-if="!children[0].input || !children[0].output">
 						<Button
-							icon="pi pi-check"
+							v-if="!parentEditingState[index].isEditingChildrenUnits"
+							@click="parentEditingState[index].isEditingChildrenUnits = true"
+							label="Add unit to all children"
 							text
-							rounded
 							size="small"
-							@click="
-								() => {
-									updateAllChildren(
-										base.id,
-										'unitExpression',
-										parentEditingState[index].childrenUnits
-									);
-									parentEditingState[index].isEditingChildrenUnits = false;
-								}
-							"
 						/>
-						<Button
-							icon="pi pi-times"
-							text
-							rounded
-							size="small"
-							@click="parentEditingState[index].isEditingChildrenUnits = false"
-						/>
-					</span>
+						<span v-else>
+							<tera-input
+								label="Unit"
+								placeholder="Add a unit"
+								v-model="parentEditingState[index].childrenUnits"
+							/>
+							<Button
+								icon="pi pi-check"
+								text
+								rounded
+								size="small"
+								@click="
+									() => {
+										updateAllChildren(
+											base.id,
+											'unitExpression',
+											parentEditingState[index].childrenUnits
+										);
+										parentEditingState[index].isEditingChildrenUnits = false;
+									}
+								"
+							/>
+							<Button
+								icon="pi pi-times"
+								text
+								rounded
+								size="small"
+								@click="parentEditingState[index].isEditingChildrenUnits = false"
+							/>
+						</span>
+					</template>
 					<Button
 						v-if="showMatrix"
 						label="Open matrix"
@@ -101,19 +104,19 @@
 				</section>
 				<ul v-if="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
-						<tera-variable-metadata-entry
-							:variable="child"
+						<tera-model-part-entry
+							:item="child"
 							:disabled-inputs="disabledInputs"
-							@update-variable="$emit('update-variable', { id: child.id, ...$event })"
+							@update-item="$emit('update-item', { id: child.id, ...$event })"
 						/>
 					</li>
 				</ul>
 			</template>
-			<tera-variable-metadata-entry
+			<tera-model-part-entry
 				v-else
-				:variable="base"
+				:item="base"
 				:disabled-inputs="disabledInputs"
-				@update-variable="$emit('update-variable', { id: base.id, ...$event })"
+				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
 	</ul>
@@ -122,23 +125,23 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
-import { ModelVariable } from '@/types/Model';
-import TeraVariableMetadataEntry from '@/components/model/tera-variable-metadata-entry.vue';
+import type { ModelPartItem } from '@/types/Model';
+import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
 import Button from 'primevue/button';
-import TeraInput from '../widgets/tera-input.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
-	variableList: {
-		base: ModelVariable;
-		children: ModelVariable[];
+	items: {
+		base: ModelPartItem;
+		children: ModelPartItem[];
 		isParent: boolean;
 	}[];
-	collapsedVariables: Map<string, string[]>;
+	collapsedItems?: Map<string, string[]>;
 	disabledInputs?: string[];
 	showMatrix?: boolean;
 }>();
 
-const emit = defineEmits(['update-variable', 'open-matrix']);
+const emit = defineEmits(['update-item', 'open-matrix']);
 
 const parentEditingState = ref<
 	{
@@ -150,7 +153,7 @@ const parentEditingState = ref<
 	}[]
 >([]);
 onMounted(() => {
-	parentEditingState.value = Array.from({ length: props.variableList.length }, () => ({
+	parentEditingState.value = Array.from({ length: props.items.length }, () => ({
 		showChildren: false,
 		isEditingChildrenUnits: false,
 		isEditingChildrenConcepts: false,
@@ -160,9 +163,9 @@ onMounted(() => {
 });
 
 function updateAllChildren(base: string, key: string, value: string) {
-	if (isEmpty(value)) return;
-	const ids = props.collapsedVariables.get(base);
-	ids?.forEach((id) => emit('update-variable', { id, key, value }));
+	if (isEmpty(value) || !props.collapsedItems) return;
+	const ids = props.collapsedItems.get(base);
+	ids?.forEach((id) => emit('update-item', { id, key, value }));
 }
 </script>
 

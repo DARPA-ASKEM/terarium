@@ -28,6 +28,15 @@ public class Transition extends SupportAdditionalProperties implements Serializa
 	private List<String> output;
 
 	@TSOptional
+	private String name;
+
+	@TSOptional
+	private String description;
+
+	@TSOptional
+	private String expression;
+
+	@TSOptional
 	private ModelGrounding grounding;
 
 	@TSOptional

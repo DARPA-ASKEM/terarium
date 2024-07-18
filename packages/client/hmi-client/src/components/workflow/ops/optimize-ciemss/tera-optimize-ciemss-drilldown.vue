@@ -392,7 +392,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/utils/optimize';
+import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -404,7 +404,7 @@ import {
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState,
-	InterventionTypes
+	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -666,16 +666,15 @@ const runOptimize = async () => {
 		paramValues.push(ele.intervention.staticInterventions[0].value);
 		startTime.push(ele.startTime);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		listBoundsInterventions.push([ele.lowerBoundValue]);
-		listBoundsInterventions.push([ele.upperBoundValue]);
 
-		if (ele.optimizationType === InterventionTypes.paramValue) {
+		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
-		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			listBoundsInterventions.push([ele.startTime]);
+			listBoundsInterventions.push([ele.endTime]);
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
 			initialGuess.push(ele.initialGuessValue);
-		} else if (ele.optimizationType === InterventionTypes.paramValueAndStartTime) {
-			initialGuess.push(ele.startTimeGuess);
-			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
@@ -724,7 +723,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100, // Reverse riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};

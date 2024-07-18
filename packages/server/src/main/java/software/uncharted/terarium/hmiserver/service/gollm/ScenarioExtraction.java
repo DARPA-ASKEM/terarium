@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
@@ -14,6 +18,7 @@ import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
  * [ { "id": "parameter_id", "value": 0.0 }, ... ] }, ...] } Dataset: {"values":[{ "id": "initial_id", "value": 0.0,
  * "type": "initial" }, { "id": "parameter_id", "value": 0.0, "type": "parameter" }, ...]}
  */
+@Slf4j
 public class ScenarioExtraction {
 	// Replace initial values in the model with the values from the condition
 	public static void replaceInitial(final Initial initial, final JsonNode conditionInitial) {
@@ -35,6 +40,16 @@ public class ScenarioExtraction {
 			if (conditionParameter.has("value")) {
 				final double value = conditionParameter.get("value").doubleValue();
 				parameter.setValue(value);
+			}
+			if (conditionParameter.has("distribution")) {
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					ModelDistribution distribution =
+							mapper.treeToValue(conditionParameter.get("distribution"), ModelDistribution.class);
+					parameter.setDistribution(distribution);
+				} catch (JsonProcessingException e) {
+					log.error("Failed to parse distribution for parameter: {}", parameter.getId());
+				}
 			}
 		}
 	}

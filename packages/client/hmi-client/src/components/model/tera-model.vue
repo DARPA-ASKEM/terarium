@@ -28,15 +28,28 @@
 				@click="toggleOptionsMenu"
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<div class="btn-group">
+				<!-- TODO: Reset and Save as buttons
+				<Button label="Reset" severity="secondary" outlined />
+				<Button label="Save as..." severity="secondary" outlined /> -->
+				<Button label="Save" @click="teraModelPartsRef?.saveChanges()" />
+			</div>
 		</template>
-		<tera-model-description
-			v-if="model"
-			:key="model?.id"
-			:model="model"
-			:feature-config="featureConfig"
-			@model-updated="fetchModel"
-			@update-model="updateModelContent"
-		/>
+		<section v-if="model">
+			<tera-model-description
+				:model="model"
+				:feature-config="featureConfig"
+				@model-updated="fetchModel"
+				@update-model="updateModelContent"
+			/>
+			<tera-model-parts
+				ref="teraModelPartsRef"
+				class="mt-0"
+				:model="model"
+				@update-model="updateModelContent"
+				:readonly="featureConfig?.isPreview"
+			/>
+		</section>
 	</tera-asset>
 </template>
 
@@ -45,6 +58,7 @@ import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
@@ -66,6 +80,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close-preview']);
+
+const teraModelPartsRef = ref();
 
 const model = ref<Model | null>(null);
 const newName = ref('New Model');
@@ -163,3 +179,12 @@ watch(
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
+}
+</style>
