@@ -69,7 +69,7 @@ export const renderLossGraph = (
 	options: { width: number; height: number }
 ) => {
 	const marginTop = 16;
-	const marginBottom = 50;
+	const marginBottom = 45;
 	const marginLeft = 70;
 	const marginRight = 20;
 
