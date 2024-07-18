@@ -184,9 +184,12 @@ export function isModelParameter(obj: Initial | ModelParameter | null): obj is M
 }
 
 export function stringToLatex(expression: string): string {
+	// First, escape backslashes to avoid breaking LaTeX syntax
+	let latexExpression = expression.replace(/\\/g, '\\\\');
+
 	// Wrap everything after the first underscore in {} for each variable
 	// and add a \ before subsequent underscores
-	let latexExpression = expression.replace(/(_)([a-zA-Z0-9_]+)/g, (_match, p1, p2) => {
+	latexExpression = expression.replace(/(_)([a-zA-Z0-9_]+)/g, (_match, p1, p2) => {
 		// Replace subsequent underscores in p2 with \_
 		const modifiedP2 = p2.replace(/_/g, '\\_');
 		return `${p1}{${modifiedP2}}`;
