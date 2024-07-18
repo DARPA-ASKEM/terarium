@@ -20,6 +20,8 @@ import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
+export type DataArray = Record<string, any>[];
+
 export async function cancelCiemssJob(runId: String) {
 	try {
 		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
@@ -118,7 +120,7 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCSV(runId: string, filename: string) {
+export async function getRunResultCSV(runId: string, filename: string): Promise<DataArray> {
 	try {
 		const resp = await API.get(`simulations/${runId}/result`, {
 			params: { filename }
@@ -134,7 +136,7 @@ export async function getRunResultCSV(runId: string, filename: string) {
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return [{}];
+		return [];
 	}
 }
 

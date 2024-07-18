@@ -91,6 +91,20 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: 4,
+		symbolSize: 200,
+		labelFontSize: 12,
+		labelOffset: 4
+	};
+
+	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -169,16 +183,7 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -197,16 +202,7 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {

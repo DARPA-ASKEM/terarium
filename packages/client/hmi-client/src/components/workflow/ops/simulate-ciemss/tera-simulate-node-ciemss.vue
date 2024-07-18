@@ -37,7 +37,8 @@ import {
 	getRunResultCSV,
 	pollAction,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
@@ -54,8 +55,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
