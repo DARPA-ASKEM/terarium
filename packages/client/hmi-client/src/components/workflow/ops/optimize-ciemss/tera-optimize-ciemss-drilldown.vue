@@ -404,7 +404,7 @@ import {
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState,
-	OptimizationTypes
+	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -667,11 +667,11 @@ const runOptimize = async () => {
 		startTime.push(ele.startTime);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 
-		if (ele.optimizationType === OptimizationTypes.getStartTime) {
+		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
 			listBoundsInterventions.push([ele.startTime]);
 			listBoundsInterventions.push([ele.endTime]);
-		} else if (ele.optimizationType === OptimizationTypes.getParamValue) {
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);

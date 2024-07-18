@@ -133,7 +133,7 @@ import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
-	OptimizationTypes,
+	OptimizationInterventionObjective,
 	OPTIMIZATION_TYPE_MAP,
 	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
@@ -155,14 +155,14 @@ const knobs = ref<InterventionPolicyGroupForm>({
 const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
-	() => knobs.value.optimizationType === OptimizationTypes.getStartTime
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.startTime
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === OptimizationTypes.paramValueAndStartTime
+	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
-	() => knobs.value.optimizationType === OptimizationTypes.getParamValue
+	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValue
 	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === OptimizationTypes.paramValueAndStartTime
+	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 </script>
 
