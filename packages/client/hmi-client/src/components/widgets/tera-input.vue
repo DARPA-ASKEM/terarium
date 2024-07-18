@@ -4,16 +4,16 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
-				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
-				:value="getValue()"
-				@input="updateValue"
-				:style="inputStyle"
-				@blur="unmask"
-				@focusout="$emit('focusout', $event)"
-				:type="getType"
 				:placeholder="placeholder"
+				:style="inputStyle"
+				:type="getType"
+				:value="getValue()"
+				@blur="unmask"
+				@click.stop
+				@focusout="$emit('focusout', $event)"
+				@input="updateValue"
 			/>
 		</main>
 	</div>
@@ -127,7 +127,7 @@ main {
 	border-radius: var(--border-radius);
 	cursor: text;
 	transition: border-color 0.3s ease-in-out;
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 
 	&:has(*:disabled) {
 		opacity: 0.5;
@@ -150,7 +150,7 @@ main {
 }
 
 label {
-	background-color: none;
+	background: none;
 	color: var(--text-color-secondary);
 	cursor: text;
 	padding-right: var(--gap-1-5);
@@ -158,11 +158,11 @@ label {
 }
 
 input {
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 	font-feature-settings: 'tnum';
 	flex-grow: 1;
 	border: none;
-	background-color: none;
+	background: none;
 	&::-webkit-inner-spin-button,
 	&::-webkit-outer-spin-button {
 		-webkit-appearance: none;
@@ -177,7 +177,7 @@ aside {
 	display: flex;
 	align-items: center;
 	i {
-		margin-right: var(--gap-small);
+		margin-right: var(--gap-2);
 	}
 }
 
