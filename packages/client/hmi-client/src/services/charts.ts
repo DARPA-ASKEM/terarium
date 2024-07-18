@@ -193,8 +193,8 @@ export const createForecastChart = (
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
-		// layerSpec.encoding.color.scale.range = ['#333'];
-		layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This seems to work
+		layerSpec.encoding.color.scale.range = ['#333'];
+		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {

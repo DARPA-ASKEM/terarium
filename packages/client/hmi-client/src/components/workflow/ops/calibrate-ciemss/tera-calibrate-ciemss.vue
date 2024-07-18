@@ -157,8 +157,9 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-				<section v-else>
-					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				<section v-else class="emptyState">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
+					<p>Processing...</p>
 				</section>
 				<tera-notebook-error
 					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
