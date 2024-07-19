@@ -260,7 +260,12 @@ export interface OptimizeChartOptions {
 
 const binCount = 5;
 
-function formatSuccessChartData(riskResults: any, targetVariable: string, threshold: number, isMinimized: boolean) {
+export function formatSuccessChartData(
+	riskResults: any,
+	targetVariable: string,
+	threshold: number,
+	isMinimized: boolean
+) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
 	if (isEmpty(data)) {
@@ -290,7 +295,7 @@ function formatSuccessChartData(riskResults: any, targetVariable: string, thresh
 		const count = data.length;
 
 		ranges.push({
-			range: `${start.toFixed(4)} - ${end.toFixed(4)}`,
+			range: `${start.toFixed(4)}-${end.toFixed(4)}`,
 			count,
 			tag: determineTag(start, end, threshold, isMinimized)
 		});
