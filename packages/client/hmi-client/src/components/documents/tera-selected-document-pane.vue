@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { useProjects } from '@/composables/project';
 import { addDocuments } from '@/services/external';
-import type { Document, ExternalPublication } from '@/types/Types';
+import type { ExternalPublication } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import dropdown from 'primevue/dropdown';
 import { computed, PropType } from 'vue';

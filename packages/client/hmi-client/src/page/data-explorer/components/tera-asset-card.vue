@@ -14,9 +14,6 @@
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
-			<ul class="snippets" v-if="snippets">
-				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
-			</ul>
 			<div
 				class="description"
 				v-if="resourceType === ResourceType.MODEL"
@@ -48,7 +45,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { DocumentAsset, Dataset, Model, Document } from '@/types/Types';
+import type { DocumentAsset, Dataset, Model } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
@@ -70,9 +67,6 @@ function highlightSearchTerms(text: string | undefined): string {
 
 const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
-const snippets = computed(() =>
-	(props.asset as Document).highlight ? Array.from((props.asset as Document).highlight).splice(0, 3) : null
-);
 const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.DOCUMENT) {
