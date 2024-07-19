@@ -153,7 +153,8 @@ import {
 	getRunResultCSV,
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
-	convertToCsvAsset
+	convertToCsvAsset,
+	DataArray
 } from '@/services/models/simulation-service';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
@@ -241,9 +242,9 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const rawContent = ref<{ [runId: string]: CsvAsset }>({});
 
 let pyciemssMap: Record<string, string> = {};
 
