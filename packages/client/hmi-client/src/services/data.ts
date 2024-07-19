@@ -1,14 +1,6 @@
 import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
+import { Dataset, DocumentAsset, Model, ProvenanceType } from '@/types/Types';
 import {
-	Dataset,
-	Document,
-	DocumentAsset,
-	Model,
-	ProvenanceType,
-	XDDFacetsItemResponse
-} from '@/types/Types';
-import {
-	Facets,
 	FullSearchResults,
 	ResourceType,
 	ResultType,
@@ -17,7 +9,6 @@ import {
 } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import { applyFacetFilters, isDataset, isModel } from '@/utils/data-util';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { isEmpty, uniqBy } from 'lodash';
 import { ID, MODEL_FILTER_FIELDS, ModelSearchParams } from '../types/Model';
 import * as DatasetService from './dataset';
@@ -64,7 +55,6 @@ const getAssets = async (params: GetAssetsParams) => {
 
 	// fetch list of model or datasets data from the HMI server
 	let assetList: Model[] | Dataset[] | Document[] = [];
-	let hits: number | undefined;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
@@ -81,11 +71,9 @@ const getAssets = async (params: GetAssetsParams) => {
 	}
 
 	// needed?
-	const allAssets: ResultType[] = assetList.map(
-		(a: Model | Dataset | Document | DocumentAsset) => ({
-			...a
-		})
-	);
+	const allAssets: ResultType[] = assetList.map((a: Model | Dataset | DocumentAsset) => ({
+		...a
+	}));
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
@@ -98,7 +86,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			: filterAssets(allAssets, resourceType, term);
 
 	// TODO: xdd facets are now driven by the back end, however our other facets are not (and are also unused?)
-	let assetFacets: { [index: string]: XDDFacetsItemResponse } | Facets;
+	/* let assetFacets:Facets;
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetFacets = getModelFacets(assetResults as Model[]); // will be moved to HMI server - keep this for now
@@ -113,9 +101,8 @@ const getAssets = async (params: GetAssetsParams) => {
 	results.allData = {
 		results: assetResults,
 		searchSubsystem: resourceType,
-		facets: assetFacets,
 		hits
-	};
+	}; */
 
 	// apply facet filters
 	if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
@@ -130,7 +117,8 @@ const getAssets = async (params: GetAssetsParams) => {
 			//        at the HMI server
 			//
 			// This is going to calculate facets aggregations from the list of results
-			let assetFacetsFiltered: Facets;
+
+			/* let assetFacetsFiltered: Facets;
 			switch (resourceType) {
 				case ResourceType.MODEL:
 					assetFacetsFiltered = getModelFacets(assetResults as Model[]);
@@ -140,12 +128,11 @@ const getAssets = async (params: GetAssetsParams) => {
 					break;
 				default:
 					return results; // error or make new resource type compatible
-			}
+			} */
 
 			results.allDataFilteredWithFacets = {
 				results: assetResults,
-				searchSubsystem: resourceType,
-				facets: assetFacetsFiltered
+				searchSubsystem: resourceType
 			};
 		} else {
 			results.allDataFilteredWithFacets = results.allData;
