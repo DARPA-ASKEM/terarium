@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ContextMeshSubmeshRelation implements Serializable {
+
 	private String mesh;
 	private String submesh;
 	private Object relation;

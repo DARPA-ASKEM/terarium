@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @Slf4j
 @RequiredArgsConstructor
 public class TGPTController {
+
 	private final ObjectMapper mapper;
 
 	@Value("${tgpt.base.url}")
@@ -34,10 +35,8 @@ public class TGPTController {
 	@GetMapping("/configuration")
 	@Secured(Roles.USER)
 	public ResponseEntity<ObjectNode> getConfiguration() {
-		return ResponseEntity.ok(mapper.createObjectNode()
-				.put("baseUrl", baseUrl)
-				.put("appUrl", appUrl)
-				.put("wsUrl", wsUrl)
-				.put("token", token));
+		return ResponseEntity.ok(
+			mapper.createObjectNode().put("baseUrl", baseUrl).put("appUrl", appUrl).put("wsUrl", wsUrl).put("token", token)
+		);
 	}
 }

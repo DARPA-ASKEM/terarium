@@ -50,7 +50,6 @@ public class AssetDependencyUtil {
 	 * @return
 	 */
 	public static <T> AssetDependencyMap getAssetDependencies(final Set<UUID> assetIds, final T asset) {
-
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final JsonNode assetJson = mapper.valueToTree(asset);
@@ -58,20 +57,21 @@ public class AssetDependencyUtil {
 		final AssetDependencyMap dependencies = new AssetDependencyMap();
 
 		executeOnEveryKeyAndText(
-				new ArrayList<>(),
-				assetJson,
-				(final List<String> path, final String key) -> {
-					final UUID uuid = uuidOrNull(key);
-					if (uuid != null && assetIds.contains(uuid)) {
-						dependencies.addKeyId(path, uuid);
-					}
-				},
-				(final List<String> path, final String value) -> {
-					final UUID uuid = uuidOrNull(value);
-					if (uuid != null && assetIds.contains(uuid)) {
-						dependencies.addValueId(path, uuid);
-					}
-				});
+			new ArrayList<>(),
+			assetJson,
+			(final List<String> path, final String key) -> {
+				final UUID uuid = uuidOrNull(key);
+				if (uuid != null && assetIds.contains(uuid)) {
+					dependencies.addKeyId(path, uuid);
+				}
+			},
+			(final List<String> path, final String value) -> {
+				final UUID uuid = uuidOrNull(value);
+				if (uuid != null && assetIds.contains(uuid)) {
+					dependencies.addValueId(path, uuid);
+				}
+			}
+		);
 
 		return dependencies;
 	}
@@ -90,15 +90,16 @@ public class AssetDependencyUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T swapAssetDependencies(
-			final T asset, final Map<UUID, UUID> assetIdMapping, final AssetDependencyMap dependencies) {
-
+		final T asset,
+		final Map<UUID, UUID> assetIdMapping,
+		final AssetDependencyMap dependencies
+	) {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		final ObjectNode dest = (ObjectNode) mapper.valueToTree(asset);
 
 		// replace key ids
 		for (final Pair<UUID, List<String>> keyId : dependencies.getKeyIds()) {
-
 			final UUID id = keyId.getFirst();
 			if (!assetIdMapping.containsKey(id)) {
 				throw new RuntimeException("No id mapping for id: " + keyId.getSecond());
@@ -184,11 +185,11 @@ public class AssetDependencyUtil {
 	}
 
 	private static void executeOnEveryKeyAndText(
-			final List<String> path,
-			final JsonNode node,
-			final BiConsumer<List<String>, String> keyFunc,
-			final BiConsumer<List<String>, String> valueFunc) {
-
+		final List<String> path,
+		final JsonNode node,
+		final BiConsumer<List<String>, String> keyFunc,
+		final BiConsumer<List<String>, String> valueFunc
+	) {
 		if (node.isObject()) {
 			final Iterator<Map.Entry<String, JsonNode>> iterator = node.fields();
 			while (iterator.hasNext()) {
@@ -206,7 +207,6 @@ public class AssetDependencyUtil {
 		} else if (node.isArray()) {
 			int i = 0;
 			for (final JsonNode subNode : node) {
-
 				final List<String> pathCopy = new ArrayList<>(path);
 				pathCopy.add(String.valueOf(i));
 

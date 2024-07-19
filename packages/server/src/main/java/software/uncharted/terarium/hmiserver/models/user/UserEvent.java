@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 @TSModel
 @Data
 public class UserEvent {
+
 	private EventType type;
 	private UserOld user;
 	private UUID id;

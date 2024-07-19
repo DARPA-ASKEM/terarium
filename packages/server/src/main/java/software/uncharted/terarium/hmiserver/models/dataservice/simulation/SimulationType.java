@@ -3,14 +3,14 @@ package software.uncharted.terarium.hmiserver.models.dataservice.simulation;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 public enum SimulationType {
-	@JsonAlias({"ensemble", "ensemble-simulate", "ensemble-simulation", "ensemble-calibrate", "ensemble-calibration"})
+	@JsonAlias({ "ensemble", "ensemble-simulate", "ensemble-simulation", "ensemble-calibrate", "ensemble-calibration" })
 	ENSEMBLE,
-	@JsonAlias({"simulate", "simulation"})
+	@JsonAlias({ "simulate", "simulation" })
 	SIMULATION,
-	@JsonAlias({"calibrate", "calibration"})
+	@JsonAlias({ "calibrate", "calibration" })
 	CALIBRATION,
-	@JsonAlias({"optimize", "optimization"})
+	@JsonAlias({ "optimize", "optimization" })
 	OPTIMIZATION,
-	@JsonAlias({"validation"})
+	@JsonAlias({ "validation" })
 	VALIDATION
 }

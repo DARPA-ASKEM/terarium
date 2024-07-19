@@ -13,13 +13,15 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class SummaryService extends TerariumAssetServiceWithoutSearch<Summary, SummaryRepository> {
+
 	public SummaryService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final SummaryRepository repository,
-			final S3ClientService s3ClientService) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final SummaryRepository repository,
+		final S3ClientService s3ClientService
+	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Summary.class);
 	}
 

@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @Accessors(chain = true)
 @TSModel
 public class SimulationRequest implements Serializable {
+
 	@JsonAlias("model_config_id")
 	private UUID modelConfigId;
 
@@ -30,14 +31,12 @@ public class SimulationRequest implements Serializable {
 
 	@Override
 	public SimulationRequest clone() {
-
 		final SimulationRequest clone = new SimulationRequest();
 
 		clone.modelConfigId = this.modelConfigId;
 		clone.setTimespan(
-				this.timespan != null
-						? new TimeSpan().setStart(timespan.getStart()).setEnd(timespan.getEnd())
-						: null);
+			this.timespan != null ? new TimeSpan().setStart(timespan.getStart()).setEnd(timespan.getEnd()) : null
+		);
 		clone.setExtra(this.extra.deepCopy());
 		clone.setEngine(this.engine);
 		clone.setPolicyInterventionId(this.policyInterventionId);

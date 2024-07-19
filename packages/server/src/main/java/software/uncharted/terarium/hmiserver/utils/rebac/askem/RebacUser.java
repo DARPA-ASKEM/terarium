@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.SchemaObject;
 
 public class RebacUser extends RebacObject {
+
 	private final ReBACService reBACService;
 
 	private final boolean serviceUser;
@@ -36,14 +37,17 @@ public class RebacUser extends RebacObject {
 	}
 
 	public void createCreatorRelationship(final RebacObject rebacObject)
-			throws Exception, RelationshipAlreadyExistsException {
+		throws Exception, RelationshipAlreadyExistsException {
 		reBACService.createRelationship(getSchemaObject(), rebacObject.getSchemaObject(), Schema.Relationship.CREATOR);
 	}
 
 	public PermissionGroup createGroup(final String name) throws Exception, RelationshipAlreadyExistsException {
 		final PermissionGroup group = reBACService.createGroup(name);
 		reBACService.createRelationship(
-				getSchemaObject(), new SchemaObject(Schema.Type.GROUP, group.getId()), Schema.Relationship.CREATOR);
+			getSchemaObject(),
+			new SchemaObject(Schema.Type.GROUP, group.getId()),
+			Schema.Relationship.CREATOR
+		);
 		return group;
 	}
 

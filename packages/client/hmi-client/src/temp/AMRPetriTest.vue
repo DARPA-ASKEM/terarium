@@ -3,12 +3,8 @@
 		<div style="display: flex; flex-direction: column">
 			<textarea style="width: 550px; height: 550px; margin: 0 10px" v-model="jsonStr"> </textarea>
 			<div>
-				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = true">
-					Collapse
-				</button>
-				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = false">
-					Expand
-				</button>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = true">Collapse</button>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = false">Expand</button>
 			</div>
 		</div>
 		<div>
@@ -27,11 +23,7 @@ import { getMMT } from '@/services/model';
 
 import { onMounted, ref, watch } from 'vue';
 import * as mmtExample from '@/examples/mira-petri.json';
-import {
-	convertToIGraph,
-	collapseParameters,
-	createParameterMatrix
-} from '@/model-representation/mira/mira';
+import { convertToIGraph, collapseParameters, createParameterMatrix } from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
@@ -85,8 +77,7 @@ onMounted(async () => {
 					lines.push('');
 					lines.push(header);
 					subjectControllers.matrix.forEach((r, idx) => {
-						const rowStr =
-							subjectControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
+						const rowStr = subjectControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
 						lines.push(rowStr);
 					});
 					lines.push('');
@@ -99,8 +90,7 @@ onMounted(async () => {
 					lines.push('');
 					lines.push(header);
 					outcomeControllers.matrix.forEach((r, idx) => {
-						const rowStr =
-							outcomeControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
+						const rowStr = outcomeControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
 						lines.push(rowStr);
 					});
 					lines.push('');

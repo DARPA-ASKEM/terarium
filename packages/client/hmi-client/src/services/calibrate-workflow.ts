@@ -1,11 +1,7 @@
 import * as d3 from 'd3';
 
 import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
-import {
-	getAsConfiguredModel,
-	getModelConfigurationById,
-	getObservables
-} from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 
 export interface CalibrateMap {
@@ -63,11 +59,7 @@ export const setupDatasetInput = async (datasetId: string | undefined) => {
 	return {};
 };
 
-export const renderLossGraph = (
-	element: HTMLElement,
-	data: any[],
-	options: { width: number; height: number }
-) => {
+export const renderLossGraph = (element: HTMLElement, data: any[], options: { width: number; height: number }) => {
 	const marginTop = 16;
 	const marginBottom = 45;
 	const marginLeft = 70;

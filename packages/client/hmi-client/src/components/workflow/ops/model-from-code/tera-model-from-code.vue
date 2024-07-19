@@ -6,10 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
+			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -51,9 +48,7 @@
 							icon="pi pi-plus"
 							text
 							@click="addCodeBlock"
-							:disabled="
-								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
-							"
+							:disabled="clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)"
 						/>
 					</section>
 				</header>
@@ -113,11 +108,7 @@
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
-				<tera-operator-placeholder
-					v-else
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
+				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
 				<template #footer>
 					<Button
 						:loading="savingAsset"
@@ -184,13 +175,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-state',
-	'select-output',
-	'append-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
@@ -219,10 +204,7 @@ const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
 	const blocks: AssetBlock<CodeBlock>[] = [];
 
 	blocks.push(...inputCodeBlocks.value);
-	if (
-		clonedState.value.modelFramework === ModelFramework.Decapodes &&
-		!isEmpty(clonedState.value.codeBlocks)
-	) {
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes && !isEmpty(clonedState.value.codeBlocks)) {
 		// show only first added code block if Decapodes
 		if (isEmpty(inputCodeBlocks.value)) blocks.push(clonedState.value.codeBlocks[0]);
 	} else {
@@ -319,10 +301,8 @@ onUnmounted(() => {
 });
 
 function buildJupyterContext() {
-	const contextName =
-		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
-	const languageName =
-		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
+	const contextName = clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
+	const languageName = clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
 
 	return {
 		context: contextName,

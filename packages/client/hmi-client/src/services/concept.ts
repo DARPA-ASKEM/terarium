@@ -106,11 +106,7 @@ function parseCurie(curie: string) {
 
 // Takes in 2 lists of generic {id, groundings} and returns the singular
 // closest match for each element in list one
-const autoEntityMapping = async (
-	sourceEntities: Entity[],
-	targetEntities: Entity[],
-	acceptableDist?: number
-) => {
+const autoEntityMapping = async (sourceEntities: Entity[], targetEntities: Entity[], acceptableDist?: number) => {
 	const result = [] as EntityMap[];
 	const acceptableDistance = acceptableDist ?? 0.5;
 
@@ -122,10 +118,7 @@ const autoEntityMapping = async (
 	const distinctSourceGroundings = [...new Set(allSourceGroundings)];
 	const distinctTargetGroundings = [...new Set(allTargetGroundings)];
 
-	const allSimilarity = await getEntitySimilarity(
-		distinctSourceGroundings,
-		distinctTargetGroundings
-	);
+	const allSimilarity = await getEntitySimilarity(distinctSourceGroundings, distinctTargetGroundings);
 	if (!allSimilarity) return result;
 	// Filter out anything with a similarity too small
 	const filteredSimilarity = allSimilarity.filter((ele) => ele.similarity >= acceptableDistance);

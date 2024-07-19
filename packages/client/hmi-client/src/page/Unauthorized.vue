@@ -3,13 +3,8 @@
 		<h4>Unauthorized</h4>
 		<ol>
 			<li>You have been authenticated but not authorized to use this application.</li>
-			<li>
-				Contact <a href="https://askemgroup.slack.com/team/U03JQSSHZ45">Uncharted</a> to be granted
-				access.
-			</li>
-			<li>
-				Once you have been authorized please <a href="#" @click="auth.logout">Sign-in</a> again.
-			</li>
+			<li>Contact <a href="https://askemgroup.slack.com/team/U03JQSSHZ45">Uncharted</a> to be granted access.</li>
+			<li>Once you have been authorized please <a href="#" @click="auth.logout">Sign-in</a> again.</li>
 		</ol>
 	</section>
 </template>

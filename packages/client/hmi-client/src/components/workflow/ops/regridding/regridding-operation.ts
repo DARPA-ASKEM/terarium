@@ -1,7 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-const DOCUMENTATION_URL =
-	'https://darpa-askem.github.io/askem-beaker/contexts_climate_data_utility.html';
+const DOCUMENTATION_URL = 'https://darpa-askem.github.io/askem-beaker/contexts_climate_data_utility.html';
 
 export interface RegriddingOperationState extends BaseState {
 	datasetId: string | null;

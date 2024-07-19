@@ -1,11 +1,6 @@
 <template>
 	<main ref="canvasRef">
-		<svg
-			class="canvas-layer background-layer"
-			ref="backgroundLayerRef"
-			:width="width"
-			:height="height"
-		>
+		<svg class="canvas-layer background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<defs>
 				<slot name="backgroundDefs" />
 			</defs>

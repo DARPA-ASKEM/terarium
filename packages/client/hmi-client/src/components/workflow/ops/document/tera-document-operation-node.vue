@@ -55,11 +55,7 @@ onMounted(async () => {
 		document.value = await getDocumentAsset(props.node.state.documentId);
 
 		// If the name is different, update the name
-		if (
-			document.value &&
-			documentName.value !== document.value.name &&
-			!isEmpty(document.value.name)
-		) {
+		if (document.value && documentName.value !== document.value.name && !isEmpty(document.value.name)) {
 			documentName.value = document.value.name;
 		}
 	}

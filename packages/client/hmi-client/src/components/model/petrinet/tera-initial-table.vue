@@ -13,12 +13,7 @@
 						<AccordionTab>
 							<template #header>
 								<span>{{ baseInitial }}</span>
-								<Button
-									label="Open Matrix"
-									text
-									size="small"
-									@click.stop="matrixModalId = baseInitial"
-								/>
+								<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
 							</template>
 							<div class="flex">
 								<Divider layout="vertical" type="solid" />
@@ -65,9 +60,7 @@
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
-			@update-cell-value="
-				emit('update-expression', { id: $event.variableName, value: $event.newValue })
-			"
+			@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
 		/>
 	</Teleport>
 </template>
@@ -118,9 +111,7 @@ const initialList = computed<
 
 			return { baseInitial, childInitials, isVirtual };
 		})
-		.filter(({ baseInitial }) =>
-			baseInitial.toLowerCase().includes(filterText.value.toLowerCase())
-		);
+		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
 const matrixModalId = ref('');

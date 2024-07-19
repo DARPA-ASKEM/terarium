@@ -63,10 +63,7 @@
 								</tr>
 								<tr>
 									<div class="row-header">
-										<td
-											v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)"
-											:key="i"
-										>
+										<td v-for="(element, i) in Object.keys(knobs.ensembleConfigs[0].solutionMappings)" :key="i">
 											{{ element }}
 										</td>
 									</div>
@@ -91,12 +88,7 @@
 							:options="datasetColumnNames"
 							placeholder="Variable name"
 						/>
-						<Button
-							class="p-button-sm p-button-outlined"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
+						<Button class="p-button-sm p-button-outlined" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
 					</AccordionTab>
 					<AccordionTab header="Additional fields">
 						<table>
@@ -182,10 +174,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
-import {
-	getRunResultCiemss,
-	makeEnsembleCiemssCalibration
-} from '@/services/models/simulation-service';
+import { getRunResultCiemss, makeEnsembleCiemssCalibration } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import AccordionTab from 'primevue/accordiontab';
@@ -202,12 +191,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 
-import {
-	chartActionsProxy,
-	drilldownChartSize,
-	getTimespan,
-	nodeMetadata
-} from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
 	EnsembleModelConfigs,
@@ -276,9 +260,7 @@ const outputs = computed(() => {
 const selectedOutputId = ref<string>();
 const showSpinner = ref(false);
 const isRunDisabled = computed(() => !knobs.value.ensembleConfigs[0]?.weight || !datasetId.value);
-const cancelRunId = computed(
-	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
-);
+const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 

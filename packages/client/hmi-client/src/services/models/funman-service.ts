@@ -94,9 +94,7 @@ export const processFunman = (result: any) => {
 
 				// Get trajectories
 				const filteredVals = Object.keys(point.values)
-					.filter(
-						(key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume'
-					)
+					.filter((key) => !params.includes(key) && key !== 'timestep' && key.split('_')[0] !== 'assume')
 					.reduce((obj, key) => {
 						obj[key] = point.values[key];
 						return obj;
@@ -195,9 +193,10 @@ export const renderFumanTrajectories = (
 	const xDomain = d3.extent(trajs.map((d) => d.timestep)) as [number, number];
 
 	// Find max/min across all state values
-	const yDomain = d3.extent(
-		trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()
-	) as [number, number];
+	const yDomain = d3.extent(trajs.map((d) => states.filter((s) => s === state).map((s) => d[s])).flat()) as [
+		number,
+		number
+	];
 
 	const xScale = d3
 		.scaleLinear()
@@ -301,9 +300,7 @@ export const renderFumanTrajectories = (
 	// Since this is variable-vs-time, we can't display constraints that involve more
 	// than one variable, and just the selected variable
 	if (options.constraints && options.constraints.length > 0) {
-		const singleVariableConstraints = options.constraints
-			.filter((d) => d.variable)
-			.filter((d) => d.variable === state);
+		const singleVariableConstraints = options.constraints.filter((d) => d.variable).filter((d) => d.variable === state);
 
 		svg
 			.selectAll('.constraint-box')
@@ -317,9 +314,7 @@ export const renderFumanTrajectories = (
 				const w = xScale(d.timepoints?.ub as number) - xScale(d.timepoints?.lb as number);
 				return w;
 			})
-			.attr('height', (d) =>
-				Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number))
-			)
+			.attr('height', (d) => Math.abs(yScale(d.interval?.ub as number) - yScale(d.interval?.lb as number)))
 			.style('fill', 'teal')
 			.style('fill-opacity', 0.3);
 	}
@@ -382,19 +377,9 @@ export const renderFunmanBoundaryChart = (
 		.domain([minY, maxY]) // input domain (inverted)
 		.range([height - margin, margin]); // output range (inverted)
 
-	g.selectAll('.true-box')
-		.data(trueBoxes)
-		.enter()
-		.append('rect')
-		.classed('true-box', true)
-		.attr('fill', 'teal');
+	g.selectAll('.true-box').data(trueBoxes).enter().append('rect').classed('true-box', true).attr('fill', 'teal');
 
-	g.selectAll('.false-box')
-		.data(falseBoxes)
-		.enter()
-		.append('rect')
-		.classed('false-box', true)
-		.attr('fill', 'orange');
+	g.selectAll('.false-box').data(falseBoxes).enter().append('rect').classed('false-box', true).attr('fill', 'orange');
 
 	g.selectAll<any, FunmanBoundingBox>('rect')
 		.attr('x', (d) => xScale(d.x1))

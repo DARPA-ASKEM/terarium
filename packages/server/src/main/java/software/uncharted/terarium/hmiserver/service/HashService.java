@@ -4,6 +4,7 @@ import jakarta.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 
 public class HashService {
+
 	/**
 	 * Hashes the given input using SHA-256 and returns the result as a hex string.
 	 *

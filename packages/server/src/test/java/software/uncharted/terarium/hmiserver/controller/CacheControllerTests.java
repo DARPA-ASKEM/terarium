@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.utils.MatchUtil;
 
 @ExtendWith(OutputCaptureExtension.class)
 public class CacheControllerTests extends TerariumApplicationTests {
+
 	@Autowired
 	private CacheableTestService testService;
 
@@ -27,8 +28,7 @@ public class CacheControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void afterEach() {
-		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name))
-				.clear());
+		cacheManager.getCacheNames().forEach(name -> Objects.requireNonNull(cacheManager.getCache(name)).clear());
 	}
 
 	// @Test
@@ -47,10 +47,9 @@ public class CacheControllerTests extends TerariumApplicationTests {
 	// @WithUserDetails(MockUser.ADAM)
 	public void testItCanClearAllCaches(final CapturedOutput output) throws Exception {
 		testService.cachedMethod();
-		mockMvc.perform(MockMvcRequestBuilders.delete("/cache")
-						.param("name", CacheName.EXAMPLE)
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(MockMvcRequestBuilders.delete("/cache").param("name", CacheName.EXAMPLE).with(csrf()))
+			.andExpect(status().isOk());
 		testService.cachedMethod();
 
 		Assertions.assertEquals(2L, MatchUtil.matchCount(CacheableTestService.LOG_MESSAGE, output.getOut()));

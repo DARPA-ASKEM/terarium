@@ -93,10 +93,7 @@
 					<template #body="{ data }">
 						<span v-if="data.key === ComparisonKey.GROUNDING && data.currentValue?.identifiers">
 							{{
-								getNameOfCurieCached(
-									nameOfCurieCache,
-									getCurieFromGroundingIdentifier(data.currentValue.identifiers)
-								)
+								getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.currentValue.identifiers))
 							}}
 							<a
 								v-if="data.currentValue"
@@ -133,18 +130,10 @@ import { Initial, Model, ModelParameter } from '@/types/Types';
 import { computed, ref } from 'vue';
 import { cloneDeep, groupBy, isEmpty } from 'lodash';
 import { Dictionary } from 'vue-gtag';
-import {
-	getCurieUrl,
-	parseCurie,
-	getCurieFromGroundingIdentifier,
-	getNameOfCurieCached
-} from '@/services/concept';
+import { getCurieUrl, parseCurie, getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import AutoComplete, {
-	AutoCompleteCompleteEvent,
-	AutoCompleteItemSelectEvent
-} from 'primevue/autocomplete';
+import AutoComplete, { AutoCompleteCompleteEvent, AutoCompleteItemSelectEvent } from 'primevue/autocomplete';
 import { isInitial, isModelParameter } from '@/services/model';
 
 const props = defineProps<{
@@ -270,9 +259,7 @@ const transitions = computed(() => {
 				name: t?.properties?.name ?? '--',
 				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
 				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
-				expression:
-					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
-					null,
+				expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ?? null,
 				extractions: extractions?.[t.id] ?? null
 			});
 		});
@@ -280,10 +267,7 @@ const transitions = computed(() => {
 	return results;
 });
 const otherConcepts = computed(() => {
-	const ids = [
-		...(states.value?.map((s) => s.id) ?? []),
-		...(transitions.value?.map((t) => t.id) ?? [])
-	];
+	const ids = [...(states.value?.map((s) => s.id) ?? []), ...(transitions.value?.map((t) => t.id) ?? [])];
 
 	// find keys that are not aligned
 	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
@@ -291,9 +275,7 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) =>
-				['anchored_extraction', 'anchored_entity'].includes(e.type)
-			)
+			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
 		);
 	});
 
@@ -334,8 +316,7 @@ const getDescription = (data) =>
 const getId = (data) => data.payload?.id?.id ?? data?.id;
 
 const getName = (data) =>
-	data.payload?.names?.map((n) => n?.name).join(', ') ||
-	data.payload?.mentions?.map((m) => m?.name).join(', ');
+	data.payload?.names?.map((n) => n?.name).join(', ') || data.payload?.mentions?.map((m) => m?.name).join(', ');
 
 const getConcept = (data) => data.payload?.groundings?.[0];
 
@@ -346,12 +327,8 @@ const getValue = (data) =>
 
 const updateModel = () => {
 	const nameRow = selectedAssignmentRows.value.find((row) => row.key === ComparisonKey.NAME);
-	const descriptionRow = selectedAssignmentRows.value.find(
-		(row) => row.key === ComparisonKey.DESCRIPTION
-	);
-	const groundingRow = selectedAssignmentRows.value.find(
-		(row) => row.key === ComparisonKey.GROUNDING
-	);
+	const descriptionRow = selectedAssignmentRows.value.find((row) => row.key === ComparisonKey.DESCRIPTION);
+	const groundingRow = selectedAssignmentRows.value.find((row) => row.key === ComparisonKey.GROUNDING);
 	const valueRow = selectedAssignmentRows.value.find((row) => row.key === ComparisonKey.VALUE);
 
 	const clonedModel = cloneDeep(props.model);

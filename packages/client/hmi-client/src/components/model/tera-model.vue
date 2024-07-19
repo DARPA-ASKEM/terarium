@@ -108,17 +108,11 @@ const optionsMenuItems = computed(() => [
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Model,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
@@ -128,9 +122,7 @@ const optionsMenuItems = computed(() => [
 		label: 'Download',
 		command: async () => {
 			if (model.value) {
-				const data = `text/json;charset=utf-8,${encodeURIComponent(
-					JSON.stringify(model.value, null, 2)
-				)}`;
+				const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(model.value, null, 2))}`;
 				const a = document.createElement('a');
 				a.href = `data:${data}`;
 				a.download = `${model.value.header.name ?? 'model'}.json`;
