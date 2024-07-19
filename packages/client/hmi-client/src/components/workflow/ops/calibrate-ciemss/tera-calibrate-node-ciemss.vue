@@ -28,7 +28,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import {
 	getRunResultCSV,
 	pollAction,
-	// getCalibrateBlobURL,
 	makeForecastJobCiemss,
 	getSimulation,
 	parsePyCiemssMap,
@@ -212,7 +211,7 @@ watch(
 		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
-			state.forecastId = state.inProgressCalibrationId;
+			state.forecastId = state.inProgressForecastId;
 			state.beforeForecastId = state.inProgressBeforeForecastId;
 
 			state.inProgressForecastId = '';
