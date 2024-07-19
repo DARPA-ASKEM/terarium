@@ -244,7 +244,6 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
-			name:
-				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));

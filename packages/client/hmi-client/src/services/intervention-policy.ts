@@ -6,9 +6,7 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 	return response?.data ?? null;
 };
 
-export const createInterventionPolicy = async (
-	policy: InterventionPolicy
-): Promise<InterventionPolicy> => {
+export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy> => {
 	delete policy.id;
 	const response = await API.post<InterventionPolicy>(`/interventions`, policy);
 	return response?.data ?? null;
@@ -19,9 +17,7 @@ export const deleteInterventionPolicy = async (policyId: string) => {
 	return response?.data ?? null;
 };
 
-export const updateInterventionPolicy = async (
-	policy: InterventionPolicy
-): Promise<InterventionPolicy> => {
+export const updateInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy> => {
 	const response = await API.put(`/interventions/${policy.id}`, policy);
 	return response?.data ?? null;
 };

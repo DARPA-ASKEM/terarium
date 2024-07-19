@@ -41,6 +41,5 @@ public class TimeFormatter {
 		}
 
 		return (sb.toString());
-
 	}
 }

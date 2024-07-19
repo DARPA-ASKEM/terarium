@@ -28,8 +28,7 @@ public class NotificationService {
 		return notificationGroupRepository.findAllByUserIdOrderByCreatedOnDesc(userId);
 	}
 
-	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(
-			final String userId, final Timestamp since) {
+	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
 		return notificationGroupRepository.findAllUnackedByUserReturnAllEvents(userId, since);
 	}
 
@@ -42,8 +41,7 @@ public class NotificationService {
 	}
 
 	public NotificationGroup createNotificationGroup(final NotificationGroup notificationGroup) {
-		if (notificationGroup.getUserId() == null
-				|| notificationGroup.getUserId().isEmpty()) {
+		if (notificationGroup.getUserId() == null || notificationGroup.getUserId().isEmpty()) {
 			try {
 				final User user = currentUserService.get();
 				notificationGroup.setUserId(user != null ? user.getId() : "anonymous");
@@ -55,9 +53,7 @@ public class NotificationService {
 	}
 
 	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
-
-		final NotificationGroup group =
-				notificationGroupRepository.findById(groupId).orElseThrow();
+		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
 
 		notificationEvent.setNotificationGroup(group);
 
@@ -69,8 +65,7 @@ public class NotificationService {
 	}
 
 	public void acknowledgeNotificationGroup(final UUID groupId) {
-		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(
-				groupId, Timestamp.from(Instant.now()));
+		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(groupId, Timestamp.from(Instant.now()));
 	}
 
 	public Optional<NotificationGroup> delete(final UUID id) {

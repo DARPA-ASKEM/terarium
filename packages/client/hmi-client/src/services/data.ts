@@ -17,14 +17,7 @@ import {
 	XDDSearchParams,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '@/types/XDD';
-import {
-	Facets,
-	FullSearchResults,
-	ResourceType,
-	ResultType,
-	SearchParameters,
-	SearchResults
-} from '@/types/common';
+import { Facets, FullSearchResults, ResourceType, ResultType, SearchParameters, SearchResults } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import { applyFacetFilters, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
@@ -39,10 +32,7 @@ import { getRelatedArtifacts } from './provenance';
 /**
  * fetch list of extractions data from the HMI server
  */
-const getXDDArtifacts = async (
-	term: string,
-	extractionTypes?: XDDExtractionType[]
-): Promise<Extraction[]> => {
+const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]): Promise<Extraction[]> => {
 	let url = '/document/extractions?';
 	url += `term=${term}`;
 	url += '&include_highlights=true';
@@ -249,11 +239,9 @@ const getAssets = async (params: GetAssetsParams) => {
 	}
 
 	// needed?
-	const allAssets: ResultType[] = assetList.map(
-		(a: Model | Dataset | Document | DocumentAsset) => ({
-			...a
-		})
-	);
+	const allAssets: ResultType[] = assetList.map((a: Model | Dataset | Document | DocumentAsset) => ({
+		...a
+	}));
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
@@ -475,19 +463,13 @@ const fetchData = async (
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given model)?
 			if (searchParam?.model && searchParam?.model.related_search_id) {
-				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.model.related_search_id,
-					ProvenanceType.Model
-				);
+				relatedArtifacts = await getRelatedArtifacts(searchParam?.model.related_search_id, ProvenanceType.Model);
 			}
 
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given dataset)?
 			if (searchParam?.dataset && searchParam?.dataset.related_search_id) {
-				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.dataset.related_search_id,
-					ProvenanceType.Dataset
-				);
+				relatedArtifacts = await getRelatedArtifacts(searchParam?.dataset.related_search_id, ProvenanceType.Dataset);
 			}
 
 			// parse retrieved related artifacts and make them ready for consumption by the explorer
@@ -539,9 +521,7 @@ const fetchData = async (
 				}
 			});
 		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(
-				fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters)
-			);
+			promiseList.push(fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters));
 		}
 	}
 

@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class Role {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
@@ -19,9 +20,7 @@ public class Role {
 	@Column(length = 512)
 	private String description;
 
-	@OneToMany(
-			fetch = FetchType.EAGER,
-			cascade = {CascadeType.ALL})
+	@OneToMany(fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
 	@JoinColumn(name = "ROLE_ID")
 	private Set<AuthorityInstance> authorities = new HashSet<>();
 

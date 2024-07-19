@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelExpression extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -6041380799225625469L;
 

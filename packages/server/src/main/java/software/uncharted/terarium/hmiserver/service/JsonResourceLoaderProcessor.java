@@ -40,21 +40,17 @@ public class JsonResourceLoaderProcessor implements ResourceLoaderAware, BeanPos
 					if (resources.length == 0) {
 						setField(fieldValue, field, bean);
 					} else if (resources.length == 1) {
-						final String resourceString =
-								loadResourceToString(resources[0].getURI().toString());
+						final String resourceString = loadResourceToString(resources[0].getURI().toString());
 						fieldValue = mapper.readValue(resourceString, field.getType());
 						setField(fieldValue, field, bean);
 					} else {
-						final Object deserializedResources =
-								Array.newInstance(field.getType().getComponentType(), resources.length);
+						final Object deserializedResources = Array.newInstance(
+							field.getType().getComponentType(),
+							resources.length
+						);
 						for (int i = 0; i < resources.length; i++) {
-							final String resourceString =
-									loadResourceToString(resources[i].getURI().toString());
-							Array.set(
-									deserializedResources,
-									i,
-									mapper.readValue(
-											resourceString, field.getType().getComponentType()));
+							final String resourceString = loadResourceToString(resources[i].getURI().toString());
+							Array.set(deserializedResources, i, mapper.readValue(resourceString, field.getType().getComponentType()));
 						}
 						setField(deserializedResources, field, bean);
 					}
@@ -67,8 +63,7 @@ public class JsonResourceLoaderProcessor implements ResourceLoaderAware, BeanPos
 		return bean;
 	}
 
-	private static void setField(final Object value, final Field field, final Object bean)
-			throws IllegalAccessException {
+	private static void setField(final Object value, final Field field, final Object bean) throws IllegalAccessException {
 		if (!field.canAccess(bean)) {
 			field.setAccessible(true);
 			field.set(bean, value);

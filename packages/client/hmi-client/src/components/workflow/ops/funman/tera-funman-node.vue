@@ -18,10 +18,7 @@ import { watch, computed, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
-import {
-	FunmanOperationState,
-	FunmanOperation
-} from '@/components/workflow/ops/funman/funman-operation';
+import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction } from '@/services/models/simulation-service';

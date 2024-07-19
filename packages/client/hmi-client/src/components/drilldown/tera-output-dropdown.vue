@@ -26,9 +26,7 @@
 				<span class="dropdown-option-group">
 					{{ getElapsedTimeText(slotProps.option?.timestamp) }}
 				</span>
-				<span
-					v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED"
-					class="connection-indicator"
+				<span v-if="slotProps.option?.status === WorkflowPortStatus.CONNECTED" class="connection-indicator"
 					><i class="pi pi-link" />Connected</span
 				>
 			</div>

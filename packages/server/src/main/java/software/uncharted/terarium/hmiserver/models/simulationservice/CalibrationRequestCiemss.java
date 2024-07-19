@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @TSModel
 // Used to kick off a calibration job in simulation-service
 public class CalibrationRequestCiemss implements Serializable {
+
 	@JsonAlias("model_config_id")
 	private UUID modelConfigId;
 

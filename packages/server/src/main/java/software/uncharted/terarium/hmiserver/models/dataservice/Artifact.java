@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @TSModel
 @Entity
 public class Artifact extends TerariumAsset {
+
 	@Serial
 	private static final long serialVersionUID = -1122602270904707476L;
 

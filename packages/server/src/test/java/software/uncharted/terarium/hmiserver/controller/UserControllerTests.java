@@ -16,9 +16,7 @@ public class UserControllerTests extends TerariumApplicationTests {
 	}
 
 	@Test
-	@WithMockUser(
-			username = "ursula",
-			authorities = {Roles.USER})
+	@WithMockUser(username = "ursula", authorities = { Roles.USER })
 	public void testItReturnsOkOnAuthorized() throws Exception {
 		mockMvc.perform(MockMvcRequestBuilders.get("/user/me")).andExpect(status().isOk());
 	}

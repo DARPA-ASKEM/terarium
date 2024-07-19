@@ -1,10 +1,6 @@
 export const translate = (x: number, y: number): string => `translate(${x}, ${y})`;
 
-export const pointOnPath = (
-	pathNode: SVGPathElement,
-	offsetType: string,
-	offsetValue: number
-): DOMPoint => {
+export const pointOnPath = (pathNode: SVGPathElement, offsetType: string, offsetValue: number): DOMPoint => {
 	let pos = 0;
 	const total = pathNode.getTotalLength();
 	if (offsetType === 'percentage') {

@@ -9,13 +9,7 @@
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
-					<Button
-						:style="{ marginRight: 'auto' }"
-						label="Run"
-						icon="pi pi-play"
-						@click="run"
-						:disabled="showSpinner"
-					/>
+					<Button :style="{ marginRight: 'auto' }" label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
 				</template>
 				<div class="form-section">
 					<h4>Set simulation parameters</h4>
@@ -171,9 +165,7 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));

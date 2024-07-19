@@ -22,7 +22,6 @@ public enum AuthorityLevel {
 	public static AuthorityLevel get(String level) {
 		try {
 			return valueOf(level);
-
 		} catch (IllegalArgumentException e) {
 			log.error("AuthorityLevel {} not found", level);
 			return null;

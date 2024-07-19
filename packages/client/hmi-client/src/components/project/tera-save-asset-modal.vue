@@ -13,23 +13,12 @@
 			<template #default>
 				<form @submit.prevent>
 					<label for="new-name">What would you like to call it?</label>
-					<InputText
-						id="new-name"
-						type="text"
-						v-model="newName"
-						placeholder="Enter a unique name"
-					/>
+					<InputText id="new-name" type="text" v-model="newName" placeholder="Enter a unique name" />
 				</form>
 			</template>
 			<template #footer>
 				<Button label="Save" size="large" @click="save" />
-				<Button
-					label="Close"
-					class="p-button-secondary"
-					size="large"
-					outlined
-					@click="closeModal"
-				/>
+				<Button label="Close" class="p-button-secondary" size="large" outlined @click="closeModal" />
 			</template>
 		</tera-modal>
 	</Teleport>

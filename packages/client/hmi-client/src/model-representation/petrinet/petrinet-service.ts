@@ -3,11 +3,7 @@ import { Model } from '@/types/Types';
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
-const replaceValuesInExpression = (
-	expression: string,
-	wordToReplace: string,
-	replaceWord: string
-): string => {
+const replaceValuesInExpression = (expression: string, wordToReplace: string, replaceWord: string): string => {
 	let expressionBuilder = '';
 	let isOperator = false;
 	let content = '';
@@ -39,11 +35,7 @@ const replaceValuesInExpression = (
 };
 
 // function to replace the content inside the tags of a mathml expression
-const replaceValuesInMathML = (
-	mathmlExpression: string,
-	wordToReplace: string,
-	replaceWord: string
-): string => {
+const replaceValuesInMathML = (mathmlExpression: string, wordToReplace: string, replaceWord: string): string => {
 	let expressionBuilder = '';
 	let isTag = false;
 	let content = '';
