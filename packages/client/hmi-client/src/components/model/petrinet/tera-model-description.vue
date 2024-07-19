@@ -39,12 +39,6 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-		<tera-model-semantic-tables
-			:model="model"
-			@update-model="(updatedModel: Model) => emit('update-model', updatedModel)"
-			class="mt-0"
-			:readonly="featureConfig?.isPreview"
-		/>
 	</section>
 </template>
 
@@ -62,7 +56,6 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import { isDataset, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 
 const props = defineProps<{
 	model: Model;
