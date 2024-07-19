@@ -97,26 +97,27 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model descriptions")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model descriptions found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelDescription.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving descriptions from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model descriptions found.",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
+					)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving descriptions from the data store",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<List<ModelDescription>> listModels(
-			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
-
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
+	) {
 		try {
 			return ResponseEntity.ok(modelService.getDescriptions(page, pageSize));
 		} catch (final IOException e) {
@@ -130,32 +131,35 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model description by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model description found.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = ModelDescription.class))),
-				@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the description from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model description found.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelDescription.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "There was no description found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the description from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<ModelDescription> getDescription(
-			@PathVariable("id") final UUID id, @RequestParam("project-id") final UUID projectId) {
-
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestParam("project-id") final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id, permission);
-			return model.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to get model description";
 			log.error(error, e);
@@ -167,37 +171,39 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model found.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Model.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the model from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model found.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the model from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<Model> getModel(
-			@PathVariable("id") final UUID id,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-				currentUserService.get().getId(), projectId);
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
-
 			// Fetch the model from the data-service
 			final Optional<Model> model = modelService.getAsset(id, permission);
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
 			// GETs not associated to a projectId cannot read private or temporary assets
-			if (permission.equals(Schema.Permission.NONE)
-					&& (!model.get().getPublicAsset() || model.get().getTemporary())) {
+			if (permission.equals(Schema.Permission.NONE) && (!model.get().getPublicAsset() || model.get().getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
@@ -220,14 +226,18 @@ public class ModelController {
 				documentIds.forEach(documentId -> {
 					try {
 						// Fetch the Document extractions
-						final Optional<DocumentAsset> document =
-								documentAssetService.getAsset(UUID.fromString(documentId), permission);
+						final Optional<DocumentAsset> document = documentAssetService.getAsset(
+							UUID.fromString(documentId),
+							permission
+						);
 						if (document.isPresent()) {
 							if (document.get().getMetadata() == null) {
 								document.get().setMetadata(new HashMap<>());
 							}
 							final List<JsonNode> extractions = objectMapper.convertValue(
-									document.get().getMetadata().get("attributes"), new TypeReference<>() {});
+								document.get().getMetadata().get("attributes"),
+								new TypeReference<>() {}
+							);
 
 							// Append the Document extractions to the Model extractions, just for the
 							// front-end.
@@ -235,9 +245,7 @@ public class ModelController {
 							if (extractions != null) {
 								model.get().getMetadata().getAttributes().addAll(extractions);
 							} else {
-								log.error(
-										"No attributes added to Model as DocumentAsset ({}) has no attributes.",
-										documentId);
+								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
 							}
 						}
 					} catch (final Exception e) {
@@ -261,52 +269,52 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Search models with a query")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Models found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = Model.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving models from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Models found.",
+				content = @Content(
+					array = @ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class))
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving models from the data store",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<List<Model>> searchModels(
-			@RequestBody final JsonNode queryJson,
-			@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page) {
-
+		@RequestBody final JsonNode queryJson,
+		@RequestParam(name = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0", required = false) final Integer page
+	) {
 		try {
-
 			Query query = null;
 			if (queryJson != null) {
 				// if query is provided deserialize it, append the soft delete filter
 				final byte[] bytes = objectMapper.writeValueAsString(queryJson).getBytes();
 				query = new Query.Builder()
-						.bool(b -> b.must(new Query.Builder()
-										.withJson(new ByteArrayInputStream(bytes))
-										.build())
-								.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-						.build();
+					.bool(b ->
+						b
+							.must(new Query.Builder().withJson(new ByteArrayInputStream(bytes)).build())
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+					)
+					.build();
 			} else {
 				query = new Query.Builder()
-						.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-								.mustNot(mn -> mn.term(t -> t.field("temporary").value(true))))
-						.build();
+					.bool(b ->
+						b
+							.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
+							.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
+					)
+					.build();
 			}
 
 			final SourceConfig source = new SourceConfig.Builder()
-					.filter(new SourceFilter.Builder()
-							.excludes("model", "semantics")
-							.build())
-					.build();
+				.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
+				.build();
 
 			return ResponseEntity.ok(modelService.searchAssets(page, pageSize, query, source));
 		} catch (final IOException e) {
@@ -320,31 +328,30 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model updated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Model.class))),
-				@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the model",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model updated.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "Model could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the model", content = @Content)
+		}
+	)
 	ResponseEntity<Model> updateModel(
-			@PathVariable("id") final UUID id,
-			@RequestBody final Model model,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestBody final Model model,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
-
 			final Optional<Model> originalModel = modelService.getAsset(id, permission);
 			if (originalModel.isEmpty()) {
 				return ResponseEntity.notFound().build();
@@ -372,24 +379,28 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an model")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Deleted model",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ResponseDeleted.class))
-						}),
-				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Deleted model",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
+					)
+				}
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+		}
+	)
 	ResponseEntity<ResponseDeleted> deleteModel(
-			@PathVariable("id") final UUID id,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			modelService.deleteAsset(id, projectId, permission);
@@ -405,25 +416,26 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Model created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Model.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the model",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Model created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Model.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue creating the model", content = @Content)
+		}
+	)
 	ResponseEntity<Model> createModel(
-			@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@RequestBody final Model model,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			// Set the model name from the AMR header name.
@@ -433,8 +445,11 @@ public class ModelController {
 			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
-			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(created, null, null);
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				created,
+				null,
+				null
+			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -449,34 +464,37 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model configurations for a model")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model configurations found",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfiguration.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving configurations from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model configurations found",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)
+					)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving configurations from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<List<ModelConfiguration>> getModelConfigurationsForModelId(
-			@PathVariable("id") final UUID id,
-			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@PathVariable("id") final UUID id,
+		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		try {
 			final List<ModelConfiguration> modelConfigurations =
-					modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
-							id, PageRequest.of(page, pageSize));
+				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(modelConfigurations);
 		} catch (final Exception e) {
@@ -490,32 +508,32 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all intervention policies for a model")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Interventions policies found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = InterventionPolicy.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving policies from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Interventions policies found.",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = InterventionPolicy.class)
+					)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving policies from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<List<InterventionPolicy>> getInterventionsForModelId(
-			@PathVariable("id") final UUID id,
-			@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
-			@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-
+		@PathVariable("id") final UUID id,
+		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		try {
 			final List<InterventionPolicy> interventionPolicies =
-					interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(
-							id, PageRequest.of(page, pageSize));
+				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
 
 			return ResponseEntity.ok(interventionPolicies);
 		} catch (final Exception e) {
@@ -529,27 +547,33 @@ public class ModelController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Formats a model configuration from an AMR")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Model configurations found.",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = ModelConfiguration.class)))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving configurations from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Model configurations found.",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelConfiguration.class)
+					)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving configurations from the data store",
+				content = @Content
+			)
+		}
+	)
 	static ResponseEntity<ModelConfiguration> modelConfigurationFromAmr(
-			@RequestBody final Model model, @RequestParam(name = "project-id", required = false) final UUID projectId) {
+		@RequestBody final Model model,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		try {
-			final ModelConfiguration modelConfiguration =
-					ModelConfigurationService.modelConfigurationFromAMR(model, model.getName(), model.getDescription());
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				model,
+				model.getName(),
+				model.getDescription()
+			);
 			return ResponseEntity.ok(modelConfiguration);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";

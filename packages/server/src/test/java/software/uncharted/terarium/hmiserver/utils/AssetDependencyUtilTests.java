@@ -18,7 +18,6 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetGetAssetDependencies() throws Exception {
-
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();
 		final UUID c = UUID.randomUUID();
@@ -29,25 +28,25 @@ public class AssetDependencyUtilTests {
 		assetIds.add(c);
 
 		final JsonNode node = objectMapper.readTree(
-				"""
-					{
-						"values": {
-							"a": "%s",
-							"b": "%s",
-							"c": "%s"
-						},
-						"keys": {
-							"%s": "a",
-							"%s": "b",
-							"%s": "c"
-						},
-						"array": [
-							"%s",
-							"%s",
-							"%s"
-						]
-				}"""
-						.formatted(a, b, c, a, b, c, a, b, c));
+			"""
+				{
+					"values": {
+						"a": "%s",
+						"b": "%s",
+						"c": "%s"
+					},
+					"keys": {
+						"%s": "a",
+						"%s": "b",
+						"%s": "c"
+					},
+					"array": [
+						"%s",
+						"%s",
+						"%s"
+					]
+			}""".formatted(a, b, c, a, b, c, a, b, c)
+		);
 
 		final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(assetIds, node);
 
@@ -64,26 +63,25 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetSwapAssetIdsSimple() throws Exception {
-
 		final String format =
-				"""
-					{
-						"values": {
-							"a": "%s",
-							"b": "%s",
-							"c": "%s"
-						},
-						"keys": {
-							"%s": "a",
-							"%s": "b",
-							"%s": "c"
-						},
-						"array": [
-							"%s",
-							"%s",
-							"%s"
-						]
-				}""";
+			"""
+				{
+					"values": {
+						"a": "%s",
+						"b": "%s",
+						"c": "%s"
+					},
+					"keys": {
+						"%s": "a",
+						"%s": "b",
+						"%s": "c"
+					},
+					"array": [
+						"%s",
+						"%s",
+						"%s"
+					]
+			}""";
 
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();
@@ -131,48 +129,47 @@ public class AssetDependencyUtilTests {
 
 	@Test
 	public void testAssetSwapAssetIdsComplicated() throws Exception {
-
 		final String format =
-				"""
-					{
-						"values": {
-							"nested": [
-								{
-									"deep": "%s"
-								},
-								"%s"
-							],
-							"some": {
-								"other": {
-									"value": "%s"
-								}
-							}
-						},
-						"keys": {
-							"nested": {
-								"array": [
-									{
-										"%s": "a"
-									},
-									{
-										"%s": "b"
-									}
-								]
+			"""
+				{
+					"values": {
+						"nested": [
+							{
+								"deep": "%s"
 							},
-							"%s": "c"
-						},
-						"array": [
-							[
-								"%s",
-								[
-									"%s"
-								]
-							],
-							[
-								[ 0, 2, ["%s"]]
+							"%s"
+						],
+						"some": {
+							"other": {
+								"value": "%s"
+							}
+						}
+					},
+					"keys": {
+						"nested": {
+							"array": [
+								{
+									"%s": "a"
+								},
+								{
+									"%s": "b"
+								}
 							]
+						},
+						"%s": "c"
+					},
+					"array": [
+						[
+							"%s",
+							[
+								"%s"
+							]
+						],
+						[
+							[ 0, 2, ["%s"]]
 						]
-				}""";
+					]
+			}""";
 
 		final UUID a = UUID.randomUUID();
 		final UUID b = UUID.randomUUID();

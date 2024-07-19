@@ -60,21 +60,12 @@
 			>
 				<template #header>
 					<!-- column summary charts below -->
-					<div
-						v-if="!previewMode && props.rawContent?.stats && showSummaries"
-						class="column-summary"
-					>
+					<div v-if="!previewMode && props.rawContent?.stats && showSummaries" class="column-summary">
 						<div class="column-summary-row">
 							<span class="column-summary-label">Max:</span>
 							<span class="column-summary-value">{{ csvMaxsToDisplay?.at(index) }}</span>
 						</div>
-						<Chart
-							class="histogram"
-							type="bar"
-							:height="480"
-							:data="chartData?.at(index)"
-							:options="chartOptions"
-						/>
+						<Chart class="histogram" type="bar" :height="480" :data="chartData?.at(index)" :options="chartOptions" />
 						<div class="column-summary-row max">
 							<span class="column-summary-label">Min:</span>
 							<span class="column-summary-value">{{ csvMinsToDisplay?.at(index) }}</span>
@@ -125,9 +116,7 @@ const showSummaries = ref(true);
 
 const csvContent: ComputedRef<string[][] | undefined> = computed(() => props.rawContent?.csv);
 const csvHeaders = computed(() => props.rawContent?.headers);
-const chartData = computed(() =>
-	props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins))
-);
+const chartData = computed(() => props.rawContent?.stats?.map((stat) => setBarChartData(stat.bins)));
 
 const selectedColumns = ref(csvHeaders?.value);
 
@@ -137,15 +126,11 @@ const csvMinsToDisplay = computed(() =>
 const csvMaxsToDisplay = computed(() =>
 	props.rawContent?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
 );
-const csvMeansToDisplay = computed(() =>
-	props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
-);
+const csvMeansToDisplay = computed(() => props.rawContent?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000));
 const csvMedianToDisplay = computed(() =>
 	props.rawContent?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
 );
-const csvSdToDisplay = computed(() =>
-	props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
-);
+const csvSdToDisplay = computed(() => props.rawContent?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000));
 const chartOptions = computed(() => setChartOptions());
 
 // Given the bins for a column set up the object needed for the chart.
@@ -158,18 +143,7 @@ const setBarChartData = (bins: any[]) => {
 		dummyLabels.push(i.toString());
 	}
 	return {
-		labels: [
-			'Bin 1',
-			'Bin 2',
-			'Bin 3',
-			'Bin 4',
-			'Bin 5',
-			'Bin 6',
-			'Bin 7',
-			'Bin 8',
-			'Bin 9',
-			'Bin 10'
-		].reverse(),
+		labels: ['Bin 1', 'Bin 2', 'Bin 3', 'Bin 4', 'Bin 5', 'Bin 6', 'Bin 7', 'Bin 8', 'Bin 9', 'Bin 10'].reverse(),
 		datasets: [
 			{
 				label: 'Count',

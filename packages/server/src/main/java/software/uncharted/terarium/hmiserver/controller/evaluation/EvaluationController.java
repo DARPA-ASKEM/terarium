@@ -54,12 +54,16 @@ public class EvaluationController {
 	@GetMapping("/scenarios")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EvaluationScenarioSummary>> getScenarios() {
-
 		final Map<String, Map<String, EvaluationScenarioSummary>> usernameToScenarioNameToSummary = new HashMap<>();
 
 		// Find the first event for each summary
 		final List<Event> events = eventService.findEvents(
-				EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
+			EventType.EVALUATION_SCENARIO,
+			null,
+			currentUserService.get().getId(),
+			null,
+			1000
+		);
 		events.forEach(event -> {
 			try {
 				final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
@@ -67,21 +71,22 @@ public class EvaluationController {
 				final String scenarioName = value.at("/name").asText();
 				final Long timestampMillis = event.getTimestampMillis();
 				final Map<String, EvaluationScenarioSummary> scenarioNameToSummary =
-						usernameToScenarioNameToSummary.getOrDefault(userId, new HashMap<>());
+					usernameToScenarioNameToSummary.getOrDefault(userId, new HashMap<>());
 				final EvaluationScenarioSummary summary = scenarioNameToSummary.getOrDefault(scenarioName, null);
 
 				// If this event is earlier than the current one, store it
 				if (summary == null || summary.getTimestampMillis() < timestampMillis) {
 					scenarioNameToSummary.put(
-							scenarioName,
-							new EvaluationScenarioSummary()
-									.setName(scenarioName)
-									.setTask(value.at("/task").asText())
-									.setDescription(value.at("/description").asText())
-									.setNotes(value.at("/notes").asText())
-									.setMultipleUsers(value.at("/multipleUsers").asBoolean())
-									.setTimestampMillis(timestampMillis)
-									.setUserId(userId));
+						scenarioName,
+						new EvaluationScenarioSummary()
+							.setName(scenarioName)
+							.setTask(value.at("/task").asText())
+							.setDescription(value.at("/description").asText())
+							.setNotes(value.at("/notes").asText())
+							.setMultipleUsers(value.at("/multipleUsers").asBoolean())
+							.setTimestampMillis(timestampMillis)
+							.setUserId(userId)
+					);
 				}
 				usernameToScenarioNameToSummary.put(userId, scenarioNameToSummary);
 			} catch (final JsonProcessingException e) {
@@ -107,19 +112,25 @@ public class EvaluationController {
 	@Secured(Roles.USER)
 	public ResponseEntity<String> getStatus(@RequestParam("name") final String name) {
 		final List<Event> events = eventService.findEvents(
-				EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
-		final Event latestEvent = events.stream()
-				.filter(event -> {
-					try {
-						final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
-						return value.at("/name").asText().equals(name);
-					} catch (final JsonProcessingException e) {
-						log.error("Error parsing event value", e);
-					}
-					return false;
-				})
-				.findFirst()
-				.orElse(null);
+			EventType.EVALUATION_SCENARIO,
+			null,
+			currentUserService.get().getId(),
+			null,
+			1000
+		);
+		final Event latestEvent = events
+			.stream()
+			.filter(event -> {
+				try {
+					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
+					return value.at("/name").asText().equals(name);
+				} catch (final JsonProcessingException e) {
+					log.error("Error parsing event value", e);
+				}
+				return false;
+			})
+			.findFirst()
+			.orElse(null);
 
 		if (latestEvent != null) {
 			try {
@@ -136,22 +147,27 @@ public class EvaluationController {
 	@Secured(Roles.USER)
 	public ResponseEntity<Long> getRuntime(@RequestParam("name") final String name) {
 		final List<Event> events = eventService.findEvents(
-				EventType.EVALUATION_SCENARIO, null, currentUserService.get().getId(), null, 1000);
-		final List<Event> scenarioEvents = events.stream()
-				.filter(event -> {
-					try {
-						final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
-						return value.at("/name").asText().equals(name);
-					} catch (final JsonProcessingException e) {
-						log.error("Error parsing event value", e);
-					}
-					return false;
-				})
-				.toList();
+			EventType.EVALUATION_SCENARIO,
+			null,
+			currentUserService.get().getId(),
+			null,
+			1000
+		);
+		final List<Event> scenarioEvents = events
+			.stream()
+			.filter(event -> {
+				try {
+					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
+					return value.at("/name").asText().equals(name);
+				} catch (final JsonProcessingException e) {
+					log.error("Error parsing event value", e);
+				}
+				return false;
+			})
+			.toList();
 
 		if (scenarioEvents.size() == 1) {
-			return ResponseEntity.ok(
-					Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis());
+			return ResponseEntity.ok(Instant.now().toEpochMilli() - scenarioEvents.get(0).getTimestampMillis());
 		}
 
 		long runtime = 0L;
@@ -161,8 +177,9 @@ public class EvaluationController {
 
 			try {
 				final JsonNode currentValue = mapper.readValue(currentEvent.getValue(), JsonNode.class);
-				if (currentValue.at("/action").asText().equals("started")
-						|| currentValue.at("/action").asText().equals("resumed")) {
+				if (
+					currentValue.at("/action").asText().equals("started") || currentValue.at("/action").asText().equals("resumed")
+				) {
 					runtime += nextEvent.getTimestampMillis() - currentEvent.getTimestampMillis();
 				}
 			} catch (final JsonProcessingException e) {
@@ -175,31 +192,33 @@ public class EvaluationController {
 	@GetMapping("/download")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> getCSV(
-			@RequestParam("userId") final String userId, @RequestParam("name") final String name) throws IOException {
-
+		@RequestParam("userId") final String userId,
+		@RequestParam("name") final String name
+	) throws IOException {
 		final List<Event> events = eventService.findAllByUserId(userId);
 
 		// Find the list of timeranges for the scenario
-		final List<Event> scenarioEvents = events.stream()
-				.filter(event -> event.getType() == EventType.EVALUATION_SCENARIO)
-				.filter(event -> {
-					try {
-						final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
-						return value.at("/name").asText().equals(name);
-					} catch (final JsonProcessingException e) {
-						log.error("Error parsing event value", e);
-					}
-					return false;
-				})
-				.toList();
+		final List<Event> scenarioEvents = events
+			.stream()
+			.filter(event -> event.getType() == EventType.EVALUATION_SCENARIO)
+			.filter(event -> {
+				try {
+					final JsonNode value = mapper.readValue(event.getValue(), JsonNode.class);
+					return value.at("/name").asText().equals(name);
+				} catch (final JsonProcessingException e) {
+					log.error("Error parsing event value", e);
+				}
+				return false;
+			})
+			.toList();
 		final List<Range> ranges = getRangesForScenario(scenarioEvents);
 
-		final List<Event> filteredEvents = events.stream()
-				.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
-				.toList();
+		final List<Event> filteredEvents = events
+			.stream()
+			.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
+			.toList();
 
-		final List<String> headers =
-				new ArrayList<>(Arrays.asList("timestamp", "projectId", "userId", "type", "value"));
+		final List<String> headers = new ArrayList<>(Arrays.asList("timestamp", "projectId", "userId", "type", "value"));
 
 		// Iterate through the events and calculate the top level field access for the
 		// value type in jackson format
@@ -220,49 +239,44 @@ public class EvaluationController {
 		headers.addAll(topLevelFields);
 
 		final StringWriter sw = new StringWriter();
-		final CSVFormat csvFormat = CSVFormat.DEFAULT
-				.builder()
-				.setHeader(headers.toArray(new String[0]))
-				.build();
+		final CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
 
 		// Write the CSV, filtering out events that occurred outside of the scenario
 		// runtime
 		try (final CSVPrinter printer = new CSVPrinter(sw, csvFormat)) {
-			events.stream()
-					.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
-					.forEach(event -> {
-						try {
-							final List<String> values = new ArrayList<>();
-							values.add(event.getTimestampMillis().toString());
-							values.add(
-									event.getProjectId() != null
-											? event.getProjectId().toString()
-											: "");
-							values.add(event.getUserId());
-							values.add(event.getType().toString());
-							values.add(event.getValue());
+			events
+				.stream()
+				.filter(event -> ranges.stream().anyMatch(r -> r.inRange(event.getTimestampMillis())))
+				.forEach(event -> {
+					try {
+						final List<String> values = new ArrayList<>();
+						values.add(event.getTimestampMillis().toString());
+						values.add(event.getProjectId() != null ? event.getProjectId().toString() : "");
+						values.add(event.getUserId());
+						values.add(event.getType().toString());
+						values.add(event.getValue());
 
-							try {
-								final JsonNode valueNode = mapper.readTree(event.getValue());
-								for (int i = 5; i < headers.size(); i++) {
-									final String header = headers.get(i);
-									final JsonNode node = valueNode.at(header);
-									if (node.isMissingNode()) {
-										values.add("");
-									} else {
-										values.add(node.asText());
-									}
-								}
-							} catch (final Exception ignored) {
-								for (int i = 5; i < headers.size(); i++) {
+						try {
+							final JsonNode valueNode = mapper.readTree(event.getValue());
+							for (int i = 5; i < headers.size(); i++) {
+								final String header = headers.get(i);
+								final JsonNode node = valueNode.at(header);
+								if (node.isMissingNode()) {
 									values.add("");
+								} else {
+									values.add(node.asText());
 								}
 							}
-							printer.printRecord(values);
-						} catch (final IOException e) {
-							log.error("Error writing event to CSV", e);
+						} catch (final Exception ignored) {
+							for (int i = 5; i < headers.size(); i++) {
+								values.add("");
+							}
 						}
-					});
+						printer.printRecord(values);
+					} catch (final IOException e) {
+						log.error("Error writing event to CSV", e);
+					}
+				});
 		}
 		return ResponseEntity.ok(sw.toString());
 	}
@@ -271,6 +285,7 @@ public class EvaluationController {
 	@NoArgsConstructor
 	@Data
 	private static class Range {
+
 		private long start;
 		private long end;
 
@@ -295,9 +310,7 @@ public class EvaluationController {
 			try {
 				final JsonNode currentValue = mapper.readValue(currentEvent.getValue(), JsonNode.class);
 				if (currentValue.at("/action").asText().equals(EvaluationScenarioStatus.STARTED.toString())) {
-					ranges.add(new Range()
-							.setStart(currentEvent.getTimestampMillis())
-							.setEnd(nextEvent.getTimestampMillis()));
+					ranges.add(new Range().setStart(currentEvent.getTimestampMillis()).setEnd(nextEvent.getTimestampMillis()));
 				}
 			} catch (final JsonProcessingException e) {
 				log.error("Error parsing event value", e);

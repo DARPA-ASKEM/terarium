@@ -1,16 +1,8 @@
 import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
-import {
-	ServerConnection,
-	KernelManager,
-	KernelSpecManager,
-	SessionManager
-} from '@jupyterlab/services';
+import { ServerConnection, KernelManager, KernelSpecManager, SessionManager } from '@jupyterlab/services';
 import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
-import {
-	standardRendererFactories as initialFactories,
-	RenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';

@@ -85,11 +85,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
 import { ExtractionAssetType } from '@/types/Types';
 import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
-import {
-	downloadDocumentAsset,
-	getDocumentAsset,
-	getDocumentFileAsText
-} from '@/services/document-assets';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import Image from 'primevue/image';

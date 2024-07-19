@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.service.data.FrameworkService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 public class FrameworkControllerTests extends TerariumApplicationTests {
+
 	@Autowired
 	private ObjectMapper objectMapper;
 
@@ -32,69 +33,68 @@ public class FrameworkControllerTests extends TerariumApplicationTests {
 
 	@BeforeEach
 	public void setup() throws IOException {
-
-		project = projectService.createProject((Project)
-				new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description"));
+		project = projectService.createProject(
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
+		);
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateFramework() throws Exception {
-
 		final ModelFramework framework = new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics");
+			.setName("test-framework")
+			.setVersion("0.1.2")
+			.setSemantics("test-semantics");
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/models/frameworks")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(framework)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/models/frameworks")
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(framework))
+			)
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateFramework() throws Exception {
+		final ModelFramework framework = frameworkService.createFramework(
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
+		);
 
-		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics"));
-
-		mockMvc.perform(MockMvcRequestBuilders.put("/models/frameworks/" + framework.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(framework)))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.put("/models/frameworks/" + framework.getId())
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(framework))
+			)
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetFramework() throws Exception {
+		final ModelFramework framework = frameworkService.createFramework(
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
+		);
 
-		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics"));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(MockMvcRequestBuilders.get("/models/frameworks/" + framework.getId()).with(csrf()))
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteFramework() throws Exception {
+		final ModelFramework framework = frameworkService.createFramework(
+			new ModelFramework().setName("test-framework").setVersion("0.1.2").setSemantics("test-semantics")
+		);
 
-		final ModelFramework framework = frameworkService.createFramework(new ModelFramework()
-				.setName("test-framework")
-				.setVersion("0.1.2")
-				.setSemantics("test-semantics"));
-
-		mockMvc.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(MockMvcRequestBuilders.delete("/models/frameworks/" + framework.getId()).with(csrf()))
+			.andExpect(status().isOk());
 
 		Assertions.assertTrue(frameworkService.getFramework(framework.getId()).isEmpty());
 	}

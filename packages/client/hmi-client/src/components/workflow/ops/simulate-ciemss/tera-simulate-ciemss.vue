@@ -20,21 +20,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
-							<InputNumber
-								id="2"
-								v-model="timespan.start"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
+							<InputNumber id="2" v-model="timespan.start" inputId="integeronly" @update:model-value="updateState" />
 						</div>
 						<div class="label-and-input">
 							<label for="3">End time</label>
-							<InputNumber
-								id="3"
-								v-model="timespan.end"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
+							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
 						</div>
 					</div>
 
@@ -52,17 +42,10 @@
 						</div>
 						<div class="label-and-input">
 							<label for="5">Method</label>
-							<Dropdown
-								id="5"
-								v-model="method"
-								:options="ciemssMethodOptions"
-								@update:model-value="updateState"
-							/>
+							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
 						</div>
 					</div>
-					<div v-if="inferredParameters">
-						Using inferred parameters from calibration: {{ inferredParameters[0] }}
-					</div>
+					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -128,10 +111,7 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[index]"
-							/>
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
 
 						<Button
@@ -173,7 +153,8 @@ import {
 	getRunResultCSV,
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
-	convertToCsvAsset
+	convertToCsvAsset,
+	DataArray
 } from '@/services/models/simulation-service';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
@@ -261,9 +242,9 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const rawContent = ref<{ [runId: string]: CsvAsset }>({});
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -281,9 +262,7 @@ const outputs = computed(() => {
 	return [];
 });
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
 const outputPanel = ref(null);
@@ -407,11 +386,9 @@ const buildJupyterContext = async () => {
 				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			kernelManager
-				.sendMessage('get_simulate_request', {})
-				.register('any_get_simulate_reply', (data) => {
-					codeText.value = data.msg.content.return;
-				});
+			kernelManager.sendMessage('get_simulate_request', {}).register('any_get_simulate_reply', (data) => {
+				codeText.value = data.msg.content.return;
+			});
 		}
 	} catch (error) {
 		logger.error(`Error initializing Jupyter session: ${error}`);

@@ -18,6 +18,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 @Accessors(chain = true)
 @TSModel
 public class Transition extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -7703055318779858671L;
 
@@ -26,6 +27,15 @@ public class Transition extends SupportAdditionalProperties implements Serializa
 	private List<String> input;
 
 	private List<String> output;
+
+	@TSOptional
+	private String name;
+
+	@TSOptional
+	private String description;
+
+	@TSOptional
+	private String expression;
 
 	@TSOptional
 	private ModelGrounding grounding;

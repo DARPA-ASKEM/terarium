@@ -39,11 +39,10 @@ public class ConfigurationController {
 
 	@GetMapping("/keycloak")
 	ResponseEntity<KeycloakJsConfiguration> getKeycloak() {
-
 		KeycloakJsConfiguration keycloakJsConfiguration = new KeycloakJsConfiguration()
-				.setUrl(config.getKeycloak().getUrl())
-				.setRealm(config.getKeycloak().getRealm())
-				.setClientId(config.getKeycloak().getClientId());
+			.setUrl(config.getKeycloak().getUrl())
+			.setRealm(config.getKeycloak().getRealm())
+			.setClientId(config.getKeycloak().getClientId());
 
 		return ResponseEntity.ok(keycloakJsConfiguration);
 	}

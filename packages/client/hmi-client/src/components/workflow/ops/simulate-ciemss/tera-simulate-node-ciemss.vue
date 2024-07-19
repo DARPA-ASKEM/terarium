@@ -8,19 +8,8 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
 		</tera-operator-placeholder>
@@ -37,11 +26,12 @@ import {
 	getRunResultCSV,
 	pollAction,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
@@ -54,8 +44,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
@@ -135,7 +125,7 @@ Provide a summary in 100 words or less.
 
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan,
@@ -157,22 +147,18 @@ const preparedCharts = computed(() => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
 
-	const fields = {
-		timeField: 'timepoint_id',
-		groupField: 'sample_id'
-	};
-
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
 				dataset: result,
 				variables: config.map((d) => pyciemssMap[d]),
-				...fields
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
 			},
 			{
 				dataset: resultSummary,
 				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
-				...fields
+				timeField: 'timepoint_id'
 			},
 			null,
 			// options

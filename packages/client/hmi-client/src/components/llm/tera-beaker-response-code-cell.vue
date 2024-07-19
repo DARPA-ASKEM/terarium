@@ -8,13 +8,7 @@
 	</div>
 
 	<!-- Are you sure? dialog -->
-	<Dialog
-		v-model:visible="showConfirmDialog"
-		modal
-		:closable="false"
-		class="w-3"
-		header="Are you sure?"
-	>
+	<Dialog v-model:visible="showConfirmDialog" modal :closable="false" class="w-3" header="Are you sure?">
 		<div class="mt-3">This cannot be undone.</div>
 		<template #footer>
 			<Button label="No" @click="cancelDelete" severity="secondary" outlined />
@@ -27,12 +21,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
-import {
-	Completer,
-	CompleterModel,
-	CompletionHandler,
-	CompletionConnector
-} from '@jupyterlab/completer';
+import { Completer, CompleterModel, CompletionHandler, CompletionConnector } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
 import Button from 'primevue/button';
@@ -120,8 +109,7 @@ commands.addCommand('invoke:completer', {
 	}
 });
 commands.addCommand('run:cell', {
-	execute: () =>
-		CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId })
+	execute: () => CodeCell.execute(cellWidget, props.jupyterSession, { notebook_item: props.notebookItemId })
 });
 
 // Add Key Bindings

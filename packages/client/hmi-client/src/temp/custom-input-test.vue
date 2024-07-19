@@ -7,12 +7,7 @@
 
 		<div class="w-2">
 			<label>Error input</label>
-			<tera-input
-				label="Label"
-				:error-message="errormessage"
-				v-model="errorstring"
-				@update:model-value="onUpdate"
-			/>
+			<tera-input label="Label" :error-message="errormessage" v-model="errorstring" @update:model-value="onUpdate" />
 		</div>
 
 		<div class="w-2">
@@ -27,12 +22,7 @@
 
 		<div class="w-2">
 			<label>sci input</label>
-			<tera-input
-				v-model="scistring"
-				label="Label"
-				type="nist"
-				@update:model-value="console.log(scistring)"
-			/>
+			<tera-input v-model="scistring" label="Label" type="nist" @update:model-value="console.log(scistring)" />
 		</div>
 	</div>
 </template>

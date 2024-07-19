@@ -26,7 +26,8 @@ public class SimulationUpdate extends TerariumEntity {
 
 	@ManyToOne
 	@JsonBackReference
-	@NotNull private Simulation simulation;
+	@NotNull
+	private Simulation simulation;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

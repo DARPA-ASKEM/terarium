@@ -83,10 +83,7 @@ export const prepareMatrixMapping = (amr: Model, transitionMatrixData: any[]) =>
 };
 
 export function createTransitionMatrix(amr: Model, transitionMatrixData: any[]) {
-	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(
-		amr,
-		transitionMatrixData
-	);
+	const { transitions, rowIndexMap, colIndexMap, rows } = prepareMatrixMapping(amr, transitionMatrixData);
 
 	// For every transition id grab its input/output and row/column index to fill its place in the matrix
 	for (let i = 0; i < transitions.length; i++) {

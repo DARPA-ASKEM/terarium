@@ -82,10 +82,7 @@ function deepToRaw<T extends Record<string, any>>(sourceObj: T): T {
 	return objectIterator(sourceObj);
 }
 
-async function updateVegaVisualization(
-	container: HTMLElement,
-	visualizationSpec: VisualizationSpec
-) {
+async function updateVegaVisualization(container: HTMLElement, visualizationSpec: VisualizationSpec) {
 	renderErrorMessage.value = undefined;
 	vegaVisualization.value = undefined;
 	try {
@@ -99,16 +96,13 @@ async function updateVegaVisualization(
 		);
 		const { view } = vegaVisualization.value;
 		props.intervalSelectionSignalNames.forEach((signalName) => {
-			view.addSignalListener(
-				signalName,
-				(name, valueRange: { [fieldName: string]: [number, number] }) => {
-					if (valueRange === undefined || Object.keys(valueRange).length === 0) {
-						emit('update-interval-selection', name, null);
-						return;
-					}
-					emit('update-interval-selection', name, valueRange);
+			view.addSignalListener(signalName, (name, valueRange: { [fieldName: string]: [number, number] }) => {
+				if (valueRange === undefined || Object.keys(valueRange).length === 0) {
+					emit('update-interval-selection', name, null);
+					return;
 				}
-			);
+				emit('update-interval-selection', name, valueRange);
+			});
 		});
 		view.addEventListener('click', (_event, item) => {
 			emit('chart-click', item?.datum ?? null);

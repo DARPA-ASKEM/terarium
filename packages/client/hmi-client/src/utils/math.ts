@@ -250,7 +250,5 @@ export const mergeUnique = (a: string[], b: string[]): string[] => {
 export const extractUniqueParameterStrings = (a: string[], b: string[]): string[] => {
 	const aUnique: string[] = [...new Set(a)];
 
-	return aUnique.filter(
-		(element) => !b.includes(element) && !b.some((item) => item.includes(element))
-	);
+	return aUnique.filter((element) => !b.includes(element) && !b.some((item) => item.includes(element)));
 };

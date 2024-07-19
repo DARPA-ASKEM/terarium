@@ -13,9 +13,7 @@
 
 		<facet-template target="facet-terms-value" class="facet-pointer">
 			<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
-			<div slot="label" class="facet-label-truncated facet-font" title="${label} - ${value}">
-				${label}
-			</div>
+			<div slot="label" class="facet-label-truncated facet-font" title="${label} - ${value}">${label}</div>
 			<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 			<div slot="value" class="facet-font">${value}</div>
 		</facet-template>
@@ -153,9 +151,7 @@ export default defineComponent({
 			}
 		},
 		numToDisplay() {
-			return this.baseData.length < FACET_DEFAULT_SIZE
-				? this.baseData.length
-				: this.moreNumToDisplay;
+			return this.baseData.length < FACET_DEFAULT_SIZE ? this.baseData.length : this.moreNumToDisplay;
 		},
 		selection() {
 			const facetClause = filtersUtil.findPositiveFacetClause(this.query.clientFilters, this.facet);
@@ -204,18 +200,13 @@ export default defineComponent({
 			return baseClone;
 		},
 		subSelection() {
-			return this.sortedJoinedData
-				? this.sortedJoinedData.map((s) => s.selectedValue / this.max)
-				: [];
+			return this.sortedJoinedData ? this.sortedJoinedData.map((s) => s.selectedValue / this.max) : [];
 		}
 	},
 	methods: {
 		updateSelection(event) {
 			const facet = event.currentTarget;
-			if (
-				event.detail.changedProperties.get('selection') !== undefined &&
-				!isEqual(facet.selection, this.selection)
-			) {
+			if (event.detail.changedProperties.get('selection') !== undefined && !isEqual(facet.selection, this.selection)) {
 				if (facet.selection) {
 					const selectedIndexes = Object.keys(facet.selection);
 					const values = selectedIndexes.map((s) => this.sortedJoinedData[parseInt(s)].key);

@@ -1,16 +1,8 @@
-import { mean } from 'lodash';
+import { isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = [
-	'#5F9E3E',
-	'#4375B0',
-	'#8F69B9',
-	'#D67DBF',
-	'#E18547',
-	'#D2C446',
-	'#84594D'
-];
+export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
 	legend: boolean;
@@ -91,6 +83,20 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: 4,
+		symbolSize: 200,
+		labelFontSize: 12,
+		labelOffset: 4
+	};
+
+	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -147,7 +153,7 @@ export const createForecastChart = (
 	};
 
 	// Build sample layer
-	if (samplingLayer) {
+	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
 
 		Object.assign(layerSpec.encoding, {
@@ -160,7 +166,7 @@ export const createForecastChart = (
 	}
 
 	// Build statistical layer
-	if (statisticsLayer) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		Object.assign(layerSpec.encoding, {
 			opacity: { value: 1.0 },
@@ -169,16 +175,7 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -189,24 +186,16 @@ export const createForecastChart = (
 	}
 
 	// Build ground truth layer
-	if (groundTruthLayer) {
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
 		layerSpec.encoding.color.scale.range = ['#333'];
+		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -218,7 +207,7 @@ export const createForecastChart = (
 
 	// Build a transparent layer with fat lines as a better hover target for tooltips
 	// Re-Build statistical layer
-	if (statisticsLayer) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
@@ -237,10 +226,7 @@ export const createForecastChart = (
 		Object.assign(layerSpec.encoding, {
 			opacity: { value: 0 },
 			strokeWidth: { value: 16 },
-			tooltip: [
-				{ field: statisticsLayer.timeField, type: 'quantitative' },
-				...(tooltipContent || [])
-			]
+			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
 		spec.layer.push(layerSpec);
 	}
@@ -274,7 +260,7 @@ export interface OptimizeChartOptions {
 
 const binCount = 5;
 
-function formatSuccessChartData(
+export function formatSuccessChartData(
 	riskResults: any,
 	targetVariable: string,
 	threshold: number,
@@ -282,59 +268,55 @@ function formatSuccessChartData(
 ) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
-
-	const minValue = Math.min(...data);
-	const maxValue = Math.max(...data);
-	const stepSize = (maxValue - minValue) / binCount;
-	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
-	for (let i = binCount; i > 0; i--) {
-		let rangeStart = minValue + stepSize * (i - 1);
-		let rangeEnd = minValue + stepSize * i;
-
-		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
-		if (stepSize === 0) {
-			rangeStart = minValue - 1;
-			rangeEnd = maxValue + 1;
-		}
-
-		let tag;
-		if (isMinimized) {
-			tag = rangeEnd < threshold ? 'in' : 'out';
-		} else {
-			tag = rangeStart > threshold ? 'in' : 'out';
-		}
-
-		bins.push({
-			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
-			count: 0,
-			tag
-		});
+	if (isEmpty(data)) {
+		return [];
 	}
 
-	const toBinIndex = (value: number) => {
-		if (value < minValue || value > maxValue) return -1;
-		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
-		if (stepSize === 0 || value === maxValue) return 0;
-		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
-		return index;
-	};
+	const min = Math.min(...data);
+	const max = Math.max(...data);
+	const ranges: { range: string; count: number; tag: 'in' | 'out' }[] = [];
 
-	const avgArray: number[] = [];
-
-	// Fill bins:
-	data.forEach((ele) => {
-		const index = toBinIndex(ele);
-		if (index !== -1) {
-			bins[index].count += 1;
-			if (bins[index].tag === 'out') {
-				avgArray.push(ele);
-			}
+	// see whether ranges are in or out of the threshold
+	const determineTag = (
+		start: number,
+		end: number,
+		thresholdValue: number,
+		isMinimizedValue: boolean
+	): 'in' | 'out' => {
+		if (isMinimizedValue) {
+			return end < thresholdValue ? 'in' : 'out';
 		}
-	});
+		return start > thresholdValue ? 'in' : 'out';
+	};
+	if (min === max) {
+		// case where there is only one value or all values are the same. we want to give the bar some thickness so that the user can see it.
+		const start = min - 1;
+		const end = min + 1;
+		const count = data.length;
 
-	const avg = mean(avgArray);
+		ranges.push({
+			range: `${start.toFixed(4)}-${end.toFixed(4)}`,
+			count,
+			tag: determineTag(start, end, threshold, isMinimized)
+		});
+	} else {
+		const rangeSize = (max - min) / binCount;
 
-	return { data: bins, avg };
+		for (let i = 0; i < binCount; i++) {
+			const start = min + i * rangeSize;
+			const end = i === binCount - 1 ? max : start + rangeSize;
+			// count the number of values in the range, some logic here to handle the last bin which is inclusive of the max value
+			const count = data.filter((num) => num >= start && (i === binCount - 1 ? num <= end : num < end)).length;
+
+			ranges.push({
+				range: `${start.toFixed(4)}-${end.toFixed(4)}`,
+				count,
+				tag: determineTag(start, end, threshold, isMinimized)
+			});
+		}
+	}
+
+	return ranges;
 }
 
 export function createOptimizeChart(
@@ -343,7 +325,7 @@ export function createOptimizeChart(
 	threshold: number,
 	isMinimized: boolean
 ): any {
-	const { data } = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
+	const data = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -374,14 +356,14 @@ export function createOptimizeChart(
 					y: {
 						field: 'start',
 						type: 'quantitative',
-						title: 'Min value at all times'
+						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all times`
 					},
 					y2: { field: 'end' },
 					x: {
 						aggregate: 'sum',
 						field: 'count',
 						type: 'quantitative',
-						title: 'Count'
+						title: 'Number of samples'
 					},
 					color: {
 						field: 'tag',

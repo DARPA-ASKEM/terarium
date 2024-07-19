@@ -27,18 +27,22 @@ public class SearchByAssetTypeControllerTests extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.ADAM)
 	public void testKnnSearch() throws Exception {
+		MvcResult res = mockMvc
+			.perform(
+				MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
+					.param("text", "Was COVID-19 invented by aliens?")
+					.param("page", "100")
+					.param("page-size", "100")
+					.param("index", TEST_INDEX) // index override
+					.with(csrf())
+			)
+			.andExpect(status().isOk())
+			.andReturn();
 
-		MvcResult res = mockMvc.perform(MockMvcRequestBuilders.get("/search-by-asset-type/" + TEST_ASSET)
-						.param("text", "Was COVID-19 invented by aliens?")
-						.param("page", "100")
-						.param("page-size", "100")
-						.param("index", TEST_INDEX) // index override
-						.with(csrf()))
-				.andExpect(status().isOk())
-				.andReturn();
-
-		List<JsonNode> docs =
-				objectMapper.readValue(res.getResponse().getContentAsString(), new TypeReference<List<JsonNode>>() {});
+		List<JsonNode> docs = objectMapper.readValue(
+			res.getResponse().getContentAsString(),
+			new TypeReference<List<JsonNode>>() {}
+		);
 
 		for (JsonNode doc : docs) {
 			log.info("doc: {}", doc);

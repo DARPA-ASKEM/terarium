@@ -7,8 +7,8 @@
 				<section class="w-full">
 					<h3>From data to discovery</h3>
 					<p>
-						Accelerate scientific modeling and simulation using AI. Search available knowledge,
-						enhance extracted models and data, and test scenarios to simulate real-world problems.
+						Accelerate scientific modeling and simulation using AI. Search available knowledge, enhance extracted models
+						and data, and test scenarios to simulate real-world problems.
 					</p>
 					<!--Placeholder - button is disabled for now-->
 					<!-- <Button
@@ -95,10 +95,7 @@
 							</div>
 						</section>
 						<section class="projects">
-							<div
-								v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)"
-								class="no-projects"
-							>
+							<div v-if="!isLoadingProjects && isEmpty(searchedAndFilterProjects)" class="no-projects">
 								<Vue3Lottie :animationData="EmptySeed" :height="200" :width="200"></Vue3Lottie>
 								<!--
 								<img src="@assets/svg/seed.svg" alt="" />
@@ -206,9 +203,7 @@ const viewOptions = ref([
 const myFilteredSortedProjects = computed(() => {
 	const projects = useProjects().allProjects.value;
 	if (!projects) return [];
-	const myProjects = projects.filter(({ userPermission }) =>
-		['creator', 'writer'].includes(userPermission ?? '')
-	);
+	const myProjects = projects.filter(({ userPermission }) => ['creator', 'writer'].includes(userPermission ?? ''));
 	return filterAndSortProjects(myProjects);
 });
 
@@ -236,12 +231,7 @@ const searchedAndFilterProjects = computed(() => {
 	const currentTabIndex = activeTabIndex.value;
 	const projects = projectsTabs.value[currentTabIndex].projects;
 	const userInput = searchProjects.value.trim();
-	const result = FilterService.filter(
-		projects,
-		['name', 'description', 'userName'],
-		userInput,
-		'contains'
-	);
+	const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
 	return filterAndSortProjects(result);
 });
 
@@ -253,18 +243,14 @@ function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'A
 		const dateValueB = b[dateType]?.toString();
 		const dateA = dateValueA ? new Date(dateValueA) : new Date(0);
 		const dateB = dateValueB ? new Date(dateValueB) : new Date(0);
-		return sorting === 'ASC'
-			? dateA.getTime() - dateB.getTime()
-			: dateB.getTime() - dateA.getTime();
+		return sorting === 'ASC' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
 	});
 }
 
 function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
 		if (selectedSort.value === 'Alphabetical') {
-			return projects.sort((a, b) =>
-				(a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase())
-			);
+			return projects.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
 		}
 		if (selectedSort.value === 'Last updated (descending)') {
 			return sortProjectByDates(projects, 'updatedOn', 'DESC');
@@ -482,8 +468,7 @@ a {
 }
 
 .video-thumbnail {
-	background-image: radial-gradient(circle, var(--primary-color), #004f3c),
-		url('@/assets/images/video-thumbnail.png');
+	background-image: radial-gradient(circle, var(--primary-color), #004f3c), url('@/assets/images/video-thumbnail.png');
 	background-blend-mode: multiply;
 	background-size: cover;
 	background-position: center;

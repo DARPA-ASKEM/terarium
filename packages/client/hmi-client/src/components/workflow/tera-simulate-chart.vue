@@ -19,14 +19,7 @@
 					</template>
 				</template>
 			</MultiSelect>
-			<Button
-				v-if="showRemoveButton"
-				title="Remove chart"
-				icon="pi pi-trash"
-				@click="$emit('remove')"
-				rounded
-				text
-			/>
+			<Button v-if="showRemoveButton" title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
 		</div>
 		<Chart
 			type="scatter"
@@ -35,9 +28,7 @@
 			:data="chartData"
 			:options="CHART_OPTIONS"
 		/>
-		<section class="empty-chart" v-if="!selectedVariable.length">
-			Select which variables to display
-		</section>
+		<section class="empty-chart" v-if="!selectedVariable.length">Select which variables to display</section>
 	</div>
 </template>
 
@@ -213,14 +204,10 @@ const getLineColor = (variableName: string, runIdx: number) => {
 	const runIdList = Object.keys(renderedRuns.value) as string[];
 	if (props.hasMeanLine) {
 		const lastRun = runIdList.length - 1;
-		return runIdx === lastRun
-			? getVariableColorByVar(variableName)
-			: `${getVariableColorByVar(variableName)}30`;
+		return runIdx === lastRun ? getVariableColorByVar(variableName) : `${getVariableColorByVar(variableName)}30`;
 	}
 
-	return hasMultiRuns.value
-		? getVariableColorByRunIdx(runIdx)
-		: getVariableColorByVar(variableName);
+	return hasMultiRuns.value ? getVariableColorByRunIdx(runIdx) : getVariableColorByVar(variableName);
 };
 
 const watchRunResults = async (runResults) => {
@@ -234,9 +221,9 @@ const watchRunResults = async (runResults) => {
 	// assume that the state variables for all runs will be identical
 	// take first run and parse it for state variables
 	if (!stateVariablesList.length) {
-		stateVariablesList = Object.keys(
-			renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]
-		).filter((key) => key !== 'timestamp');
+		stateVariablesList = Object.keys(renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]).filter(
+			(key) => key !== 'timestamp'
+		);
 	}
 	renderGraph();
 };

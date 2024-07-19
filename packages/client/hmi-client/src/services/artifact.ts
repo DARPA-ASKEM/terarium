@@ -9,11 +9,7 @@ import { Ref } from 'vue';
  * @param userName
  * @param projectId
  */
-async function createNewArtifactFromGithubFile(
-	repoOwnerAndName: string,
-	path: string,
-	userId: string
-) {
+async function createNewArtifactFromGithubFile(repoOwnerAndName: string, path: string, userId: string) {
 	// Find the file name by removing the path portion
 	const fileName: string | undefined = path.split('/').pop();
 
@@ -90,11 +86,7 @@ async function createNewArtifact(artifact: Artifact): Promise<Artifact | null> {
  * @param artifactId the artifact to add the file to
  * @param file the file to upload
  */
-async function addFileToArtifact(
-	artifactId: string,
-	file: File,
-	progress?: Ref<number>
-): Promise<boolean> {
+async function addFileToArtifact(artifactId: string, file: File, progress?: Ref<number>): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -107,10 +99,7 @@ async function addFileToArtifact(
 		},
 		onUploadProgress(progressEvent) {
 			if (progress) {
-				progress.value = Math.min(
-					90,
-					Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-				);
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
 			}
 		},
 		timeout: 3600000
@@ -120,10 +109,7 @@ async function addFileToArtifact(
 }
 
 async function getArtifactFileAsText(artifactId: string, fileName: string): Promise<string | null> {
-	const response = await API.get(
-		`/artifacts/${artifactId}/download-file-as-text?filename=${fileName}`,
-		{}
-	);
+	const response = await API.get(`/artifacts/${artifactId}/download-file-as-text?filename=${fileName}`, {});
 
 	if (!response) {
 		return null;
@@ -132,10 +118,7 @@ async function getArtifactFileAsText(artifactId: string, fileName: string): Prom
 	return response.data;
 }
 
-async function getArtifactArrayBuffer(
-	artifactId: string,
-	fileName: string
-): Promise<ArrayBuffer | null> {
+async function getArtifactArrayBuffer(artifactId: string, fileName: string): Promise<ArrayBuffer | null> {
 	const response = await API.get(`/artifacts/${artifactId}/download-file?filename=${fileName}`, {
 		responseType: 'arraybuffer'
 	});
@@ -147,9 +130,4 @@ async function getArtifactArrayBuffer(
 	return response.data;
 }
 
-export {
-	uploadArtifactToProject,
-	createNewArtifactFromGithubFile,
-	getArtifactFileAsText,
-	getArtifactArrayBuffer
-};
+export { uploadArtifactToProject, createNewArtifactFromGithubFile, getArtifactFileAsText, getArtifactArrayBuffer };

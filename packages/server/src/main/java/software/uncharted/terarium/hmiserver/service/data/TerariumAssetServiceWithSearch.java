@@ -34,22 +34,22 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 @Slf4j
 public abstract class TerariumAssetServiceWithSearch<
-				T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
-		extends TerariumAssetServiceWithoutSearch<T, R> {
+	T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>
+>
+	extends TerariumAssetServiceWithoutSearch<T, R> {
 
 	public TerariumAssetServiceWithSearch(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ElasticsearchConfiguration elasticConfig,
-			final ElasticsearchService elasticService,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final R repository,
-			final Class<T> assetClass) {
-
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ElasticsearchConfiguration elasticConfig,
+		final ElasticsearchService elasticService,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final S3ClientService s3ClientService,
+		final R repository,
+		final Class<T> assetClass
+	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, assetClass);
-
 		this.elasticConfig = elasticConfig;
 		this.elasticService = elasticService;
 	}
@@ -88,8 +88,7 @@ public abstract class TerariumAssetServiceWithSearch<
 			if (!currentIndex.equals(index)) {
 				elasticService.deleteIndex(currentIndex);
 			}
-		} catch (final Exception e) {
-		}
+		} catch (final Exception e) {}
 		elasticService.createOrEnsureIndexIsEmpty(index);
 		elasticService.createAlias(index, getAssetAlias());
 	}
@@ -129,11 +128,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	 * @throws IOException If there is an error retrieving the assets
 	 */
 	@Observed(name = "function_profile")
-	public List<T> searchAssets(
-			final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
-			throws IOException {
-		final SearchRequest.Builder builder =
-				new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
+	public List<T> searchAssets(final Integer page, final Integer pageSize, final Query query, final SourceConfig source)
+		throws IOException {
+		final SearchRequest.Builder builder = new SearchRequest.Builder().index(getAssetAlias()).from(page).size(pageSize);
 
 		if (query != null) {
 			builder.query(query);
@@ -156,8 +153,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		throws IOException {
 		final Optional<T> deleted = super.deleteAsset(id, projectId, hasWritePermission);
 
 		if (deleted.isPresent()) {
@@ -177,7 +173,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		final T created = super.createAsset(asset, projectId, hasWritePermission);
 
 		if (created.getPublicAsset() && !created.getTemporary()) {
@@ -198,7 +194,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Observed(name = "function_profile")
 	@SuppressWarnings("unchecked")
 	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
+		throws IOException {
 		final List<T> created = super.createAssets(assets, projectId, hasWritePermission);
 
 		if (created.size() > 0) {
@@ -220,8 +216,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-
+		throws IOException, IllegalArgumentException {
 		final Optional<T> updated = super.updateAsset(asset, projectId, hasWritePermission);
 
 		if (updated.isEmpty()) {
@@ -242,9 +237,10 @@ public abstract class TerariumAssetServiceWithSearch<
 	/** Upload search vector embeddings into the asset document. */
 	@Observed(name = "function_profile")
 	public void uploadEmbeddings(
-			final UUID assetId, final TerariumAssetEmbeddings embeddings, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		final UUID assetId,
+		final TerariumAssetEmbeddings embeddings,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		// Execute the update request
 		elasticService.update(getAssetAlias(), assetId.toString(), embeddings);
 	}
@@ -277,7 +273,7 @@ public abstract class TerariumAssetServiceWithSearch<
 	}
 
 	private static String generateNextIndexName(final String previousIndex) {
-		return getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex));
+		return (getIndexNameWithoutVersion(previousIndex) + "_" + incrementVersion(getVersionFromIndex(previousIndex)));
 	}
 
 	public String getCurrentAssetIndex() throws IOException {
@@ -304,8 +300,13 @@ public abstract class TerariumAssetServiceWithSearch<
 		if (elasticService.indexExists(newIndexName)) {
 			final long count = elasticService.count(newIndexName);
 			if (count > 0) {
-				throw new RuntimeException("New index " + newIndexName + " already exists and contains " + count
-						+ " documents, please delete and empty the index");
+				throw new RuntimeException(
+					"New index " +
+					newIndexName +
+					" already exists and contains " +
+					count +
+					" documents, please delete and empty the index"
+				);
 			}
 		} else {
 			elasticService.createIndex(newIndexName);

@@ -26,6 +26,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
+
 	public static final String NAME = "gollm_task:configure_model";
 
 	private final ObjectMapper objectMapper;
@@ -40,6 +41,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Input {
+
 		@JsonProperty("research_paper")
 		String researchPaper;
 
@@ -49,11 +51,13 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Response {
+
 		JsonNode response;
 	}
 
 	@Data
 	public static class Properties {
+
 		UUID projectId;
 		UUID documentId;
 		UUID modelId;
@@ -66,8 +70,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService
-					.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-					.orElseThrow();
+				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+				.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
@@ -77,33 +81,40 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 				// Map the parameters values to the model
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters =
-							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
+					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(
+						condition.get("parameters"),
+						modelCopy
+					);
 					modelCopy.getSemantics().getOde().setParameters(modelParameters);
 				}
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials =
-							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
 					modelCopy.getSemantics().getOde().setInitials(modelInitials);
 				}
 
 				// Create the new configuration
 				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
-						modelCopy,
-						condition.get("name").asText(),
-						condition.get("description").asText());
+					modelCopy,
+					condition.get("name").asText(),
+					condition.get("description").asText()
+				);
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-						configuration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+					configuration,
+					props.projectId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				);
 				// add provenance
-				provenanceService.createProvenance(new Provenance()
+				provenanceService.createProvenance(
+					new Provenance()
 						.setLeft(newConfig.getId())
 						.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
 						.setRight(props.documentId)
 						.setRightType(ProvenanceType.DOCUMENT)
-						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+				);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);

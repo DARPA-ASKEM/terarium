@@ -1,11 +1,7 @@
 <template>
 	<div :class="!customPosition && position">
 		<slot />
-		<div
-			class="tooltip-content"
-			:class="[{ 'has-arrow': hasArrow }, arrowClass]"
-			:style="customPositionStyle"
-		>
+		<div class="tooltip-content" :class="[{ 'has-arrow': hasArrow }, arrowClass]" :style="customPositionStyle">
 			<slot name="tooltip-content" />
 		</div>
 	</div>

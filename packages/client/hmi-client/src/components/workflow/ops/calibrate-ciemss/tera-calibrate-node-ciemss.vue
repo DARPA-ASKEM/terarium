@@ -9,20 +9,9 @@
 			/>
 		</template>
 
-		<tera-progress-spinner
-			v-if="inProgressCalibrationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
+		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%" />
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -42,10 +31,11 @@ import {
 	getCalibrateBlobURL,
 	makeForecastJobCiemss,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -62,7 +52,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-const runResult = ref<any>(null);
+const runResult = ref<DataArray>([]);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
@@ -82,15 +72,13 @@ const preparedCharts = computed(() => {
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	const csv = csvAsset.value.csv;
 	const csvRaw = csv.map((d) => d.join(',')).join('\n');
 	groundTruth = csvParse(csvRaw, autoType);
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find(
-		(d) => d.modelVariable === 'timestamp'
-	)?.datasetVariable;
+	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	return state.chartConfigs.map((config) => {
 		const datasetVariables: string[] = [];
@@ -235,7 +223,7 @@ watch(
 			const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
 				type: 'calibrateSimulationId',
-				label: `${portLabel} Result`,
+				label: nodeOutputLabel(props.node, `${portLabel} Result`),
 				value: [state.calibrationId],
 				state: {
 					calibrationId: state.calibrationId,
