@@ -198,7 +198,12 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2].value);
 
-const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
+const cancelRunId = computed(
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressBeforeForecastId
+);
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
@@ -344,6 +349,7 @@ const runCalibrate = async () => {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		state.inProgressBeforeForecastId = '';
 
 		emit('update-state', state);
 	}
