@@ -316,7 +316,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -597,8 +597,8 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -757,13 +757,20 @@ const preProcessedInterventionsData = computed<Dictionary<{ name: string; value:
 
 	const data = state.interventionPolicyGroups.flatMap((ele) =>
 		ele.intervention.staticInterventions.map((intervention) => ({
-			name: ele.intervention.appliedTo,
+			appliedTo: ele.intervention.appliedTo,
+			name: ele.intervention.name,
 			value: intervention.value,
 			time: intervention.timestep
 		}))
 	);
 
-	return groupBy(data, 'name');
+	return _.mapValues(_.groupBy(data, 'appliedTo'), (interventions) =>
+		interventions.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
+		}))
+	);
 });
 
 onMounted(async () => {

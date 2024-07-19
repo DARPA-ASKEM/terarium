@@ -400,13 +400,30 @@ export function createOptimizeChart(
 }
 
 function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
-	return data.map((ele) => ({
+	const markers = data.map((ele) => ({
 		data: [{}], // Dummy data to ensure the layer is rendered
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
 			x: { datum: ele.time }
 		}
 	}));
+
+	const labelsSpec = {
+		data: { values: data }, // Dummy data to ensure the layer is rendered
+		mark: {
+			type: 'text',
+			align: 'left',
+			dx: 5,
+			dy: 10
+		},
+		encoding: {
+			x: { field: 'time', type: 'quantitative' },
+			y: { field: 'value', type: 'quantitative' },
+			text: { field: 'name', type: 'nominal' }
+		}
+	};
+
+	return [...markers, labelsSpec];
 }
 
 function createStatisticLayer(
@@ -581,6 +598,7 @@ export const createOptimizeForecastChart = (
 export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
+		width: 400,
 		autosize: {
 			type: 'fit'
 		},

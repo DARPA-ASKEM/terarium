@@ -211,7 +211,7 @@ const preparedCharts = computed(() => {
 	const charts = _.mapValues(groupedOutputParameters.value, (interventions) => {
 		const flattenedData = _.flatMap(interventions, (intervention) =>
 			intervention.staticInterventions.map((staticIntervention) => ({
-				name: intervention.appliedTo,
+				name: intervention.name,
 				value: staticIntervention.value,
 				time: staticIntervention.timestep
 			}))
