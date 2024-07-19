@@ -305,9 +305,7 @@ function formatSuccessChartData(riskResults: any, targetVariable: string, thresh
 			const start = min + i * rangeSize;
 			const end = i === binCount - 1 ? max : start + rangeSize;
 			// count the number of values in the range, some logic here to handle the last bin which is inclusive of the max value
-			const count = data.filter(
-				(num) => num >= start && (i === binCount - 1 ? num <= end : num < end)
-			).length;
+			const count = data.filter((num) => num >= start && (i === binCount - 1 ? num <= end : num < end)).length;
 
 			ranges.push({
 				range: `${start.toFixed(4)}-${end.toFixed(4)}`,
