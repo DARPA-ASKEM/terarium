@@ -179,18 +179,6 @@ export interface DatasetColumn extends TerariumEntity {
     dataset?: Dataset;
 }
 
-export interface AddDocumentAssetFromXDDRequest {
-    document: Document;
-    projectId: string;
-    domain: string;
-}
-
-export interface AddDocumentAssetFromXDDResponse {
-    documentAssetId: string;
-    pdfUploadError: boolean;
-    extractionJobId: string;
-}
-
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
@@ -528,14 +516,6 @@ export interface Simulation extends TerariumAsset {
 export interface SimulationUpdate extends TerariumEntity {
     data: any;
     simulation: Simulation;
-}
-
-export interface DocumentsResponseOK extends XDDResponseOK {
-    data: Document[];
-    nextPage: string;
-    scrollId: string;
-    hits: number;
-    facets: { [index: string]: XDDFacetsItemResponse };
 }
 
 export interface EvaluationScenarioSummary {
@@ -882,31 +862,6 @@ export interface Links {
     self: string;
 }
 
-export interface Document {
-    gddId: string;
-    title: string;
-    abstractText: string;
-    journal: string;
-    type: string;
-    number: string;
-    pages: string;
-    publisher: string;
-    volume: string;
-    year: string;
-    link: { [index: string]: string }[];
-    author: { [index: string]: string }[];
-    identifier: { [index: string]: string }[];
-    githubUrls: string[];
-    knownTerms: { [index: string]: string[] };
-    highlight: string[];
-    relatedDocuments: Document[];
-    relatedExtractions: Extraction[];
-    knownEntities: KnownEntities;
-    knownEntitiesCounts: KnownEntitiesCounts;
-    citationList: { [index: string]: string }[];
-    citedBy: { [index: string]: any }[];
-}
-
 export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
@@ -997,17 +952,6 @@ export interface ProvenanceEdge {
     right: ProvenanceNode;
 }
 
-export interface XDDFacetsItemResponse {
-    buckets: XDDFacetBucket[];
-    doc_count_error_upper_bound: number;
-    sum_other_doc_count: number;
-}
-
-export interface XDDResponseOK {
-    v: number;
-    license: string;
-}
-
 export interface PermissionRole {
     id: string;
     name: string;
@@ -1023,27 +967,6 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
-}
-
-export interface Extraction {
-    id: number;
-    askemClass: string;
-    properties: ExtractionProperties;
-    askemId: string;
-    xddCreated: Date;
-    xddRegistrant: number;
-    highlight: string[];
-}
-
-export interface KnownEntities {
-    urlExtractions: XDDUrlExtraction[];
-    askemObjects: Extraction[];
-    summaries: any[];
-}
-
-export interface KnownEntitiesCounts {
-    askemObjectCount: number;
-    urlExtractionCount: number;
 }
 
 export interface OdeSemantics {
@@ -1103,40 +1026,10 @@ export interface PetriNetTransitionProperties {
     grounding?: ModelGrounding;
 }
 
-export interface XDDFacetBucket {
-    key: string;
-    docCount: string;
-}
-
 export interface Authority {
     id: number;
     name: string;
     description: string;
-}
-
-export interface ExtractionProperties {
-    title: string;
-    trustScore: string;
-    abstractText: string;
-    xddId: string;
-    documentId: string;
-    documentTitle: string;
-    contentText: string;
-    indexInDocument: number;
-    contentJSON: any;
-    image: string;
-    relevantSentences: string;
-    sectionID: string;
-    sectionTitle: string;
-    caption: string;
-    documentBibjson: Document;
-    doi: string;
-}
-
-export interface XDDUrlExtraction {
-    url: string;
-    resourceTitle: string;
-    extractedFrom: string[];
 }
 
 export interface Rate {

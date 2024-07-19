@@ -10,8 +10,6 @@
 				<template v-slot:content>
 					<tera-facets-panel
 						v-if="viewType === ViewType.LIST"
-						:facets="facets"
-						:filtered-facets="filteredFacets"
 						:result-type="resourceType"
 						:docCount="docCount"
 					/>
@@ -54,7 +52,6 @@
 				</div>
 				<tera-search-results-list
 					:data-items="resultsToShow"
-					:facets="filteredFacets"
 					:resource-type="resourceType"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
@@ -92,7 +89,6 @@ import {
 } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
-import { getFacets } from '@/utils/facets';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import { getResourceID, isDataset, isModel } from '@/utils/data-util';
@@ -101,7 +97,7 @@ import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
-import { AssetType, XDDFacetsItemResponse } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
 import { DatasetSearchParams } from '@/types/Dataset';
 import { ModelSearchParams } from '@/types/Model';
@@ -127,12 +123,10 @@ const searchTerm = ref('');
 const isSliderFacetsOpen = ref(false);
 const isSliderResourcesOpen = ref(false);
 // facets
-const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 const docCount = ref(0);
 let modelTotal: number = 0;
 let documentTotal: number = 0;
 let datasetTotal: number = 0;
-const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
@@ -194,12 +188,6 @@ function changeAssetType(type: AssetType) {
 		chosenSource.value = DatasetSource.TERARIUM;
 	}
 }
-
-const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
-	// retrieves filtered & unfiltered facet data
-	facets.value = getFacets(unfilteredData, resourceType.value);
-	filteredFacets.value = getFacets(filteredData, resourceType.value);
-};
 
 const mergeResultsKeepRecentDuplicates = (
 	existingResults: SearchResults[],
@@ -433,10 +421,6 @@ watch(resourceType, async (newResourceType, oldResourceType) => {
 		disableSearchByExample();
 		await executeSearch();
 		dirtyResults.value[newResourceType] = false;
-	} else {
-		// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
-		// re-calculate the facets
-		calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 	}
 });
 

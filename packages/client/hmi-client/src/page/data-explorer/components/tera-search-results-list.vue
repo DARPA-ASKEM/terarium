@@ -64,14 +64,7 @@
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
 import { useProjects } from '@/composables/project';
-import {
-	AssetType,
-	Dataset,
-	DocumentAsset,
-	Model,
-	ProjectAsset,
-	XDDFacetsItemResponse
-} from '@/types/Types';
+import { AssetType, Dataset, DocumentAsset, Model, ProjectAsset } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { DatasetSource } from '@/types/search';
@@ -99,10 +92,6 @@ const props = defineProps({
 	dataItems: {
 		type: Array as PropType<SearchResults[]>,
 		default: () => []
-	},
-	facets: {
-		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
-		required: true
 	},
 	resourceType: {
 		type: String as PropType<ResourceType>,

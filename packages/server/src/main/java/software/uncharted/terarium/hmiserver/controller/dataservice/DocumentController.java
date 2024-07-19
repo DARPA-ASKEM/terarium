@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,9 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,16 +38,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
-import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
-import software.uncharted.terarium.hmiserver.models.documentservice.Document;
-import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
@@ -609,63 +602,6 @@ public class DocumentController {
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	/**
-	 * Creates a document asset from an XDD document
-	 *
-	 * @param document xdd document
-	 * @param userId current user name
-	 * @param extractions list of extractions associated with the document
-	 * @return document asset
-	 */
-	private DocumentAsset createDocumentAssetFromXDDDocument(
-			final Document document,
-			final UUID projectId,
-			final String userId,
-			final List<Extraction> extractions,
-			final String summary,
-			final Schema.Permission permission)
-			throws IOException {
-
-		final String name = document.getTitle();
-
-		// create document asset
-		final DocumentAsset documentAsset = new DocumentAsset();
-		documentAsset.setName(name);
-		documentAsset.setDescription(summary);
-		documentAsset.setUserId(userId);
-		documentAsset.setFileNames(new ArrayList<>());
-
-		if (extractions != null) {
-			documentAsset.setAssets(new ArrayList<>());
-			for (int i = 0; i < extractions.size(); i++) {
-				final Extraction extraction = extractions.get(i);
-				if (extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.FIGURE.toString())
-						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.TABLE.toString())
-						|| extraction.getAskemClass().equalsIgnoreCase(ExtractionAssetType.EQUATION.toString())) {
-					final DocumentExtraction documentExtraction = new DocumentExtraction().setMetadata(new HashMap<>());
-					documentExtraction.setAssetType(ExtractionAssetType.fromString(extraction.getAskemClass()));
-					documentExtraction.setFileName("extraction_" + i + ".png");
-					documentExtraction
-							.getMetadata()
-							.put("title", extraction.getProperties().getTitle());
-					documentExtraction
-							.getMetadata()
-							.put("description", extraction.getProperties().getCaption());
-					documentAsset.getAssets().add(documentExtraction);
-				}
-			}
-		}
-
-		if (document.getGithubUrls() != null && !document.getGithubUrls().isEmpty()) {
-			documentAsset.setMetadata(new HashMap<>());
-			final ArrayNode githubUrls = objectMapper.createArrayNode();
-			document.getGithubUrls().forEach(githubUrls::add);
-			documentAsset.getMetadata().put("github_urls", githubUrls);
-		}
-
-		return documentAssetService.createAsset(documentAsset, projectId, permission);
 	}
 
 	/**
