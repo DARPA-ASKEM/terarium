@@ -79,12 +79,14 @@ async function searchConcepts(event: AutoCompleteCompleteEvent) {
 	if (query.length > 2) results.value = await searchCuriesEntities(query);
 }
 
-onMounted(() => {
+onMounted(async () => {
 	const identifiers = props.item.grounding?.identifiers;
 	if (identifiers) {
-		console.log(identifiers, props.item.grounding);
-		conceptQuery.value = getNameOfCurieCached(nameOfCurieCache.value, getCurieFromGroundingIdentifier(identifiers));
-		console.log(conceptQuery.value);
+		conceptQuery.value = await getNameOfCurieCached(
+			nameOfCurieCache.value,
+			getCurieFromGroundingIdentifier(identifiers)
+		);
+		console.log(identifiers, props.item.grounding, conceptQuery.value);
 	}
 });
 </script>
