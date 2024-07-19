@@ -166,7 +166,8 @@ import {
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
@@ -202,7 +203,7 @@ const cancelRunId = computed(() => props.node.state.inProgressForecastId || prop
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
-const runResult = ref<any>(null);
+const runResult = ref<DataArray>([]);
 
 const previewChartWidth = ref(120);
 
@@ -253,7 +254,7 @@ const preparedCharts = computed(() => {
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	if (csvAsset.value) {
 		const csv = csvAsset.value.csv;
 		const csvRaw = csv.map((d) => d.join(',')).join('\n');
