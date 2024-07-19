@@ -4,6 +4,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /** A Contributor is a User or Group that is capable of editing a Project. */
 public class Contributor {
+
 	String name;
 	Schema.Relationship permission;
 

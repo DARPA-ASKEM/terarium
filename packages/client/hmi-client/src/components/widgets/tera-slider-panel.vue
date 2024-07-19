@@ -1,16 +1,8 @@
 <template>
-	<tera-slider
-		:content-width="contentWidth"
-		:tab-width="tabWidth"
-		:direction="direction"
-		:is-open="isOpen"
-	>
+	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
 			<header class="slider-header content sticky">
-				<i
-					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
-					@click="emit('update:isOpen', false)"
-				/>
+				<i :class="`slider-header-item pi ${directionMap[direction].iconOpen}`" @click="emit('update:isOpen', false)" />
 				<slot name="header"></slot>
 				<section>
 					<h4 class="slider-header-item">{{ header }}</h4>

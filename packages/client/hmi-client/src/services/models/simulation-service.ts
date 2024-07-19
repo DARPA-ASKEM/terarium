@@ -215,10 +215,7 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 	}
 }
 
-export async function makeCalibrateJobJulia(
-	calibrationParams: CalibrationRequestJulia,
-	metadata?: any
-) {
+export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia, metadata?: any) {
 	try {
 		EventService.create(
 			EventType.RunCalibrate,
@@ -237,10 +234,7 @@ export async function makeCalibrateJobJulia(
 	}
 }
 
-export async function makeCalibrateJobCiemss(
-	calibrationParams: CalibrationRequestCiemss,
-	metadata?: any
-) {
+export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/calibrate', {
 			payload: calibrationParams,
@@ -268,10 +262,7 @@ export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiems
 	}
 }
 
-export async function makeEnsembleCiemssSimulation(
-	params: EnsembleSimulationCiemssRequest,
-	metadata?: any
-) {
+export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', {
 			payload: params,
@@ -285,10 +276,7 @@ export async function makeEnsembleCiemssSimulation(
 	}
 }
 
-export async function makeEnsembleCiemssCalibration(
-	params: EnsembleCalibrationCiemssRequest,
-	metadata?: any
-) {
+export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', {
 			payload: params,

@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Data
 @Accessors(chain = true)
 public class PermissionRelationships {
+
 	private List<PermissionGroup> permissionGroups = new ArrayList<>();
 	private List<PermissionUser> permissionUsers = new ArrayList<>();
 	private List<PermissionProject> permissionProjects = new ArrayList<>();

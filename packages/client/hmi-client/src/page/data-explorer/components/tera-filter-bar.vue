@@ -27,9 +27,7 @@ const props = defineProps({
 
 const emit = defineEmits(['filter-changed']);
 
-const topic = computed(() =>
-	props.topicOptions.find((option) => option.value === resources.getXddDataset)
-);
+const topic = computed(() => props.topicOptions.find((option) => option.value === resources.getXddDataset));
 const onTopicChange = (e) => {
 	resources.setXDDDataset(e.value);
 	emit('filter-changed');

@@ -106,9 +106,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public List<Observable> getObservables() {
-		if (this.getSemantics() == null
-				|| this.getSemantics().getOde() == null
-				|| this.getSemantics().getOde().getObservables() == null) {
+		if (
+			this.getSemantics() == null ||
+			this.getSemantics().getOde() == null ||
+			this.getSemantics().getOde().getObservables() == null
+		) {
 			return new ArrayList<Observable>();
 		}
 		return this.getSemantics().getOde().getObservables();
@@ -121,9 +123,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("parameters"), new TypeReference<>() {});
 		}
-		if (this.getSemantics() == null
-				|| this.getSemantics().getOde() == null
-				|| this.getSemantics().getOde().getParameters() == null) {
+		if (
+			this.getSemantics() == null ||
+			this.getSemantics().getOde() == null ||
+			this.getSemantics().getOde().getParameters() == null
+		) {
 			return new ArrayList<ModelParameter>();
 		}
 		return this.getSemantics().getOde().getParameters();
@@ -136,9 +140,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (this.isRegnet()) {
 			return objectMapper.convertValue(this.getModel().get("initials"), new TypeReference<>() {});
 		} else {
-			if (this.getSemantics() == null
-					|| this.getSemantics().getOde() == null
-					|| this.getSemantics().getOde().getInitials() == null) {
+			if (
+				this.getSemantics() == null ||
+				this.getSemantics().getOde() == null ||
+				this.getSemantics().getOde().getInitials() == null
+			) {
 				return new ArrayList<Initial>();
 			}
 			return this.getSemantics().getOde().getInitials();

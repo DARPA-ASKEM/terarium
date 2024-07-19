@@ -38,7 +38,8 @@ public class NotificationEvent extends TerariumEntity {
 
 	@ManyToOne
 	@JsonBackReference
-	@NotNull private NotificationGroup notificationGroup;
+	@NotNull
+	private NotificationGroup notificationGroup;
 
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")

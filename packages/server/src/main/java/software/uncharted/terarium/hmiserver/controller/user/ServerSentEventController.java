@@ -24,9 +24,7 @@ public class ServerSentEventController {
 	@Secured(Roles.USER)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	public ResponseEntity<Publisher<UserEvent>> stream() {
-
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-
 		// return Multi.createFrom().publisher(userEvents);
 	}
 }

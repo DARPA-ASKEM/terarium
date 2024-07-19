@@ -37,9 +37,7 @@ export const extractCodeLines = (code: string, start: number, end: number) => {
 export const getCodeBlocks = async (code: Code): Promise<AssetBlock<CodeBlock>[]> => {
 	if (!code.id || !code.files) return [];
 
-	const filteredFiles = Object.entries(code.files).filter(
-		(fileEntry) => fileEntry[1].dynamics?.block?.length > 0
-	);
+	const filteredFiles = Object.entries(code.files).filter((fileEntry) => fileEntry[1].dynamics?.block?.length > 0);
 
 	const promises = filteredFiles.map(async (fileEntry) => {
 		const codeContent = (await getCodeFileAsText(code.id!, fileEntry[0])) ?? '';

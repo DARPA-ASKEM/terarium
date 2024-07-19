@@ -77,11 +77,7 @@
 			</Button>
 			<span v-if="showSaveInput" style="padding-left: 1em; padding-right: 2em">
 				<InputText v-model="saveAsName" class="post-fix" placeholder="New dataset name" />
-				<i
-					class="pi pi-times i"
-					:class="{ clear: hasValidDatasetName }"
-					@click="saveAsName = ''"
-				></i>
+				<i class="pi pi-times i" :class="{ clear: hasValidDatasetName }" @click="saveAsName = ''"></i>
 				<i
 					class="pi pi-check i"
 					:class="{ save: hasValidDatasetName }"
@@ -112,13 +108,7 @@ import type { NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import {
-	createMessageId,
-	getServerSettings,
-	getSessionManager,
-	JupyterMessage,
-	newSession
-} from '@/services/jupyter';
+import { createMessageId, getServerSettings, getSessionManager, JupyterMessage, newSession } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
@@ -220,9 +210,7 @@ onMounted(() => {
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -351,9 +339,7 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -370,10 +356,7 @@ const onNewDatasetSaved = async (payload) => {
 	const datasetId = payload.dataset_id;
 	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
-	toast.success(
-		'Dataset saved successfully',
-		'Refresh to see the dataset in the resource explorer'
-	);
+	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 
 const downloadDataset = () => {

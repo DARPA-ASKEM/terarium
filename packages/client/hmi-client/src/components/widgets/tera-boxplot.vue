@@ -12,31 +12,18 @@
 			<span>{{ displayNumber(stats.min.toString()) }}</span>
 			<div class="graph">
 				<span class="line" :style="getBoxplotPartialWidth(stats.quantile_25, stats.max)" />
-				<span
-					class="box-left"
-					:style="getBoxplotPartialWidth(stats.quantile_50 - stats.quantile_25, stats.max)"
-				/>
+				<span class="box-left" :style="getBoxplotPartialWidth(stats.quantile_50 - stats.quantile_25, stats.max)" />
 				<span class="box-middle">
 					<span class="centered-text below">{{ displayNumber(stats.mean.toString()) }}</span>
 				</span>
-				<span
-					class="box-right"
-					:style="getBoxplotPartialWidth(stats.quantile_75 - stats.quantile_25, stats.max)"
-				/>
-				<span
-					class="line"
-					:style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)"
-				/>
+				<span class="box-right" :style="getBoxplotPartialWidth(stats.quantile_75 - stats.quantile_25, stats.max)" />
+				<span class="line" :style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)" />
 			</div>
 			<span>{{ displayNumber(stats.max.toString()) }}</span>
 		</figure>
 		<!-- This draws a list of the most common entries, sorted by value then by name -->
 		<figure v-if="stats.type === 'categorical'" class="flex-wrap">
-			<span
-				class="white-space-nowrap"
-				v-for="(entry, index) in sortedMostCommonEntries"
-				:key="index"
-			>
+			<span class="white-space-nowrap" v-for="(entry, index) in sortedMostCommonEntries" :key="index">
 				{{ entry[0] }}<span class="subdued ml-1">({{ entry[1] }})</span
 				>{{ index !== Object.entries(stats.most_common_entries).length - 1 ? ',' : '' }}&nbsp;
 			</span>

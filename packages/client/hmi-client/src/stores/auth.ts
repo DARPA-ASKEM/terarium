@@ -51,9 +51,7 @@ const useAuthStore = defineStore('auth', () => {
 		});
 		user.value = response.data;
 	};
-	const userInitials = computed(
-		() => `${user.value?.givenName?.charAt(0)}${user.value?.familyName?.charAt(0)}`
-	);
+	const userInitials = computed(() => `${user.value?.givenName?.charAt(0)}${user.value?.familyName?.charAt(0)}`);
 
 	const init = async () => {
 		const oidcSettings = await axios.get('/api/configuration/keycloak').then((r) => r.data);

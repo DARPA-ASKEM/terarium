@@ -23,8 +23,7 @@ public class Graph {
 			final Record r = result.next();
 
 			final List<Node> recordNodes = r.get("nodes").asList(Value::asNode);
-			final List<Relationship> recordRelationships =
-					r.get("relationships").asList(Value::asRelationship);
+			final List<Relationship> recordRelationships = r.get("relationships").asList(Value::asRelationship);
 
 			nodes.addAll(recordNodes);
 			relationships.addAll(recordRelationships);

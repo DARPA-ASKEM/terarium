@@ -9,6 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Data
 @Accessors(chain = true)
 public class PermissionGroup {
+
 	private String id;
 	private String name;
 

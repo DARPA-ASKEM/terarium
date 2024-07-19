@@ -35,9 +35,7 @@
 				<template #option="{ option }">
 					<i
 						:class="`${
-							pdfIsLoading &&
-							option.value !== DocumentView.EXTRACTIONS &&
-							option.value !== DocumentView.NOT_FOUND
+							pdfIsLoading && option.value !== DocumentView.EXTRACTIONS && option.value !== DocumentView.NOT_FOUND
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -46,11 +44,7 @@
 				</template>
 			</SelectButton>
 		</template>
-		<Accordion
-			v-if="view === DocumentView.EXTRACTIONS"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
-		>
+		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
 					<header id="Abstract">Abstract</header>
@@ -101,12 +95,7 @@
 				<ul>
 					<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
-							/>
+							<Image id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" preview />
 						</div>
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
@@ -124,12 +113,7 @@
 				<ul>
 					<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
-							/>
+							<Image id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" preview />
 						</div>
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
@@ -224,11 +208,7 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-		<tera-pdf-embed
-			v-else-if="view === DocumentView.PDF && pdfLink"
-			:pdf-link="pdfLink"
-			:title="doc.title"
-		/>
+		<tera-pdf-embed v-else-if="view === DocumentView.PDF && pdfLink" :pdf-link="pdfLink" :title="doc.title" />
 	</tera-asset>
 </template>
 
@@ -308,12 +288,9 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const formatDocumentAuthors = (d: Document) =>
-	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
+const formatDocumentAuthors = (d: Document) => highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
-const docLink = computed(() =>
-	doc?.value && !isEmpty(doc?.value?.link) ? doc.value.link[0].url : null
-);
+const docLink = computed(() => (doc?.value && !isEmpty(doc?.value?.link) ? doc.value.link[0].url : null));
 
 const formattedAbstract = computed(() => {
 	if (!doc.value || !doc.value.abstractText) return '';
@@ -326,23 +303,15 @@ const doi = computed(() => getDocumentDoi(doc.value));
 const artifacts = ref<Extraction[]>([]);
 const associatedResources = ref<ResultType[]>([]);
 
-const figures = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
-);
-const tables = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
-);
-const equations = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
-);
+const figures = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []);
+const tables = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []);
+const equations = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []);
 const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
-const sectionSummaries = computed(
-	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
-);
+const sectionSummaries = computed(() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []);
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {
 	const exclusion = [
@@ -356,15 +325,9 @@ const otherExtractions = computed(() => {
 });
 
 /* Provenance */
-const relatedTerariumModels = computed(
-	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
-);
+const relatedTerariumModels = computed(() => associatedResources.value.filter((d) => isModel(d)) as Model[]);
+const relatedTerariumDatasets = computed(() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]);
+const relatedTerariumDocuments = computed(() => associatedResources.value.filter((d) => isDocument(d)) as Document[]);
 /*
 // This is the model content that is displayed in the scroll-to-section featuer
 // That feature was removed, but way may want to bring it back.

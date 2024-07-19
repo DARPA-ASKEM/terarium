@@ -3,12 +3,7 @@
 		<div>
 			<span class="flex align-items-center"
 				><h6>{{ configuration.name }}</h6>
-				<Button
-					class="ml-auto"
-					text
-					icon="pi pi-ellipsis-v"
-					@click.stop="toggleContextMenu"
-				></Button
+				<Button class="ml-auto" text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu"></Button
 			></span>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems"></ContextMenu>
 			<p>{{ configuration.description }}</p>

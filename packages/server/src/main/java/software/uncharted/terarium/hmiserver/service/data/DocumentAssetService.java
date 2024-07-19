@@ -25,25 +25,27 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 	private final EmbeddingService embeddingService;
 
 	public DocumentAssetService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ElasticsearchConfiguration elasticConfig,
-			final ElasticsearchService elasticService,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final DocumentRepository repository,
-			final EmbeddingService embeddingService) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ElasticsearchConfiguration elasticConfig,
+		final ElasticsearchService elasticService,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final S3ClientService s3ClientService,
+		final DocumentRepository repository,
+		final EmbeddingService embeddingService
+	) {
 		super(
-				objectMapper,
-				config,
-				elasticConfig,
-				elasticService,
-				projectService,
-				projectAssetService,
-				s3ClientService,
-				repository,
-				DocumentAsset.class);
+			objectMapper,
+			config,
+			elasticConfig,
+			elasticService,
+			projectService,
+			projectAssetService,
+			s3ClientService,
+			repository,
+			DocumentAsset.class
+		);
 		this.embeddingService = embeddingService;
 	}
 
@@ -67,18 +69,20 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 	@Override
 	@Observed(name = "function_profile")
 	public DocumentAsset createAsset(
-			final DocumentAsset asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException {
-
+		final DocumentAsset asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException {
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
 	public Optional<DocumentAsset> updateAsset(
-			final DocumentAsset asset, final UUID projectId, final Schema.Permission hasWritePermission)
-			throws IOException, IllegalArgumentException {
-
+		final DocumentAsset asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
 		final Optional<DocumentAsset> originalOptional = getAsset(asset.getId(), hasWritePermission);
 		if (originalOptional.isEmpty()) {
 			return Optional.empty();
@@ -104,17 +108,15 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 				final String cardText = objectMapper.writeValueAsString(card);
 
 				new Thread(() -> {
-							try {
-								final TerariumAssetEmbeddings embeddings =
-										embeddingService.generateEmbeddings(cardText);
+					try {
+						final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
 
-								// Execute the update request
-								uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-							} catch (final Exception e) {
-								log.error("Failed to update embeddings for document {}", updated.getId(), e);
-							}
-						})
-						.start();
+						// Execute the update request
+						uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
+					} catch (final Exception e) {
+						log.error("Failed to update embeddings for document {}", updated.getId(), e);
+					}
+				}).start();
 			}
 		}
 		return updatedOptional;

@@ -265,20 +265,14 @@ export default {
 			formatAxis(xAxis);
 
 			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
-			const yAxis = this.svg
-				.append('g')
-				.attr('transform', `translate(${leftMargin},${topMargin})`)
-				.call(yAxisGen);
+			const yAxis = this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxisGen);
 			formatAxis(yAxis);
 
 			Object.keys(this.selectedCells).forEach((parameter) => {
 				this.renderBars(this.svg, parameter, this.selectedCells[parameter], this.labelRowSelected);
 			});
 
-			const rangeText = this.labelColFormatFn(
-				this.labelColList[this.selectedCell[SelectedCellValue.START_COL]],
-				1
-			);
+			const rangeText = this.labelColFormatFn(this.labelColList[this.selectedCell[SelectedCellValue.START_COL]], 1);
 			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 

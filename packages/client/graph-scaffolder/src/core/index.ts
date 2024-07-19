@@ -4,12 +4,4 @@ import DeltaRenderer from './delta-renderer';
 
 import { flattenGraph, traverseGraph, traverseNode, getAStarPath } from './traverse';
 
-export {
-	BasicRenderer,
-	DeltaRenderer,
-	Renderer,
-	flattenGraph,
-	traverseGraph,
-	traverseNode,
-	getAStarPath
-};
+export { BasicRenderer, DeltaRenderer, Renderer, flattenGraph, traverseGraph, traverseNode, getAStarPath };

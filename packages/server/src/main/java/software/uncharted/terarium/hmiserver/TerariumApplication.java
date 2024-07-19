@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @PropertySource("classpath:application.properties")
 public class TerariumApplication {
+
 	public static void main(final String[] args) {
 		SpringApplication.run(TerariumApplication.class, args);
 	}

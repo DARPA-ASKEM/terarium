@@ -51,9 +51,7 @@ const transitionsList = computed<
 		const isParent = referencedTransitions.length > 1;
 		const children = referencedTransitions
 			.map((referencedTransition) => {
-				const t = props.transitions.find(
-					(transition) => transition.id === referencedTransition.name
-				);
+				const t = props.transitions.find((transition) => transition.id === referencedTransition.name);
 				if (!t) return null;
 				return {
 					id: t.id,

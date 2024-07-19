@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Card extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -4904702264253191366L;
 

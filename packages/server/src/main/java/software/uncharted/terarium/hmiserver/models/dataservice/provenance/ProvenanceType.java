@@ -58,9 +58,9 @@ public enum ProvenanceType {
 	 */
 	public static ProvenanceType findByType(final String type) {
 		return Arrays.stream(values())
-				.filter(value -> type.equalsIgnoreCase(value.type))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
+			.filter(value -> type.equalsIgnoreCase(value.type))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No ProvenanceType with type: " + type));
 	}
 
 	@Override

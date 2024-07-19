@@ -135,22 +135,12 @@ import { nodeOutputLabel } from '@/components/workflow/util';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import {
-	blankStratifyGroup,
-	StratifyGroup,
-	StratifyOperationStateMira
-} from './stratify-mira-operation';
+import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'update-output-port',
-	'select-output'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
 
 const menuItems = computed(() => [
 	{
@@ -320,10 +310,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
-	if (
-		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
-		semantics?.ode
-	) {
+	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
 		initials?.forEach((i) => {

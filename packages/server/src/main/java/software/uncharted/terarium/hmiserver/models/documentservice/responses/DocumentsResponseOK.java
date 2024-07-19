@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 @EqualsAndHashCode(callSuper = true)
 @TSModel
 public class DocumentsResponseOK extends XDDResponseOK implements Serializable {
+
 	private List<Document> data;
 
 	@JsonAlias("next_page")

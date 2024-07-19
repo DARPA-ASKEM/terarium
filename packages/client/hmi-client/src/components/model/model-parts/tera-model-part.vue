@@ -5,17 +5,11 @@
 				<section class="parent">
 					<span>
 						<Button
-							:icon="
-								parentEditingState[index].showChildren
-									? 'pi pi-chevron-down'
-									: 'pi pi-chevron-right'
-							"
+							:icon="parentEditingState[index].showChildren ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
 							text
 							rounded
 							size="small"
-							@click="
-								parentEditingState[index].showChildren = !parentEditingState[index].showChildren
-							"
+							@click="parentEditingState[index].showChildren = !parentEditingState[index].showChildren"
 						/>
 						<h6>{{ base.id }}</h6>
 					</span>
@@ -29,11 +23,7 @@
 							size="small"
 						/>
 						<span v-else>
-							<tera-input
-								label="Unit"
-								placeholder="Add a unit"
-								v-model="parentEditingState[index].childrenUnits"
-							/>
+							<tera-input label="Unit" placeholder="Add a unit" v-model="parentEditingState[index].childrenUnits" />
 							<Button
 								icon="pi pi-check"
 								text
@@ -41,11 +31,7 @@
 								size="small"
 								@click="
 									() => {
-										updateAllChildren(
-											base.id,
-											'unitExpression',
-											parentEditingState[index].childrenUnits
-										);
+										updateAllChildren(base.id, 'unitExpression', parentEditingState[index].childrenUnits);
 										parentEditingState[index].isEditingChildrenUnits = false;
 									}
 								"
@@ -59,13 +45,7 @@
 							/>
 						</span>
 					</template>
-					<Button
-						v-if="showMatrix"
-						label="Open matrix"
-						text
-						size="small"
-						@click="$emit('open-matrix', base.id)"
-					/>
+					<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
 					<Button
 						v-if="!parentEditingState[index].isEditingChildrenConcepts"
 						@click="parentEditingState[index].isEditingChildrenConcepts = true"

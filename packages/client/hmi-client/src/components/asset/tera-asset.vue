@@ -49,11 +49,7 @@
 			<slot name="bottom-header-buttons" />
 		</div>
 		<slot name="summary" />
-		<TabView
-			v-if="tabs.length > 1"
-			:active-index="selectedTabIndex"
-			@tab-change="(e) => emit('tab-change', e)"
-		>
+		<TabView v-if="tabs.length > 1" :active-index="selectedTabIndex" @tab-change="(e) => emit('tab-change', e)">
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
@@ -202,9 +198,7 @@ watch(
 
 		headers.forEach((header) => {
 			// Extract header name
-			const textNodes = Array.from(header.childNodes).filter(
-				(node) => node.nodeType === Node.TEXT_NODE
-			);
+			const textNodes = Array.from(header.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
 			let text = textNodes.map((node) => node.textContent).join('');
 			if (!text) {
 				const span = header.querySelector('span');

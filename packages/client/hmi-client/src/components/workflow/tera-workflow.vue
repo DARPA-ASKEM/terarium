@@ -48,21 +48,13 @@
 						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
-					<ContextMenu
-						ref="addComponentMenu"
-						:model="contextMenuItems"
-						style="white-space: nowrap; width: auto"
-					/>
+					<ContextMenu ref="addComponentMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 				</div>
 			</div>
 		</template>
 		<!-- data -->
 		<template #data>
-			<ContextMenu
-				ref="contextMenu"
-				:model="contextMenuItems"
-				style="white-space: nowrap; width: auto"
-			/>
+			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
 				v-for="node in wf.nodes"
 				:key="node.id"
@@ -77,10 +69,7 @@
 					ref="teraOperatorRefs"
 					:node="node"
 					@resize="resizeHandler"
-					@port-selected="
-						(port: WorkflowPort, direction: WorkflowDirection) =>
-							createNewEdge(node, port, direction)
-					"
+					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
@@ -117,10 +106,7 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0 0 L 8 8 L 0 16 z"
-					style="fill: var(--text-color-secondary); fill-opacity: 1"
-				></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary); fill-opacity: 1"></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -179,14 +165,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type {
-	Operation,
-	Workflow,
-	WorkflowEdge,
-	WorkflowNode,
-	WorkflowOutput,
-	WorkflowPort
-} from '@/types/workflow';
+import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -313,10 +292,7 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
-function appendInputPort(
-	node: WorkflowNode<any>,
-	port: { type: string; label?: string; value: any }
-) {
+function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -655,9 +631,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
@@ -693,9 +667,7 @@ function removeEdges(portId: string) {
 	);
 
 	// Build a traversal map before we do actual removal
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.value.nodes.map((node) => [node.id, node])
-	);
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.value.nodes.map((node) => [node.id, node]));
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	wf.value.edges.forEach((edge) => {
 		if (!edge.source || !edge.target) return;
@@ -717,10 +689,7 @@ function removeEdges(portId: string) {
 
 	// cascade invalid status to downstream operators
 	if (startingNodeId !== '') {
-		workflowService.cascadeInvalidateDownstream(
-			nodeMap.get(startingNodeId) as WorkflowNode<any>,
-			nodeCache
-		);
+		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
 	}
 }
 
@@ -763,8 +732,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 	const allEdges = wf.value.edges;
 
 	// Note id can start with numerals, so we need [id=...]
-	const getPortElement = (id: string) =>
-		d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
+	const getPortElement = (id: string) => d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
 
 	// Relink heuristic, this will modify source
 	const relink = (source: Position, target: Position) => {

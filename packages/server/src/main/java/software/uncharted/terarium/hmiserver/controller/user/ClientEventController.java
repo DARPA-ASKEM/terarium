@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @RequestMapping("/client-event")
 @RequiredArgsConstructor
 public class ClientEventController {
+
 	private final ClientEventService clientEventService;
 	private final CurrentUserService currentUserService;
 

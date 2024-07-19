@@ -87,35 +87,33 @@ public class GoLLMController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "400",
-						description = "The provided document text is too long",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model or document arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<TaskResponse> createModelCardTask(
-			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		// Grab the document
 		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
@@ -166,8 +164,7 @@ public class GoLLMController {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -176,8 +173,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
 		// send the response
@@ -188,34 +184,35 @@ public class GoLLMController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Configure Model` task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model or document arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<TaskResponse> createConfigureModelTask(
-			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "document-id", required = true) final UUID documentId,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
-			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+		@RequestParam(name = "node-id", required = false) final UUID nodeId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		// Grab the document
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
@@ -272,8 +269,7 @@ public class GoLLMController {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -282,8 +278,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
 		return ResponseEntity.ok().body(resp);
@@ -291,6 +286,7 @@ public class GoLLMController {
 
 	@Data
 	public static class ConfigFromDatasetBody {
+
 		private String matrixStr = "";
 	}
 
@@ -298,39 +294,37 @@ public class GoLLMController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "400",
-						description = "The provided document text is too long",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model or document arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model or document arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<TaskResponse> createConfigFromDatasetTask(
-			@RequestParam(name = "model-id", required = true) final UUID modelId,
-			@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
-			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId,
-			@RequestBody(required = false) final ConfigFromDatasetBody body) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "dataset-ids", required = true) final List<UUID> datasetIds,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+		@RequestParam(name = "node-id", required = false) final UUID nodeId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestBody(required = false) final ConfigFromDatasetBody body
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		// Grab the datasets
 		final List<String> datasets = new ArrayList<>();
@@ -342,8 +336,7 @@ public class GoLLMController {
 			}
 
 			// make sure there is text in the document
-			if (dataset.get().getFileNames() == null
-					|| dataset.get().getFileNames().isEmpty()) {
+			if (dataset.get().getFileNames() == null || dataset.get().getFileNames().isEmpty()) {
 				log.warn(String.format("Dataset %s has no source files to send", datasetId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.files.not-found"));
 			}
@@ -401,8 +394,7 @@ public class GoLLMController {
 
 		req.setProjectId(projectId);
 
-		final ConfigureFromDatasetResponseHandler.Properties props =
-				new ConfigureFromDatasetResponseHandler.Properties();
+		final ConfigureFromDatasetResponseHandler.Properties props = new ConfigureFromDatasetResponseHandler.Properties();
 		props.setProjectId(projectId);
 		props.setDatasetIds(datasetIds);
 		props.setModelId(modelId);
@@ -415,8 +407,7 @@ public class GoLLMController {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -425,8 +416,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
 		return ResponseEntity.ok().body(resp);
@@ -436,33 +426,34 @@ public class GoLLMController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Compare Models` task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "The provided model arguments are not found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "The provided model arguments are not found",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
-			@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
-			@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-			@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
-			@RequestParam(name = "node-id", required = false) final UUID nodeId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
+		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
+		@RequestParam(name = "node-id", required = false) final UUID nodeId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		final List<String> modelCards = new ArrayList<>();
 		for (final UUID modelId : modelIds) {
@@ -474,12 +465,13 @@ public class GoLLMController {
 			}
 			if (model.get().getMetadata().getGollmCard() != null) {
 				try {
-					modelCards.add(objectMapper.writeValueAsString(
-							model.get().getMetadata().getGollmCard()));
+					modelCards.add(objectMapper.writeValueAsString(model.get().getMetadata().getGollmCard()));
 				} catch (final JsonProcessingException e) {
 					log.error("Unable to serialize model card", e);
 					throw new ResponseStatusException(
-							HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+						HttpStatus.INTERNAL_SERVER_ERROR,
+						messages.get("task.gollm.json-processing")
+					);
 				}
 			}
 		}
@@ -518,8 +510,7 @@ public class GoLLMController {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -528,8 +519,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
 		return ResponseEntity.ok().body(resp);
@@ -539,35 +529,34 @@ public class GoLLMController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Generate Summary` task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = TaskResponse.class))),
-				@ApiResponse(
-						responseCode = "422",
-						description = "The request was interrupted while waiting for a response",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "503",
-						description = "The request was timed out while waiting for a response",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "422",
+				description = "The request was interrupted while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "503",
+				description = "The request was timed out while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<TaskResponse> createGenerateResponseTask(
-			@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
-			@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
-			@RequestParam(name = "project-id", required = false) final UUID projectId,
-			@RequestBody final String instruction) {
-
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
+		@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestBody final String instruction
+	) {
 		// create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -594,8 +583,7 @@ public class GoLLMController {
 			resp = taskService.runTask(mode, req);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input: {}", e.getMessage());
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
 		} catch (final TimeoutException e) {
 			log.error("Timeout while waiting for task response: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -604,8 +592,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response: {}", e.getMessage());
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
 		return ResponseEntity.ok().body(resp);
@@ -614,21 +601,22 @@ public class GoLLMController {
 	@PutMapping("/{task-id}")
 	@Operation(summary = "Cancel a GoLLM task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched cancellation successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Void.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the cancellation",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched cancellation successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Void.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue dispatching the cancellation",
+				content = @Content
+			)
+		}
+	)
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(taskId);
 		return ResponseEntity.ok().build();

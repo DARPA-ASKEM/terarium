@@ -2,15 +2,7 @@ import { mean, isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = [
-	'#5F9E3E',
-	'#4375B0',
-	'#8F69B9',
-	'#D67DBF',
-	'#E18547',
-	'#D2C446',
-	'#84594D'
-];
+export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
 	legend: boolean;
@@ -234,10 +226,7 @@ export const createForecastChart = (
 		Object.assign(layerSpec.encoding, {
 			opacity: { value: 0 },
 			strokeWidth: { value: 16 },
-			tooltip: [
-				{ field: statisticsLayer.timeField, type: 'quantitative' },
-				...(tooltipContent || [])
-			]
+			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
 		spec.layer.push(layerSpec);
 	}
@@ -271,12 +260,7 @@ export interface OptimizeChartOptions {
 
 const binCount = 5;
 
-function formatSuccessChartData(
-	riskResults: any,
-	targetVariable: string,
-	threshold: number,
-	isMinimized: boolean
-) {
+function formatSuccessChartData(riskResults: any, targetVariable: string, threshold: number, isMinimized: boolean) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
 

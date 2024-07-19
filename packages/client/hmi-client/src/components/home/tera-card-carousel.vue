@@ -58,9 +58,7 @@ const cardListRef = ref();
 const carouselWidth = ref(0);
 const activeCarouselPage = ref(1);
 
-const amountOfCardsToMove = computed(() =>
-	Math.floor(carouselWidth.value / (cardWidth + rightGapWidth))
-);
+const amountOfCardsToMove = computed(() => Math.floor(carouselWidth.value / (cardWidth + rightGapWidth)));
 
 const scrollIncrement = computed(() => (cardWidth + rightGapWidth) * amountOfCardsToMove.value);
 
@@ -92,8 +90,7 @@ function scroll(pagesToMove: number) {
 	}
 	activeCarouselPage.value += pagesToMove;
 	const pixelsToTranslate = -scrollIncrement.value * pagesToMove;
-	const marginLeftString =
-		cardListRef.value.style.marginLeft === '' ? '0' : cardListRef.value.style.marginLeft;
+	const marginLeftString = cardListRef.value.style.marginLeft === '' ? '0' : cardListRef.value.style.marginLeft;
 	const newMarginLeft = parseFloat(marginLeftString) + pixelsToTranslate;
 	// Don't let the list scroll far enough left that we see space before the first card.
 	cardListRef.value.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
