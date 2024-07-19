@@ -29,16 +29,9 @@
 			:disabled="disabledInputs?.includes('unitExpression')"
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
-		<!--TODO: Add support for editing concepts-->
-		<!-- <tera-input
-			label="Concept"
-			placeholder="Select a concept"
-			icon="pi pi-search"
-
-			v-model="query"@complete="$emit('update-item', { key: 'concept', value: $event.value?.curie })"
-		/> -->
 		<span class="concept">
 			<label>Concept</label>
+			<!--icon="pi pi-search"-->
 			<AutoComplete
 				label="Concept"
 				size="small"
@@ -48,15 +41,10 @@
 				optionLabel="name"
 				:disabled="disabledInputs?.includes('concept')"
 				@complete="searchConcepts"
-				@item-select="console.log($event)"
+				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
 			/>
 		</span>
-		<katex-element
-			class="expression"
-			v-if="item.expression"
-			:expression="item.expression"
-			:throw-on-error="false"
-		/>
+		<katex-element class="expression" v-if="item.expression" :expression="item.expression" :throw-on-error="false" />
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
@@ -73,44 +61,30 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
-import {
-	// getCurieFromGroundingIdentifier,
-	// getNameOfCurieCached,
-	searchCuriesEntities
-} from '@/services/concept';
-// getNameOfCurieCached(
-// 		new Map<string, string>(),
-// 		getCurieFromGroundingIdentifier(grounding.identifiers)
-// 	)
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 
 const props = defineProps<{
 	item: ModelPartItem;
 	disabledInputs?: string[];
 }>();
 
-if (!props.disabledInputs) console.log(props.item);
+defineEmits(['update-item']);
 
 const conceptQuery = ref('');
 const results = ref<DKG[]>([]);
-
-defineEmits(['update-item']);
+const nameOfCurieCache = ref(new Map<string, string>());
 
 async function searchConcepts(event: AutoCompleteCompleteEvent) {
 	const query = event.query;
-	if (query.length > 2) {
-		results.value = await searchCuriesEntities(query);
-		console.log(results.value);
-	}
+	if (query.length > 2) results.value = await searchCuriesEntities(query);
 }
 
 onMounted(() => {
-	if (props.item.grounding?.identifiers) {
-		console.log(props.item.grounding.identifiers);
-		// conceptQuery.value = getNameOfCurieCached(
-		// 	new Map<string, string>(),
-		// 	getCurieFromGroundingIdentifier(props.item.grounding.identifiers.ncit)
-		// );
-		// console.log(conceptQuery.value);
+	const identifiers = props.item.grounding?.identifiers;
+	if (identifiers) {
+		console.log(identifiers, props.item.grounding);
+		conceptQuery.value = getNameOfCurieCached(nameOfCurieCache.value, getCurieFromGroundingIdentifier(identifiers));
+		console.log(conceptQuery.value);
 	}
 });
 </script>
@@ -165,6 +139,10 @@ div {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	gap: var(--gap-1);
+}
+
+:deep(.p-autocomplete-input) {
+	padding: var(--gap-1) var(--gap-2);
 }
 
 .expression {

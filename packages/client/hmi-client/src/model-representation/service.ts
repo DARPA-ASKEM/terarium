@@ -6,7 +6,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, parseCurie } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -206,13 +206,16 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 	}
 }
 
-export function updateVariableProperty(v: any, key: string, value: any) {
+export function updateModelPartProperty(modelPart: any, key: string, value: any) {
 	if (key === 'unitExpression') {
-		if (!v.units) v.units = { expression: '', expression_mathml: '' };
-		v.units.expression = value;
-		v.units.expression_mathml = `<ci>${value}</ci>`;
+		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
+		modelPart.units.expression = value;
+		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
+	} else if (key === 'concept') {
+		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
+		modelPart.grounding.identifiers = parseCurie(value);
 	} else {
-		v[key] = value;
+		modelPart[key] = value;
 	}
 }
 
@@ -220,42 +223,42 @@ export function updateParameter(model: Model, id: string, key: string, value: an
 	const parameters = getParameters(model);
 	const parameter = parameters.find((p: ModelParameter) => p.id === id);
 	if (!parameter) return;
-	updateVariableProperty(parameter, key, value);
+	updateModelPartProperty(parameter, key, value);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
 	const auxiliary = auxiliaries.find((a) => a.id === id);
 	if (!auxiliary) return;
-	updateVariableProperty(auxiliary, key, value);
+	updateModelPartProperty(auxiliary, key, value);
 }
 
 export function updateState(model: Model, id: string, key: string, value: any) {
 	const states = getStates(model);
 	const state = states.find((i: any) => i.id === id);
 	if (!state) return;
-	updateVariableProperty(state, key, value);
+	updateModelPartProperty(state, key, value);
 }
 
 export function updateObservable(model: Model, id: string, key: string, value: any) {
 	const observables = model?.semantics?.ode?.observables ?? [];
 	const observable = observables.find((o) => o.id === id);
 	if (!observable) return;
-	updateVariableProperty(observable, key, value);
+	updateModelPartProperty(observable, key, value);
 }
 
 export function updateTransition(model: Model, id: string, key: string, value: any) {
 	const transitions: Transition[] = model?.model?.transitions ?? [];
 	const transition = transitions.find((t) => t.id === id);
 	if (!transition) return;
-	transition[key] = value;
 	if (transition.properties && key === 'name') {
 		transition.properties.name = value;
 	}
+	updateModelPartProperty(transition, key, value);
 }
 
 export function updateTime(model: Model, key: string, value: any) {
 	const time: State = model?.semantics?.ode?.time;
-	updateVariableProperty(time, key, value);
+	updateModelPartProperty(time, key, value);
 }
 
 // Gets states, vertices, stocks (no stock type yet)

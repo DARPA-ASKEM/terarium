@@ -1140,6 +1140,7 @@ export interface Observable {
     description?: string;
     units?: ModelUnit;
     expression?: string;
+    grounding?: ModelGrounding;
     expression_mathml?: string;
 }
 

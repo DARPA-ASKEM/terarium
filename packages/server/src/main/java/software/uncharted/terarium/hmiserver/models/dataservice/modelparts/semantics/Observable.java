@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 
 @Data
@@ -37,6 +38,9 @@ public class Observable extends SupportAdditionalProperties implements Serializa
 
 	@TSOptional
 	private String expression;
+
+	@TSOptional
+	private ModelGrounding grounding;
 
 	@TSOptional
 	@JsonProperty("expression_mathml")

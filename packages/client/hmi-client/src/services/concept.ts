@@ -86,6 +86,7 @@ async function getEntitySimilarity(
 const getNameOfCurieCached = (cache: Map<string, string>, curie: string): string => {
 	if (!cache.has(curie)) {
 		getCuriesEntities([curie]).then((response) => cache.set(curie, response?.[0].name ?? ''));
+		console.log(curie);
 	}
 	return cache.get(curie) ?? '';
 };
