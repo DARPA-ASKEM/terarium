@@ -580,3 +580,29 @@ export const createOptimizeForecastChart = (
 
 	return spec;
 };
+
+export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		autosize: {
+			type: 'fit'
+		},
+		layer: []
+	};
+	if (interventionsData && interventionsData.length > 0) {
+		// markers
+		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+			spec.layer.push(marker);
+		});
+		// chart
+		spec.layer.push({
+			data: { values: interventionsData }, // Dummy data to ensure the layer is rendered
+			mark: 'point',
+			encoding: {
+				x: { field: 'time', type: 'quantitative' },
+				y: { field: 'value', type: 'quantitative' }
+			}
+		});
+	}
+	return spec;
+};
