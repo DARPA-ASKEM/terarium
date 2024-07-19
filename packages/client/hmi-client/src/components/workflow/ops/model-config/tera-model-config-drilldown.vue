@@ -65,7 +65,7 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="pl-3 pr-3">
+		<tera-drilldown-section :tabName="ConfigTabs.Wizard" class="px-3">
 			<template #header-controls-left>
 				<tera-toggleable-edit
 					v-if="knobs.transientModelConfig.name"
@@ -78,7 +78,7 @@
 				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
 			</template>
 
-			<Accordion multiple :active-index="[0, 1, 2, 3]">
+			<Accordion multiple :active-index="[0, 1]">
 				<AccordionTab>
 					<template #header>
 						Description
@@ -97,10 +97,9 @@
 					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 				</AccordionTab>
 			</Accordion>
-			<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
-				>Some metadata is missing from these values. This information can be added manually to the attached
-				model.</Message
-			>
+			<Message v-if="model && isModelMissingMetadata(model)" class="m-2">
+				Some metadata is missing from these values. This information can be added manually to the attached model.
+			</Message>
 
 			<tera-initial-table
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.initials) && model"
@@ -122,12 +121,6 @@
 				@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 				@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-
-			<!-- TODO - For Nelson eval debug, remove in April 2024 -->
-			<div style="padding-left: 1rem; font-size: 90%; color: #555555">
-				<div>Model config id: {{ selectedConfigId }}</div>
-				<div>Model id: {{ props.node.inputs[0].value?.[0] }}</div>
-			</div>
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
 			<tera-drilldown-section id="notebook-section">
@@ -226,7 +219,6 @@ import Textarea from 'primevue/textarea';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -236,10 +228,8 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelParts from '@/components/model/tera-model-parts.vue';
-// import teraModelIntervention from '@/components/model/petrinet/tera-model-intervention.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
-
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
