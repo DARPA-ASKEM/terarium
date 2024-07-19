@@ -401,7 +401,7 @@ export function createOptimizeChart(
 
 function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
 	const markers = data.map((ele) => ({
-		data: [{}], // Dummy data to ensure the layer is rendered
+		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
 			x: { datum: ele.time }
@@ -409,12 +409,13 @@ function createInterventionChartMarkers(data: { name: string; value: number; tim
 	}));
 
 	const labelsSpec = {
-		data: { values: data }, // Dummy data to ensure the layer is rendered
+		data: { values: data },
 		mark: {
 			type: 'text',
 			align: 'left',
+			angle: 90,
 			dx: 5,
-			dy: 10
+			dy: -10
 		},
 		encoding: {
 			x: { field: 'time', type: 'quantitative' },

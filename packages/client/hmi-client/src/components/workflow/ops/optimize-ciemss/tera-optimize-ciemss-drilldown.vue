@@ -755,22 +755,36 @@ const setOutputValues = async () => {
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
-	const data = state.interventionPolicyGroups.flatMap((ele) =>
-		ele.intervention.staticInterventions.map((intervention) => ({
-			appliedTo: ele.intervention.appliedTo,
-			name: ele.intervention.name,
-			value: intervention.value,
-			time: intervention.timestep
-		}))
-	);
+	// Combine before and after interventions
+	const combinedInterventions = [
+		...state.interventionPolicyGroups.flatMap((group) =>
+			group.intervention.staticInterventions.map((intervention) => ({
+				appliedTo: group.intervention.appliedTo,
+				name: group.intervention.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		),
+		...(state.optimizedInterventionPolicy?.interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				appliedTo: intervention.appliedTo,
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		) || [])
+	];
 
-	return _.mapValues(_.groupBy(data, 'appliedTo'), (interventions) =>
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
 		interventions.map(({ name, value, time }) => ({
 			name,
 			value,
 			time
 		}))
 	);
+
+	return groupedAndMapped;
 });
 
 onMounted(async () => {
