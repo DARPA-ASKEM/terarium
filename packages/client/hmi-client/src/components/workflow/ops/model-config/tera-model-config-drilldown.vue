@@ -549,7 +549,7 @@ const initialize = async () => {
 	model.value = await getModel(modelId);
 
 	if (!state.transientModelConfig.id) {
-		// apply a configuration if one hasnt been applied yet
+		// apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -560,8 +560,8 @@ const initialize = async () => {
 		const jupyterContext = buildJupyterContext();
 		if (jupyterContext) {
 			if (kernelManager.jupyterSession !== null) {
-				// when coming from output dropdown change we should shutdown first
-				await kernelManager.shutdown();
+				// when coming from output dropdown change we should shut down first
+				kernelManager.shutdown();
 			}
 			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
 		}
@@ -680,61 +680,10 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* This is for the box around the suggested configurations section */
-.box-container {
-	border: solid 1px var(--surface-border);
-	border-radius: var(--border-radius);
-	background-color: var(--surface-50);
-}
-
-.box-container:deep(.p-accordion .p-accordion-content) {
-	padding: 0;
-	background-color: transparent;
-}
-
-.box-container:deep(.p-datatable .p-datatable-tbody > tr) {
-	background-color: transparent;
-}
-
-.box-container:deep(.p-paginator) {
-	background-color: transparent;
-}
-
-.box-container:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
-	background-color: transparent;
-}
-
-.box-container:deep(.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link) {
-	background-color: transparent;
-}
-.box-container:deep(.p-datatable .p-sortable-column.p-highlight) {
-	background-color: transparent;
-}
-.box-container:deep(table > thead > tr > th:nth-child(1)) {
-	padding-left: var(--gap);
-}
-.box-container:deep(.p-button .p-button-label) {
-	text-align: left;
-}
-
 :deep(.p-datatable-loading-overlay.p-component-overlay) {
 	background-color: var(--surface-section);
 }
 
-.form-section {
-	display: flex;
-	flex-direction: column;
-	gap: var(--gap);
-}
-
-.artifact-amount {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
-}
-.empty-section {
-	color: var(--text-color-subdued);
-}
 .p-datatable.p-datatable-sm :deep(.p-datatable-tbody > tr > td) {
 	padding: 0;
 }
@@ -764,10 +713,6 @@ onUnmounted(() => {
 	padding-left: var(--gap-medium);
 }
 
-.use-button {
-	white-space: nowrap;
-}
-
 #matrix-canvas {
 	position: fixed;
 	top: 0;
@@ -779,15 +724,6 @@ onUnmounted(() => {
 	mix-blend-mode: darken;
 	opacity: 1;
 	transition: opacity 1s;
-}
-
-.footer {
-	display: flex;
-	justify-content: space-between;
-	width: 100%;
-	padding-top: var(--gap-small);
-	padding-bottom: var(--gap-small);
-	border-top: 1px solid var(--surface-border-light);
 }
 
 .sort-by-label {
