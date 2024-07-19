@@ -2,39 +2,18 @@
 	{{ activeProjectId }}
 	<template v-if="node">
 		<tera-model-workflow-wrapper v-if="isNodeOfOperationType(OperationType.MODEL)" :node="node" />
-		<tera-stratify-mira
-			v-else-if="isNodeOfOperationType(OperationType.STRATIFY_MIRA)"
-			:node="node"
-		/>
-		<tera-dataset-transformer
-			v-else-if="isNodeOfOperationType(OperationType.DATASET_TRANSFORMER)"
-			:node="node"
-		/>
+		<tera-stratify-mira v-else-if="isNodeOfOperationType(OperationType.STRATIFY_MIRA)" :node="node" />
+		<tera-dataset-transformer v-else-if="isNodeOfOperationType(OperationType.DATASET_TRANSFORMER)" :node="node" />
 		<tera-dataset-drilldown v-else-if="isNodeOfOperationType(OperationType.DATASET)" :node="node" />
-		<tera-regridding-drilldown
-			v-else-if="isNodeOfOperationType(OperationType.REGRIDDING)"
-			:node="node"
-		/>
-		<tera-calibrate-julia
-			v-else-if="isNodeOfOperationType(OperationType.CALIBRATION_JULIA)"
-			:node="node"
-		/>
-		<tera-simulate-julia
-			v-else-if="isNodeOfOperationType(OperationType.SIMULATE_JULIA)"
-			:node="node"
-		/>
-		<tera-calibrate-ciemss
-			v-else-if="isNodeOfOperationType(OperationType.CALIBRATION_CIEMSS)"
-			:node="node"
-		/>
+		<tera-regridding-drilldown v-else-if="isNodeOfOperationType(OperationType.REGRIDDING)" :node="node" />
+		<tera-calibrate-julia v-else-if="isNodeOfOperationType(OperationType.CALIBRATION_JULIA)" :node="node" />
+		<tera-simulate-julia v-else-if="isNodeOfOperationType(OperationType.SIMULATE_JULIA)" :node="node" />
+		<tera-calibrate-ciemss v-else-if="isNodeOfOperationType(OperationType.CALIBRATION_CIEMSS)" :node="node" />
 		<tera-calibrate-ensemble-ciemss
 			v-else-if="isNodeOfOperationType(OperationType.CALIBRATE_ENSEMBLE_CIEMSS)"
 			:node="node"
 		/>
-		<tera-simulate-ciemss
-			v-else-if="isNodeOfOperationType(OperationType.SIMULATE_CIEMSS)"
-			:node="node"
-		/>
+		<tera-simulate-ciemss v-else-if="isNodeOfOperationType(OperationType.SIMULATE_CIEMSS)" :node="node" />
 		<tera-simulate-ensemble-ciemss
 			v-else-if="isNodeOfOperationType(OperationType.SIMULATE_ENSEMBLE_CIEMSS)"
 			:node="node"

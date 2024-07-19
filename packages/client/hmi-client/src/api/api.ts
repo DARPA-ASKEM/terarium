@@ -15,12 +15,7 @@ function getProjectIdFromUrl(): string | null {
 }
 
 function getProjectId(): string | null {
-	return (
-		activeProjectId.value ??
-		localStorage.getItem('activeProjectId') ??
-		getProjectIdFromUrl() ??
-		null
-	);
+	return activeProjectId.value ?? localStorage.getItem('activeProjectId') ?? getProjectIdFromUrl() ?? null;
 }
 
 const API = axios.create({
