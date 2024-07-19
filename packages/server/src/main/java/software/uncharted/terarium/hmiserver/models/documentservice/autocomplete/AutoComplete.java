@@ -24,11 +24,13 @@ public class AutoComplete implements Serializable {
 	 * @return true if there are no suggestions.
 	 */
 	public boolean hasNoSuggestions() {
-		return (suggest == null
-				|| suggest.getEntitySuggestFuzzy() == null
-				|| suggest.getEntitySuggestFuzzy().isEmpty()
-				|| suggest.getEntitySuggestFuzzy().get(0).getOptions() == null
-				|| suggest.getEntitySuggestFuzzy().get(0).getOptions().isEmpty());
+		return (
+			suggest == null ||
+			suggest.getEntitySuggestFuzzy() == null ||
+			suggest.getEntitySuggestFuzzy().isEmpty() ||
+			suggest.getEntitySuggestFuzzy().get(0).getOptions() == null ||
+			suggest.getEntitySuggestFuzzy().get(0).getOptions().isEmpty()
+		);
 	}
 
 	/**
@@ -38,8 +40,7 @@ public class AutoComplete implements Serializable {
 	 */
 	public List<String> getAutoCompletes() {
 		List<String> autoCompletes = new ArrayList<>();
-		for (Map<String, Object> options :
-				getSuggest().getEntitySuggestFuzzy().get(0).getOptions()) {
+		for (Map<String, Object> options : getSuggest().getEntitySuggestFuzzy().get(0).getOptions()) {
 			autoCompletes.add(options.get(AUTOCOMPLETE_FIELD).toString());
 		}
 

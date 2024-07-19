@@ -24,13 +24,7 @@
 		<template #footer>
 			<!--FIXME: This design is odd, since these buttons do the same thing-->
 			<Button size="large" label="OK" @click="emit('close-modal')" />
-			<Button
-				size="large"
-				severity="secondary"
-				class="p-button-outlined"
-				label="Cancel"
-				@click="emit('close-modal')"
-			/>
+			<Button size="large" severity="secondary" class="p-button-outlined" label="Cancel" @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>

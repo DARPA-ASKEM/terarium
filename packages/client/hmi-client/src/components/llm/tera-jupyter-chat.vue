@@ -37,12 +37,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import {
-	createMessageId,
-	getSessionManager,
-	JupyterMessage,
-	KernelState
-} from '@/services/jupyter';
+import { createMessageId, getSessionManager, JupyterMessage, KernelState } from '@/services/jupyter';
 import type { CsvAsset, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
@@ -217,10 +212,7 @@ const updateNotebookCells = (message) => {
 	// and stores resulting csv after each query.
 	let notebookItem;
 	const parentId: String | null =
-		message.metadata?.notebook_item ||
-		message.parent_header?.msg_id ||
-		message.header?.msg_id ||
-		null;
+		message.metadata?.notebook_item || message.parent_header?.msg_id || message.header?.msg_id || null;
 
 	// Update existing cell
 	notebookItem = notebookItems.value.find(
@@ -241,16 +233,12 @@ const updateNotebookCells = (message) => {
 	}
 	if (message.header.msg_type === 'dataset') {
 		// If we get a new dataset, remove any old datasets
-		notebookItem.messages = notebookItem.messages.filter(
-			(msg) => msg.header.msg_type !== 'dataset'
-		);
+		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'dataset');
 		notebookItem.resultingCsv = message.content;
 		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'model_preview') {
 		// If we get a new model preview, remove any old previews
-		notebookItem.messages = notebookItem.messages.filter(
-			(msg) => msg.header.msg_type !== 'model_preview'
-		);
+		notebookItem.messages = notebookItem.messages.filter((msg) => msg.header.msg_type !== 'model_preview');
 		emit('update-kernel-state', message.content);
 	} else if (message.header.msg_type === 'execute_input') {
 		const executionParent = message.parent_header.msg_id;
@@ -273,15 +261,9 @@ const updateKernelStatus = (kernelStatus) => {
 const newJupyterMessage = (jupyterMessage) => {
 	const msgType = jupyterMessage.header.msg_type;
 	if (
-		[
-			'stream',
-			'code_cell',
-			'llm_request',
-			'llm_thought',
-			'llm_response',
-			'beaker_response',
-			'dataset'
-		].indexOf(msgType) > -1
+		['stream', 'code_cell', 'llm_request', 'llm_thought', 'llm_response', 'beaker_response', 'dataset'].indexOf(
+			msgType
+		) > -1
 	) {
 		messagesHistory.value.push(jupyterMessage);
 		updateNotebookCells(jupyterMessage);
@@ -359,9 +341,7 @@ watch(
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 		}
 		return [];
 	},

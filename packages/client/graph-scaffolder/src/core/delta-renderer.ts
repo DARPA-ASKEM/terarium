@@ -55,19 +55,13 @@ export default abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
 		recursiveBuild(chart as any, this.graph.nodes);
 
 		this.renderNodesAdded(
-			chart
-				?.selectAll<any, INode<V>>('.node-ui')
-				.filter((d) => d.state === 'new') as D3SelectionINode<V>
+			chart?.selectAll<any, INode<V>>('.node-ui').filter((d) => d.state === 'new') as D3SelectionINode<V>
 		);
 		this.renderNodesUpdated(
-			chart
-				?.selectAll<any, INode<V>>('.node-ui')
-				.filter((d) => d.state === 'updated') as D3SelectionINode<V>
+			chart?.selectAll<any, INode<V>>('.node-ui').filter((d) => d.state === 'updated') as D3SelectionINode<V>
 		);
 		this.renderNodesRemoved(
-			chart
-				?.selectAll<any, INode<V>>('.node-ui')
-				.filter((d) => d.state === 'removed') as D3SelectionINode<V>
+			chart?.selectAll<any, INode<V>>('.node-ui').filter((d) => d.state === 'removed') as D3SelectionINode<V>
 		);
 	}
 
@@ -101,19 +95,13 @@ export default abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
 			});
 
 		this.renderEdgesAdded(
-			chart
-				.selectAll<any, IEdge<E>>('.edge')
-				.filter((d) => d.state === 'new') as D3SelectionIEdge<E>
+			chart.selectAll<any, IEdge<E>>('.edge').filter((d) => d.state === 'new') as D3SelectionIEdge<E>
 		);
 		this.renderEdgesUpdated(
-			chart
-				.selectAll<any, IEdge<E>>('.edge')
-				.filter((d) => d.state === 'updated') as D3SelectionIEdge<E>
+			chart.selectAll<any, IEdge<E>>('.edge').filter((d) => d.state === 'updated') as D3SelectionIEdge<E>
 		);
 		this.renderEdgesRemoved(
-			chart
-				.selectAll<any, IEdge<E>>('.edge')
-				.filter((d) => d.state === 'removed') as D3SelectionIEdge<E>
+			chart.selectAll<any, IEdge<E>>('.edge').filter((d) => d.state === 'removed') as D3SelectionIEdge<E>
 		);
 	}
 

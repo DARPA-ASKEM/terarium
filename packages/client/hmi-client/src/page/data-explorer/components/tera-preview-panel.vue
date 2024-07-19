@@ -92,10 +92,7 @@ const previewItemId = computed(() => {
 	if (isDocument(previewItemState.value)) {
 		return previewItemState.value.gddId;
 	}
-	if (
-		previewItemResourceType.value === ResourceType.DATASET &&
-		props.source === DatasetSource.ESGF
-	) {
+	if (previewItemResourceType.value === ResourceType.DATASET && props.source === DatasetSource.ESGF) {
 		const dataset: Dataset = previewItemState.value as Dataset;
 		return dataset.esgfId as string;
 	}

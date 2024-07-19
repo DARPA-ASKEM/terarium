@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Accessors(chain = true)
 public class ElasticsearchConfiguration {
+
 	String url;
 
 	@Value("${terarium.elasticsearch.auth_enabled:false}")
@@ -123,18 +124,19 @@ public class ElasticsearchConfiguration {
 	}
 
 	public record Index(
-			String prefix,
-			String suffix,
-			String codeRoot,
-			String artifactRoot,
-			String datasetRoot,
-			String documentRoot,
-			String equationRoot,
-			String modelRoot,
-			String modelConfigurationRoot,
-			String notebookSessionRoot,
-			String simulationRoot,
-			String workflowRoot,
-			String decapodesConfigurationRoot,
-			String decapodesContextRoot) {}
+		String prefix,
+		String suffix,
+		String codeRoot,
+		String artifactRoot,
+		String datasetRoot,
+		String documentRoot,
+		String equationRoot,
+		String modelRoot,
+		String modelConfigurationRoot,
+		String notebookSessionRoot,
+		String simulationRoot,
+		String workflowRoot,
+		String decapodesConfigurationRoot,
+		String decapodesContextRoot
+	) {}
 }

@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class XDDFacetBucket implements Serializable {
+
 	private String key;
 
 	@JsonAlias("doc_count")

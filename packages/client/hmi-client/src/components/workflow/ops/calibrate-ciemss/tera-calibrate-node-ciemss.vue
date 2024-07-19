@@ -9,20 +9,9 @@
 			/>
 		</template>
 
-		<tera-progress-spinner
-			v-if="inProgressCalibrationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
+		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%" />
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -88,9 +77,7 @@ const preparedCharts = computed(() => {
 	groundTruth = csvParse(csvRaw, autoType);
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find(
-		(d) => d.modelVariable === 'timestamp'
-	)?.datasetVariable;
+	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	return state.chartConfigs.map((config) => {
 		const datasetVariables: string[] = [];

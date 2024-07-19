@@ -58,11 +58,7 @@
 						</div>
 					</div>
 					<!-- Handle llm_response type -->
-					<div
-						v-else-if="
-							m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'
-						"
-					>
+					<div v-else-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
 						<div class="llm-response">{{ m.content['text'] }}</div>
 					</div>
 					<!-- Handle stream type for stderr -->
@@ -144,9 +140,7 @@ const isEditingQuery = ref(false);
 
 // Computed values for the labels and icons
 const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show reasoning'));
-const showHideIcon = computed(() =>
-	showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'
-);
+const showHideIcon = computed(() => (showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'));
 
 // Reference for the chat window menu and its items
 const chatWindowMenu = ref();

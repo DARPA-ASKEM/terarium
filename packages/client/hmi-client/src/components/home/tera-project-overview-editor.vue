@@ -1,9 +1,5 @@
 <template>
-	<Editor
-		v-model="editorContent"
-		:class="{ readonly: !hasEditPermission }"
-		:readonly="!hasEditPermission"
-	/>
+	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
 </template>
 
 <script setup lang="ts">
@@ -16,12 +12,8 @@ import { b64DecodeUnicode } from '@/utils/binary';
 const AUTO_SAVE_DELAY = 3000;
 
 const { activeProject, refresh } = useProjects();
-const lastSavedContent = computed(() =>
-	b64DecodeUnicode(activeProject.value?.overviewContent ?? '')
-);
-const hasEditPermission = computed(() =>
-	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
-);
+const lastSavedContent = computed(() => b64DecodeUnicode(activeProject.value?.overviewContent ?? ''));
+const hasEditPermission = computed(() => ['creator', 'writer'].includes(activeProject.value?.userPermission ?? ''));
 const editorContent = ref('');
 
 let autoSaveIntervalId: number | null = null;
@@ -35,9 +27,7 @@ const stopAutoSave = () => {
 };
 
 const isContentSameAsLastSaved = computed(
-	() =>
-		lastSavedContent.value.length === editorContent.value.length &&
-		lastSavedContent.value === editorContent.value
+	() => lastSavedContent.value.length === editorContent.value.length && lastSavedContent.value === editorContent.value
 );
 const saveContent = async () => {
 	if (!activeProject.value) return;

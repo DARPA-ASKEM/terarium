@@ -9,11 +9,7 @@ import { INode, D3SelectionINode } from '../types';
  *
  * See: https://observablehq.com/@d3/programmatic-zoom
  */
-export const moveTo = <V, E>(
-	G: Renderer<V, E>,
-	node: D3SelectionINode<V>,
-	duration: number
-): void => {
+export const moveTo = <V, E>(G: Renderer<V, E>, node: D3SelectionINode<V>, duration: number): void => {
 	const chart = G.chart;
 	const chartSize = G.chartSize;
 	const svg = d3.select(G.svgEl);

@@ -29,9 +29,7 @@ export const nestedTypeColors = [
 
 let domain: string[] = [];
 
-let scaleNodeType: d3.ScaleOrdinal<string, string, never> = d3
-	.scaleOrdinal(nodeTypeColors)
-	.domain([]);
+let scaleNodeType: d3.ScaleOrdinal<string, string, never> = d3.scaleOrdinal(nodeTypeColors).domain([]);
 
 function getNodeTypeColor(id: string): string {
 	return scaleNodeType(id);
@@ -54,10 +52,7 @@ let scaleNestedType = d3.scaleLinear().domain([0, 2]);
 
 function getNestedTypeColor(id: string): string {
 	const index = domain.indexOf(id);
-	return d3.piecewise(
-		d3.interpolateRgb.gamma(2.2),
-		nestedTypeColors
-	)(scaleNestedType(index === -1 ? 0 : index));
+	return d3.piecewise(d3.interpolateRgb.gamma(2.2), nestedTypeColors)(scaleNestedType(index === -1 ? 0 : index));
 }
 
 function setNestedTypeColor(ids: string[]): void {
