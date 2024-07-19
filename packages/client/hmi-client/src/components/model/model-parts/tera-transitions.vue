@@ -1,7 +1,6 @@
 <template>
 	<tera-model-part
 		:items="transitionsList"
-		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="$emit('update-transition', $event)"
