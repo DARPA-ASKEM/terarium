@@ -1,11 +1,7 @@
 <template>
 	<header :class="`${status} ${interactionClasses}`">
 		<span class="header-label">{{ name }}</span>
-		<Button
-			icon="pi pi-ellipsis-v"
-			class="p-button-icon-only p-button-text p-button-rounded"
-			@click="toggleMenu"
-		/>
+		<Button icon="pi pi-ellipsis-v" class="p-button-icon-only p-button-text p-button-rounded" @click="toggleMenu" />
 		<Menu ref="menu" :model="options" :popup="true" />
 	</header>
 </template>
@@ -17,12 +13,7 @@ import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
-const emit = defineEmits([
-	'remove-operator',
-	'open-in-new-window',
-	'duplicate-branch',
-	'show-annotation-editor'
-]);
+const emit = defineEmits(['remove-operator', 'open-in-new-window', 'duplicate-branch', 'show-annotation-editor']);
 
 const props = defineProps({
 	name: {

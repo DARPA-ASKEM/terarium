@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableCaching
-@ImportAutoConfiguration(classes = {CacheAutoConfiguration.class, RedisAutoConfiguration.class})
+@ImportAutoConfiguration(classes = { CacheAutoConfiguration.class, RedisAutoConfiguration.class })
 @Slf4j
 public class CacheConfiguration implements CachingConfigurer {
 
@@ -41,7 +41,6 @@ public class CacheConfiguration implements CachingConfigurer {
 	@Bean
 	public KeyGenerator keyGenerator() {
 		return (target, method, params) -> {
-
 			// Generate a unique key based on the calling method and parameters supplied
 			String key = target.getClass().getName();
 			key += "_" + method.getName();

@@ -10,10 +10,7 @@
 						<label class="subheader">Add documents, models or datasets to your project here.</label>
 						<div class="supported-resources">
 							<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
-							<div>
-								<i class="pi pi-share-alt" /><span>Models</span
-								><span>(AMR, sbml, vensim, stella)</span>
-							</div>
+							<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
 							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
 						</div>
 						<tera-drag-and-drop-importer
@@ -229,19 +226,13 @@ async function upload() {
 			const { name, id } = (results.value ?? [])[index];
 			if (name && name.toLowerCase().endsWith('.pdf')) {
 				extractPDF(id);
-			} else if (
-				name &&
-				(name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))
-			) {
+			} else if (name && (name.toLowerCase().endsWith('.txt') || name.toLowerCase().endsWith('.md'))) {
 				modelCard(id);
 			}
 		});
 		emit('close');
 		const resourceMsg = createdAssets.length > 1 ? 'resources were' : 'resource was';
-		useToastService().success(
-			'Success!',
-			`${createdAssets.length} ${resourceMsg} successfully added to this project`
-		);
+		useToastService().success('Success!', `${createdAssets.length} ${resourceMsg} successfully added to this project`);
 		importedFiles.value = [];
 		results.value = null;
 	} else if (urlToUpload.value) {

@@ -32,7 +32,8 @@ public class InitialSemantic extends Semantic {
 	@JsonBackReference
 	@Schema(hidden = true)
 	@TSIgnore
-	@NotNull private ModelConfiguration modelConfiguration;
+	@NotNull
+	private ModelConfiguration modelConfiguration;
 
 	@Override
 	public InitialSemantic clone() {

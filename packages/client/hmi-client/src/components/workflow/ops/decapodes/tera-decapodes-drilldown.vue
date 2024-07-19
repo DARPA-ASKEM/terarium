@@ -6,12 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #header-actions>
-			<tera-output-dropdown
-				@click.stop
-				:output="selectedOutputId"
-				is-selectable
-				:options="outputs"
-			/>
+			<tera-output-dropdown @click.stop :output="selectedOutputId" is-selectable :options="outputs" />
 		</template>
 		<main>
 			<tera-drilldown-section>
@@ -101,8 +96,7 @@ const sampleAgentQuestions = ['Convert the model to equations please'];
 const contextLanguage = 'julia-1.10';
 const isRunningCode = ref<boolean>(false);
 const selectedOutputId = ref<string>(props.node.active ?? '');
-const defaultCodeText =
-	'# This environment allows you to work with a decapode model that was passed in.';
+const defaultCodeText = '# This environment allows you to work with a decapode model that was passed in.';
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
 		return [

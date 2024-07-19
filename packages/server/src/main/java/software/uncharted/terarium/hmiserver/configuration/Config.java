@@ -18,6 +18,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class Config {
+
 	/** The base url of the deployed application. Eg/ http://localhost:5173 or https://myapp.uncharted.software */
 	String baseUrl;
 
@@ -72,6 +73,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {
+
 		/** If true, clear the cache on startup. Should be false in production environments */
 		Boolean clearOnStartup;
 	}
@@ -79,6 +81,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class Keycloak {
+
 		/** The url of the keycloak server. eg/ http://localhost:8081 or https://keycloak.uncharted.software */
 		String url;
 		/** The realm name to use for authentication */
@@ -104,6 +107,7 @@ public class Config {
 	@Accessors(chain = true)
 	@TSModel
 	public static class ClientConfig implements Serializable {
+
 		/** The base url of the deployed application. Mirror of {@link Config#baseUrl} */
 		String baseUrl;
 
@@ -124,6 +128,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class AmazonCredentials {
+
 		String accessKey;
 		String secretKey;
 	}
@@ -131,6 +136,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class AmazonS3 {
+
 		String region;
 		String url;
 		String credentialsId;
@@ -139,6 +145,7 @@ public class Config {
 	@Data
 	@Accessors(chain = true)
 	public static class Amazon {
+
 		Map<String, AmazonCredentials> credentials;
 		Map<String, AmazonS3> s3;
 	}

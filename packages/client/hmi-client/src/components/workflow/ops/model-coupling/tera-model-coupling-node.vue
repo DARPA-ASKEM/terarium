@@ -2,13 +2,7 @@
 	<tera-operator-placeholder :operation-type="node.operationType">
 		Attach two or more models
 	</tera-operator-placeholder>
-	<Button
-		v-if="node.inputs[0].value"
-		@click="emit('open-drilldown')"
-		label="Edit"
-		severity="secondary"
-		outlined
-	/>
+	<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 </template>
 
 <script setup lang="ts">

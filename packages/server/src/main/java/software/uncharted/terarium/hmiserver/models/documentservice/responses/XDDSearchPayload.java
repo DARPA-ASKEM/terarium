@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class XDDSearchPayload implements Serializable {
+
 	private String doi;
 
 	private String term;

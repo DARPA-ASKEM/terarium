@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @TSModel
 public class Provenance extends TerariumAsset {
+
 	@Serial
 	private static final long serialVersionUID = 8443258388173011137L;
 
@@ -41,11 +42,12 @@ public class Provenance extends TerariumAsset {
 	public Provenance() {}
 
 	public Provenance(
-			final ProvenanceRelationType extractedFrom,
-			final UUID left,
-			final ProvenanceType leftType,
-			final UUID right,
-			final ProvenanceType rightType) {
+		final ProvenanceRelationType extractedFrom,
+		final UUID left,
+		final ProvenanceType leftType,
+		final UUID right,
+		final ProvenanceType rightType
+	) {
 		this.relationType = extractedFrom;
 		this.left = left;
 		this.leftType = leftType;

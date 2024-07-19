@@ -34,10 +34,7 @@
 
 				<!-- Constant -->
 				<tera-input
-					v-if="
-						getParameterDistribution(modelConfiguration, parameterId).type ===
-						DistributionType.Constant
-					"
+					v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
 					label="Constant"
 					type="nist"
 					:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.value"
@@ -49,18 +46,11 @@
 					"
 				/>
 				<!-- Uniform Distribution -->
-				<template
-					v-if="
-						getParameterDistribution(modelConfiguration, parameterId).type ===
-						DistributionType.Uniform
-					"
-				>
+				<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
 					<tera-input
 						label="Min"
 						type="nist"
-						:model-value="
-							getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum
-						"
+						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.minimum"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -71,9 +61,7 @@
 					<tera-input
 						label="Max"
 						type="nist"
-						:model-value="
-							getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum
-						"
+						:model-value="getParameterDistribution(modelConfiguration, parameterId)?.parameters.maximum"
 						@update:model-value="
 							emit('update-parameter', {
 								id: parameterId,
@@ -84,18 +72,8 @@
 				</template>
 			</span>
 			<section>
-				<Button
-					:label="getSourceLabel(parameterId)"
-					text
-					size="small"
-					@click="isSourceOpen = !isSourceOpen"
-				/>
-				<Button
-					:label="getOtherValuesLabel"
-					text
-					size="small"
-					@click="showOtherConfigValueModal = true"
-				/>
+				<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
+				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 			</section>
 		</main>
 		<footer v-if="isSourceOpen">
@@ -121,11 +99,7 @@
 
 <script setup lang="ts">
 import { Model, ModelConfiguration } from '@/types/Types';
-import {
-	getParameterSource,
-	getParameterDistribution,
-	getOtherValues
-} from '@/services/model-configurations';
+import { getParameterSource, getParameterDistribution, getOtherValues } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
@@ -152,12 +126,7 @@ const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 
 const otherValueList = ref(
-	getOtherValues(
-		props.modelConfigurations,
-		props.parameterId,
-		'referenceId',
-		'parameterSemanticList'
-	)
+	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
 
 function getSourceLabel(initialId) {

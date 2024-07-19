@@ -62,20 +62,8 @@
 <script setup lang="ts">
 import { computed, onUpdated, PropType, Ref, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
-import {
-	downloadRawFile,
-	getClimateDataset,
-	getDataset,
-	getDownloadURL,
-	updateDataset
-} from '@/services/dataset';
-import {
-	AssetType,
-	type CsvAsset,
-	type Dataset,
-	type DatasetColumn,
-	PresignedURL
-} from '@/types/Types';
+import { downloadRawFile, getClimateDataset, getDataset, getDownloadURL, updateDataset } from '@/services/dataset';
+import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FeatureConfig } from '@/types/common';
@@ -171,17 +159,11 @@ const optionsMenuItems = ref([
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Dataset,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Dataset, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
@@ -273,8 +255,7 @@ watch(
 	() => dataset.value,
 	async () => {
 		// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
-		if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf')
-			return;
+		if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
 
 		// We are assuming here there is only a single csv file.
 		if (

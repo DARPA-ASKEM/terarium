@@ -1,19 +1,8 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import type { Model, Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
-import {
-	FACET_FIELDS as DATASET_FACET_FIELDS,
-	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
-} from '@/types/Dataset';
-import {
-	FACET_FIELDS as MODEL_FACET_FIELDS,
-	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
-	ID
-} from '@/types/Model';
-import {
-	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
-	FACET_FIELDS as DOCUMENT_FACET_FIELDS,
-	GITHUB_URL
-} from '@/types/XDD';
+import { FACET_FIELDS as DATASET_FACET_FIELDS, DISPLAY_NAMES as DATASET_DISPLAY_NAMES } from '@/types/Dataset';
+import { FACET_FIELDS as MODEL_FACET_FIELDS, DISPLAY_NAMES as MODEL_DISPLAY_NAMES, ID } from '@/types/Model';
+import { DISPLAY_NAMES as XDD_DISPLAY_NAMES, FACET_FIELDS as DOCUMENT_FACET_FIELDS, GITHUB_URL } from '@/types/XDD';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
 import { logger } from '@/utils/logger';

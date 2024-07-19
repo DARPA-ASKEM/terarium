@@ -31,35 +31,34 @@ public class DecapodesConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a decapodes configuration by ID")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Decapodes configuration found.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = DecapodesConfiguration.class))),
-				@ApiResponse(
-						responseCode = "204",
-						description = "There was no decapodes configuration found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue retrieving the decapodes configuration from the data store",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Decapodes configuration found.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesConfiguration.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "204",
+				description = "There was no decapodes configuration found",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the decapodes configuration from the data store",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<DecapodesConfiguration> getDecapodesConfiguration(@PathVariable("id") final UUID id) {
-
 		try {
-
 			// Fetch the decapodes configuration from the data-service
-			final Optional<DecapodesConfiguration> configuration =
-					decapodesConfigurationService.getDecapodesConfiguration(id);
-			return configuration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent()
-					.build());
-
+			final Optional<DecapodesConfiguration> configuration = decapodesConfigurationService.getDecapodesConfiguration(
+				id
+			);
+			return configuration.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 			// Return the configuration
 		} catch (final IOException e) {
 			final String error = "Unable to get decapodes configuration";
@@ -72,34 +71,33 @@ public class DecapodesConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a decapodes configuration")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Decapodes configuraiton updated.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = DecapodesConfiguration.class))),
-				@ApiResponse(
-						responseCode = "404",
-						description = "DecapodesConfiguration could not be found",
-						content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue updating the decapodes configuration",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Decapodes configuraiton updated.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesConfiguration.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "DecapodesConfiguration could not be found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue updating the decapodes configuration",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<DecapodesConfiguration> updateDecapodesConfiguration(
-			@PathVariable("id") final UUID id, @RequestBody final DecapodesConfiguration configuration) {
-
+		@PathVariable("id") final UUID id,
+		@RequestBody final DecapodesConfiguration configuration
+	) {
 		try {
 			configuration.setId(id);
-			final Optional<DecapodesConfiguration> updated =
-					decapodesConfigurationService.updateDecapodesConfiguration(configuration);
-			return updated.map(ResponseEntity::ok)
-					.orElseGet(() -> ResponseEntity.notFound().build());
+			final Optional<DecapodesConfiguration> updated = decapodesConfigurationService.updateDecapodesConfiguration(
+				configuration
+			);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update decapodes configuration";
 			log.error(error, e);
@@ -111,21 +109,21 @@ public class DecapodesConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an decapodes configuration")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Deleted decapodes configuration",
-						content = {
-							@Content(
-									mediaType = "application/json",
-									schema =
-											@io.swagger.v3.oas.annotations.media.Schema(
-													implementation = ResponseDeleted.class))
-						}),
-				@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Deleted decapodes configuration",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseDeleted.class)
+					)
+				}
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred while deleting", content = @Content)
+		}
+	)
 	ResponseEntity<ResponseDeleted> deleteDecapodesConfiguration(@PathVariable("id") final UUID id) {
-
 		try {
 			decapodesConfigurationService.deleteDecapodesConfiguration(id);
 			return ResponseEntity.ok(new ResponseDeleted("DecapodesConfiguration", id));
@@ -140,23 +138,23 @@ public class DecapodesConfigurationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new decapodes configuration")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "201",
-						description = "Decapodes configuration created.",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = DecapodesConfiguration.class))),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue creating the decapodes configuration",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "201",
+				description = "Decapodes configuration created.",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DecapodesConfiguration.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue creating the decapodes configuration",
+				content = @Content
+			)
+		}
+	)
 	ResponseEntity<DecapodesConfiguration> createDecapodesConfiguration(@RequestBody DecapodesConfiguration config) {
-
 		try {
 			config = decapodesConfigurationService.createDecapodesConfiguration(config);
 			return ResponseEntity.status(HttpStatus.CREATED).body(config);

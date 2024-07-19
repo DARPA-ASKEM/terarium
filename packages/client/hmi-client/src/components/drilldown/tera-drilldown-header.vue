@@ -1,18 +1,9 @@
 <template>
 	<header>
 		<div class="title-row">
-			<h4 class="title">
-				<slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" />
-			</h4>
+			<h4 class="title"><slot /> <i v-if="props.tooltip" v-tooltip="tooltip" class="pi pi-info-circle" /></h4>
 			<slot name="top-header-actions" />
-			<Button
-				class="close-mask"
-				icon="pi pi-times"
-				text
-				rounded
-				aria-label="Close"
-				@click="emit('close')"
-			/>
+			<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="emit('close')" />
 		</div>
 		<div class="tabs-row">
 			<TabView v-if="views.length > 1" :active-index="activeIndex" @tab-change="onTabChange">

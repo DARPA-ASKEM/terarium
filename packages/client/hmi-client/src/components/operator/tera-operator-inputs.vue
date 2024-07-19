@@ -42,13 +42,7 @@ import { WorkflowPort, WorkflowPortStatus, WorkflowDirection } from '@/types/wor
 import { getPortLabel } from '@/services/workflow';
 import Button from 'primevue/button';
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-selected',
-	'port-mouseover',
-	'port-mouseleave',
-	'remove-edges'
-]);
+const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave', 'remove-edges']);
 
 defineProps({
 	inputs: {

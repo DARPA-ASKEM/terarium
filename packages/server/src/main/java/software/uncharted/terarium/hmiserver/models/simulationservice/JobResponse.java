@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class JobResponse {
+
 	@JsonAlias("simulation_id")
 	private String simulationId;
 }

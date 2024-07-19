@@ -29,6 +29,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesTerm {
+
 	@TSOptional
 	private String name;
 

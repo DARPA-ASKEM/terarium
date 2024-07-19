@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ConfigurationCondition implements Serializable {
+
 	private String _type;
 	private String type;
 	private String value;

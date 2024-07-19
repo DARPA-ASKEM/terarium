@@ -36,31 +36,29 @@ public class NotificationController {
 	private final CurrentUserService currentUserService;
 	private final NotificationService notificationService;
 
-	@GetMapping()
+	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Return all recent notification groups for a user")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Returned recent notifications successfully",
-						content =
-								@Content(
-										array =
-												@ArraySchema(
-														schema =
-																@io.swagger.v3.oas.annotations.media.Schema(
-																		implementation = NotificationGroup.class)))),
-				@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Returned recent notifications successfully",
+				content = @Content(
+					array = @ArraySchema(
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = NotificationGroup.class)
+					)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue fetching the notifications")
+		}
+	)
 	public ResponseEntity<List<NotificationGroup>> getNotificationGroups(
-			@RequestParam(value = "since", required = false, defaultValue = "48") final long sinceInHours,
-			@RequestParam(value = "include-unack", required = false, defaultValue = "false")
-					final boolean includeUnack) {
-
+		@RequestParam(value = "since", required = false, defaultValue = "48") final long sinceInHours,
+		@RequestParam(value = "include-unack", required = false, defaultValue = "false") final boolean includeUnack
+	) {
 		final LocalDateTime sinceDateTime = LocalDateTime.now().minusHours(sinceInHours);
-		final Timestamp since =
-				Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final Timestamp since = Timestamp.from(sinceDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		final String userId = currentUserService.get().getId().toString();
 
@@ -74,14 +72,12 @@ public class NotificationController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Acknowledges all events in notification group")
 	@ApiResponses(
-			value = {
-				@ApiResponse(responseCode = "200", description = "Acknowledged all events in notification group"),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue acknowledging the notification group")
-			})
+		value = {
+			@ApiResponse(responseCode = "200", description = "Acknowledged all events in notification group"),
+			@ApiResponse(responseCode = "500", description = "There was an issue acknowledging the notification group")
+		}
+	)
 	public ResponseEntity<Void> acknowledgeNotificationGroup(@PathVariable("groupId") final UUID groupId) {
-
 		notificationService.acknowledgeNotificationGroup(groupId);
 
 		return ResponseEntity.ok(null);

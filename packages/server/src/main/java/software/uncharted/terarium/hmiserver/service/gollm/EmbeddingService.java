@@ -24,6 +24,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 @Slf4j
 @RequiredArgsConstructor
 public class EmbeddingService {
+
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
@@ -33,6 +34,7 @@ public class EmbeddingService {
 
 	@Data
 	public static class GoLLMSearchRequest {
+
 		private String text;
 
 		@JsonProperty("embedding_model")
@@ -41,12 +43,12 @@ public class EmbeddingService {
 
 	@Data
 	private static class EmbeddingsResponse {
+
 		double[] response;
 	}
 
 	public TerariumAssetEmbeddings generateEmbeddings(final String input)
-			throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
-
+		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException, IOException {
 		// create the embedding search request
 		final GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
 		embeddingRequest.setText(input);
@@ -73,7 +75,7 @@ public class EmbeddingService {
 		final Embeddings embeddingChunk = new Embeddings();
 		embeddingChunk.setVector(embeddingResp.response);
 		embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
-		embeddingChunk.setSpans(new long[] {0, input.length()});
+		embeddingChunk.setSpans(new long[] { 0, input.length() });
 
 		final TerariumAssetEmbeddings embeddings = new TerariumAssetEmbeddings();
 		embeddings.getEmbeddings().add(embeddingChunk);
