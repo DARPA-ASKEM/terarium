@@ -1,5 +1,5 @@
-import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
-import type { Model, XDDFacetsItemResponse, Dataset } from '@/types/Types';
+import { Facets, FacetBucket, ResourceType } from '@/types/common';
+import type { Model, Dataset } from '@/types/Types';
 import {
 	FACET_FIELDS as DATASET_FACET_FIELDS,
 	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
@@ -10,7 +10,7 @@ import {
 	ID
 } from '@/types/Model';
 
-import { groupBy, mergeWith, isArray } from 'lodash';
+import { groupBy } from 'lodash';
 
 import { logger } from '@/utils/logger';
 
@@ -75,39 +75,6 @@ export const getDatasetFacets = (datasets: Dataset[]) => {
 		}
 	});
 
-	return facets;
-};
-
-// Merging facets who share the same key requires custom logic, e.g.,
-//  XDD documents of "type" [fulltext] and Models of "type": [model, dataset]
-//  should be merged into one facet representing the overall "type" of result
-// @ts-ignore
-// eslint-disable-next-line consistent-return
-function mergeCustomizer(objValue: any, srcValue: any) {
-	if (isArray(objValue)) {
-		return objValue.concat(srcValue);
-	}
-	// return null;
-}
-
-export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
-	let facets = {} as { [index: string]: XDDFacetsItemResponse };
-	if (results.length > 0) {
-		results.forEach((resultsObj) => {
-			if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
-				// extract facets based on the result type
-				// because we would have different facets for different result types
-				// e.g., XDD will have facets that leverage the XDD fields and stats
-				if (
-					resultsObj.searchSubsystem === ResourceType.DOCUMENT ||
-					resultsObj.searchSubsystem === ResourceType.MODEL ||
-					resultsObj.searchSubsystem === ResourceType.DATASET
-				) {
-					facets = mergeWith(facets, resultsObj.facets, mergeCustomizer);
-				}
-			}
-		});
-	}
 	return facets;
 };
 
