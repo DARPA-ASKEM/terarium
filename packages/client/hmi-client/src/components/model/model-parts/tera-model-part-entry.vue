@@ -83,7 +83,6 @@ onMounted(async () => {
 	if (identifiers) {
 		conceptQuery.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 	}
-	console.log(identifiers, props.item.grounding, conceptQuery.value);
 });
 </script>
 

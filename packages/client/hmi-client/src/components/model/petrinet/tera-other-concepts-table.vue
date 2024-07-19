@@ -92,6 +92,7 @@
 					</template>
 					<template #body="{ data }">
 						<span v-if="data.key === ComparisonKey.GROUNDING && data.currentValue?.identifiers">
+							<!--FIXME: Determine concept script-->
 							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.currentValue.identifiers)) }}
 							<a
 								v-if="data.currentValue"

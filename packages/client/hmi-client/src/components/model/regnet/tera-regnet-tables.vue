@@ -15,6 +15,7 @@
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
+							<!--FIXME: Determine concept script-->
 							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
 
 							<a
