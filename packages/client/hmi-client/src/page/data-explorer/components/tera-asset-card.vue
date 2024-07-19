@@ -1,10 +1,5 @@
 <template>
-	<div
-		class="asset-card"
-		draggable="true"
-		@dragstart="startDrag(asset, resourceType)"
-		@dragend="endDrag"
-	>
+	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)" @dragend="endDrag">
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType !== ResourceType.DOCUMENT ? resourceType.toUpperCase() : 'DOCUMENT' }}
@@ -37,10 +32,7 @@
 				v-else-if="resourceType === ResourceType.DOCUMENT"
 				v-html="highlightSearchTerms((asset as DocumentAsset).description)"
 			/>
-			<div
-				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
-			>
+			<div class="parameters" v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters">
 				PARAMETERS:
 				{{ (asset as Model).semantics?.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
@@ -79,9 +71,7 @@ function highlightSearchTerms(text: string | undefined): string {
 const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
 const snippets = computed(() =>
-	(props.asset as Document).highlight
-		? Array.from((props.asset as Document).highlight).splice(0, 3)
-		: null
+	(props.asset as Document).highlight ? Array.from((props.asset as Document).highlight).splice(0, 3) : null
 );
 const title = computed(() => {
 	let value = '';

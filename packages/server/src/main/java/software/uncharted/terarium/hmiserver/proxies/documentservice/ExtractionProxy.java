@@ -9,12 +9,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 @FeignClient(name = "extractionService", url = "${xdd-prod-service.url}")
 public interface ExtractionProxy {
-
 	@PostMapping(value = "/cosmos_service/process/", consumes = "multipart/form-data")
 	ResponseEntity<JsonNode> processPdfExtraction(
-			@RequestPart("compress_images") final Boolean compressImages,
-			@RequestPart("use_cache") final Boolean useCache,
-			@RequestPart("pdf") MultipartFile file);
+		@RequestPart("compress_images") final Boolean compressImages,
+		@RequestPart("use_cache") final Boolean useCache,
+		@RequestPart("pdf") MultipartFile file
+	);
 
 	@GetMapping(value = "/cosmos_service/process/{id}/result")
 	ResponseEntity<byte[]> result(@PathVariable("id") final UUID jobId);
@@ -24,7 +24,9 @@ public interface ExtractionProxy {
 
 	@GetMapping(value = "/cosmos_service/process/{id}/result/extractions/{extraction-type}")
 	ResponseEntity<JsonNode> extraction(
-			@PathVariable("id") final UUID jobId, @PathVariable("extraction-type") final String type);
+		@PathVariable("id") final UUID jobId,
+		@PathVariable("extraction-type") final String type
+	);
 
 	@GetMapping(value = "/cosmos_service/process/{id}/status")
 	ResponseEntity<JsonNode> status(@PathVariable("id") final UUID jobId);

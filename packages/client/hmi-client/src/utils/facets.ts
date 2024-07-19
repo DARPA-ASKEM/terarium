@@ -1,14 +1,7 @@
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import type { Model, Dataset } from '@/types/Types';
-import {
-	FACET_FIELDS as DATASET_FACET_FIELDS,
-	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
-} from '@/types/Dataset';
-import {
-	FACET_FIELDS as MODEL_FACET_FIELDS,
-	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
-	ID
-} from '@/types/Model';
+import { FACET_FIELDS as DATASET_FACET_FIELDS, DISPLAY_NAMES as DATASET_DISPLAY_NAMES } from '@/types/Dataset';
+import { FACET_FIELDS as MODEL_FACET_FIELDS, DISPLAY_NAMES as MODEL_DISPLAY_NAMES, ID } from '@/types/Model';
 
 import { groupBy } from 'lodash';
 

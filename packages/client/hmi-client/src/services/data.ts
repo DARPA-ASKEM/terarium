@@ -1,12 +1,6 @@
 import { DATASET_FILTER_FIELDS, DatasetSearchParams } from '@/types/Dataset';
 import { Dataset, DocumentAsset, Model, ProvenanceType } from '@/types/Types';
-import {
-	FullSearchResults,
-	ResourceType,
-	ResultType,
-	SearchParameters,
-	SearchResults
-} from '@/types/common';
+import { FullSearchResults, ResourceType, ResultType, SearchParameters, SearchResults } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import { applyFacetFilters, isDataset, isModel } from '@/utils/data-util';
 import { isEmpty, uniqBy } from 'lodash';
@@ -184,10 +178,7 @@ const fetchData = async (
 	const promiseList = [] as Promise<FullSearchResults>[];
 
 	if (resourceType) {
-		if (
-			searchParam?.model?.related_search_enabled ||
-			searchParam?.dataset?.related_search_enabled
-		) {
+		if (searchParam?.model?.related_search_enabled || searchParam?.dataset?.related_search_enabled) {
 			let relatedArtifacts: ResultType[] = [];
 			//
 			// search by example
@@ -198,19 +189,13 @@ const fetchData = async (
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given model)?
 			if (searchParam?.model && searchParam?.model.related_search_id) {
-				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.model.related_search_id,
-					ProvenanceType.Model
-				);
+				relatedArtifacts = await getRelatedArtifacts(searchParam?.model.related_search_id, ProvenanceType.Model);
 			}
 
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given dataset)?
 			if (searchParam?.dataset && searchParam?.dataset.related_search_id) {
-				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.dataset.related_search_id,
-					ProvenanceType.Dataset
-				);
+				relatedArtifacts = await getRelatedArtifacts(searchParam?.dataset.related_search_id, ProvenanceType.Dataset);
 			}
 
 			// parse retrieved related artifacts and make them ready for consumption by the explorer
@@ -251,9 +236,7 @@ const fetchData = async (
 				}
 			});
 		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(
-				fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters)
-			);
+			promiseList.push(fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters));
 		}
 	}
 

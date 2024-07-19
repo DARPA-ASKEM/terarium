@@ -23,7 +23,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
-
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
@@ -86,7 +85,6 @@ public class DocumentAsset extends TerariumAsset {
 		}
 		return this.fileNames;
 	}
-
 
 	@Override
 	public DocumentAsset clone() {

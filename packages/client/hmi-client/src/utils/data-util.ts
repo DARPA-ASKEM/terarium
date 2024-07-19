@@ -8,18 +8,13 @@ import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-mo
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 import { FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 
-export const applyFacetFilters = <T>(
-	results: T[],
-	filters: Filters,
-	resourceType: ResourceType
-) => {
+export const applyFacetFilters = <T>(results: T[], filters: Filters, resourceType: ResourceType) => {
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
 
 	const { clauses } = filters;
-	const ASSET_FACET_FIELDS: string[] =
-		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
+	const ASSET_FACET_FIELDS: string[] = resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
 
 	clauses.forEach((clause) => {
 		const filterField: string = clause.field; // the field to filter on
