@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 @RequiredArgsConstructor
 @Slf4j
 public class GenerateSummaryHandler extends TaskResponseHandler {
+
 	public static final String NAME = "gollm_task:generate_summary";
 
 	private final SummaryService summaryService;
@@ -25,6 +26,7 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+
 		private UUID projectId;
 		private UUID previousSummaryId;
 		private UUID summaryId;
@@ -32,6 +34,7 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 
 	@Data
 	private static class ResponseOutput {
+
 		private String response;
 	}
 
@@ -55,8 +58,8 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Summary summary = summaryService
-					.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-					.orElseThrow();
+				.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+				.orElseThrow();
 			summary.setGeneratedSummary("Generating AI summary has failed.");
 			summaryService.updateAsset(summary, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
@@ -74,8 +77,8 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 			final ObjectMapper mapper = new ObjectMapper();
 			final ResponseOutput resOutput = mapper.readValue(output, ResponseOutput.class);
 			final Summary summary = summaryService
-					.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-					.orElseThrow();
+				.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+				.orElseThrow();
 			summary.setGeneratedSummary(resOutput.response);
 			summaryService.updateAsset(summary, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {

@@ -15,12 +15,7 @@
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{
-								getNameOfCurieCached(
-									nameOfCurieCache,
-									getCurieFromGroundingIdentifier(data.grounding.identifiers)
-								)
-							}}
+							{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
 
 							<a
 								target="_blank"
@@ -63,7 +58,7 @@
 			</DataTable>
 		</AccordionTab>
 		<AccordionTab header="Parameters">
-			<tera-parameters-metadata
+			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
@@ -90,13 +85,14 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import TeraParametersMetadata from '@/components/model/tera-parameters-metadata.vue';
+import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 
@@ -126,9 +122,3 @@ function onCellEditComplete() {
 	conceptSearchTerm.value = '';
 }
 </script>
-
-<style scoped>
-section {
-	margin-left: 1rem;
-}
-</style>

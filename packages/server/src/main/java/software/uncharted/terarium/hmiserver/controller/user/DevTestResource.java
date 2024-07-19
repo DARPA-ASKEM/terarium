@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RequestMapping("/dev-tests")
 @RestController
 public class DevTestResource {
+
 	// @Broadcast
 	// @Channel("user-event")
 	// Emitter<UserEvent> userEventEmitter;

@@ -61,27 +61,27 @@ public class FunmanController {
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a model configuration validation task")
 	@ApiResponses(
-			value = {
-				@ApiResponse(
-						responseCode = "200",
-						description = "Dispatched successfully",
-						content =
-								@Content(
-										mediaType = "application/json",
-										schema =
-												@io.swagger.v3.oas.annotations.media.Schema(
-														implementation = Simulation.class))),
-				@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
-				@ApiResponse(
-						responseCode = "500",
-						description = "There was an issue dispatching the request",
-						content = @Content)
-			})
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Simulation.class)
+				)
+			),
+			@ApiResponse(responseCode = "400", description = "Invalid input or bad request", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
 	public ResponseEntity<Simulation> createValidationRequest(
-			@RequestBody final JsonNode input,
-			@RequestParam(name = "project-id", required = false) final UUID projectId) {
-		final Schema.Permission permission =
-				projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+		@RequestBody final JsonNode input,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(
+			currentUserService.get().getId(),
+			projectId
+		);
 
 		final TaskRequest taskRequest = new TaskRequest();
 		taskRequest.setTimeoutMinutes(30);
@@ -108,8 +108,7 @@ public class FunmanController {
 			newSimulation = simulationService.createAsset(sim, projectId, permission);
 		} catch (final Exception e) {
 			log.error("An error occurred while trying to create a simulation asset.", e);
-			throw new ResponseStatusException(
-					HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
 		final ValidateModelConfigHandler.Properties props = new ValidateModelConfigHandler.Properties();
@@ -121,8 +120,7 @@ public class FunmanController {
 			taskService.runTask(TaskMode.ASYNC, taskRequest);
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.json-processing"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.funman.timeout"));
@@ -132,7 +130,9 @@ public class FunmanController {
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.funman.execution-failure"));
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("task.funman.execution-failure")
+			);
 		}
 
 		return ResponseEntity.ok(newSimulation);

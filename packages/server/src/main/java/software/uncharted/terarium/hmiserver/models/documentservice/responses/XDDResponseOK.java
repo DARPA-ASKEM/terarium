@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class XDDResponseOK implements Serializable {
+
 	/** Version */
 	private Number v;
 

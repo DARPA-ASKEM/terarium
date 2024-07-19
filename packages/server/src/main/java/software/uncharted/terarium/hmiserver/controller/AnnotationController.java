@@ -28,10 +28,10 @@ public class AnnotationController {
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<Annotation>> getAnnotations(
-			@RequestParam("artifact-type") final String artifactType,
-			@RequestParam("artifact-id") final String artifactId,
-			@RequestParam(value = "limit", defaultValue = "100", required = false) final int limit) {
-
+		@RequestParam("artifact-type") final String artifactType,
+		@RequestParam("artifact-id") final String artifactId,
+		@RequestParam(value = "limit", defaultValue = "100", required = false) final int limit
+	) {
 		return ResponseEntity.ok(annotationService.findArtifacts(artifactType, artifactId, limit));
 	}
 
@@ -68,7 +68,6 @@ public class AnnotationController {
 	@Secured(Roles.USER)
 	@Transactional
 	public ResponseEntity<JsonNode> deleteAnnotations(@RequestParam("id") final String id) {
-
 		final Annotation annotation = annotationService.findArtifact(id);
 		if (annotation == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotation not found");

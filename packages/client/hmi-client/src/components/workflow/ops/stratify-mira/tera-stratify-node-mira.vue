@@ -3,19 +3,8 @@
 		<tera-operator-placeholder v-if="!outputPreview" :operation-type="node.operationType">
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
-		<tera-model-diagram
-			v-if="outputPreview"
-			:model="outputPreview"
-			:is-editable="false"
-			is-preview
-		/>
-		<Button
-			v-if="node.inputs[0].value"
-			@click="emit('open-drilldown')"
-			label="Edit"
-			severity="secondary"
-			outlined
-		/>
+		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :is-editable="false" is-preview />
+		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 	</section>
 </template>
 

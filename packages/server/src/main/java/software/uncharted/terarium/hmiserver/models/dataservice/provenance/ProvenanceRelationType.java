@@ -32,9 +32,9 @@ public enum ProvenanceRelationType {
 	 */
 	public static ProvenanceRelationType findByType(final String type) {
 		return Arrays.stream(values())
-				.filter(value -> type.equalsIgnoreCase(value.type))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No RelationType with type: " + type));
+			.filter(value -> type.equalsIgnoreCase(value.type))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No RelationType with type: " + type));
 	}
 
 	ProvenanceRelationType(final String type) {

@@ -11,7 +11,7 @@
 			>
 				{{ title ?? node.displayName }}
 				<template #top-header-actions>
-					<aside class="input-chips mr-auto">
+					<aside class="flex gap-1 ml-3 mr-auto">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
@@ -37,10 +37,7 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
-					<tera-operator-annotation
-						:state="node.state"
-						@update-state="(state: any) => emit('update-state', state)"
-					/>
+					<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 				</template>
 			</tera-drilldown-header>
 			<main class="flex overflow-hidden h-full">
@@ -88,12 +85,7 @@ const props = defineProps<{
 	popover?: boolean;
 }>();
 
-const emit = defineEmits([
-	'on-close-clicked',
-	'update-state',
-	'update:selection',
-	'update-output-port'
-]);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
 const slots = useSlots();
 const menu = ref();
 /**
@@ -191,18 +183,12 @@ footer {
 	gap: 0.5rem;
 }
 
-.input-chips {
-	display: flex;
-	gap: var(--gap-1-5);
-	margin: 0 var(--gap);
-}
-
 .p-chip {
 	background-color: var(--surface-section);
 	color: var(--text-color-primary);
 }
 
 :deep(.p-chip .p-chip-text) {
-	font-size: var(--font-caption);
+	font-size: var(--font-body-small);
 }
 </style>

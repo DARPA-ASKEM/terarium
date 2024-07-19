@@ -4,6 +4,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
+
 	/**
 	 * Without tracking "on behalf of" user and corresponding project to check for permissions, assume the user had
 	 * permissions at the time of the Task's creation

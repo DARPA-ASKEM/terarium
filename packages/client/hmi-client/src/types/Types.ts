@@ -278,6 +278,9 @@ export interface Transition {
     id: string;
     input: string[];
     output: string[];
+    name?: string;
+    description?: string;
+    expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
 }
@@ -419,11 +422,6 @@ export interface DecapodesTerm {
 
 export interface NotebookSession extends TerariumAsset {
     data: any;
-}
-
-export interface PetriNetModel {
-    states: PetriNetState[];
-    transitions: PetriNetTransition[];
 }
 
 export interface Project extends TerariumAsset {
@@ -970,21 +968,6 @@ export interface Properties {
     description?: string;
 }
 
-export interface PetriNetState {
-    id: string;
-    name: string;
-    grounding: ModelGrounding;
-    initial: ModelExpression;
-}
-
-export interface PetriNetTransition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties: PetriNetTransitionProperties;
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1092,17 +1075,6 @@ export interface VariableStatement {
     provenance?: ProvenanceInfo;
 }
 
-export interface ModelExpression {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface PetriNetTransitionProperties {
-    name: string;
-    description: string;
-    grounding?: ModelGrounding;
-}
-
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
@@ -1165,6 +1137,8 @@ export interface Observable {
     id: string;
     name?: string;
     states?: string[];
+    description?: string;
+    units?: ModelUnit;
     expression?: string;
     expression_mathml?: string;
 }
@@ -1416,7 +1390,7 @@ export enum SimulationEngine {
 }
 
 export enum InterventionSemanticType {
-    Variable = "variable",
+    State = "state",
     Parameter = "parameter",
 }
 

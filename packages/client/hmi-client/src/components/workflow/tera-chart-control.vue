@@ -15,14 +15,7 @@
 					</template>
 				</template>
 			</MultiSelect>
-			<Button
-				v-if="showRemoveButton"
-				title="Remove chart"
-				icon="pi pi-trash"
-				@click="$emit('remove')"
-				rounded
-				text
-			/>
+			<Button v-if="showRemoveButton" title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
 		</div>
 	</div>
 </template>

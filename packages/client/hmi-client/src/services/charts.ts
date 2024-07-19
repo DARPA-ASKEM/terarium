@@ -1,27 +1,13 @@
+import { mean, isEmpty } from 'lodash';
+
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-const CATEGORICAL_SCHEME = [
-	'#5F9E3E',
-	'#4375B0',
-	'#8F69B9',
-	'#D67DBF',
-	'#E18547',
-	'#D2C446',
-	'#84594D'
-];
+export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
-	variables?: string[];
-	statisticalVariables?: string[];
-	groundTruthVariables?: string[];
-
 	legend: boolean;
-
 	translationMap?: Record<string, string>;
-
 	colorscheme?: string[];
-	timeField: string;
-	groupField: string;
 
 	title?: string;
 	xAxisTitle: string;
@@ -31,8 +17,18 @@ export interface ForecastChartOptions {
 	height: number;
 }
 
+export interface ForecastChartLayer {
+	dataset: Record<string, any>[];
+	variables: string[];
+	timeField: string;
+	groupField?: string;
+}
+
 /**
- * Generate Vegalite specs for simulation/forecast charts
+ * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
+ *  - sampling layer: multiple forecast runsk
+ *  - statistics layer: statistical aggregate of the sampling layer
+ *  - ground truth layer: any grounding data
  *
  * Data comes in as a list of multi-variate objects:
  *   [ { time: 1, var1: 0.2, var2: 0.5, var3: 0.1 }, ... ]
@@ -48,9 +44,9 @@ export interface ForecastChartOptions {
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
 export const createForecastChart = (
-	sampleRunData: Record<string, any>[],
-	statisticData: Record<string, any>[],
-	groundTruthData: Record<string, any>[],
+	samplingLayer: ForecastChartLayer | null,
+	statisticsLayer: ForecastChartLayer | null,
+	groundTruthLayer: ForecastChartLayer | null,
 	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
@@ -110,81 +106,58 @@ export const createForecastChart = (
 		}
 	};
 
-	// Build sample layer
-	if (sampleRunData && sampleRunData.length > 0) {
-		const sampleVariables = options.variables?.map((d) => d);
-
-		spec.layer.push({
-			mark: { type: 'line' },
-			data: { values: sampleRunData },
+	// Helper function to capture common layer structure
+	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+		const header = {
+			mark: { type: markType },
+			data: { values: layer.dataset },
 			transform: [
 				{
-					fold: sampleVariables,
-					as: ['sample_variable', 'sample_value']
+					fold: layer.variables,
+					as: ['variableField', 'valueField']
 				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'sample_variable',
-					type: 'nominal',
-					scale: {
-						domain: sampleVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false // No legend for sampling-layer, too noisy
+			]
+		};
+		const encoding = {
+			x: { field: layer.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'valueField', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'variableField',
+				type: 'nominal',
+				scale: {
+					domain: layer.variables,
+					range: options.colorscheme || CATEGORICAL_SCHEME
 				},
-				detail: { field: options.groupField, type: 'nominal' },
-				strokeWidth: { value: 1 },
-				opacity: { value: 0.1 }
+				legend: false
 			}
+		};
+
+		return {
+			...header,
+			encoding
+		} as any;
+	};
+
+	// Build sample layer
+	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
+		const layerSpec = newLayer(samplingLayer, 'line');
+
+		Object.assign(layerSpec.encoding, {
+			detail: { field: samplingLayer.groupField, type: 'nominal' },
+			strokeWidth: { value: 1 },
+			opacity: { value: 0.1 }
 		});
+
+		spec.layer.push(layerSpec);
 	}
 
 	// Build statistical layer
-	if (statisticData && statisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => {
-			const tip: any = {
-				field: d,
-				type: 'quantitative',
-				format: '.4f'
-			};
-
-			if (options.translationMap && options.translationMap[d]) {
-				tip.title = options.translationMap[d];
-			}
-
-			return tip;
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+		const layerSpec = newLayer(statisticsLayer, 'line');
+		Object.assign(layerSpec.encoding, {
+			opacity: { value: 1.0 },
+			strokeWidth: { value: 2 }
 		});
-
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: statisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				},
-				opacity: { value: 1.0 },
-				strokeWidth: { value: 2 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
@@ -208,38 +181,25 @@ export const createForecastChart = (
 	}
 
 	// Build ground truth layer
-	if (groundTruthData && groundTruthData.length > 0) {
-		const groundTruthVariables = options.groundTruthVariables?.map((d) => d);
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+		const layerSpec = newLayer(groundTruthLayer, 'point');
 
-		const layerSpec: any = {
-			mark: { type: 'point' },
-			data: { values: groundTruthData },
-			transform: [
-				{
-					fold: groundTruthVariables,
-					as: ['ground_variable', 'ground_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'ground_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'ground_variable',
-					type: 'nominal',
-					scale: {
-						domain: groundTruthVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				}
-			}
-		};
+		// FIXME: variables not aligned, set unique color for now
+		layerSpec.encoding.color.scale.range = ['#333'];
+		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: { value: 'Ground truth' },
+				title: null,
+				padding: { value: 0 },
 				strokeColor: null,
-				padding: { value: 5 }
+				orient: 'top',
+				direction: 'horizontal',
+				columns: Math.floor(options.width / 100),
+				symbolStrokeWidth: 4,
+				symbolSize: 200,
+				labelFontSize: 12,
+				labelOffset: 4
 			};
 
 			if (labelExpr.length > 0) {
@@ -251,9 +211,8 @@ export const createForecastChart = (
 
 	// Build a transparent layer with fat lines as a better hover target for tooltips
 	// Re-Build statistical layer
-	if (statisticData && statisticData.length > 0) {
-		const statisticalVariables = options.statisticalVariables?.map((d) => d);
-		const tooltipContent = statisticalVariables?.map((d) => {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
 				type: 'quantitative',
@@ -267,33 +226,356 @@ export const createForecastChart = (
 			return tip;
 		});
 
-		const layerSpec: any = {
-			mark: { type: 'line' },
-			data: { values: statisticData },
-			transform: [
-				{
-					fold: statisticalVariables,
-					as: ['stat_variable', 'stat_value']
-				}
-			],
-			encoding: {
-				x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-				y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-				color: {
-					field: 'stat_variable',
-					type: 'nominal',
-					scale: {
-						domain: statisticalVariables,
-						range: options.colorscheme || CATEGORICAL_SCHEME
-					},
-					legend: false
-				},
-				opacity: { value: 0 },
-				strokeWidth: { value: 16 },
-				tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-			}
-		};
+		const layerSpec = newLayer(statisticsLayer, 'line');
+		Object.assign(layerSpec.encoding, {
+			opacity: { value: 0 },
+			strokeWidth: { value: 16 },
+			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+		});
 		spec.layer.push(layerSpec);
+	}
+
+	return spec;
+};
+
+/// /////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
+
+export interface OptimizeChartOptions {
+	variables?: string[];
+	statisticalVariables?: string[];
+	groundTruthVariables?: string[];
+
+	legend: boolean;
+
+	translationMap?: Record<string, string>;
+
+	colorscheme?: string[];
+	timeField: string;
+	groupField: string;
+
+	title?: string;
+	xAxisTitle: string;
+	yAxisTitle: string;
+
+	width: number;
+	height: number;
+}
+
+const binCount = 5;
+
+function formatSuccessChartData(riskResults: any, targetVariable: string, threshold: number, isMinimized: boolean) {
+	const targetState = `${targetVariable}_state`;
+	const data = riskResults[targetState]?.qoi || [];
+
+	const minValue = Math.min(...data);
+	const maxValue = Math.max(...data);
+	const stepSize = (maxValue - minValue) / binCount;
+	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
+	for (let i = binCount; i > 0; i--) {
+		let rangeStart = minValue + stepSize * (i - 1);
+		let rangeEnd = minValue + stepSize * i;
+
+		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
+		if (stepSize === 0) {
+			rangeStart = minValue - 1;
+			rangeEnd = maxValue + 1;
+		}
+
+		let tag;
+		if (isMinimized) {
+			tag = rangeEnd < threshold ? 'in' : 'out';
+		} else {
+			tag = rangeStart > threshold ? 'in' : 'out';
+		}
+
+		bins.push({
+			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
+			count: 0,
+			tag
+		});
+	}
+
+	const toBinIndex = (value: number) => {
+		if (value < minValue || value > maxValue) return -1;
+		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
+		if (stepSize === 0 || value === maxValue) return 0;
+		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
+		return index;
+	};
+
+	const avgArray: number[] = [];
+
+	// Fill bins:
+	data.forEach((ele) => {
+		const index = toBinIndex(ele);
+		if (index !== -1) {
+			bins[index].count += 1;
+			if (bins[index].tag === 'out') {
+				avgArray.push(ele);
+			}
+		}
+	});
+
+	const avg = mean(avgArray);
+
+	return { data: bins, avg };
+}
+
+export function createOptimizeChart(
+	riskResults: any,
+	targetVariable: string,
+	threshold: number,
+	isMinimized: boolean
+): any {
+	const { data } = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		width: 400,
+		height: 400,
+		data: {
+			values: data
+		},
+		transform: [
+			{
+				calculate: 'split(datum.range, "-")[0]',
+				as: 'start'
+			},
+			{
+				calculate: 'split(datum.range, "-")[1]',
+				as: 'end'
+			}
+		],
+		layer: [
+			{
+				mark: {
+					type: 'bar',
+					stroke: 'black',
+					tooltip: true,
+					interpolate: 'linear'
+				},
+				encoding: {
+					y: {
+						field: 'start',
+						type: 'quantitative',
+						title: 'Min value at all times'
+					},
+					y2: { field: 'end' },
+					x: {
+						aggregate: 'sum',
+						field: 'count',
+						type: 'quantitative',
+						title: 'Count'
+					},
+					color: {
+						field: 'tag',
+						type: 'nominal',
+						scale: {
+							domain: ['out', 'in'],
+							range: ['#FFAB00', '#1B8073']
+						}
+					}
+				}
+			},
+			{
+				mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+				encoding: {
+					y: { datum: +threshold }
+				}
+			},
+			{
+				mark: {
+					type: 'text',
+					align: 'left',
+					text: `Threshold = ${+threshold}`,
+					baseline: 'line-bottom'
+				},
+				encoding: {
+					y: { datum: +threshold }
+				}
+			}
+		],
+		config: {
+			legend: { title: null, orient: 'top', direction: 'horizontal' }
+		}
+	};
+}
+
+function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
+	return data.map((ele) => ({
+		data: [{}], // Dummy data to ensure the layer is rendered
+		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
+		encoding: {
+			x: { datum: ele.time }
+		}
+	}));
+}
+
+function createStatisticLayer(
+	data: Record<string, any>[],
+	xaxis,
+	yaxis,
+	options: OptimizeChartOptions,
+	isPreStatistic: boolean
+) {
+	const statisticalVariables = options.statisticalVariables?.map((d) => d);
+	const tooltipContent = statisticalVariables?.map((d) => ({
+		field: d,
+		type: 'quantitative',
+		format: '.4f'
+	}));
+
+	const layerSpec: any = {
+		mark: { type: 'line' },
+		data: { values: data },
+		transform: [
+			{
+				fold: statisticalVariables,
+				as: ['stat_variable', 'stat_value']
+			}
+		],
+		encoding: {
+			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'stat_variable',
+				type: 'nominal',
+				scale: {
+					domain: statisticalVariables,
+					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
+				},
+				legend: options.legend
+					? {
+							title: null,
+							orient: 'top',
+							direction: 'horizontal',
+							labelExpr: isPreStatistic
+								? 'datum.value ? "Before Optimization" : ""'
+								: 'datum.value ? "After Optimization" : ""'
+						}
+					: null
+			},
+			opacity: { value: 1.0 },
+			strokeWidth: { value: 3.5 },
+			tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
+		}
+	};
+
+	return layerSpec;
+}
+
+function createSampleLayer(
+	data: Record<string, any>[],
+	xaxis,
+	yaxis,
+	options: OptimizeChartOptions,
+	isPreSample: boolean
+) {
+	const sampleVariables = options.variables?.map((d) => d);
+
+	return {
+		mark: { type: 'line' },
+		data: { values: data },
+		transform: [
+			{
+				fold: sampleVariables,
+				as: ['sample_variable', 'sample_value']
+			}
+		],
+		encoding: {
+			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
+			y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
+			color: {
+				field: 'sample_variable',
+				type: 'nominal',
+				scale: {
+					domain: sampleVariables,
+					range: [isPreSample ? '#AAB3C6' : '#1B8073']
+				},
+				legend: false // No legend for sampling-layer, too noisy
+			},
+			detail: { field: options.groupField, type: 'nominal' },
+			strokeWidth: { value: 1 },
+			opacity: { value: 0.1 }
+		}
+	};
+}
+export const createOptimizeForecastChart = (
+	preSampleRunData: Record<string, any>[],
+	preStatisticData: Record<string, any>[],
+	postSampleRunData: Record<string, any>[],
+	postStatisticData: Record<string, any>[],
+	interventionsData: { name: string; value: number; time: number }[],
+	options: OptimizeChartOptions
+) => {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal'; // Adjust font weight here
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const xaxis = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle;
+
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj,
+		description: '',
+		width: options.width,
+		height: options.height,
+		autosize: {
+			type: 'fit'
+		},
+
+		// layers
+		layer: [],
+
+		// Make layers independent
+		resolve: {
+			legend: { color: 'independent' },
+			scale: { color: 'independent' }
+		}
+	};
+
+	// Build pre sample layer
+	if (preSampleRunData && preSampleRunData.length > 0) {
+		spec.layer.push(createSampleLayer(preSampleRunData, xaxis, yaxis, options, true));
+	}
+
+	// Build post sample layer
+	if (postSampleRunData && postSampleRunData.length > 0) {
+		spec.layer.push(createSampleLayer(postSampleRunData, xaxis, yaxis, options, false));
+	}
+
+	// Build pre statistical layer
+	if (preStatisticData && preStatisticData.length > 0) {
+		spec.layer.push(createStatisticLayer(preStatisticData, xaxis, yaxis, options, true));
+	}
+
+	if (postStatisticData && postStatisticData.length > 0) {
+		spec.layer.push(createStatisticLayer(postStatisticData, xaxis, yaxis, options, false));
+	}
+
+	if (interventionsData && interventionsData.length > 0) {
+		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+			spec.layer.push(marker);
+		});
 	}
 
 	return spec;

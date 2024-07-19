@@ -67,8 +67,7 @@ export function useProjects() {
 	 */
 	function getActiveProjectAssets(assetType: AssetType) {
 		return (
-			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ??
-			([] as ProjectAsset[])
+			activeProject.value?.projectAssets.filter((asset) => asset.assetType === assetType) ?? ([] as ProjectAsset[])
 		);
 	}
 
@@ -87,11 +86,7 @@ export function useProjects() {
 		projectId?: Project['id']
 	): Promise<ProjectAsset['id']> {
 		if (!assetId) return undefined;
-		const newAssetId = await ProjectService.addAsset(
-			projectId ?? activeProjectId.value,
-			assetType,
-			assetId
-		);
+		const newAssetId = await ProjectService.addAsset(projectId ?? activeProjectId.value, assetType, assetId);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value);
@@ -106,9 +101,7 @@ export function useProjects() {
 	 * @returns {ProjectAsset | undefined}
 	 */
 	function findAsset(assetId: ProjectAsset['assetId']): ProjectAsset | undefined {
-		return activeProject.value?.projectAssets.find(
-			(projectAsset) => projectAsset.assetId === assetId
-		);
+		return activeProject.value?.projectAssets.find((projectAsset) => projectAsset.assetId === assetId);
 	}
 
 	/**
@@ -131,11 +124,7 @@ export function useProjects() {
 	 * @returns {Promise<boolean>} True if the asset was successfully deleted. False, otherwise.
 	 */
 	async function deleteAsset(assetType: AssetType, assetId: string, projectId?: Project['id']) {
-		const deleted = await ProjectService.deleteAsset(
-			projectId ?? activeProjectId.value,
-			assetType,
-			assetId
-		);
+		const deleted = await ProjectService.deleteAsset(projectId ?? activeProjectId.value, assetType, assetId);
 		if (!projectId || projectId === activeProjectId.value) {
 			setTimeout(async () => {
 				activeProject.value = await ProjectService.get(activeProjectId.value);
@@ -227,12 +216,7 @@ export function useProjects() {
 		return ProjectService.removePermissions(projectId, userId, relationship);
 	}
 
-	async function updatePermissions(
-		projectId: Project['id'],
-		userId: string,
-		oldRelationship: string,
-		to: string
-	) {
+	async function updatePermissions(projectId: Project['id'], userId: string, oldRelationship: string, to: string) {
 		return ProjectService.updatePermissions(projectId, userId, oldRelationship, to);
 	}
 
@@ -241,10 +225,7 @@ export function useProjects() {
 		if (!projectToClone) {
 			return null;
 		}
-		const created = await ProjectService.create(
-			`Copy of ${projectToClone.name}`,
-			projectToClone.description
-		);
+		const created = await ProjectService.create(`Copy of ${projectToClone.name}`, projectToClone.description);
 		if (!created || !created.id) {
 			return null;
 		}

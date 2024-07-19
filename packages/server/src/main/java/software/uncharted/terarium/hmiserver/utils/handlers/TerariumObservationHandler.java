@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class TerariumObservationHandler implements ObservationHandler<Observation.Context> {
+
 	@Override
 	public boolean supportsContext(final Observation.Context context) {
 		return true;

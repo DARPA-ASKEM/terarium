@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class DownloadService {
+
 	/**
 	 * Normalizes a relative url fragment and a base url to a fully qualified Url
 	 *
@@ -26,8 +27,7 @@ public class DownloadService {
 	 * @return a fully qualified url
 	 * @throws URISyntaxException if the url is not a valid URI
 	 */
-	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl)
-			throws URISyntaxException {
+	private static String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
 		final URI uri = new URI(baseUrl);
 		return uri.getScheme() + "://" + uri.getHost() + relativeUrl;
 	}
@@ -52,24 +52,27 @@ public class DownloadService {
 		// for pdf version 1.3
 		// check if data ends with %%EOF
 		if (data[4] == 0x31 && data[5] == 0x2E && data[6] == 0x33) {
-			return data[data.length - 7] == 0x25
-					&& data[data.length - 6] == 0x25
-					&& data[data.length - 5] == 0x45
-					&& data[data.length - 4] == 0x4F
-					&& data[data.length - 3] == 0x46
-					&& data[data.length - 2] == 0x20
-					&& data[data.length - 1] == 0x0A;
+			return (
+				data[data.length - 7] == 0x25 &&
+				data[data.length - 6] == 0x25 &&
+				data[data.length - 5] == 0x45 &&
+				data[data.length - 4] == 0x4F &&
+				data[data.length - 3] == 0x46 &&
+				data[data.length - 2] == 0x20 &&
+				data[data.length - 1] == 0x0A
+			);
 		}
-
 		// for pdf version 1.4
 		// check if data ends with %%EOF
 		else if (data[4] == 0x31 && data[5] == 0x2E && data[6] == 0x34) {
-			return data[data.length - 6] == 0x25
-					&& data[data.length - 5] == 0x25
-					&& data[data.length - 4] == 0x45
-					&& data[data.length - 3] == 0x4F
-					&& data[data.length - 2] == 0x46
-					&& data[data.length - 1] == 0x0A;
+			return (
+				data[data.length - 6] == 0x25 &&
+				data[data.length - 5] == 0x25 &&
+				data[data.length - 4] == 0x45 &&
+				data[data.length - 3] == 0x4F &&
+				data[data.length - 2] == 0x46 &&
+				data[data.length - 1] == 0x0A
+			);
 		}
 
 		return true;
@@ -84,8 +87,7 @@ public class DownloadService {
 	 * @throws URISyntaxException if the url is not a valid URI
 	 */
 	public static byte[] getPDF(String url) throws IOException, URISyntaxException {
-		final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build();
+		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
 
 		url = url.replace(" ", "%20");
 
@@ -93,8 +95,7 @@ public class DownloadService {
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
-		if (response.getStatusLine().getStatusCode() >= 300
-				&& response.getStatusLine().getStatusCode() <= 310) {
+		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
 			final String redirect = response.getFirstHeader("Location").getValue();
 			if (!redirect.startsWith("http")) {
 				return getPDF(normalizeRelativeUrl(redirect, url));
@@ -110,12 +111,13 @@ public class DownloadService {
 				final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
-				final String pdfUrl = links.stream()
-						.map(element -> element.attributes().get("href"))
-						.map(String::toLowerCase)
-						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
-						.findFirst()
-						.orElse(null);
+				final String pdfUrl = links
+					.stream()
+					.map(element -> element.attributes().get("href"))
+					.map(String::toLowerCase)
+					.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+					.findFirst()
+					.orElse(null);
 
 				if (pdfUrl == null) {
 					return null;
@@ -141,8 +143,7 @@ public class DownloadService {
 	 * @throws URISyntaxException if the url is not a valid URI
 	 */
 	public static String getPDFURL(String url) throws IOException, URISyntaxException {
-		final CloseableHttpClient httpclient =
-				HttpClients.custom().disableRedirectHandling().build();
+		final CloseableHttpClient httpclient = HttpClients.custom().disableRedirectHandling().build();
 
 		url = url.replace(" ", "%20");
 
@@ -150,8 +151,7 @@ public class DownloadService {
 		final HttpResponse response = httpclient.execute(get);
 
 		// Follow redirects until we actually get a document
-		if (response.getStatusLine().getStatusCode() >= 300
-				&& response.getStatusLine().getStatusCode() <= 310) {
+		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
 			final String redirect = response.getFirstHeader("Location").getValue();
 			if (!redirect.startsWith("http")) {
 				return getPDFURL(normalizeRelativeUrl(redirect, url));
@@ -167,12 +167,13 @@ public class DownloadService {
 				final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
-				final String pdfUrl = links.stream()
-						.map(element -> element.attributes().get("href"))
-						.map(String::toLowerCase)
-						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
-						.findFirst()
-						.orElse(null);
+				final String pdfUrl = links
+					.stream()
+					.map(element -> element.attributes().get("href"))
+					.map(String::toLowerCase)
+					.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+					.findFirst()
+					.orElse(null);
 
 				if (pdfUrl == null) {
 					return null;

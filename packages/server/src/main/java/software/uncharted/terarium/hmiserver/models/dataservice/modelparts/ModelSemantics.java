@@ -18,6 +18,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelSemantics extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -3980275395523359973L;
 

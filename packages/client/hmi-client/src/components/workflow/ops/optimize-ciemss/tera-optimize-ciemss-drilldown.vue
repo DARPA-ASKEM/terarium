@@ -40,10 +40,7 @@
 					</h5>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
-							v-if="
-								cfg.intervention?.staticInterventions &&
-								cfg.intervention?.staticInterventions.length > 0
-							"
+							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
 							:key="idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
@@ -51,10 +48,7 @@
 					</template>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-dynamic-intervention-policy-group
-							v-if="
-								cfg.intervention?.dynamicInterventions &&
-								cfg.intervention?.dynamicInterventions.length > 0
-							"
+							v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
 							:key="idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
@@ -215,16 +209,10 @@
 				is-selectable
 				:class="{ 'failed-run': optimizationResult.success === 'False' }"
 			>
-				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
-					:summary-id="node.state.summaryId"
-				/>
+				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Optimize result.json display: -->
-				<div
-					v-if="optimizationResult && displayOptimizationResultMessage"
-					class="result-message-grid"
-				>
+				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid">
 					<span class="flex flex-row">
 						<h6>Response</h6>
 						<Button
@@ -277,27 +265,15 @@
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li
-										v-for="(_, key) of knobs.selectedInterventionVariables"
-										:key="`intervention_${key}`"
-									>
-										<vega-chart
-											are-embed-actions-visible
-											:visualization-spec="preparedInterventionsCharts[key]"
-										/>
+									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="`intervention_${key}`">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li
-										v-for="(_, key) of knobs.selectedSimulationVariables"
-										:key="`simulation_${key}`"
-									>
-										<vega-chart
-											are-embed-actions-visible
-											:visualization-spec="preparedCharts[key]"
-										/>
+									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="`simulation_${key}`">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
@@ -321,12 +297,7 @@
 			/>
 		</template>
 	</tera-drilldown>
-	<Dialog
-		v-model:visible="showModelModal"
-		modal
-		header="Save as new model configuration"
-		class="save-dialog w-4"
-	>
+	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
 		<div class="label-and-input">
 			<label> Model config name</label>
 			<tera-input v-model="modelConfigName" />
@@ -392,7 +363,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/utils/optimize';
+import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -404,7 +375,7 @@ import {
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState,
-	InterventionTypes
+	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
 
 const props = defineProps<{
@@ -467,21 +438,15 @@ const showSaveDataDialog = ref<boolean>(false);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
-const cancelRunId = computed(
-	() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId
-);
+const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
 const isSaveDisabled = computed<boolean>(() =>
 	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
 );
 
-const activePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive)
-);
+const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
-const inactivePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive)
-);
+const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
 
 const menuItems = computed(() => [
@@ -504,8 +469,7 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = computed<boolean>(
-	() =>
-		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 
 const showModelModal = ref(false);
@@ -546,10 +510,7 @@ const optimizationResult = ref<any>('');
 const modelParameterOptions = ref<string[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
 
-const simulationChartOptions = computed(() => [
-	...modelParameterOptions.value,
-	...modelStateAndObsOptions.value
-]);
+const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
@@ -609,9 +570,7 @@ const initialize = async () => {
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
-		getInterventionPolicyById(policyId).then((interventionPolicy) =>
-			setInterventionPolicyGroups(interventionPolicy)
-		);
+		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
 	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
@@ -634,9 +593,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 	state.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
-			const isNotActive =
-				intervention.dynamicInterventions?.length > 0 ||
-				intervention.staticInterventions?.length > 1;
+			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
@@ -664,15 +621,22 @@ const runOptimize = async () => {
 	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.startTime);
+		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
-		listBoundsInterventions.push([ele.lowerBoundValue]);
-		listBoundsInterventions.push([ele.upperBoundValue]);
 
-		if (ele.optimizationType === InterventionTypes.paramValue) {
+		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
-		} else if (ele.optimizationType === InterventionTypes.startTime) {
+			listBoundsInterventions.push([ele.startTime]);
+			listBoundsInterventions.push([ele.endTime]);
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
 			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime) {
+			initialGuess.push(ele.startTimeGuess);
+			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
 		} else {
 			console.error(`invalid optimization type used:${ele.optimizationType}`);
 		}
@@ -721,7 +685,7 @@ const runOptimize = async () => {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
 			maxfeval: knobs.value.maxfeval,
-			alpha: (100 - props.node.state.constraintGroups[0].riskTolerance) / 100, // Reverse riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
+			alpha: props.node.state.constraintGroups[0].riskTolerance / 100, // riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 			solverMethod: knobs.value.solverMethod
 		}
 	};
@@ -768,20 +732,14 @@ const setOutputValues = async () => {
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
 
-	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(
-		knobs.value.postForecastRunId,
-		'risk.json'
-	);
+	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
 
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(postResult[0]);
 
 	// FIXME: only show the post optimize data for now...
-	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
-		postResult,
-		Object.values(pyciemssMap)
-	);
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
@@ -791,15 +749,10 @@ const setOutputValues = async () => {
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
-	optimizationResult.value = await getRunResult(
-		knobs.value.optimizationRunId,
-		'optimize_results.json'
-	);
+	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
 };
 
-const preProcessedInterventionsData = computed<
-	Dictionary<{ name: string; value: number; time: number }[]>
->(() => {
+const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
 	const data = state.interventionPolicyGroups.flatMap((ele) =>

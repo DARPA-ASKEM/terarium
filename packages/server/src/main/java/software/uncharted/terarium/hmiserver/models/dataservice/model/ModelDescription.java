@@ -23,22 +23,24 @@ public class ModelDescription extends SupportAdditionalProperties implements Ser
 	private static final long serialVersionUID = 7664512323130188442L;
 
 	public static ModelDescription fromModel(final Model model) {
-
-		final ModelDescription desc =
-				new ModelDescription().setUserId(model.getUserId()).setTimestamp(model.getCreatedOn());
+		final ModelDescription desc = new ModelDescription()
+			.setUserId(model.getUserId())
+			.setTimestamp(model.getCreatedOn());
 
 		if (model.getId() != null) {
 			desc.setId(model.getId());
 		}
 
 		if (model.getHeader() != null) {
-			desc.setHeader(new ModelHeader()
+			desc.setHeader(
+				new ModelHeader()
 					.setName(model.getHeader().getName())
 					.setDescription(model.getHeader().getDescription())
 					.setModelSchema(model.getHeader().getModelSchema())
 					.setSchemaName(model.getHeader().getSchemaName())
 					.setModelVersion(model.getHeader().getModelVersion())
-					.setExtractedFrom(model.getHeader().getExtractedFrom()));
+					.setExtractedFrom(model.getHeader().getExtractedFrom())
+			);
 		}
 		return desc;
 	}

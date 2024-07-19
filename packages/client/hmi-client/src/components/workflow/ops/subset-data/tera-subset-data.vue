@@ -20,8 +20,8 @@
 				<!-- Geo boundaries -->
 				<h5>Select geo-boundaries</h5>
 				<p class="subheader">
-					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial
-					skipping to retain every nth data point for a coarser subset.
+					Set your desired latitude and longitude to define the spatial boundaries. Apply spatial skipping to retain
+					every nth data point for a coarser subset.
 				</p>
 
 				<!-- Preview image -->
@@ -41,19 +41,13 @@
 				<span>
 					<label>Longitude</label>
 					<InputNumber v-model="longitudeStart" placeholder="Start" />
-					<Slider
-						v-model="longitudeRange"
-						range
-						class="w-full"
-						:min="-180"
-						:max="180"
-						:step="0.001"
-					/>
+					<Slider v-model="longitudeRange" range class="w-full" :min="-180" :max="180" :step="0.001" />
 					<InputNumber v-model="longitudeEnd" placeholder="End" />
 				</span>
 				<code>
-					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}',
-					'{{ longitudeEnd }}'])
+					selectSpatialDomain(['{{ latitudeStart }}', '{{ latitudeEnd }}', '{{ longitudeStart }}', '{{
+						longitudeEnd
+					}}'])
 				</code>
 				<div class="flex flex-row align-items-center">
 					<span>
@@ -70,8 +64,8 @@
 				<!-- Temporal slice -->
 				<h5 class="mt-3">Select temporal slice</h5>
 				<p class="subheader">
-					Set your desired time range to define the temporal boundaries. Apply time skipping to
-					retain every nth time slice for a coarser subset.
+					Set your desired time range to define the temporal boundaries. Apply time skipping to retain every nth time
+					slice for a coarser subset.
 				</p>
 				<div class="flex flex-row">
 					<div class="col">
@@ -111,10 +105,7 @@
 				<TabView
 					><TabPanel header="Description">{{ subset?.description }}</TabPanel>
 					<TabPanel header="Map view">
-						<tera-carousel
-							v-if="subset?.metadata?.preview"
-							:labels="subset.metadata.preview.map(({ year }) => year)"
-						>
+						<tera-carousel v-if="subset?.metadata?.preview" :labels="subset.metadata.preview.map(({ year }) => year)">
 							<div v-for="item in subset.metadata.preview" :key="item">
 								<img :src="item.image" alt="Preview" />
 							</div>
@@ -150,10 +141,7 @@
 									</td>
 									<td>
 										<ul>
-											<li
-												v-for="(coordinate, coordinateKey) in value.coordinates"
-												:key="coordinateKey"
-											>
+											<li v-for="(coordinate, coordinateKey) in value.coordinates" :key="coordinateKey">
 												{{ coordinate }}
 											</li>
 										</ul>
@@ -457,8 +445,7 @@ watch(
 	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)
-				?.value?.[0];
+			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
 			}

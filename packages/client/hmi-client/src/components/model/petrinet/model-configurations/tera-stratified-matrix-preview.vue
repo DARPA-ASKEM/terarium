@@ -67,9 +67,7 @@ watch(
 		matrix.value = extractTemplateMatrix(transitionMatrix).matrix;
 
 		// Get subject and outcome for the current template
-		const templateSummary = collapsedTemplates.templatesSummary.find(
-			(template) => template.name === props.id
-		);
+		const templateSummary = collapsedTemplates.templatesSummary.find((template) => template.name === props.id);
 		if (templateSummary) {
 			subject.value = templateSummary.subject;
 			outcome.value = templateSummary.outcome;

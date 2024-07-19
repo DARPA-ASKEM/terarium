@@ -20,11 +20,7 @@ import { getMMT } from '@/services/model';
 import TeraStratifiedMatrix from '@/components/model/petrinet/model-configurations/tera-stratified-matrix.vue';
 import { emptyMiraModel } from '@/model-representation/mira/mira';
 import type { Model } from '@/types/Types';
-import type {
-	MiraModel,
-	MiraTemplateParams,
-	TemplateSummary
-} from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams, TemplateSummary } from '@/model-representation/mira/mira-common';
 import { StratifiedMatrix } from '@/types/Model';
 import { updateParameter } from '@/model-representation/service';
 

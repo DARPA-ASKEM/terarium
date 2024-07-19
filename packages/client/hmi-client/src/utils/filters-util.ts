@@ -63,21 +63,12 @@ function isEqual(a: Filters, b: Filters) {
 }
 
 function findPositiveFacetClause(filters: Filters, field: ClauseField) {
-	if (filters)
-		return _.find(filters.clauses, (clause) => clause.field === field && clause.isNot === false);
+	if (filters) return _.find(filters.clauses, (clause) => clause.field === field && clause.isNot === false);
 	return null;
 }
 
-function removeClause(
-	filters: Filters,
-	field: ClauseField,
-	operand: ClauseOperand,
-	isNot: ClauseNegation
-) {
-	_.remove(
-		filters.clauses,
-		(clause) => clause.field === field && clause.operand === operand && clause.isNot === isNot
-	);
+function removeClause(filters: Filters, field: ClauseField, operand: ClauseOperand, isNot: ClauseNegation) {
+	_.remove(filters.clauses, (clause) => clause.field === field && clause.operand === operand && clause.isNot === isNot);
 }
 
 function setClause(
