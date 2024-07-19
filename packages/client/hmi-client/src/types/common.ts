@@ -75,7 +75,7 @@ export type SearchParameters = {
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | Document | DocumentAsset;
+export type ResultType = Model | Dataset | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];

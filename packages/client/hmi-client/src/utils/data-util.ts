@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { Dataset, Document, DocumentAsset, Model, ProgrammingLanguage } from '@/types/Types';
+import { Dataset, DocumentAsset, Model, ProgrammingLanguage } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
@@ -61,31 +61,14 @@ export function isDataset(item: ResultType): item is Dataset {
 	return (<Dataset>item).columns !== undefined || (<Dataset>item).esgfId !== undefined;
 }
 
-export function isDocument(item: ResultType): item is Document {
-	return (<Document>item).publisher !== undefined;
-}
 export function isDocumentAsset(item: ResultType): item is DocumentAsset {
 	return (<DocumentAsset>item).fileNames !== undefined;
 }
 export function getResourceID(item: ResultType) {
-	if (isDocument(item)) {
-		return (item as Document).gddId;
-	}
 	return item.id;
 }
 
 //
-
-export function getDocumentDoi(doc: Document | null) {
-	let docIdentifier = '';
-	if (doc && doc.identifier.length > 0) {
-		const defaultDOI = doc.identifier.find((i) => i.type === 'doi');
-		if (defaultDOI) {
-			docIdentifier = defaultDOI.id;
-		}
-	}
-	return docIdentifier;
-}
 
 export function pdfNameFromUrl(url: string): string | null {
 	const urlWithoutParams = url.split('?')[0]; // Remove query parameters

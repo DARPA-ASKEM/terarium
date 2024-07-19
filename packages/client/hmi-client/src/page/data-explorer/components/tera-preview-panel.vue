@@ -33,7 +33,6 @@ import { computed, PropType, ref, watch } from 'vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
-import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
@@ -78,9 +77,6 @@ const previewItemResourceType = ref<ResourceType | null>(null);
 
 const previewItemId = computed(() => {
 	if (!previewItemState.value) return '';
-	if (isDocument(previewItemState.value)) {
-		return previewItemState.value.gddId;
-	}
 	if (
 		previewItemResourceType.value === ResourceType.DATASET &&
 		props.source === DatasetSource.ESGF

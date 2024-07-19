@@ -54,9 +54,6 @@
 				<DataTable :value="relatedTerariumDatasets">
 					<Column field="name" header="Datasets" />
 				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents" />
-				</DataTable>
 			</AccordionTab>
 		</Accordion>
 		<tera-model-semantic-tables
@@ -80,7 +77,7 @@ import type { Author, Dataset, Model } from '@/types/Types';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import { isDataset, isDocument, isModel } from '@/utils/data-util';
+import { isDataset, isModel } from '@/utils/data-util';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
 
@@ -130,9 +127,6 @@ const relatedTerariumModels = computed(
 );
 const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 </script>
 
