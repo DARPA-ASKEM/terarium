@@ -31,7 +31,8 @@ import {
 	getCalibrateBlobURL,
 	makeForecastJobCiemss,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
@@ -51,7 +52,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-const runResult = ref<any>(null);
+const runResult = ref<DataArray>([]);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
@@ -71,7 +72,7 @@ const preparedCharts = computed(() => {
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	const csv = csvAsset.value.csv;
 	const csvRaw = csv.map((d) => d.join(',')).join('\n');
 	groundTruth = csvParse(csvRaw, autoType);
