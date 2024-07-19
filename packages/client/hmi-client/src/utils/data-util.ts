@@ -12,18 +12,13 @@ import { FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-export const applyFacetFilters = <T>(
-	results: T[],
-	filters: Filters,
-	resourceType: ResourceType
-) => {
+export const applyFacetFilters = <T>(results: T[], filters: Filters, resourceType: ResourceType) => {
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
 
 	const { clauses } = filters;
-	const ASSET_FACET_FIELDS: string[] =
-		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
+	const ASSET_FACET_FIELDS: string[] = resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
 
 	clauses.forEach((clause) => {
 		const filterField: string = clause.field; // the field to filter on

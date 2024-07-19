@@ -37,10 +37,7 @@
 				</template>
 				<template #actions>
 					<slot name="header-actions" />
-					<tera-operator-annotation
-						:state="node.state"
-						@update-state="(state: any) => emit('update-state', state)"
-					/>
+					<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 				</template>
 			</tera-drilldown-header>
 			<main class="flex overflow-hidden h-full">
@@ -88,12 +85,7 @@ const props = defineProps<{
 	popover?: boolean;
 }>();
 
-const emit = defineEmits([
-	'on-close-clicked',
-	'update-state',
-	'update:selection',
-	'update-output-port'
-]);
+const emit = defineEmits(['on-close-clicked', 'update-state', 'update:selection', 'update-output-port']);
 const slots = useSlots();
 const menu = ref();
 /**

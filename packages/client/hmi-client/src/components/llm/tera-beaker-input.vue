@@ -80,11 +80,7 @@ const addCodeCellButton = ref<HTMLElement | null>(null);
 const fixedDivWidth = ref(0);
 
 const submitQuery = () => {
-	EventService.create(
-		EventType.TransformPrompt,
-		useProjects().activeProject.value?.id,
-		queryString.value
-	);
+	EventService.create(EventType.TransformPrompt, useProjects().activeProject.value?.id, queryString.value);
 	emit('submit-query', queryString.value);
 	queryString.value = '';
 };
@@ -101,8 +97,7 @@ onMounted(() => {
 
 	const updateWidth = () => {
 		if (containerElement.value && addCodeCellButton.value) {
-			fixedDivWidth.value =
-				containerElement.value.offsetWidth - addCodeCellButton.value.offsetWidth - 25;
+			fixedDivWidth.value = containerElement.value.offsetWidth - addCodeCellButton.value.offsetWidth - 25;
 		}
 	};
 

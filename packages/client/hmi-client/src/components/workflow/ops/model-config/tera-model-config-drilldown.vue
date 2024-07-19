@@ -7,17 +7,10 @@
 		@update:selection="onSelection"
 	>
 		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
+			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 		</template>
 		<template #sidebar>
-			<tera-slider-panel
-				v-model:is-open="isSidebarOpen"
-				header="Configurations"
-				content-width="360px"
-			>
+			<tera-slider-panel v-model:is-open="isSidebarOpen" header="Configurations" content-width="360px">
 				<template #content>
 					<div class="m-3">
 						<div class="flex flex-column gap-1">
@@ -82,24 +75,14 @@
 			</template>
 			<template #header-controls-right>
 				<Button label="Reset" @click="resetConfiguration" outlined severity="secondary" />
-				<Button
-					class="mr-3"
-					:disabled="isSaveDisabled"
-					label="Save"
-					@click="() => createConfiguration()"
-				/>
+				<Button class="mr-3" :disabled="isSaveDisabled" label="Save" @click="() => createConfiguration()" />
 			</template>
 
 			<Accordion multiple :active-index="[0, 1, 2, 3]">
 				<AccordionTab>
 					<template #header>
 						Description
-						<Button
-							v-if="!isEditingDescription"
-							icon="pi pi-pencil"
-							text
-							@click.stop="onEditDescription"
-						/>
+						<Button v-if="!isEditingDescription" icon="pi pi-pencil" text @click.stop="onEditDescription" />
 						<template v-else>
 							<Button icon="pi pi-times" text @click.stop="isEditingDescription = false" />
 							<Button icon="pi pi-check" text @click.stop="onConfirmEditDescription" />
@@ -108,20 +91,15 @@
 					<p class="description text" v-if="!isEditingDescription">
 						{{ knobs.transientModelConfig.description }}
 					</p>
-					<Textarea
-						v-else
-						class="context-item"
-						placeholder="Enter a description"
-						v-model="newDescription"
-					/>
+					<Textarea v-else class="context-item" placeholder="Enter a description" v-model="newDescription" />
 				</AccordionTab>
 				<AccordionTab header="Diagram">
 					<tera-model-diagram v-if="model" :model="model" :is-editable="false" />
 				</AccordionTab>
 			</Accordion>
 			<Message v-if="model && isModelMissingMetadata(model)" class="m-2"
-				>Some metadata is missing from these values. This information can be added manually to the
-				attached model.</Message
+				>Some metadata is missing from these values. This information can be added manually to the attached
+				model.</Message
 			>
 
 			<tera-initial-table
@@ -131,9 +109,7 @@
 				:modelConfigurations="filteredModelConfigurations"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
-				@update-expression="
-					setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)
-				"
+				@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
 			<tera-parameter-table
@@ -266,10 +242,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import {
-	emptyMiraModel,
-	generateModelDatasetConfigurationContext
-} from '@/model-representation/mira/mira';
+import { emptyMiraModel, generateModelDatasetConfigurationContext } from '@/model-representation/mira/mira';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { configureModelFromDatasets, configureModelFromDocument } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
@@ -360,9 +333,7 @@ const buildJupyterContext = () => {
 		}
 	};
 };
-const codeText = ref(
-	'# This environment contains the variable "model_config" to be read and updated'
-);
+const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
 const llmThoughts = ref<any[]>([]);
 const notebookResponse = ref();
 const executeResponse = ref({
@@ -389,8 +360,7 @@ const filteredModelConfigurations = computed(() => {
 	const searchTerm = filterModelConfigurationsText.value.toLowerCase();
 	const filteredConfigurations = suggestedConfigurationContext.value.tableData.filter(
 		(config) =>
-			config.name?.toLowerCase().includes(searchTerm) ||
-			config.description?.toLowerCase().includes(searchTerm)
+			config.name?.toLowerCase().includes(searchTerm) || config.description?.toLowerCase().includes(searchTerm)
 	);
 
 	return orderBy(filteredConfigurations, [selectedSortOption.value], ['desc']);
@@ -498,17 +468,14 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 		taskIdRefs[event.type].value = '';
 	}
-	if (event.data.status === TaskStatus.Success && model.value?.id)
-		await fetchConfigurations(model.value.id);
+	if (event.data.status === TaskStatus.Success && model.value?.id) await fetchConfigurations(model.value.id);
 };
 
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const selectedOutputId = ref<string>('');
-const selectedConfigId = computed(
-	() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedConfigId = computed(() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
 const datasetIds = computed(() => props.node.inputs?.[2]?.value);
@@ -526,19 +493,14 @@ const isFetching = ref(false);
 const documentModelConfigTaskId = ref('');
 const datasetModelConfigTaskId = ref('');
 const isLoading = computed(
-	() =>
-		documentModelConfigTaskId.value !== '' ||
-		datasetModelConfigTaskId.value !== '' ||
-		isFetching.value
+	() => documentModelConfigTaskId.value !== '' || datasetModelConfigTaskId.value !== '' || isFetching.value
 );
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
-const downloadConfiguredModel = async (
-	configuration: ModelConfiguration = knobs.value.transientModelConfig
-) => {
+const downloadConfiguredModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const rawModel = await getAsConfiguredModel(configuration);
 	if (rawModel) {
 		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rawModel, null, 2))}`;
@@ -676,9 +638,7 @@ const resetConfiguration = () => {
 		header: 'Are you sure you want to reset the configuration?',
 		message: 'This will reset all values original values of the configuration.',
 		accept: () => {
-			const originalConfig = suggestedConfigurationContext.value.tableData.find(
-				(c) => c.id === selectedConfigId.value
-			);
+			const originalConfig = suggestedConfigurationContext.value.tableData.find((c) => c.id === selectedConfigId.value);
 			if (originalConfig) {
 				applyConfigValues(originalConfig);
 			}
@@ -754,9 +714,7 @@ onUnmounted(() => {
 	background-color: transparent;
 }
 
-.box-container:deep(
-		.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link
-	) {
+.box-container:deep(.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link) {
 	background-color: transparent;
 }
 .box-container:deep(.p-datatable .p-sortable-column.p-highlight) {

@@ -50,13 +50,9 @@ const directionMap = {
 	}
 };
 
-const sidePanelContentStyle = computed(() =>
-	thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : ''
-);
+const sidePanelContentStyle = computed(() => (thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : ''));
 
-const sidePanelTabStyle = computed(
-	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`
-);
+const sidePanelTabStyle = computed(() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`);
 </script>
 
 <style scoped>

@@ -1,21 +1,12 @@
 <template>
-	<tera-tooltip
-		:custom-position="hoveredTransitionPosition"
-		:show-tooltip="!isEmpty(hoveredTransitionId)"
-	>
+	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
 		<main>
 			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
 							<span>
-								<Button
-									@click="resetZoom"
-									label="Reset zoom"
-									size="small"
-									severity="secondary"
-									outlined
-								/>
+								<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
 								<span class="how-to-zoom">
 									<kbd>Ctrl</kbd>
 									+
@@ -100,16 +91,8 @@ import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import {
-	MiraModel,
-	MiraTemplateParams,
-	ObservableSummary
-} from '@/model-representation/mira/mira-common';
-import {
-	isStratifiedModel,
-	emptyMiraModel,
-	convertToIGraph
-} from '@/model-representation/mira/mira';
+import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
@@ -140,10 +123,7 @@ enum StratifiedView {
 }
 
 const stratifiedView = ref(StratifiedView.Collapsed);
-const stratifiedViewOptions = ref([
-	{ value: StratifiedView.Expanded },
-	{ value: StratifiedView.Collapsed }
-]);
+const stratifiedViewOptions = ref([{ value: StratifiedView.Expanded }, { value: StratifiedView.Collapsed }]);
 
 const isStratified = computed(() => isStratifiedModel(mmt.value));
 
@@ -194,10 +174,7 @@ async function renderGraph() {
 				const transitionMatrixWidth = selection.datum().width;
 
 				// Shift tooltip to the top center of the transition matrix
-				const x =
-					transitionMatrixX -
-					(tooltipWidth + transitionMatrixWidth / 2) / 2 +
-					transitionMatrixBounds.width / 2;
+				const x = transitionMatrixX - (tooltipWidth + transitionMatrixWidth / 2) / 2 + transitionMatrixBounds.width / 2;
 				const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
 
 				hoveredTransitionPosition.value = { x, y };

@@ -38,6 +38,7 @@ public class SimulationRequestStatusNotifier {
 
 	@Setter
 	private int threshold = DEFAULT_POLLING_THRESHOLD;
+
 	/*
 	 * Estimated time it takes for the simulation to reach half of its completion.
 	 * This is used to calculate the estimated time remaining for the simulation to complete.
@@ -55,6 +56,7 @@ public class SimulationRequestStatusNotifier {
 	@Data
 	@TSModel
 	private static class SimulationNotificationData {
+
 		private final UUID simulationId;
 		private final SimulationType simulationType;
 		private final SimulationEngine simulationEngine;
@@ -62,13 +64,14 @@ public class SimulationRequestStatusNotifier {
 	}
 
 	public SimulationRequestStatusNotifier(
-			final NotificationService notificationService,
-			final ClientEventService clientEventService,
-			final SimulationService simulationService,
-			final UUID simulationId,
-			final UUID projectId,
-			final Schema.Permission permission,
-			final JsonNode metadata) {
+		final NotificationService notificationService,
+		final ClientEventService clientEventService,
+		final SimulationService simulationService,
+		final UUID simulationId,
+		final UUID projectId,
+		final Schema.Permission permission,
+		final JsonNode metadata
+	) {
 		this.clientEventService = clientEventService;
 		this.notificationService = notificationService;
 		this.simulationService = simulationService;
@@ -81,8 +84,9 @@ public class SimulationRequestStatusNotifier {
 	}
 
 	private void sendStatusMessage(
-			final NotificationGroupInstance<SimulationNotificationData> notificationInterface,
-			final Simulation simulation) {
+		final NotificationGroupInstance<SimulationNotificationData> notificationInterface,
+		final Simulation simulation
+	) {
 		final String statusMessage = simulation.getStatusMessage() != null ? simulation.getStatusMessage() : "";
 		final ProgressState status = simulation.getStatus();
 		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
@@ -97,7 +101,8 @@ public class SimulationRequestStatusNotifier {
 			notificationInterface.sendMessage("Simulation is queued...", ProgressState.QUEUED);
 		} else {
 			notificationInterface.sendMessage(
-					(statusMessage == null || statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage);
+				(statusMessage == null || statusMessage.isEmpty()) ? "Simulation is running..." : statusMessage
+			);
 		}
 	}
 
@@ -108,16 +113,17 @@ public class SimulationRequestStatusNotifier {
 		}
 		final Simulation sim = simAsset.get();
 
-		final NotificationGroupInstance<SimulationNotificationData> notificationInterface =
-				new NotificationGroupInstance<SimulationNotificationData>(
-						clientEventService,
-						notificationService,
-						ClientEventType.SIMULATION_NOTIFICATION,
-						this.projectId,
-						new SimulationNotificationData(
-								this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
-						this.halfTimeSeconds,
-						sim.getId());
+		final NotificationGroupInstance<SimulationNotificationData> notificationInterface = new NotificationGroupInstance<
+			SimulationNotificationData
+		>(
+			clientEventService,
+			notificationService,
+			ClientEventType.SIMULATION_NOTIFICATION,
+			this.projectId,
+			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
+			this.halfTimeSeconds,
+			sim.getId()
+		);
 		log.info("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);
 
@@ -134,14 +140,15 @@ public class SimulationRequestStatusNotifier {
 				final Simulation simulation = result.get();
 				this.sendStatusMessage(notificationInterface, simulation);
 				log.info(
-						"Polling simulation {} with status {} for the {} time",
-						this.simulationId,
-						simulation.getStatus(),
-						pollAttempts);
+					"Polling simulation {} with status {} for the {} time",
+					this.simulationId,
+					simulation.getStatus(),
+					pollAttempts
+				);
 			} catch (final Exception e) {
 				final String errMsg = e instanceof RuntimeException
-						? e.getMessage()
-						: "Unexpected error occurred while checking the simulation status.";
+					? e.getMessage()
+					: "Unexpected error occurred while checking the simulation status.";
 				notificationInterface.sendFinalMessage(errMsg, ProgressState.FAILED);
 
 				this.executor.shutdown();

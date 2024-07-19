@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class DecapodesExpression {
+
 	private List<Object> context;
 	private List<DecapodesEquation> equations;
 	private String _type;

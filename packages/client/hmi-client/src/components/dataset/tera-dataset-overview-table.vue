@@ -14,9 +14,7 @@
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
-						{{
-							getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept))
-						}}
+						{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept)) }}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"

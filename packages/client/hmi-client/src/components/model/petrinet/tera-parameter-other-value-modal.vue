@@ -40,9 +40,7 @@
 							<section class="inline-flex gap-1">
 								<template v-if="data.distribution.type === DistributionType.Constant">
 									<span>Constants</span>
-									<span class="pl-1">{{
-										displayNumber(data.distribution.parameters.value.toString())
-									}}</span>
+									<span class="pl-1">{{ displayNumber(data.distribution.parameters.value.toString()) }}</span>
 								</template>
 							</section>
 						</template>
@@ -50,9 +48,7 @@
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
 									<span>Min</span>
-									<span class="pl-1 pr-1">{{
-										displayNumber(data.distribution.parameters.minimum.toString())
-									}}</span>
+									<span class="pl-1 pr-1">{{ displayNumber(data.distribution.parameters.minimum.toString()) }}</span>
 								</div>
 							</template>
 						</template>
@@ -60,9 +56,7 @@
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
 									<span>Max</span>
-									<span class="pl-1 pr-1">{{
-										displayNumber(data.distribution.parameters.maximum.toString())
-									}}</span>
+									<span class="pl-1 pr-1">{{ displayNumber(data.distribution.parameters.maximum.toString()) }}</span>
 								</div>
 							</template>
 						</template>

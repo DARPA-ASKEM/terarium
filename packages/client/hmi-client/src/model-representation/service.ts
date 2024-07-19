@@ -3,14 +3,7 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type {
-	Initial,
-	Model,
-	ModelParameter,
-	State,
-	RegNetVertex,
-	Transition
-} from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
@@ -305,10 +298,7 @@ export function getInitialUnits(model: Model, target: string): string {
 export function getInitialConcept(model: Model, target: string): string {
 	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
 	if (!identifiers) return '';
-	return getNameOfCurieCached(
-		new Map<string, string>(),
-		getCurieFromGroundingIdentifier(identifiers)
-	);
+	return getNameOfCurieCached(new Map<string, string>(), getCurieFromGroundingIdentifier(identifiers));
 }
 
 /**

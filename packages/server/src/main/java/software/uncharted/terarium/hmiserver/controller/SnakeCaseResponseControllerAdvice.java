@@ -26,9 +26,9 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 	public void init() {
 		// We modify the injected object mappers because Spring injects an ObjectMapper
 		// different from one that is returned via `new ObjectMapper()`
-		mapper = mapper.copy()
-				.setPropertyNamingStrategy(
-						new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
+		mapper = mapper
+			.copy()
+			.setPropertyNamingStrategy(new AMRPropertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy()));
 	}
 
 	@Override
@@ -42,20 +42,21 @@ public class SnakeCaseResponseControllerAdvice implements ResponseBodyAdvice {
 
 	@Override
 	public Object beforeBodyWrite(
-			final Object body,
-			final MethodParameter returnType,
-			final MediaType selectedContentType,
-			final Class selectedConverterType,
-			final ServerHttpRequest request,
-			final ServerHttpResponse response) {
-
-		if (body != null
-				&& selectedContentType == MediaType.APPLICATION_JSON
-				&& containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")) {
+		final Object body,
+		final MethodParameter returnType,
+		final MediaType selectedContentType,
+		final Class selectedConverterType,
+		final ServerHttpRequest request,
+		final ServerHttpResponse response
+	) {
+		if (
+			body != null &&
+			selectedContentType == MediaType.APPLICATION_JSON &&
+			containsKeyIgnoreCase(request.getHeaders(), "X-Enable-Snake-Case")
+		) {
 			try {
 				return mapper.readValue(mapper.writeValueAsString(body), JsonNode.class);
-			} catch (final JsonProcessingException ignored) {
-			}
+			} catch (final JsonProcessingException ignored) {}
 		}
 		return body;
 	}

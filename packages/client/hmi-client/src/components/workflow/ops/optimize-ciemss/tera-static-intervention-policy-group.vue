@@ -4,11 +4,7 @@
 			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<label for="active">Optimize</label>
-				<InputSwitch
-					v-model="knobs.isActive"
-					:disabled="isNotEditable"
-					@change="emit('update-self', knobs)"
-				/>
+				<InputSwitch v-model="knobs.isActive" :disabled="isNotEditable" @change="emit('update-self', knobs)" />
 			</div>
 		</div>
 		<template v-if="knobs.isActive">
@@ -23,10 +19,7 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					for the {{ knobs.intervention.type }}&nbsp;<strong>{{
-						knobs.intervention.appliedTo
-					}}</strong
-					>.
+					for the {{ knobs.intervention.type }}&nbsp;<strong>{{ knobs.intervention.appliedTo }}</strong>
 				</p>
 				<p v-if="showNewValueOptions && staticInterventions.length === 1">
 					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
@@ -144,9 +137,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-self']);
 
-const staticInterventions = ref<StaticIntervention[]>(
-	props.config.intervention.staticInterventions
-);
+const staticInterventions = ref<StaticIntervention[]>(props.config.intervention.staticInterventions);
 
 const knobs = ref<InterventionPolicyGroupForm>({
 	...props.config
@@ -155,14 +146,14 @@ const knobs = ref<InterventionPolicyGroupForm>({
 const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
-	() => knobs.value.optimizationType === OptimizationInterventionObjective.startTime
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+	() =>
+		knobs.value.optimizationType === OptimizationInterventionObjective.startTime ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
-	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValue
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// || knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+	() =>
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 </script>
 

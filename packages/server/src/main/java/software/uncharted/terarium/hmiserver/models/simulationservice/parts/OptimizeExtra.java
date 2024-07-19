@@ -12,6 +12,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeExtra implements Serializable {
+
 	@JsonAlias("num_samples")
 	private int numSamples;
 

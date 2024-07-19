@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ContextPrimalDualRelation implements Serializable {
+
 	private String primal;
 	private String dual;
 	private JsonNode method;

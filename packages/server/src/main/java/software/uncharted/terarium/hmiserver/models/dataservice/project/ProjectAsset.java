@@ -28,14 +28,18 @@ public class ProjectAsset extends TerariumAsset {
 
 	@ManyToOne
 	@JsonBackReference
-	@NotNull private Project project;
+	@NotNull
+	private Project project;
 
-	@NotNull private UUID assetId;
+	@NotNull
+	private UUID assetId;
 
-	@NotNull @Enumerated(EnumType.STRING)
+	@NotNull
+	@Enumerated(EnumType.STRING)
 	private AssetType assetType;
 
-	@NotNull private String assetName;
+	@NotNull
+	private String assetName;
 
 	@TSOptional
 	private String externalRef;

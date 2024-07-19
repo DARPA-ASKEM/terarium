@@ -1,8 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { NotebookHistory } from '@/services/notebook';
 
-const DOCUMENTATION_URL =
-	'https://github.com/DARPA-ASKEM/beaker-kernel/blob/main/docs/contexts_mira_model_edit.md';
+const DOCUMENTATION_URL = 'https://github.com/DARPA-ASKEM/beaker-kernel/blob/main/docs/contexts_mira_model_edit.md';
 
 export interface ModelEditOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
@@ -15,9 +14,7 @@ export const ModelEditOperation: Operation = {
 	description: 'Edit a model',
 	documentationUrl: DOCUMENTATION_URL,
 	isRunnable: false,
-	inputs: [
-		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }
-	],
+	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'modelId', label: 'Model' }],
 	action: async () => ({}),
 	initState: () => {

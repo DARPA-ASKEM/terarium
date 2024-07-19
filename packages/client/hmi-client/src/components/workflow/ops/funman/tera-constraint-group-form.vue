@@ -65,18 +65,10 @@
 
 		<!-- These are the radio buttons -->
 		<section class="radio-buttons" v-if="constraintType === 'monotonicityConstraint'">
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="increasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="increasing" />
 			<label class="monoton-label">Increasing</label>
 			&nbsp;
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="decreasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="decreasing" />
 			<label class="monoton-label">Decreasing</label>
 		</section>
 
@@ -90,22 +82,12 @@
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
 				<label for="input1" class="label label-padding">Start time</label>
-				<InputNumber
-					id="input1"
-					class="p-inputtext-md"
-					v-model="startTime"
-					@update:model-value="updateChanges()"
-				/>
+				<InputNumber id="input1" class="p-inputtext-md" v-model="startTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input2" class="label label-padding">End time</label>
-				<InputNumber
-					id="input2"
-					class="p-inputtext-md"
-					v-model="endTime"
-					@update:model-value="updateChanges()"
-				/>
+				<InputNumber id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">

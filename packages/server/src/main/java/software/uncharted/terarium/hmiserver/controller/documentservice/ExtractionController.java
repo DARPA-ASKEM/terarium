@@ -26,8 +26,10 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 public class ExtractionController {
 
 	// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-	private static final Pattern DOI_VALIDATION_PATTERN =
-			Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
+	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile(
+		"^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$",
+		Pattern.CASE_INSENSITIVE
+	);
 
 	@Value("${xdd.api-key}")
 	String key;
@@ -40,11 +42,11 @@ public class ExtractionController {
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<XDDResponse<XDDExtractionsResponseOK>> searchExtractions(
-			@RequestParam(required = false, name = "term") final String term,
-			@RequestParam(required = false, name = "page") final Integer page,
-			@RequestParam(required = false, name = "ASKEM_CLASS") final String askemClass,
-			@RequestParam(required = false, name = "include_highlights") final String include_highlights) {
-
+		@RequestParam(required = false, name = "term") final String term,
+		@RequestParam(required = false, name = "page") final Integer page,
+		@RequestParam(required = false, name = "ASKEM_CLASS") final String askemClass,
+		@RequestParam(required = false, name = "include_highlights") final String include_highlights
+	) {
 		final Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
 		final boolean isDoi = matcher.find();
@@ -69,15 +71,18 @@ public class ExtractionController {
 			}
 
 			return ResponseEntity.ok(response);
-
 		} catch (final FeignException e) {
 			log.error("xDD returned an exception for extraction search:", e);
 			throw new ResponseStatusException(
-					HttpStatusCode.valueOf(e.status()), "There was an issue with the extraction search to xDD");
+				HttpStatusCode.valueOf(e.status()),
+				"There was an issue with the extraction search to xDD"
+			);
 		} catch (final Exception e) {
 			log.error("Unable to find extractions, an error occurred", e);
 			throw new ResponseStatusException(
-					HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find extractions, an error occurred");
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to find extractions, an error occurred"
+			);
 		}
 	}
 
@@ -85,17 +90,16 @@ public class ExtractionController {
 	@Secured(Roles.USER)
 	public ResponseEntity<List<String>> getAutocomplete(@PathVariable("term") final String term) {
 		try {
-
 			final AutoComplete autoComplete = proxy.getAutocomplete(term);
-			if (autoComplete.hasNoSuggestions())
-				return ResponseEntity.noContent().build();
+			if (autoComplete.hasNoSuggestions()) return ResponseEntity.noContent().build();
 
 			return ResponseEntity.ok(autoComplete.getAutoCompletes());
-
 		} catch (final FeignException e) {
 			log.error("xDD returned an exception for autocomplete:", e);
 			throw new ResponseStatusException(
-					HttpStatusCode.valueOf(e.status()), "xDD returned an exception for autocomplete");
+				HttpStatusCode.valueOf(e.status()),
+				"xDD returned an exception for autocomplete"
+			);
 		} catch (final Exception e) {
 			log.error("Unable to find xdd Autocompletes", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to find xdd Autocompletes");

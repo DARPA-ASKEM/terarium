@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @RequiredArgsConstructor
 public class RestTemplateConfiguration {
+
 	public final Config config;
 	private final ObjectMapper objectMapper;
 

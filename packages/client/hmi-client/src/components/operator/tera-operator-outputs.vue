@@ -44,13 +44,7 @@ import { PropType, computed } from 'vue';
 import { WorkflowPortStatus, WorkflowDirection, WorkflowOutput } from '@/types/workflow';
 import Button from 'primevue/button';
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-selected',
-	'port-mouseover',
-	'port-mouseleave',
-	'remove-edges'
-]);
+const emit = defineEmits(['port-mouseover', 'port-selected', 'port-mouseover', 'port-mouseleave', 'remove-edges']);
 
 const props = defineProps({
 	outputs: {

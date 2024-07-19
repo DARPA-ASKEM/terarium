@@ -9,21 +9,11 @@
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-					<Button
-						label="Run"
-						icon="pi pi-play"
-						@click="runCalibrate"
-						:disabled="disableRunButton"
-					/>
+					<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteMapping"
-						/>
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -55,48 +45,34 @@
 								<span class="column-header"></span>
 							</template>
 							<template #body="{ index }">
-								<Button
-									class="p-button-sm p-button-text"
-									label="Delete"
-									@click="deleteMapRow(index)"
-								/>
+								<Button class="p-button-sm p-button-text" label="Delete" @click="deleteMapRow(index)" />
 							</template>
 						</Column>
 					</DataTable>
-					<div>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
-						/>
+					<div class="flex justify-content-between">
+						<div>
+							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-sparkles"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
+						</div>
+						<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
 					</div>
 				</div>
 
-				<div class="form-section">
-					<h4>Calibration settings</h4>
+				<div class="form-section mt-4">
+					<h5>Calibration settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numSamples"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numSamples" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numIterations"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numIterations" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-samples">End time for forecast</label>
@@ -109,21 +85,19 @@
 		<section :tabName="CalibrateTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
+
+		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-preview>
-				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
-					:summary-id="node.state.summaryId"
-				/>
-
+				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
+				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot"></div>
+				<div ref="drilldownLossPlot" class="loss-chart"></div>
+
+				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
-					<section
-						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
-						ref="outputPanel"
-					>
+					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:variables="Object.keys(pyciemssMap)"
@@ -132,10 +106,7 @@
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[index]"
-							/>
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
 						<Button
 							class="add-chart"
@@ -151,13 +122,11 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-				<section v-else>
-					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+				<section v-else class="emptyState">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
+					<p>Processing...</p>
 				</section>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
-					v-bind="node.state.errorMessage"
-				/>
+				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -172,12 +141,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
-import {
-	CalibrateMap,
-	renderLossGraph,
-	setupDatasetInput,
-	setupModelInput
-} from '@/services/calibrate-workflow';
+import { CalibrateMap, renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -193,12 +157,7 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
-import {
-	getTimespan,
-	chartActionsProxy,
-	drilldownChartSize,
-	nodeMetadata
-} from '@/components/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -239,9 +198,7 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2].value);
 
-const cancelRunId = computed(
-	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
-);
+const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
@@ -255,8 +212,7 @@ let lossValues: { [key: string]: number }[] = [];
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const mappingDropdownPlaceholder = computed(() => {
-	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value))
-		return 'Select variable';
+	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
 
@@ -277,9 +233,7 @@ const disableRunButton = computed(
 );
 
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedCharts = computed(() => {
@@ -307,9 +261,7 @@ const preparedCharts = computed(() => {
 	}
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find(
-		(d) => d.modelVariable === 'timestamp'
-	)?.datasetVariable;
+	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	return state.chartConfigs.map((config) => {
 		const datasetVariables: string[] = [];
@@ -451,10 +403,7 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = (await autoCalibrationMapping(
-		modelStateOptions.value,
-		datasetColumns.value
-	)) as CalibrateMap[];
+	mapping.value = (await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value)) as CalibrateMap[];
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
@@ -557,6 +506,7 @@ th {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
+	padding-top: var(--gap-2);
 }
 
 .emptyState {
@@ -603,5 +553,11 @@ img {
 	& > * {
 		flex: 1;
 	}
+}
+
+.loss-chart {
+	background: var(--surface-a);
+	border-radius: var(--border-radius-medium);
+	border: 1px solid var(--surface-border-light);
 }
 </style>

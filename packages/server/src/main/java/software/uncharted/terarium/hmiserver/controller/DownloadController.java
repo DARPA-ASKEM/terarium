@@ -27,12 +27,11 @@ public class DownloadController {
 	public ResponseEntity<Resource> get(@RequestParam("doi") final String doi) throws IOException, URISyntaxException {
 		final byte[] pdfBytes = DownloadService.getPDF("https://unpaywall.org/" + doi);
 		if (pdfBytes != null) {
-
 			return ResponseEntity.ok()
-					.headers(new HttpHeaders())
-					.contentLength(pdfBytes.length)
-					.contentType(MediaType.APPLICATION_OCTET_STREAM)
-					.body(new ByteArrayResource(pdfBytes));
+				.headers(new HttpHeaders())
+				.contentLength(pdfBytes.length)
+				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.body(new ByteArrayResource(pdfBytes));
 		} else {
 			return ResponseEntity.internalServerError().build();
 		}

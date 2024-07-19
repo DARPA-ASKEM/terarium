@@ -5,10 +5,12 @@ import lombok.Data;
 
 @Data
 public class ClimateDataResultPreviews {
+
 	private List<Preview> previews;
 
 	@Data
 	public static class Preview {
+
 		String image;
 		String year;
 	}

@@ -24,13 +24,13 @@ public class AdminClientService {
 	public void init() {
 		// todo configify
 		keycloak = KeycloakBuilder.builder()
-				.serverUrl(config.getKeycloak().getUrl())
-				.realm(config.getKeycloak().getAdminRealm())
-				.clientId(config.getKeycloak().getAdminClientId())
-				.grantType(OAuth2Constants.PASSWORD)
-				.username(config.getKeycloak().getAdminUsername())
-				.password(config.getKeycloak().getAdminPassword())
-				.build();
+			.serverUrl(config.getKeycloak().getUrl())
+			.realm(config.getKeycloak().getAdminRealm())
+			.clientId(config.getKeycloak().getAdminClientId())
+			.grantType(OAuth2Constants.PASSWORD)
+			.username(config.getKeycloak().getAdminUsername())
+			.password(config.getKeycloak().getAdminPassword())
+			.build();
 	}
 
 	public User getUserFromJwt(final Jwt jwt) {
