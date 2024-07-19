@@ -173,7 +173,7 @@ export const addEdge = (
 
 	// Not supported if there are more than oen matches
 	if (intersectionTypes.length > 1) {
-		console.error(`Ambiguous matching types ${intersectionTypes}`);
+		console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
 		return;
 	}
 

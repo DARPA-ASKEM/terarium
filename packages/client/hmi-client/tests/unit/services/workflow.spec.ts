@@ -295,31 +295,35 @@ describe('workflow copying branch >- fork', () => {
 });
 
 describe('workflow operator with multiple output types', () => {
-	const multiOutputOp: Operation = {
+	const commonFields = {
 		name: 'test' as any,
 		displayName: 'test',
 		description: 'test',
-		inputs: [],
-		outputs: [{ type: 'datasetId|modelId' }],
 		isRunnable: true
+	};
+
+	const multiOutputOp: Operation = {
+		...commonFields,
+		inputs: [],
+		outputs: [{ type: 'datasetId|modelId' }]
 	};
 
 	const datasetOp: Operation = {
-		name: 'test' as any,
-		displayName: 'test',
-		description: 'test',
+		...commonFields,
 		inputs: [{ type: 'datasetId' }],
-		outputs: [],
-		isRunnable: true
+		outputs: []
 	};
 
 	const modelConfigOp: Operation = {
-		name: 'test' as any,
-		displayName: 'test',
-		description: 'test',
+		...commonFields,
 		inputs: [{ type: 'modelId' }],
-		outputs: [],
-		isRunnable: true
+		outputs: []
+	};
+
+	const edgeCaseOp: Operation = {
+		...commonFields,
+		inputs: [{ type: 'modelId|datasetId|number' }],
+		outputs: []
 	};
 
 	const wf = workflowService.emptyWorkflow('test', 'test');
@@ -327,6 +331,7 @@ describe('workflow operator with multiple output types', () => {
 	workflowService.addNode(wf, datasetOp, { x: 0, y: 0 }, {});
 	workflowService.addNode(wf, modelConfigOp, { x: 0, y: 0 }, {});
 	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, edgeCaseOp, { x: 0, y: 0 }, {});
 
 	const multiOutputNode = wf.nodes[0];
 	multiOutputNode.outputs[0].value = [
@@ -339,8 +344,9 @@ describe('workflow operator with multiple output types', () => {
 	const datasetNode = wf.nodes[1];
 	const modelNode = wf.nodes[2];
 	const testNode = wf.nodes[3];
+	const edgeCaseNode = wf.nodes[4];
 
-	it('dataset/model => dataset', () => {
+	it('dataset|model => dataset', () => {
 		workflowService.addEdge(
 			wf,
 			multiOutputNode.id,
@@ -355,7 +361,7 @@ describe('workflow operator with multiple output types', () => {
 		workflowService.removeEdge(wf, wf.edges[0].id);
 	});
 
-	it('dataset/model => model', () => {
+	it('dataset|model => model', () => {
 		workflowService.addEdge(
 			wf,
 			multiOutputNode.id,
@@ -370,7 +376,7 @@ describe('workflow operator with multiple output types', () => {
 		workflowService.removeEdge(wf, wf.edges[0].id);
 	});
 
-	it('dataset/model => test', () => {
+	it('dataset|model => test', () => {
 		workflowService.addEdge(
 			wf,
 			multiOutputNode.id,
@@ -381,6 +387,19 @@ describe('workflow operator with multiple output types', () => {
 		);
 
 		expect(testNode.inputs[0].value).toBeNull();
+		expect(wf.edges.length).eq(0);
+	});
+
+	it('edge case many to many', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			edgeCaseNode.id,
+			edgeCaseNode.inputs[0].id,
+			[]
+		);
+		expect(edgeCaseNode.inputs[0].value).toBeNull();
 		expect(wf.edges.length).eq(0);
 	});
 });
