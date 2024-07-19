@@ -22,6 +22,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @Slf4j
 @RequiredArgsConstructor
 public class LogController {
+
 	private final CurrentUserService currentUserService;
 
 	/**
@@ -34,7 +35,8 @@ public class LogController {
 	public ResponseEntity<HttpStatus> log(@RequestBody List<ClientLog> logList) {
 		logList.forEach(clientLog -> {
 			List<String> parts = new ArrayList<>(
-					List.of(clientLog.getTimestampMillis() + "", getCurrentUserId(), clientLog.getMessage()));
+				List.of(clientLog.getTimestampMillis() + "", getCurrentUserId(), clientLog.getMessage())
+			);
 			if (clientLog.getArgs() != null && clientLog.getArgs().length > 0) {
 				parts.addAll(Arrays.asList(clientLog.getArgs()));
 			}

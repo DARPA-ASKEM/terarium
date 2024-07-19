@@ -21,10 +21,7 @@
 			:inputs="node.inputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortType.Input)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="
-				(input: WorkflowPort, direction: WorkflowDirection) =>
-					emit('port-selected', input, direction)
-			"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 		<section class="content">
@@ -40,10 +37,7 @@
 			:outputs="node.outputs"
 			@port-mouseover="(event) => mouseoverPort(event, PortType.Output)"
 			@port-mouseleave="emit('port-mouseleave')"
-			@port-selected="
-				(input: WorkflowPort, direction: WorkflowDirection) =>
-					emit('port-selected', input, direction)
-			"
+			@port-selected="(input: WorkflowPort, direction: WorkflowDirection) => emit('port-selected', input, direction)"
 			@remove-edges="(portId: string) => emit('remove-edges', portId)"
 		/>
 	</main>

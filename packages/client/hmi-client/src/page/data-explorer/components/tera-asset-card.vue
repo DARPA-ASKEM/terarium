@@ -1,10 +1,5 @@
 <template>
-	<div
-		class="asset-card"
-		draggable="true"
-		@dragstart="startDrag(asset, resourceType)"
-		@dragend="endDrag"
-	>
+	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)" @dragend="endDrag">
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType !== ResourceType.XDD ? resourceType.toUpperCase() : 'DOCUMENT' }}
@@ -61,10 +56,7 @@
 				v-else-if="resourceType === ResourceType.XDD"
 				v-html="highlightSearchTerms((asset as DocumentAsset).description)"
 			/>
-			<div
-				class="parameters"
-				v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters"
-			>
+			<div class="parameters" v-if="resourceType === ResourceType.MODEL && (asset as Model).semantics?.ode?.parameters">
 				PARAMETERS:
 				{{ (asset as Model).semantics?.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
@@ -77,11 +69,7 @@
 		</main>
 		<aside>
 			<tera-carousel
-				v-if="
-					resourceType === ResourceType.XDD &&
-					source === DocumentSource.XDD &&
-					!isEmpty(extractions)
-				"
+				v-if="resourceType === ResourceType.XDD && source === DocumentSource.XDD && !isEmpty(extractions)"
 				is-numeric
 				height="6rem"
 				width="8rem"
@@ -132,14 +120,7 @@
 import { isEmpty } from 'lodash';
 import { computed, ref, watch, ComputedRef } from 'vue';
 import { XDDExtractionType } from '@/types/XDD';
-import type {
-	Extraction,
-	XDDUrlExtraction,
-	DocumentAsset,
-	Dataset,
-	Model,
-	Document
-} from '@/types/Types';
+import type { Extraction, XDDUrlExtraction, DocumentAsset, Dataset, Model, Document } from '@/types/Types';
 import { ResourceType, ResultType } from '@/types/common';
 import { DocumentSource } from '@/types/search';
 import * as textUtil from '@/utils/text';
@@ -214,17 +195,13 @@ const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => 
 });
 
 const snippets = computed(() =>
-	(props.asset as Document).highlight
-		? Array.from((props.asset as Document).highlight).splice(0, 3)
-		: null
+	(props.asset as Document).highlight ? Array.from((props.asset as Document).highlight).splice(0, 3) : null
 );
 const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
 		value =
-			props.source === DocumentSource.XDD
-				? (props.asset as Document).title
-				: (props.asset as DocumentAsset).name ?? '';
+			props.source === DocumentSource.XDD ? (props.asset as Document).title : (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
@@ -242,8 +219,7 @@ watch(
 );
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
-	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
+	chosenExtractionFilter.value = chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
 
 // Return formatted author, year, journal

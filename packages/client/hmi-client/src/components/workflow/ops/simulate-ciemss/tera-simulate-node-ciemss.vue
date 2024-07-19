@@ -8,19 +8,8 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
 		</tera-operator-placeholder>
@@ -33,12 +22,7 @@ import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import {
-	getRunResultCSV,
-	pollAction,
-	getSimulation,
-	parsePyCiemssMap
-} from '@/services/models/simulation-service';
+import { getRunResultCSV, pollAction, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';

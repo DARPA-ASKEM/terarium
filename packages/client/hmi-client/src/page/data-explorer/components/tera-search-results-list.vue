@@ -6,11 +6,7 @@
 				{{ resultsText }}
 				<span v-if="isEmpty(searchByExampleOptionsStr)"> "{{ props.searchTerm }}" </span>
 				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
-					<tera-asset-card
-						:asset="searchByExampleItem!"
-						:resource-type="resourceType"
-						:source="source"
-					/>
+					<tera-asset-card :asset="searchByExampleItem!" :resource-type="resourceType" :source="source" />
 				</div>
 			</template>
 			<template v-else>{{ itemsText }} </template>
@@ -64,15 +60,7 @@
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
 import { useProjects } from '@/composables/project';
-import {
-	AssetType,
-	Dataset,
-	Document,
-	DocumentAsset,
-	Model,
-	ProjectAsset,
-	XDDFacetsItemResponse
-} from '@/types/Types';
+import { AssetType, Dataset, Document, DocumentAsset, Model, ProjectAsset, XDDFacetsItemResponse } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { DocumentSource } from '@/types/search';
@@ -80,10 +68,7 @@ import type { Source } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
-import {
-	getSearchByExampleOptionsString,
-	useSearchByExampleOptions
-} from '@/page/data-explorer/search-by-example';
+import { getSearchByExampleOptionsString, useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
@@ -152,9 +137,7 @@ const projectOptions = computed(() => {
 					if (useProjects().hasEditPermission()) {
 						if (!datasetId && selectedAsset.value.esgfId) {
 							// The selectedAsset is a light asset for front end and we need the whole thing.
-							const climateDataset: Dataset | null = await getClimateDataset(
-								selectedAsset.value.esgfId
-							);
+							const climateDataset: Dataset | null = await getClimateDataset(selectedAsset.value.esgfId);
 							if (climateDataset) {
 								const dataset: Dataset | null = await createDataset(climateDataset);
 								if (dataset) {
@@ -192,10 +175,7 @@ const projectOptions = computed(() => {
 	return [
 		{
 			label: 'Add to which project?',
-			items: [
-				...lastUpdatedProjectItem,
-				...sortBy(items, (item) => item.label?.toString().toLowerCase())
-			]
+			items: [...lastUpdatedProjectItem, ...sortBy(items, (item) => item.label?.toString().toLowerCase())]
 		}
 	];
 });
@@ -228,8 +208,7 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults =
-		props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
 	return searchResults;
 });
 
@@ -256,10 +235,7 @@ const resultsText = computed(() => {
 	}
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	const toOrFor =
-		searchByExampleOptionsStr.value.length > 0
-			? `with ${searchByExampleOptionsStr.value} to`
-			: 'for';
+	const toOrFor = searchByExampleOptionsStr.value.length > 0 ? `with ${searchByExampleOptionsStr.value} to` : 'for';
 	return `Showing ${resultsCount.value} ${truncated}result${s} ${toOrFor} `;
 });
 

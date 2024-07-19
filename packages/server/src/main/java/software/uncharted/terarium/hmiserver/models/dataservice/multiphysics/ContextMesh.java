@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ContextMesh implements Serializable {
+
 	private String id;
 	private String description;
 	private Object dimensionality;

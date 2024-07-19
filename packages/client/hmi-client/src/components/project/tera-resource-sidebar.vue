@@ -26,12 +26,7 @@
 			@click="emit('open-asset', overview)"
 		>
 			<span>
-				<vue-feather
-					class="p-button-icon-left"
-					type="layout"
-					size="1rem"
-					stroke="rgb(16, 24, 40)"
-				/>
+				<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
 				<span class="p-button-label">Overview</span>
 			</span>
 		</Button>
@@ -59,9 +54,7 @@
 						<!-- New asset buttons for some types -->
 						<Button
 							class="new-button"
-							v-if="
-								type === AssetType.Model || type === AssetType.Code || type === AssetType.Workflow
-							"
+							v-if="type === AssetType.Model || type === AssetType.Code || type === AssetType.Workflow"
 							icon="pi pi-plus"
 							label="New"
 							text

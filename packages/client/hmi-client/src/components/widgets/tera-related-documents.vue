@@ -35,12 +35,7 @@
 				@click="dialogForExtraction"
 			/>
 		</footer>
-		<Dialog
-			modal
-			v-model:visible="visible"
-			:header="`Describe this ${assetType}`"
-			:style="{ width: '50vw' }"
-		>
+		<Dialog modal v-model:visible="visible" :header="`Describe this ${assetType}`" :style="{ width: '50vw' }">
 			<p class="constrain-width mt-2 mb-4">
 				Terarium can extract information from documents to describe this
 				{{ assetType }}.<br />Select a document you would like to use.
@@ -57,9 +52,7 @@
 			<div v-else>
 				<div class="no-documents">
 					<img class="no-documents-img" src="@assets/svg/plants.svg" alt="" />
-					<div class="no-documents-text">
-						You don't have any resources that can be used. Try adding some documents.
-					</div>
+					<div class="no-documents-text">You don't have any resources that can be used. Try adding some documents.</div>
 					<div class="no-documents-text">
 						Would you like to generate descriptions without attaching additional context?
 					</div>
@@ -209,15 +202,14 @@ async function getRelatedDocuments() {
 	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
 	if (!provenanceType) return;
 
-	await getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then(
-		(nodes) => {
-			const provenanceNodes = nodes ?? [];
-			relatedDocuments.value =
-				(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(
-					({ id, name }) => ({ id: id ?? '', name: name ?? '' })
-				) ?? [];
-		}
-	);
+	await getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
+		const provenanceNodes = nodes ?? [];
+		relatedDocuments.value =
+			(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(({ id, name }) => ({
+				id: id ?? '',
+				name: name ?? ''
+			})) ?? [];
+	});
 }
 
 onMounted(() => {

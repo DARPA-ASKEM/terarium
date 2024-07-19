@@ -7,4 +7,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE) // This annotation can be used on classes
 @Retention(RetentionPolicy.RUNTIME) // This annotation will be available at runtime
-public @interface AMRSchemaType {}
+public @interface AMRSchemaType {
+}

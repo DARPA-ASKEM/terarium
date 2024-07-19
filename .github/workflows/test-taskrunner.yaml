@@ -22,14 +22,9 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  lint-server:
-    name: Lint and format server
-    uses: ./.github/workflows/lint-server.yaml
-
   taskrunner-tests:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
-    needs: lint-server
 
     permissions:
       contents: read

@@ -33,10 +33,7 @@
 		<section class="project-page">
 			<tera-model v-if="pageType === AssetType.Model" :asset-id="assetId" />
 			<tera-code :asset-id="assetId" v-else-if="pageType === AssetType.Code" />
-			<tera-project-overview
-				v-else-if="pageType === ProjectPages.OVERVIEW"
-				@open-new-asset="openNewAsset"
-			/>
+			<tera-project-overview v-else-if="pageType === ProjectPages.OVERVIEW" @open-new-asset="openNewAsset" />
 			<tera-workflow v-else-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 			<!--Add new process/asset views here-->
 			<template v-else-if="assetId">
@@ -49,12 +46,7 @@
 				<tera-dataset v-else-if="pageType === AssetType.Dataset" :asset-id="assetId" />
 			</template>
 		</section>
-		<tera-slider-panel
-			v-model:is-open="isNotesSliderOpen"
-			content-width="240px"
-			direction="right"
-			header="Notes"
-		>
+		<tera-slider-panel v-model:is-open="isNotesSliderOpen" content-width="240px" direction="right" header="Notes">
 			<template v-slot:content>
 				<tera-notes-sidebar :asset-id="assetId" :page-type="pageType" />
 			</template>
@@ -122,10 +114,7 @@ async function removeAsset(assetRoute: AssetRoute) {
 		isProjectAssetTypes(assetRoute.pageType) &&
 		assetRoute.pageType !== ProjectPages.OVERVIEW
 	) {
-		const isRemoved = await useProjects().deleteAsset(
-			assetRoute.pageType as AssetType,
-			assetRoute.assetId
-		);
+		const isRemoved = await useProjects().deleteAsset(assetRoute.pageType as AssetType, assetRoute.assetId);
 		if (isRemoved) {
 			if (isEqual(assetRoute, openedAssetRoute.value)) {
 				openAsset({ assetId: '', pageType: ProjectPages.OVERVIEW });

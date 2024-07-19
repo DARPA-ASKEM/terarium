@@ -15,12 +15,7 @@
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{
-								getNameOfCurieCached(
-									nameOfCurieCache,
-									getCurieFromGroundingIdentifier(data.grounding.identifiers)
-								)
-							}}
+							{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
 
 							<a
 								target="_blank"
@@ -90,11 +85,7 @@ import {
 	getCurieUrl,
 	parseCurie
 } from '@/services/concept';
-import type {
-	MiraModel,
-	MiraTemplateParams,
-	ObservableSummary
-} from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 
 const props = defineProps<{

@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @Accessors(chain = true)
 @TSModel
 public class EnsembleCalibrationCiemssRequest implements Serializable {
+
 	@JsonAlias("model_configs")
 	private List<EnsembleModelConfigs> modelConfigs;
 

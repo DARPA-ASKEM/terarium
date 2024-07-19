@@ -7,5 +7,5 @@ public enum InterventionSemanticType {
 	STATE,
 
 	@JsonProperty("parameter")
-	PARAMETER,
+	PARAMETER
 }

@@ -52,10 +52,7 @@
 				Other concepts
 				<span class="artifact-amount">({{ otherConcepts.length }})</span>
 			</template>
-			<tera-other-concepts-table
-				:model="model"
-				@update-model="(updatedModel) => emit('update-model', updatedModel)"
-			/>
+			<tera-other-concepts-table :model="model" @update-model="(updatedModel) => emit('update-model', updatedModel)" />
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -100,9 +97,7 @@ const emit = defineEmits([
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const time = computed(() =>
-	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
-);
+const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -112,15 +107,11 @@ const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
 		...transition,
 		name: transition.name ?? transition.properties?.name ?? transition.id,
-		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)
-			?.expression
+		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)?.expression
 	}))
 );
 const otherConcepts = computed(() => {
-	const ids = [
-		...(states.value?.map((s) => s.id) ?? []),
-		...(transitions.value?.map((t) => t.id) ?? [])
-	];
+	const ids = [...(states.value?.map((s) => s.id) ?? []), ...(transitions.value?.map((t) => t.id) ?? [])];
 
 	// find keys that are not aligned
 	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
@@ -128,9 +119,7 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) =>
-				['anchored_extraction', 'anchored_entity'].includes(e.type)
-			)
+			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
 		);
 	});
 

@@ -41,7 +41,6 @@ public class ProjectExport {
 	}
 
 	public void loadFromZipFile(final InputStream inputStream) throws IOException {
-
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -56,7 +55,6 @@ public class ProjectExport {
 
 		// iterate on assets
 		while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-
 			// read the asset json
 			final AssetExport asset = objectMapper.readValue(readZipEntry(zipInputStream), AssetExport.class);
 
@@ -75,7 +73,6 @@ public class ProjectExport {
 	}
 
 	public byte[] getAsZipFile() throws JsonProcessingException, IOException {
-
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -89,7 +86,6 @@ public class ProjectExport {
 		zipOutputStream.closeEntry();
 
 		for (final AssetExport asset : assets) {
-
 			final byte[] assetBytes = objectMapper.writeValueAsBytes(asset);
 
 			final ZipEntry assetEntry = new ZipEntry(asset.getAsset().getId() + ".json");
@@ -113,7 +109,6 @@ public class ProjectExport {
 	}
 
 	public ProjectExport clone() {
-
 		final ProjectExport cloned = new ProjectExport();
 		cloned.setProject(project.clone());
 
@@ -130,12 +125,10 @@ public class ProjectExport {
 
 		// determine dependencies for each asset
 		for (final AssetExport assetExport : assets) {
-
 			final TerariumAsset currentAsset = assetExport.getAsset();
 
 			// determine any dependencies each asset has
-			final AssetDependencyMap dependencies =
-					AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
+			final AssetDependencyMap dependencies = AssetDependencyUtil.getAssetDependencies(projectAssetIds, currentAsset);
 
 			// clone the asset
 			final TerariumAsset clonedAsset = currentAsset.clone();
@@ -155,12 +148,14 @@ public class ProjectExport {
 
 		// update all uuids with the cloned uuids
 		for (final AssetExport assetExport : clonedAssetExports) {
-			final AssetDependencyMap dependencies =
-					assetDependencies.get(assetExport.getAsset().getId());
+			final AssetDependencyMap dependencies = assetDependencies.get(assetExport.getAsset().getId());
 
 			// update any referenced dependencies
-			final TerariumAsset finalClonedAsset =
-					AssetDependencyUtil.swapAssetDependencies(assetExport.getAsset(), oldToNewIds, dependencies);
+			final TerariumAsset finalClonedAsset = AssetDependencyUtil.swapAssetDependencies(
+				assetExport.getAsset(),
+				oldToNewIds,
+				dependencies
+			);
 
 			assetExport.setAsset(finalClonedAsset);
 		}

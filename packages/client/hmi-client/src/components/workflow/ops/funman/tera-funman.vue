@@ -23,9 +23,7 @@
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
 					</h5>
-					<p class="secondary-text mt-1">
-						The validator will use these parameters to execute the sanity checks.
-					</p>
+					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
@@ -40,30 +38,18 @@
 							<InputNumber v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
-					<InputText
-						:disabled="true"
-						class="p-inputtext-sm timespan-list mb-2"
-						v-model="requestStepListString"
-					/>
+					<InputText :disabled="true" class="p-inputtext-sm timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 								<tera-input type="nist" v-model="knobs.tolerance" />
-								<Slider
-									v-model="knobs.tolerance"
-									:min="0"
-									:max="1"
-									:step="0.01"
-									class="w-full mr-2"
-								/>
+								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 							</div>
 						</div>
 						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label class="w-auto mr-2"
-								>Select parameters of interest <i class="pi pi-info-circle"
-							/></label>
+							<label class="w-auto mr-2">Select parameters of interest <i class="pi pi-info-circle" /></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
@@ -95,9 +81,7 @@
 
 					<div class="spacer">
 						<h5>Add sanity checks</h5>
-						<p class="secondary-text mt-1">
-							Model configurations will be tested against these constraints.
-						</p>
+						<p class="secondary-text mt-1">Model configurations will be tested against these constraints.</p>
 					</div>
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
@@ -175,12 +159,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
-import type {
-	FunmanPostQueriesRequest,
-	Model,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
@@ -450,10 +429,7 @@ const setModelOptions = async () => {
 		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
-	const massValue = await pythonInstance.evaluateExpression(
-		modelMassExpression as string,
-		parametersMap
-	);
+	const massValue = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 	mass.value = massValue;
 
 	if (model.value.model.states) {
@@ -482,9 +458,7 @@ const setModelOptions = async () => {
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
-		variablesOfInterest.value = requestParameters.value
-			.filter((d: any) => d.label === 'all')
-			.map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}

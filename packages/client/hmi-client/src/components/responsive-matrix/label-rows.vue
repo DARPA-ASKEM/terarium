@@ -1,12 +1,6 @@
 <template>
 	<div class="label-container row" :style="labelContainerStyle">
-		<div
-			class="label"
-			v-for="(label, idx) in labels"
-			:key="idx"
-			:title="label.alt"
-			:style="getLabelStyle(idx)"
-		>
+		<div class="label" v-for="(label, idx) in labels" :key="idx" :title="label.alt" :style="getLabelStyle(idx)">
 			{{ label.value }}
 		</div>
 	</div>
@@ -115,8 +109,7 @@ export default {
 	methods: {
 		buildLabelData() {
 			const visibleBounds = this.viewport.getVisibleBounds();
-			const viewportRowDensity =
-				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.items.length;
+			const viewportRowDensity = ((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.items.length;
 
 			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));

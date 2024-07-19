@@ -1,10 +1,6 @@
 <template>
 	<div class="response-thought-container">
-		<div
-			ref="responseThought"
-			class="thought"
-			:class="{ hide: !props.showThought, show: props.showThought }"
-		>
+		<div ref="responseThought" class="thought" :class="{ hide: !props.showThought, show: props.showThought }">
 			<slot />
 		</div>
 	</div>
