@@ -34,18 +34,23 @@
 			label="Concept"
 			placeholder="Select a concept"
 			icon="pi pi-search"
-			:disabled="disabledInputs?.includes('concept')"
+
 			v-model="query"@complete="$emit('update-item', { key: 'concept', value: $event.value?.curie })"
 		/> -->
-		<AutoComplete
-			label="Concept"
-			placeholder="Select a concept"
-			v-model="q"
-			@suggestions="results"
-			@complete="searchConcepts"
-			option-label="name"
-			:disabled="disabledInputs?.includes('concept')"
-		/>
+		<span class="concept">
+			<label>Concept</label>
+			<AutoComplete
+				label="Concept"
+				size="small"
+				placeholder="Select a concept"
+				v-model="conceptQuery"
+				:suggestions="results"
+				optionLabel="name"
+				:disabled="disabledInputs?.includes('concept')"
+				@complete="searchConcepts"
+				@item-select="console.log($event)"
+			/>
+		</span>
 		<katex-element
 			class="expression"
 			v-if="item.expression"
@@ -63,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
@@ -85,8 +90,10 @@ const props = defineProps<{
 
 if (!props.disabledInputs) console.log(props.item);
 
-const q = ref('');
+const conceptQuery = ref('');
 const results = ref<DKG[]>([]);
+
+defineEmits(['update-item']);
 
 async function searchConcepts(event: AutoCompleteCompleteEvent) {
 	const query = event.query;
@@ -96,7 +103,16 @@ async function searchConcepts(event: AutoCompleteCompleteEvent) {
 	}
 }
 
-defineEmits(['update-item']);
+onMounted(() => {
+	if (props.item.grounding?.identifiers) {
+		console.log(props.item.grounding.identifiers);
+		// conceptQuery.value = getNameOfCurieCached(
+		// 	new Map<string, string>(),
+		// 	getCurieFromGroundingIdentifier(props.item.grounding.identifiers.ncit)
+		// );
+		// console.log(conceptQuery.value);
+	}
+});
 </script>
 
 <style scoped>
@@ -142,8 +158,13 @@ div {
 	grid-area: unit;
 }
 
-:deep([label='Concept']) {
+.concept {
 	grid-area: concept;
+	display: flex;
+	align-items: center;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	gap: var(--gap-1);
 }
 
 .expression {
