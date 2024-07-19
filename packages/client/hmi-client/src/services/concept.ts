@@ -84,6 +84,7 @@ async function getEntitySimilarity(
 }
 
 const getNameOfCurieCached = async (curie: string, cache: Map<string, string> = new Map<string, string>()) => {
+	if (isEmpty(curie)) return '';
 	if (!cache.has(curie)) {
 		const response = await getCuriesEntities([curie]);
 		cache.set(curie, response?.[0].name ?? '');
