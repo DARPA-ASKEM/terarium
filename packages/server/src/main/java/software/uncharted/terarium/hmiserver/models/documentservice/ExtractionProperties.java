@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 public class ExtractionProperties implements Serializable {
+
 	private String title;
 
 	private String DOI;

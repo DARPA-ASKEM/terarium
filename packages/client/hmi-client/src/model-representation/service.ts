@@ -3,7 +3,7 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
@@ -206,32 +206,60 @@ export function setParameters(model: Model, parameters: ModelParameter[]) {
 	}
 }
 
-export function updateParameter(model: Model, parameterId: string, key: string, value: any) {
-	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
-		// TODO: Add support for editing concept/grounding
-		if (key === 'units') {
-			if (!obj.units) obj.units = { expression: '', expression_mathml: '' };
-			obj.units.expression = value;
-			obj.units.expression_mathml = `<ci>${value}</ci>`;
-		} else if (obj[key]) {
-			obj[key] = value;
-		}
+export function updateVariableProperty(v: any, key: string, value: any) {
+	if (key === 'unitExpression') {
+		if (!v.units) v.units = { expression: '', expression_mathml: '' };
+		v.units.expression = value;
+		v.units.expression_mathml = `<ci>${value}</ci>`;
+	} else {
+		v[key] = value;
 	}
+}
 
+export function updateParameter(model: Model, id: string, key: string, value: any) {
 	const parameters = getParameters(model);
-	const parameter = parameters.find((p: ModelParameter) => p.id === parameterId);
+	const parameter = parameters.find((p: ModelParameter) => p.id === id);
 	if (!parameter) return;
-	updateProperty(parameter);
+	updateVariableProperty(parameter, key, value);
 
 	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
 	const auxiliaries = model.model?.auxiliaries ?? [];
-	const auxiliary = auxiliaries.find((a) => a.id === parameterId);
+	const auxiliary = auxiliaries.find((a) => a.id === id);
 	if (!auxiliary) return;
-	updateProperty(auxiliary);
+	updateVariableProperty(auxiliary, key, value);
 }
 
-// Gets states, vertices, stocks
-export function getStates(model: Model): any[] {
+export function updateState(model: Model, id: string, key: string, value: any) {
+	const states = getStates(model);
+	const state = states.find((i: any) => i.id === id);
+	if (!state) return;
+	updateVariableProperty(state, key, value);
+}
+
+export function updateObservable(model: Model, id: string, key: string, value: any) {
+	const observables = model?.semantics?.ode?.observables ?? [];
+	const observable = observables.find((o) => o.id === id);
+	if (!observable) return;
+	updateVariableProperty(observable, key, value);
+}
+
+export function updateTransition(model: Model, id: string, key: string, value: any) {
+	const transitions: Transition[] = model?.model?.transitions ?? [];
+	const transition = transitions.find((t) => t.id === id);
+	if (!transition) return;
+	transition[key] = value;
+	if (transition.properties && key === 'name') {
+		transition.properties.name = value;
+	}
+}
+
+export function updateTime(model: Model, key: string, value: any) {
+	const time: State = model?.semantics?.ode?.time;
+	updateVariableProperty(time, key, value);
+}
+
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (State & RegNetVertex)[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
@@ -243,23 +271,6 @@ export function getStates(model: Model): any[] {
 		default:
 			return [];
 	}
-}
-
-export function updateState(model: Model, id: string, key: string, value: any) {
-	function updateProperty(obj: ModelParameter | any /** There is no auxiliary type yet */) {
-		// TODO: Add support for editing concept/grounding
-		if (key === 'initial') {
-			if (!obj.initial) obj.initial = { expression: '', expression_mathml: '' };
-			obj.initial.expression = value;
-			obj.initial.expression_mathml = `<ci>${value}</ci>`;
-		} else if (obj[key]) {
-			obj[key] = value;
-		}
-	}
-	const states = getStates(model);
-	const state = states.find((i: any) => i.id === id);
-	if (!state) return;
-	updateProperty(state);
 }
 
 /**
@@ -287,10 +298,7 @@ export function getInitialUnits(model: Model, target: string): string {
 export function getInitialConcept(model: Model, target: string): string {
 	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
 	if (!identifiers) return '';
-	return getNameOfCurieCached(
-		new Map<string, string>(),
-		getCurieFromGroundingIdentifier(identifiers)
-	);
+	return getNameOfCurieCached(new Map<string, string>(), getCurieFromGroundingIdentifier(identifiers));
 }
 
 /**
@@ -335,67 +343,6 @@ export function getInitial(model: Model, target: string): Initial | undefined {
 		case AMRSchemaNames.STOCKFLOW:
 		default:
 			return model.semantics?.ode?.initials?.find((i) => i.target === target);
-	}
-}
-
-// TODO: These updateMetadata functions and even the updateParameter function share similar logic and can be refactored
-/**
- * Updates the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateParameterMetadata(
-	model: Model,
-	parameterId: string,
-	key: string,
-	value: any
-) {
-	if (!model.metadata?.parameters?.[parameterId]) {
-		model.metadata ??= {};
-		model.metadata.parameters ??= {};
-		model.metadata.parameters[parameterId] ??= {};
-		model.metadata.parameters[parameterId].id = parameterId;
-	}
-	const parameterMetadata = model.metadata.parameters[parameterId];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'units') {
-		if (!parameterMetadata.units)
-			parameterMetadata.units = { expression: '', expression_mathml: '' };
-		parameterMetadata.units.expression = value;
-		parameterMetadata.units.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		parameterMetadata[key] = value;
-	}
-}
-
-/**
- * Updates the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} target - The target of the initial.
- * @param {string} key - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateInitialMetadata(model: Model, target: string, key: string, value: any) {
-	if (!model.metadata?.initials?.[target]) {
-		model.metadata ??= {};
-		model.metadata.initials ??= {};
-		model.metadata.initials[target] ??= {};
-		model.metadata.initials[target].id = target;
-	}
-
-	const initialMetadata = model.metadata.initials[target];
-
-	// TODO: Add support for editing concept metadata
-	if (key === 'initial') {
-		if (!initialMetadata.initial)
-			initialMetadata.initial = { expression: '', expression_mathml: '' };
-		initialMetadata.initial.expression = value;
-		initialMetadata.initial.expression_mathml = `<ci>${value}</ci>`;
-	} else {
-		initialMetadata[key] = value;
 	}
 }
 

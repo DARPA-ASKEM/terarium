@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class FunmanParameter {
+
 	/** This is expected to be a model param's ID * */
 	private String name;
 

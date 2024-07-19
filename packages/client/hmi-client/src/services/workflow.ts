@@ -426,9 +426,7 @@ export function selectOutput(
 
 	selected.status = WorkflowPortStatus.CONNECTED;
 
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.nodes.map((node) => [node.id, node])
-	);
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.nodes.map((node) => [node.id, node]));
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	nodeCache.set(operator.id, []);
 
@@ -489,10 +487,7 @@ export async function generateSummary(
 
 // Check if the current-state matches that of the output-state.
 // Note operatorState subsumes the keys of the outputState
-export const isOperatorStateInSync = (
-	operatorState: Record<string, any>,
-	outputState: Record<string, any>
-) => {
+export const isOperatorStateInSync = (operatorState: Record<string, any>, outputState: Record<string, any>) => {
 	const hasKey = Object.prototype.hasOwnProperty;
 
 	const keys = Object.keys(outputState);

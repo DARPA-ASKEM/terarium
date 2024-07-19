@@ -59,12 +59,7 @@
 						></span>
 						<span class="meta-property">ID:</span>
 						<span class="meta-property-value" @dblclick="idInput = false"
-							><InputText
-								v-model="id"
-								class="control-button"
-								:disabled="idInput"
-								@blur="idInput = true"
-							></InputText>
+							><InputText v-model="id" class="control-button" :disabled="idInput" @blur="idInput = true"></InputText>
 						</span>
 					</span>
 					<Button
@@ -149,9 +144,7 @@ const props = defineProps({
 
 const id = ref(props.id);
 const name = ref(props.name);
-const expandedDiv = computed(() =>
-	props.keepOpen || isEditingEquation.value ? `expanded-div` : ``
-);
+const expandedDiv = computed(() => (props.keepOpen || isEditingEquation.value ? `expanded-div` : ``));
 
 defineExpose({
 	mathLiveField,

@@ -21,11 +21,7 @@ public class EventTest extends TerariumApplicationTests {
 	public void canEventBeSavedThenRetrieved() {
 		final UUID projectId = UUID.randomUUID();
 
-		final Event e = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(projectId)
-				.setUserId("test")
-				.setValue("test");
+		final Event e = new Event().setType(EventType.TEST_TYPE).setProjectId(projectId).setUserId("test").setValue("test");
 		final Event givenEvent = eventService.save(e);
 
 		Assertions.assertNotNull(givenEvent);
@@ -38,40 +34,23 @@ public class EventTest extends TerariumApplicationTests {
 	@Test
 	@Transactional
 	public void canEventBeSavedThenRetrievedWithByProjectId() {
-
 		UUID p1 = UUID.randomUUID();
 		UUID p2 = UUID.randomUUID();
 		UUID p3 = UUID.randomUUID();
 
-		final Event e1 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("test");
+		final Event e1 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("test");
 		Event givenEvent = eventService.save(e1);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e2 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p2)
-				.setUserId("test")
-				.setValue("test");
+		final Event e2 = new Event().setType(EventType.TEST_TYPE).setProjectId(p2).setUserId("test").setValue("test");
 		givenEvent = eventService.save(e2);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e3 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p2)
-				.setUserId("test")
-				.setValue("test");
+		final Event e3 = new Event().setType(EventType.TEST_TYPE).setProjectId(p2).setUserId("test").setValue("test");
 		givenEvent = eventService.save(e3);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e4 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p3)
-				.setUserId("test")
-				.setValue("test");
+		final Event e4 = new Event().setType(EventType.TEST_TYPE).setProjectId(p3).setUserId("test").setValue("test");
 		givenEvent = eventService.save(e4);
 		Assertions.assertNotNull(givenEvent);
 
@@ -95,38 +74,21 @@ public class EventTest extends TerariumApplicationTests {
 	@Test
 	@Transactional
 	public void canEventBeSavedThenRetrievedByLike() {
-
 		UUID p1 = UUID.randomUUID();
 
-		final Event e1 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e1 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		Event givenEvent = eventService.save(e1);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e2 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e2 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		givenEvent = eventService.save(e2);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e3 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e3 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		givenEvent = eventService.save(e3);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e4 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("world");
+		final Event e4 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("world");
 		givenEvent = eventService.save(e4);
 		Assertions.assertNotNull(givenEvent);
 
@@ -152,35 +114,19 @@ public class EventTest extends TerariumApplicationTests {
 	public void canEventBeSavedThenRetrievedByUserId() {
 		UUID p1 = UUID.randomUUID();
 
-		final Event e1 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e1 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		Event givenEvent = eventService.save(e1);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e2 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e2 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		givenEvent = eventService.save(e2);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e3 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test")
-				.setValue("hello");
+		final Event e3 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test").setValue("hello");
 		givenEvent = eventService.save(e3);
 		Assertions.assertNotNull(givenEvent);
 
-		final Event e4 = new Event()
-				.setType(EventType.TEST_TYPE)
-				.setProjectId(p1)
-				.setUserId("test1")
-				.setValue("world");
+		final Event e4 = new Event().setType(EventType.TEST_TYPE).setProjectId(p1).setUserId("test1").setValue("world");
 		givenEvent = eventService.save(e4);
 		Assertions.assertNotNull(givenEvent);
 

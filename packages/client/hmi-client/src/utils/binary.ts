@@ -1,8 +1,6 @@
 function b64EncodeUnicode(str) {
 	return btoa(
-		encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_match, p1) =>
-			String.fromCharCode(Number(`0x${p1}`))
-		)
+		encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_match, p1) => String.fromCharCode(Number(`0x${p1}`)))
 	);
 }
 

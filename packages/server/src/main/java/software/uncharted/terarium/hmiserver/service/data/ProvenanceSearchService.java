@@ -43,24 +43,30 @@ public class ProvenanceSearchService {
 	 */
 	public ProvenanceSearchResult connectedNodes(final ProvenanceQueryParam payload) {
 		try (final Session session = neo4jService.getSession()) {
-
 			final String matchNode = matchNodeBuilder(payload.getRootType(), payload.getRootId());
 			final String nodeAbbr = returnNodeAbbr(payload.getRootType());
 
 			final String relationshipsStr = relationshipsArrayAsStr(
-					Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
-					new ArrayList<>());
+				Arrays.asList(ProvenanceRelationType.CONTAINS, ProvenanceRelationType.IS_CONCEPT_OF),
+				new ArrayList<>()
+			);
 
 			final String limit = payload.getLimit() != null ? "limit: " + payload.getLimit() + ", " : "";
 			final String hops = payload.getHops() != null ? "maxLevel: " + payload.getHops() + ", " : "";
 
-			final String query = matchNode + " CALL apoc.path.subgraphAll(" + nodeAbbr + ", {"
-					+ "relationshipFilter: '" + relationshipsStr + "',"
-					+ "minLevel: 0, "
-					+ limit
-					+ hops
-					+ "whitelistNodes: []"
-					+ "}) YIELD nodes, relationships RETURN nodes, relationships";
+			final String query =
+				matchNode +
+				" CALL apoc.path.subgraphAll(" +
+				nodeAbbr +
+				", {" +
+				"relationshipFilter: '" +
+				relationshipsStr +
+				"'," +
+				"minLevel: 0, " +
+				limit +
+				hops +
+				"whitelistNodes: []" +
+				"}) YIELD nodes, relationships RETURN nodes, relationships";
 
 			final Result result = session.run(query);
 
@@ -79,7 +85,10 @@ public class ProvenanceSearchService {
 			final String matchNode = matchNodeBuilder(ProvenanceType.CONCEPT);
 
 			final String query = String.format(
-					"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n", matchNode, payload.getCurie());
+				"'%s'-[r:IS_CONCEPT_OF]->(n) WHERE Cn.concept='%s' RETURN n",
+				matchNode,
+				payload.getCurie()
+			);
 
 			final Result response = session.run(query);
 
@@ -96,15 +105,17 @@ public class ProvenanceSearchService {
 	public Set<String> modelConfigFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
 			throw new IllegalArgumentException(
-					"Document used for model-configuration extraction can only be found by providing a model-confirguration");
+				"Document used for model-configuration extraction can only be found by providing a model-confirguration"
+			);
 		}
 
 		try (final Session session = neo4jService.getSession()) {
 			final UUID modelConfigurationId = payload.getRootId();
 
 			final String query = String.format(
-					"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
-					modelConfigurationId);
+				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
+				modelConfigurationId
+			);
 
 			final Result response = session.run(query);
 			final Set<String> responseData = new HashSet<>();
@@ -124,15 +135,17 @@ public class ProvenanceSearchService {
 	public Set<String> modelConfigFromDataset(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL_CONFIGURATION) {
 			throw new IllegalArgumentException(
-					"Dataset used for model-configuration extraction can only be found by providing a model-confirguration");
+				"Dataset used for model-configuration extraction can only be found by providing a model-confirguration"
+			);
 		}
 
 		try (final Session session = neo4jService.getSession()) {
 			final UUID modelConfigurationId = payload.getRootId();
 
 			final String query = String.format(
-					"MATCH (d:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
-					modelConfigurationId);
+				"MATCH (d:Dataset)<-[r:EXTRACTED_FROM]-(m:ModelConfiguration {id: '%s'}) RETURN d",
+				modelConfigurationId
+			);
 
 			final Result response = session.run(query);
 			final Set<String> responseData = new HashSet<>();
@@ -151,15 +164,16 @@ public class ProvenanceSearchService {
 	 */
 	public Set<String> modelsFromDocument(final ProvenanceQueryParam payload) {
 		if (payload.getRootType() != ProvenanceType.MODEL) {
-			throw new IllegalArgumentException(
-					"Document used for model extraction can only be found by providing a Model");
+			throw new IllegalArgumentException("Document used for model extraction can only be found by providing a Model");
 		}
 
 		try (final Session session = neo4jService.getSession()) {
 			final UUID modelId = payload.getRootId();
 
-			final String query =
-					String.format("MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN d", modelId);
+			final String query = String.format(
+				"MATCH (d:Document)<-[r:EXTRACTED_FROM]-(m:Model {id: '%s'}) RETURN d",
+				modelId
+			);
 
 			final Result response = session.run(query);
 
@@ -175,7 +189,6 @@ public class ProvenanceSearchService {
 	// Util methods
 
 	public ProvenanceSearchResult nodesEdges(final Result response, final ProvenanceQueryParam payload) {
-
 		final boolean includeEdges = payload.getEdges() != null ? payload.getEdges() : false;
 		final boolean includeNodes = payload.getNodes() != null ? payload.getNodes() : true;
 		final boolean includeVersions = payload.getVersions() != null ? payload.getVersions() : false;
@@ -191,7 +204,6 @@ public class ProvenanceSearchService {
 			if (!includeVersions) {
 				for (final ProvenanceEdge edge : edges) {
 					if (edge.getRelationType() == ProvenanceRelationType.BEGINS_AT) {
-
 						final ProvenanceNode model = edge.getLeft();
 						final ProvenanceNode modelRevision = edge.getRight();
 						modelRevisionsToModel(model, modelRevision, edges);
@@ -213,14 +225,18 @@ public class ProvenanceSearchService {
 	}
 
 	public static void modelRevisionsToModel(
-			final ProvenanceNode model, final ProvenanceNode modelRevision, final List<ProvenanceEdge> edges) {
-
+		final ProvenanceNode model,
+		final ProvenanceNode modelRevision,
+		final List<ProvenanceEdge> edges
+	) {
 		for (final ProvenanceEdge edge : edges) {
 			if (edge.getRight().equals(modelRevision)) {
 				edge.setRight(model);
 				final ProvenanceNode left = edge.getLeft();
-				if (left.getType() == ProvenanceType.MODEL_REVISION
-						&& ProvenanceRelationType.EDITED_FROM == edge.getRelationType()) {
+				if (
+					left.getType() == ProvenanceType.MODEL_REVISION &&
+					ProvenanceRelationType.EDITED_FROM == edge.getRelationType()
+				) {
 					modelRevisionsToModel(model, left, edges);
 				}
 			}
@@ -228,8 +244,10 @@ public class ProvenanceSearchService {
 			if (edge.getLeft().equals(modelRevision)) {
 				edge.setLeft(model);
 				final ProvenanceNode right = edge.getRight();
-				if (right.getType() == ProvenanceType.MODEL_REVISION
-						&& ProvenanceRelationType.EDITED_FROM == edge.getRelationType()) {
+				if (
+					right.getType() == ProvenanceType.MODEL_REVISION &&
+					ProvenanceRelationType.EDITED_FROM == edge.getRelationType()
+				) {
 					modelRevisionsToModel(model, right, edges);
 				}
 			}
@@ -237,7 +255,9 @@ public class ProvenanceSearchService {
 	}
 
 	public static List<ProvenanceEdge> filterRelationshipTypes(
-			final List<ProvenanceEdge> relationships, final List<ProvenanceType> includedTypes) {
+		final List<ProvenanceEdge> relationships,
+		final List<ProvenanceType> includedTypes
+	) {
 		if (includedTypes.size() == 0) {
 			return relationships;
 		}
@@ -245,9 +265,7 @@ public class ProvenanceSearchService {
 		for (final ProvenanceEdge relation : relationships) {
 			final ProvenanceNode left = relation.getLeft();
 			final ProvenanceNode right = relation.getRight();
-			if (!left.equals(right)
-					&& includedTypes.contains(left.getType())
-					&& includedTypes.contains(right.getType())) {
+			if (!left.equals(right) && includedTypes.contains(left.getType()) && includedTypes.contains(right.getType())) {
 				clipped.add(relation);
 			}
 		}
@@ -255,7 +273,9 @@ public class ProvenanceSearchService {
 	}
 
 	public static List<ProvenanceNode> filterNodeTypes(
-			final List<ProvenanceNode> nodes, final List<ProvenanceType> includedTypes) {
+		final List<ProvenanceNode> nodes,
+		final List<ProvenanceType> includedTypes
+	) {
 		if (includedTypes.size() == 0) {
 			return nodes;
 		}
@@ -279,7 +299,6 @@ public class ProvenanceSearchService {
 				formatted.setType(ProvenanceType.findByType(label));
 
 				nodes.add(formatted);
-
 			} catch (final NoSuchElementException e) {
 				log.warn("No element found: " + e);
 				continue;
@@ -340,7 +359,9 @@ public class ProvenanceSearchService {
 	}
 
 	public static String relationshipsArrayAsStr(
-			final List<ProvenanceRelationType> exclude, final List<ProvenanceRelationType> include) {
+		final List<ProvenanceRelationType> exclude,
+		final List<ProvenanceRelationType> include
+	) {
 		final StringBuilder relationshipStr = new StringBuilder();
 		if (exclude != null) {
 			for (final ProvenanceRelationType type : ProvenanceRelationType.values()) {

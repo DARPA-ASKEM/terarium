@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.service.KeycloakTokenService;
 
 @RequiredArgsConstructor
 public class ServiceRequestFilter extends GenericFilterBean {
+
 	private final KeycloakTokenService keycloakTokenService;
 	private final Config config;
 
@@ -27,8 +28,10 @@ public class ServiceRequestFilter extends GenericFilterBean {
 
 	@Override
 	public void doFilter(
-			final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain)
-			throws IOException, ServletException {
+		final ServletRequest servletRequest,
+		final ServletResponse servletResponse,
+		final FilterChain filterChain
+	) throws IOException, ServletException {
 		final HeaderMapRequestWrapper wrappedRequest = new HeaderMapRequestWrapper((HttpServletRequest) servletRequest);
 
 		// Get the authorization header from the wrappedRequest
@@ -37,7 +40,6 @@ public class ServiceRequestFilter extends GenericFilterBean {
 		// if the header is basic auth, then we need to use the token service to get the
 		// jwt token
 		if (authorizationHeader != null && authorizationHeader.startsWith("Basic")) {
-
 			// Ensure that this requests path is a path that we want to use basic auth for
 			final String path = ((HttpServletRequest) servletRequest).getRequestURI();
 			final AntPathMatcher matcher = new AntPathMatcher();
@@ -59,8 +61,7 @@ public class ServiceRequestFilter extends GenericFilterBean {
 
 			// If we have a basic auth header, then we need to get the jwt token from the
 			// token service
-			final String basicAuth =
-					authorizationHeader.substring("Basic".length()).trim();
+			final String basicAuth = authorizationHeader.substring("Basic".length()).trim();
 			final String[] credentials = new String(Base64.getDecoder().decode(basicAuth)).split(":", 2);
 			final String jwtToken = keycloakTokenService.getToken(credentials[0], credentials[1]);
 
@@ -74,6 +75,7 @@ public class ServiceRequestFilter extends GenericFilterBean {
 	}
 
 	static class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
+
 		public HeaderMapRequestWrapper(final HttpServletRequest request) {
 			super(request);
 		}

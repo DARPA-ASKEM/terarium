@@ -21,19 +21,14 @@ export const getModelConfigurationById = async (id: string): Promise<ModelConfig
 	return response?.data ?? null;
 };
 
-export const createModelConfiguration = async (
-	modelConfiguration: ModelConfiguration
-): Promise<ModelConfiguration> => {
+export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
 	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
 	const response = await API.post(`/model-configurations`, modelConfiguration);
 	return response?.data ?? null;
 };
 
 export const updateModelConfiguration = async (modelConfiguration: ModelConfiguration) => {
-	const response = await API.put(
-		`/model-configurations/${modelConfiguration.id}`,
-		modelConfiguration
-	);
+	const response = await API.put(`/model-configurations/${modelConfiguration.id}`, modelConfiguration);
 	return response?.data ?? null;
 };
 
@@ -42,20 +37,13 @@ export const deleteModelConfiguration = async (id: string) => {
 	return response?.data ?? null;
 };
 
-export const getAsConfiguredModel = async (
-	modelConfiguration: ModelConfiguration
-): Promise<Model> => {
-	const response = await API.get<Model>(
-		`model-configurations/as-configured-model/${modelConfiguration.id}`
-	);
+export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
+	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
 	return response?.data ?? null;
 };
 
 export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
-	const response = await API.post<ModelConfiguration>(
-		`model-configurations/as-configured-model/`,
-		model
-	);
+	const response = await API.post<ModelConfiguration>(`model-configurations/as-configured-model/`, model);
 	return response?.data ?? null;
 };
 
@@ -86,17 +74,11 @@ export function setParameterDistributions(
 	});
 }
 
-export function getParameter(
-	config: ModelConfiguration,
-	parameterId: string
-): ParameterSemantic | undefined {
+export function getParameter(config: ModelConfiguration, parameterId: string): ParameterSemantic | undefined {
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(
-	config: ModelConfiguration,
-	parameterId: string
-): ModelDistribution {
+export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
 	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
 	return parameter.distribution;
@@ -148,29 +130,18 @@ export function getParameterSource(config: ModelConfiguration, parameterId: stri
 	return getParameter(config, parameterId)?.source ?? '';
 }
 
-export function setParameterSource(
-	config: ModelConfiguration,
-	parameterId: string,
-	source: string
-): void {
+export function setParameterSource(config: ModelConfiguration, parameterId: string, source: string): void {
 	const parameter = getParameter(config, parameterId);
 	if (parameter) {
 		parameter.source = source;
 	}
 }
 
-export function getInitial(
-	config: ModelConfiguration,
-	initialId: string
-): InitialSemantic | undefined {
+export function getInitial(config: ModelConfiguration, initialId: string): InitialSemantic | undefined {
 	return getInitials(config).find((initial) => initial.target === initialId);
 }
 
-export function setInitialExpression(
-	config: ModelConfiguration,
-	initialId: string,
-	expression: string
-): void {
+export function setInitialExpression(config: ModelConfiguration, initialId: string, expression: string): void {
 	const initial = getInitial(config, initialId);
 	if (!initial) return;
 
@@ -187,11 +158,7 @@ export function setInitialExpression(
 		});
 }
 
-export function setInitialSource(
-	config: ModelConfiguration,
-	initialId: string,
-	source: string
-): void {
+export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
 	const initial = getInitial(config, initialId);
 	if (initial) {
 		initial.source = source;
@@ -208,4 +175,22 @@ export function getInitialExpression(config: ModelConfiguration, initialId: stri
 
 export function getObservables(config: ModelConfiguration): ObservableSemantic[] {
 	return config.observableSemanticList ?? [];
+}
+
+export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
+	let otherValues: object[] = [];
+
+	const modelConfigTableData = configs.map((modelConfig) => ({
+		name: modelConfig.name ?? '',
+		list: modelConfig[otherValueList]
+	}));
+
+	modelConfigTableData.forEach((modelConfig) => {
+		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
+		if (config && modelConfig.name) {
+			const data: object = { name: modelConfig.name, ...config };
+			otherValues = [...otherValues, data];
+		}
+	});
+	return otherValues;
 }

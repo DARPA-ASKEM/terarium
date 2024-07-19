@@ -11,20 +11,22 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 public class InterventionService extends TerariumAssetServiceWithoutSearch<InterventionPolicy, InterventionRepository> {
 
 	public InterventionService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectService projectService,
-			final ProjectAssetService projectAssetService,
-			final InterventionRepository repository,
-			final S3ClientService s3ClientService) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final InterventionRepository repository,
+		final S3ClientService s3ClientService
+	) {
 		super(
-				objectMapper,
-				config,
-				projectService,
-				projectAssetService,
-				repository,
-				s3ClientService,
-				InterventionPolicy.class);
+			objectMapper,
+			config,
+			projectService,
+			projectAssetService,
+			repository,
+			s3ClientService,
+			InterventionPolicy.class
+		);
 	}
 
 	@Override

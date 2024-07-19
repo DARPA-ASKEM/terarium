@@ -3,13 +3,7 @@
  */
 
 import API from '@/api/api';
-import {
-	AssetType,
-	ProvenanceQueryParam,
-	ProvenanceSearchResult,
-	ProvenanceType,
-	TerariumAsset
-} from '@/types/Types';
+import { AssetType, ProvenanceQueryParam, ProvenanceSearchResult, ProvenanceType, TerariumAsset } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import { logger } from '@/utils/logger';
 import { getBulkDatasets } from './dataset';
@@ -47,8 +41,8 @@ async function getConnectedNodes(
 		verbose: true,
 		types
 	};
-	const connectedNodesRaw = await API.post('/provenance/search/connected-nodes', body).catch(
-		(error) => logger.error(`Error: ${error}`)
+	const connectedNodesRaw = await API.post('/provenance/search/connected-nodes', body).catch((error) =>
+		logger.error(`Error: ${error}`)
 	);
 
 	return connectedNodesRaw?.data ?? null;
@@ -67,11 +61,7 @@ async function getRelatedArtifacts(
 	const response: ResultType[] = [];
 
 	if (!rootType || !id) return response;
-	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(
-		id,
-		rootType,
-		types
-	);
+	const connectedNodes: ProvenanceSearchResult | null = await getConnectedNodes(id, rootType, types);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
 		const datasetIDs: string[] = [];
@@ -94,10 +84,7 @@ async function getRelatedArtifacts(
 				datasetIDs.push(node.id.toString());
 			}
 
-			if (
-				node.type === ProvenanceType.Document &&
-				documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
+			if (node.type === ProvenanceType.Document && documentAssetIds.length < MAX_RELATED_ARTIFACT_COUNT) {
 				documentAssetIds.push(node.id.toString());
 			}
 

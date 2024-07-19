@@ -65,16 +65,7 @@ import { ref, nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
 import { Viewport } from 'pixi-viewport';
-import {
-	Application,
-	DisplayObject,
-	Geometry,
-	Texture,
-	Shader,
-	Mesh,
-	FederatedPointerEvent,
-	Point
-} from 'pixi.js';
+import { Application, DisplayObject, Geometry, Texture, Shader, Mesh, FederatedPointerEvent, Point } from 'pixi.js';
 import { NumberValue } from 'd3';
 
 import {
@@ -294,9 +285,7 @@ export default {
 		microRowSettings(): number[] {
 			// work out the percentage of the total row length taken by all selected rows
 			// as a value between 0 and 1
-			const percentageSelectedRows = this.numSelectedRows
-				? 0.5 + (this.numSelectedRows / this.numRows) * 0.5
-				: 0;
+			const percentageSelectedRows = this.numSelectedRows ? 0.5 + (this.numSelectedRows / this.numRows) * 0.5 : 0;
 
 			// find the number of micro rows assigned to rows of every status using the equation:
 			// micro_rows_per_row_of_status = percentage_row_len_of_status * total_num_rows / total_num_rows_with_status
@@ -321,9 +310,7 @@ export default {
 		microColSettings(): number[] {
 			// work out the percentage of the total col length taken by all selected cols
 			// as a value between 0 and 1
-			const percentageSelectedCols = this.numSelectedCols
-				? 0.5 + (this.numSelectedCols / this.numCols) * 0.5
-				: 0;
+			const percentageSelectedCols = this.numSelectedCols ? 0.5 + (this.numSelectedCols / this.numCols) * 0.5 : 0;
 
 			// find the number of micro cols assigned to cols of every status using the equation:
 			// micro_cols_per_col_of_status = percentage_col_len_of_status * total_num_cols / total_num_cols_with_status
@@ -780,11 +767,7 @@ export default {
 			const microElArrayBufferDim = getTextureDim(microElArray.length, this.glMaxTextureSize);
 			const microElArrayBuffer = new Uint32Array(microElArrayBufferDim.n);
 			microElArrayBuffer.set(microElArray);
-			return uint32ArrayToRedIntTex(
-				microElArrayBuffer,
-				microElArrayBufferDim.x,
-				microElArrayBufferDim.y
-			);
+			return uint32ArrayToRedIntTex(microElArrayBuffer, microElArrayBufferDim.x, microElArrayBufferDim.y);
 		},
 
 		/**
@@ -1009,8 +992,7 @@ export default {
 
 		handleKeyDown({ altKey }: KeyboardEvent) {
 			if (altKey && this.viewport) {
-				this.cursorMode =
-					this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
+				this.cursorMode = this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
 				this.viewport.pause = this.cursorMode === CursorModes.SELECT;
 			}
 		},

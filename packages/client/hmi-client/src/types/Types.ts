@@ -93,7 +93,6 @@ export interface CsvAsset {
     stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
-    data: { [index: string]: string }[];
 }
 
 export interface CsvColumnStats {
@@ -279,6 +278,9 @@ export interface Transition {
     id: string;
     input: string[];
     output: string[];
+    name?: string;
+    description?: string;
+    expression?: string;
     grounding?: ModelGrounding;
     properties?: Properties;
 }
@@ -420,11 +422,6 @@ export interface DecapodesTerm {
 
 export interface NotebookSession extends TerariumAsset {
     data: any;
-}
-
-export interface PetriNetModel {
-    states: PetriNetState[];
-    transitions: PetriNetTransition[];
 }
 
 export interface Project extends TerariumAsset {
@@ -728,12 +725,11 @@ export interface EnsembleSimulationCiemssRequest {
 export interface OptimizeRequestCiemss {
     modelConfigId: string;
     timespan: TimeSpan;
-    policyInterventions?: PolicyInterventions;
-    fixedStaticParameterInterventions?: string;
+    optimizeInterventions?: OptimizeInterventions;
+    fixedStaticParameterInterventions?: Intervention[];
     stepSize?: number;
     qoi: OptimizeQoi;
     riskBound: number;
-    initialGuessInterventions: number[];
     boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
@@ -804,16 +800,18 @@ export interface OptimizeExtra {
     solverMethod?: string;
 }
 
-export interface OptimizeQoi {
-    contexts: string[];
-    method: string;
-}
-
-export interface PolicyInterventions {
+export interface OptimizeInterventions {
     interventionType: string;
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
+    objectiveFunctionOption?: string[];
+    initialGuess?: number[];
+}
+
+export interface OptimizeQoi {
+    contexts: string[];
+    method: string;
 }
 
 export interface TimeSpan {
@@ -970,21 +968,6 @@ export interface Properties {
     description?: string;
 }
 
-export interface PetriNetState {
-    id: string;
-    name: string;
-    grounding: ModelGrounding;
-    initial: ModelExpression;
-}
-
-export interface PetriNetTransition {
-    id: string;
-    input: string[];
-    output: string[];
-    grounding?: ModelGrounding;
-    properties: PetriNetTransitionProperties;
-}
-
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1092,17 +1075,6 @@ export interface VariableStatement {
     provenance?: ProvenanceInfo;
 }
 
-export interface ModelExpression {
-    expression: string;
-    expression_mathml: string;
-}
-
-export interface PetriNetTransitionProperties {
-    name: string;
-    description: string;
-    grounding?: ModelGrounding;
-}
-
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
@@ -1165,6 +1137,8 @@ export interface Observable {
     id: string;
     name?: string;
     states?: string[];
+    description?: string;
+    units?: ModelUnit;
     expression?: string;
     expression_mathml?: string;
 }
@@ -1416,7 +1390,7 @@ export enum SimulationEngine {
 }
 
 export enum InterventionSemanticType {
-    Variable = "variable",
+    State = "state",
     Parameter = "parameter",
 }
 

@@ -4,11 +4,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<tera-drilldown-section
-			tabName="Description"
-			:is-loading="fetchingDataset"
-			class="ml-3 mr-3 pt-2"
-		>
+		<tera-drilldown-section tabName="Description" :is-loading="fetchingDataset" class="ml-3 mr-3 pt-2">
 			<tera-dataset-description :dataset="dataset" :raw-content="rawContent" :image="image" />
 		</tera-drilldown-section>
 
@@ -56,10 +52,7 @@ const fetchDataset = async () => {
 		rawContent.value = null;
 	} else {
 		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		rawContent.value = await downloadRawFile(
-			props.node.state.datasetId,
-			datasetTemp?.fileNames?.[0] ?? ''
-		);
+		rawContent.value = await downloadRawFile(props.node.state.datasetId, datasetTemp?.fileNames?.[0] ?? '');
 	}
 	if (datasetTemp) {
 		dataset.value = enrichDataset(datasetTemp);

@@ -1,32 +1,15 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<tera-simulate-chart
-				v-for="(config, idx) of props.node.state.chartConfigs"
-				:key="idx"
-				:run-results="runResults[selectedRunId]"
-				:chartConfig="{
-					selectedRun: selectedRunId,
-					selectedVariable: config
-				}"
-				:size="{ width: 180, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			<vega-chart
+				v-for="(_config, index) of props.node.state.chartConfigs"
+				:key="index"
+				:are-embed-actions-visible="false"
+				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
 		</tera-operator-placeholder>
@@ -35,25 +18,19 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { csvParse } from 'd3';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import {
-	getRunResultCiemss,
-	getRunResult,
-	pollAction,
-	getSimulation
-} from '@/services/models/simulation-service';
+import { getRunResultCSV, pollAction, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
-import type { RunResults } from '@/types/SimulateConfig';
 import { createLLMSummary } from '@/services/summary-service';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -61,11 +38,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: any }>({});
+const runResultsSummary = ref<{ [runId: string]: any }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+
+let pyciemssMap: Record<string, string> = {};
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -114,9 +94,7 @@ const processResult = async (runId: string) => {
 		chartProxy.addChart();
 	}
 
-	// FIXME: Test summarization
-	const summaryStr = await getRunResult(runId, 'result_summary.csv');
-	const summaryData = csvParse(summaryStr);
+	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -141,7 +119,7 @@ Provide a summary in 100 words or less.
 
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan,
@@ -152,6 +130,47 @@ Provide a summary in 100 words or less.
 		isSelected: false
 	});
 };
+
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
+
+	const fields = {
+		timeField: 'timepoint_id',
+		groupField: 'sample_id'
+	};
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				...fields
+			},
+			{
+				dataset: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				...fields
+			},
+			null,
+			// options
+			{
+				width: 180,
+				height: 120,
+				legend: false,
+				translationMap: reverseMap,
+				xAxisTitle: '',
+				yAxisTitle: ''
+			}
+		)
+	);
+});
 
 watch(
 	() => props.node.state.inProgressSimulationId,
@@ -178,8 +197,12 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value);
-		runResults.value[selectedRunId.value] = output.runResults;
+		const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(result[0]);
+		runResults.value[selectedRunId.value] = result;
+
+		const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );

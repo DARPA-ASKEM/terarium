@@ -2,9 +2,7 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				<span class="mr-auto"
-					>Initials<span class="artifact-amount">({{ numInitials }})</span></span
-				>
+				Initials <span class="artifact-amount">({{ numInitials }})</span>
 				<tera-input v-model="filterText" placeholder="Filter" />
 			</template>
 
@@ -15,12 +13,7 @@
 						<AccordionTab>
 							<template #header>
 								<span>{{ baseInitial }}</span>
-								<Button
-									label="Open Matrix"
-									text
-									size="small"
-									@click.stop="matrixModalId = baseInitial"
-								/>
+								<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
 							</template>
 							<div class="flex">
 								<Divider layout="vertical" type="solid" />
@@ -28,7 +21,8 @@
 									<li v-for="{ target } in childInitials" :key="target">
 										<tera-initial-entry
 											:model="model"
-											:model-configuration="props.modelConfiguration"
+											:model-configuration="modelConfiguration"
+											:modelConfigurations="modelConfigurations"
 											:initial-id="target"
 											@update-expression="emit('update-expression', $event)"
 											@update-source="emit('update-source', $event)"
@@ -46,6 +40,7 @@
 						class="pl-5"
 						:model="model"
 						:model-configuration="modelConfiguration"
+						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
 						@update-expression="emit('update-expression', $event)"
 						@update-source="emit('update-source', $event)"
@@ -65,9 +60,7 @@
 			:stratified-matrix-type="StratifiedMatrix.Initials"
 			:open-value-config="!!matrixModalId"
 			@close-modal="matrixModalId = ''"
-			@update-cell-value="
-				emit('update-expression', { id: $event.variableName, value: $event.newValue })
-			"
+			@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
 		/>
 	</Teleport>
 </template>
@@ -89,6 +82,7 @@ import TeraInitialEntry from './tera-initial-entry.vue';
 
 const props = defineProps<{
 	modelConfiguration: ModelConfiguration;
+	modelConfigurations: ModelConfiguration[];
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
@@ -107,7 +101,6 @@ const initialList = computed<
 	const collapsedInitials = collapseInitials(props.mmt);
 	const initials = getInitials(props.modelConfiguration);
 	return Array.from(collapsedInitials.keys())
-		.flat()
 		.map((id) => {
 			const childTargets = collapsedInitials.get(id) ?? [];
 			const childInitials = childTargets
@@ -118,9 +111,7 @@ const initialList = computed<
 
 			return { baseInitial, childInitials, isVirtual };
 		})
-		.filter(({ baseInitial }) =>
-			baseInitial.toLowerCase().includes(filterText.value.toLowerCase())
-		);
+		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
 const matrixModalId = ref('');
@@ -141,7 +132,8 @@ ul {
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
+	margin-right: auto;
 }
 
 :deep(.p-divider) {

@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
 public class XDDExtractionsResponseOK extends XDDResponseOK {
+
 	private List<Extraction> data;
 
 	private Number total;

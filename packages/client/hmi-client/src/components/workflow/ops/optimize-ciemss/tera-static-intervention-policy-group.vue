@@ -4,7 +4,7 @@
 			<label class="mr-auto" tag="h5"> {{ config.intervention?.name ?? `Intervention` }}</label>
 			<div>
 				<label for="active">Optimize</label>
-				<InputSwitch v-model="knobs.isActive" @change="emit('update-self', knobs)" />
+				<InputSwitch v-model="knobs.isActive" :disabled="isNotEditable" @change="emit('update-self', knobs)" />
 			</div>
 		</div>
 		<template v-if="knobs.isActive">
@@ -17,10 +17,15 @@
 						option-value="value"
 						option-label="label"
 						:options="OPTIMIZATION_TYPE_MAP"
+						@change="emit('update-self', knobs)"
 					/>
-					for the <strong>{{ knobs.intervention.type }}</strong>
-					<strong>{{ knobs.intervention.appliedTo }}</strong
-					>.
+					for the {{ knobs.intervention.type }}&nbsp;<strong>{{ knobs.intervention.appliedTo }}</strong>
+				</p>
+				<p v-if="showNewValueOptions && staticInterventions.length === 1">
+					at the start time <strong>{{ staticInterventions[0].timestep }}</strong>
+				</p>
+				<p v-else-if="showStartTimeOptions && staticInterventions.length === 1">
+					when the value is <strong>{{ staticInterventions[0].value }}</strong>
 				</p>
 			</section>
 			<div>
@@ -31,16 +36,22 @@
 							<span>value closet to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.newValueOption"
-								:options="NEW_VALUE_OPTIONS"
+								v-model="knobs.objectiveFunctionOption"
+								option-value="value"
+								option-label="label"
+								:options="OBJECTIVE_FUNCTION_MAP"
+								@change="emit('update-self', knobs)"
 							/>
 						</template>
 						<span v-if="showNewValueOptions && showStartTimeOptions">and at the</span>
 						<template v-if="showStartTimeOptions">
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.startTimeOption"
-								:options="START_TIME_OPTIONS"
+								v-model="knobs.objectiveFunctionOption"
+								option-value="value"
+								option-label="label"
+								:options="OBJECTIVE_FUNCTION_MAP"
+								@change="emit('update-self', knobs)"
 							/>
 							<span>start time</span>
 						</template>
@@ -49,30 +60,49 @@
 				</section>
 
 				<section v-if="showNewValueOptions">
-					<h6 class="pt-4, pb-3">New Value</h6>
+					<h6 class="pt-4, pb-3">Intervention Value</h6>
 					<div class="input-row">
-						<div v-for="(objective, index) in newValueInputs" :key="index" class="label-and-input">
-							<div class="label-and-input">
-								<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
-								<tera-input type="number" v-model="knobs[objective]" />
-							</div>
-						</div>
+						<tera-input
+							type="nist"
+							label="Lower bound"
+							v-model="knobs.lowerBoundValue"
+							@update:model-value="$emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Upper bound"
+							v-model="knobs.upperBoundValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Initial guess"
+							v-model="knobs.initialGuessValue"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
-
 				<section v-if="showStartTimeOptions">
-					<h6 class="pt-4, pb-3">Start Time</h6>
+					<h6 class="pt-4, pb-3">Intervention Time</h6>
 					<div class="input-row">
-						<div
-							v-for="(objective, index) in newStartTimeInputs"
-							:key="index"
-							class="label-and-input"
-						>
-							<div class="label-and-input">
-								<label :for="objective">{{ NEW_VALUE_OPTIONS[index] }}</label>
-								<tera-input type="number" v-model="knobs[objective]" />
-							</div>
-						</div>
+						<tera-input
+							type="nist"
+							label="Start time"
+							v-model="knobs.startTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="End time"
+							v-model="knobs.endTime"
+							@update:model-value="emit('update-self', knobs)"
+						/>
+						<tera-input
+							type="nist"
+							label="Initial guess"
+							v-model="knobs.startTimeGuess"
+							@update:model-value="emit('update-self', knobs)"
+						/>
 					</div>
 				</section>
 			</div>
@@ -80,7 +110,7 @@
 		<template v-else>
 			<p v-for="(staticIntervention, index) in staticInterventions" :key="index">
 				Set the <strong>{{ config.intervention?.type }}</strong>
-				<strong>{{ config.intervention?.appliedTo }}</strong> to a new value of
+				<strong>{{ config.intervention?.appliedTo }}</strong> to the value of
 				<strong>{{ staticIntervention.value }}</strong> day at start time
 				<strong>{{ staticIntervention.timestep }}</strong> day.
 			</p>
@@ -96,52 +126,35 @@ import { computed, ref } from 'vue';
 import { StaticIntervention } from '@/types/Types';
 import {
 	InterventionPolicyGroupForm,
-	InterventionTypes,
-	OPTIMIZATION_TYPE_MAP
+	OptimizationInterventionObjective,
+	OPTIMIZATION_TYPE_MAP,
+	OBJECTIVE_FUNCTION_MAP
 } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 
 const props = defineProps<{
 	config: InterventionPolicyGroupForm;
-	staticInterventions: StaticIntervention[];
 }>();
 
 const emit = defineEmits(['update-self']);
 
-const knobs = ref({
-	isActive: props.config.isActive ?? false,
-	intervention: props.config.intervention,
-	optimizationType: props.config.optimizationType ?? InterventionTypes.paramValue,
-	newValueOption: props.config.newValueOption ?? 'initial guess',
-	startTimeOption: props.config.startTimeOption ?? 'earliest',
-	startTime: props.config.startTime ?? 0,
-	endTime: props.config.endTime ?? 0,
-	lowerBound: props.config.lowerBound ?? 0,
-	upperBound: props.config.upperBound ?? 0,
-	startTimeGuess: props.config.startTimeGuess ?? 1,
-	initialGuess: props.config.initialGuess ?? 0
+const staticInterventions = ref<StaticIntervention[]>(props.config.intervention.staticInterventions);
+
+const knobs = ref<InterventionPolicyGroupForm>({
+	...props.config
 });
 
-const NEW_VALUE_OPTIONS = ['lower bound', 'upper bound', 'initial guess'];
-const START_TIME_OPTIONS = ['earliest', 'latest', 'inital guess'];
-
-const newValueInputs = ['lowerBound', 'upperBound', 'initialGuess'];
-const newStartTimeInputs = ['startTime', 'endTime', 'startTimeGuess'];
+const isNotEditable = computed(() => staticInterventions.value.length !== 1);
 
 const showStartTimeOptions = computed(
 	() =>
-		knobs.value.optimizationType === InterventionTypes.paramValue ||
-		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+		knobs.value.optimizationType === OptimizationInterventionObjective.startTime ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showNewValueOptions = computed(
 	() =>
-		knobs.value.optimizationType === InterventionTypes.startTime ||
-		knobs.value.optimizationType === InterventionTypes.paramValueAndStartTime
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValue ||
+		knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
 );
-
-// TODO: Fix this
-// const upstateState = () => {
-// 	emit('update-self', configIntervention);
-// };
 </script>
 
 <style scoped>
@@ -153,10 +166,6 @@ const showNewValueOptions = computed(
 	align-items: center;
 	gap: var(--gap-2);
 	padding-bottom: 0.5rem;
-
-	& > *:first-child {
-		flex: 2;
-	}
 
 	& > *:not(:first-child) {
 		flex: 1;
@@ -193,17 +202,22 @@ const showNewValueOptions = computed(
 
 .policy-group {
 	display: flex;
-	padding: 1rem 1rem 1rem 1.5rem;
+	padding: var(--gap-4);
+	padding-left: var(--gap-5);
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
 	gap: var(--gap-2);
-	border-radius: 0.375rem;
-	background: #fff;
+	border-radius: var(--gap-1-5);
+	background: var(--surface-section);
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	/* Shadow/medium */
 	box-shadow:
 		0 2px 4px -1px rgba(0, 0, 0, 0.06),
 		0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.policy-group + .policy-group {
+	margin-top: var(--gap-2);
 }
 </style>

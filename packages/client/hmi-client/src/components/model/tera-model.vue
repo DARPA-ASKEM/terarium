@@ -28,19 +28,28 @@
 				@click="toggleOptionsMenu"
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+			<div class="btn-group">
+				<!-- TODO: Reset and Save as buttons
+				<Button label="Reset" severity="secondary" outlined />
+				<Button label="Save as..." severity="secondary" outlined /> -->
+				<Button label="Save" @click="teraModelPartsRef?.saveChanges()" />
+			</div>
 		</template>
-		<tera-model-description
-			v-if="model"
-			:key="model?.id"
-			:model="model"
-			:model-configurations="modelConfigurations"
-			:feature-config="featureConfig"
-			:highlight="highlight"
-			@model-updated="getModelWithConfigurations"
-			@update-model="updateModelContent"
-			@update-configuration="updateConfiguration"
-			@fetch-model="fetchModel"
-		/>
+		<section v-if="model">
+			<tera-model-description
+				:model="model"
+				:feature-config="featureConfig"
+				@model-updated="fetchModel"
+				@update-model="updateModelContent"
+			/>
+			<tera-model-parts
+				ref="teraModelPartsRef"
+				class="mt-0"
+				:model="model"
+				@update-model="updateModelContent"
+				:readonly="featureConfig?.isPreview"
+			/>
+		</section>
 	</tera-asset>
 </template>
 
@@ -49,27 +58,18 @@ import { computed, PropType, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ContextMenu from 'primevue/contextmenu';
-import { updateModelConfiguration } from '@/services/model-configurations';
-import {
-	getModel,
-	getModelConfigurationsForModel,
-	isModelEmpty,
-	updateModel
-} from '@/services/model';
+import { getModel, updateModel } from '@/services/model';
 import { FeatureConfig } from '@/types/common';
-import { AssetType, type Model, type ModelConfiguration } from '@/types/Types';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 
 const props = defineProps({
 	assetId: {
-		type: String,
-		default: ''
-	},
-	highlight: {
 		type: String,
 		default: ''
 	},
@@ -79,23 +79,18 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits([
-	'close-preview',
-	'update-model-configuration',
-	'new-model-configuration'
-]);
+const emit = defineEmits(['close-preview']);
+
+const teraModelPartsRef = ref();
 
 const model = ref<Model | null>(null);
-const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newName = ref('New Model');
 const isRenaming = ref(false);
 const isModelLoading = ref(false);
 
 const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 
-const toggleOptionsMenu = (event) => {
-	optionsMenu.value.toggle(event);
-};
+const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 
 // User menu
 const optionsMenu = ref();
@@ -113,17 +108,11 @@ const optionsMenuItems = computed(() => [
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Model,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
@@ -133,9 +122,7 @@ const optionsMenuItems = computed(() => [
 		label: 'Download',
 		command: async () => {
 			if (model.value) {
-				const data = `text/json;charset=utf-8,${encodeURIComponent(
-					JSON.stringify(model.value, null, 2)
-				)}`;
+				const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(model.value, null, 2))}`;
 				const a = document.createElement('a');
 				a.href = `data:${data}`;
 				a.download = `${model.value.header.name ?? 'model'}.json`;
@@ -146,9 +133,6 @@ const optionsMenuItems = computed(() => [
 			emit('close-preview');
 		}
 	}
-
-	// { icon: 'pi pi-clone', label: 'Make a copy', command: initiateModelDuplication }
-	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
 async function updateModelContent(updatedModel: Model) {
@@ -157,9 +141,7 @@ async function updateModelContent(updatedModel: Model) {
 	}
 	await updateModel(updatedModel);
 	await useProjects().refresh();
-	setTimeout(async () => {
-		await getModelWithConfigurations(); // elastic search might still not update in time
-	}, 800);
+	await fetchModel();
 }
 
 async function updateModelName() {
@@ -171,49 +153,8 @@ async function updateModelName() {
 	isRenaming.value = false;
 }
 
-async function updateConfiguration(updatedConfiguration: ModelConfiguration) {
-	await updateModelConfiguration(updatedConfiguration);
-	setTimeout(async () => {
-		emit('update-model-configuration');
-		const indexToUpdate = modelConfigurations.value.findIndex(
-			({ id }) => id === updatedConfiguration.id
-		);
-		modelConfigurations.value[indexToUpdate] = updatedConfiguration; // Below line would be ideal but the order of the configs change after the refetch
-		// await fetchConfigurations(); // elastic search might still not update in time
-	}, 800);
-}
-
-async function fetchConfigurations() {
-	if (model.value) {
-		let tempConfigurations = await getModelConfigurationsForModel(model.value.id);
-
-		// Ensure that we always have a "default config" model configuration
-		if (useProjects().hasEditPermission()) {
-			if (
-				(isEmpty(tempConfigurations) ||
-					!tempConfigurations.find((d) => d.name === 'Default config')) &&
-				!isModelEmpty(model.value)
-			) {
-				// await addDefaultConfiguration(model.value);
-				setTimeout(async () => {
-					// elastic search might still not update in time
-					tempConfigurations = await getModelConfigurationsForModel(model.value?.id!);
-					modelConfigurations.value = tempConfigurations;
-				}, 800);
-				return;
-			}
-		}
-		modelConfigurations.value = tempConfigurations;
-	}
-}
-
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
-}
-
-async function getModelWithConfigurations() {
-	await fetchModel();
-	await fetchConfigurations();
 }
 
 watch(
@@ -223,10 +164,19 @@ watch(
 		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
-			await getModelWithConfigurations();
+			await fetchModel();
 			isModelLoading.value = false;
 		}
 	},
 	{ immediate: true }
 );
 </script>
+
+<style scoped>
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-small);
+	margin-left: auto;
+}
+</style>

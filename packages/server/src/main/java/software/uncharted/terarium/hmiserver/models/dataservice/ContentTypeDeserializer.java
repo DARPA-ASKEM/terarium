@@ -14,13 +14,12 @@ public class ContentTypeDeserializer extends JsonDeserializer<ContentType> {
 
 	@Override
 	public ContentType deserialize(final JsonParser jp, final DeserializationContext ctxt)
-			throws IOException, JsonProcessingException {
-
+		throws IOException, JsonProcessingException {
 		final ObjectMapper mapper = (ObjectMapper) jp.getCodec();
 		final JsonNode node = mapper.readTree(jp);
 
 		final String mimeTypeStr = node.get("mimeType").asText();
-		if (!node.has("charset")) {
+		if (!node.hasNonNull("charset")) {
 			return ContentType.create(mimeTypeStr);
 		}
 

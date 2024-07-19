@@ -23,13 +23,7 @@
 					</div>
 					<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 					<div class="right-side flex gap-2">
-						<Button
-							class="toolbar-button"
-							severity="secondary"
-							outlined
-							label="Save"
-							@click="saveCode()"
-						/>
+						<Button class="toolbar-button" severity="secondary" outlined label="Save" @click="saveCode()" />
 						<Button
 							class="toolbar-button white-space-nowrap"
 							severity="secondary"
@@ -109,8 +103,8 @@
 				<template #header>
 					<h4>Save this code block</h4>
 					<p>
-						Enter a name for the code block you are saving. Choose a name that reflects its purpose
-						or functionality within the model.
+						Enter a name for the code block you are saving. Choose a name that reflects its purpose or functionality
+						within the model.
 					</p>
 				</template>
 				<template #default>
@@ -132,13 +126,7 @@
 							}
 						"
 					/>
-					<Button
-						label="Cancel"
-						severity="secondary"
-						size="large"
-						outlined
-						@click="isDynamicsModalVisible = false"
-					/>
+					<Button label="Cancel" severity="secondary" size="large" outlined @click="isDynamicsModalVisible = false" />
 				</template>
 			</tera-modal>
 		</Teleport>
@@ -158,7 +146,7 @@ import '@/ace-config';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useProjects } from '@/composables/project';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import {
 	getCodeAsset,
 	getCodeFileAsText,
@@ -211,19 +199,13 @@ const isDynamicsModalVisible = ref(false);
 const newDynamicsName = ref('');
 const newDynamicsDescription = ref('');
 const programmingLanguage = ref<ProgrammingLanguage>(ProgrammingLanguage.Python);
-const programmingLanguages = [
-	ProgrammingLanguage.Julia,
-	ProgrammingLanguage.Python,
-	ProgrammingLanguage.R
-];
+const programmingLanguages = [ProgrammingLanguage.Julia, ProgrammingLanguage.Python, ProgrammingLanguage.R];
 const isLoading = ref(false);
 
 const repoUrl = computed(() => codeAsset.value?.repoUrl ?? '');
 
 const selectedRangeToString = computed(() =>
-	selectionRange.value
-		? `L${selectionRange.value.start.row + 1}-L${selectionRange.value.end.row + 1}`
-		: ''
+	selectionRange.value ? `L${selectionRange.value.start.row + 1}-L${selectionRange.value.end.row + 1}` : ''
 );
 
 const fileNames = computed<string[]>(() => {
@@ -249,8 +231,7 @@ async function initialize(editorInstance) {
  */
 function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
-	selectionRange.value =
-		!isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
+	selectionRange.value = !isEmpty(selectedText.value) && editor.value ? editor.value.getSelectionRange() : null;
 }
 
 function highlightDynamics() {
@@ -267,11 +248,7 @@ function highlightDynamics() {
 						// Extract start and end rows and highlight them in the editor
 						const { startRow, endRow } = extractDynamicRows(block[i]);
 						if (!Number.isNaN(startRow) && !Number.isNaN(endRow)) {
-							editor.value?.session.addMarker(
-								new Range(startRow, 0, endRow, 0),
-								'ace-active-line',
-								'fullLine'
-							);
+							editor.value?.session.addMarker(new Range(startRow, 0, endRow, 0), 'ace-active-line', 'fullLine');
 							existingMarkers.add(block[i]);
 						}
 					}
@@ -298,9 +275,7 @@ async function addDynamic() {
 	if (selectedRangeToString.value && codeAssetCopy.value) {
 		if (!codeAssetCopy.value.files) codeAssetCopy.value.files = {};
 		if (codeAssetCopy.value.files[codeSelectedFile.value]?.dynamics?.block) {
-			codeAssetCopy.value.files[codeSelectedFile.value].dynamics.block.push(
-				selectedRangeToString.value
-			);
+			codeAssetCopy.value.files[codeSelectedFile.value].dynamics.block.push(selectedRangeToString.value);
 		} else {
 			codeAssetCopy.value.files[codeSelectedFile.value] = {
 				fileName: codeSelectedFile.value,
@@ -457,8 +432,7 @@ watch(
 
 			codeText.value = (await getCodeFileAsText(props.assetId, filename)) ?? INITIAL_TEXT;
 
-			programmingLanguage.value =
-				code.files[filename].language ?? getProgrammingLanguage(codeName.value);
+			programmingLanguage.value = code.files[filename].language ?? getProgrammingLanguage(codeName.value);
 		} else {
 			codeAsset.value = null;
 			codeName.value = 'newcode.py';
@@ -489,17 +463,11 @@ const optionsMenuItems = ref([
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Code,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Code, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 						else logger.error('Failed to add asset to project');
 					}

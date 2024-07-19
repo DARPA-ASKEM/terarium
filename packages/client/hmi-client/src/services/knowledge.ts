@@ -34,10 +34,7 @@ export const equationsToAMR = async (
  * Given a dataset, enrich its metadata
  * Returns a runId used to poll for result
  */
-export const profileDataset = async (
-	datasetId: Dataset['id'],
-	documentId: string | null = null
-) => {
+export const profileDataset = async (datasetId: Dataset['id'], documentId: string | null = null) => {
 	let response: any;
 	if (documentId && datasetId) {
 		response = await API.post(`/knowledge/profile-dataset/${datasetId}?document-id=${documentId}`);
@@ -64,10 +61,7 @@ export const extractPDF = async (documentId: DocumentAsset['id']) => {
 };
 
 /** Extract variables from a text document */
-export const extractVariables = async (
-	documentId: DocumentAsset['id'],
-	modelIds: Array<Model['id']>
-) => {
+export const extractVariables = async (documentId: DocumentAsset['id'], modelIds: Array<Model['id']>) => {
 	console.group('SKEMA Variable extraction');
 	if (documentId) {
 		const url = `/knowledge/variable-extractions?document-id=${documentId}&model-ids=${modelIds}`;

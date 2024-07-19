@@ -53,11 +53,11 @@ public abstract class TerariumAsset extends TerariumEntity {
 	@Override
 	public TerariumAsset clone() {
 		throw new RuntimeException(
-				"This should not be called. Override this method on the derived class and call cloneSuperFields instead.");
+			"This should not be called. Override this method on the derived class and call cloneSuperFields instead."
+		);
 	}
 
 	protected TerariumAsset cloneSuperFields(final TerariumAsset asset) {
-
 		// TODO this should be a part of the clone method, and this should implement
 		// Cloneable
 

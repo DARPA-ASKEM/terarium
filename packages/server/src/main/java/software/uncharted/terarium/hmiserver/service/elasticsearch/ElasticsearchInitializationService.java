@@ -68,7 +68,9 @@ public class ElasticsearchInitializationService {
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
 						final boolean acknowledged = elasticsearchService.putComponentTemplate(
-								componentTemplateName, templateJson.toString());
+							componentTemplateName,
+							templateJson.toString()
+						);
 						if (acknowledged) {
 							log.info("Added component template: {}", componentTemplateName);
 						} else {
@@ -92,8 +94,10 @@ public class ElasticsearchInitializationService {
 					final JsonNode templateJson;
 					try {
 						templateJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged =
-								elasticsearchService.putIndexTemplate(indexTemplateName, templateJson.toString());
+						final boolean acknowledged = elasticsearchService.putIndexTemplate(
+							indexTemplateName,
+							templateJson.toString()
+						);
 						if (acknowledged) {
 							log.info("Added index template: {}", indexTemplateName);
 						} else {
@@ -117,8 +121,7 @@ public class ElasticsearchInitializationService {
 					final JsonNode pipelineJson;
 					try {
 						pipelineJson = objectMapper.readValue(resource.getInputStream(), JsonNode.class);
-						final boolean acknowledged =
-								elasticsearchService.putPipeline(pipelineName, pipelineJson.toString());
+						final boolean acknowledged = elasticsearchService.putPipeline(pipelineName, pipelineJson.toString());
 						if (acknowledged) {
 							log.info("Added pipeline: {}", pipelineName);
 						} else {
@@ -134,7 +137,6 @@ public class ElasticsearchInitializationService {
 
 	/** For each index in the ElasticsearchConfiguration, add it to the cluster if it doesn't exist */
 	private void pushMissingIndices() throws IOException {
-
 		final Map<String, String> indices = new HashMap<>() {
 			@Serial
 			private static final long serialVersionUID = -200876314045109854L;

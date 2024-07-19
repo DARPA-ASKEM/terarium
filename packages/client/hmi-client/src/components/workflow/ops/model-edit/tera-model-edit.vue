@@ -32,13 +32,7 @@
 						@question-asked="updateLlmQuery"
 					>
 						<template #toolbar-right-side>
-							<Button
-								label="Reset"
-								outlined
-								severity="secondary"
-								size="small"
-								@click="resetModel"
-							/>
+							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
 							<Button icon="pi pi-play" label="Run" size="small" @click="runFromCodeWrapper" />
 						</template>
 					</tera-notebook-jupyter-input>
@@ -109,7 +103,7 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { DrilldownTabs } from '@/types/common';
 import { ModelEditOperationState } from './model-edit-operation';
@@ -117,13 +111,7 @@ import { ModelEditOperationState } from './model-edit-operation';
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output-port']);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -138,8 +126,7 @@ const outputs = computed(() => {
 });
 
 const isReadyToCreateDefaultOutput = computed(
-	() =>
-		isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
+	() => isEmpty(outputs.value) || (outputs.value.length === 1 && !outputs.value?.[0]?.items[0].value)
 );
 
 const drilldownRef = ref();
@@ -168,8 +155,7 @@ const sampleAgentQuestions = [
 
 const contextLanguage = ref<string>('python3');
 
-const defaultCodeText =
-	'# This environment contains the variable "model" \n# which is displayed on the right';
+const defaultCodeText = '# This environment contains the variable "model" \n# which is displayed on the right';
 const codeText = ref(defaultCodeText);
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
@@ -310,9 +296,7 @@ function onDrilldownClose() {
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
-	const modelData = isReadyToCreateDefaultOutput.value
-		? modelToSave
-		: await createModel(modelToSave);
+	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
 
 	emit('append-output', {

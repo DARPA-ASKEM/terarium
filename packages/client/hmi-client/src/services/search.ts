@@ -7,9 +7,7 @@ export async function searchByAssetType(
 	assetType: AssetType
 ): Promise<TerariumAssetThatSupportsAdditionalProperties[]> {
 	try {
-		const response = await API.get(
-			`/search-by-asset-type/${assetType}?text=${encodeURIComponent(text)}`
-		);
+		const response = await API.get(`/search-by-asset-type/${assetType}?text=${encodeURIComponent(text)}`);
 		return response?.data ?? [];
 	} catch (error) {
 		logger.error(`Unable to fetch results from the question: ${text}`);

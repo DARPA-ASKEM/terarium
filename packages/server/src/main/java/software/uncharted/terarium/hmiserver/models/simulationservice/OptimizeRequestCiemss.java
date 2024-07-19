@@ -8,9 +8,10 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.Intervention;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeExtra;
+import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeInterventions;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.OptimizeQoi;
-import software.uncharted.terarium.hmiserver.models.simulationservice.parts.PolicyInterventions;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
 @Data
@@ -18,6 +19,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @TSModel
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeRequestCiemss implements Serializable {
+
 	@JsonAlias("model_config_id")
 	private UUID modelConfigId;
 
@@ -25,10 +27,11 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	@TSOptional
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L80
-	private PolicyInterventions policyInterventions;
+	private OptimizeInterventions optimizeInterventions;
 
 	@TSOptional
-	private UUID fixedStaticParameterInterventions;
+	@JsonAlias("fixed_static_parameter_interventions")
+	private List<Intervention> fixedStaticParameterInterventions;
 
 	@JsonAlias("step_size")
 	@TSOptional
@@ -38,9 +41,6 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	@JsonAlias("risk_bound")
 	private Double riskBound;
-
-	@JsonAlias("initial_guess_interventions")
-	private List<Double> initialGuessInterventions;
 
 	@JsonAlias("bounds_interventions")
 	private List<List<Double>> boundsInterventions;

@@ -7,10 +7,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
+			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 			<!-- Unsure how to handle this -->
 			<tera-output-dropdown
 				:options="outputs"
@@ -37,12 +34,7 @@
 						option-disabled="disabled"
 						@change="onChangeModelFramework"
 					/>
-					<Button
-						label="Run"
-						@click="onRun"
-						:diabled="assetLoading"
-						:loading="loadingModel"
-					></Button>
+					<Button label="Run" @click="onRun" :diabled="assetLoading" :loading="loadingModel"></Button>
 				</template>
 				<header>
 					<section class="header-group">
@@ -63,9 +55,7 @@
 						</div>
 						<div>
 							<Button text @click="toggleCollapseAll">{{ getCollapsedLabel() }}</Button>
-							<Button text @click="toggleIncludedEquations">{{
-								getIncludedEquationLabel()
-							}}</Button>
+							<Button text @click="toggleIncludedEquations">{{ getIncludedEquationLabel() }}</Button>
 						</div>
 					</section>
 				</header>
@@ -123,11 +113,7 @@
 						:generating-card="isGeneratingCard"
 					/>
 				</section>
-				<tera-operator-placeholder
-					v-else
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
+				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">
@@ -164,7 +150,7 @@ import { useProjects } from '@/composables/project';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { DrilldownTabs } from '@/types/common';
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
@@ -178,13 +164,7 @@ import {
 	ModelFromEquationsState
 } from './model-from-equations-operation';
 
-const emit = defineEmits([
-	'close',
-	'update-state',
-	'append-output',
-	'select-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output', 'update-output-port']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -240,11 +220,7 @@ const selectedOutputId = ref<string>('');
 const modelFrameworks = Object.entries(ModelFramework).map(([key, value]) => ({
 	label: textUtils.pascalCaseToCapitalSentence(key),
 	value,
-	disabled: [
-		ModelFramework.Decapode,
-		ModelFramework.GeneralizedAMR,
-		ModelFramework.MathExpressionTree
-	].includes(value)
+	disabled: [ModelFramework.Decapode, ModelFramework.GeneralizedAMR, ModelFramework.MathExpressionTree].includes(value)
 }));
 
 const clonedState = ref<ModelFromEquationsState>({
@@ -271,8 +247,9 @@ onMounted(async () => {
 	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
-	const equations: AssetBlock<DocumentExtraction>[] =
-		props.node.inputs?.[0]?.value?.[0]?.equations?.filter((e) => e.includeInProcess);
+	const equations: AssetBlock<DocumentExtraction>[] = props.node.inputs?.[0]?.value?.[0]?.equations?.filter(
+		(e) => e.includeInProcess
+	);
 	assetLoading.value = true;
 	if (documentId) {
 		document.value = await getDocumentAsset(documentId);
@@ -306,13 +283,9 @@ onMounted(async () => {
 
 		const newEquations = await Promise.all(promises);
 
-		let extractedEquations = state.equations.filter((e) =>
-			instanceOfEquationFromImageBlock(e.asset)
-		);
+		let extractedEquations = state.equations.filter((e) => instanceOfEquationFromImageBlock(e.asset));
 		extractedEquations = unionBy(newEquations, extractedEquations, 'asset.fileName');
-		const inputEquations = state.equations.filter(
-			(e) => !instanceOfEquationFromImageBlock(e.asset)
-		);
+		const inputEquations = state.equations.filter((e) => !instanceOfEquationFromImageBlock(e.asset));
 		state.equations = [...extractedEquations, ...inputEquations];
 		state.text = document.value?.text ?? '';
 		emit('update-state', state);
@@ -390,9 +363,9 @@ function getAssetUrl(asset: AssetBlock<EquationFromImageBlock>): string {
 	return foundAsset.metadata?.url;
 }
 
-function onAddModel(modelName: string) {
-	if (!modelName || !selectedOutputId.value) return;
-	updateNodeLabel(selectedOutputId.value, modelName);
+function onAddModel(model: Model) {
+	if (!model?.name || !selectedOutputId.value) return;
+	updateNodeLabel(selectedOutputId.value, model.name);
 }
 
 function onCloseModelModal() {
@@ -437,17 +410,13 @@ function getEquations() {
 	multipleEquations.value = '';
 }
 
-const allEquationCollapsed = computed(
-	() => !clonedState.value.equations.some((equation) => !equation.isCollapsed)
-);
+const allEquationCollapsed = computed(() => !clonedState.value.equations.some((equation) => !equation.isCollapsed));
 
 const allEquationsInProcess = computed(
 	() => !clonedState.value.equations.some((equation) => !equation.includeInProcess)
 );
 
-const selectedEquations = computed(() =>
-	clonedState.value.equations.filter((equation) => equation.includeInProcess)
-);
+const selectedEquations = computed(() => clonedState.value.equations.filter((equation) => equation.includeInProcess));
 
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';

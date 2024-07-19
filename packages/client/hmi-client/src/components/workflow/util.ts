@@ -11,7 +11,7 @@ import { useProjects } from '@/composables/project';
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
 
-	const parentContainerWidth = (element as HTMLElement).clientWidth - 48;
+	const parentContainerWidth = (element as HTMLElement).clientWidth - 24;
 	return { width: parentContainerWidth, height: 270 };
 };
 
@@ -46,6 +46,11 @@ export const chartActionsProxy = (node: WorkflowNode<any>, updateStateCallback: 
 		removeChart,
 		configurationChange
 	};
+};
+
+export const nodeOutputLabel = (node: WorkflowNode<any>, prefix: string) => {
+	const outputNumber = node.outputs.filter((d) => d.value).length;
+	return `${prefix} - ${outputNumber + 1}`;
 };
 
 export const nodeMetadata = (node: WorkflowNode<any>) => ({

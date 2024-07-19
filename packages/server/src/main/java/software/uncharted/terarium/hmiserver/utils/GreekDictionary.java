@@ -9,6 +9,7 @@ import com.google.common.collect.HashBiMap;
  * <p>englishToGreek("beta")); // Output: β greekToEnglish("β")); // Output: beta
  */
 public class GreekDictionary {
+
 	private static BiMap<String, String> englishGreek = HashBiMap.create();
 
 	static {

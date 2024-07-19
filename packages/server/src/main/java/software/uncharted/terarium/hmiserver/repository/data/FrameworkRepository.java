@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.repository.PSCrudRepository;
 
 @Repository
 public interface FrameworkRepository extends PSCrudRepository<ModelFramework, UUID> {
-
 	List<ModelFramework> findAllByDeletedOnIsNull();
 
 	List<ModelFramework> findAllByIdInAndDeletedOnIsNull(final List<UUID> ids);
