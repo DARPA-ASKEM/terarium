@@ -72,7 +72,6 @@ defineEmits(['update-item']);
 
 const conceptQuery = ref('');
 const results = ref<DKG[]>([]);
-const nameOfCurieCache = ref(new Map<string, string>());
 
 async function searchConcepts(event: AutoCompleteCompleteEvent) {
 	const query = event.query;
@@ -82,10 +81,7 @@ async function searchConcepts(event: AutoCompleteCompleteEvent) {
 onMounted(async () => {
 	const identifiers = props.item.grounding?.identifiers;
 	if (identifiers) {
-		conceptQuery.value = await getNameOfCurieCached(
-			nameOfCurieCache.value,
-			getCurieFromGroundingIdentifier(identifiers)
-		);
+		conceptQuery.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 		console.log(identifiers, props.item.grounding, conceptQuery.value);
 	}
 });

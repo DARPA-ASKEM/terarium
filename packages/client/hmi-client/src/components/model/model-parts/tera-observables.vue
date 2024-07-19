@@ -29,13 +29,14 @@ const observablesList = computed<
 	}[]
 >(() =>
 	props.observables.map((observable) => {
-		const { id, name, expression, description, units } = observable;
+		const { id, name, expression, description, units, grounding } = observable;
 		return {
 			base: {
 				id,
 				name,
 				description,
 				unitExpression: units?.expression,
+				grounding,
 				expression,
 				expression_mathml: observable.expression_mathml
 			},

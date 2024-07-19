@@ -14,7 +14,7 @@
 			<template #body="{ data }">
 				<template v-if="!isEmpty(data.concept)">
 					<div class="flex flex-row align-items-center">
-						{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.concept)) }}
+						{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.concept)) }}
 						<i class="pi pi-chevron-down pl-2 text-xs" />
 						<a
 							target="_blank"
@@ -83,7 +83,6 @@ const conceptSearchTerm = ref({
 	name: ''
 });
 const curies = ref<DKG[]>([]);
-const nameOfCurieCache = ref(new Map<string, string>());
 
 const formattedData = computed(() => {
 	if (!props.dataset?.columns) return [];

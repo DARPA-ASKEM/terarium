@@ -301,7 +301,7 @@ export function getInitialUnits(model: Model, target: string): string {
 export async function getInitialConcept(model: Model, target: string) {
 	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
 	if (!identifiers) return '';
-	return getNameOfCurieCached(new Map<string, string>(), getCurieFromGroundingIdentifier(identifiers));
+	return getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 }
 
 /**
