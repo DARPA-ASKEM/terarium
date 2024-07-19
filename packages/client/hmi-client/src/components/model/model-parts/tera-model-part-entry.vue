@@ -51,12 +51,7 @@
 				@item-select="console.log($event)"
 			/>
 		</span>
-		<katex-element
-			class="expression"
-			v-if="item.expression"
-			:expression="item.expression"
-			:throw-on-error="false"
-		/>
+		<katex-element class="expression" v-if="item.expression" :expression="item.expression" :throw-on-error="false" />
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
