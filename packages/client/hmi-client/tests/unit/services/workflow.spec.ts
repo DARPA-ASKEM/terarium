@@ -293,3 +293,94 @@ describe('workflow copying branch >- fork', () => {
 		expect(sanityCheck(wf)).to.eq(true);
 	});
 });
+
+describe('workflow operator with multiple output types', () => {
+	const multiOutputOp: Operation = {
+		name: 'test' as any,
+		displayName: 'test',
+		description: 'test',
+		inputs: [],
+		outputs: [{ type: 'datasetId|modelId' }],
+		isRunnable: true
+	};
+
+	const datasetOp: Operation = {
+		name: 'test' as any,
+		displayName: 'test',
+		description: 'test',
+		inputs: [{ type: 'datasetId' }],
+		outputs: [],
+		isRunnable: true
+	};
+
+	const modelConfigOp: Operation = {
+		name: 'test' as any,
+		displayName: 'test',
+		description: 'test',
+		inputs: [{ type: 'modelId' }],
+		outputs: [],
+		isRunnable: true
+	};
+
+	const wf = workflowService.emptyWorkflow('test', 'test');
+	workflowService.addNode(wf, multiOutputOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, datasetOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, modelConfigOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
+
+	const multiOutputNode = wf.nodes[0];
+	multiOutputNode.outputs[0].value = [
+		{
+			datasetId: 'dataset xyz',
+			modelId: 'model abc'
+		}
+	];
+
+	const datasetNode = wf.nodes[1];
+	const modelNode = wf.nodes[2];
+	const testNode = wf.nodes[3];
+
+	it('dataset/model => dataset', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			datasetNode.id,
+			datasetNode.inputs[0].id,
+			[]
+		);
+
+		expect(datasetNode.inputs[0].value).toMatchObject(['dataset xyz']);
+		expect(wf.edges.length).eq(1);
+		workflowService.removeEdge(wf, wf.edges[0].id);
+	});
+
+	it('dataset/model => model', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			modelNode.id,
+			modelNode.inputs[0].id,
+			[]
+		);
+
+		expect(modelNode.inputs[0].value).toMatchObject(['model abc']);
+		expect(wf.edges.length).eq(1);
+		workflowService.removeEdge(wf, wf.edges[0].id);
+	});
+
+	it('dataset/model => test', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			testNode.id,
+			testNode.inputs[0].id,
+			[]
+		);
+
+		expect(testNode.inputs[0].value).toBeNull();
+		expect(wf.edges.length).eq(0);
+	});
+});
