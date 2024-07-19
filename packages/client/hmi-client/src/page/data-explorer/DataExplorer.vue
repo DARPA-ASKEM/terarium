@@ -7,13 +7,6 @@
 				header="Filters"
 				v-model:is-open="isSliderFacetsOpen"
 			>
-				<template v-slot:content>
-					<tera-facets-panel
-						v-if="viewType === ViewType.LIST"
-						:result-type="resourceType"
-						:docCount="docCount"
-					/>
-				</template>
 			</tera-slider-panel>
 			<div class="results-content">
 				<div class="search">
@@ -80,13 +73,7 @@ import SelectButton from 'primevue/selectbutton';
 import Dropdown from 'primevue/dropdown';
 import { fetchData } from '@/services/data';
 import { searchByAssetType } from '@/services/search';
-import {
-	ResourceType,
-	ResultType,
-	SearchParameters,
-	SearchResults,
-	ViewType
-} from '@/types/common';
+import { ResourceType, ResultType, SearchParameters, SearchResults } from '@/types/common';
 import { DatasetSource } from '@/types/search';
 import type { Source } from '@/types/search';
 import useQueryStore from '@/stores/query';
@@ -95,7 +82,6 @@ import { getResourceID, isDataset, isModel } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
-import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
 import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { AssetType } from '@/types/Types';
 import TeraSearchbar from '@/components/navbar/tera-searchbar.vue'; // import Chip from 'primevue/chip';
@@ -128,7 +114,6 @@ let modelTotal: number = 0;
 let documentTotal: number = 0;
 let datasetTotal: number = 0;
 
-const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
@@ -199,7 +184,7 @@ const mergeResultsKeepRecentDuplicates = (
 	const overlapping = intersectionBy(existingResults, newResults, mergeId);
 	overlapping.forEach((res) => {
 		const existingOldIndex = mergedResults.findIndex(
-			(u) => u.searchSubsystem === res.searchSubsystem
+			(u) => u?.searchSubsystem === res?.searchSubsystem
 		);
 		const newResult = newResults.find((u) => u.searchSubsystem === res.searchSubsystem);
 		// remove the old one and insert the new updated result
@@ -407,7 +392,7 @@ watch(resourceType, async (newResourceType, oldResourceType) => {
 
 	// if no data currently exist for the selected tab,
 	// or if data exists but outdated then we should refetch
-	const resList = dataItemsUnfiltered.value.find((res) => res.searchSubsystem === newResourceType);
+	const resList = dataItemsUnfiltered.value.find((res) => res?.searchSubsystem === newResourceType);
 
 	/** clear filters if they exist, we when to set the old resource type to
 	 * have dirty results since now they will need to be refetched when the facets filters are cleared

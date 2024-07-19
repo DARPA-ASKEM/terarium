@@ -2,14 +2,12 @@ import {
 	AssetType,
 	ClientEventType,
 	Dataset,
-	Document,
 	DocumentAsset,
 	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
-	StatusUpdate,
-	XDDFacetsItemResponse
+	StatusUpdate
 } from '@/types/Types';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
@@ -81,7 +79,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];
-	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
