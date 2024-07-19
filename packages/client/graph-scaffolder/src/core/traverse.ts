@@ -8,10 +8,7 @@ export const traverseNode = <T>(node: INode<T>, callback: (node: INode<T>) => vo
 		traverseNode(node.nodes[i], callback);
 	}
 };
-export const traverseGraph = <V, E>(
-	graph: IGraph<V, E>,
-	callback: (node: INode<V>) => void
-): void => {
+export const traverseGraph = <V, E>(graph: IGraph<V, E>, callback: (node: INode<V>) => void): void => {
 	for (let i = 0; i < graph.nodes.length; i++) {
 		traverseNode(graph.nodes[i], callback);
 	}
@@ -20,9 +17,7 @@ export const traverseGraph = <V, E>(
 /**
  * Returns a flat representation of all nodes and edges.
  */
-export const flattenGraph = <V, E>(
-	graph: IGraph<V, E>
-): { nodes: INode<V>[]; edges: IEdge<E>[] } => {
+export const flattenGraph = <V, E>(graph: IGraph<V, E>): { nodes: INode<V>[]; edges: IEdge<E>[] } => {
 	let nodes: INode<V>[] = [];
 	traverseGraph(graph, (node) => {
 		nodes = nodes.concat(node);
@@ -66,8 +61,7 @@ export const getAStarPath = (
 
 	// Math helpers
 	const sqDifference = (a: number, b: number) => (a - b) * (a - b);
-	const sqDistance = (p1: IPoint, p2: IPoint) =>
-		sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
+	const sqDistance = (p1: IPoint, p2: IPoint) => sqDifference(p1.x, p2.x) + sqDifference(p1.y, p2.y);
 
 	const heuristic = (p: IPoint) => sqDistance(p, goal) * 1.2;
 	const pEqual = (p1: IPoint, p2: IPoint) => p1.x === p2.x && p1.y === p2.y;

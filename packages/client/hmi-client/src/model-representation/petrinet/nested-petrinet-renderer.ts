@@ -96,9 +96,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		const stratifiedTransitions = selection.filter(
 			(d) => d.data.type === NodeType.Transition && d.data.isStratified === true
 		);
-		const transitions = selection.filter(
-			(d) => d.data.type === NodeType.Transition && !d.data.isStratified
-		);
+		const transitions = selection.filter((d) => d.data.type === NodeType.Transition && !d.data.isStratified);
 		const observables = selection.filter((d) => d.data.type === NodeType.Observable);
 
 		// species
@@ -106,9 +104,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')
-			)
+			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')))
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -123,9 +119,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', (d) =>
-				d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'
-			)
+			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'))
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -199,13 +193,10 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			Object.entries(node).forEach((kvPair, i) => {
 				if (kvPair[0] === '_key') return;
 				const value = kvPair[1];
-				const childRadius =
-					CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] * parentRadius - CIRCLE_MARGIN;
+				const childRadius = CIRCLE_PACKING_CHILD_NORMALIZED_RADII[nestedNodesLen] * parentRadius - CIRCLE_MARGIN;
 
-				const xPos =
-					parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
-				const yPos =
-					parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1] + parentY;
+				const xPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
+				const yPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1] + parentY;
 
 				select(g[idx])
 					.append('circle')

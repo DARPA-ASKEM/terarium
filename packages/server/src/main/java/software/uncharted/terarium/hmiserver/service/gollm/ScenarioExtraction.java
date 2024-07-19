@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
@@ -14,15 +18,16 @@ import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
  * [ { "id": "parameter_id", "value": 0.0 }, ... ] }, ...] } Dataset: {"values":[{ "id": "initial_id", "value": 0.0,
  * "type": "initial" }, { "id": "parameter_id", "value": 0.0, "type": "parameter" }, ...]}
  */
+@Slf4j
 public class ScenarioExtraction {
+
 	// Replace initial values in the model with the values from the condition
 	public static void replaceInitial(final Initial initial, final JsonNode conditionInitial) {
 		final String id = conditionInitial.get("id").asText();
 		final String target = initial.getTarget();
 		if (target.equals(id) || target.equals(GreekDictionary.englishToGreek(id))) {
 			if (conditionInitial.has("value")) {
-				final String value =
-						String.valueOf(conditionInitial.get("value").doubleValue());
+				final String value = String.valueOf(conditionInitial.get("value").doubleValue());
 				initial.setExpression(value);
 			}
 		}
@@ -36,16 +41,27 @@ public class ScenarioExtraction {
 				final double value = conditionParameter.get("value").doubleValue();
 				parameter.setValue(value);
 			}
+			if (conditionParameter.has("distribution")) {
+				try {
+					ObjectMapper mapper = new ObjectMapper();
+					ModelDistribution distribution = mapper.treeToValue(
+						conditionParameter.get("distribution"),
+						ModelDistribution.class
+					);
+					parameter.setDistribution(distribution);
+				} catch (JsonProcessingException e) {
+					log.error("Failed to parse distribution for parameter: {}", parameter.getId());
+				}
+			}
 		}
 	}
 
 	public static List<ModelParameter> getModelParameters(final JsonNode condition, final Model modelCopy) {
 		final List<ModelParameter> modelParameters = modelCopy.getParameters();
-		modelParameters.forEach((parameter) -> {
-			condition.forEach((conditionParameter) -> {
+		modelParameters.forEach(parameter -> {
+			condition.forEach(conditionParameter -> {
 				// Test if type exist and is parameter for Dataset extraction
-				if (conditionParameter.has("type")
-						&& conditionParameter.get("type").asText().equals("initial")) {
+				if (conditionParameter.has("type") && conditionParameter.get("type").asText().equals("initial")) {
 					return;
 				}
 				replaceParameter(parameter, conditionParameter);
@@ -56,11 +72,10 @@ public class ScenarioExtraction {
 
 	public static List<Initial> getModelInitials(final JsonNode condition, final Model modelCopy) {
 		final List<Initial> modelInitials = modelCopy.getInitials();
-		modelInitials.forEach((initial) -> {
+		modelInitials.forEach(initial -> {
 			final String target = initial.getTarget();
-			condition.forEach((conditionInitial) -> {
-				if (conditionInitial.has("type")
-						&& conditionInitial.get("type").asText().equals("parameter")) return;
+			condition.forEach(conditionInitial -> {
+				if (conditionInitial.has("type") && conditionInitial.get("type").asText().equals("parameter")) return;
 				replaceInitial(initial, conditionInitial);
 			});
 		});

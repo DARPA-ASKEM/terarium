@@ -41,9 +41,7 @@ const toast = useToastService();
 const route = useRoute();
 const router = useRouter();
 const currentRoute = (useCurrentRoute().value.name ?? '').toString();
-const displayNavBar = computed(
-	() => !['unauthorized', RouteName.WorkflowNode.toString()].includes(currentRoute)
-);
+const displayNavBar = computed(() => !['unauthorized', RouteName.WorkflowNode.toString()].includes(currentRoute));
 const isStandalone = computed(() => [RouteName.WorkflowNode.toString()].includes(currentRoute));
 
 /* Project */
@@ -51,12 +49,7 @@ API.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		const status = error.response.status;
-		toast.showToast(
-			ToastSeverity.error,
-			`${ToastSummaries.NETWORK_ERROR} (${status})`,
-			'Unauthorized',
-			5000
-		);
+		toast.showToast(ToastSeverity.error, `${ToastSummaries.NETWORK_ERROR} (${status})`, 'Unauthorized', 5000);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
 		}

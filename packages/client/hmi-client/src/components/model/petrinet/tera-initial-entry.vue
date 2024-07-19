@@ -19,18 +19,8 @@
 					@update:model-value="emit('update-expression', { id: initialId, value: $event })"
 				/>
 			</span>
-			<Button
-				:label="getSourceLabel(initialId)"
-				text
-				size="small"
-				@click="sourceOpen = !sourceOpen"
-			/>
-			<Button
-				:label="getOtherValuesLabel"
-				text
-				size="small"
-				@click="showOtherConfigValueModal = true"
-			/>
+			<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
+			<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 		</main>
 		<footer v-if="sourceOpen">
 			<tera-input
@@ -58,20 +48,12 @@
 <script setup lang="ts">
 import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
-import {
-	getInitialExpression,
-	getInitialSource,
-	getOtherValues
-} from '@/services/model-configurations';
+import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import {
-	getInitialDescription,
-	getInitialName,
-	getInitialUnits
-} from '@/model-representation/service';
+import { getInitialDescription, getInitialName, getInitialUnits } from '@/model-representation/service';
 
 const props = defineProps<{
 	model: Model;
@@ -80,9 +62,7 @@ const props = defineProps<{
 	modelConfigurations: ModelConfiguration[];
 }>();
 
-const otherValueList = ref(
-	getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList')
-);
+const otherValueList = ref(getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList'));
 
 const emit = defineEmits(['update-expression', 'update-source']);
 

@@ -88,11 +88,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {
-	createParameterMatrix,
-	createInitialMatrix,
-	collapseTemplates
-} from '@/model-representation/mira/mira';
+import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
 import { logger } from '@/utils/logger';
@@ -155,10 +151,7 @@ async function getMatrixValue(variableName: string) {
 	}
 
 	if (props.shouldEval) {
-		const expressionEval = await pythonInstance.evaluateExpression(
-			expressionBase,
-			parametersValueMap.value
-		);
+		const expressionEval = await pythonInstance.evaluateExpression(expressionBase, parametersValueMap.value);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;

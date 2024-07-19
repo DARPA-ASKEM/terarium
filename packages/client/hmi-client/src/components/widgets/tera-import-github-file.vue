@@ -4,8 +4,7 @@
 			<tera-modal v-if="visible" @modal-mask-clicked="emit('close')">
 				<template #header>
 					<h2>
-						https://github.com/{{ repoOwnerAndName
-						}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
+						https://github.com/{{ repoOwnerAndName }}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
 					</h2>
 					<b>({{ directoryContent?.totalFiles }}) files found in: </b>
 					<div class="flex justify-content-left">
@@ -23,9 +22,7 @@
 								<li v-if="hasDirectories">
 									<header>
 										<b>Directories</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Directory?.length }})</span
-										>
+										<span class="artifact-amount">({{ directoryContent?.files.Directory?.length }})</span>
 									</header>
 								</li>
 								<li
@@ -39,9 +36,7 @@
 								<li v-if="hasCode">
 									<header>
 										<b>Code</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Code?.length }})</span
-										>
+										<span class="artifact-amount">({{ directoryContent?.files.Code?.length }})</span>
 									</header>
 								</li>
 								<li
@@ -49,21 +44,14 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
+									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
 									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasData">
 									<header>
 										<b>Data</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Data?.length }})</span
-										>
+										<span class="artifact-amount">({{ directoryContent?.files.Data?.length }})</span>
 									</header>
 								</li>
 								<li
@@ -71,21 +59,14 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
+									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
 									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasDocuments">
 									<header>
 										<b>Documents</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Documents?.length }})</span
-										>
+										<span class="artifact-amount">({{ directoryContent?.files.Documents?.length }})</span>
 									</header>
 								</li>
 								<li
@@ -93,21 +74,14 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<Checkbox
-										class="file-checkboxes"
-										v-model="selectedFiles"
-										:inputId="content.name"
-										:value="content"
-									/>
+									<Checkbox class="file-checkboxes" v-model="selectedFiles" :inputId="content.name" :value="content" />
 									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasOther">
 									<header>
 										<b>Unknown File Types</b>
-										<span class="artifact-amount"
-											>({{ directoryContent?.files.Other?.length }})</span
-										>
+										<span class="artifact-amount">({{ directoryContent?.files.Other?.length }})</span>
 									</header>
 								</li>
 								<li
@@ -117,11 +91,7 @@
 									@click="previewTextFile(content)"
 								>
 									<div class="unknown-check">
-										<Checkbox
-											v-model="selectedUnknownFiles"
-											:inputId="content.name"
-											:value="content"
-										/>
+										<Checkbox v-model="selectedUnknownFiles" :inputId="content.name" :value="content" />
 										<i class="pi pi-file unknown-icon" />
 										{{ content.name }}
 									</div>
@@ -152,9 +122,7 @@
 					</div>
 				</template>
 				<template #footer>
-					<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()"
-						>Import repo to project</Button
-					>
+					<Button v-if="useProjects().activeProject.value" @click="addRepoToCodeAsset()">Import repo to project</Button>
 					<Dropdown
 						v-else
 						placeholder="Import repo to project"
@@ -240,27 +208,17 @@ const asDocumentTypes = ref([
 	{ name: 'Import as data', code: FileCategory.Data }
 ]);
 
-const directories = computed(() =>
-	currentDirectory.value.split('/').map((d) => ({ label: d, disabled: true }))
-);
+const directories = computed(() => currentDirectory.value.split('/').map((d) => ({ label: d, disabled: true })));
 
 const isInDirectory: ComputedRef<boolean> = computed(() => !isEmpty(currentDirectory.value));
 // There may be a more concise way to do this?
-const hasDirectories: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent?.value?.files?.Directory)
-);
+const hasDirectories: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent?.value?.files?.Directory));
 const hasCode: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent.value?.files?.Code));
 const hasData: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent.value?.files?.Data));
-const hasDocuments: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent?.value?.files?.Documents)
-);
-const hasOther: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent?.value?.files?.Other)
-);
+const hasDocuments: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent?.value?.files?.Documents));
+const hasOther: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent?.value?.files?.Other));
 
-const projectOptions = computed(() =>
-	useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id }))
-);
+const projectOptions = computed(() => useProjects().allProjects.value?.map((p) => ({ name: p.name, id: p.id })));
 
 async function initializeCodeBrowser() {
 	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
@@ -291,19 +249,17 @@ function onSelectedTextChange() {
 async function openSelectedFiles(event?: DropdownChangeEvent) {
 	const projectId = event?.value?.id;
 	// split the selected files into their respective categories
-	const selectedCodeFiles: GithubFile[] = [
-		...selectedFiles.value,
-		...selectedUnknownFiles.value
-	].filter((file) => file.fileCategory === FileCategory.Code);
+	const selectedCodeFiles: GithubFile[] = [...selectedFiles.value, ...selectedUnknownFiles.value].filter(
+		(file) => file.fileCategory === FileCategory.Code
+	);
 
 	// Import code files, if any were selected
 	if (selectedCodeFiles.length > 0) {
 		await openCodeFiles(selectedCodeFiles, projectId);
 	}
-	const selectedDataFiles: GithubFile[] = [
-		...selectedFiles.value,
-		...selectedUnknownFiles.value
-	].filter((file) => file.fileCategory === FileCategory.Data);
+	const selectedDataFiles: GithubFile[] = [...selectedFiles.value, ...selectedUnknownFiles.value].filter(
+		(file) => file.fileCategory === FileCategory.Data
+	);
 
 	if (selectedDataFiles.length > 0) {
 		await importDataFiles(selectedDataFiles);
@@ -318,13 +274,9 @@ async function openSelectedFiles(event?: DropdownChangeEvent) {
 	}
 
 	// TODO: make this number account for files that were not succussfully imported
-	const numUploadedFiles =
-		selectedCodeFiles.length + selectedDataFiles.length + selectedDocumentFiles.length;
+	const numUploadedFiles = selectedCodeFiles.length + selectedDataFiles.length + selectedDocumentFiles.length;
 	const resourceMsg = numUploadedFiles > 1 ? 'resources were' : 'resource was';
-	useToastService().success(
-		'Success!',
-		`${numUploadedFiles} ${resourceMsg} successfuly added to this project`
-	);
+	useToastService().success('Success!', `${numUploadedFiles} ${resourceMsg} successfuly added to this project`);
 	// FIXME: Files aren't opening
 	emit('close');
 }
@@ -335,10 +287,7 @@ async function openSelectedFiles(event?: DropdownChangeEvent) {
  */
 async function openDirectory(directory: string) {
 	currentDirectory.value = directory;
-	directoryContent.value = await getGithubRepositoryContent(
-		repoOwnerAndName.value,
-		currentDirectory.value
-	);
+	directoryContent.value = await getGithubRepositoryContent(repoOwnerAndName.value, currentDirectory.value);
 }
 
 /**
@@ -398,11 +347,7 @@ async function importDocumentFiles(githubFiles: GithubFile[], projectId?: string
  */
 async function openCodeFiles(githubFiles: GithubFile[], projectId?: string) {
 	githubFiles.forEach(async (githubFile) => {
-		const newCode = await uploadCodeToProjectFromGithub(
-			repoOwnerAndName.value,
-			githubFile.path,
-			githubFile.htmlUrl
-		);
+		const newCode = await uploadCodeToProjectFromGithub(repoOwnerAndName.value, githubFile.path, githubFile.htmlUrl);
 		if (newCode && newCode.id) {
 			await useProjects().addAsset(AssetType.Code, newCode.id, projectId);
 		}
@@ -418,10 +363,7 @@ async function addRepoToCodeAsset(event?: DropdownChangeEvent) {
 		const assetId = await useProjects().addAsset(AssetType.Code, newCodeAsset.id, projectId);
 
 		if (assetId) {
-			useToastService().success(
-				'Success!',
-				'The Github repository was successfuly added to this project'
-			);
+			useToastService().success('Success!', 'The Github repository was successfuly added to this project');
 		}
 	}
 }

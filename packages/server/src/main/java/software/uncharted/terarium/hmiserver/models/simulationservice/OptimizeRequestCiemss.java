@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.parts.Time
 @TSModel
 // Used to kick off a Optimize job in simulation-service
 public class OptimizeRequestCiemss implements Serializable {
+
 	@JsonAlias("model_config_id")
 	private UUID modelConfigId;
 
@@ -40,9 +41,6 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	@JsonAlias("risk_bound")
 	private Double riskBound;
-
-	@JsonAlias("initial_guess_interventions")
-	private List<Double> initialGuessInterventions;
 
 	@JsonAlias("bounds_interventions")
 	private List<List<Double>> boundsInterventions;

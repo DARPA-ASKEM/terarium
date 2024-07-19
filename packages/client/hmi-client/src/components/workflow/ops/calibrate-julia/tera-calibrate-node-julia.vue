@@ -16,20 +16,9 @@
 			/>
 		</template>
 
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
+		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -49,7 +38,7 @@ import { csvParse } from 'd3';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import type { CsvAsset } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { CalibrationOperationStateJulia, CalibrationOperationJulia } from './calibrate-operation';
@@ -101,7 +90,7 @@ const processResult = (id: string) => {
 
 	emit('append-output', {
 		type: CalibrationOperationJulia.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		value: [id],
 		isSelected: false,
 		state: {

@@ -29,9 +29,11 @@ public class NotificationGroup extends TerariumEntity {
 	@Serial
 	private static final long serialVersionUID = -3382397588627700379L;
 
-	@NotNull private String userId;
+	@NotNull
+	private String userId;
 
-	@NotNull private String type;
+	@NotNull
+	private String type;
 
 	@TSOptional
 	private UUID projectId;

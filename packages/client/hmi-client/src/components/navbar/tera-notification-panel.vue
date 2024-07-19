@@ -1,33 +1,15 @@
 <template>
 	<div class="notification-button">
-		<Button
-			icon="pi pi-bell"
-			severity="secondary"
-			rounded
-			text
-			aria-label="Notifications"
-			@click="togglePanel"
-		/>
-		<span class="badge" v-if="unacknowledgedFinishedItems.length > 0">
-			{{ unacknowledgedFinishedItems.length }}</span
-		>
+		<Button icon="pi pi-bell" severity="secondary" rounded text aria-label="Notifications" @click="togglePanel" />
+		<span class="badge" v-if="unacknowledgedFinishedItems.length > 0"> {{ unacknowledgedFinishedItems.length }}</span>
 	</div>
 	<OverlayPanel class="notification-panel-container" ref="panel" @hide="acknowledgeFinishedItems">
 		<header>
 			<h1>Notifications</h1>
-			<Button
-				label="Clear notifications"
-				text
-				:disabled="!hasFinishedItems"
-				@click="clearFinishedItems"
-			/>
+			<Button label="Clear notifications" text :disabled="!hasFinishedItems" @click="clearFinishedItems" />
 		</header>
 		<ul class="notification-items-container" v-if="sortedNotificationItems.length > 0">
-			<li
-				class="notification-item"
-				v-for="item in sortedNotificationItems"
-				:key="item.notificationGroupId"
-			>
+			<li class="notification-item" v-for="item in sortedNotificationItems" :key="item.notificationGroupId">
 				<p class="heading">
 					{{ getTitleText(item) }}
 					<tera-asset-link
@@ -42,21 +24,13 @@
 					</p>
 					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
-				<div
-					v-if="isRunning(item) || isCancelling(item) || isQueued(item)"
-					class="progressbar-container"
-				>
+				<div v-if="isRunning(item) || isCancelling(item) || isQueued(item)" class="progressbar-container">
 					<p class="action">
 						{{ getActionText(item) }}
-						<span v-if="item.progress !== undefined && isRunning(item)">
-							{{ Math.round(item.progress * 100) }}%</span
-						>
+						<span v-if="item.progress !== undefined && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
 					</p>
 
-					<ProgressBar
-						v-if="item.progress !== undefined"
-						:value="isRunning(item) ? item.progress * 100 : 0"
-					/>
+					<ProgressBar v-if="item.progress !== undefined" :value="isRunning(item) ? item.progress * 100 : 0" />
 					<ProgressBar v-else mode="indeterminate" />
 					<Button
 						v-if="item.supportCancel"
@@ -68,12 +42,8 @@
 					/>
 				</div>
 				<div v-else class="done-container">
-					<div class="status-msg ok" v-if="isComplete(item)">
-						<i class="pi pi-check-circle" />Completed
-					</div>
-					<div class="status-msg cancel" v-if="isCancelled(item)">
-						<i class="pi pi-exclamation-circle" />Cancelled
-					</div>
+					<div class="status-msg ok" v-if="isComplete(item)"><i class="pi pi-check-circle" />Completed</div>
+					<div class="status-msg cancel" v-if="isCancelled(item)"><i class="pi pi-exclamation-circle" />Cancelled</div>
 					<div class="status-msg error" v-else-if="isFailed(item)">
 						<i class="pi pi-exclamation-circle" /> Failed: {{ item.error }}
 					</div>
@@ -116,9 +86,7 @@ const togglePanel = (event) => panel.value.toggle(event);
 
 const getTitleText = (item: NotificationItem) => `${item.typeDisplayName} from`;
 
-const sortedNotificationItems = computed(() =>
-	orderBy(notificationItems.value, (item) => item.lastUpdated, ['desc'])
-);
+const sortedNotificationItems = computed(() => orderBy(notificationItems.value, (item) => item.lastUpdated, ['desc']));
 
 const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
 const isQueued = (item: NotificationItem) => item.status === ProgressState.Queued;

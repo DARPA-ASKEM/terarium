@@ -11,32 +11,17 @@
 		/>
 	</section>
 
-	<Button
-		v-if="node.inputs[0].value"
-		label="Edit"
-		@click="emit('open-drilldown')"
-		severity="secondary"
-		outlined
-	/>
+	<Button v-if="node.inputs[0].value" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 	<tera-operator-placeholder v-else :operation-type="node.operationType">
 		Connect a model configuration
 	</tera-operator-placeholder>
-	<tera-progress-spinner
-		v-if="inProgressSimulationId"
-		:font-size="2"
-		is-centered
-		style="height: 100%"
-	/>
+	<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import {
-	getRunResultCiemss,
-	pollAction,
-	getSimulation
-} from '@/services/models/simulation-service';
+import { getRunResultCiemss, pollAction, getSimulation } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
@@ -45,7 +30,7 @@ import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
@@ -110,7 +95,7 @@ const processResult = async (simulationId: string) => {
 
 	emit('append-output', {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
-		label: `${portLabel} Result`,
+		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		value: [simulationId],
 		state: {
 			mapping: state.mapping,

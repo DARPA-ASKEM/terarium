@@ -6,9 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="ModelCouplingTabgs.Wizard">
-			<tera-drilldown-section class="ml-4 mr-2 mt-3"
-				>Coming soon. Use the notebook tab for now.</tera-drilldown-section
-			>
+			<tera-drilldown-section class="ml-4 mr-2 mt-3">Coming soon. Use the notebook tab for now.</tera-drilldown-section>
 		</div>
 		<div :tabName="ModelCouplingTabgs.Notebook">
 			<tera-drilldown-section>

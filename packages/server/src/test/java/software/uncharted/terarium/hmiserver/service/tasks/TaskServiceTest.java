@@ -51,7 +51,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateEchoTaskRequest() throws Exception {
-
 		final String additionalProps = "These are additional properties";
 
 		final byte[] input = "{\"input\":\"This is my input string\",\"include_progress\":true}".getBytes();
@@ -83,13 +82,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateLargeEchoTaskRequest() throws Exception {
-
 		final String additionalProps = "These are additional properties";
 
 		final int STRING_LENGTH = 1048576;
 
 		final byte[] input =
-				("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}").getBytes();
+			("{\"input\":\"" + generateRandomString(STRING_LENGTH) + "\",\"include_progress\":true}").getBytes();
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -105,7 +103,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMModelCardRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("gollm/test_input.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -120,6 +117,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	}
 
 	static class AdditionalProps {
+
 		public String str;
 		public Integer num;
 	}
@@ -127,13 +125,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMEmbeddingRequest() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
 		req.setScript("gollm_task:embedding");
 		req.setInput(
-				("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}")
-						.getBytes());
+			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+		);
 
 		final AdditionalProps add = new AdditionalProps();
 		add.str = "this is my str";
@@ -152,12 +149,11 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMGenerateSummaryRequest() throws Exception {
-
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
 		req.setScript(GenerateSummaryHandler.NAME);
 		final String input =
-				"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
+			"Following sections describe the input and output of an operation.\nInput: { a: 1}\nOutput: { a: 2}. Provide a summary in less than 10 words.";
 		req.setInput(input.getBytes(StandardCharsets.UTF_8));
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -168,7 +164,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraMDLToStockflowRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("mira/IndiaNonSubscriptedPulsed.mdl");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -189,7 +184,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraStellaToStockflowRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("mira/SIR.xmile");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -210,7 +204,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendMiraSBMLToPetrinetRequest() throws Exception {
-
 		final ClassPathResource resource = new ClassPathResource("mira/BIOMD0000000001.xml");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
 
@@ -227,25 +220,27 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGoLLMConfigFromDatasetRequest() throws Exception {
-
 		final UUID taskId = UUID.randomUUID();
 
 		final ClassPathResource datasetResource1 = new ClassPathResource("gollm/Epi Sc 4 Interaction matrix.csv");
-		final String dataset1 =
-				new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
+		final String dataset1 = new String(Files.readAllBytes(datasetResource1.getFile().toPath()));
 		final ClassPathResource datasetResource2 = new ClassPathResource("gollm/other-dataset.csv");
-		final String dataset2 =
-				new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
+		final String dataset2 = new String(Files.readAllBytes(datasetResource2.getFile().toPath()));
 
 		final ClassPathResource amrResource = new ClassPathResource("gollm/scenario4_4spec_regnet_empty.json");
 		final String amr = new String(Files.readAllBytes(amrResource.getFile().toPath()));
 		final JsonNode amrJson = new ObjectMapper().readTree(amr);
 
-		final String content = "{\"datasets\": ["
-				+ "\"" + dataset1.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) + "\","
-				+ "\"" + dataset2.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n"))
-				+ "\"], \"amr\":"
-				+ amrJson.toString() + "}";
+		final String content =
+			"{\"datasets\": [" +
+			"\"" +
+			dataset1.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) +
+			"\"," +
+			"\"" +
+			dataset2.replaceAll("(?<!\\\\)\\n", Matcher.quoteReplacement("\\\\n")) +
+			"\"], \"amr\":" +
+			amrJson.toString() +
+			"}";
 
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
@@ -262,7 +257,6 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendAmrToMmtRequest() throws Exception {
-
 		final UUID taskId = UUID.randomUUID();
 
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
@@ -293,16 +287,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
 		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
@@ -321,29 +311,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
 		taskService.cancelTask(future1.getId());
-		Assertions.assertEquals(
-				TaskStatus.CANCELLED,
-				future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should not pull the cancelled response from cache
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertNotEquals(future1.getId(), future2.getId());
 
 		// next request should pull the successful response from cache
 		final TaskFuture future3 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(
-				TaskStatus.SUCCESS,
-				future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.SUCCESS, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertEquals(future2.getId(), future3.getId());
 	}
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCacheWithConcurrency() throws Exception {
-
 		final int NUM_REQUESTS = 1024;
 		final int NUM_UNIQUE_REQUESTS = 32;
 		final int NUM_THREADS = 24;
@@ -377,10 +360,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 					final TaskResponse resp = taskService.runTaskSync(req);
 					successTaskIds.add(resp.getId());
-				} catch (final RuntimeException e) {
-					// expected for purposely failed tasks
-
-				} catch (final Exception e) {
+				} catch (final RuntimeException e) {} catch (final Exception e) {
 					log.error("Error in test", e);
 				}
 			});

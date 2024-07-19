@@ -11,9 +11,7 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="llmAnswer">{{ llmAnswer }}</p>
-							<p v-else class="subdued">
-								Analyzing models metadata to generate a detailed comparison analysis...
-							</p>
+							<p v-else class="subdued">Analyzing models metadata to generate a detailed comparison analysis...</p>
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -33,12 +31,7 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram
-										:model="model"
-										:is-editable="false"
-										is-preview
-										class="diagram"
-									/>
+									<tera-model-diagram :model="model" :is-editable="false" is-preview class="diagram" />
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -80,13 +73,7 @@
 						:context-language="contextLanguage"
 					>
 						<template #toolbar-right-side>
-							<Button
-								label="Reset"
-								outlined
-								severity="secondary"
-								size="small"
-								@click="resetNotebook"
-							/>
+							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
 							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
 						</template>
 					</tera-notebook-jupyter-input>
@@ -209,14 +196,9 @@ const llmAnswer = computed(() => {
 	return parsedValue.response;
 });
 
-const modelCardsToCompare = computed(() =>
-	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
-);
+const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
 const fields = computed(
-	() =>
-		[
-			...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))
-		] as string[]
+	() => [...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))] as string[]
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
@@ -228,10 +210,7 @@ async function addModelForComparison(modelId: Model['id']) {
 	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
-	if (
-		modelsToCompare.value.length === props.node.inputs.length - 1 &&
-		modelsToCompare.value.length > 1
-	) {
+	if (modelsToCompare.value.length === props.node.inputs.length - 1 && modelsToCompare.value.length > 1) {
 		buildJupyterContext();
 	}
 }

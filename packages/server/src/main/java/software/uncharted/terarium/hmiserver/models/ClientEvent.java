@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @Value
 @TSModel
 public class ClientEvent<T> implements Serializable {
+
 	@Builder.Default
 	private UUID id = UUID.randomUUID();
 

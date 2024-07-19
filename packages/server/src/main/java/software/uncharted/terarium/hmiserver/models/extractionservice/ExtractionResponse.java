@@ -8,6 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class ExtractionResponse {
+
 	private String id;
 	private String status;
 	private ExtractionResponseResult result;

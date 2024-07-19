@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.tasks;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -12,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -28,6 +26,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureModelResponseHandler extends TaskResponseHandler {
+
 	public static final String NAME = "gollm_task:configure_model";
 
 	private final ObjectMapper objectMapper;
@@ -42,6 +41,7 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Input {
+
 		@JsonProperty("research_paper")
 		String researchPaper;
 
@@ -51,11 +51,13 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Response {
+
 		JsonNode response;
 	}
 
 	@Data
 	public static class Properties {
+
 		UUID projectId;
 		UUID documentId;
 		UUID modelId;
@@ -68,8 +70,8 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final Model model = modelService
-					.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-					.orElseThrow();
+				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+				.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// For each configuration, create a new model configuration with parameters set
@@ -78,53 +80,41 @@ public class ConfigureModelResponseHandler extends TaskResponseHandler {
 				modelCopy.setId(model.getId());
 
 				// Map the parameters values to the model
-				final ArrayNode gollmExtractions = objectMapper.createArrayNode();
 				if (condition.has("parameters")) {
-					final List<ModelParameter> modelParameters =
-							ScenarioExtraction.getModelParameters(condition.get("parameters"), modelCopy);
-					if (modelCopy.isRegnet()) {
+					final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(
+						condition.get("parameters"),
 						modelCopy
-								.getModel()
-								.put("parameters", objectMapper.convertValue(modelParameters, JsonNode.class));
-					}
-					final ArrayNode parameters = condition.get("parameters").deepCopy();
-					gollmExtractions.addAll(parameters);
+					);
+					modelCopy.getSemantics().getOde().setParameters(modelParameters);
 				}
 
 				// Map the initials values to the model
 				if (condition.has("initials")) {
-					final List<Initial> modelInitials =
-							ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
-					if (modelCopy.isRegnet()) {
-						modelCopy.getModel().put("initials", objectMapper.convertValue(modelInitials, JsonNode.class));
-					}
-					final ArrayNode initials = condition.get("initials").deepCopy();
-					gollmExtractions.addAll(initials);
+					final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition.get("initials"), modelCopy);
+					modelCopy.getSemantics().getOde().setInitials(modelInitials);
 				}
-
-				// Set the all the GoLLM extractions into the model metadata
-				// FIXME - It is not what we should do, this is a hack for the March 2024
-				// Evaluation
-				if (model.getMetadata() == null) {
-					model.setMetadata(new ModelMetadata());
-				}
-				model.getMetadata().setGollmExtractions(gollmExtractions);
 
 				// Create the new configuration
 				final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
-						model,
-						condition.get("name").asText(),
-						condition.get("description").asText());
+					modelCopy,
+					condition.get("name").asText(),
+					condition.get("description").asText()
+				);
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-						configuration, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+					configuration,
+					props.projectId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				);
 				// add provenance
-				provenanceService.createProvenance(new Provenance()
+				provenanceService.createProvenance(
+					new Provenance()
 						.setLeft(newConfig.getId())
 						.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
 						.setRight(props.documentId)
 						.setRightType(ProvenanceType.DOCUMENT)
-						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+				);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);

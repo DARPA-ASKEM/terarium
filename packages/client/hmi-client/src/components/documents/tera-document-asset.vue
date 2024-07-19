@@ -32,11 +32,7 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
-		<Accordion
-			v-if="view === DocumentView.EXTRACTIONS"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
-		>
+		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<!-- Abstract -->
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
@@ -54,13 +50,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -81,13 +71,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -108,13 +92,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -136,9 +114,7 @@
 		<p
 			class="pl-3"
 			v-if="
-				isEmpty(document?.assets) &&
-				view === DocumentView.EXTRACTIONS &&
-				viewOptions[1]?.value === DocumentView.PDF
+				isEmpty(document?.assets) && view === DocumentView.EXTRACTIONS && viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
 			PDF Extractions are processing please come back in some time...
@@ -162,11 +138,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { ClientEvent, DocumentAsset } from '@/types/Types';
 import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
-import {
-	downloadDocumentAsset,
-	getDocumentAsset,
-	getDocumentFileAsText
-} from '@/services/document-assets';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -226,17 +198,13 @@ const docText = ref<string | null>(null);
 const documentLoading = ref(false);
 
 const figures = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
 );
 const tables = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
 );
 const equations = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) ||
-		[]
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) || []
 );
 
 const optionsMenu = ref();
@@ -246,17 +214,11 @@ const optionsMenuItems = ref([
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Document,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Document, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []

@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Accessors(chain = true)
 @Entity
 public class ModelConfiguration extends TerariumAsset {
+
 	@TSOptional
 	private UUID calibrationRunId;
 

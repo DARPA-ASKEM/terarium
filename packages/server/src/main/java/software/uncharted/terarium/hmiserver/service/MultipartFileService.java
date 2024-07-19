@@ -23,9 +23,11 @@ public class MultipartFileService {
 		final Map<String, byte[]> result = new HashMap<>();
 		try {
 			final JakartaServletFileUpload upload = new JakartaServletFileUpload();
-			upload.getItemIterator(request).forEachRemaining(item -> {
-				result.put(item.getFieldName(), item.getInputStream().readAllBytes());
-			});
+			upload
+				.getItemIterator(request)
+				.forEachRemaining(item -> {
+					result.put(item.getFieldName(), item.getInputStream().readAllBytes());
+				});
 		} catch (final Exception e) {
 			log.error("Error parsing multipart file", e);
 		}

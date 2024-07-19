@@ -2,9 +2,9 @@
 	<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5]">
 		<AccordionTab>
 			<template #header>
-				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
+				State variables<span class="artifact-amount">({{ states.length }})</span>
 			</template>
-			<tera-states-metadata
+			<tera-states
 				v-if="!isEmpty(mmt.initials)"
 				:model="model"
 				:mmt="mmt"
@@ -13,9 +13,9 @@
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
-				Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
+				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
 			</template>
-			<tera-parameters-metadata
+			<tera-parameters
 				v-if="!isEmpty(mmt.parameters)"
 				:model="model"
 				:mmt="mmt"
@@ -27,107 +27,56 @@
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="name" header="Name" />
-				<Column field="expression" header="Expression">
-					<template #body="{ data }">
-						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
-							:throw-on-error="false"
-						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-observables
+				v-if="!isEmpty(observables)"
+				:model="model"
+				:mmt="mmt"
+				:observables="observables"
+				@update-item="emit('update-observable', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(transitions)" data-key="id" :value="transitions">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="name" header="Name" />
-				<Column field="input" header="Input">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="output" header="Output">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="expression" header="Expression">
-					<template #body="{ data }">
-						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
-							:throw-on-error="false"
-						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-transitions
+				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				:transitions="transitions"
+				@update-transition="emit('update-transition', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Other concepts
 				<span class="artifact-amount">({{ otherConcepts.length }})</span>
 			</template>
-			<tera-other-concepts-table
-				:model="model"
-				@update-model="(updatedModel) => emit('update-model', updatedModel)"
-			/>
+			<tera-other-concepts-table :model="model" @update-model="(updatedModel) => emit('update-model', updatedModel)" />
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
-				<Column field="id" header="Symbol">
-					<template #body="slotProps">
-						<span class="latex-font">
-							{{ slotProps.data.id }}
-						</span>
-					</template>
-				</Column>
-				<Column field="units.expression" header="Unit" />
-			</DataTable>
+			<tera-time v-if="time" :time="time" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
-import type { Model } from '@/types/Types';
+import type { Model, Transition, State } from '@/types/Types';
 import { groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import TeraStatesMetadata from '@/components/model/tera-states-metadata.vue';
-import TeraParametersMetadata from '@/components/model//tera-parameters-metadata.vue';
+import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
+import TeraTime from '@/components/model/model-parts/tera-time.vue';
 import TeraOtherConceptsTable from './tera-other-concepts-table.vue';
 
 const props = defineProps<{
@@ -137,42 +86,32 @@ const props = defineProps<{
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model', 'update-state', 'update-parameter']);
+const emit = defineEmits([
+	'update-model',
+	'update-state',
+	'update-parameter',
+	'update-observable',
+	'update-transition',
+	'update-time'
+]);
 
-const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const time = computed(() =>
-	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
-);
+const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
 });
-const states = computed(() => props.model?.model?.states ?? []);
-const transitions = computed(() => {
-	const results: any[] = [];
-	if (props.model?.model?.transitions) {
-		props.model.model.transitions.forEach((t) => {
-			results.push({
-				id: t.id,
-				name: t?.properties?.name ?? '--',
-				input: !isEmpty(t.input) ? t.input.join(', ') : '--',
-				output: !isEmpty(t.output) ? t.output.join(', ') : '--',
-				expression:
-					props.model?.semantics?.ode?.rates?.find((rate) => rate.target === t.id)?.expression ??
-					null,
-				extractions: extractions?.[t.id] ?? null
-			});
-		});
-	}
-	return results;
-});
+const states = computed<State[]>(() => props.model?.model?.states ?? []);
+const transitions = computed<Transition[]>(() =>
+	props.model.model.transitions?.map((transition: Transition) => ({
+		...transition,
+		name: transition.name ?? transition?.properties?.name ?? transition.id,
+		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)?.expression
+	}))
+);
 const otherConcepts = computed(() => {
-	const ids = [
-		...(states.value?.map((s) => s.id) ?? []),
-		...(transitions.value?.map((t) => t.id) ?? [])
-	];
+	const ids = [...(states.value?.map((s) => s.id) ?? []), ...(transitions.value?.map((t) => t.id) ?? [])];
 
 	// find keys that are not aligned
 	const unalignedKeys = Object.keys(extractions.value).filter((k) => !ids.includes(k));
@@ -180,9 +119,7 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) =>
-				['anchored_extraction', 'anchored_entity'].includes(e.type)
-			)
+			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
 		);
 	});
 
@@ -192,20 +129,3 @@ const otherConcepts = computed(() => {
 	return unalignedExtractions ?? [];
 });
 </script>
-
-<style scoped>
-section {
-	margin-left: 1rem;
-}
-
-.clickable-tag:hover {
-	cursor: pointer;
-}
-
-:deep(.p-accordion-content:empty::before) {
-	content: 'None';
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
-	margin-left: 1rem;
-}
-</style>

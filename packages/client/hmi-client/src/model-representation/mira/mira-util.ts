@@ -1,10 +1,6 @@
 import { MiraTemplate, MiraMatrix, TemplateSummary, MiraMatrixEntry } from './mira-common';
 
-export const removeModifiers = (
-	v: string,
-	context: { [key: string]: string },
-	scrubbingKeys: string[]
-) => {
+export const removeModifiers = (v: string, context: { [key: string]: string }, scrubbingKeys: string[]) => {
 	let result = v;
 	scrubbingKeys.forEach((key) => {
 		result = result.replace(`_${context[key]}`, '');
