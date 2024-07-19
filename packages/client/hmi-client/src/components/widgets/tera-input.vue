@@ -124,7 +124,7 @@ const unmask = () => {
 		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 
-	if (isTextContainingOnlyDigits(props.modelValue)) {
+	if (isTextContainingOnlyDigits(maskedValue.value)) {
 		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
