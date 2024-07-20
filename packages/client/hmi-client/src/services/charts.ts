@@ -612,7 +612,7 @@ export const createInterventionChart = (interventionsData: { name: string; value
 		});
 		// chart
 		spec.layer.push({
-			data: { values: interventionsData }, // Dummy data to ensure the layer is rendered
+			data: { values: interventionsData },
 			mark: 'point',
 			encoding: {
 				x: { field: 'time', type: 'quantitative' },
