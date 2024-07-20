@@ -56,11 +56,10 @@
 					<span v-else>
 						<span class="concept">
 							<label>Concept</label>
-							<!--icon="pi pi-search"-->
 							<AutoComplete
 								label="Concept"
 								size="small"
-								placeholder="Select a concept"
+								placeholder="Search concepts"
 								v-model="parentEditingState[index].childrenConcepts.name"
 								:suggestions="results"
 								optionLabel="name"
