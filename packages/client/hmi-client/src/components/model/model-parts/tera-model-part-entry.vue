@@ -36,11 +36,11 @@
 				label="Concept"
 				size="small"
 				placeholder="Select a concept"
-				v-model="conceptQuery"
+				v-model="query"
 				:suggestions="results"
 				optionLabel="name"
 				:disabled="disabledInputs?.includes('concept')"
-				@complete="searchConcepts"
+				@complete="async () => (results = await searchCuriesEntities(query))"
 				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
 			/>
 		</span>
@@ -56,9 +56,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
@@ -70,20 +70,16 @@ const props = defineProps<{
 
 defineEmits(['update-item']);
 
-const conceptQuery = ref('');
+const query = ref('');
 const results = ref<DKG[]>([]);
 
-async function searchConcepts(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) results.value = await searchCuriesEntities(query);
-}
-
-onMounted(async () => {
-	const identifiers = props.item.grounding?.identifiers;
-	if (identifiers) {
-		conceptQuery.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-	}
-});
+watch(
+	() => props.item.grounding?.identifiers,
+	async (identifiers) => {
+		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

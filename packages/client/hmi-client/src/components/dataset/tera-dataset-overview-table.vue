@@ -21,10 +21,10 @@
 			</template>
 			<template #editor="{ data, index }">
 				<AutoComplete
-					v-model="conceptQuery"
+					v-model="query"
 					placeholder="Search for concepts"
 					:suggestions="curies"
-					@complete="onSearch"
+					@complete="async () => (curies = await searchCuriesEntities(query))"
 					@item-select="
 						updateDataset(index, 'metadata', {
 							...data.column?.metadata,
@@ -60,7 +60,7 @@ import {
 	parseCurie,
 	searchCuriesEntities
 } from '@/services/concept';
-import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
+import AutoComplete from 'primevue/autocomplete';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 
 const props = defineProps<{
@@ -68,20 +68,12 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-dataset']);
 
-const conceptQuery = ref('');
+const query = ref('');
 const curies = ref<DKG[]>([]);
 const tableData = ref<any[]>([]);
 
 function formatName(name: string) {
 	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
-}
-
-async function onSearch(event: AutoCompleteCompleteEvent) {
-	const query = event.query;
-	if (query.length > 2) {
-		const response = await searchCuriesEntities(query);
-		curies.value = response;
-	}
 }
 
 async function updateDataset(index: number, field: string, value: any) {
@@ -96,7 +88,7 @@ async function updateDataset(index: number, field: string, value: any) {
 }
 
 function onCellEditComplete() {
-	conceptQuery.value = '';
+	query.value = '';
 }
 
 watch(
