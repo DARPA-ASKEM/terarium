@@ -214,6 +214,7 @@ export function updateModelPartProperty(modelPart: any, key: string, value: any)
 	} else if (key === 'concept') {
 		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
 		modelPart.grounding.identifiers = parseCurie(value);
+		console.log(modelPart);
 	} else {
 		modelPart[key] = value;
 	}
