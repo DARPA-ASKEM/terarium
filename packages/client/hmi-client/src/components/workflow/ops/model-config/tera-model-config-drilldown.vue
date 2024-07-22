@@ -111,7 +111,6 @@
 				@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
 				@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 			/>
-
 			<tera-parameter-table
 				v-if="!isEmpty(knobs.transientModelConfig) && !isEmpty(mmt.parameters) && model"
 				:model="model"
@@ -239,16 +238,15 @@ import { configureModelFromDatasets, configureModelFromDocument } from '@/servic
 import { KernelSessionManager } from '@/services/jupyter';
 import { getMMT, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
-	amrToModelConfiguration,
 	createModelConfiguration,
-	getAsConfiguredModel,
-	setInitialExpression,
 	setInitialSource,
+	setInitialExpression,
+	setParameterSource,
 	setParameterDistributions,
-	setParameterSource
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { ClientEvent, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type { Model, ModelConfiguration, TaskResponse, ClientEvent } from '@/types/Types';
 import { ClientEventType, TaskStatus } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -261,7 +259,6 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
-import TeraOperatorAnnotation from '@/components/operator/tera-operator-annotation.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -319,7 +316,7 @@ const buildJupyterContext = () => {
 		return null;
 	}
 	return {
-		context: 'mira_config_edit',
+		context: 'model_configuration',
 		language: 'python3',
 		context_info: {
 			id: contextId
@@ -335,7 +332,11 @@ const executeResponse = ref({
 	value: '',
 	traceback: ''
 });
-const sampleAgentQuestions = ['What are the current parameters values?', 'update the parameters {gamma: 0.13}'];
+const sampleAgentQuestions = [
+	'What are the current parameters values?',
+	'Update parameter gamma to constant 0.13',
+	'Update parameter beta to a uniform distribution with max 0.5 and min 0.2'
+];
 const contextLanguage = ref<string>('python3');
 
 const appendCode = (data: any, property: string, runUpdatedCode = false) => {
@@ -381,9 +382,9 @@ const runFromCode = () => {
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
 		})
-		.register('model_preview', (data) => {
+		.register('model_configuration_preview', (data) => {
 			if (!data.content) return;
-			handleModelPreview(data);
+			knobs.value.transientModelConfig = data.content;
 
 			if (executedCode) {
 				saveCodeToState(executedCode, true);
@@ -462,13 +463,6 @@ const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
 
 useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler);
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
-
-const handleModelPreview = async (data: any) => {
-	if (!model.value) return;
-	// Only update the keys provided in the model preview (not ID, temporary ect)
-	Object.assign(model.value, cloneDeep(data.content['application/json']));
-	knobs.value.transientModelConfig = await amrToModelConfiguration(model.value);
-};
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]);

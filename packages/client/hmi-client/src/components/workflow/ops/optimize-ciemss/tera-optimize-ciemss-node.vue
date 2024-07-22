@@ -152,6 +152,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
+			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
 		}
 	},
