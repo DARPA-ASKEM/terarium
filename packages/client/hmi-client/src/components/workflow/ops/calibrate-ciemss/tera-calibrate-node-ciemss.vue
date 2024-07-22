@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResult && csvAsset">
+		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre">
 			<vega-chart
 				v-for="(_config, index) of props.node.state.chartConfigs"
 				:key="index"
@@ -43,6 +43,7 @@ import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -52,22 +53,38 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 const runResult = ref<DataArray>([]);
+const runResultPre = ref<DataArray>([]);
+const runResultSummary = ref<DataArray>([]);
+const runResultSummaryPre = ref<DataArray>([]);
+
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
 let pyciemssMap: Record<string, string> = {};
+
 const preparedCharts = computed(() => {
 	const state = props.node.state;
 
-	if (!runResult.value || !csvAsset.value) return [];
+	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 
-	const result = runResult.value;
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(
+		runResult.value,
+		runResultPre.value,
+		runResultSummary.value,
+		runResultSummaryPre.value
+	);
 
+	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}`] = key;
+		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
+	});
+	state.mapping.forEach((mapObj) => {
+		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
@@ -91,16 +108,19 @@ const preparedCharts = computed(() => {
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
-			null,
+			{
+				dataset: resultSummary,
+				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				timeField: 'timepoint_id'
+			},
 			{
 				dataset: groundTruth,
 				variables: datasetVariables,
-				timeField: datasetTimeField as string,
-				groupField: 'sample_id'
+				timeField: datasetTimeField as string
 			},
 			{
 				width: 180,
@@ -108,7 +128,8 @@ const preparedCharts = computed(() => {
 				legend: false,
 				translationMap: reverseMap,
 				xAxisTitle: '',
-				yAxisTitle: ''
+				yAxisTitle: '',
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
@@ -172,12 +193,12 @@ watch(
 		};
 
 		// Calibration has finished, now kick of two forecast jobs to do comparison
-		// - using the default configuration (before)
+		// - using the default configuration ()
 		// - using the calibfrated configuration
 		if (response.state === PollerState.Done) {
-			// Default (before)
+			// Default (Pre)
 			let forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
-			state.inProgressBeforeForecastId = forecastResponse.id;
+			state.inProgressPreForecastId = forecastResponse.id;
 
 			// With calibrated result
 			baseRequestPayload.extra.inferred_parameters = id;
@@ -193,12 +214,12 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId + props.node.state.inProgressBeforeForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressPreForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
 		let doneProcess = true;
-		let response = await pollResult(props.node.state.inProgressBeforeForecastId);
+		let response = await pollResult(props.node.state.inProgressPreForecastId);
 		if (response.state !== PollerState.Done) {
 			doneProcess = false;
 		}
@@ -212,10 +233,10 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
 			state.forecastId = state.inProgressForecastId;
-			state.beforeForecastId = state.inProgressBeforeForecastId;
+			state.preForecastId = state.inProgressPreForecastId;
 
 			state.inProgressForecastId = '';
-			state.inProgressBeforeForecastId = '';
+			state.inProgressPreForecastId = '';
 			emit('update-state', state);
 
 			// Get the calibrate losses to generate a run summary
@@ -243,7 +264,7 @@ watch(
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
-					beforeForecastId: state.beforeForecastId,
+					preForecastId: state.preForecastId,
 					numIterations: state.numIterations,
 					numSamples: state.numSamples,
 					summaryId: summaryResponse?.id
@@ -262,10 +283,18 @@ watch(
 		if (!active) return;
 		if (!state.forecastId) return;
 
-		// Simulate
-		const result = await getRunResultCSV(state.forecastId, 'result.csv');
-		pyciemssMap = parsePyCiemssMap(result[0]);
-		runResult.value = result;
+		// Simulates
+		runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
+		runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
+
+		runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
+		runResultSummaryPre.value = await getRunResultCSV(
+			state.preForecastId,
+			'result_summary.csv',
+			renameFnGenerator('pre')
+		);
+
+		pyciemssMap = parsePyCiemssMap(runResult.value[0]);
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];
