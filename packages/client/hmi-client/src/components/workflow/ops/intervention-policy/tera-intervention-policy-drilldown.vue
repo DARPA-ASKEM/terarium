@@ -207,9 +207,9 @@ const stateOptions = computed(() => {
 
 const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
 
-const preparedCharts = computed(() => {
-	const charts = _.mapValues(groupedOutputParameters.value, (interventions) => {
-		const flattenedData = _.flatMap(interventions, (intervention) =>
+const preparedCharts = computed(() =>
+	_.mapValues(groupedOutputParameters.value, (interventions) => {
+		const flattenedData = interventions.flatMap((intervention) =>
 			intervention.staticInterventions.map((staticIntervention) => ({
 				name: intervention.name,
 				value: staticIntervention.value,
@@ -217,10 +217,8 @@ const preparedCharts = computed(() => {
 			}))
 		);
 		return createInterventionChart(flattenedData);
-	});
-
-	return charts;
-});
+	})
+);
 
 const initialize = async () => {
 	const state = props.node.state;
