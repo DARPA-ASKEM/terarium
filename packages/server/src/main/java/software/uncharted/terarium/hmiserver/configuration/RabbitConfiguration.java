@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfiguration {
+
 	@Value("${spring.rabbitmq.addresses}")
 	String rabbitAddresses;
 
@@ -21,7 +22,6 @@ public class RabbitConfiguration {
 
 	@Bean
 	public RabbitAdmin rabbitAdmin() throws URISyntaxException {
-
 		URI rabbitAddress = new URI(rabbitAddresses);
 
 		final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();

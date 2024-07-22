@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @Accessors(chain = true)
 @TSModel
 public class UploadProgress {
+
 	private String uploadId;
 	private int percentComplete;
 }

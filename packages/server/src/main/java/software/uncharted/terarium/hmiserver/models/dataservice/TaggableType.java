@@ -9,7 +9,6 @@ public enum TaggableType {
 	MODEL_PARAMETERS("model_parameters", null),
 	MODELS("models", AssetType.MODEL),
 	PROJECTS("projects", null),
-	PUBLICATIONS("publications", AssetType.PUBLICATION),
 	QUALIFIERS("qualifiers", null),
 	SIMULATION_PARAMETERS("simulation_parameters", null),
 	SIMULATION_PLANS("simulation_plans", null),
@@ -27,9 +26,9 @@ public enum TaggableType {
 	 */
 	public static TaggableType findByType(final String type) {
 		return Arrays.stream(values())
-				.filter(value -> type.equalsIgnoreCase(value.type))
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("No TaggableType with type: " + type));
+			.filter(value -> type.equalsIgnoreCase(value.type))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("No TaggableType with type: " + type));
 	}
 
 	TaggableType(final String type, final AssetType assetType) {
@@ -37,8 +36,8 @@ public enum TaggableType {
 		this.assetType = assetType;
 	}
 
-	public static TaggableType getTaggableTypeFromAssetType(AssetType assetType) {
-		for (TaggableType type : TaggableType.values()) {
+	public static TaggableType getTaggableTypeFromAssetType(final AssetType assetType) {
+		for (final TaggableType type : TaggableType.values()) {
 			if (type.assetType != null && type.assetType.equals(assetType)) {
 				return type;
 			}

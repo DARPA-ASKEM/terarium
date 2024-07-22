@@ -1,20 +1,29 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<div :tabName="FunmanTabs.Wizard" class="ml-4 mr-2 mt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:loading="showSpinner"
+						class="run-button"
+						label="Run"
+						icon="pi pi-play"
+						@click="runMakeQuery"
+						size="large"
+					/>
+				</template>
 				<main>
 					<h5>
 						Set validation parameters
 						<i class="pi pi-info-circle" v-tooltip="validateParametersToolTip" />
 					</h5>
-					<p class="secondary-text mt-1">
-						The validator will use these parameters to execute the sanity checks.
-					</p>
+					<p class="secondary-text mt-1">The validator will use these parameters to execute the sanity checks.</p>
 					<div class="section-row timespan">
 						<div class="button-column">
 							<label>Start time</label>
@@ -29,37 +38,18 @@
 							<InputNumber v-model="knobs.numberOfSteps" />
 						</div>
 					</div>
-					<InputText
-						:disabled="true"
-						class="p-inputtext-sm timespan-list mb-2"
-						v-model="requestStepListString"
-					/>
+					<InputText :disabled="true" class="p-inputtext-sm timespan-list mb-2" v-model="requestStepListString" />
 					<template v-if="showAdditionalOptions">
 						<div class="button-column">
 							<label>Tolerance</label>
 							<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
-								<tera-input-number
-									class="w-2"
-									:min="0"
-									:max="1"
-									:min-fraction-digits="0"
-									:max-fraction-digits="7"
-									v-model="knobs.tolerance"
-								/>
-								<Slider
-									v-model="knobs.tolerance"
-									:min="0"
-									:max="1"
-									:step="0.01"
-									class="w-full mr-2"
-								/>
+								<tera-input type="nist" v-model="knobs.tolerance" />
+								<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
 							</div>
 						</div>
 						<div class="section-row fadein animation-duration-600">
 							<!-- This will definitely require a proper tool tip. -->
-							<label class="w-auto mr-2"
-								>Select parameters of interest <i class="pi pi-info-circle"
-							/></label>
+							<label class="w-auto mr-2">Select parameters of interest <i class="pi pi-info-circle" /></label>
 							<MultiSelect
 								ref="columnSelect"
 								:modelValue="variablesOfInterest"
@@ -91,14 +81,12 @@
 
 					<div class="spacer">
 						<h5>Add sanity checks</h5>
-						<p class="secondary-text mt-1">
-							Model configurations will be tested against these constraints.
-						</p>
+						<p class="secondary-text mt-1">Model configurations will be tested against these constraints.</p>
 					</div>
 					<tera-compartment-constraint :variables="modelStates" :mass="mass" />
 					<tera-constraint-group-form
 						v-for="(cfg, index) in node.state.constraintGroups"
-						:key="index + Date.now()"
+						:key="selectedOutputId + ':' + index"
 						:config="cfg"
 						:index="index"
 						:model-states="modelStates"
@@ -133,32 +121,23 @@
 				@update:selection="onSelection"
 				:options="outputs"
 				is-selectable
-				class="pt-3 pb-3 pl-2 pr-4"
+				class="pb-3 pl-2 pr-4"
 			>
 				<template v-if="showSpinner">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
 				</template>
 				<template v-else>
-					<tera-funman-output v-if="activeOutput" :fun-model-id="activeOutput.value?.[0]" />
+					<tera-funman-output
+						v-if="activeOutput"
+						:fun-model-id="activeOutput.value?.[0]"
+						:trajectoryState="node.state.trajectoryState"
+						@update:trajectoryState="updateTrajectorystate"
+					/>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</template>
-
-		<template #footer>
-			<Button
-				outlined
-				:loading="showSpinner"
-				class="run-button"
-				label="Run"
-				icon="pi pi-play"
-				@click="runMakeQuery"
-				size="large"
-			/>
-			<Button outlined label="Save as a new model" size="large" />
-			<Button label="Close" @click="emit('close')" size="large" />
 		</template>
 	</tera-drilldown>
 </template>
@@ -168,7 +147,7 @@ import _, { floor } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import MultiSelect from 'primevue/multiselect';
@@ -180,15 +159,10 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
-import type {
-	FunmanPostQueriesRequest,
-	Model,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { FunmanPostQueriesRequest, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { makeQueries } from '@/services/models/funman-service';
 import { WorkflowNode, WorkflowOutput } from '@/types/workflow';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraFunmanOutput from '@/components/workflow/ops/funman/tera-funman-output.vue';
@@ -316,6 +290,15 @@ const toggleAdditonalOptions = () => {
 	showAdditionalOptions.value = !showAdditionalOptions.value;
 };
 
+const menuItems = computed(() => [
+	{
+		label: 'Save as new model configurations',
+		icon: 'pi pi-pencil',
+		disabled: true,
+		command: () => {}
+	}
+]);
+
 const variablesOfInterest = ref<string[]>([]);
 const onToggleVariableOfInterest = (vals: string[]) => {
 	variablesOfInterest.value = vals;
@@ -423,7 +406,7 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	model.value = modelConfiguration.value.configuration;
+	model.value = await getAsConfiguredModel(modelConfiguration.value);
 };
 
 const setModelOptions = async () => {
@@ -442,13 +425,11 @@ const setModelOptions = async () => {
 
 	const parametersMap = {};
 	semantics?.ode.parameters?.forEach((d) => {
-		parametersMap[renameReserved(d.id)] = d.value;
+		// FIXME: may need to sample distributions if value is not available
+		parametersMap[renameReserved(d.id)] = d.value || 0;
 	});
 
-	const massValue = await pythonInstance.evaluateExpression(
-		modelMassExpression as string,
-		parametersMap
-	);
+	const massValue = await pythonInstance.evaluateExpression(modelMassExpression as string, parametersMap);
 	mass.value = massValue;
 
 	if (model.value.model.states) {
@@ -477,9 +458,7 @@ const setModelOptions = async () => {
 	if (model.value.semantics?.ode.parameters) {
 		setRequestParameters(model.value.semantics?.ode.parameters);
 
-		variablesOfInterest.value = requestParameters.value
-			.filter((d: any) => d.label === 'all')
-			.map((d: any) => d.name);
+		variablesOfInterest.value = requestParameters.value.filter((d: any) => d.label === 'all').map((d: any) => d.name);
 	} else {
 		toast.error('', 'Provided model has no parameters');
 	}
@@ -511,6 +490,12 @@ const setRequestParameters = (modelParameters: ModelParameter[]) => {
 		}
 		return param;
 	});
+};
+
+const updateTrajectorystate = (s: string) => {
+	const state = _.cloneDeep(props.node.state);
+	state.trajectoryState = s;
+	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

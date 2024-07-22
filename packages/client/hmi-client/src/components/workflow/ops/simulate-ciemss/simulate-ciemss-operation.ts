@@ -1,8 +1,7 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
 
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
@@ -26,7 +25,18 @@ export const SimulateCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{ type: 'calibrateSimulationId', label: 'Calibration', acceptMultiple: false, isOptional: true }
+		{
+			type: 'calibrateSimulationId',
+			label: 'Calibration',
+			acceptMultiple: false,
+			isOptional: true
+		},
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false,
+			isOptional: true
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -41,11 +51,5 @@ export const SimulateCiemssOperation: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' }
 		};
 		return init;
-	},
-
-	// TODO: Figure out mapping
-	// Calls API, returns results.
-	action: async (): Promise<void> => {
-		console.log('test');
 	}
 };

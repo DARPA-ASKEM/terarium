@@ -73,7 +73,8 @@ const submitQuestion = () => {
 	const message = props.kernelManager.sendMessage('llm_request', {
 		request: questionString.value
 	});
-	emit('question-asked');
+	emit('question-asked', questionString.value);
+
 	// May prefer to use a manual status rather than following this. TBD. Both options work for now
 	message.register('status', (data) => {
 		kernelStatus.value = data.content.execution_state;
@@ -105,7 +106,6 @@ const submitQuestion = () => {
 	margin-bottom: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
-	padding-top: var(--gap);
 }
 
 .toolbar-left-side,

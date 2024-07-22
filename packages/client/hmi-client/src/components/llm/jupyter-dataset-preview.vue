@@ -4,12 +4,7 @@
 		<section v-if="csvContent">
 			<span>{{ `${csvContent[0].length} columns | ${csvContent.length - 1} rows` }} </span>
 			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1)">
-				<Column
-					v-for="(colName, index) of csvHeaders"
-					:key="index"
-					:field="index.toString()"
-					:header="colName"
-				/>
+				<Column v-for="(colName, index) of csvHeaders" :key="index" :field="index.toString()" :header="colName" />
 			</DataTable>
 			<span>Showing first {{ csvContent.length - 1 }} rows</span>
 		</section>

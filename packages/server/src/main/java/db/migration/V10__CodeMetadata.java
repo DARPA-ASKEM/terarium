@@ -16,14 +16,15 @@ public class V10__CodeMetadata extends BaseJavaMigration {
 	@Override
 	public void migrate(final Context context) throws Exception {
 		try (var statement = context.getConnection().createStatement()) {
-
 			// Select all rows from the simulation_result_files table
 			final ResultSet resultSet = statement.executeQuery(
-					"SELECT code_id, metadata, metadata_key FROM code_metadata ORDER BY code_id;");
+				"SELECT code_id, metadata, metadata_key FROM code_metadata ORDER BY code_id;"
+			);
 
 			// Prepare the update statement for the simulation table
-			final PreparedStatement preparedStatement =
-					context.getConnection().prepareStatement("UPDATE code SET metadata = ?::json WHERE id = ?;");
+			final PreparedStatement preparedStatement = context
+				.getConnection()
+				.prepareStatement("UPDATE code SET metadata = ?::json WHERE id = ?;");
 
 			UUID prevId = null;
 			Map<String, String> metadataMap = new HashMap<>();

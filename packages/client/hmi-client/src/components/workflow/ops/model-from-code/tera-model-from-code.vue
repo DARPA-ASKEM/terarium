@@ -6,10 +6,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<template #header-actions>
-			<tera-operator-annotation
-				:state="node.state"
-				@update-state="(state: any) => emit('update-state', state)"
-			/>
+			<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
 			<tera-output-dropdown
 				:options="outputs"
 				v-model:output="selectedOutputId"
@@ -51,9 +48,7 @@
 							icon="pi pi-plus"
 							text
 							@click="addCodeBlock"
-							:disabled="
-								clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)
-							"
+							:disabled="clonedState.modelFramework === ModelFramework.Decapodes && !isEmpty(allCodeBlocks)"
 						/>
 					</section>
 				</header>
@@ -113,11 +108,7 @@
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
-				<tera-operator-placeholder
-					v-else
-					:operation-type="node.operationType"
-					style="height: 100%"
-				/>
+				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
 				<template #footer>
 					<Button
 						:loading="savingAsset"
@@ -159,12 +150,12 @@ import TeraModelDescription from '@/components/model/petrinet/tera-model-descrip
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { useProjects } from '@/composables/project';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getCodeAsset } from '@/services/code';
 import { getDocumentAsset } from '@/services/document-assets';
 import { KernelSessionManager } from '@/services/jupyter';
 import { codeBlocksToAmr } from '@/services/knowledge';
-import { createModel, generateModelCard, getModel, updateModel } from '@/services/model';
+import { createModel, getModel, updateModel } from '@/services/model';
 import type { Card, Code, DocumentAsset, Model } from '@/types/Types';
 import { AssetType, ProgrammingLanguage } from '@/types/Types';
 import { ModelServiceType } from '@/types/common';
@@ -177,19 +168,14 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
+import { modelCard } from '@/services/goLLM';
 import { ModelFromCodeState } from './model-from-code-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromCodeState>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-state',
-	'select-output',
-	'append-output',
-	'update-output-port'
-]);
+const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output', 'update-output-port']);
 
 enum ModelFramework {
 	Petrinet = 'Petrinet',
@@ -218,10 +204,7 @@ const allCodeBlocks = computed<AssetBlock<CodeBlock>[]>(() => {
 	const blocks: AssetBlock<CodeBlock>[] = [];
 
 	blocks.push(...inputCodeBlocks.value);
-	if (
-		clonedState.value.modelFramework === ModelFramework.Decapodes &&
-		!isEmpty(clonedState.value.codeBlocks)
-	) {
+	if (clonedState.value.modelFramework === ModelFramework.Decapodes && !isEmpty(clonedState.value.codeBlocks)) {
 		// show only first added code block if Decapodes
 		if (isEmpty(inputCodeBlocks.value)) blocks.push(clonedState.value.codeBlocks[0]);
 	} else {
@@ -318,10 +301,8 @@ onUnmounted(() => {
 });
 
 function buildJupyterContext() {
-	const contextName =
-		clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
-	const languageName =
-		clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
+	const contextName = clonedState.value.modelFramework === ModelFramework.Decapodes ? 'decapodes' : null;
+	const languageName = clonedState.value.codeLanguage === ProgrammingLanguage.Julia ? 'julia-1.10' : null;
 
 	return {
 		context: contextName,
@@ -371,7 +352,7 @@ async function handleCode() {
 			return;
 		}
 
-		generateCard(documentId.value, model.id);
+		await generateCard(documentId.value);
 
 		clonedState.value.modelId = model.id;
 
@@ -515,22 +496,13 @@ function isSaveModelDisabled(): boolean {
 	return !selectedModel.value || !!activeProjectModelIds?.includes(selectedModel.value.id);
 }
 
-// generates the model card and fetches the model when finished
-async function generateCard(docId, modelId) {
-	if (!docId || !modelId) return;
-
-	if (clonedState.value.modelService === ModelServiceType.TA1 && card.value) {
-		return;
-	}
-
-	if (clonedState.value.modelService === ModelServiceType.TA4 && goLLMCard.value) {
-		return;
-	}
-
+// Generates the model card and fetches the model when finished
+async function generateCard(docId) {
+	if (!docId || goLLMCard.value) return;
 	isGeneratingCard.value = true;
-	await generateModelCard(docId, modelId, clonedState.value.modelService);
+	await modelCard(docId);
 	isGeneratingCard.value = false;
-	fetchModel();
+	await fetchModel();
 }
 
 watch(

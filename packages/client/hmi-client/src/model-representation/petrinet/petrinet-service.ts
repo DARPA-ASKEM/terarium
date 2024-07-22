@@ -1,14 +1,9 @@
-import { updateModelConfiguration } from '@/services/model-configurations';
-import { Model, ModelConfiguration } from '@/types/Types';
+import { Model } from '@/types/Types';
 
 const replaceExactString = (str: string, wordToReplace: string, replacementWord: string): string =>
 	str.trim() === wordToReplace.trim() ? str.replace(wordToReplace, replacementWord) : str;
 
-const replaceValuesInExpression = (
-	expression: string,
-	wordToReplace: string,
-	replaceWord: string
-): string => {
+const replaceValuesInExpression = (expression: string, wordToReplace: string, replaceWord: string): string => {
 	let expressionBuilder = '';
 	let isOperator = false;
 	let content = '';
@@ -40,11 +35,7 @@ const replaceValuesInExpression = (
 };
 
 // function to replace the content inside the tags of a mathml expression
-const replaceValuesInMathML = (
-	mathmlExpression: string,
-	wordToReplace: string,
-	replaceWord: string
-): string => {
+const replaceValuesInMathML = (mathmlExpression: string, wordToReplace: string, replaceWord: string): string => {
 	let expressionBuilder = '';
 	let isTag = false;
 	let content = '';
@@ -91,19 +82,6 @@ export const updateParameterId = (amr: Model, id: string, newId: string) => {
 			}
 		});
 	}
-};
-
-export const updateConfigFields = async (
-	modelConfigs: ModelConfiguration[],
-	id: string,
-	newId: string
-) => {
-	modelConfigs.forEach((config) => {
-		updateParameterId(config.configuration, id, newId);
-		// note that this is making an async call but we don't need to wait for it to finish
-		// since we don't immediately need the updated configs
-		updateModelConfiguration(config);
-	});
 };
 
 export function newAMR(modelName: string = '') {

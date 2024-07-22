@@ -1,5 +1,5 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { ModelConfiguration } from '@/types/Types';
 
 export const name = 'ModelConfigOperation';
 
@@ -12,7 +12,6 @@ export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	modelEditCodeHistory: ModelEditCode[];
 	hasCodeBeenRun: boolean;
-	tempConfigId: string; // This is used for beaker context when there is no output selected. It is a config id that is in TDS and marked as temp
 }
 
 export const ModelConfigOperation: Operation = {
@@ -25,19 +24,21 @@ export const ModelConfigOperation: Operation = {
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'modelConfigId' }],
+	outputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	action: async () => ({}),
 
 	initState: () => {
 		const init: ModelConfigOperationState = {
 			modelEditCodeHistory: [],
 			hasCodeBeenRun: false,
-			tempConfigId: '',
 			transientModelConfig: {
 				name: '',
 				description: '',
-				model_id: '',
-				configuration: {} as Model
+				modelId: '',
+				calibrationRunId: '',
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
 			}
 		};
 		return init;

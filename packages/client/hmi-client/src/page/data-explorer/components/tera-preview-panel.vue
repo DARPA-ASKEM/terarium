@@ -1,10 +1,5 @@
 <template>
-	<tera-slider
-		:content-width="contentWidth"
-		tab-width="0"
-		direction="right"
-		:is-open="Boolean(previewItem)"
-	>
+	<tera-slider content-width="100%" tab-width="0" direction="right" :is-open="Boolean(previewItem)">
 		<template v-slot:content>
 			<template v-if="previewItemResourceType === ResourceType.XDD">
 				<tera-external-publication
@@ -97,10 +92,7 @@ const previewItemId = computed(() => {
 	if (isDocument(previewItemState.value)) {
 		return previewItemState.value.gddId;
 	}
-	if (
-		previewItemResourceType.value === ResourceType.DATASET &&
-		props.source === DatasetSource.ESGF
-	) {
+	if (previewItemResourceType.value === ResourceType.DATASET && props.source === DatasetSource.ESGF) {
 		const dataset: Dataset = previewItemState.value as Dataset;
 		return dataset.esgfId as string;
 	}

@@ -3,16 +3,7 @@ import EventEmitter from './event-emitter';
 import removeChildren from '../utils/dom-util';
 import { traverseGraph, getAStarPath } from './traverse';
 import { translate } from '../utils/svg-util';
-import {
-	Options,
-	INode,
-	IEdge,
-	IGraph,
-	IRect,
-	IPoint,
-	D3Selection,
-	D3SelectionINode
-} from '../types';
+import { Options, INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -312,16 +303,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			gX?.call(xAxis);
 			gY?.call(yAxis);
 			svg.selectAll('.axis').selectAll('.domain').remove();
-			svg
-				.selectAll('.axis')
-				.selectAll('line')
-				.style('opacity', 0.1)
-				.style('pointer-events', 'none');
-			svg
-				.selectAll('.axis')
-				.selectAll('text')
-				.style('opacity', 0.5)
-				.style('pointer-events', 'none');
+			svg.selectAll('.axis').selectAll('line').style('opacity', 0.1).style('pointer-events', 'none');
+			svg.selectAll('.axis').selectAll('text').style('opacity', 0.5).style('pointer-events', 'none');
 		}
 
 		// Zoom control
@@ -334,18 +317,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				gX.call(xAxis.scale(evt.transform.rescaleX(x)));
 				gY.call(yAxis.scale(evt.transform.rescaleY(y)));
 				svg.selectAll('.axis').selectAll('.domain').remove();
-				svg
-					.selectAll('.axis')
-					.selectAll('line')
-					.style('opacity', 0.1)
-					.style('pointer-events', 'none');
-				svg
-					.selectAll('.axis')
-					.selectAll('text')
-					.style('opacity', 0.5)
-					.style('pointer-events', 'none');
+				svg.selectAll('.axis').selectAll('line').style('opacity', 0.1).style('pointer-events', 'none');
+				svg.selectAll('.axis').selectAll('text').style('opacity', 0.5).style('pointer-events', 'none');
 			}
 		};
+
 		const zoomEnd = () => {
 			if (!this.graph || !chart) return;
 			this.zoomTransformObject = d3.zoomTransform(chart.node() as Element);
@@ -354,16 +330,20 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
+		const zoomRange = this.options.zoomRange || [minZoom, maxZoom];
 
-		if (this.options.zoomRange) {
-			this.zoom = d3
-				.zoom()
-				.scaleExtent(this.options.zoomRange)
-				.on('zoom', zoomed)
-				.on('end', zoomEnd);
-		} else {
-			this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
-		}
+		this.zoom = d3
+			.zoom()
+			.filter((event: MouseEvent) => {
+				if (renderer.options?.zoomModifier) {
+					return !(event.type === 'wheel') || event?.[renderer.options.zoomModifier];
+				}
+				return true;
+			})
+			.scaleExtent(zoomRange)
+			.on('zoom', zoomed)
+			.on('end', zoomEnd);
+
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		if (this.options.useStableZoomPan && this.zoomTransformObject) {
@@ -399,10 +379,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			translateY = this.chartSize.height / 2 - scaleFactor * graphCenterY;
 		}
 
-		svg.call(
-			this.zoom?.transform as any,
-			d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor)
-		);
+		svg.call(this.zoom?.transform as any, d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor));
 	}
 
 	enableNodeDragging(renderer: Renderer<V, E>): void {
@@ -427,10 +404,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				// relax this guard.
 				// if (node.nodes && node.nodes.length > 0) continue;
 				if (p.x >= checkingNode.x - buffer && p.x <= checkingNode.x + checkingNode.width + buffer) {
-					if (
-						p.y >= checkingNode.y - buffer &&
-						p.y <= checkingNode.y + checkingNode.height + buffer
-					) {
+					if (p.y >= checkingNode.y - buffer && p.y <= checkingNode.y + checkingNode.height + buffer) {
 						return true;
 					}
 				}
@@ -444,8 +418,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 
-			if (dragSelector)
-				renderer.isDragEnabled = d3.select(evt.sourceEvent.target).classed(dragSelector);
+			if (dragSelector) renderer.isDragEnabled = d3.select(evt.sourceEvent.target).classed(dragSelector);
 
 			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-start', evt, node, renderer);
@@ -526,11 +499,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			emitWrapper('node-drag-end', evt, node, renderer);
 		}
 
-		const nodeDrag = d3
-			.drag()
-			.on('start', nodeDragStart)
-			.on('end', nodeDragEnd)
-			.on('drag', nodeDragMove);
+		const nodeDrag = d3.drag().on('start', nodeDragStart).on('end', nodeDragEnd).on('drag', nodeDragMove);
 		this.chart?.selectAll('.node').call(nodeDrag as any);
 	}
 

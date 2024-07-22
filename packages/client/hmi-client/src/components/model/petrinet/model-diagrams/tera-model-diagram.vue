@@ -1,38 +1,17 @@
 <template>
-	<tera-tooltip
-		:custom-position="hoveredTransitionPosition"
-		:show-tooltip="!isEmpty(hoveredTransitionId)"
-	>
+	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
 		<main>
-			<TeraResizablePanel
-				v-if="!isPreview"
-				class="diagram-container"
-				:class="{ unlocked: !isLocked }"
-				:style="isLocked && { pointerEvents: 'none' }"
-			>
+			<TeraResizablePanel v-if="!isPreview" class="diagram-container">
 				<section class="graph-element">
 					<Toolbar>
 						<template #start>
 							<span>
-								<Button
-									@click="resetZoom"
-									label="Reset zoom"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
-									severity="secondary"
-								/>
-								<Button
-									@click="isLocked = !isLocked"
-									:icon="isLocked ? 'pi pi-lock' : 'pi pi-unlock'"
-									:label="isLocked ? 'Unlock to adjust' : 'Lock to freeze'"
-									class="p-button-sm p-button-outlined"
-									style="background-color: var(--gray-50)"
-									onmouseover="this.style.backgroundColor='--gray-100';"
-									onmouseout="this.style.backgroundColor='(--gray-50)';"
-									severity="secondary"
-								/>
+								<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
+								<span class="how-to-zoom">
+									<kbd>Ctrl</kbd>
+									+
+									<kbd>scroll</kbd>&nbsp;to zoom</span
+								>
 							</span>
 						</template>
 						<template #center> </template>
@@ -40,13 +19,9 @@
 							<span>
 								<SelectButton
 									v-if="model && isStratified"
+									class="p-button-sm"
 									:model-value="stratifiedView"
-									@change="
-										if ($event.value) {
-											stratifiedView = $event.value;
-											toggleCollapsedView();
-										}
-									"
+									@change="$event.value && toggleCollapsedView($event.value)"
 									:options="stratifiedViewOptions"
 									option-value="value"
 								>
@@ -59,18 +34,14 @@
 						</template>
 					</Toolbar>
 					<template v-if="model">
-						<tera-model-type-legend class="legend-anchor" :model="model" />
 						<div class="graph-container">
 							<div ref="graphElement" class="graph-element" />
-							<div class="legend">
-								<div class="legend-item" v-for="(label, index) in graphLegendLabels" :key="index">
-									<div
-										class="legend-circle"
-										:style="`background: ${graphLegendColors[index]}`"
-									></div>
+							<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+								<li v-for="(label, index) in graphLegendLabels" :key="index">
+									<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
 									{{ label }}
-								</div>
-							</div>
+								</li>
+							</ul>
 						</div>
 					</template>
 				</section>
@@ -83,16 +54,12 @@
 			/>
 			<Teleport to="body">
 				<tera-stratified-matrix-modal
-					v-if="openValueConfig && modelConfiguration"
+					v-if="selectedTransitionId"
 					:id="selectedTransitionId"
 					:mmt="mmt"
 					:mmt-params="mmtParams"
 					:stratified-matrix-type="StratifiedMatrix.Rates"
-					:open-value-config="openValueConfig"
-					@close-modal="openValueConfig = false"
-					@update-configuration="
-						(configToUpdate: ModelConfiguration) => emit('update-configuration', configToUpdate)
-					"
+					@close-modal="selectedTransitionId = ''"
 				/>
 			</Teleport>
 		</main>
@@ -115,48 +82,37 @@ import { ref, watch, computed, nextTick } from 'vue';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { PetrinetRenderer, NodeType } from '@/model-representation/petrinet/petrinet-renderer';
+import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelType, getMMT } from '@/services/model';
-import type { Model, ModelConfiguration } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { StratifiedMatrix } from '@/types/Model';
 import { AMRSchemaNames } from '@/types/common';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {
-	isStratifiedModel,
-	emptyMiraModel,
-	convertToIGraph,
-	collapseTemplates,
-	rawTemplatesSummary
-} from '@/model-representation/mira/mira';
+import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
 import { getModelRenderer } from '@/model-representation/service';
-import TeraModelTypeLegend from './tera-model-type-legend.vue';
+import { NodeType } from '@/services/graph';
 import TeraStratifiedMatrixModal from '../model-configurations/tera-stratified-matrix-modal.vue';
 import TeraStratifiedMatrixPreview from '../model-configurations/tera-stratified-matrix-preview.vue';
 
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfiguration?: ModelConfiguration;
 	isPreview?: boolean;
 }>();
 
-const emit = defineEmits(['update-configuration']);
-
-const isLocked = ref(true);
-const isCollapsed = ref(true);
 const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
-const openValueConfig = ref(false);
 const selectedTransitionId = ref('');
 const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
+let observableSummary: ObservableSummary = {};
 const hoveredTransitionId = ref('');
 const hoveredTransitionPosition = ref({ x: 0, y: 0 });
 const tooltipContentRef = ref();
@@ -167,10 +123,7 @@ enum StratifiedView {
 }
 
 const stratifiedView = ref(StratifiedView.Collapsed);
-const stratifiedViewOptions = ref([
-	{ value: StratifiedView.Expanded },
-	{ value: StratifiedView.Collapsed }
-]);
+const stratifiedViewOptions = ref([{ value: StratifiedView.Expanded }, { value: StratifiedView.Collapsed }]);
 
 const isStratified = computed(() => isStratifiedModel(mmt.value));
 
@@ -181,20 +134,23 @@ const resetZoom = async () => {
 };
 
 async function renderGraph() {
-	const { templatesSummary } = collapseTemplates(mmt.value);
-	const rawTemplates = rawTemplatesSummary(mmt.value);
-
-	renderer = getModelRenderer(mmt.value, graphElement.value as HTMLDivElement, isCollapsed.value);
+	renderer = getModelRenderer(
+		mmt.value,
+		graphElement.value as HTMLDivElement,
+		stratifiedView.value === StratifiedView.Collapsed
+	);
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
+	} else {
+		graphLegendLabels.value = [];
+		graphLegendColors.value = [];
 	}
 
 	renderer.on('node-click', (_eventName, _event, selection) => {
 		const { id, data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) {
 			selectedTransitionId.value = id;
-			openValueConfig.value = true;
 		}
 	});
 
@@ -218,10 +174,7 @@ async function renderGraph() {
 				const transitionMatrixWidth = selection.datum().width;
 
 				// Shift tooltip to the top center of the transition matrix
-				const x =
-					transitionMatrixX -
-					(tooltipWidth + transitionMatrixWidth / 2) / 2 +
-					transitionMatrixBounds.width / 2;
+				const x = transitionMatrixX - (tooltipWidth + transitionMatrixWidth / 2) / 2 + transitionMatrixBounds.width / 2;
 				const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
 
 				hoveredTransitionPosition.value = { x, y };
@@ -235,10 +188,11 @@ async function renderGraph() {
 	});
 
 	// Render graph
-	const graphData =
-		isCollapsed.value === true && isStratified.value
-			? convertToIGraph(templatesSummary)
-			: convertToIGraph(rawTemplates);
+	const graphData = convertToIGraph(
+		mmt.value,
+		observableSummary,
+		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
+	);
 
 	if (renderer) {
 		renderer.isGraphDirty = true;
@@ -247,9 +201,9 @@ async function renderGraph() {
 	}
 }
 
-async function toggleCollapsedView() {
-	isCollapsed.value = !isCollapsed.value;
-	renderGraph();
+async function toggleCollapsedView(view: StratifiedView) {
+	stratifiedView.value = view;
+	await renderGraph();
 }
 
 watch(
@@ -260,6 +214,7 @@ watch(
 		const response: any = await getMMT(props.model);
 		mmt.value = response.mmt;
 		mmtParams.value = response.template_params;
+		observableSummary = response.observable_summary;
 		await renderGraph();
 	},
 	{ immediate: true, deep: true }
@@ -283,9 +238,7 @@ main {
 	display: flex;
 	flex-direction: column;
 }
-.unlocked {
-	border: 1px solid var(--primary-color);
-}
+
 .preview {
 	/* Having both min and max heights prevents height from resizing itself while being dragged on templating canvas
 	This resizes on template canvas but not when its in a workflow node?? (tera-model-node)
@@ -334,6 +287,11 @@ main {
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
 }
 
 :deep(.graph-element .p-button) {
@@ -343,39 +301,53 @@ main {
 	}
 }
 
-.legend {
+.how-to-zoom {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-caption);
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: 0 var(--gap-small);
+	border-radius: var(--border-radius);
+	pointer-events: none;
+	user-select: none;
+}
+
+kbd {
+	background-color: var(--surface-section);
+	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
+	padding: 2px var(--gap-xsmall);
+	font-size: var(--font-tiny);
+	font-weight: var(--font-weight-semibold);
+}
+
+ul.legend {
+	background-color: var(--surface-transparent);
+	backdrop-filter: blur(4px);
+	padding: var(--gap-xsmall) var(--gap-small);
+	border-radius: var(--border-radius);
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	display: flex;
-	margin: 1rem;
+	margin: var(--gap-small);
+	margin-bottom: var(--gap);
+	gap: var(--gap);
+	pointer-events: none;
+
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--gap-xsmall);
+	}
 }
-.legend-item {
-	display: flex;
-	align-items: center;
-	margin: 0 1rem;
-}
+
 .legend-circle {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
 	border-radius: 50%;
-	margin-right: 0.5rem;
-}
-
-.legend-anchor {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-	background-color: var(--surface-glass);
-	backdrop-filter: blur(5px);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
-	max-width: 95%;
 }
 
 .modal-input-container {

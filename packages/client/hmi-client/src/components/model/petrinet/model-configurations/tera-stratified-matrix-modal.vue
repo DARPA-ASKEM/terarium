@@ -3,7 +3,7 @@
 		<template #header>
 			<div class="flex align-items-center justify-space-between">
 				<h4 class="w-full">{{ id }} matrix</h4>
-				<div class="flex align-items-center gap-2 white-space-nowrap">
+				<div v-if="!isReadOnly" class="flex align-items-center gap-2 white-space-nowrap">
 					<label for="matrixShouldEval" class="mr-2">Evaluate expressions</label>
 					<InputSwitch
 						inputId="matrixShouldEval"
@@ -22,14 +22,9 @@
 			/>
 		</template>
 		<template #footer>
+			<!--FIXME: This design is odd, since these buttons do the same thing-->
 			<Button size="large" label="OK" @click="emit('close-modal')" />
-			<Button
-				size="large"
-				severity="secondary"
-				class="p-button-outlined"
-				label="Cancel"
-				@click="emit('close-modal')"
-			/>
+			<Button size="large" severity="secondary" class="p-button-outlined" label="Cancel" @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
 </template>
@@ -48,7 +43,7 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
-	openValueConfig: boolean;
+	isReadOnly?: boolean;
 }>();
 
 const emit = defineEmits(['close-modal', 'update-cell-value']);

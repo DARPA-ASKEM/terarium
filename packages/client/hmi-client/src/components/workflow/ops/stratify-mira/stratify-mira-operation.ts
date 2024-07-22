@@ -1,8 +1,7 @@
 import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 
-const DOCUMENTATION_URL =
-	'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
+const DOCUMENTATION_URL = 'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
 
 export interface StratifyGroup {
 	borderColour: string;
@@ -18,6 +17,8 @@ export interface StratifyGroup {
 }
 
 export interface StratifyCode {
+	llmQuery: string;
+	llmThoughts: any[];
 	code: string;
 	timestamp: number;
 }
@@ -57,10 +58,8 @@ export const StratifyMiraOperation: Operation = {
 	displayName: 'Stratify model',
 	description: 'Stratify a model',
 	documentationUrl: DOCUMENTATION_URL,
-	inputs: [
-		{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }
-	],
-	outputs: [{ type: 'model' }],
+	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration', acceptMultiple: false }],
+	outputs: [{ type: 'modelId', label: 'Model' }],
 	isRunnable: false,
 	action: () => {},
 	initState: () => {

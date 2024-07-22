@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.dataset;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
@@ -10,7 +9,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.io.Serial;
@@ -25,7 +23,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 
 /** Represents a dataset document from TDS */
 @EqualsAndHashCode(callSuper = true)
@@ -53,18 +50,6 @@ public class Dataset extends TerariumAsset {
 	@JsonAlias("data_source_date")
 	@Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
 	private Timestamp dataSourceDate;
-
-	/** (Optional) list of file names associated with the dataset */
-	@TSOptional
-	@JsonAlias("file_names")
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	private List<String> fileNames;
-
-	@TSOptional
-	@ManyToOne
-	@JsonBackReference
-	private Project project;
 
 	@TSOptional
 	@JsonAlias("dataset_url")
@@ -108,10 +93,7 @@ public class Dataset extends TerariumAsset {
 		clone.userId = this.userId;
 		clone.esgfId = this.esgfId;
 		clone.dataSourceDate = this.dataSourceDate;
-		if (fileNames != null) {
-			clone.fileNames = new ArrayList<>();
-			clone.fileNames.addAll(fileNames);
-		}
+
 		clone.datasetUrl = this.datasetUrl;
 		if (datasetUrls != null) {
 			clone.datasetUrls = new ArrayList<>();

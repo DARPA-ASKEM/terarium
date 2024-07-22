@@ -11,6 +11,7 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;
@@ -21,11 +22,6 @@ import org.hibernate.annotations.Where;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -38,6 +34,9 @@ public class Project extends TerariumAsset {
 	private static final long serialVersionUID = -241733670076432802L;
 
 	private String userId;
+
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "default")
+	private String thumbnail;
 
 	@TSOptional
 	@Transient
@@ -59,38 +58,7 @@ public class Project extends TerariumAsset {
 	@Where(clause = "deleted_on IS NULL")
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	@JsonManagedReference
-	@Deprecated // This will be going away once the PG migration is done.
 	private List<ProjectAsset> projectAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@JsonManagedReference
-	private List<Code> codeAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@JsonManagedReference
-	private List<Dataset> datasetAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@JsonManagedReference
-	private List<Workflow> workflowAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@JsonManagedReference
-	private List<Artifact> artifactAssets = new ArrayList<>();
-
-	@OneToMany(mappedBy = "project", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@Where(clause = "deleted_on IS NULL")
-	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
-	@JsonManagedReference
-	private List<DocumentAsset> documentAssets = new ArrayList<>();
 
 	@TSOptional
 	@Transient
@@ -120,6 +88,26 @@ public class Project extends TerariumAsset {
 		if (project.getOverviewContent() != null) {
 			existingProject.setOverviewContent(project.getOverviewContent());
 		}
+		if (project.getThumbnail() != null) {
+			existingProject.setThumbnail(project.getThumbnail());
+		}
 		return existingProject;
+	}
+
+	public Project clone() {
+		final Project cloned = new Project();
+		cloneSuperFields(cloned);
+		cloned.userId = userId;
+		cloned.userName = userName;
+		if (authors != null) {
+			cloned.authors = new ArrayList<>(authors);
+		}
+		cloned.overviewContent = overviewContent;
+		if (metadata != null) {
+			cloned.metadata = new HashMap<>(metadata);
+		}
+		cloned.publicProject = publicProject;
+		cloned.userPermission = userPermission;
+		return cloned;
 	}
 }

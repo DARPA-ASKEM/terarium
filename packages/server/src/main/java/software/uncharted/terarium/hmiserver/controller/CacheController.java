@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.service.CacheService;
 @RequestMapping("/cache")
 @RequiredArgsConstructor
 public class CacheController {
+
 	private final CacheService cacheService;
 
 	/**

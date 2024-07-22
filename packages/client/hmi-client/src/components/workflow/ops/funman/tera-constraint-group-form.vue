@@ -57,8 +57,6 @@
 					v-if="weights"
 					:key="index"
 					:placeholder="variable"
-					:min-fraction-digits="3"
-					:max-fraction-digits="3"
 					v-model="weights[index]"
 					@update:model-value="updateChanges()"
 				/>
@@ -67,18 +65,10 @@
 
 		<!-- These are the radio buttons -->
 		<section class="radio-buttons" v-if="constraintType === 'monotonicityConstraint'">
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="increasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="increasing" />
 			<label class="monoton-label">Increasing</label>
 			&nbsp;
-			<RadioButton
-				v-model="derivativeType"
-				@update:model-value="updateChanges()"
-				value="decreasing"
-			/>
+			<RadioButton v-model="derivativeType" @update:model-value="updateChanges()" value="decreasing" />
 			<label class="monoton-label">Decreasing</label>
 		</section>
 
@@ -92,46 +82,22 @@
 		<div v-if="constraintType !== 'monotonicityConstraint'" class="flex-container">
 			<div class="input-container">
 				<label for="input1" class="label label-padding">Start time</label>
-				<InputNumber
-					id="input1"
-					class="p-inputtext-md"
-					v-model="startTime"
-					@update:model-value="updateChanges()"
-				/>
+				<InputNumber id="input1" class="p-inputtext-md" v-model="startTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input2" class="label label-padding">End time</label>
-				<InputNumber
-					id="input2"
-					class="p-inputtext-md"
-					v-model="endTime"
-					@update:model-value="updateChanges()"
-				/>
+				<InputNumber id="input2" class="p-inputtext-md" v-model="endTime" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input3" class="label label-padding">Lower bound</label>
-				<tera-input-number
-					id="input3"
-					class="p-inputtext-md"
-					v-model="lowerBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
+				<tera-input type="number" v-model="lowerBound" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input4" class="label label-padding">Upper bound</label>
-				<tera-input-number
-					id="input4"
-					class="p-inputtext-md"
-					v-model="upperBound"
-					:min-fraction-digits="3"
-					:max-fraction-digits="12"
-					@update:model-value="updateChanges()"
-				/>
+				<tera-input type="number" v-model="upperBound" @update:model-value="updateChanges()" />
 			</div>
 		</div>
 	</div>
@@ -145,7 +111,7 @@ import MultiSelect from 'primevue/multiselect';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
 import { ConstraintGroup } from '@/components/workflow/ops/funman/funman-operation';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInput from '@/components/widgets/tera-input.vue';
 
 const props = defineProps<{
 	modelStates: string[];

@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableCaching
-@ImportAutoConfiguration(classes = {CacheAutoConfiguration.class, RedisAutoConfiguration.class})
+@ImportAutoConfiguration(classes = { CacheAutoConfiguration.class, RedisAutoConfiguration.class })
 @Slf4j
 public class CacheConfiguration implements CachingConfigurer {
 
@@ -27,7 +27,8 @@ public class CacheConfiguration implements CachingConfigurer {
 		Cache usersCache = new ConcurrentMapCache("users");
 		Cache rolesCache = new ConcurrentMapCache("roles");
 		Cache authoriesCache = new ConcurrentMapCache("authorities");
-		cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache));
+		Cache projectContributorsCache = new ConcurrentMapCache("projectcontributors");
+		cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache, projectContributorsCache));
 		return cacheManager;
 	}
 
@@ -40,7 +41,6 @@ public class CacheConfiguration implements CachingConfigurer {
 	@Bean
 	public KeyGenerator keyGenerator() {
 		return (target, method, params) -> {
-
 			// Generate a unique key based on the calling method and parameters supplied
 			String key = target.getClass().getName();
 			key += "_" + method.getName();

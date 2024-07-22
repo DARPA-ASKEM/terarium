@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 @RequiredArgsConstructor
 @Slf4j
 public class ValidateModelConfigHandler extends TaskResponseHandler {
+
 	public static final String NAME = "funman_task:validate_modelconfig";
 
 	private final ObjectMapper objectMapper;
@@ -33,7 +34,37 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Properties {
+
+		UUID projectId;
 		UUID simulationId;
+	}
+
+	@Override
+	public TaskResponse onRunning(final TaskResponse resp) {
+		// FIXME: remove when we distinguish between "initialized" vs "running" state
+		if (resp.getOutput() == null) {
+			return resp;
+		}
+
+		try {
+			final JsonNode intermediateResult = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			final double progress = intermediateResult.get("progress").doubleValue();
+
+			final Properties props = resp.getAdditionalProperties(Properties.class);
+			final UUID simulationId = props.getSimulationId();
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
+			if (!sim.isEmpty()) {
+				sim.get().setProgress(progress);
+				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			}
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+
+		return resp;
 	}
 
 	@Override
@@ -43,7 +74,10 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			Optional<Simulation> sim = simulationService.getAsset(simulationId);
+			final Optional<Simulation> sim = simulationService.getAsset(
+				simulationId,
+				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+			);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -54,8 +88,8 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			// Upload final result into S3
 			final byte[] bytes = objectMapper.writeValueAsBytes(result.get("response"));
-			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.APPLICATION_OCTET_STREAM);
-			simulationService.uploadFile(simulationId, resultFilename, fileEntity, ContentType.TEXT_PLAIN);
+			final HttpEntity fileEntity = new ByteArrayEntity(bytes, ContentType.TEXT_PLAIN);
+			simulationService.uploadFile(simulationId, resultFilename, fileEntity);
 
 			// Mark simulation as completed, update result file
 			sim.get().setStatus(ProgressState.COMPLETE);
@@ -64,7 +98,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(sim.get());
+			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

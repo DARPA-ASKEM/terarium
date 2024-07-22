@@ -52,9 +52,7 @@ export async function saveAs(
 	await useProjects().addAsset(assetType, response.id, projectId);
 
 	// After saving notify the user and do any necessary actions
-	logger.info(
-		`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`
-	);
+	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
 	if (openOnSave) {
 		router.push({
 			name: RouteName.Project,
@@ -70,11 +68,7 @@ export async function saveAs(
 }
 
 // Overwrites/updates the asset
-export async function update(
-	newAsset: AssetToSave,
-	assetType: AssetType,
-	onSaveFunction?: Function
-) {
+export async function update(newAsset: AssetToSave, assetType: AssetType, onSaveFunction?: Function) {
 	if (!(newAsset instanceof File) && !newAsset.id) {
 		logger.error(`Can't update an asset that lacks an id.`);
 		return;

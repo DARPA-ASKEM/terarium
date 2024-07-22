@@ -4,13 +4,12 @@
   -->
 <template>
 	<tera-asset
+		:id="assetId"
 		:feature-config="featureConfig"
 		:name="document?.name ?? ''"
 		:overline="document?.source ?? ''"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
-		:stretch-content="view === DocumentView.PDF"
-		:show-sticky-header="view === DocumentView.PDF"
 		:is-loading="documentLoading"
 	>
 		<template #edit-buttons>
@@ -33,11 +32,7 @@
 			/>
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 		</template>
-		<Accordion
-			v-if="view === DocumentView.EXTRACTIONS"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
-		>
+		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<!-- Abstract -->
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
@@ -55,13 +50,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in figures" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -82,13 +71,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in tables" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -109,13 +92,7 @@
 				</template>
 				<ul>
 					<li v-for="(ex, index) in equations" :key="index" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image col-4"
-							:src="ex.metadata?.url"
-							:alt="''"
-							preview
-						/>
+						<Image id="img" class="extracted-image col-4" :src="ex.metadata?.url" :alt="''" preview />
 						<tera-show-more-text
 							v-if="ex.metadata?.content"
 							class="extracted-caption col-7"
@@ -137,9 +114,7 @@
 		<p
 			class="pl-3"
 			v-if="
-				isEmpty(document?.assets) &&
-				view === DocumentView.EXTRACTIONS &&
-				viewOptions[1]?.value === DocumentView.PDF
+				isEmpty(document?.assets) && view === DocumentView.EXTRACTIONS && viewOptions[1]?.value === DocumentView.PDF
 			"
 		>
 			PDF Extractions are processing please come back in some time...
@@ -158,16 +133,12 @@ import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig } from '@/types/common';
+import { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import type { ClientEvent, DocumentAsset, ExtractionStatusUpdate } from '@/types/Types';
+import type { ClientEvent, DocumentAsset } from '@/types/Types';
 import { AssetType, ClientEventType, ExtractionAssetType, ProgressState } from '@/types/Types';
-import {
-	downloadDocumentAsset,
-	getDocumentAsset,
-	getDocumentFileAsText
-} from '@/services/document-assets';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import Image from 'primevue/image';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import SelectButton from 'primevue/selectbutton';
@@ -177,7 +148,6 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import { getStatusFromProgress } from '@/services/notificationEventHandlers';
 import TeraTextEditor from './tera-text-editor.vue';
 
 enum DocumentView {
@@ -228,17 +198,13 @@ const docText = ref<string | null>(null);
 const documentLoading = ref(false);
 
 const figures = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Figure) || []
 );
 const tables = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Table) || []
 );
 const equations = computed(
-	() =>
-		document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) ||
-		[]
+	() => document.value?.assets?.filter((asset) => asset.assetType === ExtractionAssetType.Equation) || []
 );
 
 const optionsMenu = ref();
@@ -248,17 +214,11 @@ const optionsMenuItems = ref([
 		label: 'Add to project',
 		items:
 			useProjects()
-				.allProjects.value?.filter(
-					(project) => project.id !== useProjects().activeProject.value?.id
-				)
+				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
 				.map((project) => ({
 					label: project.name,
 					command: async () => {
-						const response = await useProjects().addAsset(
-							AssetType.Document,
-							props.assetId,
-							project.id
-						);
+						const response = await useProjects().addAsset(AssetType.Document, props.assetId, project.id);
 						if (response) logger.info(`Added asset to ${project.name}`);
 					}
 				})) ?? []
@@ -309,7 +269,7 @@ watch(
 	{ immediate: true }
 );
 
-const formattedAbstract = computed<string>(() => document.value?.description ?? '');
+const formattedAbstract = computed<string>(() => document.value?.documentAbstract ?? '');
 
 onUpdated(() => {
 	if (document.value) {
@@ -323,9 +283,9 @@ onMounted(async () => {
 
 async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
 	console.log(event.data.message);
-	if (!event.data || event.data.documentId !== props.assetId) return;
+	if (!event.data || event.data.data.documentId !== props.assetId) return;
 
-	const status = getStatusFromProgress(event.data);
+	const status = event.data.state;
 	// FIXME: adding the 'dispatching' check since there seems to be an issue with the status of the extractions.
 	if (status === ProgressState.Complete || event.data.message.includes('Dispatching')) {
 		document.value = await getDocumentAsset(props.assetId);

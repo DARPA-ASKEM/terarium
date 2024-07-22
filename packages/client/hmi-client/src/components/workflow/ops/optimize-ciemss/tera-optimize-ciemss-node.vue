@@ -1,32 +1,17 @@
 <template>
 	<main>
-		<tera-operator-placeholder
-			v-if="!showSpinner && !runResults"
-			:operation-type="node.operationType"
-		>
+		<tera-operator-placeholder v-if="!showSpinner && !runResults" :operation-type="node.operationType">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
-				<tera-simulate-chart
-					v-for="(cfg, idx) in node.state.chartConfigs"
-					:key="idx"
-					:run-results="runResults"
-					:chartConfig="{ selectedRun: props.node.state.forecastRunId, selectedVariable: cfg }"
-					has-mean-line
-					:size="{ width: 190, height: 120 }"
-					@configuration-change="chartProxy.configurationChange(idx, $event)"
-				/>
+				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
+					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
+				</template>
 			</div>
 			<div class="flex gap-2">
-				<Button
-					@click="emit('open-drilldown')"
-					label="Edit"
-					severity="secondary"
-					outlined
-					class="w-full"
-				/>
+				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -34,25 +19,29 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onUnmounted } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
-import { Poller, PollerState } from '@/api/api';
+import { Poller, PollerResult, PollerState } from '@/api/api';
 import {
 	pollAction,
-	getRunResult,
-	getRunResultCiemss,
 	makeForecastJobCiemss,
-	getSimulation
+	getRunResult,
+	getRunResultCSV,
+	parsePyCiemssMap
 } from '@/services/models/simulation-service';
-import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
-import { SimulationRequest, Intervention as SimulationIntervention } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
-import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
+import { SimulationRequest, InterventionPolicy } from '@/types/Types';
+import { createLLMSummary } from '@/services/summary-service';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { createOptimizeForecastChart } from '@/services/charts';
+import {
+	OptimizeCiemssOperationState,
+	OptimizeCiemssOperation,
+	createInterventionPolicyFromOptimize
+} from './optimize-ciemss-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -60,112 +49,110 @@ const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
 }>();
 
-const runResults = ref<RunResults>({});
+const runResults = ref<any>({});
+const runResultsSummary = ref<any>({});
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
+
+let pyciemssMap: Record<string, string> = {};
+
 const inferredParameters = computed(() => props.node.inputs[1].value);
 const showSpinner = computed<boolean>(
-	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressForecastId !== ''
+	() =>
+		props.node.state.inProgressOptimizeId !== '' ||
+		props.node.state.inProgressPostForecastId !== '' ||
+		props.node.state.inProgressPreForecastId !== ''
 );
-const chartProxy = chartActionsProxy(props.node, (state: OptimizeCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(4000)
-		.setThreshold(350)
+		.setInterval(5000)
+		.setThreshold(100)
 		.setPollAction(async () => pollAction(runId));
+
 	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.optimizeErrorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressForecastId = '';
-		state.inProgressOptimizeId = '';
-		poller.stop();
-	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		// throw if there are any failed runs for now
-		logger.error(`Optimization: ${runId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.inProgressOptimizeId = '';
-			state.optimizeErrorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
+		return pollerResults;
 	}
-	emit('update-state', state);
+	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		console.error(`Optimize: ${runId} has failed`, pollerResults);
+	}
 	return pollerResults;
 };
 
-const getSimulationInterventions = async (id) => {
-	const policyResult = await getRunResult(id, 'policy.json');
-	const paramNames: string[] = [];
-	const paramValues: number[] = [];
-	const startTime: number[] = [];
-	props.node.state.interventionPolicyGroups.forEach((ele) => {
-		paramNames.push(ele.parameter);
-		paramValues.push(ele.paramValue);
-		startTime.push(ele.startTime);
-	});
-
-	const simulationIntervetions: SimulationIntervention[] = [];
-	// This is all index matching for optimizeInterventions.paramNames, optimizeInterventions.startTimes, and policyResult
-	for (let i = 0; i < paramNames.length; i++) {
-		simulationIntervetions.push({
-			name: paramNames[i],
-			timestep: startTime[i],
-			value: policyResult[i]
-		});
-	}
-	return simulationIntervetions;
-};
-
-const startForecast = async (simulationIntervetions) => {
+const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 	const simulationPayload: SimulationRequest = {
-		projectId: '',
 		modelConfigId: modelConfigId.value as string,
 		timespan: {
 			start: 0,
 			end: props.node.state.endTime
 		},
-		interventions: simulationIntervetions,
 		extra: {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod
 		},
 		engine: 'ciemss'
 	};
+
+	if (optimizedInterventions) {
+		// Use the intervention policy ID provided.
+		simulationPayload.policyInterventionId = optimizedInterventions.id;
+	} else {
+		// Use the input interventions provided
+		const inputIntervention = props.node.inputs[2].value?.[0];
+		simulationPayload.policyInterventionId = inputIntervention;
+	}
 	if (inferredParameters.value) {
 		simulationPayload.extra.inferred_parameters = inferredParameters.value[0];
 	}
-	return makeForecastJobCiemss(simulationPayload);
+	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
+
+const preparedCharts = computed(() => {
+	const { preForecastRunId, postForecastRunId, selectedSimulationVariables } = props.node.state;
+	if (!postForecastRunId || !preForecastRunId) return [];
+	const preResult = runResults.value[preForecastRunId];
+	const preResultSummary = runResultsSummary.value[preForecastRunId];
+	const postResult = runResults.value[postForecastRunId];
+	const postResultSummary = runResultsSummary.value[postForecastRunId];
+	return selectedSimulationVariables.map((variable) =>
+		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
+			width: 180,
+			height: 120,
+			variables: [pyciemssMap[variable]],
+			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
+			legend: false,
+			groupField: 'sample_id',
+			timeField: 'timepoint_id',
+			xAxisTitle: '',
+			yAxisTitle: '',
+			title: variable
+		})
+	);
+});
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
-	async (id) => {
-		if (!id || id === '') return;
+	async (optId) => {
+		if (!optId || optId === '') return;
 
-		const response = await pollResult(id);
+		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const simulationIntervetions = await getSimulationInterventions(id);
-			const forecastResponse = await startForecast(simulationIntervetions);
-			const forecastId = forecastResponse.id;
+			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
+
+			const preForecastResponce = await startForecast(undefined);
+			const preForecastId = preForecastResponce.id;
+			const postForecastResponce = await startForecast(newInterventionResponse);
+			const postForecastId = postForecastResponce.id;
 
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressOptimizeId = '';
-			state.optimizationRunId = id;
-			state.inProgressForecastId = forecastId;
+			state.optimizationRunId = optId;
+			state.inProgressPreForecastId = preForecastId;
+			state.inProgressPostForecastId = postForecastId;
+			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
 		}
 	},
@@ -173,22 +160,44 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
-	async (id) => {
-		if (!id || id === '') return;
-
-		const response = await pollResult(id);
-		if (response.state === PollerState.Done) {
+	() => `${props.node.state.inProgressPreForecastId},${props.node.state.inProgressPostForecastId}`,
+	async () => {
+		const preSimId = props.node.state.inProgressPreForecastId;
+		const postSimId = props.node.state.inProgressPostForecastId;
+		if (!preSimId || preSimId === '' || !postSimId || postSimId === '') return;
+		const responseList: Promise<PollerResult<any>>[] = [];
+		responseList.push(pollResult(preSimId));
+		responseList.push(pollResult(postSimId));
+		const [preResponse, postResponse] = await Promise.all(responseList);
+		if (preResponse.state === PollerState.Done && postResponse.state === PollerState.Done) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
-			state.inProgressForecastId = '';
-			state.forecastRunId = id;
+
+			// Generate output summary, collect key facts and get agent to summarize
+			const optimizationResult = await getRunResult(state.optimizationRunId, 'optimize_results.json');
+			const prompt = `
+The following are the key attributes and findings of an optimization process for a ODE epidemilogy model, the goal is to find the best values or time points that satisfy a set of constraints.
+
+- The succss constraints are, in JSON: ${JSON.stringify(state.constraintGroups)}
+- We want to optimize: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === true))}
+- The fixed/static intervenations: ${JSON.stringify(state.interventionPolicyGroups.filter((d) => d.isActive === false))}
+- The best guesses are: ${optimizationResult.x}
+- The result is ${optimizationResult.success}
+
+Provide a consis summary in 100 words or less.
+			`;
+			const summaryResponse = await createLLMSummary(prompt);
+			state.summaryId = summaryResponse?.id;
+
+			state.inProgressPreForecastId = '';
+			state.preForecastRunId = preSimId;
+			state.inProgressPostForecastId = '';
+			state.postForecastRunId = postSimId;
 			emit('update-state', state);
 
 			emit('append-output', {
 				type: OptimizeCiemssOperation.outputs[0].type,
-				label: `Simulation output - ${props.node.outputs.length + 1}`,
-				value: [id],
+				label: nodeOutputLabel(props.node, `Simulation output`),
+				value: [postSimId],
 				isSelected: false,
 				state
 			});
@@ -203,16 +212,30 @@ watch(
 		const active = props.node.active;
 		const state = props.node.state;
 		if (!active) return;
-		if (!state.forecastRunId) return;
+		if (!state.postForecastRunId || !state.preForecastRunId) return;
 
-		const forecastRunId = state.forecastRunId;
+		const preForecastRunId = state.preForecastRunId;
+		const postForecastRunId = state.postForecastRunId;
 
-		// Simulate
-		const result = await getRunResultCiemss(forecastRunId, 'result.csv');
-		runResults.value = result.runResults;
+		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+		const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(postResult[0]);
+
+		runResults.value[preForecastRunId] = preResult;
+		runResults.value[postForecastRunId] = postResult;
+
+		const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+		const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
+
+		runResultsSummary.value[preForecastRunId] = preResultSummary;
+		runResultsSummary.value[postForecastRunId] = postResultSummary;
 	},
 	{ immediate: true }
 );
+
+onUnmounted(() => {
+	poller.stop();
+});
 </script>
 
 <style scoped></style>

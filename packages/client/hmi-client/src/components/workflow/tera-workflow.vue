@@ -5,8 +5,6 @@
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		@mouseleave="setMouseOverCanvas(false)"
-		@mouseenter="setMouseOverCanvas(true)"
 		@focus="() => {}"
 		@blur="() => {}"
 		@drop="onDrop"
@@ -42,24 +40,6 @@
 				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 				<div class="button-group">
 					<Button
-						label="Show everything"
-						severity="secondary"
-						outlined
-						@click="resetZoom"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					<Button
-						label="Clean up layout"
-						severity="secondary"
-						outlined
-						@click="cleanUpLayout"
-						size="small"
-						disabled
-						class="white-space-nowrap"
-					/>
-					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
@@ -68,24 +48,16 @@
 						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
-					<ContextMenu
-						ref="addComponentMenu"
-						:model="contextMenuItems"
-						style="white-space: nowrap; width: auto"
-					/>
+					<ContextMenu ref="addComponentMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 				</div>
 			</div>
 		</template>
 		<!-- data -->
 		<template #data>
-			<ContextMenu
-				ref="contextMenu"
-				:model="contextMenuItems"
-				style="white-space: nowrap; width: auto"
-			/>
+			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
-				v-for="(node, index) in wf.nodes"
-				:key="index"
+				v-for="node in wf.nodes"
+				:key="node.id"
 				:style="{
 					width: `${node.width}px`,
 					top: `${node.y}px`,
@@ -94,12 +66,10 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<tera-operator
+					ref="teraOperatorRefs"
 					:node="node"
 					@resize="resizeHandler"
-					@port-selected="
-						(port: WorkflowPort, direction: WorkflowDirection) =>
-							createNewEdge(node, port, direction)
-					"
+					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
@@ -136,10 +106,7 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0 0 L 8 8 L 0 16 z"
-					style="fill: var(--text-color-secondary); fill-opacity: 1"
-				></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary); fill-opacity: 1"></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -166,12 +133,12 @@
 				fill="none"
 			/>
 			<path
-				v-for="(edge, index) of wf.edges"
+				v-for="edge of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#667085"
 				stroke-width="2"
 				marker-start="url(#circle)"
-				:key="index"
+				:key="edge.id"
 				fill="none"
 			/>
 		</template>
@@ -198,14 +165,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type {
-	Operation,
-	Workflow,
-	WorkflowEdge,
-	WorkflowNode,
-	WorkflowOutput,
-	WorkflowPort
-} from '@/types/workflow';
+import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -236,7 +196,6 @@ import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
 import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
 import * as SimulateJuliaOp from '@/components/workflow/ops/simulate-julia/mod';
-import * as ModelTransformerOp from '@/components/workflow/ops/model-transformer/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -247,12 +206,11 @@ import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
 import * as CalibrateJuliaOp from '@/components/workflow/ops/calibrate-julia/mod';
 import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
-import * as ModelCouplingOp from '@/components/workflow/ops/model-coupling/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as DecapodesOp from '@/components/workflow/ops/decapodes/mod';
 import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
+import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
@@ -263,7 +221,6 @@ registry.registerOp(StratifyMiraOp);
 registry.registerOp(ModelFromCodeOp);
 registry.registerOp(SimulateEnsembleCiemssOp);
 registry.registerOp(DatasetOp);
-registry.registerOp(ModelTransformerOp);
 registry.registerOp(FunmanOp);
 registry.registerOp(ModelOp);
 registry.registerOp(ModelEditOp);
@@ -275,12 +232,11 @@ registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
 registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
-registry.registerOp(ModelCouplingOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
-registry.registerOp(DecapodesOp);
 registry.registerOp(RegriddingOp);
+registry.registerOp(InterventionPolicyOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -294,7 +250,6 @@ const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
-let isMouseOverCanvas: boolean = false;
 let saveTimer: any = null;
 let workflowDirty: boolean = false;
 let startTime: number = 0;
@@ -323,13 +278,10 @@ const optionsMenuItems = ref([
 	}
 ]);
 
-const setMouseOverCanvas = (val: boolean) => {
-	isMouseOverCanvas = val;
-};
-
 const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
+const teraOperatorRefs = ref();
 
 async function updateWorkflowName() {
 	const workflowClone = cloneDeep(wf.value);
@@ -340,10 +292,7 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
-function appendInputPort(
-	node: WorkflowNode<any>,
-	port: { type: string; label?: string; value: any }
-) {
+function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -360,11 +309,17 @@ function appendInputPort(
  * */
 function appendOutput(
 	node: WorkflowNode<any> | null,
-	port: { type: string; label?: string; value: any; state?: any; isSelected?: boolean }
+	port: {
+		type: string;
+		label?: string;
+		value: any;
+		state?: any;
+		isSelected?: boolean;
+	}
 ) {
 	if (!node) return;
 
-	// we assume that if we can produce an output, the status is okay
+	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
@@ -385,8 +340,10 @@ function appendOutput(
 	node.outputs.push(outputPort);
 	node.active = uuid;
 
-	selectOutput(node, uuid);
+	// Filter out temporary outputs where value is null
+	node.outputs = node.outputs.filter((d) => d.value);
 
+	selectOutput(node, uuid);
 	workflowDirty = true;
 }
 
@@ -536,9 +493,8 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(StratifyMiraOp)
 			},
 			{
-				label: DecapodesOp.operation.displayName,
-				disabled: true,
-				command: addOperatorToWorkflow(DecapodesOp)
+				label: InterventionPolicyOp.operation.displayName,
+				command: addOperatorToWorkflow(InterventionPolicyOp)
 			}
 		]
 	},
@@ -548,10 +504,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: ModelComparisonOp.operation.displayName,
 				command: addOperatorToWorkflow(ModelComparisonOp)
-			},
-			{
-				label: ModelCouplingOp.operation.displayName,
-				command: addOperatorToWorkflow(ModelCouplingOp)
 			},
 			{ separator: true },
 			{
@@ -679,9 +631,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
@@ -715,12 +665,32 @@ function removeEdges(portId: string) {
 	const edges = wf.value.edges.filter(
 		({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId
 	);
+
+	// Build a traversal map before we do actual removal
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.value.nodes.map((node) => [node.id, node]));
+	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
+	wf.value.edges.forEach((edge) => {
+		if (!edge.source || !edge.target) return;
+		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
+		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
+	});
+	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
+
+	// Remove edge
 	if (!isEmpty(edges)) {
 		edges.forEach((edge) => {
 			workflowService.removeEdge(wf.value, edge.id);
 		});
 		workflowDirty = true;
-	} else logger.error(`Edges with port id:${portId} not found.`);
+	} else {
+		logger.error(`Edges with port id:${portId} not found.`);
+		return;
+	}
+
+	// cascade invalid status to downstream operators
+	if (startingNodeId !== '') {
+		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
+	}
 }
 
 function onCanvasClick() {
@@ -762,8 +732,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 	const allEdges = wf.value.edges;
 
 	// Note id can start with numerals, so we need [id=...]
-	const getPortElement = (id: string) =>
-		d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
+	const getPortElement = (id: string) => d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
 
 	// Relink heuristic, this will modify source
 	const relink = (source: Position, target: Position) => {
@@ -848,7 +817,10 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 }
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
-	if (!isMouseOverCanvas) return;
+	const teraNode = teraOperatorRefs.value.find((operatorNode) => operatorNode.id === node.id);
+	if (teraNode.isEditing ?? false) {
+		return;
+	}
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
@@ -921,7 +893,7 @@ onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
 	saveTimer = setInterval(() => {
-		if (workflowDirty) {
+		if (workflowDirty && useProjects().hasEditPermission()) {
 			workflowService.updateWorkflow(wf.value);
 			workflowDirty = false;
 		}
@@ -941,16 +913,6 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 	window.removeEventListener('beforeunload', unloadCheck);
 });
-
-function cleanUpLayout() {
-	// TODO: clean up layout of nodes
-	console.log('clean up layout');
-}
-
-function resetZoom() {
-	// TODO: reset zoom level and position
-	console.log('clean up layout');
-}
 </script>
 
 <style scoped>

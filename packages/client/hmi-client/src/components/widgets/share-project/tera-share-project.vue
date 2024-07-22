@@ -98,12 +98,11 @@ const generalAccessOptions = ref([
 	{ label: Accessibility.Public, icon: 'pi pi-users' }
 ]);
 const isUpdatingAccessibility = ref(false);
+const publicGeneralAccess = ref(props.project.publicProject);
 const generalAccess = computed(() => {
 	if (isUpdatingAccessibility.value) return { label: 'Loading...' };
 
-	return useProjects().activeProject.value?.publicProject
-		? generalAccessOptions.value[1]
-		: generalAccessOptions.value[0];
+	return publicGeneralAccess.value ? generalAccessOptions.value[1] : generalAccessOptions.value[0];
 });
 const generalAccessCaption = computed(() => {
 	if (generalAccess.value.label === Accessibility.Restricted) {
@@ -115,6 +114,7 @@ const generalAccessCaption = computed(() => {
 async function changeAccessibility({ label }: { label: Accessibility }) {
 	isUpdatingAccessibility.value = true;
 	await useProjects().setAccessibility(props.project.id, label === Accessibility.Public);
+	publicGeneralAccess.value = label === Accessibility.Public;
 	isUpdatingAccessibility.value = false;
 }
 
@@ -167,9 +167,7 @@ async function setPermissions() {
 	await selectedUsers.value.forEach(async ({ id }) => {
 		const permission = newSelectedUserPermissions.get(id);
 		if (permission) {
-			const currentPermission = permissions.value?.permissionUsers.find(
-				(u) => u.id === id
-			)?.relationship;
+			const currentPermission = permissions.value?.permissionUsers.find((u) => u.id === id)?.relationship;
 			if (permission === 'remove') {
 				if (currentPermission) {
 					if (await useProjects().removePermissions(props.project.id, id, currentPermission)) {
@@ -179,9 +177,7 @@ async function setPermissions() {
 					}
 				}
 			} else if (currentPermission) {
-				if (
-					await useProjects().updatePermissions(props.project.id, id, currentPermission, permission)
-				) {
+				if (await useProjects().updatePermissions(props.project.id, id, currentPermission, permission)) {
 					if (permission === 'reader') {
 						removeUser(id);
 					} else {
@@ -226,9 +222,7 @@ async function addUser(id) {
 async function getPermissions() {
 	permissions.value = await useProjects().getPermissions(props.project.id);
 	existingUsers.value = new Set();
-	permissions.value?.permissionUsers.forEach(({ id, relationship }) =>
-		addExistingUser(id, relationship)
-	);
+	permissions.value?.permissionUsers.forEach(({ id, relationship }) => addExistingUser(id, relationship));
 }
 
 watch(

@@ -193,10 +193,7 @@ function appendNumberToModelVariables(model: Model, number: number) {
 	return templateWithNumber;
 }
 
-export function prepareDecomposedTemplateAddition(
-	canvas: ModelTemplateCanvas,
-	card: ModelTemplateCard
-) {
+export function prepareDecomposedTemplateAddition(canvas: ModelTemplateCanvas, card: ModelTemplateCard) {
 	// Append a number to the model variables to avoid conflicts
 	const decomposedTemplateToAdd = appendNumberToModelVariables(
 		card.model,
@@ -226,9 +223,7 @@ export function addDecomposedTemplateInKernel(
 		return;
 	}
 
-	const decomposedTemplateToAdd = isTemplatePrepared
-		? model
-		: prepareDecomposedTemplateAddition(canvas, card);
+	const decomposedTemplateToAdd = isTemplatePrepared ? model : prepareDecomposedTemplateAddition(canvas, card);
 	if (!decomposedTemplateToAdd) return;
 
 	const addTemplateArguments: AddTemplateArguments = {};
@@ -387,11 +382,7 @@ export function updateDecomposedTemplateNameInKernel(
 		? flattenedModel.semantics.ode.rates.map(({ target }) => target)
 		: [];
 
-	if (
-		flattenedModel.header.name === newName ||
-		transitionIds.includes(newName) ||
-		rateTargets.includes(newName)
-	) {
+	if (flattenedModel.header.name === newName || transitionIds.includes(newName) || rateTargets.includes(newName)) {
 		logger.error('Your template name needs to be unique. Please try again.');
 		return;
 	}
@@ -612,13 +603,7 @@ export async function flattenedToDecomposedInView(
 				cardId: card.id,
 				portId: repeatedInitialTarget
 			};
-			addEdgeInView(
-				decomposedCanvas,
-				junctionId,
-				target,
-				portPositions[index],
-				interpolatePointsFn
-			);
+			addEdgeInView(decomposedCanvas, junctionId, target, portPositions[index], interpolatePointsFn);
 		});
 	});
 }
@@ -629,11 +614,7 @@ export function flattenedToDecomposedInKernel(
 	interpolatePointsFn?: Function
 ) {
 	kernelManager.sendMessage('amr_to_templates', {}).register('amr_to_templates_response', (d) => {
-		flattenedToDecomposedInView(
-			decomposedCanvas,
-			d.content.templates as Model[],
-			interpolatePointsFn
-		);
+		flattenedToDecomposedInView(decomposedCanvas, d.content.templates as Model[], interpolatePointsFn);
 	});
 }
 
@@ -672,9 +653,7 @@ export async function reflectFlattenedEditInDecomposedView(
 	const flattenedInitialTargets =
 		flattenedCanvas.cards[0].model.semantics?.ode?.initials?.map(({ target }) => target) ?? [];
 	flattenedCanvas.junctions.forEach((flatJunction) => {
-		isReadyToReflect = flatJunction.edges.some((edge) =>
-			flattenedInitialTargets.includes(edge.target.portId)
-		);
+		isReadyToReflect = flatJunction.edges.some((edge) => flattenedInitialTargets.includes(edge.target.portId));
 	});
 	if (!isReadyToReflect) return;
 
@@ -685,14 +664,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			// Specify position of card for decomposed view (good enough for now)
 			card.x = 100;
 			card.y = 100 + decomposedCanvas.cards.length * 200;
-			addDecomposedTemplateInKernel(
-				kernelManager,
-				decomposedCanvas,
-				card,
-				outputCode,
-				syncWithMiraModel,
-				true
-			);
+			addDecomposedTemplateInKernel(kernelManager, decomposedCanvas, card, outputCode, syncWithMiraModel, true);
 		});
 
 	// Make sure cards are rendered before junctions and edges (this is required to determine port positions)
@@ -703,9 +675,7 @@ export async function reflectFlattenedEditInDecomposedView(
 		const sharedPortId = flatJunction.edges[0].target.portId; // The state id shared by all ports is always the first port id
 
 		// Find the junction in the decomposed view that corresponds to the flattened junction
-		let decompJunctionId = decomposedCanvas.junctions.find(
-			({ edges }) => edges[0].target.portId === sharedPortId
-		)?.id;
+		let decompJunctionId = decomposedCanvas.junctions.find(({ edges }) => edges[0].target.portId === sharedPortId)?.id;
 		// If junction isn't found a new one must be created along with the edge that would be drawn to the junction by default
 		if (!decompJunctionId) {
 			// Finds the decomposed template that has the port used in the flattened view
@@ -730,10 +700,7 @@ export async function reflectFlattenedEditInDecomposedView(
 			if (!decompJunctionId || flatEdge.target.portId === sharedPortId) return; // The edge connect to the sharedPortId is already created
 
 			// If flat edge port matches an initial in the decomposed template, add an edge to the junction
-			const templateCard = findTemplateCardForNewEdge(
-				decomposedCanvas.cards,
-				flatEdge.target.portId
-			);
+			const templateCard = findTemplateCardForNewEdge(decomposedCanvas.cards, flatEdge.target.portId);
 			if (!templateCard) return;
 			const portPosition = getPortPosition(templateCard, flatEdge.target.portId); // This works since the card will exist in both views and the offset values for the ports are the same
 

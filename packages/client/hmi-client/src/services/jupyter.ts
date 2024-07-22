@@ -1,16 +1,8 @@
 import { EventEmitter, EventName, EventCallback } from '@/utils/emitter';
 import { SessionContext } from '@jupyterlab/apputils';
-import {
-	ServerConnection,
-	KernelManager,
-	KernelSpecManager,
-	SessionManager
-} from '@jupyterlab/services';
+import { ServerConnection, KernelManager, KernelSpecManager, SessionManager } from '@jupyterlab/services';
 import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
-import {
-	standardRendererFactories as initialFactories,
-	RenderMimeRegistry
-} from '@jupyterlab/rendermime';
+import { standardRendererFactories as initialFactories, RenderMimeRegistry } from '@jupyterlab/rendermime';
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
@@ -280,6 +272,7 @@ export class KernelSessionManager {
 				console.log('waiting...', this.jupyterSession?.session?.kernel);
 				counter++;
 				if (this.jupyterSession?.session?.kernel) {
+					window.addEventListener('beforeunload', this.shutdown.bind(this)); // bind(this) ensures that this instance of the class is used
 					clearInterval(id);
 					resolve(true);
 				}
@@ -318,6 +311,7 @@ export class KernelSessionManager {
 	}
 
 	shutdown() {
+		window.removeEventListener('beforeunload', this.shutdown.bind(this)); // bind(this) ensures that this instance of the class is used
 		this.jupyterSession?.shutdown();
 	}
 }

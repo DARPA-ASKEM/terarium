@@ -1,3 +1,4 @@
+import { ModelGrounding } from '@/types/Types';
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
@@ -5,6 +6,22 @@ export type ModelSearchParams = {
 	filters?: Filters;
 	related_search_id?: string;
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related models
+};
+
+// These are common properties among states, parameters, transitions, observables, etc
+// Useful for UI components that need to display these properties
+export type ModelPartItem = {
+	id: string;
+	name?: string;
+	description?: string;
+	grounding?: ModelGrounding;
+	unitExpression?: string;
+	expression?: string;
+	expression_mathml?: string;
+	// Transition/rate
+	templateId?: string;
+	input?: string;
+	output?: string;
 };
 
 export enum StratifiedMatrix {

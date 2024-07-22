@@ -29,6 +29,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simul
 import software.uncharted.terarium.hmiserver.models.simulationservice.CiemssStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.ScimlStatusUpdate;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
@@ -62,6 +63,8 @@ public class SimulationEventService {
 	Queue scimlQueue;
 	Queue pyciemssQueue;
 
+	final Schema.Permission assumedPermission = Schema.Permission.WRITE;
+
 	@PostConstruct
 	void init() {
 		scimlQueue = new Queue(SCIML_QUEUE, config.getDurableQueues(), false, false);
@@ -81,13 +84,11 @@ public class SimulationEventService {
 	}
 
 	public void unsubscribe(final List<String> simulationIds, final User user) {
-		for (final String simulationId : simulationIds)
-			simulationIdToUserIds.get(simulationId).remove(user.getId());
+		for (final String simulationId : simulationIds) simulationIdToUserIds.get(simulationId).remove(user.getId());
 	}
 
 	@RabbitListener(queues = "${terarium.sciml-queue}", concurrency = "1")
 	private void onScimlUpdateOneInstanceReceives(final Message message, final Channel channel) throws IOException {
-
 		final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
 		if (update == null) {
 			return;
@@ -96,7 +97,7 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(UUID.fromString(update.getId()), simulationUpdate);
+			simulationService.appendUpdateToSimulation(UUID.fromString(update.getId()), simulationUpdate, assumedPermission);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}
@@ -108,40 +109,41 @@ public class SimulationEventService {
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											autoDelete = "true",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.simulation.sciml-broadcast-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+		bindings = @QueueBinding(
+			value = @org.springframework.amqp.rabbit.annotation.Queue(
+				autoDelete = "true",
+				exclusive = "false",
+				durable = "${terarium.taskrunner.durable-queues}"
+			),
+			exchange = @Exchange(
+				value = "${terarium.simulation.sciml-broadcast-exchange}",
+				durable = "${terarium.taskrunner.durable-queues}",
+				autoDelete = "false",
+				type = ExchangeTypes.DIRECT
+			),
+			key = ""
+		),
+		concurrency = "1"
+	)
 	private void onScimlAllInstanceReceive(final Message message) {
 		try {
-
 			final ScimlStatusUpdate update = ClientEventService.decodeMessage(message, ScimlStatusUpdate.class);
 			if (update == null) {
 				return;
 			}
 			final ClientEvent<ScimlStatusUpdate> status = ClientEvent.<ScimlStatusUpdate>builder()
-					.type(ClientEventType.SIMULATION_SCIML)
-					.data(update)
-					.build();
+				.type(ClientEventType.SIMULATION_SCIML)
+				.data(update)
+				.build();
 
 			final String id = update.getId();
 			if (simulationIdToUserIds.containsKey(id)) {
-				simulationIdToUserIds.get(id).forEach(userId -> {
-					clientEventService.sendToUser(status, userId);
-				});
+				simulationIdToUserIds
+					.get(id)
+					.forEach(userId -> {
+						clientEventService.sendToUser(status, userId);
+					});
 			}
-
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}
@@ -149,7 +151,6 @@ public class SimulationEventService {
 
 	@RabbitListener(queues = "${terarium.simulation-status}", concurrency = "1")
 	private void onPyciemssOneInstanceReceives(final Message message, final Channel channel) throws IOException {
-
 		final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
 		if (update == null) {
 			return;
@@ -158,7 +159,11 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(UUID.fromString(update.getJobId()), simulationUpdate);
+			simulationService.appendUpdateToSimulation(
+				UUID.fromString(update.getJobId()),
+				simulationUpdate,
+				assumedPermission
+			);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}
@@ -170,39 +175,41 @@ public class SimulationEventService {
 	// message. Any operation that must occur on _every_ instance of the hmi-server
 	// should be triggered here.
 	@RabbitListener(
-			bindings =
-					@QueueBinding(
-							value =
-									@org.springframework.amqp.rabbit.annotation.Queue(
-											autoDelete = "true",
-											exclusive = "false",
-											durable = "${terarium.taskrunner.durable-queues}"),
-							exchange =
-									@Exchange(
-											value = "${terarium.simulation.pyciemss-broadcast-exchange}",
-											durable = "${terarium.taskrunner.durable-queues}",
-											autoDelete = "false",
-											type = ExchangeTypes.DIRECT),
-							key = ""),
-			concurrency = "1")
+		bindings = @QueueBinding(
+			value = @org.springframework.amqp.rabbit.annotation.Queue(
+				autoDelete = "true",
+				exclusive = "false",
+				durable = "${terarium.taskrunner.durable-queues}"
+			),
+			exchange = @Exchange(
+				value = "${terarium.simulation.pyciemss-broadcast-exchange}",
+				durable = "${terarium.taskrunner.durable-queues}",
+				autoDelete = "false",
+				type = ExchangeTypes.DIRECT
+			),
+			key = ""
+		),
+		concurrency = "1"
+	)
 	private void onPyciemssAllInstanceReceive(final Message message) {
 		try {
-
 			final CiemssStatusUpdate update = ClientEventService.decodeMessage(message, CiemssStatusUpdate.class);
 			if (update == null) {
 				return;
 			}
 
 			final ClientEvent<CiemssStatusUpdate> status = ClientEvent.<CiemssStatusUpdate>builder()
-					.type(ClientEventType.SIMULATION_PYCIEMSS)
-					.data(update)
-					.build();
+				.type(ClientEventType.SIMULATION_PYCIEMSS)
+				.data(update)
+				.build();
 
 			final String id = update.getJobId();
 			if (simulationIdToUserIds.containsKey(id)) {
-				simulationIdToUserIds.get(id).forEach(userId -> {
-					clientEventService.sendToUser(status, userId);
-				});
+				simulationIdToUserIds
+					.get(id)
+					.forEach(userId -> {
+						clientEventService.sendToUser(status, userId);
+					});
 			}
 		} catch (final Exception e) {
 			log.error("Error processing event", e);

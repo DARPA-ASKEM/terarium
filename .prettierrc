@@ -1,6 +1,8 @@
-{
-    "singleQuote": true,
-    "printWidth": 100,
-    "trailingComma": "none",
-    "bracketSpacing": true
-}
+### Prettier configuration file in YAML
+# https://prettier.io/docs/en/configuration.html#configuration-schema
+bracketSpacing: true
+printWidth: 120
+plugins:
+ - prettier-plugin-java
+singleQuote: true
+trailingComma: "none"

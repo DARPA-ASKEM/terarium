@@ -8,9 +8,9 @@ import {
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
+	StatusUpdate,
 	XDDFacetsItemResponse
 } from '@/types/Types';
-import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
@@ -18,6 +18,11 @@ import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
 	isPreview: boolean;
+}
+
+export enum DrilldownTabs {
+	Wizard = 'Wizard',
+	Notebook = 'Notebook'
 }
 
 export enum ParamType {
@@ -79,7 +84,6 @@ export type ResultType = Model | Dataset | Document | DocumentAsset;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
-	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -127,6 +131,7 @@ export type AssetRoute = {
 export interface AssetItem extends AssetRoute {
 	icon?: string;
 	assetName?: string;
+	assetCreatedOn?: string;
 }
 
 export type CodeRequest = {
@@ -201,11 +206,16 @@ export interface CompareModelsResponseType {
 	response: string;
 }
 
-export interface NotificationItem extends NotificationItemStatus {
+export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
+
+export interface NotificationItem extends NotificationItemStatus, AssetRoute {
 	notificationGroupId: string;
 	type: ClientEventType;
-	assetId: string;
-	assetName: string;
+	typeDisplayName: string;
+	sourceName: string;
+	context: string;
+	projectId?: string;
+	nodeId?: string;
 	lastUpdated: number;
 	acknowledged: boolean;
 	supportCancel: boolean;
@@ -234,7 +244,6 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
-			name:
-				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));

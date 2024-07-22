@@ -8,12 +8,9 @@ import org.springframework.data.repository.NoRepositoryBean;
 
 @NoRepositoryBean
 public interface PSCrudSoftDeleteRepository<T, ID> extends PSCrudRepository<T, ID> {
-
 	List<T> findAllByIdInAndDeletedOnIsNull(final List<ID> ids);
 
 	Optional<T> getByIdAndDeletedOnIsNull(final ID id);
-
-	Page<T> findAllByDeletedOnIsNull(final Pageable pageable);
 
 	Page<T> findAllByPublicAssetIsTrueAndTemporaryIsFalseAndDeletedOnIsNull(final Pageable pageable);
 }

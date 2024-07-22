@@ -12,12 +12,14 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 public class CodeService extends TerariumAssetServiceWithoutSearch<Code, CodeRepository> {
 
 	public CodeService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ProjectAssetService projectAssetService,
-			final CodeRepository repository,
-			final S3ClientService s3ClientService) {
-		super(objectMapper, config, projectAssetService, repository, s3ClientService, Code.class);
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final CodeRepository repository,
+		final S3ClientService s3ClientService
+	) {
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Code.class);
 	}
 
 	@Override

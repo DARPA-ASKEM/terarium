@@ -97,7 +97,6 @@
 					class="5"
 					:disabled="!kernelState"
 				/>
-
 				<Button
 					label="Save as"
 					icon="pi pi-save"
@@ -146,13 +145,7 @@ import type { CsvAsset, NotebookSession } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
-import {
-	createMessageId,
-	getServerSettings,
-	getSessionManager,
-	JupyterMessage,
-	newSession
-} from '@/services/jupyter';
+import { createMessageId, getServerSettings, getSessionManager, JupyterMessage, newSession } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import Dropdown from 'primevue/dropdown';
@@ -183,7 +176,7 @@ const emit = defineEmits(['new-dataset-saved', 'update-language']);
 const chat = ref();
 const kernelStatus = ref(<string>'');
 const kernelState = ref(null);
-const actionTarget = ref('df');
+const actionTarget = ref<string | null>(null);
 
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
@@ -309,9 +302,7 @@ onMounted(() => {
 				results.push(result);
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -324,10 +315,16 @@ onUnmounted(() => {
 	jupyterSession.shutdown();
 });
 
-const updateKernelState = (newKernelState) => {
+const updateKernelState = (newKernelState: any) => {
 	kernelState.value = newKernelState;
+	// Default the dropdown to the first dataframe
+	if (!actionTarget.value) {
+		actionTarget.value = Object.keys(newKernelState)[0];
+	}
 };
 
+// TODO: Integrate tera-save-asset-modal.vue instead of doing this
+// There is no clear way to save a csv dataset unless we do it using jupyter like we have now, once we figure out how to save using createDataset we should move this
 // Save file function
 const saveAsNewDataset = async () => {
 	if (!hasValidDatasetName.value || saveAsName.value === null) {
@@ -347,7 +344,6 @@ const saveAsNewDataset = async () => {
 	// newDataset.fileNames = [filename];
 	// const result = await createNewDataset(newDataset);
 
-	// import { KernelConnection as JupyterKernelConnection } from '@/services/jupyter';
 	const session = jupyterSession.session;
 	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {
@@ -446,9 +442,7 @@ const updateKernelList = () => {
 			while (result) {
 				result = sessions.next();
 			}
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			runningSessions.value = results.reverse().map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
@@ -465,10 +459,7 @@ const onNewDatasetSaved = async (payload) => {
 	const datasetId = payload.dataset_id;
 	await useProjects().addAsset(AssetType.Dataset, datasetId);
 	emit('new-dataset-saved', { id: datasetId, name: saveAsName.value });
-	toast.success(
-		'Dataset saved successfully',
-		'Refresh to see the dataset in the resource explorer'
-	);
+	toast.success('Dataset saved successfully', 'Refresh to see the dataset in the resource explorer');
 };
 
 const downloadDataset = () => {
@@ -583,7 +574,7 @@ const onDownloadResponse = (payload) => {
 }
 
 .variables-table div {
-	padding: 0.25rem;
+	padding: var(--gap-1);
 }
 
 .variables-header {

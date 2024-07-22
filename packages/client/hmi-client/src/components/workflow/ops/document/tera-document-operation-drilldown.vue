@@ -4,7 +4,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<div>
+		<tera-columnar-panel>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
@@ -71,7 +71,7 @@
 					<Button label="Close" @click="emit('close')" />
 				</template>
 			</tera-drilldown-preview>
-		</div>
+		</tera-columnar-panel>
 	</tera-drilldown>
 </template>
 
@@ -85,11 +85,7 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref, watch } from 'vue';
 import { ExtractionAssetType } from '@/types/Types';
 import type { DocumentAsset, DocumentExtraction } from '@/types/Types';
-import {
-	downloadDocumentAsset,
-	getDocumentAsset,
-	getDocumentFileAsText
-} from '@/services/document-assets';
+import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { cloneDeep, isEmpty } from 'lodash';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import Image from 'primevue/image';
@@ -97,6 +93,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 
 import { DocumentOperationState } from './document-operation';
 

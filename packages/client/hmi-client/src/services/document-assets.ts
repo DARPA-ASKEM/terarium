@@ -22,13 +22,14 @@ async function getAll(): Promise<DocumentAsset[] | null> {
 
 /**
  * Get DocumentAsset from the data service
+ * Note that projectId is optional as projectId is assigned by the axios API interceptor if value is available from activeProjectId. If the method is call from place where activeProjectId is not available, projectId should be passed as an argument as all endpoints requires projectId as a parameter.
  * @return DocumentAsset|null - the dataset, or null if none returned by API
  */
-async function getDocumentAsset(documentId: string): Promise<DocumentAsset | null> {
-	const response = await API.get(`/document-asset/${documentId}`).catch((error) => {
-		logger.error(
-			`Error: data-service was not able to retreive the document asset ${documentId} ${error}`
-		);
+async function getDocumentAsset(documentId: string, projectId?: string): Promise<DocumentAsset | null> {
+	const response = await API.get(`/document-asset/${documentId}`, {
+		params: { 'project-id': projectId }
+	}).catch((error) => {
+		logger.error(`Error: data-service was not able to retreive the document asset ${documentId} ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -115,11 +116,7 @@ async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<Doc
  * @param documentId the documentId to add the file to
  * @param file the file to upload
  */
-async function addFileToDocumentAsset(
-	documentId: string,
-	file: File,
-	progress?: Ref<number>
-): Promise<boolean> {
+async function addFileToDocumentAsset(documentId: string, file: File, progress?: Ref<number>): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('file', file);
 
@@ -132,10 +129,7 @@ async function addFileToDocumentAsset(
 		},
 		onUploadProgress(progressEvent) {
 			if (progress) {
-				progress.value = Math.min(
-					90,
-					Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
-				);
+				progress.value = Math.min(90, Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100)));
 			}
 		},
 		timeout: 3600000
@@ -146,10 +140,9 @@ async function addFileToDocumentAsset(
 
 async function downloadDocumentAsset(documentId: string, fileName: string): Promise<string | null> {
 	try {
-		const response = await API.get(
-			`document-asset/${documentId}/download-document?filename=${fileName}`,
-			{ responseType: 'arraybuffer' }
-		);
+		const response = await API.get(`document-asset/${documentId}/download-document?filename=${fileName}`, {
+			responseType: 'arraybuffer'
+		});
 		const blob = new Blob([response?.data], { type: 'application/pdf' });
 		const pdfLink = window.URL.createObjectURL(blob);
 		return pdfLink ?? null;
@@ -160,10 +153,7 @@ async function downloadDocumentAsset(documentId: string, fileName: string): Prom
 }
 
 async function getDocumentFileAsText(documentId: string, fileName: string): Promise<string | null> {
-	const response = await API.get(
-		`/document-asset/${documentId}/download-document-as-text?filename=${fileName}`,
-		{}
-	);
+	const response = await API.get(`/document-asset/${documentId}/download-document-as-text?filename=${fileName}`, {});
 
 	if (!response) {
 		return null;
@@ -172,14 +162,8 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
-async function getEquationFromImageUrl(
-	documentId: string,
-	filename: string
-): Promise<string | null> {
-	const response = await API.get(
-		`/document-asset/${documentId}/image-to-equation?filename=${filename}`,
-		{}
-	);
+async function getEquationFromImageUrl(documentId: string, filename: string): Promise<string | null> {
+	const response = await API.get(`/document-asset/${documentId}/image-to-equation?filename=${filename}`, {});
 
 	if (!response) {
 		return null;

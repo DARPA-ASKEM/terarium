@@ -7,14 +7,19 @@
 	>
 		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
+				<template #header-controls-right>
+					<Button
+						:style="{ marginRight: 'auto' }"
+						label="Run"
+						icon="pi pi-play"
+						@click="runCalibrate"
+						:disabled="disableRunButton"
+					/>
+				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteAllMapping"
-						/>
+						<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMapping" />
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -24,7 +29,7 @@
 									class="w-full p-inputtext-sm"
 									placeholder="Select a variable"
 									v-model="data[field]"
-									:options="modelStateOptions?.map((ele) => ele.id)"
+									:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
 								/>
 							</template>
 						</Column>
@@ -46,27 +51,13 @@
 								<span class="column-header"></span>
 							</template>
 							<template #body="{ index }">
-								<Button
-									class="p-button-sm p-button-text"
-									label="Delete"
-									@click="deleteMapRow(index)"
-								/>
+								<Button class="p-button-sm p-button-text" label="Delete" @click="deleteMapRow(index)" />
 							</template>
 						</Column>
 					</DataTable>
 					<div>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
-						/>
+						<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+						<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Auto map" @click="getAutoMapping" />
 					</div>
 				</div>
 				<div class="form-section">
@@ -92,11 +83,7 @@
 						</div>
 						<div class="label-and-input">
 							<label for="ode-method">ODE method</label>
-							<InputText
-								class="p-inputtext-sm"
-								v-model="extra.odeMethod"
-								@update:model-value="updateStateExtras"
-							/>
+							<InputText class="p-inputtext-sm" v-model="extra.odeMethod" @update:model-value="updateStateExtras" />
 						</div>
 						<div class="label-and-input">
 							<label for="calibrate-method">Calibrate method</label>
@@ -120,7 +107,6 @@
 				v-model:output="selectedOutputId"
 				@update:selection="onSelection"
 				is-selectable
-				class="mr-4 ml-2 mt-3 mb-3"
 			>
 				<div class="form-section">
 					<h5>Calibrated parameters</h5>
@@ -175,17 +161,6 @@
 				</div>
 			</tera-drilldown-preview>
 		</template>
-		<template #footer>
-			<Button
-				outlined
-				:style="{ marginRight: 'auto' }"
-				label="Run"
-				icon="pi pi-play"
-				@click="runCalibrate"
-				:disabled="disableRunButton"
-			/>
-			<Button label="Close" @click="emit('close')" />
-		</template>
 	</tera-drilldown>
 </template>
 
@@ -205,15 +180,9 @@ import {
 	CsvAsset,
 	DatasetColumn,
 	ModelConfiguration,
-	ScimlStatusUpdate,
-	State
+	ScimlStatusUpdate
 } from '@/types/Types';
-import {
-	setupModelInput,
-	setupDatasetInput,
-	renderLossGraph,
-	CalibrateMap
-} from '@/services/calibrate-workflow';
+import { setupModelInput, setupDatasetInput, renderLossGraph, CalibrateMap } from '@/services/calibrate-workflow';
 import { autoCalibrationMapping } from '@/services/concept';
 import { RunResults, RunType } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
@@ -230,13 +199,10 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 
-import { getTimespan, chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
-import {
-	CalibrateExtraJulia,
-	CalibrateMethodOptions,
-	CalibrationOperationStateJulia
-} from './calibrate-operation';
+import { getInitials } from '@/services/model-configurations';
+import { CalibrateExtraJulia, CalibrateMethodOptions, CalibrationOperationStateJulia } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateJulia>;
@@ -250,7 +216,7 @@ enum CalibrateTabs {
 }
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<State[] | undefined>();
+const modelStateOptions = ref<any[] | undefined>();
 const datasetColumns = ref<DatasetColumn[]>();
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
@@ -296,11 +262,7 @@ const chartProxy = chartActionsProxy(props.node, (state: CalibrationOperationSta
 
 const disableRunButton = computed(
 	() =>
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
+		!currentDatasetFileName.value || !modelConfig.value || !csvAsset.value || !modelConfigId.value || !datasetId.value
 );
 
 const updateStateExtras = () => {
@@ -310,8 +272,8 @@ const updateStateExtras = () => {
 };
 
 const filterStateVars = (params) => {
-	const initialStates =
-		modelConfig.value?.configuration?.semantics?.ode?.initials?.map((d) => d.expression) ?? [];
+	if (!modelConfig.value) return {};
+	const initialStates = getInitials(modelConfig.value).map((d) => d.expression) ?? [];
 	return Object.keys(params).reduce((acc, key) => {
 		if (!initialStates.includes(key)) {
 			acc[key] = params[key];
@@ -331,12 +293,7 @@ const runCalibrate = async () => {
 };
 
 const makeCalibrateRequest = async () => {
-	if (
-		!modelConfigId.value ||
-		!datasetId.value ||
-		!currentDatasetFileName.value ||
-		!modelConfig.value
-	) {
+	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value || !modelConfig.value) {
 		throw new Error('Insufficient information to run calibrate operation');
 	}
 
@@ -359,7 +316,7 @@ const makeCalibrateRequest = async () => {
 		engine: 'sciml',
 		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value })
 	};
-	const response = await makeCalibrateJobJulia(calibrationRequest);
+	const response = await makeCalibrateJobJulia(calibrationRequest, nodeMetadata(props.node));
 	return response.simulationId;
 };
 
@@ -432,10 +389,7 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = (await autoCalibrationMapping(
-		modelStateOptions.value,
-		datasetColumns.value
-	)) as CalibrateMap[];
+	mapping.value = (await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value)) as CalibrateMap[];
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);

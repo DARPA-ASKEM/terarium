@@ -53,7 +53,6 @@ function deploy_local_lean() {
   docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml up --detach --wait
 }
 
-
 function stop_local() {
   echo "Stopping local dev containers"
   cat containers/common.env containers/secrets.env > containers/.env
@@ -72,11 +71,17 @@ function stop_local_lean() {
   docker compose --env-file containers/.env --file containers/docker-compose-local-lean.yml down
 }
 
-
 function start_local() {
   echo "Starting local server"
   cd ${SERVER_DIR} || exit
   ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local'
+  cd - || exit
+}
+
+function start_staging() {
+  echo "Starting local server pointing to staging keycloak"
+  cd ${SERVER_DIR} || exit
+  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
   cd - || exit
 }
 
@@ -124,7 +129,7 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"local"}
 SERVER=${SERVER:-"false"}
 
-VALID_ENVIRONMENTS=("local" "full" "ll")
+VALID_ENVIRONMENTS=("local" "staging" "full" "ll")
 ENVIRONMENT_IS_VALID=0
 for env in ${VALID_ENVIRONMENTS[@]}; do
   echo "checking $ENVIRONMENT against $env"
@@ -150,6 +155,9 @@ case ${COMMAND} in
       local)
         deploy_local
         ;;
+      staging)
+        deploy_local
+        ;;
       full)
         deploy_full
         ;;
@@ -160,6 +168,8 @@ case ${COMMAND} in
     if [ ${SERVER} == "run" ]; then
       if [ ${ENVIRONMENT} == "local" ]; then
         start_local
+      elif [ ${ENVIRONMENT} == "staging" ]; then
+        start_staging
       fi
       delete_secrets
     fi
@@ -168,6 +178,9 @@ case ${COMMAND} in
     decrypt_secrets
     case ${ENVIRONMENT} in
       local)
+        stop_local
+        ;;
+      staging)
         stop_local
         ;;
       full)
@@ -200,14 +213,14 @@ case ${COMMAND} in
 
       start
         ENVIRONMENT
-          local | full | ll (default: local)  Indicate which environment to develop against
+          local | staging | full | ll (default: local)  Indicate which environment to develop against
               (ll: local_lean to run local with the absolute minimal support to run hmiServer for development)
 
         run (default: null) Indicate whether to run the server after starting the containers
 
       stop
         ENVIRONMENT
-          local | full (default: local)  Indicate which containers to stop
+          local | staging | full | ll (default: local)  Indicate which containers to stop
 
       OTHER COMMANDS:
         encrypt

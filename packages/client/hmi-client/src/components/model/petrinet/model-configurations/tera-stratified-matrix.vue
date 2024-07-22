@@ -37,27 +37,23 @@
 							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
 						>
-							<template v-if="cell.content.id">
-								<section class="flex flex-column">
-									<InputText
-										v-if="editableCellStates[rowIdx][colIdx]"
-										class="cell-input"
-										:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
-										v-model.lazy="valueToEdit"
-										v-focus
-										@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
-										@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
-									/>
+							<section v-if="cell.content.id" class="flex flex-column">
+								<InputText
+									v-if="editableCellStates[rowIdx][colIdx]"
+									class="cell-input"
+									:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
+									v-model.lazy="valueToEdit"
+									v-focus
+									@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
+									@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
+								/>
+								<div class="w-full" :class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }">
 									<div
-										class="w-full"
-										:class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }"
+										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
-										<div
-											class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
-											v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
-										>
-											{{ cell?.content.id }}
-											<!--
+										{{ cell?.content.id }}
+										<!--
 											<span
 												v-if="cell?.content?.controllers"
 												class="pi pi-info-circle"
@@ -67,16 +63,14 @@
 												}"
 											/>
 											-->
-										</div>
-										<div>
-											<div
-												class="mathml-container"
-												v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
-											/>
-										</div>
 									</div>
-								</section>
-							</template>
+									<div
+										v-if="!isReadOnly"
+										class="mathml-container"
+										v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
+									/>
+								</div>
+							</section>
 							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
@@ -94,11 +88,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import {
-	createParameterMatrix,
-	createInitialMatrix,
-	collapseTemplates
-} from '@/model-representation/mira/mira';
+import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
 import { getVariable } from '@/model-representation/service';
 import { extractTemplateMatrix } from '@/model-representation/mira/mira-util';
 import { logger } from '@/utils/logger';
@@ -108,17 +98,19 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	id: string;
 	stratifiedMatrixType: StratifiedMatrix;
+	isReadOnly?: boolean;
 	shouldEval: boolean;
+	matrixType?: string;
 }>();
 
 const emit = defineEmits(['update-cell-value']);
 
 const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
-const matrixType = ref('subjectOutcome');
+const matrixType = ref(props.matrixType || 'subjectOutcome');
 const matrixMap = ref<any>();
 const matrix = ref<any>([]);
 
-const currentMatrixtype = ref('');
+const currentMatrixtype = ref(props.matrixType || '');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -144,7 +136,7 @@ const vFocus = {
 };
 
 function onEnterValueCell(variableName: string, rowIdx: number, colIdx: number) {
-	if (!variableName) return;
+	if (!variableName || props.isReadOnly) return;
 	valueToEdit.value = getVariable(props.mmt, variableName).value;
 	editableCellStates.value[rowIdx][colIdx] = true;
 }
@@ -159,10 +151,7 @@ async function getMatrixValue(variableName: string) {
 	}
 
 	if (props.shouldEval) {
-		const expressionEval = await pythonInstance.evaluateExpression(
-			expressionBase,
-			parametersValueMap.value
-		);
+		const expressionEval = await pythonInstance.evaluateExpression(expressionBase, parametersValueMap.value);
 		return (await pythonInstance.parseExpression(expressionEval)).pmathml;
 	}
 	return (await pythonInstance.parseExpression(expressionBase)).pmathml;

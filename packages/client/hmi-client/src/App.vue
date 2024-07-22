@@ -36,28 +36,18 @@ import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
 
-/**
- * Router
- */
+/* Router */
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
-
 const displayNavBar = computed(() => currentRoute.value.name !== 'unauthorized');
 
-/**
- * Project
- */
+/* Project */
 API.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		const status = error.response.status;
-		toast.showToast(
-			ToastSeverity.error,
-			`${ToastSummaries.NETWORK_ERROR} (${status})`,
-			'Unauthorized',
-			5000
-		);
+		toast.showToast(ToastSeverity.error, `${ToastSummaries.NETWORK_ERROR} (${status})`, 'Unauthorized', 5000);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
 		}

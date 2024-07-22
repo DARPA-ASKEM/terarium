@@ -3,9 +3,16 @@ import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import { Ref, ref } from 'vue';
+import { activeProjectId } from '@/composables/activeProject';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
+
+function getProjectIdFromUrl(): string | null {
+	const url = new URL(window.location.href);
+	const match = url.pathname.match(/\/projects\/([a-z,0-9,-]+)\//);
+	return match ? match[1] : null;
+}
 
 const API = axios.create({
 	baseURL: '/api',
@@ -18,7 +25,16 @@ const API = axios.create({
 API.interceptors.request.use(
 	(config) => {
 		const auth = useAuthStore();
-		config.headers.setAuthorization(`Bearer ${auth.token}`);
+		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
+		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
+		const projectId = activeProjectId.value || getProjectIdFromUrl();
+		if (projectId) {
+			if (config.params) {
+				config.params['project-id'] = projectId;
+			} else {
+				config.params = { 'project-id': projectId };
+			}
+		}
 		return config;
 	},
 	(error) => {
@@ -32,9 +48,7 @@ API.interceptors.response.use(
 		if (error.status === 401) {
 			// redirect to login
 			const auth = useAuthStore();
-			auth.keycloak?.login({
-				redirectUri: window.location.href
-			});
+			auth.login(window.location.href);
 		} else {
 			let message = error.message;
 			let title = `${error.response?.statusText} (${error.response?.status})`;
@@ -275,7 +289,7 @@ export class TaskHandler {
 		try {
 			this.eventSource = new EventSource(API.defaults.baseURL + this.url, {
 				headers: {
-					Authorization: `Bearer ${authStore.token}`
+					Authorization: `Bearer ${authStore.getToken()}`
 				},
 				retry: 3000
 			});

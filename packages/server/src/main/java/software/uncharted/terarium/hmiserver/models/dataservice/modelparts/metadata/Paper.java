@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class Paper extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -2218015536823471410L;
 
@@ -23,4 +24,13 @@ public class Paper extends SupportAdditionalProperties implements Serializable {
 	private String fileDirectory;
 
 	private String doi;
+
+	@Override
+	public Paper clone() {
+		final Paper clone = (Paper) super.clone();
+		clone.id = id;
+		clone.fileDirectory = fileDirectory;
+		clone.doi = doi;
+		return clone;
+	}
 }

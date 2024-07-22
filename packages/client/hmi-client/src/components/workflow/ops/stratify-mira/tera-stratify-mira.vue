@@ -4,10 +4,12 @@
 		:menu-items="menuItems"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
+		@update-output-port="(output: any) => emit('update-output-port', output)"
 		@update:selection="onSelection"
+		v-bind="$attrs"
 	>
 		<div :tabName="StratifyTabs.Wizard">
-			<tera-drilldown-section class="pl-4 pt-3">
+			<tera-drilldown-section class="pl-4">
 				<div class="form-section">
 					<header class="inline-flex justify-content-between">
 						<section>
@@ -48,7 +50,7 @@
 						:context-language="'python3'"
 						@llm-output="(data: any) => processLLMOutput(data)"
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="llmThoughts = []"
+						@question-asked="updateLlmQuery"
 					>
 						<template #toolbar-right-side>
 							<Button label="Run" size="small" icon="pi pi-play" @click="runCodeStratify" />
@@ -73,7 +75,6 @@
 				@update:selection="onSelection"
 				v-model:output="selectedOutputId"
 				is-selectable
-				class="mr-4 mt-3 mb-2"
 			>
 				<div class="h-full">
 					<tera-notebook-error
@@ -84,7 +85,7 @@
 					/>
 					<template v-else-if="stratifiedAmr">
 						<tera-model-diagram :model="stratifiedAmr" :is-editable="false" />
-						<TeraModelSemanticTables :model="stratifiedAmr" :is-editable="false" />
+						<tera-model-parts :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
 						<tera-operator-placeholder :operation-type="node.operationType" />
@@ -95,7 +96,8 @@
 	</tera-drilldown>
 	<tera-save-asset-modal
 		v-if="stratifiedAmr"
-		:model="stratifiedAmr"
+		:asset="stratifiedAmr"
+		:assetType="AssetType.Model"
 		:is-visible="showSaveModelModal"
 		@close-modal="showSaveModelModal = false"
 	/>
@@ -109,13 +111,14 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-model-diagram.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraModelSemanticTables from '@/components/model/tera-model-semantic-tables.vue';
-import TeraSaveAssetModal from '@/page/project/components/tera-save-asset-modal.vue';
+import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 
 import { createModel, getModel } from '@/services/model';
+
 import { WorkflowNode, OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -125,27 +128,19 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import '@/ace-config';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import type { Model } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { nodeOutputLabel } from '@/components/workflow/util';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import {
-	blankStratifyGroup,
-	StratifyGroup,
-	StratifyOperationStateMira
-} from './stratify-mira-operation';
+import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'update-output-port',
-	'select-output'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
 
 const menuItems = computed(() => [
 	{
@@ -179,6 +174,7 @@ const kernelManager = new KernelSessionManager();
 
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
+const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
 
 const sampleAgentQuestions = [
@@ -186,6 +182,11 @@ const sampleAgentQuestions = [
 	'Stratify my model by the locations Toronto and Montreal where Toronto and Montreal cannot interact',
 	'What is cartesian_control in stratify?'
 ];
+
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
 
 const updateStratifyGroupForm = (config: StratifyGroup) => {
 	const state = _.cloneDeep(props.node.state);
@@ -276,7 +277,7 @@ const handleModelPreview = async (data: any) => {
 
 	emit('append-output', {
 		id: uuidv4(),
-		label: `Output ${Date.now()}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		type: 'modelId',
 		state: {
 			strataGroup: _.cloneDeep(props.node.state.strataGroup),
@@ -309,10 +310,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
-	if (
-		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
-		semantics?.ode
-	) {
+	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
 		initials?.forEach((i) => {
@@ -420,20 +418,19 @@ const runCodeStratify = () => {
 	});
 };
 
-// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service
+// FIXME: Copy pasted in 3 locations, could be written cleaner and in a service. Migrate it to use saveCodeToState from @/services/notebook
 const saveCodeToState = (code: string, hasCodeBeenRun: boolean) => {
 	const state = _.cloneDeep(props.node.state);
 	state.hasCodeBeenRun = hasCodeBeenRun;
-
 	// for now only save the last code executed, may want to save all code executed in the future
 	const codeHistoryLength = props.node.state.strataCodeHistory.length;
 	const timestamp = Date.now();
+	const llm = { llmQuery: llmQuery.value, llmThoughts: llmThoughts.value };
 	if (codeHistoryLength > 0) {
-		state.strataCodeHistory[0] = { code, timestamp };
+		state.strataCodeHistory[0] = { code, timestamp, ...llm };
 	} else {
-		state.strataCodeHistory.push({ code, timestamp });
+		state.strataCodeHistory.push({ code, timestamp, ...llm });
 	}
-
 	emit('update-state', state);
 };
 

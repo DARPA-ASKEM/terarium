@@ -6,18 +6,10 @@ import {
 	convertToClientEvents,
 	getLatestUnacknowledgedNotifications
 } from '@/services/notification';
-import {
-	createNotificationEventHandlers,
-	createNotificationEventLogger
-} from '@/services/notificationEventHandlers';
+import { createNotificationEventHandlers, createNotificationEventLogger } from '@/services/notificationEventHandlers';
 import { ProgressState } from '@/types/Types';
-import { useProjects } from './project';
 
 let initialized = false;
-
-const { findAsset } = useProjects();
-
-const isNotificationForActiveProject = (item: NotificationItem) => !!findAsset(item.assetId);
 
 const isFinished = (item: NotificationItem) =>
 	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(item.status);
@@ -26,15 +18,9 @@ const isFinished = (item: NotificationItem) =>
 const items = ref<NotificationItem[]>([]);
 
 export function useNotificationManager() {
-	const itemsForActiveProject = computed(() => items.value.filter(isNotificationForActiveProject));
-
-	const hasFinishedItems = computed(() =>
-		itemsForActiveProject.value.some((item: NotificationItem) => isFinished(item))
-	);
+	const hasFinishedItems = computed(() => items.value.some((item: NotificationItem) => isFinished(item)));
 	const unacknowledgedFinishedItems = computed(() =>
-		itemsForActiveProject.value.filter(
-			(item: NotificationItem) => isFinished(item) && !item.acknowledged
-		)
+		items.value.filter((item: NotificationItem) => isFinished(item) && !item.acknowledged)
 	);
 
 	async function init() {
@@ -52,20 +38,14 @@ export function useNotificationManager() {
 		// Initialize SSE event handlers for the subsequent events for the notification manager
 		supportedEventTypes.forEach((eventType) => subscribe(eventType, handlers.get(eventType)));
 		// Attach handlers for logging
-		supportedEventTypes.forEach((eventType) =>
-			subscribe(eventType, createNotificationEventLogger(itemsForActiveProject))
-		);
+		supportedEventTypes.forEach((eventType) => subscribe(eventType, createNotificationEventLogger(items)));
 
 		initialized = true;
 	}
 
 	function clearFinishedItems() {
-		itemsForActiveProject.value.forEach((item) => {
-			if (item.status !== ProgressState.Running) acknowledgeNotification(item.notificationGroupId);
-		});
-		items.value = items.value.filter(
-			(item) => !isNotificationForActiveProject(item) || item.status === ProgressState.Running
-		);
+		items.value.filter(isFinished).forEach((item) => acknowledgeNotification(item.notificationGroupId));
+		items.value = items.value.filter((item) => !isFinished(item));
 	}
 
 	function acknowledgeFinishedItems() {
@@ -78,7 +58,7 @@ export function useNotificationManager() {
 
 	return {
 		init,
-		itemsForActiveProject,
+		notificationItems: items,
 		clearFinishedItems,
 		acknowledgeFinishedItems,
 		hasFinishedItems,

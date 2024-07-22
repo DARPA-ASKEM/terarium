@@ -1,6 +1,7 @@
 import getConfiguration from '@/services/ConfigService';
 import useAuthStore from '@/stores/auth';
-import type { ClientEvent, ExtractionStatusUpdate } from '@/types/Types';
+import type { ClientEvent } from '@/types/Types';
+import type { ExtractionStatusUpdate } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
 import { EventSource } from 'extended-eventsource';
 
@@ -19,6 +20,8 @@ let lastHeartbeat = new Date().valueOf();
  * in the event of a retriable error
  */
 let backoffMs = 1000;
+
+let lastReconnectCheck = 0;
 
 /**
  * Whether we are currently reconnecting to the SSE endpoint
@@ -44,7 +47,7 @@ export async function init(): Promise<void> {
 
 	eventSource = new EventSource('/api/client-event', {
 		headers: {
-			Authorization: `Bearer ${authStore.token}`
+			Authorization: `Bearer ${authStore.getToken()}`
 		},
 		retry: 3000
 	});
@@ -63,9 +66,7 @@ export async function init(): Promise<void> {
 	eventSource.onopen = async (response: any) => {
 		if (response.status === 401) {
 			// redirect to the login page
-			authStore.keycloak?.login({
-				redirectUri: window.location.href
-			});
+			authStore.login(window.location.href);
 		} else if (response.status >= 500) {
 			throw new RetriableError('Internal server error');
 		} else {
@@ -74,10 +75,11 @@ export async function init(): Promise<void> {
 		}
 	};
 	eventSource.onerror = (error: any) => {
+		backoffMs *= 2;
+		backoffMs = Math.min(backoffMs, 60000);
 		// If we get a retriable error, double the backoff time up to a maximum of 60 seconds
 		if (error instanceof RetriableError) {
-			backoffMs *= 2;
-			return Math.min(backoffMs, 60000);
+			return backoffMs;
 		}
 		throw error; // fatal
 	};
@@ -88,11 +90,13 @@ export async function init(): Promise<void> {
  * and reconnects if not
  */
 setInterval(async () => {
-	if (!reconnecting) {
+	const lastCheck = new Date().valueOf() - lastReconnectCheck;
+	if (!reconnecting && lastCheck >= backoffMs) {
 		reconnecting = true;
+		lastReconnectCheck = new Date().valueOf();
 		const config = await getConfiguration();
 		const heartbeatIntervalMillis = config?.sseHeartbeatIntervalMillis ?? 10000;
-		if (new Date().valueOf() - lastHeartbeat > heartbeatIntervalMillis) {
+		if (lastReconnectCheck - lastHeartbeat > heartbeatIntervalMillis) {
 			await init();
 		}
 		reconnecting = false;
@@ -138,13 +142,13 @@ export async function unsubscribe(
 export const extractionStatusUpdateHandler = async (event: ClientEvent<ExtractionStatusUpdate>) => {
 	const { data } = event;
 	if (data.error) {
-		console.error(`[${data.t}]: ${data.error}`);
+		console.error(`[${data.progress}]: ${data.error}`);
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 		return;
 	}
 
-	console.debug(`[${data.t}]: ${data.message}`);
-	if (data.t >= 1.0) {
+	console.debug(`[${data.progress}]: ${data.message}`);
+	if (data.progress >= 1.0) {
 		await unsubscribe(ClientEventType.Extraction, extractionStatusUpdateHandler);
 	}
 };

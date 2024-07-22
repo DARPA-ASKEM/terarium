@@ -1,32 +1,15 @@
 <template>
 	<main>
 		<template v-if="selectedRunId && runResults[selectedRunId]">
-			<tera-simulate-chart
-				v-for="(config, idx) of props.node.state.chartConfigs"
-				:key="idx"
-				:run-results="runResults[selectedRunId]"
-				:chartConfig="{
-					selectedRun: selectedRunId,
-					selectedVariable: config
-				}"
-				:size="{ width: 180, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(idx, $event)"
+			<vega-chart
+				v-for="(_config, index) of props.node.state.chartConfigs"
+				:key="index"
+				:are-embed-actions-visible="false"
+				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<tera-progress-spinner
-			v-if="inProgressSimulationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration
 		</tera-operator-placeholder>
@@ -38,19 +21,22 @@ import _ from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
-	getRunResultCiemss,
+	getRunResultCSV,
 	pollAction,
-	getSimulation
+	getSimulation,
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy } from '@/components/workflow/util';
+import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
-import type { RunResults } from '@/types/SimulateConfig';
+import { createLLMSummary } from '@/services/summary-service';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -58,11 +44,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
 const selectedRunId = ref<string>();
 const inProgressSimulationId = computed(() => props.node.state.inProgressSimulationId);
 const areInputsFilled = computed(() => props.node.inputs[0].value);
+
+let pyciemssMap: Record<string, string> = {};
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -105,24 +94,85 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
-const processResult = (runId: string) => {
+const processResult = async (runId: string) => {
 	const state = _.cloneDeep(props.node.state);
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
 
+	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
+	const start = _.first(summaryData);
+	const end = _.last(summaryData);
+
+	const prompt = `
+The following are the key attributes of a simulation/forecasting process for a ODE epidemilogy model.
+
+The input parameters are as follows:
+- samples: ${state.numSamples}
+- method: ${state.method}
+- timespan: ${JSON.stringify(state.currentTimespan)}
+
+The output has these metrics at the start:
+- ${JSON.stringify(start)}
+
+The output has these metrics at the end:
+- ${JSON.stringify(end)}
+
+Provide a summary in 100 words or less.
+	`;
+
+	const summaryResponse = await createLLMSummary(prompt);
+
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: `Output - ${props.node.outputs.length + 1}`,
+		label: nodeOutputLabel(props.node, 'Output'),
 		value: [runId],
 		state: {
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
-			method: state.method
+			method: state.method,
+			summaryId: summaryResponse?.id
 		},
 		isSelected: false
 	});
 };
+
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				timeField: 'timepoint_id'
+			},
+			null,
+			// options
+			{
+				width: 180,
+				height: 120,
+				legend: false,
+				translationMap: reverseMap,
+				xAxisTitle: '',
+				yAxisTitle: ''
+			}
+		)
+	);
+});
 
 watch(
 	() => props.node.state.inProgressSimulationId,
@@ -131,7 +181,7 @@ watch(
 
 		const response = await pollResult(id);
 		if (response.state === PollerState.Done) {
-			processResult(id);
+			await processResult(id);
 		}
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressSimulationId = '';
@@ -149,8 +199,12 @@ watch(
 		selectedRunId.value = props.node.outputs.find((o) => o.id === active)?.value?.[0];
 		if (!selectedRunId.value) return;
 
-		const output = await getRunResultCiemss(selectedRunId.value);
-		runResults.value[selectedRunId.value] = output.runResults;
+		const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+		pyciemssMap = parsePyCiemssMap(result[0]);
+		runResults.value[selectedRunId.value] = result;
+
+		const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
 	},
 	{ immediate: true }
 );

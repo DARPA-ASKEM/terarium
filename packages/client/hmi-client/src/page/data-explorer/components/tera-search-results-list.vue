@@ -6,11 +6,7 @@
 				{{ resultsText }}
 				<span v-if="isEmpty(searchByExampleOptionsStr)"> "{{ props.searchTerm }}" </span>
 				<div v-else-if="!isEmpty(searchByExampleOptionsStr)" class="search-by-example-card">
-					<tera-asset-card
-						:asset="searchByExampleItem!"
-						:resource-type="resourceType"
-						:source="source"
-					/>
+					<tera-asset-card :asset="searchByExampleItem!" :resource-type="resourceType" :source="source" />
 				</div>
 			</template>
 			<template v-else>{{ itemsText }} </template>
@@ -33,8 +29,7 @@
 
 	<!-- Loading animation -->
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<!-- <div><i class="pi pi-spin pi-spinner" /></div> -->
-		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200"></Vue3Lottie>
+		<Vue3Lottie :animationData="LoadingWateringCan" :height="200" :width="200" />
 	</div>
 
 	<!-- Nothing found -->
@@ -63,17 +58,9 @@
 
 <script setup lang="ts">
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import LoadingWateringCan from '@/assets/images/lottie-loading-wateringCan.json';
+import LoadingWateringCan from '@/assets/images/lottie-loading-watering-can.json';
 import { useProjects } from '@/composables/project';
-import {
-	AssetType,
-	Dataset,
-	Document,
-	DocumentAsset,
-	Model,
-	ProjectAsset,
-	XDDFacetsItemResponse
-} from '@/types/Types';
+import { AssetType, Dataset, Document, DocumentAsset, Model, ProjectAsset, XDDFacetsItemResponse } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { DocumentSource } from '@/types/search';
@@ -81,14 +68,11 @@ import type { Source } from '@/types/search';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
-import {
-	getSearchByExampleOptionsString,
-	useSearchByExampleOptions
-} from '@/page/data-explorer/search-by-example';
+import { getSearchByExampleOptionsString, useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
 import { createDocumentFromXDD } from '@/services/document-assets';
 import { isDataset, isDocument, isModel } from '@/utils/data-util';
 import { logger } from '@/utils/logger';
-import { isEmpty } from 'lodash';
+import { isEmpty, sortBy, orderBy, remove } from 'lodash';
 import { computed, PropType, Ref, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
 import { createDataset, getClimateDataset } from '@/services/dataset';
@@ -132,31 +116,28 @@ const props = defineProps({
 const selectedAsset: Ref<ResultType> = ref({} as ResultType);
 const isAdding = ref(false);
 
-const projectOptions = computed(() => [
-	{
-		label: 'Add to which project?',
-		items:
-			useProjects().allProjects.value?.map((project) => ({
-				label: project.name,
-				command: async () => {
-					let response: ProjectAsset['id'] | null = null;
-					let assetName: string = '';
-					isAdding.value = true;
+const projectOptions = computed(() => {
+	const items =
+		useProjects().allProjects.value?.map((project) => ({
+			label: project.name,
+			command: async () => {
+				let response: ProjectAsset['id'] | null = null;
+				let assetName: string = '';
+				isAdding.value = true;
 
-					if (isModel(selectedAsset.value)) {
-						const modelAsset: Model = selectedAsset.value as Model;
+				if (isModel(selectedAsset.value)) {
+					const modelAsset: Model = selectedAsset.value as Model;
 
-						const modelId = modelAsset.id;
-						response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
-						assetName = modelAsset.header.name;
-					} else if (isDataset(selectedAsset.value)) {
-						let datasetId = selectedAsset.value.id;
+					const modelId = modelAsset.id;
+					response = await useProjects().addAsset(AssetType.Model, modelId, project.id);
+					assetName = modelAsset.header.name;
+				} else if (isDataset(selectedAsset.value)) {
+					let datasetId = selectedAsset.value.id;
 
+					if (useProjects().hasEditPermission()) {
 						if (!datasetId && selectedAsset.value.esgfId) {
 							// The selectedAsset is a light asset for front end and we need the whole thing.
-							const climateDataset: Dataset | null = await getClimateDataset(
-								selectedAsset.value.esgfId
-							);
+							const climateDataset: Dataset | null = await getClimateDataset(selectedAsset.value.esgfId);
 							if (climateDataset) {
 								const dataset: Dataset | null = await createDataset(climateDataset);
 								if (dataset) {
@@ -164,30 +145,40 @@ const projectOptions = computed(() => [
 								}
 							}
 						}
-
-						// then, link and store in the project assets
-						if (datasetId) {
-							response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
-							assetName = selectedAsset.value.name ?? '';
-						}
-					} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
-						const document = selectedAsset.value as Document;
-						await createDocumentFromXDD(document, project.id as string);
-						assetName = selectedAsset.value.title;
-					} else if (props.source === DocumentSource.TERARIUM) {
-						const document = selectedAsset.value as DocumentAsset;
-						const assetType = AssetType.Document;
-						response = await useProjects().addAsset(assetType, document.id, project.id);
-						assetName = document.name ?? '';
 					}
 
-					if (response) logger.info(`Added ${assetName} to ${project.name}`);
-
-					isAdding.value = false;
+					// then, link and store in the project assets
+					if (datasetId) {
+						response = await useProjects().addAsset(AssetType.Dataset, datasetId, project.id);
+						assetName = selectedAsset.value.name ?? '';
+					}
+				} else if (isDocument(selectedAsset.value) && props.source === DocumentSource.XDD) {
+					const document = selectedAsset.value as Document;
+					await createDocumentFromXDD(document, project.id as string);
+					assetName = selectedAsset.value.title;
+				} else if (props.source === DocumentSource.TERARIUM) {
+					const document = selectedAsset.value as DocumentAsset;
+					const assetType = AssetType.Document;
+					response = await useProjects().addAsset(assetType, document.id, project.id);
+					assetName = document.name ?? '';
 				}
-			})) ?? []
-	}
-]);
+
+				if (response) logger.info(`Added ${assetName} to ${project.name}`);
+
+				isAdding.value = false;
+			}
+		})) ?? [];
+
+	const lastProjectUpdated = orderBy(useProjects().allProjects.value, ['updatedOn'], ['desc'])[0];
+	const lastUpdatedProjectItem = remove(items, (item) => item.label === lastProjectUpdated.name);
+
+	return [
+		{
+			label: 'Add to which project?',
+			items: [...lastUpdatedProjectItem, ...sortBy(items, (item) => item.label?.toString().toLowerCase())]
+		}
+	];
+});
 
 const previewedAsset = ref<ResultType | null>(null);
 
@@ -217,8 +208,7 @@ const togglePreview = (asset: ResultType) => {
 // });
 
 const filteredAssets = computed(() => {
-	const searchResults =
-		props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resourceType)?.results ?? [];
 	return searchResults;
 });
 
@@ -245,10 +235,7 @@ const resultsText = computed(() => {
 	}
 	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	const toOrFor =
-		searchByExampleOptionsStr.value.length > 0
-			? `with ${searchByExampleOptionsStr.value} to`
-			: 'for';
+	const toOrFor = searchByExampleOptionsStr.value.length > 0 ? `with ${searchByExampleOptionsStr.value} to` : 'for';
 	return `Showing ${resultsCount.value} ${truncated}result${s} ${toOrFor} `;
 });
 
@@ -285,7 +272,7 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	gap: 0.25rem;
+	gap: var(--gap-1);
 	align-items: center;
 	margin-bottom: 8rem;
 	flex-grow: 1;
@@ -302,7 +289,7 @@ ul {
 
 .no-results-found {
 	font-weight: var(--font-weight);
-	margin-top: 0.25rem;
+	margin-top: var(--gap-1);
 	font-size: 1.5rem;
 }
 
@@ -329,7 +316,7 @@ ul {
 
 .p-chip span {
 	color: var(--text-color-primary);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
 .search-container {

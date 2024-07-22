@@ -3,9 +3,10 @@ import { runDagreLayout } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import type { Initial, Model, ModelParameter } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, parseCurie } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -138,6 +139,7 @@ export const getModelRenderer = (
 			el: graphElement,
 			useAStarRouting: false,
 			useStableZoomPan: true,
+			zoomModifier: 'ctrlKey',
 			runLayout: runDagreLayout,
 			dims,
 			nestedMap,
@@ -149,6 +151,7 @@ export const getModelRenderer = (
 		el: graphElement,
 		useAStarRouting: false,
 		useStableZoomPan: true,
+		zoomModifier: 'ctrlKey',
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});
@@ -189,14 +192,115 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 	}
 }
 
+export function setParameters(model: Model, parameters: ModelParameter[]) {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			model.model.parameters = parameters;
+			break;
+		case AMRSchemaNames.PETRINET:
+		case AMRSchemaNames.STOCKFLOW:
+		default:
+			if (model.semantics) model.semantics.ode.parameters = parameters;
+			break;
+	}
+}
+
+export function updateModelPartProperty(modelPart: any, key: string, value: any) {
+	if (key === 'unitExpression') {
+		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
+		modelPart.units.expression = value;
+		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
+	} else if (key === 'concept') {
+		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
+		modelPart.grounding.identifiers = parseCurie(value);
+	} else {
+		modelPart[key] = value;
+	}
+}
+
+export function updateParameter(model: Model, id: string, key: string, value: any) {
+	const parameters = getParameters(model);
+	const parameter = parameters.find((p: ModelParameter) => p.id === id);
+	if (!parameter) return;
+	updateModelPartProperty(parameter, key, value);
+
+	// FIXME: (For stockflow) Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
+	const auxiliaries = model.model?.auxiliaries ?? [];
+	const auxiliary = auxiliaries.find((a) => a.id === id);
+	if (!auxiliary) return;
+	updateModelPartProperty(auxiliary, key, value);
+}
+
+export function updateState(model: Model, id: string, key: string, value: any) {
+	const states = getStates(model);
+	const state = states.find((i: any) => i.id === id);
+	if (!state) return;
+	updateModelPartProperty(state, key, value);
+}
+
+export function updateObservable(model: Model, id: string, key: string, value: any) {
+	const observables = model?.semantics?.ode?.observables ?? [];
+	const observable = observables.find((o) => o.id === id);
+	if (!observable) return;
+	updateModelPartProperty(observable, key, value);
+}
+
+export function updateTransition(model: Model, id: string, key: string, value: any) {
+	const transitions: Transition[] = model?.model?.transitions ?? [];
+	const transition = transitions.find((t) => t.id === id);
+	if (!transition) return;
+	if (transition.properties && key === 'name') {
+		transition.properties.name = value;
+	}
+	updateModelPartProperty(transition, key, value);
+}
+
+export function updateTime(model: Model, key: string, value: any) {
+	const time: State = model?.semantics?.ode?.time;
+	updateModelPartProperty(time, key, value);
+}
+
+// Gets states, vertices, stocks (no stock type yet)
+export function getStates(model: Model): (State & RegNetVertex)[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.REGNET:
+			return model.model?.vertices ?? [];
+		case AMRSchemaNames.PETRINET:
+			return model.model?.states ?? [];
+		case AMRSchemaNames.STOCKFLOW:
+			return model.model?.stocks ?? [];
+		default:
+			return [];
+	}
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
+ * @param {string} target - The target of the initial.
  * @returns {any} - The metadata for the specified initial or undefined if not found.
  */
-export function getInitialMetadata(model: Model, parameterId: string) {
-	return model.metadata?.initials?.[parameterId];
+export function getInitialMetadata(model: Model, target: string) {
+	return model.metadata?.initials?.[target];
+}
+
+export function getInitialName(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.name ?? '';
+}
+
+export function getInitialDescription(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.description ?? '';
+}
+
+export function getInitialUnits(model: Model, target: string): string {
+	return getInitialMetadata(model, target)?.units?.expression ?? '';
+}
+
+export async function getInitialConcept(model: Model, target: string): Promise<string> {
+	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
+	return getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 }
 
 /**
@@ -229,73 +333,47 @@ export function getInitials(model: Model): Initial[] {
 /**
  * Returns the model initial with the specified ID.
  * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
+ * @param {string} target - The target of the initial.
  * @returns {Initial | null} - The model initial or null if not found.
  */
-export function getInitial(model: Model, initialId: string): Initial | undefined {
+export function getInitial(model: Model, target: string): Initial | undefined {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:
-			return model.model?.vertices.find((i) => i.id === initialId);
+			return model.model?.vertices.find((i) => i.id === target);
 		case AMRSchemaNames.PETRINET:
 		case AMRSchemaNames.STOCKFLOW:
 		default:
-			return model.semantics?.ode?.initials?.find((i) => i.target === initialId);
+			return model.semantics?.ode?.initials?.find((i) => i.target === target);
 	}
 }
 
-/**
- * Updates the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @param {string} metadataKey - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateParameterMetadata(
-	model: Model,
-	parameterId: string,
-	metadataKey: string,
-	value: any
-) {
-	if (!model.metadata?.parameters?.[parameterId]) {
-		model.metadata ??= {};
-		model.metadata.parameters ??= {};
-		model.metadata.parameters[parameterId] ??= {};
-	}
-	model.metadata.parameters[parameterId][metadataKey] = value;
+// cleans a model by removing distributions that are not needed
+export function cleanModel(model: Model): void {
+	const parameters: ModelParameter[] = getParameters(model);
+
+	parameters.forEach((p) => {
+		const max = parseFloat(p.distribution?.parameters.maximum);
+		const min = parseFloat(p.distribution?.parameters.minimum);
+
+		// we delete the distribution when there is partial/no distribution
+
+		if (Number.isNaN(max) || Number.isNaN(min)) {
+			delete p.distribution;
+		}
+	});
 }
 
-/**
- * Updates the metadata for a specific initial in the model.
- * @param {Model} model - The model object.
- * @param {string} initialId - The ID of the initial.
- * @param {string} metadataKey - The key of the metadata to update.
- * @param {any} value - The new value for the metadata.
- */
-export function updateInitialMetadata(
-	model: Model,
-	initialId: string,
-	metadataKey: string,
-	value: any
-) {
-	if (!model.metadata?.initials?.[initialId]) {
-		model.metadata ??= {};
-		model.metadata.initials ??= {};
-		model.metadata.initials[initialId] ??= {};
-	}
-	model.metadata.initials[initialId][metadataKey] = value;
-}
+export function isModelMissingMetadata(model: Model): boolean {
+	const parameters: ModelParameter[] = getParameters(model);
+	const initials: Initial[] = getInitials(model);
 
-export function setParameters(model: Model, parameters: ModelParameter[]) {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			model.model.parameters = parameters;
-			break;
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			if (model.semantics) model.semantics.ode.parameters = parameters;
-			break;
-	}
+	const initialsCheck = initials.some((i) => {
+		const initialMetadata = getInitialMetadata(model, i.target);
+		return !initialMetadata?.name || !initialMetadata?.description || !initialMetadata?.units;
+	});
+
+	const parametersCheck = parameters.some((p) => !p.name || !p.description || !p.units?.expression);
+
+	return initialsCheck || parametersCheck;
 }

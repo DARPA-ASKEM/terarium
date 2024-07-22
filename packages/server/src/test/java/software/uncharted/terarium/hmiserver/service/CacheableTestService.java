@@ -10,6 +10,7 @@ import software.uncharted.terarium.hmiserver.models.CacheName;
 @Slf4j
 @Service
 public class CacheableTestService {
+
 	public static String LOG_MESSAGE = "In cached method";
 	public static String RETURN_VALUE = "Hello";
 

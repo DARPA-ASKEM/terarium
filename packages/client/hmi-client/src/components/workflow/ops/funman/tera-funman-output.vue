@@ -1,7 +1,12 @@
 <template>
 	<div class="section-row">
 		<label>Trajectory State</label>
-		<Dropdown v-model="selectedTrajState" :options="modelStates"> </Dropdown>
+		<Dropdown
+			v-model="selectedTrajState"
+			:options="modelStates"
+			@update:model-value="emit('update:trajectoryState', $event)"
+		>
+		</Dropdown>
 	</div>
 	<div ref="trajRef"></div>
 
@@ -14,14 +19,7 @@
 		<section class="boundary-drilldown">
 			<div class="boundary-drilldown-header">
 				{{ selectedParam }} : {{ selectedParam2 }} pairwise drilldown
-				<Button
-					class="close-mask"
-					icon="pi pi-times"
-					text
-					rounded
-					aria-label="Close"
-					@click="selectedParam2 = ''"
-				/>
+				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" @click="selectedParam2 = ''" />
 			</div>
 			<tera-funman-boundary-chart
 				:processed-data="processedData as FunmanProcessedData"
@@ -36,10 +34,7 @@
 
 	<div class="variables-table" v-if="selectedParam2 === ''">
 		<div class="variables-header">
-			<header
-				v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']"
-				:key="index"
-			>
+			<header v-for="(title, index) in ['select', 'Parameter', 'Lower bound', 'Upper bound', '', '']" :key="index">
 				{{ title }}
 			</header>
 		</div>
@@ -70,11 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import {
-	FunmanProcessedData,
-	processFunman,
-	renderFumanTrajectories
-} from '@/services/models/funman-service';
+import { FunmanProcessedData, processFunman, renderFumanTrajectories } from '@/services/models/funman-service';
 import { getRunResult } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
 import RadioButton from 'primevue/radiobutton';
@@ -85,7 +76,10 @@ import TeraFunmanBoundaryChart from './tera-funman-boundary-chart.vue';
 
 const props = defineProps<{
 	funModelId: string;
+	trajectoryState?: string;
 }>();
+
+const emit = defineEmits(['update:trajectoryState']);
 
 const parameterOptions = ref<string[]>([]);
 const selectedParam = ref<string>('');
@@ -147,7 +141,8 @@ const initalizeParameters = async () => {
 	funmanResult.model.petrinet.model.states.forEach((element) => {
 		modelStates.value.push(element.id);
 	});
-	selectedTrajState.value = modelStates.value[0];
+
+	selectedTrajState.value = props.trajectoryState || modelStates.value[0];
 
 	lastTrueBox.value = funmanResult.parameter_space.true_boxes?.at(-1);
 

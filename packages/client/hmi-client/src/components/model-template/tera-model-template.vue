@@ -55,13 +55,7 @@ const props = defineProps<{
 	showParameters?: boolean;
 }>();
 
-const emit = defineEmits([
-	'port-mouseover',
-	'port-mouseleave',
-	'port-selected',
-	'update-name',
-	'remove'
-]);
+const emit = defineEmits(['port-mouseover', 'port-mouseleave', 'port-selected', 'update-name', 'remove']);
 
 // Used to pass card width.
 // Unsure if we want to set widths on certain cards but for now this works
@@ -112,6 +106,7 @@ function updateName() {
 
 .card {
 	display: flex;
+	cursor: pointer;
 	background-color: var(--surface-section);
 	border-radius: var(--border-radius-medium);
 	outline: 1px solid var(--surface-border-alt);

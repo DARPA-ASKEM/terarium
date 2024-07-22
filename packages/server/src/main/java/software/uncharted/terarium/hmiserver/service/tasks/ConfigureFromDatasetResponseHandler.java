@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Initial;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
@@ -27,6 +27,7 @@ import software.uncharted.terarium.hmiserver.service.gollm.ScenarioExtraction;
 @RequiredArgsConstructor
 @Slf4j
 public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
+
 	public static final String NAME = "gollm_task:dataset_configure";
 
 	private final ObjectMapper objectMapper;
@@ -41,6 +42,7 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Input {
+
 		@JsonProperty("datasets")
 		List<String> datasets;
 
@@ -53,24 +55,32 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 
 	@Data
 	public static class Response {
+
 		JsonNode response;
 	}
 
 	@Data
 	public static class Properties {
+
 		List<UUID> datasetIds;
+		UUID projectId;
 		UUID modelId;
+		UUID workflowId;
+		UUID nodeId;
 	}
 
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
+			final Model model = modelService
+				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
+				.orElseThrow();
 			final Response configurations = objectMapper.readValue(resp.getOutput(), Response.class);
 
 			// Map the parameters values to the model
-			final Model modelCopy = new Model(model);
+			final Model modelCopy = (Model) model.clone();
+			modelCopy.setId(model.getId());
 			final JsonNode condition = configurations.getResponse().get("values");
 			final List<ModelParameter> modelParameters = ScenarioExtraction.getModelParameters(condition, modelCopy);
 			final List<Initial> modelInitials = ScenarioExtraction.getModelInitials(condition, modelCopy);
@@ -81,29 +91,33 @@ public class ConfigureFromDatasetResponseHandler extends TaskResponseHandler {
 			}
 
 			// Create the new configuration
-			final ModelConfiguration configuration = new ModelConfiguration();
-			configuration.setModelId(model.getId());
-			configuration.setName("New configuration from dataset");
-			configuration.setDescription("");
-			configuration.setConfiguration(modelCopy);
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
+				modelCopy,
+				"New configuration from dataset",
+				""
+			);
 
 			try {
 				for (final UUID datasetId : props.datasetIds) {
-					final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration);
+					final ModelConfiguration newConfig = modelConfigurationService.createAsset(
+						modelConfiguration,
+						props.projectId,
+						ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+					);
 					// add provenance
-					provenanceService.createProvenance(new Provenance()
+					provenanceService.createProvenance(
+						new Provenance()
 							.setLeft(newConfig.getId())
 							.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
 							.setRight(datasetId)
 							.setRightType(ProvenanceType.DATASET)
-							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM));
+							.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+					);
 				}
-
 			} catch (final IOException e) {
 				log.error("Failed to set model configuration", e);
 				throw new RuntimeException(e);
 			}
-
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
 			throw new RuntimeException(e);

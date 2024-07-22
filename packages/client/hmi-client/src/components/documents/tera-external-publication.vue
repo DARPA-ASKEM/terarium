@@ -1,6 +1,7 @@
 <template>
 	<tera-asset
 		v-if="doc"
+		:id="doc.gddId"
 		:feature-config="featureConfig"
 		:name="highlightSearchTerms(doc.title)"
 		:overline="highlightSearchTerms(doc.journal)"
@@ -9,13 +10,13 @@
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
 		:hide-intro="view === DocumentView.PDF"
-		:stretch-content="view === DocumentView.PDF"
-		:show-sticky-header="view === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
 				v-if="featureConfig.isPreview"
-				class="p-button-sm p-button-outlined"
+				size="small"
+				severity="secondary"
+				outlined
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
@@ -34,9 +35,7 @@
 				<template #option="{ option }">
 					<i
 						:class="`${
-							pdfIsLoading &&
-							option.value !== DocumentView.EXTRACTIONS &&
-							option.value !== DocumentView.NOT_FOUND
+							pdfIsLoading && option.value !== DocumentView.EXTRACTIONS && option.value !== DocumentView.NOT_FOUND
 								? 'pi pi-spin pi-spinner'
 								: option.icon
 						} p-button-icon-left`"
@@ -45,11 +44,7 @@
 				</template>
 			</SelectButton>
 		</template>
-		<Accordion
-			v-if="view === DocumentView.EXTRACTIONS"
-			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
-		>
+		<Accordion v-if="view === DocumentView.EXTRACTIONS" :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<AccordionTab v-if="!isEmpty(formattedAbstract)">
 				<template #header>
 					<header id="Abstract">Abstract</header>
@@ -100,12 +95,7 @@
 				<ul>
 					<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
-							/>
+							<Image id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" preview />
 						</div>
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
@@ -123,12 +113,7 @@
 				<ul>
 					<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
 						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
-							/>
+							<Image id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" preview />
 						</div>
 						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
@@ -223,36 +208,32 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-		<tera-pdf-embed
-			v-else-if="view === DocumentView.PDF && pdfLink"
-			:pdf-link="pdfLink"
-			:title="doc.title"
-		/>
+		<tera-pdf-embed v-else-if="view === DocumentView.PDF && pdfLink" :pdf-link="pdfLink" :title="doc.title" />
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch, onUpdated, PropType } from 'vue';
+import { getDocumentById, getXDDArtifacts } from '@/services/data';
+import { XDDExtractionType } from '@/types/XDD';
+import { CodeRequest, FeatureConfig, ResultType } from '@/types/common';
+import { getDocumentDoi, isDataset, isDocument, isModel } from '@/utils/data-util';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
 import Button from 'primevue/button';
-import { getDocumentById, getXDDArtifacts } from '@/services/data';
-import { XDDExtractionType } from '@/types/XDD';
-import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, FeatureConfig, CodeRequest } from '@/types/common';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import { PropType, computed, onMounted, onUpdated, ref, watch } from 'vue';
 // import { getRelatedArtifacts } from '@/services/provenance';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import type { Model, Extraction, Document, Dataset } from '@/types/Types';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import type { Dataset, Document, Extraction, Model } from '@/types/Types';
 // import { ProvenanceType } from '@/types/Types';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
-import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import TeraAsset from '@/components/asset/tera-asset.vue';
 import SelectButton from 'primevue/selectbutton';
 
 enum DocumentView {
@@ -307,12 +288,9 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const formatDocumentAuthors = (d: Document) =>
-	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
+const formatDocumentAuthors = (d: Document) => highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
-const docLink = computed(() =>
-	doc?.value && !isEmpty(doc?.value?.link) ? doc.value.link[0].url : null
-);
+const docLink = computed(() => (doc?.value && !isEmpty(doc?.value?.link) ? doc.value.link[0].url : null));
 
 const formattedAbstract = computed(() => {
 	if (!doc.value || !doc.value.abstractText) return '';
@@ -325,23 +303,15 @@ const doi = computed(() => getDocumentDoi(doc.value));
 const artifacts = ref<Extraction[]>([]);
 const associatedResources = ref<ResultType[]>([]);
 
-const figures = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
-);
-const tables = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
-);
-const equations = computed(
-	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
-);
+const figures = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []);
+const tables = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []);
+const equations = computed(() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []);
 const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
-const sectionSummaries = computed(
-	() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []
-);
+const sectionSummaries = computed(() => doc.value?.knownEntities?.summaries.map(({ sections }) => sections) ?? []);
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {
 	const exclusion = [
@@ -355,15 +325,9 @@ const otherExtractions = computed(() => {
 });
 
 /* Provenance */
-const relatedTerariumModels = computed(
-	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
-);
+const relatedTerariumModels = computed(() => associatedResources.value.filter((d) => isModel(d)) as Model[]);
+const relatedTerariumDatasets = computed(() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]);
+const relatedTerariumDocuments = computed(() => associatedResources.value.filter((d) => isDocument(d)) as Document[]);
 /*
 // This is the model content that is displayed in the scroll-to-section featuer
 // That feature was removed, but way may want to bring it back.
@@ -392,16 +356,6 @@ const fetchDocumentArtifacts = async () => {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
 	}
-};
-
-const fetchAssociatedResources = async () => {
-	// if (doc.value) {
-	// TODO: getRelatedArtifacts and down the chain are expecting a UUID not an xddUri as the first parameter, (how) do we fix this?
-	// const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-	// associatedResources.value = results;
-	// } else {
-	associatedResources.value = [];
-	// }
 };
 
 /*
@@ -455,7 +409,6 @@ watch(
 	async (currentValue, oldValue) => {
 		if (currentValue !== oldValue) {
 			fetchDocumentArtifacts();
-			fetchAssociatedResources();
 			viewOptions.value = [extractionsOption, pdfOption];
 			view.value = DocumentView.EXTRACTIONS;
 			pdfLink.value = null;
@@ -497,7 +450,6 @@ function openImportGithubFileModal(url: string) {
 
 onMounted(async () => {
 	fetchDocumentArtifacts();
-	fetchAssociatedResources();
 });
 
 onUpdated(() => {

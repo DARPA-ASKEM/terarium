@@ -3,53 +3,37 @@
 		<AccordionTab>
 			<template #header>
 				Initial variables<span class="artifact-amount">({{ initialsLength }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
-				>
 			</template>
-			<tera-initial-table
-				:model="transientModel"
+			<tera-states
+				v-if="!isEmpty(mmt.initials)"
+				:model="model"
 				:mmt="mmt"
-				:mmt-params="mmtParams"
-				@update-value="updateInitial"
-				@update-model="(updateModel: Model) => (transientModel = updateModel)"
-				:readonly="readonly"
+				@update-state="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parametersLength }})</span>
-				<Button v-if="!readonly" @click.stop="emit('update-model', transientModel)" class="ml-auto"
-					>Save Changes</Button
-				>
 			</template>
-			<tera-parameter-table
-				:model="transientModel"
+			<tera-parameters
+				v-if="!isEmpty(mmt.parameters)"
+				:model="model"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
-				@update-value="updateParam"
-				@update-model="(updatedModel: Model) => (transientModel = updatedModel)"
-				:readonly="readonly"
+				@update-parameter="emit('update-parameter', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(observables)" edit-mode="cell" data-key="id" :value="observables">
-				<Column field="id" header="Symbol" />
-				<Column field="name" header="Name" />
-				<Column field="expression" header="Expression">
-					<template #body="{ data }">
-						<katex-element
-							v-if="data.expression"
-							:expression="data.expression"
-							:throw-on-error="false"
-						/>
-						<template v-else>--</template>
-					</template>
-				</Column>
-			</DataTable>
+			<tera-observables
+				v-if="!isEmpty(observables)"
+				:model="model"
+				:mmt="mmt"
+				:observables="observables"
+				@update-item="emit('update-observable', $event)"
+			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
@@ -62,11 +46,7 @@
 				<Column field="downstream_stock" header="Downstream stock" />
 				<Column field="rate_expression" header="Rate expression">
 					<template #body="{ data }">
-						<katex-element
-							v-if="data.rate_expression"
-							:expression="data.rate_expression"
-							:throw-on-error="false"
-						/>
+						<katex-element v-if="data.rate_expression" :expression="data.rate_expression" :throw-on-error="false" />
 						<template v-else>--</template>
 					</template>
 				</Column>
@@ -108,14 +88,8 @@
 				</Column>
 				<Column field="payload.groundings" header="Concept">
 					<template #body="{ data }">
-						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1"
-							>--</template
-						>
-						<template
-							v-else
-							v-for="grounding in data?.payload?.groundings"
-							:key="grounding.grounding_id"
-						>
+						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1">--</template>
+						<template v-else v-for="grounding in data?.payload?.groundings" :key="grounding.grounding_id">
 							{{ grounding.grounding_text }}
 							<a
 								target="_blank"
@@ -135,53 +109,43 @@
 				Time
 				<span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<DataTable v-if="!isEmpty(time)" data-key="id" :value="time">
-				<Column field="id" header="Symbol" />
-				<Column field="units.expression" header="Unit" />
-			</DataTable>
+			<tera-time v-if="time" :time="time" @update-time="emit('update-time', $event)" />
 		</AccordionTab>
 	</Accordion>
 </template>
 
 <script setup lang="ts">
-import type { Initial, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
-import { cloneDeep, groupBy, isEmpty } from 'lodash';
+import type { Model } from '@/types/Types';
+import { groupBy, isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
-import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
-import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import { emptyMiraModel } from '@/model-representation/mira/mira';
-import { getMMT } from '@/services/model';
-import Button from 'primevue/button';
+import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import TeraStates from '@/components/model/model-parts/tera-states.vue';
+import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
+import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraTime from '@/components/model/model-parts/tera-time.vue';
 
 const props = defineProps<{
 	model: Model;
-	modelConfigurations?: ModelConfiguration[];
+	mmt: MiraModel;
+	mmtParams: MiraTemplateParams;
+	observableSummary: ObservableSummary;
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model']);
+const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-time']);
 
-const mmt = ref<MiraModel>(emptyMiraModel());
-const mmtParams = ref<MiraTemplateParams>({});
-
-const transientModel = ref(cloneDeep(props.model));
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parametersLength = computed(
-	() =>
-		(props.model?.semantics?.ode.parameters?.length ?? 0) +
-		(props.model?.model?.auxiliaries?.length ?? 0)
+	() => (props.model?.semantics?.ode.parameters?.length ?? 0) + (props.model?.model?.auxiliaries?.length ?? 0)
 );
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const time = computed(() =>
-	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
-);
+const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -197,74 +161,10 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) =>
-				['anchored_extraction', 'anchored_entity'].includes(e.type)
-			)
+			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
 		);
 	});
 
 	return unalignedExtractions ?? [];
 });
-
-const updateInitial = (inits: Initial[]) => {
-	const modelInitials = transientModel.value.semantics?.ode.initials ?? [];
-	for (let i = 0; i < modelInitials.length; i++) {
-		const foundInitial = inits.find((init) => init.target === modelInitials![i].target);
-		if (foundInitial) {
-			modelInitials[i] = foundInitial;
-		}
-	}
-};
-
-const updateParam = (params: ModelParameter[]) => {
-	const modelParameters = transientModel.value.semantics?.ode?.parameters ?? [];
-	for (let i = 0; i < modelParameters.length; i++) {
-		const foundParam = params.find((p) => p.id === modelParameters![i].id);
-		if (foundParam) {
-			modelParameters[i] = foundParam;
-		}
-	}
-	// FIXME: Sometimes auxiliaries can share the same ids as parameters so for now both are be updated in that case
-	const modelAuxiliaries = transientModel.value.model?.auxiliaries ?? [];
-	for (let i = 0; i < modelAuxiliaries.length; i++) {
-		const foundParam = params.find((p) => p.id === modelAuxiliaries![i].id);
-		if (foundParam) {
-			modelAuxiliaries[i] = foundParam;
-		}
-	}
-};
-
-function updateMMT() {
-	getMMT(props.model).then((response) => {
-		mmt.value = response.mmt;
-		mmtParams.value = response.template_params;
-	});
-}
-
-watch(
-	() => props.model,
-	(model) => {
-		transientModel.value = cloneDeep(model);
-		updateMMT();
-	}
-);
-
-onMounted(() => updateMMT());
 </script>
-
-<style scoped>
-section {
-	margin-left: 1rem;
-}
-
-.clickable-tag:hover {
-	cursor: pointer;
-}
-
-:deep(.p-accordion-content:empty::before) {
-	content: 'None';
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
-	margin-left: 1rem;
-}
-</style>

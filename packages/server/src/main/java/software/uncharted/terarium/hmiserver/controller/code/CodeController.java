@@ -13,7 +13,11 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
 import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
@@ -30,6 +34,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 @RestController
 @RequiredArgsConstructor
 public class CodeController {
+
 	private final GithubProxy githubProxy;
 
 	private final JsDelivrProxy jsdelivrProxy;
@@ -48,17 +53,16 @@ public class CodeController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@ApiResponses(
-			value = {
-				@ApiResponse(responseCode = "200", description = "Code transformed successfully"),
-				@ApiResponse(responseCode = "204", description = "No content"),
-			})
+		value = {
+			@ApiResponse(responseCode = "200", description = "Code transformed successfully"),
+			@ApiResponse(responseCode = "204", description = "No content")
+		}
+	)
 	public ResponseEntity<StoredModel> transformCode(final String code) {
-
 		// Convert from highlighted code a function network
 		final String skemaResponseStr;
 		try {
-			skemaResponseStr =
-					skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
+			skemaResponseStr = skemaProxy.getFunctionNetwork(new CodeRequest(code)).getBody();
 		} catch (final FeignException e) {
 			final String error = "Error creating function network from code";
 			final int status = e.status() >= 400 ? e.status() : 500;
@@ -76,21 +80,18 @@ public class CodeController {
 		// order to pass it on to the
 		// service that will store the model as it expects application/json and not a
 		// string
-		final String unescapedSkemaResponseStr =
-				StringEscapeUtils.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
+		final String unescapedSkemaResponseStr = StringEscapeUtils.unescapeJson(
+			skemaResponseStr.substring(1, skemaResponseStr.length() - 1)
+		);
 
 		// Store the model
 		try {
-			final String modelId =
-					skemaRustProxy.addModel(unescapedSkemaResponseStr).getBody();
+			final String modelId = skemaRustProxy.addModel(unescapedSkemaResponseStr).getBody();
 
-			final String odiResponseStr =
-					skemaRustProxy.getModelNamedOpis(modelId).getBody();
-			final String odoResponseStr =
-					skemaRustProxy.getModelNamedOpos(modelId).getBody();
+			final String odiResponseStr = skemaRustProxy.getModelNamedOpis(modelId).getBody();
+			final String odoResponseStr = skemaRustProxy.getModelNamedOpos(modelId).getBody();
 
-			return ResponseEntity.ok(
-					new StoredModel().setId(modelId).setInputs(odiResponseStr).setOutputs(odoResponseStr));
+			return ResponseEntity.ok(new StoredModel().setId(modelId).setInputs(odiResponseStr).setOutputs(odoResponseStr));
 		} catch (final FeignException e) {
 			final String error = "transforming code to model failed";
 			final int status = e.status() >= 400 ? e.status() : 500;
@@ -102,18 +103,18 @@ public class CodeController {
 	@GetMapping("/repo-content")
 	@Secured(Roles.USER)
 	@ApiResponses(
-			value = {
-				@ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
-				@ApiResponse(responseCode = "204", description = "No content"),
-			})
+		value = {
+			@ApiResponse(responseCode = "200", description = "Github repository content retrieved"),
+			@ApiResponse(responseCode = "204", description = "No content")
+		}
+	)
 	public ResponseEntity<GithubRepo> getGithubRepositoryContent(
-			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("path") final String path) {
+		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
+		@RequestParam("path") final String path
+	) {
 		final List<GithubFile> files;
 		try {
-			files = githubProxy
-					.getGithubRepositoryContent(repoOwnerAndName, path)
-					.getBody();
+			files = githubProxy.getGithubRepositoryContent(repoOwnerAndName, path).getBody();
 		} catch (final FeignException e) {
 			final String error = "Error getting github repository content";
 			final int status = e.status() >= 400 ? e.status() : 500;
@@ -131,9 +132,9 @@ public class CodeController {
 	@GetMapping("/repo-file-content")
 	@Secured(Roles.USER)
 	public ResponseEntity<String> getGithubCode(
-			@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-			@RequestParam("path") final String path) {
-
+		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
+		@RequestParam("path") final String path
+	) {
 		final String code;
 		try {
 			code = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
@@ -149,10 +150,9 @@ public class CodeController {
 
 	@GetMapping("/repo-zip")
 	public ResponseEntity<byte[]> downloadGitHubRepositoryZip(
-			@RequestParam("repo-owner-and-name") final String repoOwnerAndName) {
-
+		@RequestParam("repo-owner-and-name") final String repoOwnerAndName
+	) {
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
-
 			final String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
 
 			final HttpGet httpGet = new HttpGet(githubApiUrl);
@@ -160,12 +160,12 @@ public class CodeController {
 
 			final byte[] zipBytes = response.getEntity().getContent().readAllBytes();
 			return ResponseEntity.ok(zipBytes);
-
 		} catch (final Exception e) {
 			log.error(e.toString());
 			throw new ResponseStatusException(
-					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-					"Unable to download zip file from github");
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				"Unable to download zip file from github"
+			);
 		}
 	}
 }

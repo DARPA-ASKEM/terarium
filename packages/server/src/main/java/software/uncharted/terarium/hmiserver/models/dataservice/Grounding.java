@@ -39,7 +39,6 @@ public class Grounding extends TerariumEntity {
 
 	@Override
 	public Grounding clone() {
-
 		final Grounding clone = new Grounding();
 		if (this.identifiers != null) {
 			clone.identifiers = new ArrayList<>();

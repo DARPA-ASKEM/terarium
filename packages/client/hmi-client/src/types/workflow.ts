@@ -27,7 +27,8 @@ export enum WorkflowOperationTypes {
 	DOCUMENT = 'Document',
 	MODEL_FROM_EQUATIONS = 'ModelFromEquations',
 	DECAPODES = 'Decapodes',
-	REGRIDDING = 'Regridding'
+	REGRIDDING = 'Regridding',
+	INTERVENTION_POLICY = 'InterventionPolicy'
 }
 
 export enum OperatorStatus {
@@ -35,10 +36,7 @@ export enum OperatorStatus {
 	IN_PROGRESS = 'in progress',
 	SUCCESS = 'success',
 	INVALID = 'invalid',
-	WARNING = 'warning', // Probably won't be used - would there be potential crossover with INVALID?
-	FAILED = 'failed',
-	ERROR = 'error',
-	DISABLED = 'disabled'
+	ERROR = 'error'
 }
 
 export enum WorkflowPortStatus {
@@ -96,7 +94,8 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 
 // Common state properties for all operators
 export interface BaseState {
-	annotation?: string;
+	annotation?: string; // @deprecated
+	summaryId?: string;
 }
 
 // Node definition in the workflow
@@ -186,5 +185,6 @@ export enum ProgressState {
 export interface AssetBlock<T> {
 	name: string;
 	includeInProcess: boolean;
+	isCollapsed?: false;
 	asset: T;
 }

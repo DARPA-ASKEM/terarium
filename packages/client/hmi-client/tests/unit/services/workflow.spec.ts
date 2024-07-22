@@ -57,12 +57,8 @@ const plusNode = (id: string) =>
 		id,
 		workflowId: '0',
 		operationType: 'add',
-		inputs: operationLib
-			.get('add')
-			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
-		outputs: operationLib
-			.get('add')
-			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
+		inputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
+		outputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
 		x: 0,
 		y: 0,
 		width: 0,

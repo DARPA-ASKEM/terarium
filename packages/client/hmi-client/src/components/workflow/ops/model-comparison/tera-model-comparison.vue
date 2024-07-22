@@ -11,9 +11,7 @@
 					<Accordion :activeIndex="0">
 						<AccordionTab header="Overview">
 							<p v-if="llmAnswer">{{ llmAnswer }}</p>
-							<p v-else class="subdued">
-								Analyzing models metadata to generate a detailed comparison analysis...
-							</p>
+							<p v-else class="subdued">Analyzing models metadata to generate a detailed comparison analysis...</p>
 						</AccordionTab>
 					</Accordion>
 				</section>
@@ -33,12 +31,7 @@
 							<tr>
 								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
-									<tera-model-diagram
-										:model="model"
-										:is-editable="false"
-										is-preview
-										class="diagram"
-									/>
+									<tera-model-diagram :model="model" :is-editable="false" is-preview class="diagram" />
 								</td>
 							</tr>
 							<template v-for="field in fields" :key="field">
@@ -66,21 +59,10 @@
 				</div>
 			</tera-drilldown-section>
 		</div>
-		<div :tabName="Tabs.Notebook">
+		<tera-columnar-panel :tabName="Tabs.Notebook">
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar-right-side">
-					<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-					<Button
-						icon="pi pi-play"
-						label="Run"
-						outlined
-						severity="secondary"
-						size="small"
-						@click="runCode"
-					/>
-				</div>
 				<div class="toolbar">
 					<tera-notebook-jupyter-input
 						:kernelManager="kernelManager"
@@ -89,7 +71,12 @@
 						@llm-thought-output="(data: any) => llmThoughts.push(data)"
 						@question-asked="llmThoughts = []"
 						:context-language="contextLanguage"
-					/>
+					>
+						<template #toolbar-right-side>
+							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
+							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
+						</template>
+					</tera-notebook-jupyter-input>
 					<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
 				</div>
 				<v-ace-editor
@@ -136,7 +123,7 @@
 					</div>
 				</template>
 			</tera-drilldown-preview>
-		</div>
+		</tera-columnar-panel>
 	</tera-drilldown>
 </template>
 
@@ -152,7 +139,7 @@ import TeraModelDiagram from '@/components/model/petrinet/model-diagrams/tera-mo
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import type { Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, TaskResponse, TaskStatus, type Model } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -167,13 +154,17 @@ import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jup
 
 import { saveCodeToState } from '@/services/notebook';
 import { getImages, addImage, deleteImages } from '@/services/image';
+import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import { b64DecodeUnicode } from '@/utils/binary';
+import { useClientEvent } from '@/composables/useClientEvent';
+import { CompareModelsResponseType } from '@/types/common';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelComparisonOperationState>;
 }>();
 
-const emit = defineEmits(['append-output-port', 'update-state', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -190,21 +181,24 @@ const sampleAgentQuestions = [
 
 const isLoadingStructuralComparisons = ref(false);
 const structuralComparisons = ref<string[]>([]);
-const llmAnswer = ref('');
+const compareModelsTaskId = ref<string>('');
+const compareModelsTaskOutput = ref<string>('');
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const modelsToCompare = ref<Model[]>([]);
 const contextLanguage = ref<string>('python3');
 
-const modelCardsToCompare = computed(() =>
-	modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard)
-);
+const llmAnswer = computed(() => {
+	if (!compareModelsTaskOutput.value) return '';
+	const str = b64DecodeUnicode(compareModelsTaskOutput.value);
+	const parsedValue = JSON.parse(str) as CompareModelsResponseType;
+	return parsedValue.response;
+});
+
+const modelCardsToCompare = computed(() => modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard));
 const fields = computed(
-	() =>
-		[
-			...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))
-		] as string[]
+	() => [...new Set(modelCardsToCompare.value.reduce((acc, card) => acc.concat(Object.keys(card)), []))] as string[]
 );
 const cellWidth = computed(() => `${85 / modelsToCompare.value.length}vw`);
 
@@ -216,10 +210,7 @@ async function addModelForComparison(modelId: Model['id']) {
 	if (!modelId) return;
 	const model = await getModel(modelId);
 	if (model) modelsToCompare.value.push(model);
-	if (
-		modelsToCompare.value.length === props.node.inputs.length - 1 &&
-		modelsToCompare.value.length > 1
-	) {
+	if (modelsToCompare.value.length === props.node.inputs.length - 1 && modelsToCompare.value.length > 1) {
 		buildJupyterContext();
 	}
 }
@@ -291,12 +282,6 @@ function appendCode(data: any) {
 	else logger.error('No code to append');
 }
 
-function processCompareModels(modelIds) {
-	compareModels(modelIds).then((response) => {
-		llmAnswer.value = response.response;
-	});
-}
-
 async function buildJupyterContext() {
 	if (modelsToCompare.value.length < 2) {
 		logger.warn('Cannot build Jupyter context without models');
@@ -325,6 +310,20 @@ async function buildJupyterContext() {
 	}
 }
 
+async function processCompareModels(modelIds, workflowId?: string, nodeId?: string) {
+	const taskRes = await compareModels(modelIds, workflowId, nodeId);
+	compareModelsTaskId.value = taskRes.id;
+	if (taskRes.status === TaskStatus.Success) {
+		compareModelsTaskOutput.value = taskRes.output;
+	}
+}
+
+useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
+	if (!event.data || event.data.id !== compareModelsTaskId.value) return;
+	if (event.data.status !== TaskStatus.Success) return;
+	compareModelsTaskOutput.value = event.data.output;
+});
+
 onMounted(async () => {
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
@@ -341,7 +340,7 @@ onMounted(async () => {
 	const modelIds = props.node.inputs
 		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
 		.map((input) => input.value?.[0]);
-	processCompareModels(modelIds);
+	processCompareModels(modelIds, props.node.workflowId, props.node.id);
 });
 
 onUnmounted(() => {

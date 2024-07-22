@@ -1,33 +1,30 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		:menu-items="menuItems"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
-				<div class="form-section">
+				<template #header-controls-left>
 					<h5>Set simulation parameters</h5>
+				</template>
+				<template #header-controls-right>
+					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
+					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+				</template>
+				<div class="form-section">
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="2">Start time</label>
-							<InputNumber
-								id="2"
-								v-model="timespan.start"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
+							<InputNumber id="2" v-model="timespan.start" inputId="integeronly" @update:model-value="updateState" />
 						</div>
 						<div class="label-and-input">
 							<label for="3">End time</label>
-							<InputNumber
-								id="3"
-								v-model="timespan.end"
-								inputId="integeronly"
-								@update:model-value="updateState"
-							/>
+							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
 						</div>
 					</div>
 
@@ -54,23 +51,37 @@
 						</div>
 						<div class="label-and-input">
 							<label for="5">Method</label>
-							<Dropdown
-								id="5"
-								v-model="method"
-								:options="ciemssMethodOptions"
-								@update:model-value="updateState"
-							/>
+							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
 						</div>
 					</div>
-					<div v-if="inferredParameters">
-						Using inferred parameters from calibration: {{ inferredParameters[0] }}
-					</div>
+					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="SimulateTabs.Notebook" class="ml-4 mr-2 pt-3">
-			<p>Under construction. Use the wizard for now.</p>
-		</section>
+		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+			<div class="toolbar">
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
+					</template>
+				</tera-notebook-jupyter-input>
+				<tera-notebook-jupyter-thought-output :llm-thoughts="llmThoughts" />
+			</div>
+			<v-ace-editor
+				v-model:value="codeText"
+				@init="initializeAceEditor"
+				lang="python"
+				theme="chrome"
+				style="flex-grow: 1; width: 100%"
+				class="ace-editor"
+			/>
+		</tera-drilldown-section>
 		<template #preview>
 			<tera-drilldown-preview
 				title="Simulation output"
@@ -79,10 +90,12 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				class="mr-4 ml-4 mt-3 mb-3"
 			>
+				<tera-operator-output-summary
+					v-if="node.state.summaryId && runResults[selectedRunId]"
+					:summary-id="node.state.summaryId"
+				/>
 				<div class="flex flex-row align-items-center gap-2">
-					What do you want to see?
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -99,18 +112,17 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<tera-simulate-chart
-							v-for="(cfg, idx) in node.state.chartConfigs"
-							:key="idx"
-							:run-results="runResults[selectedRunId]"
-							:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-							has-mean-line
-							@configuration-change="chartProxy.configurationChange(idx, $event)"
-							@remove="chartProxy.removeChart(idx)"
-							show-remove-button
-							:size="chartSize"
-							class="mb-2"
-						/>
+						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
+							<tera-chart-control
+								:variables="Object.keys(pyciemssMap)"
+								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:show-remove-button="true"
+								@configuration-change="chartProxy.configurationChange(index, $event)"
+								@remove="chartProxy.removeChart(index)"
+							/>
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
+						</template>
+
 						<Button
 							class="p-button-sm p-button-text"
 							@click="chartProxy.addChart()"
@@ -129,36 +141,34 @@
 			</tera-drilldown-preview>
 		</template>
 		<template #footer>
-			<Button outlined label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
-			<tera-pyciemss-cancel-button
-				class="mr-auto"
-				:disabled="cancelRunId === ''"
-				:simulation-run-id="cancelRunId"
+			<tera-save-dataset-from-simulation
+				:simulation-run-id="selectedRunId"
+				:showDialog="showSaveDataDialog"
+				@hide-dialog="showSaveDataDialog = false"
 			/>
-			<tera-save-dataset-from-simulation :simulation-run-id="selectedRunId" />
-			<Button label="Close" @click="emit('close')" />
 		</template>
 	</tera-drilldown>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
 import type { WorkflowNode } from '@/types/workflow';
 import {
-	getRunResultCiemss,
-	makeForecastJobCiemss as makeForecastJob
+	getRunResultCSV,
+	parsePyCiemssMap,
+	makeForecastJobCiemss as makeForecastJob,
+	convertToCsvAsset,
+	DataArray
 } from '@/services/models/simulation-service';
-import { createCsvAssetFromRunResults } from '@/services/dataset';
-import { chartActionsProxy, drilldownChartSize } from '@/components/workflow/util';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
 import SelectButton from 'primevue/selectbutton';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -166,16 +176,33 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import { useProjects } from '@/composables/project';
+import { isSaveDatasetDisabled } from '@/components/dataset/utils';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import { KernelSessionManager } from '@/services/jupyter';
+import { logger } from '@/utils/logger';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { createForecastChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+import TeraChartControl from '../../tera-chart-control.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+let editor: VAceEditorInstance['_editor'] | null;
+const codeText = ref('');
+
 const inferredParameters = computed(() => props.node.inputs[1].value);
+const policyInterventionId = computed(() => props.node.inputs[2].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const llmThoughts = ref<any[]>([]);
+const llmQuery = ref('');
 
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -207,16 +234,45 @@ const qualityValues = {
 	method: ciemssMethodOptions.value[0]
 };
 
+const updateLlmQuery = (query: string) => {
+	llmThoughts.value = [];
+	llmQuery.value = query;
+};
+
+const processLLMOutput = (data: any) => {
+	codeText.value = data.content.code;
+};
+
+const showSaveDataDialog = ref<boolean>(false);
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
 	{ value: OutputView.Charts, icon: 'pi pi-image' },
 	{ value: OutputView.Data, icon: 'pi pi-list' }
 ]);
 
-const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const isSaveDisabled = computed<boolean>(() =>
+	isSaveDatasetDisabled(selectedRunId.value, useProjects().activeProject.value?.id)
+);
 
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const menuItems = computed(() => [
+	{
+		label: 'Save as new dataset',
+		icon: 'pi pi-pencil',
+		disabled: isSaveDisabled.value,
+		command: () => {
+			showSaveDataDialog.value = true;
+		}
+	}
+]);
+
+const showSpinner = ref(false);
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const rawContent = ref<{ [runId: string]: CsvAsset }>({});
+
+let pyciemssMap: Record<string, string> = {};
+
+const kernelManager = new KernelSessionManager();
 
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -242,9 +298,7 @@ const presetType = computed(() => {
 });
 
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 const cancelRunId = computed(() => props.node.state.inProgressSimulationId);
 const outputPanel = ref(null);
@@ -265,6 +319,44 @@ const setPresetValues = (data) => {
 		method.value = speedValues.method;
 	}
 };
+
+const preparedCharts = computed(() => {
+	if (!selectedRunId.value) return [];
+
+	const result = runResults.value[selectedRunId.value];
+	const resultSummary = runResultsSummary.value[selectedRunId.value];
+
+	const reverseMap: Record<string, string> = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		reverseMap[`${pyciemssMap[key]}_mean`] = key;
+	});
+
+	return props.node.state.chartConfigs.map((config) =>
+		createForecastChart(
+			{
+				dataset: result,
+				variables: config.map((d) => pyciemssMap[d]),
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: config.map((d) => `${pyciemssMap[d]}_mean`),
+				timeField: 'timepoint_id'
+			},
+			null,
+			// options
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				translationMap: reverseMap,
+				xAxisTitle: 'Time',
+				yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+			}
+		)
+	);
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -287,7 +379,6 @@ const makeForecastRequest = async () => {
 	const state = props.node.state;
 
 	const payload: SimulationRequest = {
-		projectId: '',
 		modelConfigId,
 		timespan: {
 			start: state.currentTimespan.start,
@@ -300,24 +391,92 @@ const makeForecastRequest = async () => {
 		engine: 'ciemss'
 	};
 
-	if (inferredParameters.value) {
+	if (inferredParameters.value?.[0]) {
 		payload.extra.inferred_parameters = inferredParameters.value[0];
 	}
+	if (policyInterventionId.value?.[0]) {
+		payload.policyInterventionId = policyInterventionId.value[0];
+	}
 
-	const response = await makeForecastJob(payload);
+	const response = await makeForecastJob(payload, nodeMetadata(props.node));
 	return response.id;
 };
 
 const lazyLoadSimulationData = async (runId: string) => {
 	if (runResults.value[runId] && rawContent.value[runId]) return;
 
-	const output = await getRunResultCiemss(runId);
-	runResults.value[runId] = output.runResults;
-	rawContent.value[runId] = createCsvAssetFromRunResults(runResults.value[runId]);
+	const result = await getRunResultCSV(selectedRunId.value, 'result.csv');
+	pyciemssMap = parsePyCiemssMap(result[0]);
+	runResults.value[selectedRunId.value] = result;
+	rawContent.value[selectedRunId.value] = convertToCsvAsset(result, Object.values(pyciemssMap));
+
+	const resultSummary = await getRunResultCSV(selectedRunId.value, 'result_summary.csv');
+	runResultsSummary.value[selectedRunId.value] = resultSummary;
 };
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
+};
+
+const buildJupyterContext = async () => {
+	const modelConfigId = props.node.inputs[0].value?.[0];
+	if (!modelConfigId) return;
+	try {
+		const jupyterContext = {
+			context: 'pyciemss',
+			language: 'python3',
+			context_info: {
+				model_config_id: modelConfigId
+			}
+		};
+		if (jupyterContext) {
+			if (kernelManager.jupyterSession !== null) {
+				kernelManager.shutdown();
+			}
+			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
+			kernelManager.sendMessage('get_simulate_request', {}).register('any_get_simulate_reply', (data) => {
+				codeText.value = data.msg.content.return;
+			});
+		}
+	} catch (error) {
+		logger.error(`Error initializing Jupyter session: ${error}`);
+	}
+};
+
+const runCode = () => {
+	const code = editor?.getValue();
+	if (!code) return;
+
+	const messageContent = {
+		silent: false,
+		store_history: false,
+		user_expressions: {},
+		allow_stdin: true,
+		stop_on_error: false,
+		code
+	};
+
+	// TODO: Utilize the output of this request.
+	kernelManager
+		.sendMessage('execute_request', { messageContent })
+		.register('execute_input', (data) => {
+			console.log(data.content.code);
+		})
+		.register('stream', (data) => {
+			console.log('stream', data);
+		})
+		.register('any_execute_reply', (data) => {
+			console.log(data);
+			// FIXME: save isnt working...but the idea is to save the simulation results to the HMI with this action
+			kernelManager
+				.sendMessage('save_results_to_hmi_request', { project_id: useProjects().activeProjectId })
+				.register('code_cell', (d) => {
+					console.log(d);
+				});
+		});
+};
+const initializeAceEditor = (editorInstance: any) => {
+	editor = editorInstance;
 };
 
 watch(
@@ -343,9 +502,24 @@ watch(
 	},
 	{ immediate: true }
 );
+
+onMounted(() => {
+	buildJupyterContext();
+});
+
+onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
+.notebook-section:deep(main .toolbar) {
+	padding-left: var(--gap-medium);
+}
+
+.notebook-section:deep(main) {
+	gap: var(--gap-small);
+	position: relative;
+}
+
 .form-section {
 	display: flex;
 	flex-direction: column;

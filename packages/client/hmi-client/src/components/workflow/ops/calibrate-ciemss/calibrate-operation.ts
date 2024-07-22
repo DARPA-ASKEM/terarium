@@ -1,8 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
 
 export interface CalibrationOperationStateCiemss extends BaseState {
 	chartConfigs: string[][];
@@ -10,10 +9,12 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	simulationsInProgress: string[];
 
 	inProgressCalibrationId: string;
+	inProgressBeforeForecastId: string;
 	inProgressForecastId: string;
 	errorMessage: { name: string; value: string; traceback: string };
 
 	calibrationId: string;
+	beforeForecastId: string;
 	forecastId: string;
 	numIterations: number;
 	numSamples: number;
@@ -28,7 +29,13 @@ export const CalibrationOperationCiemss: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },
-		{ type: 'datasetId', label: 'Dataset' }
+		{ type: 'datasetId', label: 'Dataset' },
+		{
+			type: 'policyInterventionId',
+			label: 'Interventions',
+			acceptMultiple: false,
+			isOptional: true
+		}
 	],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
@@ -40,9 +47,11 @@ export const CalibrationOperationCiemss: Operation = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
+			inProgressBeforeForecastId: '',
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
 			calibrationId: '',
+			beforeForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' },
 			numIterations: 100,

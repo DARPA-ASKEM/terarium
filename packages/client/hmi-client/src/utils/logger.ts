@@ -45,12 +45,7 @@ class Logger {
 		this.logBuffer.startService();
 	}
 
-	log(
-		level: string,
-		message: string,
-		messageOptions?: LoggerMessageOptionsType,
-		...optionalParams: any[]
-	): void {
+	log(level: string, message: string, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
 		if (this.options.hooks?.before) {
 			this.options.hooks.before(level, message.toString());
 		}

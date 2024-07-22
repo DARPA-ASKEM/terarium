@@ -1,53 +1,39 @@
 <template>
 	<section>
 		<!-- Top line -->
-		<div class="flex flex-row justify-content-between mb-2">
-			<div class="caption subdued">{{ stats.type.toUpperCase() }}</div>
-			<div v-if="stats.type === 'numeric'" class="caption subdued">
-				STD: {{ stats.std.toFixed(3) }}
-			</div>
-			<div v-if="stats.type === 'categorical'" class="caption subdued">
-				{{ stats.num_unique_entries }} unique
-			</div>
-			<div class="caption subdued">{{ stats.num_null_entries }} nulls</div>
-		</div>
+		<header class="subdued">
+			<span>{{ stats.type.toUpperCase() }}</span>
+			<span v-if="stats.type === 'numeric'">STD: {{ displayNumber(stats.std.toString()) }}</span>
+			<span v-if="stats.type === 'categorical'">{{ stats.num_unique_entries }} unique</span>
+			<span>{{ stats.num_null_entries }} nulls</span>
+		</header>
 		<!-- This draws a box-plot with the stats -->
-		<div v-if="stats.type === 'numeric'" class="flex flex-row align-items-center tnum mb-1">
-			<div class="caption mr-1">{{ stats.min }}</div>
-			<div class="line" :style="getBoxplotPartialWidth(stats.quantile_25, stats.max)" />
-			<div
-				class="box-left"
-				:style="getBoxplotPartialWidth(stats.quantile_50 - stats.quantile_25, stats.max)"
-			/>
-			<div class="caption box-middle">
-				<div class="centered-text below">{{ stats.mean.toFixed(2) }}</div>
-			</div>
-			<div
-				class="box-right"
-				:style="getBoxplotPartialWidth(stats.quantile_75 - stats.quantile_25, stats.max)"
-			/>
-			<div class="line" :style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)" />
-			<div class="caption ml-1">{{ stats.max }}</div>
-		</div>
-
-		<!-- This draws a list of the most common entries, sorted by value then by name -->
-		<div v-if="stats.type === 'categorical'">
-			<div class="flex flex-row flex-wrap">
-				<span
-					class="white-space-nowrap"
-					v-for="(entry, index) in sortedMostCommonEntries"
-					:key="index"
-				>
-					{{ entry[0] }}<span class="caption subdued ml-1">({{ entry[1] }})</span
-					>{{ index !== Object.entries(stats.most_common_entries).length - 1 ? ',' : '' }}&nbsp;
+		<figure v-if="stats.type === 'numeric'" class="tnum">
+			<span>{{ displayNumber(stats.min.toString()) }}</span>
+			<div class="graph">
+				<span class="line" :style="getBoxplotPartialWidth(stats.quantile_25, stats.max)" />
+				<span class="box-left" :style="getBoxplotPartialWidth(stats.quantile_50 - stats.quantile_25, stats.max)" />
+				<span class="box-middle">
+					<span class="centered-text below">{{ displayNumber(stats.mean.toString()) }}</span>
 				</span>
+				<span class="box-right" :style="getBoxplotPartialWidth(stats.quantile_75 - stats.quantile_25, stats.max)" />
+				<span class="line" :style="getBoxplotPartialWidth(stats.max - stats.quantile_75, stats.max)" />
 			</div>
-		</div>
+			<span>{{ displayNumber(stats.max.toString()) }}</span>
+		</figure>
+		<!-- This draws a list of the most common entries, sorted by value then by name -->
+		<figure v-if="stats.type === 'categorical'" class="flex-wrap">
+			<span class="white-space-nowrap" v-for="(entry, index) in sortedMostCommonEntries" :key="index">
+				{{ entry[0] }}<span class="subdued ml-1">({{ entry[1] }})</span
+				>{{ index !== Object.entries(stats.most_common_entries).length - 1 ? ',' : '' }}&nbsp;
+			</span>
+		</figure>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { displayNumber } from '@/utils/number';
 
 const props = defineProps<{
 	stats: {
@@ -83,9 +69,22 @@ function getBoxplotPartialWidth(n1: number, n2: number) {
 </script>
 
 <style scoped>
-.caption {
+section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 	font-size: var(--font-caption);
+	text-wrap: nowrap;
 }
+
+header,
+figure {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: var(--gap-1);
+}
+
 .subdued {
 	color: var(--text-color-subdued);
 }
@@ -96,6 +95,12 @@ function getBoxplotPartialWidth(n1: number, n2: number) {
 
 .tnum {
 	font-feature-settings: 'tnum';
+}
+
+.graph {
+	width: 100%;
+	display: flex;
+	align-items: center;
 }
 
 .box-left {

@@ -3,12 +3,8 @@
 		<div style="display: flex; flex-direction: column">
 			<textarea style="width: 550px; height: 550px; margin: 0 10px" v-model="jsonStr"> </textarea>
 			<div>
-				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapse = true">
-					Collapse
-				</button>
-				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapse = false">
-					Expand
-				</button>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = true">Collapse</button>
+				<button style="width: 10rem; margin: 3px; font-size: 125%" @click="isCollapsed = false">Expand</button>
 			</div>
 		</div>
 		<div>
@@ -27,32 +23,27 @@ import { getMMT } from '@/services/model';
 
 import { onMounted, ref, watch } from 'vue';
 import * as mmtExample from '@/examples/mira-petri.json';
-import {
-	collapseTemplates,
-	convertToIGraph,
-	collapseParameters,
-	createParameterMatrix
-} from '@/model-representation/mira/mira';
+import { convertToIGraph, collapseParameters, createParameterMatrix } from '@/model-representation/mira/mira';
 
 const graphElement = ref<HTMLDivElement | null>(null);
 const jsonStr = ref('');
 const strataType = ref<string | null>(null);
-const isCollapse = ref(true);
+const isCollapsed = ref(true);
 
 onMounted(async () => {
 	jsonStr.value = JSON.stringify(mmtExample, null, 2);
 
 	watch(
-		() => jsonStr.value,
+		() => [jsonStr.value, isCollapsed.value],
 		async () => {
 			const jsonData = JSON.parse(jsonStr.value);
 			const mmtR = await getMMT(jsonData);
 			const mmt = mmtR.mmt;
 			const template_params = mmtR.template_params;
+			const observable_summary = mmtR.observable_summary;
 
 			const renderer = getModelRenderer(mmt, graphElement.value as HTMLDivElement, false);
-			const { templatesSummary } = collapseTemplates(mmt);
-			const graphData = convertToIGraph(templatesSummary);
+			const graphData = convertToIGraph(mmt, observable_summary, isCollapsed.value);
 
 			// Create all possible matrices
 			const rootParams = collapseParameters(mmt, template_params);
@@ -86,8 +77,7 @@ onMounted(async () => {
 					lines.push('');
 					lines.push(header);
 					subjectControllers.matrix.forEach((r, idx) => {
-						const rowStr =
-							subjectControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
+						const rowStr = subjectControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
 						lines.push(rowStr);
 					});
 					lines.push('');
@@ -100,8 +90,7 @@ onMounted(async () => {
 					lines.push('');
 					lines.push(header);
 					outcomeControllers.matrix.forEach((r, idx) => {
-						const rowStr =
-							outcomeControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
+						const rowStr = outcomeControllers.colNames[idx] + ',' + r.map((d) => d.content.id).join(',');
 						lines.push(rowStr);
 					});
 					lines.push('');

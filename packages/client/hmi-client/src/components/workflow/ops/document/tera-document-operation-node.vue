@@ -55,11 +55,7 @@ onMounted(async () => {
 		document.value = await getDocumentAsset(props.node.state.documentId);
 
 		// If the name is different, update the name
-		if (
-			document.value &&
-			documentName.value !== document.value.name &&
-			!isEmpty(document.value.name)
-		) {
+		if (document.value && documentName.value !== document.value.name && !isEmpty(document.value.name)) {
 			documentName.value = document.value.name;
 		}
 	}
@@ -70,6 +66,7 @@ async function onDocumentChange(chosenProjectDocument: ProjectAsset) {
 	if (chosenProjectDocument?.assetId) {
 		fetchingDocument.value = true;
 		document.value = await getDocumentAsset(chosenProjectDocument.assetId);
+		documentName.value = document.value?.name;
 		fetchingDocument.value = false;
 	}
 }
@@ -110,7 +107,10 @@ watch(
 			if (isEmpty(state.tables)) state.tables = tables;
 			emit('update-state', state);
 
-			if (!props.node.outputs.find((port) => port.type === 'documentId')) {
+			const outputs = props.node.outputs;
+			const documentPort = outputs.find((port) => port.type === 'documentId');
+
+			if (!documentPort || !documentPort.value) {
 				emit('append-output', {
 					type: 'documentId',
 					label: documentName.value,
@@ -124,50 +124,6 @@ watch(
 					]
 				});
 			}
-
-			/*
-			if (!props.node.outputs.find((port) => port.type === 'equations') && !isEmpty(equations)) {
-				const selected = equations.filter((e) => e.includeInProcess);
-				emit('append-output-port', {
-					type: 'equations',
-					label: `equations (${selected.length}/${equations.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							equations
-						}
-					]
-				});
-			}
-
-			if (!props.node.outputs.find((port) => port.type === 'figures') && !isEmpty(figures)) {
-				const selected = figures.filter((f) => f.includeInProcess);
-				emit('append-output-port', {
-					type: 'figures',
-					label: `figures (${selected.length}/${figures.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							figures
-						}
-					]
-				});
-			}
-
-			if (!props.node.outputs.find((port) => port.type === 'tables') && !isEmpty(tables)) {
-				const selected = tables.filter((t) => t.includeInProcess);
-				emit('append-output-port', {
-					type: 'tables',
-					label: `tables (${selected.length}/${tables.length})`,
-					value: [
-						{
-							documentId: document.value.id,
-							tables
-						}
-					]
-				});
-			}
-			*/
 		}
 	},
 	{ immediate: true }

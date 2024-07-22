@@ -1,11 +1,6 @@
 <template>
 	<main ref="canvasRef">
-		<svg
-			class="canvas-layer background-layer"
-			ref="backgroundLayerRef"
-			:width="width"
-			:height="height"
-		>
+		<svg class="canvas-layer background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<defs>
 				<slot name="backgroundDefs" />
 			</defs>
@@ -202,7 +197,7 @@ onMounted(() => {
 <style scoped>
 main {
 	width: 100%;
-	height: 100%;
+	min-height: 100%;
 }
 
 main > * {

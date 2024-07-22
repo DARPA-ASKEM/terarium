@@ -1,8 +1,6 @@
 ## [Name of the Test Scenario]
 Please go through __every__ step of the test scenario.\
-When blocked, an error, or a UI/UX anomaly occurs, please report which scenario and step to [\#askem-testing](https://unchartedsoftware.slack.com/archives/C06FGLXB2CE).
-
-Estimated time to completion: [X] minutes
+Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
 ### 1. Begin test
 1. Login to https://app.staging.terarium.ai using the test account
@@ -10,7 +8,7 @@ Estimated time to completion: [X] minutes
     email: qa@test.io
     password: askem-quality-assurance
     ```
-2. Create, or open, project named `Q&A [Your Name] [YYMMDD]`
+2. Create, or open, project named `QA [Your Name]`
 
 ### 2. [Task name]
 1. Describe what the user is to be done to complete a task.
@@ -32,6 +30,3 @@ Estimated time to completion: [X] minutes
     - Instead, provide the `SIR.json` file of the model pre-configured
     - Link the file to its path in the `testing/data` folder.
     - Please re-use existing files if possible.
-
-### 4. End test
-1. logout of the application 

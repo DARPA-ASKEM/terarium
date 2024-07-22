@@ -10,10 +10,12 @@ import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
 @Entity
@@ -24,7 +26,8 @@ public class SimulationUpdate extends TerariumEntity {
 
 	@ManyToOne
 	@JsonBackReference
-	@NotNull private Simulation simulation;
+	@NotNull
+	private Simulation simulation;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

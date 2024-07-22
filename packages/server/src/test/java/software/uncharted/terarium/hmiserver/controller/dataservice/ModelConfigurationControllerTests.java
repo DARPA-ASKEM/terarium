@@ -16,9 +16,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 
 public class ModelConfigurationControllerTests extends TerariumApplicationTests {
@@ -35,9 +36,18 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Autowired
 	private ElasticsearchConfiguration elasticConfig;
 
+	@Autowired
+	private ProjectService projectService;
+
+	Project project;
+
 	@BeforeEach
 	public void setup() throws IOException {
 		elasticService.createOrEnsureIndexIsEmpty(elasticConfig.getModelConfigurationIndex());
+
+		project = projectService.createProject(
+			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
+		);
 	}
 
 	@AfterEach
@@ -48,69 +58,84 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetModelConfiguration() throws Exception {
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+			(ModelConfiguration) new ModelConfiguration()
+				.setModelId(UUID.randomUUID())
+				.setName("test-framework")
+				.setDescription("test-desc"),
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
-						.setModelId(UUID.randomUUID())
-						.setConfiguration(new Model())
-						.setName("test-framework")
-						.setDescription("test-desc"));
-
-		mockMvc.perform(MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+			)
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanCreateModelConfiguration() throws Exception {
-
 		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
-				.setModelId(UUID.randomUUID())
-				.setConfiguration(new Model())
-				.setDescription("test-desc")
-				.setName("test-framework");
+			.setModelId(UUID.randomUUID())
+			.setDescription("test-desc")
+			.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.post("/model-configurations")
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(modelConfiguration)))
-				.andExpect(status().isCreated());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.post("/model-configurations")
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(modelConfiguration))
+			)
+			.andExpect(status().isCreated());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateModelConfiguration() throws Exception {
+		final ModelConfiguration modelConfiguration = modelConfigurationService.createAsset(
+			(ModelConfiguration) new ModelConfiguration()
+				.setModelId(UUID.randomUUID())
+				.setDescription("test-desc")
+				.setName("test-framework"),
+			project.getId(),
+			ASSUME_WRITE_PERMISSION
+		);
 
-		final ModelConfiguration modelConfiguration =
-				modelConfigurationService.createAsset((ModelConfiguration) new ModelConfiguration()
-						.setModelId(UUID.randomUUID())
-						.setConfiguration(new Model())
-						.setDescription("test-desc")
-						.setName("test-framework"));
-
-		mockMvc.perform(MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
-						.with(csrf())
-						.contentType("application/json")
-						.content(objectMapper.writeValueAsString(modelConfiguration)))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+					.contentType("application/json")
+					.content(objectMapper.writeValueAsString(modelConfiguration))
+			)
+			.andExpect(status().isOk());
 	}
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteModelConfiguration() throws Exception {
-
 		final ModelConfiguration modelConfiguration = (ModelConfiguration) new ModelConfiguration()
-				.setModelId(UUID.randomUUID())
-				.setConfiguration(new Model())
-				.setDescription("test-desc")
-				.setName("test-framework");
+			.setModelId(UUID.randomUUID())
+			.setDescription("test-desc")
+			.setName("test-framework");
 
-		mockMvc.perform(MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
-						.with(csrf()))
-				.andExpect(status().isOk());
+		mockMvc
+			.perform(
+				MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
+					.param("project-id", PROJECT_ID.toString())
+					.with(csrf())
+			)
+			.andExpect(status().isOk());
 
 		Assertions.assertTrue(
-				modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
+			modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
+		);
 	}
 }

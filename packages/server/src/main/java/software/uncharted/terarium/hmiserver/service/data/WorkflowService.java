@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -13,27 +14,32 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
-			final ObjectMapper objectMapper,
-			final Config config,
-			final ElasticsearchConfiguration elasticConfig,
-			final ElasticsearchService elasticService,
-			final ProjectAssetService projectAssetService,
-			final S3ClientService s3ClientService,
-			final WorkflowRepository repository) {
+		final ObjectMapper objectMapper,
+		final Config config,
+		final ElasticsearchConfiguration elasticConfig,
+		final ElasticsearchService elasticService,
+		final ProjectService projectService,
+		final ProjectAssetService projectAssetService,
+		final S3ClientService s3ClientService,
+		final WorkflowRepository repository
+	) {
 		super(
-				objectMapper,
-				config,
-				elasticConfig,
-				elasticService,
-				projectAssetService,
-				s3ClientService,
-				repository,
-				Workflow.class);
+			objectMapper,
+			config,
+			elasticConfig,
+			elasticService,
+			projectService,
+			projectAssetService,
+			s3ClientService,
+			repository,
+			Workflow.class
+		);
 	}
 
 	@Override
@@ -50,7 +56,8 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 
 	@Override
 	@Observed(name = "function_profile")
-	public Workflow createAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+	public Workflow createAsset(final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
+		throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -62,12 +69,16 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.createAsset(asset);
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Workflow> updateAsset(final Workflow asset) throws IOException, IllegalArgumentException {
+	public Optional<Workflow> updateAsset(
+		final Workflow asset,
+		final UUID projectId,
+		final Schema.Permission hasWritePermission
+	) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -79,7 +90,7 @@ public class WorkflowService extends TerariumAssetServiceWithSearch<Workflow, Wo
 				edge.setWorkflowId(asset.getId());
 			}
 		}
-		return super.updateAsset(asset);
+		return super.updateAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override

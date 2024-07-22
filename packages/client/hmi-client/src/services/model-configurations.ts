@@ -1,212 +1,196 @@
-import _ from 'lodash';
 import API from '@/api/api';
 import type {
-	ModelConfiguration,
+	InitialSemantic,
 	Model,
-	Intervention,
-	ModelParameter,
+	ModelConfiguration,
 	ModelDistribution,
-	Initial
+	ObservableSemantic,
+	ParameterSemantic
 } from '@/types/Types';
-import { getParameters } from '@/model-representation/service';
+import { isEmpty } from 'lodash';
+import { pythonInstance } from '@/python/PyodideController';
+import { DistributionType } from './distribution';
 
-export const getAllModelConfigurations = async () => {
+export const getAllModelConfigurations = async (): Promise<ModelConfiguration[]> => {
 	const response = await API.get(`/model-configurations`);
-	return (response?.data as ModelConfiguration[]) ?? null;
+	return response?.data ?? null;
 };
 
-export const getModelConfigurationById = async (id: string) => {
+export const getModelConfigurationById = async (id: string): Promise<ModelConfiguration> => {
 	const response = await API.get(`/model-configurations/${id}`);
-	return (response?.data as ModelConfiguration) ?? null;
+	return response?.data ?? null;
+};
+
+export const createModelConfiguration = async (modelConfiguration: ModelConfiguration): Promise<ModelConfiguration> => {
+	modelConfiguration.temporary = modelConfiguration.temporary ?? false;
+	const response = await API.post(`/model-configurations`, modelConfiguration);
+	return response?.data ?? null;
+};
+
+export const updateModelConfiguration = async (modelConfiguration: ModelConfiguration) => {
+	const response = await API.put(`/model-configurations/${modelConfiguration.id}`, modelConfiguration);
+	return response?.data ?? null;
+};
+
+export const deleteModelConfiguration = async (id: string) => {
+	const response = await API.delete(`/model-configurations/${id}`);
+	return response?.data ?? null;
+};
+
+export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
+	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
+	return response?.data ?? null;
+};
+
+export const postAsConfiguredModel = async (model: Model): Promise<ModelConfiguration> => {
+	const response = await API.post<ModelConfiguration>(`model-configurations/as-configured-model/`, model);
+	return response?.data ?? null;
+};
+
+export const amrToModelConfiguration = async (model: Model): Promise<ModelConfiguration> => {
+	const response = await API.post<ModelConfiguration>(`/models/amr-to-model-configuration`, model);
+	return response?.data ?? null;
 };
 
 export const getModelIdFromModelConfigurationId = async (id: string) => {
 	const modelConfiguration = await getModelConfigurationById(id);
-	return modelConfiguration?.model_id ?? null;
+	return modelConfiguration?.modelId ?? null;
 };
 
-export const createModelConfiguration = async (
-	model_id: string | undefined,
-	name: string,
-	description: string,
-	configuration: Model,
-	isTemporary?: boolean,
-	givenInterventions?: Intervention[]
-) => {
-	if (!model_id) {
-		return null;
-	}
-	const temporary = isTemporary ?? false;
-	const interventions = givenInterventions ?? [];
-	const response = await API.post(`/model-configurations`, {
-		model_id,
-		temporary,
-		name,
-		description,
-		configuration,
-		interventions
-	});
-	return response?.data ?? null;
-};
-
-export const addDefaultConfiguration = async (model: Model): Promise<void> => {
-	await createModelConfiguration(model.id, 'Default config', 'Default config', model);
-};
-
-export const updateModelConfiguration = async (config: ModelConfiguration) => {
-	// Do a sanity pass to ensure type-safety
-	const model: Model = config.configuration as Model;
-	const parameters = model.semantics?.ode.parameters;
-	if (parameters) {
-		parameters.forEach((param) => {
-			if (param.value && typeof param.value === 'string' && _.isNumber(+param.value)) {
-				param.value = +param.value;
-				console.debug(`corerce ${param.id} ${param.value} to number`);
-			}
-		});
-	}
-
-	// If the "default" config is updated we want to update the model as well
-	// because the model as a copy of the data
-	if (config.name === 'Default config') {
-		API.put(`/models/${config.configuration.id}`, config.configuration);
-	}
-
-	const response = await API.put(`/model-configurations/${config.id}`, config);
-	return response?.data ?? null;
-};
-
-export function sanityCheck(config: ModelConfiguration): string[] {
-	const errors: string[] = [];
-	const modelToCheck = config.configuration;
-	if (!modelToCheck) {
-		errors.push('no model defined in configuration');
-		return errors;
-	}
-
-	const parameters: ModelParameter[] = getParameters(modelToCheck);
-
-	parameters.forEach((p) => {
-		const val = p.value;
-		const max = parseFloat(p.distribution?.parameters.maximum);
-		const min = parseFloat(p.distribution?.parameters.minimum);
-		if (val && val > max) {
-			errors.push(`${p.id} value ${p.value} > distribution max of ${max}`);
-		}
-		if (val && val < min) {
-			errors.push(`${p.id} value ${p.value} < distribution min of ${min}`);
-		}
-
-		// Arbitrary 0.003 here, try to ensure interval is significant w.r.t value
-		const interval = Math.abs(max - min);
-		if (val !== 0 && val !== undefined && Math.abs(interval / val) < 0.003) {
-			errors.push(`${p.id} distribution range [${min}, ${max}] may be too small`);
-		}
-
-		// no constant & no/partial distribution
-		if (val === undefined || Number.isNaN(val)) {
-			if (Number.isNaN(max) || Number.isNaN(min)) {
-				errors.push(`${p.id} has no constant value and partial/no distribution`);
-			}
-		}
-	});
-	return errors;
+export function getParameters(config: ModelConfiguration): ParameterSemantic[] {
+	return config.parameterSemanticList ?? [];
 }
 
-// cleans a model by removing distributions that are not needed
-export function cleanModel(model: Model): void {
-	const parameters: ModelParameter[] = getParameters(model);
-
-	parameters.forEach((p) => {
-		const val = p.value;
-		const max = parseFloat(p.distribution?.parameters.maximum);
-		const min = parseFloat(p.distribution?.parameters.minimum);
-
-		// we delete the distribution when there is a constant + partial/no distribution
-		if (val !== undefined && !Number.isNaN(val)) {
-			if (Number.isNaN(max) || Number.isNaN(min)) {
-				delete p.distribution;
-			}
-		}
-	});
+export function getInitials(config: ModelConfiguration): InitialSemantic[] {
+	return config.initialSemanticList ?? [];
 }
 
-export function getInitial(config: ModelConfiguration, initialId: string): Initial | undefined {
-	return config.configuration.semantics?.ode.initials?.find(
-		(initial) => initial.target === initialId
-	);
-}
-
-export function getInitialSource(config: ModelConfiguration, initialId: string): string {
-	return config.configuration.metadata?.initials?.[initialId].source ?? '';
-}
-
-export function setInitialSource(
+export function setParameterDistributions(
 	config: ModelConfiguration,
-	initialId: string,
-	source: string
+	distributionParameterMappings: { id: string; distribution: ModelDistribution }[]
 ): void {
-	const initial = config.configuration.metadata?.initials?.[initialId];
-	if (initial) {
-		initial.source = source;
-	}
+	distributionParameterMappings.forEach((mapping) => {
+		setParameterDistribution(config, mapping.id, mapping.distribution);
+	});
 }
 
-export function getParameter(
-	config: ModelConfiguration,
-	parameterId: string
-): ModelParameter | undefined {
-	return config.configuration.semantics?.ode.parameters?.find((param) => param.id === parameterId);
+export function getParameter(config: ModelConfiguration, parameterId: string): ParameterSemantic | undefined {
+	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function setDistribution(
+export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+	const parameter = getParameter(config, parameterId);
+	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
+	return parameter.distribution;
+}
+
+export function setParameterDistribution(
 	config: ModelConfiguration,
 	parameterId: string,
 	distribution: ModelDistribution
 ): void {
 	const parameter = getParameter(config, parameterId);
-	if (parameter) {
-		parameter.distribution = distribution;
+	if (!parameter) return;
+
+	const type = distribution.type;
+
+	if (type === DistributionType.Constant) {
+		parameter.distribution = convertToConstantDistribution(distribution);
+	} else if (type === DistributionType.Uniform) {
+		parameter.distribution = convertToUniformDistribution(distribution);
 	}
 }
 
-export function removeDistribution(config: ModelConfiguration, parameterId: string): void {
-	const parameter = getParameter(config, parameterId);
-	if (parameter?.distribution) {
-		delete parameter.distribution;
-	}
+function convertToConstantDistribution(distribution: ModelDistribution): ModelDistribution {
+	// if no parameters, initialize
+	if (isEmpty(distribution.parameters)) distribution.parameters = { value: 0 };
+
+	return {
+		type: DistributionType.Constant,
+		parameters: {
+			value: distribution.parameters.value
+		}
+	};
 }
 
-export function getInterventions(config: ModelConfiguration): Intervention[] {
-	return config.interventions ?? [];
-}
+function convertToUniformDistribution(distribution: ModelDistribution): ModelDistribution {
+	// if no parameters, initialize
+	if (isEmpty(distribution.parameters)) distribution.parameters = { minimum: 0, maximum: 0 };
 
-// FIXME: for set and remove interventions, we should not be using the index.  This should be addressed when we move to the new model config data structure.
-export function setIntervention(
-	config: ModelConfiguration,
-	index: number,
-	intervention: Intervention
-): void {
-	const interventions = getInterventions(config);
-	interventions[index] = intervention;
-}
-
-export function removeIntervention(config: ModelConfiguration, index: number): void {
-	const interventions = getInterventions(config);
-	interventions.splice(index, 1);
+	return {
+		type: DistributionType.Uniform,
+		parameters: {
+			minimum: distribution.parameters.minimum,
+			maximum: distribution.parameters.maximum
+		}
+	};
 }
 
 export function getParameterSource(config: ModelConfiguration, parameterId: string): string {
-	return config.configuration.metadata?.parameters?.[parameterId]?.source ?? '';
+	return getParameter(config, parameterId)?.source ?? '';
 }
 
-export function setParameterSource(
-	config: ModelConfiguration,
-	parameterId: string,
-	source: string
-): void {
-	const parameter = config.configuration.metadata?.parameters?.[parameterId];
+export function setParameterSource(config: ModelConfiguration, parameterId: string, source: string): void {
+	const parameter = getParameter(config, parameterId);
 	if (parameter) {
 		parameter.source = source;
 	}
+}
+
+export function getInitial(config: ModelConfiguration, initialId: string): InitialSemantic | undefined {
+	return getInitials(config).find((initial) => initial.target === initialId);
+}
+
+export function setInitialExpression(config: ModelConfiguration, initialId: string, expression: string): void {
+	const initial = getInitial(config, initialId);
+	if (!initial) return;
+
+	pythonInstance
+		.parseExpression(expression)
+		.then((result) => {
+			const mathml = result.mathml;
+			initial.expression = expression;
+			initial.expressionMathml = mathml;
+		})
+		.catch((error) => {
+			// Handle error appropriately
+			console.error('Error parsing expression:', error);
+		});
+}
+
+export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
+	const initial = getInitial(config, initialId);
+	if (initial) {
+		initial.source = source;
+	}
+}
+
+export function getInitialSource(config: ModelConfiguration, initialId: string): string {
+	return getInitial(config, initialId)?.source ?? '';
+}
+
+export function getInitialExpression(config: ModelConfiguration, initialId: string): string {
+	return getInitial(config, initialId)?.expression ?? '';
+}
+
+export function getObservables(config: ModelConfiguration): ObservableSemantic[] {
+	return config.observableSemanticList ?? [];
+}
+
+export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
+	let otherValues: object[] = [];
+
+	const modelConfigTableData = configs.map((modelConfig) => ({
+		name: modelConfig.name ?? '',
+		list: modelConfig[otherValueList]
+	}));
+
+	modelConfigTableData.forEach((modelConfig) => {
+		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
+		if (config && modelConfig.name) {
+			const data: object = { name: modelConfig.name, ...config };
+			otherValues = [...otherValues, data];
+		}
+	});
+	return otherValues;
 }

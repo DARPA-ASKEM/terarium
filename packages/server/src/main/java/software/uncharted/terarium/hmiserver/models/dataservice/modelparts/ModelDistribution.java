@@ -14,10 +14,19 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelDistribution extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = -5426742497090710018L;
 
 	private String type;
 
 	private Map<String, Object> parameters;
+
+	@Override
+	public ModelDistribution clone() {
+		ModelDistribution clone = (ModelDistribution) super.clone();
+		clone.setParameters(this.getParameters());
+		clone.setType(this.getType());
+		return clone;
+	}
 }
