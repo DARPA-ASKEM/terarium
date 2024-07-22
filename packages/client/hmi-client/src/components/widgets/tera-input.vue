@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
+import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
 import { isEmpty, isString } from 'lodash';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
@@ -77,7 +77,7 @@ function isTextContainingOnlyDigits(value: string | number | undefined): boolean
 }
 
 function getValue() {
-	if (isNistType || isTextContainingOnlyDigits(maskedValue.value)) return maskedValue.value;
+	if (isNistType || isTextContainingOnlyDigits(props.modelValue)) return maskedValue.value;
 	return props.modelValue;
 }
 
@@ -85,7 +85,6 @@ const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const value = target.value;
 
-	maskedValue.value = '';
 	if (isNistType) {
 		maskedValue.value = value;
 		if (scrubAndParse(maskedValue.value)) {
@@ -124,7 +123,7 @@ const unmask = () => {
 	if (isNistType && !getErrorMessage.value) {
 		emit('update:model-value', nistToNumber(maskedValue.value));
 	} else if (isTextContainingOnlyDigits(maskedValue.value)) {
-		emit('update:model-value', nistToNumber(maskedValue.value));
+		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
 </script>
