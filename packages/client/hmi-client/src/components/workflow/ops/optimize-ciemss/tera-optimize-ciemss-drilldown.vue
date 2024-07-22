@@ -198,6 +198,12 @@
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
+			<div class="result-message-grid">
+				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
+					<div class="label">{{ key }}:</div>
+					<div class="value">{{ formatJsonValue(value) }}</div>
+				</div>
+			</div>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -340,7 +346,8 @@ import {
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
@@ -506,6 +513,7 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const optimizeRequestPayload = ref<any>('');
 
 const modelParameterOptions = ref<string[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
@@ -752,6 +760,7 @@ const setOutputValues = async () => {
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
 	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
+	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
@@ -905,11 +914,12 @@ watch(
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+	overflow: auto;
 }
 
 .label {
 	font-weight: bold;
-	width: 150px; /* Adjust the width of the label column as needed */
+	width: 210px; /* Adjust the width of the label column as needed */
 }
 .value {
 	flex-grow: 1;
