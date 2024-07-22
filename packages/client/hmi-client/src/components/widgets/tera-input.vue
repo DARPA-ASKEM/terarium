@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { isString } from 'lodash';
 import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
+import { isString } from 'lodash';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -73,7 +73,7 @@ const getErrorMessage = computed(() => props.errorMessage || error.value);
 
 // If the input is a string composed only of digits, display as NIST number
 function isTextContainingOnlyDigits(value: string | number | undefined): boolean {
-	return isString(value) && /^\d+(\s\d+)?$/.test(value);
+	return isString(value) && /^\d+(\.\d+)?(\s\d+(\.\d+)?)?$/.test(value);
 }
 
 function getValue() {
@@ -99,6 +99,7 @@ const updateValue = (event: Event) => {
 	} else if (props.type === 'number') {
 		emit('update:model-value', parseFloat(value));
 	} else {
+		maskedValue.value = '';
 		emit('update:model-value', value);
 	}
 };
@@ -122,9 +123,7 @@ const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
 		emit('update:model-value', nistToNumber(maskedValue.value));
-	}
-
-	if (isTextContainingOnlyDigits(maskedValue.value)) {
+	} else if (isTextContainingOnlyDigits(maskedValue.value)) {
 		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
