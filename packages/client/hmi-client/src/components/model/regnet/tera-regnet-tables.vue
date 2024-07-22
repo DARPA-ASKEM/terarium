@@ -15,7 +15,8 @@
 				<Column field="grounding.identifiers" header="Concept">
 					<template #body="{ data }">
 						<template v-if="data?.grounding?.identifiers && !isEmpty(data.grounding.identifiers)">
-							{{ getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
+							<!--FIXME: Determine concept script-->
+							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.grounding.identifiers)) }}
 
 							<a
 								target="_blank"
@@ -100,7 +101,6 @@ const emit = defineEmits(['update-model', 'update-parameter']);
 
 const vertices = computed(() => props.model?.model?.vertices ?? []);
 const edges = computed(() => props.model.model?.edges ?? []);
-const nameOfCurieCache = ref(new Map<string, string>());
 const curies = ref<DKG[]>([]);
 const conceptSearchTerm = ref('');
 
