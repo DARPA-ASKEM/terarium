@@ -2,7 +2,6 @@
 	<tera-model-part
 		:items="stateList"
 		:collapsed-items="collapsedInitials"
-		:disabled-inputs="['concept']"
 		@update-item="emit('update-state', $event)"
 	/>
 </template>
