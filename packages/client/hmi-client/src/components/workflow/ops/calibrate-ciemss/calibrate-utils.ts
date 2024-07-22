@@ -1,6 +1,10 @@
 import _ from 'lodash';
 import { DataArray } from '@/services/models/simulation-service';
 
+/**
+ * A rename function generator for getRunResultCSV. Here the idea
+ * to differentiate before and after columns in the run results
+ * */
 export const renameFnGenerator = (label: string) => (col: string) => {
 	if (col === 'timepoint_id' || col === 'sample_id') return col;
 	return `${col}:${label}`;
