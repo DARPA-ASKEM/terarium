@@ -109,7 +109,7 @@ export const addNode = (
 };
 
 /**
- * Create an eddge between two nodes, and transfer the value from
+* Create an edge between two nodes, and transfer the value from
  * source-node's output port to target-node's input port
  *
  * The terms are used as depicted in the following schematics
