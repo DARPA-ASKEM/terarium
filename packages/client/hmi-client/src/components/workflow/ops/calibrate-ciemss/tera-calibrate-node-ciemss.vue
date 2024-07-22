@@ -127,7 +127,7 @@ const preparedCharts = computed(() => {
 				height: 120,
 				legend: false,
 				translationMap: reverseMap,
-				xAxisTitle: '',
+				xAxisTitle: 'Time',
 				yAxisTitle: '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
