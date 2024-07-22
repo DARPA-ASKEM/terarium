@@ -171,7 +171,7 @@ export const addEdge = (
 	const allowedInputTypes = targetInputPort.type.split('|');
 	const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
 
-	// Not supported if there are more than oen matches
+	// Not supported if there are more than one matche
 	if (intersectionTypes.length > 1) {
 		console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
 		return;
