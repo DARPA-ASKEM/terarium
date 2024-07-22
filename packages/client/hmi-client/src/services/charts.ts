@@ -370,9 +370,10 @@ export function createOptimizeChart(
 						field: 'tag',
 						type: 'nominal',
 						scale: {
-							domain: ['failing', 'passing'],
+							domain: ['out', 'in'],
 							range: ['#FFAB00', '#1B8073']
-						}
+						},
+						legend: { labelExpr: 'datum.value === "in" ? "passing" : "failing"' }
 					}
 				}
 			},
