@@ -95,13 +95,9 @@ watch(
 	() => props.dataset?.columns,
 	async () => {
 		tableData.value = await Promise.all(
-			props.dataset?.columns?.map(async (col) => {
-				let identifier: object | undefined;
-				if (col.metadata?.groundings?.identifiers) {
-					identifier = col.metadata.groundings.identifiers;
-				} else if (col.grounding?.identifiers[0]) {
-					identifier = parseCurie(String(col.grounding.identifiers[0].curie));
-				}
+			props.dataset.columns?.map(async (col) => {
+				const identifier =
+					col.metadata?.groundings?.identifiers ?? parseCurie(String(col.grounding?.identifiers[0].curie));
 				return {
 					id: col.name,
 					name: formatName(col.name),
