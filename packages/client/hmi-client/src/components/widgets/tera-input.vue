@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
-import { isEmpty } from 'lodash';
+import { isEmpty, isString } from 'lodash';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -73,8 +73,7 @@ const getErrorMessage = computed(() => props.errorMessage || error.value);
 
 // If the input is a string composed only of digits, display as NIST number
 function isTextContainingOnlyDigits(value: string | number | undefined): boolean {
-	value = value?.toString();
-	return !isEmpty(value) && scrubAndParse(value?.toString());
+	return !isEmpty(value) && isString(value) && scrubAndParse(value);
 }
 
 function getValue() {
