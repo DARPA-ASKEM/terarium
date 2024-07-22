@@ -92,9 +92,8 @@
 					</template>
 					<template #body="{ data }">
 						<span v-if="data.key === ComparisonKey.GROUNDING && data.currentValue?.identifiers">
-							{{
-								getNameOfCurieCached(nameOfCurieCache, getCurieFromGroundingIdentifier(data.currentValue.identifiers))
-							}}
+							<!--FIXME: Determine concept script-->
+							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.currentValue.identifiers)) }}
 							<a
 								v-if="data.currentValue"
 								target="_blank"
@@ -156,7 +155,6 @@ const emit = defineEmits(['update-model']);
 
 const isAssignmentModalVisible = ref(false);
 
-const nameOfCurieCache = ref(new Map<string, string>());
 const selectedConcept = ref(null);
 const semanticSearchTerm = ref('');
 const selectedCurrentSemantic = ref<ModelParameter | Initial | null>(null);
