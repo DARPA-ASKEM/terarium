@@ -28,7 +28,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import {
 	getRunResultCSV,
 	pollAction,
-	getCalibrateBlobURL,
 	makeForecastJobCiemss,
 	getSimulation,
 	parsePyCiemssMap,
@@ -39,7 +38,7 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset } from '@/types/Types';
+import type { CsvAsset, SimulationRequest } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -157,33 +156,36 @@ watch(
 		if (!id || id === '') return;
 
 		const response = await pollResult(id);
+		const state = _.cloneDeep(props.node.state);
+
+		const baseRequestPayload: SimulationRequest = {
+			modelConfigId: modelConfigId.value as string,
+			timespan: {
+				start: 0,
+				end: state.endTime
+			},
+			extra: {
+				num_samples: state.numSamples,
+				method: 'dopri5'
+			},
+			engine: 'ciemss'
+		};
+
+		// Calibration has finished, now kick of two forecast jobs to do comparison
+		// - using the default configuration (before)
+		// - using the calibfrated configuration
 		if (response.state === PollerState.Done) {
-			// Start 2nd simulation to get sample simulation from dill
-			const dillURL = await getCalibrateBlobURL(id);
-			console.log('dill URL is', dillURL);
+			// Default (before)
+			let forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressBeforeForecastId = forecastResponse.id;
 
-			const forecastResponse = await makeForecastJobCiemss(
-				{
-					modelConfigId: modelConfigId.value as string,
-					timespan: {
-						start: 0,
-						end: props.node.state.endTime
-					},
-					extra: {
-						num_samples: props.node.state.numSamples,
-						method: 'dopri5',
-						inferred_parameters: id
-					},
-					engine: 'ciemss'
-				},
-				nodeMetadata(props.node)
-			);
-			const forecastId = forecastResponse.id;
+			// With calibrated result
+			baseRequestPayload.extra.inferred_parameters = id;
+			forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressForecastId = forecastResponse.id;
 
-			const state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';
 			state.calibrationId = id;
-			state.inProgressForecastId = forecastId;
 			emit('update-state', state);
 		}
 	},
@@ -191,16 +193,29 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressBeforeForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
-		const response = await pollResult(id);
-		if (response.state === PollerState.Done) {
+		let doneProcess = true;
+		let response = await pollResult(props.node.state.inProgressBeforeForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		response = await pollResult(props.node.state.inProgressForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
 			state.chartConfigs = [[]];
+			state.forecastId = state.inProgressForecastId;
+			state.beforeForecastId = state.inProgressBeforeForecastId;
+
 			state.inProgressForecastId = '';
-			state.forecastId = id;
+			state.inProgressBeforeForecastId = '';
 			emit('update-state', state);
 
 			// Get the calibrate losses to generate a run summary
@@ -228,6 +243,7 @@ watch(
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
+					beforeForecastId: state.beforeForecastId,
 					numIterations: state.numIterations,
 					numSamples: state.numSamples,
 					summaryId: summaryResponse?.id
