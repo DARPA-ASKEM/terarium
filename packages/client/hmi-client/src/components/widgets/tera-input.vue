@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
+import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
 import { isEmpty, isString } from 'lodash';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
@@ -124,7 +124,7 @@ const unmask = () => {
 	if (isNistType && !getErrorMessage.value) {
 		emit('update:model-value', nistToNumber(maskedValue.value));
 	} else if (isTextContainingOnlyDigits(maskedValue.value)) {
-		emit('update:model-value', nistToString(maskedValue.value));
+		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 };
 </script>
