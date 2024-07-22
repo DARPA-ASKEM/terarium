@@ -109,7 +109,7 @@ export const addNode = (
 };
 
 /**
-* Create an edge between two nodes, and transfer the value from
+ * Create an edge between two nodes, and transfer the value from
  * source-node's output port to target-node's input port
  *
  * The terms are used as depicted in the following schematics
@@ -171,7 +171,7 @@ export const addEdge = (
 	const allowedInputTypes = targetInputPort.type.split('|');
 	const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
 
-  // Not supported if there are more than one match
+	// Not supported if there are more than one match
 	if (intersectionTypes.length > 1) {
 		console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
 		return;
