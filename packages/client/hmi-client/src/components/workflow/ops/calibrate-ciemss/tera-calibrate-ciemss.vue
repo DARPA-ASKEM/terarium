@@ -97,7 +97,7 @@
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset" ref="outputPanel">
+					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:variables="Object.keys(pyciemssMap)"
@@ -108,14 +108,7 @@
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-						<Button
-							class="add-chart"
-							text
-							:outlined="true"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						></Button>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
