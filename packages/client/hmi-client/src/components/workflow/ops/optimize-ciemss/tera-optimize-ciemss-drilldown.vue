@@ -316,7 +316,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -597,8 +597,8 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -755,15 +755,36 @@ const setOutputValues = async () => {
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
-	const data = state.interventionPolicyGroups.flatMap((ele) =>
-		ele.intervention.staticInterventions.map((intervention) => ({
-			name: ele.intervention.appliedTo,
-			value: intervention.value,
-			time: intervention.timestep
+	// Combine before and after interventions
+	const combinedInterventions = [
+		...state.interventionPolicyGroups.flatMap((group) =>
+			group.intervention.staticInterventions.map((intervention) => ({
+				appliedTo: group.intervention.appliedTo,
+				name: group.intervention.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		),
+		...(state.optimizedInterventionPolicy?.interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				appliedTo: intervention.appliedTo,
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
+		interventions.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
 		}))
 	);
 
-	return groupBy(data, 'name');
+	return groupedAndMapped;
 });
 
 onMounted(async () => {
