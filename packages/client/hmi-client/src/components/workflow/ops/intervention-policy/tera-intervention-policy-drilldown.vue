@@ -188,7 +188,11 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
 const isEditingDescription = ref(false);
-const isSaved = computed(() => isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value));
+const isSaved = computed(
+	() =>
+		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
+		isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+);
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
