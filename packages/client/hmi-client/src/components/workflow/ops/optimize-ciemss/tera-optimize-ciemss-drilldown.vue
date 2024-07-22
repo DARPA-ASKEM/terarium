@@ -41,7 +41,7 @@
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
 							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
-							:key="idx"
+							:key="cfg.id"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
