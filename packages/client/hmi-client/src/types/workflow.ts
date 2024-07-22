@@ -49,7 +49,7 @@ export interface OperationData {
 	type: string;
 	label?: string;
 	isOptional?: boolean;
-	acceptMultiple?: boolean;
+	acceptMultiple?: boolean; // @deprecated
 }
 
 // Defines a function: eg: model, simulate, calibrate
@@ -81,7 +81,7 @@ export interface WorkflowPort {
 	label?: string;
 	value?: any[] | null;
 	isOptional: boolean;
-	acceptMultiple?: boolean;
+	acceptMultiple?: boolean; // @deprecated
 }
 
 // Operator Output needs more information than a standard operator port.
