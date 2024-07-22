@@ -62,7 +62,7 @@ export const createForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -73,6 +73,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = '.3s';
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
