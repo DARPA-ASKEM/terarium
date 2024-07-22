@@ -400,13 +400,31 @@ export function createOptimizeChart(
 }
 
 function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
-	return data.map((ele) => ({
-		data: [{}], // Dummy data to ensure the layer is rendered
+	const markers = data.map((ele) => ({
+		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
 			x: { datum: ele.time }
 		}
 	}));
+
+	const labelsSpec = {
+		data: { values: data },
+		mark: {
+			type: 'text',
+			align: 'left',
+			angle: 90,
+			dx: 5,
+			dy: -10
+		},
+		encoding: {
+			x: { field: 'time', type: 'quantitative' },
+			y: { field: 'value', type: 'quantitative' },
+			text: { field: 'name', type: 'nominal' }
+		}
+	};
+
+	return [...markers, labelsSpec];
 }
 
 function createStatisticLayer(
@@ -575,5 +593,32 @@ export const createOptimizeForecastChart = (
 		});
 	}
 
+	return spec;
+};
+
+export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		width: 400,
+		autosize: {
+			type: 'fit'
+		},
+		layer: []
+	};
+	if (interventionsData && interventionsData.length > 0) {
+		// markers
+		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+			spec.layer.push(marker);
+		});
+		// chart
+		spec.layer.push({
+			data: { values: interventionsData },
+			mark: 'point',
+			encoding: {
+				x: { field: 'time', type: 'quantitative' },
+				y: { field: 'value', type: 'quantitative' }
+			}
+		});
+	}
 	return spec;
 };

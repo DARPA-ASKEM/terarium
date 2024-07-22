@@ -1,3 +1,4 @@
+import { ModelGrounding } from '@/types/Types';
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
@@ -13,7 +14,7 @@ export type ModelPartItem = {
 	id: string;
 	name?: string;
 	description?: string;
-	grounding?: any;
+	grounding?: ModelGrounding;
 	unitExpression?: string;
 	expression?: string;
 	expression_mathml?: string;

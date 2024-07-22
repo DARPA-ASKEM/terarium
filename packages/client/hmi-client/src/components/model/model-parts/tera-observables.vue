@@ -1,9 +1,5 @@
 <template>
-	<tera-model-part
-		:items="observablesList"
-		:disabled-inputs="['concept']"
-		@update-observable="emit('update-observable', $event)"
-	/>
+	<tera-model-part :items="observablesList" @update-observable="emit('update-observable', $event)" />
 </template>
 
 <script setup lang="ts">
@@ -29,13 +25,14 @@ const observablesList = computed<
 	}[]
 >(() =>
 	props.observables.map((observable) => {
-		const { id, name, expression, description, units } = observable;
+		const { id, name, expression, description, units, grounding } = observable;
 		return {
 			base: {
 				id,
 				name,
 				description,
 				unitExpression: units?.expression,
+				grounding,
 				expression,
 				expression_mathml: observable.expression_mathml
 			},
