@@ -586,7 +586,7 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyId === interventionPolicy.id) {
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
@@ -595,6 +595,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;

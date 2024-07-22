@@ -24,6 +24,7 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroupForm {
+	id?: string; // The ID of the InterventionPolicy this is portraying
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
