@@ -556,7 +556,6 @@ const updateCriterionGroupForm = (index: number, config: Criterion) => {
 	if (!state.constraintGroups) return;
 
 	state.constraintGroups[index] = config;
-	setOutputSettingSimulationDefaults(state);
 	emit('update-state', state);
 };
 
@@ -580,10 +579,7 @@ const initialize = async () => {
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
-		getInterventionPolicyById(policyId).then((interventionPolicy) => {
-			setInterventionPolicyGroups(interventionPolicy);
-			setOutputSettingInterventionDefaults();
-		});
+		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
 	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
@@ -619,35 +615,13 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 	emit('update-state', state);
 };
 
-const setOutputSettingInterventionDefaults = () => {
-	const selectedInterventionVariables: Array<string> = [];
-	props.node.state.interventionPolicyGroups.forEach((intervention) =>
-		selectedInterventionVariables.push(intervention.intervention.appliedTo)
-	);
-	knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
-};
-
-const setOutputSettingSimulationDefaults = (state) => {
-	if (knobs.value.selectedSimulationVariables.length) {
-		return;
-	}
-	const selectedSimulationVariables: Array<string> = [];
-	state.constraintGroups.forEach((constraint) => {
-		if (constraint.targetVariable) {
-			selectedSimulationVariables.push(constraint.targetVariable);
-		}
-	});
-
-	if (selectedSimulationVariables.length) {
-		knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
-	}
-};
-
 const runOptimize = async () => {
 	if (!modelConfiguration.value?.id) {
 		logger.error('no model config id provided');
 		return;
 	}
+
+	setOutputSettingDefaults();
 
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
@@ -739,6 +713,30 @@ const runOptimize = async () => {
 	state.optimizationRunId = '';
 	state.inProgressPostForecastId = '';
 	emit('update-state', state);
+};
+
+const setOutputSettingDefaults = () => {
+	if (!knobs.value.selectedInterventionVariables.length) {
+		const selectedInterventionVariables: Array<string> = [];
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		const selectedSimulationVariables: Array<string> = [];
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
 };
 
 const saveModelConfiguration = async () => {
