@@ -41,7 +41,7 @@
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
 							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
-							:key="idx"
+							:key="cfg.id || '' + idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
@@ -198,6 +198,12 @@
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
+			<div class="result-message-grid">
+				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
+					<div class="label">{{ key }}:</div>
+					<div class="value">{{ formatJsonValue(value) }}</div>
+				</div>
+			</div>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -340,7 +346,8 @@ import {
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
@@ -506,6 +513,7 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const optimizeRequestPayload = ref<any>('');
 
 const modelParameterOptions = ref<string[]>([]);
 const modelStateAndObsOptions = ref<string[]>([]);
@@ -570,6 +578,7 @@ const initialize = async () => {
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
+		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
@@ -586,7 +595,7 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyId === interventionPolicy.id) {
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
@@ -595,6 +604,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
 			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
@@ -750,6 +760,7 @@ const setOutputValues = async () => {
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
 	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
+	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
@@ -903,11 +914,12 @@ watch(
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+	overflow: auto;
 }
 
 .label {
 	font-weight: bold;
-	width: 150px; /* Adjust the width of the label column as needed */
+	width: 210px; /* Adjust the width of the label column as needed */
 }
 .value {
 	flex-grow: 1;
