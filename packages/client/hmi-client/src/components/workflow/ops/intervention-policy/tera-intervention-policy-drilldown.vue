@@ -76,7 +76,7 @@
 							<ul class="flex flex-column gap-2">
 								<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
 									<h5 class="pb-2">{{ appliedTo }}</h5>
-									<!-- CHARTS HERE-->
+									<vega-chart :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 									<ul>
 										<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
 											<h6 class="pb-1">{{ intervention.name }}</h6>
@@ -124,7 +124,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { cloneDeep, groupBy, isEmpty } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
@@ -146,6 +146,8 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
 import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { createInterventionChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import { InterventionPolicyOperation, InterventionPolicyState } from './tera-intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
@@ -204,6 +206,19 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
+
+const preparedCharts = computed(() =>
+	_.mapValues(groupedOutputParameters.value, (interventions) => {
+		const flattenedData = interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		);
+		return createInterventionChart(flattenedData);
+	})
+);
 
 const initialize = async () => {
 	const state = props.node.state;
@@ -291,7 +306,9 @@ const onAddIntervention = () => {
 
 const onDeleteIntervention = (index: number) => {
 	// Create a new array excluding the intervention at the specified index
-	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter((_, i) => i !== index);
+	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
+		(_intervention, i) => i !== index
+	);
 
 	// Reassign the updated interventions array back to the transientInterventionPolicy
 	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
