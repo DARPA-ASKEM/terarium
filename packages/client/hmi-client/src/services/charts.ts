@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
 	legend: boolean;
