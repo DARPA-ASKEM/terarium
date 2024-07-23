@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -24,6 +26,12 @@ import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 @EqualsAndHashCode(callSuper = true)
 @TSModel
 @Entity
+@Table(
+	name = "notification_group",
+	indexes = {
+		@Index(name = "idx_user_id", columnList = "userId"), @Index(name = "idx_created_on", columnList = "createdOn")
+	}
+)
 public class NotificationGroup extends TerariumEntity {
 
 	@Serial

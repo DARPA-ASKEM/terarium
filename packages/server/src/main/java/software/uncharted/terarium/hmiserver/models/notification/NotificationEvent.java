@@ -9,7 +9,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.sql.Timestamp;
@@ -26,6 +28,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 @EqualsAndHashCode(callSuper = true)
 @TSModel
 @Entity
+@Table(
+	name = "notification_event",
+	indexes = { @Index(name = "idx_notification_group_id", columnList = "notification_group_id") }
+)
 public class NotificationEvent extends TerariumEntity {
 
 	@Serial
