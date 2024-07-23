@@ -4,6 +4,8 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+export const NUMBER_FORMAT = '.3~s';
+
 export interface ForecastChartOptions {
 	legend: boolean;
 	translationMap?: Record<string, string>;
@@ -73,7 +75,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.format = '.3s';
+	yaxis.format = NUMBER_FORMAT;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -239,8 +241,8 @@ export const createForecastChart = (
 };
 
 /// /////////////////////////////////////////////////////////////////////////////
+// Optimize charts
 /// /////////////////////////////////////////////////////////////////////////////
-
 export interface OptimizeChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
@@ -552,7 +554,7 @@ export const createOptimizeForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -563,6 +565,7 @@ export const createOptimizeForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = NUMBER_FORMAT;
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
