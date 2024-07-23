@@ -1,5 +1,5 @@
 <template>
-	<aside class="multiselect-container">
+	<aside>
 		<MultiSelect
 			v-model="selectedVariable"
 			:options="variables"
@@ -28,6 +28,7 @@ const props = defineProps<{
 	variables: string[];
 	chartConfig: ChartConfig;
 	showRemoveButton: boolean;
+	multiSelect: boolean;
 }>();
 
 const emit = defineEmits(['configuration-change', 'remove']);
@@ -43,13 +44,13 @@ const updateSelectedVariable = () => {
 </script>
 
 <style scoped>
-.multiselect-container {
+aside {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--gap-2);
 	justify-content: space-between;
 	position: relative;
-	margin: 0 var(--gap-2);
+	margin: var(--gap-2) 0;
 }
 </style>
