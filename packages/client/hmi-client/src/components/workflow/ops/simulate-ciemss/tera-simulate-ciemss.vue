@@ -112,7 +112,7 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
+						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:variables="Object.keys(pyciemssMap)"
 								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
@@ -122,13 +122,7 @@
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-
-						<Button
-							class="p-button-sm p-button-text"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						/>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable

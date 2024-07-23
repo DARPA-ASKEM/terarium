@@ -31,8 +31,8 @@
 			<tera-drilldown-section class="px-3">
 				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
-					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy"></Button>
-					<Button @click="onSaveInterventions" label="Save" />
+					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
+					<Button @click="onSaveInterventions" label="Save" :disabled="isSaved" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
@@ -124,7 +124,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import _, { cloneDeep, groupBy, isEmpty } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
@@ -188,6 +188,11 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
 const isEditingDescription = ref(false);
+const isSaved = computed(
+	() =>
+		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
+		isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+);
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
@@ -290,13 +295,17 @@ const onSelection = (id: string) => {
 };
 
 const onReplacePolicy = (policy: InterventionPolicy) => {
-	confirm.require({
-		header: 'Are you sure you want to use this intervention policy?',
-		message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
-		accept: () => applyInterventionPolicy(policy),
-		acceptLabel: 'Confirm',
-		rejectLabel: 'Cancel'
-	});
+	if (isSaved.value) {
+		applyInterventionPolicy(policy);
+	} else {
+		confirm.require({
+			header: 'Are you sure you want to use this intervention policy?',
+			message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
+			accept: () => applyInterventionPolicy(policy),
+			acceptLabel: 'Confirm',
+			rejectLabel: 'Cancel'
+		});
+	}
 };
 
 const onAddIntervention = () => {
