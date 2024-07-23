@@ -92,12 +92,12 @@
 
 			<div class="input-container">
 				<label for="input3" class="label label-padding">Lower bound</label>
-				<tera-input type="number" v-model="lowerBound" @update:model-value="updateChanges()" />
+				<tera-input type="nist" v-model="lowerBound" @update:model-value="updateChanges()" />
 			</div>
 
 			<div class="input-container">
 				<label for="input4" class="label label-padding">Upper bound</label>
-				<tera-input type="number" v-model="upperBound" @update:model-value="updateChanges()" />
+				<tera-input type="nist" v-model="upperBound" @update:model-value="updateChanges()" />
 			</div>
 		</div>
 	</div>

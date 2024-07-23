@@ -29,7 +29,7 @@
 												{{ id }}
 											</td>
 											<td>
-												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="number" />
+												<tera-input v-model="knobs.ensembleConfigs[i].weight" type="nist" />
 											</td>
 										</tr>
 									</tbody>

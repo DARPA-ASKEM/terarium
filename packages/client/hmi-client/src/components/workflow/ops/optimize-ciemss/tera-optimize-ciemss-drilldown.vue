@@ -63,11 +63,11 @@
 					<div class="input-row">
 						<div class="label-and-input">
 							<label>Start time</label>
-							<tera-input disabled type="number" model-value="0" />
+							<tera-input disabled type="nist" model-value="0" />
 						</div>
 						<div class="label-and-input">
 							<label>End time</label>
-							<tera-input type="number" v-model="knobs.endTime" />
+							<tera-input type="nist" v-model="knobs.endTime" />
 						</div>
 					</div>
 					<div>
@@ -89,7 +89,7 @@
 							<div class="label-and-input">
 								<label>Number of samples to simulate model</label>
 								<div>
-									<tera-input type="number" v-model="knobs.numSamples" />
+									<tera-input type="nist" v-model="knobs.numSamples" />
 								</div>
 							</div>
 							<div class="label-and-input">

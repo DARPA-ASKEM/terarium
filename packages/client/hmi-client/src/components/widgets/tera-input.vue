@@ -41,7 +41,7 @@ const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
 
-const isNistType = props.type === 'nist';
+const isNistType = props.type === 'nist' || props.type === 'number';
 const getType = isNistType ? 'text' : props.type;
 const getDisabled = props.disabled ?? false;
 
@@ -95,8 +95,6 @@ const updateValue = (event: Event) => {
 		}
 	} else if (isTextContainingOnlyDigits(value)) {
 		maskedValue.value = numberToNist(value);
-	} else if (props.type === 'number') {
-		emit('update:model-value', parseFloat(value));
 	} else {
 		maskedValue.value = value;
 		emit('update:model-value', value);
