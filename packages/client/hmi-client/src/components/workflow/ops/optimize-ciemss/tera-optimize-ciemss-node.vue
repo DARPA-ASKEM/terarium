@@ -125,8 +125,8 @@ const preparedCharts = computed(() => {
 			legend: false,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable,
 			title: variable
 		})
 	);

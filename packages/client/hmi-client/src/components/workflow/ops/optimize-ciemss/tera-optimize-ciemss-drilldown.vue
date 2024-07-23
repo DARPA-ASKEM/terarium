@@ -630,6 +630,8 @@ const runOptimize = async () => {
 		return;
 	}
 
+	setOutputSettingDefaults();
+
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
@@ -720,6 +722,29 @@ const runOptimize = async () => {
 	state.optimizationRunId = '';
 	state.inProgressPostForecastId = '';
 	emit('update-state', state);
+};
+
+const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
+	if (!knobs.value.selectedInterventionVariables.length) {
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
 };
 
 const saveModelConfiguration = async () => {
