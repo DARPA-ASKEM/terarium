@@ -48,14 +48,14 @@ public class ProjectService {
 
 	@Observed(name = "function_profile")
 	public List<Project> getActiveProjects(final List<UUID> ids) {
-		Map<UUID, Project> projectMap = new HashMap<>();
-		List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findByIdsWithAssets(ids);
-		for (ProjectAndAssetAggregate aggregate : projectAggregates) {
+		final Map<UUID, Project> projectMap = new HashMap<>();
+		final List<ProjectAndAssetAggregate> projectAggregates = projectRepository.findByIdsWithAssets(ids);
+		for (final ProjectAndAssetAggregate aggregate : projectAggregates) {
 			if (projectMap.containsKey(aggregate.getId())) {
-				Project project = projectMap.get(aggregate.getId());
+				final Project project = projectMap.get(aggregate.getId());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 			} else {
-				Project project = new Project();
+				final Project project = new Project();
 				project.setId(aggregate.getId());
 				project.setCreatedOn(aggregate.getCreatedOn());
 				project.setUpdatedOn(aggregate.getUpdatedOn());
@@ -76,7 +76,7 @@ public class ProjectService {
 		return new ArrayList<>(projectMap.values());
 	}
 
-	private void addAssetCount(Project project, String assetTypeName, Integer assetCount) {
+	private void addAssetCount(final Project project, final String assetTypeName, final Integer assetCount) {
 		if (AssetType.DATASET.name().equals(assetTypeName)) {
 			project.getMetadata().put("datasets-count", assetCount.toString());
 		}
@@ -129,6 +129,7 @@ public class ProjectService {
 		return true;
 	}
 
+	@Observed(name = "function_profile")
 	public boolean isProjectPublic(final UUID id) {
 		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
 		if (isPublic.isEmpty()) {
@@ -137,6 +138,7 @@ public class ProjectService {
 		return isPublic.get();
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
 		throws ResponseStatusException {
 		try {
@@ -152,6 +154,7 @@ public class ProjectService {
 		return Schema.Permission.NONE;
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
 		throws ResponseStatusException {
 		try {
@@ -167,6 +170,7 @@ public class ProjectService {
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
 		throws ResponseStatusException {
 		try {
@@ -182,6 +186,7 @@ public class ProjectService {
 		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
 		throws ResponseStatusException {
 		try {
