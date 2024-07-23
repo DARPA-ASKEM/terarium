@@ -357,7 +357,7 @@ export function createOptimizeChart(
 					y: {
 						field: 'start',
 						type: 'quantitative',
-						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all times`
+						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all timepoints`
 					},
 					y2: { field: 'end' },
 					x: {
@@ -372,7 +372,8 @@ export function createOptimizeChart(
 						scale: {
 							domain: ['out', 'in'],
 							range: ['#FFAB00', '#1B8073']
-						}
+						},
+						legend: { labelExpr: 'datum.value === "in" ? "passing" : "failing"' }
 					}
 				}
 			},
