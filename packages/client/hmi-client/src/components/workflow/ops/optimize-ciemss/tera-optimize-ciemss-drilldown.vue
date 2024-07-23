@@ -960,7 +960,7 @@ watch(
 	flex-grow: 1;
 }
 
-.failed-run {
+:deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
 	color: var(--error-color-text);
