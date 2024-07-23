@@ -7,7 +7,7 @@
 				@update:selection="onCustomSelectionChange"
 				dataKey="id"
 				:rowsPerPageOptions="[10, 20, 50]"
-				tableStyle="min-width: 65rem"
+				tableStyle="min-width: 90rem"
 			>
 				<template #header> </template>
 				<Column headerStyle="width: 2rem">
@@ -33,16 +33,22 @@
 						<template v-if="col.field === 'name'">
 							{{ data.name }}
 						</template>
-						<template v-if="col.field === 'target'">
+						<template v-if="col.field === 'source'">
 							{{ data.referenceId }}
 						</template>
+						<template v-if="col.field === 'range'">
+							<tera-line-graphic
+								:id="data.index"
+								:max-value="maxValue"
+								:min-value="minValue"
+								:distribution="data.distribution"
+							/>
+						</template>
 						<template v-if="col.field === 'value'">
-							<section class="inline-flex gap-1">
-								<template v-if="data.distribution.type === DistributionType.Constant">
-									<span>Constants</span>
-									<span class="pl-1">{{ displayNumber(data.distribution.parameters.value.toString()) }}</span>
-								</template>
-							</section>
+							<template v-if="data.distribution.type === DistributionType.Constant">
+								<span>Constants</span>
+								<span class="pl-1">{{ displayNumber(data.distribution.parameters.value.toString()) }}</span>
+							</template>
 						</template>
 						<template v-if="col.field === 'minimum'">
 							<template v-if="data.distribution.type === DistributionType.Uniform">
@@ -85,10 +91,10 @@
 						</Column>
 						<Column>
 							<template #footer>
-								<Dropdown class="input-field" v-model="numberType" :options="numberOptions" />
+								<Dropdown v-model="numberType" :options="numberOptions" />
 							</template>
 						</Column>
-						<Column>
+						<Column :class="numberType === numberOptions[0] ? 'constant' : ''">
 							<template #footer v-if="numberType === numberOptions[0]">
 								<tera-input
 									type="nist"
@@ -98,7 +104,7 @@
 								/>
 							</template>
 						</Column>
-						<Column>
+						<Column :class="numberType === numberOptions[1] ? 'min-max' : ''">
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
 									type="nist"
@@ -108,7 +114,7 @@
 								/>
 							</template>
 						</Column>
-						<Column>
+						<Column :class="numberType === numberOptions[1] ? 'min-max' : ''">
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
 									type="nist"
@@ -131,6 +137,7 @@
 
 <script setup lang="ts">
 import { displayNumber } from '@/utils/number';
+import { max, min } from 'd3';
 import { DistributionType } from '@/services/distribution';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
@@ -142,17 +149,37 @@ import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
 import RadioButton from 'primevue/radiobutton';
+import TeraLineGraphic from './tera-line-graphic.vue';
 
 const props = defineProps<{
 	id: string;
 	otherValueList: any;
 }>();
 
-const otherValueList = ref(props.otherValueList);
+const otherValueList = ref(
+	props.otherValueList.map((value, index) => {
+		value.index = index + 1;
+		return value;
+	})
+);
+
+const minValues: Array<number> = [];
+const maxValues: Array<number> = [];
+otherValueList.value.forEach((element) => {
+	if (element.distribution?.parameters?.maximum) {
+		maxValues.push(element.distribution?.parameters?.maximum);
+	}
+	if (element.distribution?.parameters?.minimum) {
+		minValues.push(element.distribution?.parameters?.minimum);
+	}
+});
+const minValue: number = min(minValues) ?? 0;
+const maxValue: number = max(maxValues) ?? 0;
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
-	{ field: 'target', header: 'Source' },
+	{ field: 'source', header: 'Source' },
+	{ field: 'range', header: 'Ranger' },
 	{ field: 'value', header: 'Value' },
 	{ field: 'minimum', header: '' },
 	{ field: 'maximum', header: '' }
@@ -216,15 +243,17 @@ const onCustomSelectionChange = (val) => {
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
 		case 'name':
-			return 40;
-		case 'target':
-			return 5;
-		case 'value':
 			return 25;
+		case 'source':
+			return 15;
+		case 'range':
+			return 20;
+		case 'value':
+			return 12;
 		case 'minimum':
-			return 15;
+			return 12;
 		case 'maximum':
-			return 15;
+			return 12;
 		default:
 			return 100;
 	}
@@ -263,7 +292,31 @@ function applySelectedValue() {
 </script>
 
 <style scoped>
-.input-field {
-	height: 40px;
+/* Change style for Primevue componment */
+:deep(.p-radiobutton-box[data-pc-section='input']) {
+	border: 2px solid var(--button-color);
+}
+
+:deep(tbody > tr > td:nth-child(6)[role='cell']:has(span)) {
+	border-radius: 5px;
+	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
+}
+
+:deep(tbody > tr > td:nth-child(5)[role='cell']:has(span)) {
+	border-radius: 5px;
+	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
+}
+
+:deep(tbody > tr > td:last-child[role='cell']:has(span)) {
+	border-radius: 5px;
+	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
+}
+
+:deep(td[role='cell'] > div.p-dropdown) {
+	height: 50px;
+}
+
+:deep(input) {
+	margin-top: 1rem;
 }
 </style>

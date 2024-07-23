@@ -1,89 +1,85 @@
 <template>
 	<tera-modal>
-		<section>
-			<DataTable
-				:value="otherValueList"
-				@update:selection="onCustomSelectionChange"
-				dataKey="id"
-				:rowsPerPageOptions="[10, 20, 50]"
-				tableStyle="min-width: 55rem"
+		<DataTable
+			:value="otherValueList"
+			@update:selection="onCustomSelectionChange"
+			dataKey="id"
+			:rowsPerPageOptions="[10, 20, 50]"
+			tableStyle="min-width: 55rem"
+		>
+			<template #header> </template>
+			<Column headerStyle="width: 2rem">
+				<template #body="{ data }">
+					<RadioButton
+						v-model="customSelection"
+						:inputId="data.id"
+						:value="data"
+						variant="filled"
+						@change="onCustomSelectionChange(data)"
+					/>
+				</template>
+			</Column>
+			<Column
+				v-for="(col, index) in selectedColumns"
+				:field="col.field"
+				:header="col.header"
+				:sortable="col.field !== 'stats'"
+				:key="index"
+				:style="`width: ${getColumnWidth(col.field)}%`"
 			>
-				<template #header> </template>
-				<Column headerStyle="width: 2rem">
-					<template #body="{ data }">
-						{{ console.log(data) }}
-						<RadioButton
-							v-model="customSelection"
-							:inputId="data.id"
-							:value="data"
-							variant="filled"
-							@change="onCustomSelectionChange(data)"
-						/>
+				<template #body="{ data }">
+					<template v-if="col.field === 'name'">
+						{{ data.name }}
 					</template>
-				</Column>
-				<Column
-					v-for="(col, index) in selectedColumns"
-					:field="col.field"
-					:header="col.header"
-					:sortable="col.field !== 'stats'"
-					:key="index"
-					:style="`width: ${getColumnWidth(col.field)}%`"
-				>
-					<template #body="{ data }">
-						<template v-if="col.field === 'name'">
-							{{ data.name }}
+					<template v-if="col.field === 'target'">
+						{{ data.target }}
+					</template>
+					<template v-if="col.field === 'expression'">
+						<section class="inline-flex gap-1">
+							<span class="value-label">Constants</span>
+							<span class="value">{{ numberToNist(data.expression) }}</span>
+						</section>
+					</template>
+				</template>
+			</Column>
+			<ColumnGroup type="footer">
+				<Row>
+					<Column>
+						<template #footer>
+							<RadioButton
+								v-model="customSelection"
+								inputId="custom"
+								:value="{}"
+								variant="filled"
+								@change="onCustomSelectionChange('custom')"
+							/>
 						</template>
-						<template v-if="col.field === 'target'">
-							{{ data.target }}
+					</Column>
+					<Column :colspan="2">
+						<template #footer>
+							<tera-input
+								placeholder="Add a source"
+								v-model="customSource"
+								@update:modelValue="onCustomSelectionChange"
+							/>
 						</template>
-						<template v-if="col.field === 'expression'">
+					</Column>
+					<Column>
+						<template #footer>
 							<section class="inline-flex gap-1">
-								<span class="cell-space">Constants</span>
-								<span>{{ numberToNist(data.expression) }}</span>
-							</section>
-						</template>
-					</template>
-				</Column>
-				<ColumnGroup type="footer">
-					<Row>
-						<Column>
-							<template #footer>
-								<RadioButton
-									v-model="customSelection"
-									inputId="custom"
-									:value="{}"
-									variant="filled"
-									@change="onCustomSelectionChange('custom')"
-								/>
-							</template>
-						</Column>
-						<Column :colspan="2">
-							<template #footer>
+								<span class="custom-input-label">Constant</span>
 								<tera-input
 									type="nist"
-									placeholder="Add a source"
-									v-model="customSource"
+									placeholder="Constant"
+									v-model="customConstant"
 									@update:modelValue="onCustomSelectionChange"
 								/>
-							</template>
-						</Column>
-						<Column>
-							<template #footer>
-								<section class="inline-flex gap-1">
-									<span class="custom-input-label">Constant</span>
-									<tera-input
-										type="nist"
-										placeholder="Constant"
-										v-model="customConstant"
-										@update:modelValue="onCustomSelectionChange"
-									/>
-								</section>
-							</template>
-						</Column>
-					</Row>
-				</ColumnGroup>
-			</DataTable>
-		</section>
+							</section>
+						</template>
+					</Column>
+				</Row>
+			</ColumnGroup>
+		</DataTable>
 		<template #footer>
 			<Button label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
 			<Button label="Cancel" severity="secondary" raised @click="emit('close-modal')" />
@@ -161,8 +157,12 @@ function applySelectedValue() {
 </script>
 
 <style scoped>
-.cell-space {
+.value-label {
+	color: var(--surface-600);
 	padding-right: 1rem;
+}
+.value {
+	color: var(--surface-900);
 }
 
 .custom-input-label {
@@ -170,5 +170,22 @@ function applySelectedValue() {
 	justify-content: left;
 	align-items: center;
 	padding-right: 1rem;
+}
+
+.custom-input {
+	height: 100%;
+}
+/* Change style for Primevue componment */
+:deep(.p-radiobutton-box[data-pc-section='input']) {
+	border: 2px solid var(--button-color);
+}
+
+:deep(tbody > tr > td:last-child[role='cell']) {
+	border-radius: 5px;
+	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
+}
+
+:deep(input) {
+	margin-top: 1rem;
 }
 </style>
