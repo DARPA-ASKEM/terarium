@@ -23,6 +23,14 @@ export async function getModel(modelId: string): Promise<Model | null> {
 	return response?.data ?? null;
 }
 
+/**
+ * Get the model-configuration's underlying model
+ */
+export async function getModelByModelConfigurationId(configId: string): Promise<Model | null> {
+	const response = await API.get(`/models/from-model-configuration/${configId}`);
+	return response?.data ?? null;
+}
+
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch

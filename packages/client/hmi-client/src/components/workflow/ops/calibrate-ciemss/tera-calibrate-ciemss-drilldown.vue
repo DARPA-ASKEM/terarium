@@ -155,6 +155,7 @@ import {
 	ModelConfiguration
 } from '@/types/Types';
 import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -171,6 +172,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import type { Model } from '@/types/Types';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -192,6 +194,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
+const model = ref<Model | null>(null);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
@@ -286,6 +289,8 @@ const preparedCharts = computed(() => {
 			}
 		});
 
+		const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+
 		return createForecastChart(
 			{
 				dataset: result,
@@ -305,12 +310,13 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
+				title: `${config.join(',')}`,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: '',
+				xAxisTitle,
+				yAxisTitle: `${config.join(',')}`,
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -457,6 +463,18 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+	},
+	{ immediate: true }
 );
 
 watch(
