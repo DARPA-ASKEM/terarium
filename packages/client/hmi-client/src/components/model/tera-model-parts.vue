@@ -32,14 +32,13 @@ import {
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
-import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	model: Model;
 	readonly?: boolean;
 }>();
 
-const emit = defineEmits(['update-model']);
+defineEmits(['update-model']);
 
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
@@ -90,16 +89,14 @@ function updateMMT() {
 	});
 }
 
-// Apply changes to the model when the component unmounts or the user navigates away
-function saveChanges() {
-	emit('update-model', transientModel.value);
-	logger.info('Saved changes');
+function reset() {
+	transientModel.value = cloneDeep(props.model);
 }
-defineExpose({ saveChanges });
 
 onMounted(() => updateMMT());
 
 // TODO: Do we still want autosave? It worked onUnmount but on staging the onbeforemount wasn't triggering
+// Apply changes to the model when the component unmounts or the user navigates away
 // onMounted(() => {
 // 	window.addEventListener('beforeunload', saveChanges);
 // 	updateMMT();
@@ -110,16 +107,16 @@ onMounted(() => updateMMT());
 // 	window.removeEventListener('beforeunload', saveChanges);
 // });
 
-// Meant to run when we want to view a different model, like when we swtich outputs in the stratify operator
-// This is not to be used a refresh when saving a model
 watch(
 	() => props.model,
 	() => {
-		transientModel.value = cloneDeep(props.model);
+		reset();
 		updateMMT();
 	},
 	{ deep: true }
 );
+
+defineExpose({ transientModel, reset });
 </script>
 
 <style scoped>
