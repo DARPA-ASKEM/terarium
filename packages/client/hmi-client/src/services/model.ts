@@ -172,3 +172,23 @@ export function isInitial(obj: Initial | ModelParameter | null): obj is Initial 
 export function isModelParameter(obj: Initial | ModelParameter | null): obj is ModelParameter {
 	return obj !== null && 'id' in obj;
 }
+
+export function stringToLatexExpression(expression: string): string {
+	// Wrap everything after the first underscore in {} for each variable
+	// and add a \ before subsequent underscores
+	let latexExpression = expression.replace(/(_)([a-zA-Z0-9_]+)/g, (_match, p1, p2) => {
+		// Replace subsequent underscores in p2 with \_
+		const modifiedP2 = p2.replace(/_/g, '\\_');
+		return `${p1}{${modifiedP2}}`;
+	});
+
+	// (Unsure about this) Convert * to space (implicit multiplication) for LaTeX
+	// latexExpression = latexExpression.replace(/\*/g, ' ');
+
+	// Convert ^ to LaTeX superscript notation
+	latexExpression = latexExpression.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
+
+	// Detect and convert fractions a/b to \frac{a}{b}
+	latexExpression = latexExpression.replace(/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/g, '\\frac{$1}{$2}');
+	return latexExpression;
+}
