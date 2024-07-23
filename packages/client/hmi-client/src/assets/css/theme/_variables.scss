@@ -869,12 +869,12 @@ $petri-inputBox: var(--surface-0);
 
 :root {
 	--editing-color: rgb(238, 238, 136);
-	--button-color: #{$successButtonBg};
 	--border-radius-small: #{$smallBorderRadius};
 	--border-radius: #{$borderRadius};
 	--border-radius-medium: #{$mediumBorderRadius};
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
+	--button-color: #{$successButtonBg};
 	--chevron-hover: #1b807332;
 	--content-padding: #{$panelContentPadding};
 	--error-message-background: #{$errorMessageBg};
