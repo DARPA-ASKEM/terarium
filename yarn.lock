@@ -3346,10 +3346,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.17.6":
-  version: 4.17.6
-  resolution: "@types/lodash@npm:4.17.6"
-  checksum: 6d3a68b3e795381f4aaf946855134d24eeb348ad5d66e9a44461d30026da82b215d55b92b70486d811ca45d54d4ab956aa2dced37fd04e19d49afe160ae3da2e
+"@types/lodash@npm:4.17.7":
+  version: 4.17.7
+  resolution: "@types/lodash@npm:4.17.7"
+  checksum: b8177f19cf962414a66989837481b13f546afc2e98e8d465bec59e6ac03a59c584eb7053ce511cde3a09c5f3096d22a5ae22cfb56b23f3b0da75b0743b6b1a44
   languageName: node
   linkType: hard
 
@@ -8567,7 +8567,7 @@ __metadata:
   dependencies:
     "@types/d3": "npm:7.4.3"
     "@types/jest": "npm:29.5.12"
-    "@types/lodash": "npm:4.17.6"
+    "@types/lodash": "npm:4.17.7"
     "@typescript-eslint/eslint-plugin": "npm:5.62.0"
     "@typescript-eslint/parser": "npm:5.62.0"
     copy: "npm:0.3.2"
@@ -8758,7 +8758,7 @@ __metadata:
     "@playwright/test": "npm:1.31.2"
     "@rushstack/eslint-patch": "npm:1.10.3"
     "@types/d3": "npm:7.4.3"
-    "@types/lodash": "npm:4.17.6"
+    "@types/lodash": "npm:4.17.7"
     "@types/node": "npm:18.19.3"
     "@uncharted.software/design-tokens": "npm:1.1.0"
     "@uncharted.software/facets-core": "npm:3.2.6"
@@ -12271,12 +12271,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:3.3.2":
-  version: 3.3.2
-  resolution: "prettier@npm:3.3.2"
+"prettier@npm:3.3.3":
+  version: 3.3.3
+  resolution: "prettier@npm:3.3.3"
   bin:
     prettier: bin/prettier.cjs
-  checksum: 83214e154afa5aa9b664c2506640212323eb1376b13379b2413dc351b7de0687629dca3f00ff2ec895ebd7e3a2adb7d7e231b6c77606e2358137f2150807405b
+  checksum: 5beac1f30b5b40162532b8e2f7c3a4eb650910a2695e9c8512a62ffdc09dae93190c29db9107fa7f26d1b6c71aad3628ecb9b5de1ecb0911191099be109434d7
   languageName: node
   linkType: hard
 
@@ -14003,7 +14003,7 @@ __metadata:
     eslint-plugin-vue: "npm:9.27.0"
     husky: "npm:8.0.3"
     lint-staged: "npm:15.2.7"
-    prettier: "npm:3.3.2"
+    prettier: "npm:3.3.3"
     prettier-plugin-java: "npm:2.6.4"
     typescript: "npm:5.4.5"
   languageName: unknown

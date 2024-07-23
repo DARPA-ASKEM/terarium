@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -171,18 +170,8 @@ public class ProjectController {
 		}
 
 		projects.forEach(project -> {
-			final List<AssetType> assetTypes = Arrays.asList(
-				AssetType.DATASET,
-				AssetType.MODEL,
-				AssetType.DOCUMENT,
-				AssetType.WORKFLOW
-			);
-
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
-			final Schema.Permission permission = projectService.checkPermissionCanRead(
-				currentUserService.get().getId(),
-				project.getId()
-			);
+			projectService.checkPermissionCanRead(currentUserService.get().getId(), project.getId());
 
 			// Set the user permission for the project. If we are unable to get the user
 			// permission, we remove the project.
