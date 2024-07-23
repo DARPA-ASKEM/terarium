@@ -1,9 +1,9 @@
 <template>
 	<aside>
 		<MultiSelect
-			v-if="multiSelect"
 			v-model="selectedVariable"
 			:options="variables"
+			:selection-limit="!multiSelect ? 1 : undefined"
 			placeholder="Select variables to display"
 			@update:model-value="updateSelectedVariable"
 			filter
@@ -15,13 +15,6 @@
 				</template>
 			</template>
 		</MultiSelect>
-		<Dropdown
-			v-else
-			placeholder="Select variable to display"
-			v-model="selectedVariable"
-			:options="variables"
-			@change="updateSelectedVariable"
-		/>
 		<Button v-if="showRemoveButton" title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
 	</aside>
 </template>
@@ -29,7 +22,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import { ChartConfig } from '@/types/SimulateConfig';
 
