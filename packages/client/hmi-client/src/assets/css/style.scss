@@ -54,6 +54,12 @@ body {
 		"main"
 		"footer";
 	grid-template-rows: minMax(3.5rem, max-content) 1fr max-content;
+
+	&:has(.standalone) {
+		grid-template-areas:
+			"main";
+		grid-template-rows: 1fr;
+	}
 }
 
 /* Highlights */
@@ -88,7 +94,7 @@ a {
 	flex: 0 0 4rem;
 	padding: 0.5rem 0;
 	text-align: left;
-}  
+}
 .jp-Collapser {
 	flex: 0 0 0;
 }
@@ -101,7 +107,7 @@ a {
 }
 .jp-OutputPrompt {
   color: var(--primary-color-dark);
-}	
+}
 .jp-InputArea-editor {
 	border-radius: 3px;
 }
