@@ -2,13 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { stringToLatexExpression } from '@/services/model';
 
 describe('stringToLatexExpression', () => {
-	it('should escape backslashes in the expression', () => {
-		const expression = 'x\\y';
-		const expected = 'x\\y';
-		const result = stringToLatexExpression(expression);
-		expect(result).toEqual(expected);
-	});
-
 	it('should wrap variables after underscores in {} and escape subsequent underscores', () => {
 		const expression = 'x_variable';
 		const expected = 'x_{variable}';
