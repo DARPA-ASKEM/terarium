@@ -29,7 +29,6 @@
 			:disabled="disabledInputs?.includes('unitExpression')"
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
-
 		<span class="concept">
 			<label>Concept</label>
 			<AutoComplete
@@ -47,7 +46,7 @@
 		<katex-element
 			class="expression"
 			v-if="item.expression"
-			:expression="stringToLatex(item.expression)"
+			:expression="stringToLatexExpression(item.expression)"
 			:throw-on-error="false"
 		/>
 		<tera-input
@@ -65,7 +64,7 @@ import { ref, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
-import { stringToLatex } from '@/services/model';
+import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 

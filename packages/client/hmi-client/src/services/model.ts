@@ -173,7 +173,7 @@ export function isModelParameter(obj: Initial | ModelParameter | null): obj is M
 	return obj !== null && 'id' in obj;
 }
 
-export function stringToLatex(expression: string): string {
+export function stringToLatexExpression(expression: string): string {
 	// First, escape backslashes to avoid breaking LaTeX syntax
 	let latexExpression = expression.replace(/\\/g, '\\\\');
 

@@ -48,7 +48,7 @@
 					<template #body="{ data }">
 						<katex-element
 							v-if="data.rate_expression"
-							:expression="stringToLatex(data.rate_expression)"
+							:expression="stringToLatexExpression(data.rate_expression)"
 							:throw-on-error="false"
 						/>
 						<template v-else>--</template>
@@ -126,7 +126,7 @@ import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
-import { stringToLatex } from '@/services/model';
+import { stringToLatexExpression } from '@/services/model';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
