@@ -24,6 +24,8 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroupForm {
+	// The ID of the InterventionPolicy this is portraying
+	id?: string; // // FIXME: This will not be required when some init logic is moved from drilldown -> Node.
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;

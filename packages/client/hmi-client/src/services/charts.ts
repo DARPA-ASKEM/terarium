@@ -2,7 +2,7 @@ import { isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
 	legend: boolean;
@@ -62,7 +62,7 @@ export const createForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -73,6 +73,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = '.3s';
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -190,8 +191,8 @@ export const createForecastChart = (
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
-		layerSpec.encoding.color.scale.range = ['#333'];
-		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
+		layerSpec.encoding.color.scale.range = ['#1B8073'];
+		// layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
