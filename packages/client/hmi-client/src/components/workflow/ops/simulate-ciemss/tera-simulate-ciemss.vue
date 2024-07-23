@@ -16,6 +16,17 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[PresetTypes.Fast, PresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
+					</div>
+
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -58,7 +69,8 @@
 					@llm-thought-output="(data: any) => llmThoughts.push(data)"
 					@question-asked="updateLlmQuery"
 				>
-					<template #toolbar-right-side>
+					<template #toolbar-right-side
+						>t
 						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
@@ -205,6 +217,21 @@ enum OutputView {
 	Data = 'Data'
 }
 
+enum PresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
+}
+
+const speedValues = {
+	numSamples: 10,
+	method: ciemssMethodOptions.value[1]
+};
+
+const qualityValues = {
+	numSamples: 100,
+	method: ciemssMethodOptions.value[0]
+};
+
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
 	llmQuery.value = query;
@@ -256,6 +283,18 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const presetType = computed(() => {
+	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+		return PresetTypes.Fast;
+	}
+	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+		return PresetTypes.Normal;
+	}
+
+	return '';
+});
+
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
@@ -266,6 +305,18 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
+
+const setPresetValues = (data: PresetTypes) => {
+	console.log(data);
+	if (data === PresetTypes.Normal) {
+		numSamples.value = qualityValues.numSamples;
+		method.value = qualityValues.method;
+	}
+	if (data === PresetTypes.Fast) {
+		numSamples.value = speedValues.numSamples;
+		method.value = speedValues.method;
+	}
+};
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
