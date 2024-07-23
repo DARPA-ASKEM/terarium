@@ -101,8 +101,8 @@
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-								:multiSelect="false"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="false"
 								:show-remove-button="true"
 								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
