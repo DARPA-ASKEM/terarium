@@ -16,6 +16,17 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[PresetTypes.Fast, PresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
+					</div>
+
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -30,15 +41,6 @@
 
 					<!-- Number of Samples & Method -->
 					<div class="input-row mt-3">
-						<div class="label-and-input">
-							<label for="4">Preset (optional)</label>
-							<Dropdown
-								v-model="presetType"
-								placeholder="Select an option"
-								:options="[PresetTypes.Speed, PresetTypes.Quality]"
-								@update:model-value="setPresetValues"
-							/>
-						</div>
 						<div class="label-and-input">
 							<label for="4">Number of samples</label>
 							<InputNumber
@@ -67,7 +69,8 @@
 					@llm-thought-output="(data: any) => llmThoughts.push(data)"
 					@question-asked="updateLlmQuery"
 				>
-					<template #toolbar-right-side>
+					<template #toolbar-right-side
+						>t
 						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
@@ -214,8 +217,8 @@ enum OutputView {
 }
 
 enum PresetTypes {
-	Speed = 'Speed',
-	Quality = ' Quality'
+	Fast = 'Fast',
+	Normal = 'Normal'
 }
 
 const speedValues = {
@@ -282,10 +285,10 @@ const outputs = computed(() => {
 
 const presetType = computed(() => {
 	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
-		return PresetTypes.Speed;
+		return PresetTypes.Fast;
 	}
 	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
-		return PresetTypes.Quality;
+		return PresetTypes.Normal;
 	}
 
 	return '';
@@ -302,13 +305,13 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
-const setPresetValues = (data) => {
+const setPresetValues = (data: PresetTypes) => {
 	console.log(data);
-	if (data === PresetTypes.Quality) {
+	if (data === PresetTypes.Normal) {
 		numSamples.value = qualityValues.numSamples;
 		method.value = qualityValues.method;
 	}
-	if (data === PresetTypes.Speed) {
+	if (data === PresetTypes.Fast) {
 		numSamples.value = speedValues.numSamples;
 		method.value = speedValues.method;
 	}
