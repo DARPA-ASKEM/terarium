@@ -1,5 +1,5 @@
 <template>
-	<div :id="graphicId" class="line-graphic-container">
+	<div :id="graphicId">
 		<svg :height="parentHeight">
 			<line x1="0" :y1="parentHeight / 2" :x2="width" :y2="parentHeight / 2" stroke="black" />
 			<rect
@@ -64,9 +64,4 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.line-graphic-container {
-	width: 100%;
-	height: 40px;
-}
-</style>
+<style scoped></style>

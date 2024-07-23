@@ -12,7 +12,6 @@
 				:rowsPerPageOptions="[10, 20, 50]"
 				tableStyle="min-width: 90rem"
 			>
-				<template #header> </template>
 				<Column headerStyle="width: 2rem">
 					<template #body="{ data }">
 						<RadioButton
