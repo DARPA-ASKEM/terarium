@@ -165,6 +165,16 @@ export async function getModelEquation(model: Model): Promise<string> {
 	return latex ?? '';
 }
 
+export const getModelVariableUnits = (model: Model) => {
+	const modelVariableUnits: { [key: string]: string } = {
+		_time: model?.semantics?.ode?.time?.units?.expression || ''
+	};
+	[...(model?.model.states ?? []), ...(model?.semantics?.ode?.parameters ?? [])].forEach((v) => {
+		modelVariableUnits[v.id] = v.units?.expression || '';
+	});
+	return modelVariableUnits;
+};
+
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
 }

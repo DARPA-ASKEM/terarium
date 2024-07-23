@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
 import { getAsConfiguredModel, getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getModelVariableUnits } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -14,7 +15,10 @@ export interface CalibrateMap {
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
+		// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
 		const model = await getAsConfiguredModel(modelConfiguration);
+
+		const modelVariableUnits = getModelVariableUnits(model);
 		const modelOptions: any[] = model?.model.states;
 
 		getObservables(modelConfiguration).forEach((o) => {
@@ -22,7 +26,8 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		});
 
 		modelOptions.push({ id: 'timestamp' });
-		return { modelConfiguration, modelOptions };
+
+		return { modelConfiguration, modelOptions, modelVariableUnits };
 	}
 	return {};
 };

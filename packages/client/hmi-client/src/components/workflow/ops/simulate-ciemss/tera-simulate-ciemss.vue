@@ -154,7 +154,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
+import type { CsvAsset, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -179,6 +179,8 @@ import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
+import { getModelVariableUnits } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -328,7 +330,6 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
@@ -349,8 +350,8 @@ const preparedCharts = computed(() => {
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: 'Units' /* TODO: 'Units' should be replaced with selected variable concepts */
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -501,8 +502,16 @@ watch(
 	{ immediate: true }
 );
 
-onMounted(() => {
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
+onMounted(async () => {
 	buildJupyterContext();
+
+	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
+	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
+	const model = await getAsConfiguredModel(modelConfiguration);
+	const modelVariableUnits = getModelVariableUnits(model);
+	modelVarUnits.value = modelVariableUnits;
 });
 
 onUnmounted(() => kernelManager.shutdown());
