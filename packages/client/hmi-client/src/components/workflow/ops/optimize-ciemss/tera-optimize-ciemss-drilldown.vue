@@ -716,23 +716,22 @@ const runOptimize = async () => {
 };
 
 const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
 	if (!knobs.value.selectedInterventionVariables.length) {
-		const selectedInterventionVariables: Array<string> = [];
 		props.node.state.interventionPolicyGroups.forEach((intervention) =>
 			selectedInterventionVariables.push(intervention.intervention.appliedTo)
 		);
-
 		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
 	}
 
 	if (!knobs.value.selectedSimulationVariables.length) {
-		const selectedSimulationVariables: Array<string> = [];
 		props.node.state.constraintGroups.forEach((constraint) => {
 			if (constraint.targetVariable) {
 				selectedSimulationVariables.push(constraint.targetVariable);
 			}
 		});
-
 		if (selectedSimulationVariables.length) {
 			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
 		}
