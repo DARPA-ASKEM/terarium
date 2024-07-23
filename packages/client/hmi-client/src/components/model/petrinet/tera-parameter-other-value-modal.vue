@@ -154,7 +154,7 @@ import RadioButton from 'primevue/radiobutton';
 import TeraLineGraphic from './tera-line-graphic.vue';
 
 const props = defineProps<{
-	id: string;
+	id: any;
 	otherValueList: any;
 }>();
 

@@ -23,22 +23,22 @@ import { onMounted, ref } from 'vue';
 import { DistributionType } from '@/services/distribution';
 
 const props = defineProps<{
-	id: string;
-	maxValue: number;
-	minValue: number;
+	id: any;
+	maxValue: any;
+	minValue: any;
 	distribution: any;
 }>();
 const graphicId = 'graphic-'.concat(props.id);
 const parentWidth = ref<number>(0);
 const parentHeight = ref<number>(0);
-const width = ref('100%');
-const rectWidth = ref(0);
-const rectX = ref(0);
-const circlePoint = ref(0);
-const range = ref([1, 100]);
+const width = ref<string>('100%');
+const rectWidth = ref<number>(0);
+const rectX = ref<number>(0);
+const circlePoint = ref<number>(0);
+const range = ref<Array<number>>([1, 100]);
 
-const max = props.maxValue;
-const min = props.minValue;
+const max: number = props.maxValue;
+const min: number = props.minValue;
 
 const isUniformType = () => props.distribution.type === DistributionType.Uniform;
 
