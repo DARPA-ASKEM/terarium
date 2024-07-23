@@ -6,40 +6,12 @@ import type { CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
-import { Model } from '@/types/Types';
 
 // FIXME: replace with single API call
 export const getModelByModelConfigurationId = async (id: string) => {
 	const modelConfig = await getModelConfigurationById(id);
 	const model = await getModel(modelConfig.modelId as string);
 	return model;
-};
-
-// Note: variables can be any of state, parameter, or observables
-interface VariableMetadata {
-	id: string;
-	name: string;
-	unit: string;
-	concept: string;
-}
-
-export const getVariableData = (variables: string[], model: Model) => {
-	const results: { [key: string]: VariableMetadata } = {};
-	variables.forEach((v) => {
-		const result: VariableMetadata = {
-			id: v,
-			name: '',
-			unit: '',
-			concept: ''
-		};
-
-		const state = model.model.state.find((d) => d.id === v);
-		if (state) {
-			result.name = state.name;
-			result.unit = state.units ? state.units.expression : '';
-		}
-	});
-	return results;
 };
 
 export const drilldownChartSize = (element: HTMLElement | null) => {

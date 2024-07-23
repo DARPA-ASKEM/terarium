@@ -37,7 +37,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { Model } from '@/types/Types';
+import type { Model } from '@/types/Types';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -148,8 +148,7 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-
-	console.log('!!!', model.value?.model);
+	const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
@@ -172,7 +171,7 @@ const preparedCharts = computed(() => {
 				height: 120,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
+				xAxisTitle,
 				yAxisTitle: `${config.join(',')}`
 			}
 		)
