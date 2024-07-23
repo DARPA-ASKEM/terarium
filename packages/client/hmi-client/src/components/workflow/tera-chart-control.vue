@@ -1,6 +1,7 @@
 <template>
 	<aside>
 		<MultiSelect
+			v-if="multiSelect"
 			v-model="selectedVariable"
 			:options="variables"
 			placeholder="Select variables to display"
@@ -14,6 +15,7 @@
 				</template>
 			</template>
 		</MultiSelect>
+		<Dropdown v-else v-model="selectedVariable" :options="variables" @change="updateSelectedVariable" />
 		<Button v-if="showRemoveButton" title="Remove chart" icon="pi pi-trash" @click="$emit('remove')" rounded text />
 	</aside>
 </template>
