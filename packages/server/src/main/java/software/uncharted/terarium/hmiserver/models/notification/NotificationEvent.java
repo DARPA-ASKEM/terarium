@@ -30,7 +30,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 @Entity
 @Table(
 	name = "notification_event",
-	indexes = { @Index(name = "idx_notification_group_id", columnList = "notification_group_id") }
+	indexes = {
+		@Index(name = "idx_notification_group_id", columnList = "notification_group_id"),
+		@Index(name = "idx_acknowledged_on", columnList = "acknowledgedOn")
+	}
 )
 public class NotificationEvent extends TerariumEntity {
 
