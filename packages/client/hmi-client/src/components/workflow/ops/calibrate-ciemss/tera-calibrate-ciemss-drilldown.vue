@@ -154,13 +154,8 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
-import {
-	getTimespan,
-	chartActionsProxy,
-	drilldownChartSize,
-	nodeMetadata,
-	getModelByModelConfigurationId
-} from '@/components/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {

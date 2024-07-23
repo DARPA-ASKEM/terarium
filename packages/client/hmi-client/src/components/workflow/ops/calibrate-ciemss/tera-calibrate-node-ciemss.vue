@@ -33,8 +33,9 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
-import { nodeMetadata, nodeOutputLabel, getModelByModelConfigurationId } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';

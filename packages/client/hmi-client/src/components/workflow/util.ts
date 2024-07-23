@@ -4,15 +4,6 @@ import type { CsvAsset, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { getModel } from '@/services/model';
-
-// FIXME: replace with single API call
-export const getModelByModelConfigurationId = async (id: string) => {
-	const modelConfig = await getModelConfigurationById(id);
-	const model = await getModel(modelConfig.modelId as string);
-	return model;
-};
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };

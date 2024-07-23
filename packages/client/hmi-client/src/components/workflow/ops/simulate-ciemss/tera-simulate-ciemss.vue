@@ -163,12 +163,8 @@ import {
 	convertToCsvAsset,
 	DataArray
 } from '@/services/models/simulation-service';
-import {
-	chartActionsProxy,
-	drilldownChartSize,
-	nodeMetadata,
-	getModelByModelConfigurationId
-} from '@/components/workflow/util';
+import { getModelByModelConfigurationId } from '@/services/model';
+import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import teraNotebookJupyterThoughtOutput from '@/components/llm/tera-notebook-jupyter-thought-output.vue';
