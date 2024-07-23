@@ -1,5 +1,8 @@
 <template>
 	<tera-modal>
+		<template #header>
+			<h4>Other configuration values for '{{ otherValueList[0].target }}'</h4>
+		</template>
 		<DataTable
 			:value="otherValueList"
 			@update:selection="onCustomSelectionChange"
@@ -174,15 +177,6 @@ function applySelectedValue() {
 
 .custom-input {
 	height: 100%;
-}
-/* Change style for Primevue componment */
-:deep(.p-radiobutton-box[data-pc-section='input']) {
-	border: 2px solid var(--button-color);
-}
-
-:deep(tbody > tr > td:last-child[role='cell']) {
-	border-radius: 5px;
-	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
 }
 
 :deep(input) {

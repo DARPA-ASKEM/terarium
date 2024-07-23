@@ -1,5 +1,8 @@
 <template>
 	<tera-modal>
+		<template #header>
+			<h4>Other configuration values for '{{ otherValueList[0].referenceId }}'</h4>
+		</template>
 		<section>
 			<DataTable
 				class="value-border"
@@ -80,7 +83,7 @@
 								/>
 							</template>
 						</Column>
-						<Column>
+						<Column :colspan="2">
 							<template #footer>
 								<tera-input
 									placeholder="Add a source"
@@ -94,7 +97,7 @@
 								<Dropdown v-model="numberType" :options="numberOptions" />
 							</template>
 						</Column>
-						<Column :class="numberType === numberOptions[0] ? 'constant' : ''">
+						<Column>
 							<template #footer v-if="numberType === numberOptions[0]">
 								<tera-input
 									type="nist"
@@ -104,7 +107,7 @@
 								/>
 							</template>
 						</Column>
-						<Column :class="numberType === numberOptions[1] ? 'min-max' : ''">
+						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
 									type="nist"
@@ -114,7 +117,7 @@
 								/>
 							</template>
 						</Column>
-						<Column :class="numberType === numberOptions[1] ? 'min-max' : ''">
+						<Column>
 							<template #footer v-if="numberType === numberOptions[1]">
 								<tera-input
 									type="nist"
@@ -179,7 +182,7 @@ const maxValue: number = max(maxValues) ?? 0;
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
 	{ field: 'source', header: 'Source' },
-	{ field: 'range', header: 'Ranger' },
+	{ field: 'range', header: 'Range' },
 	{ field: 'value', header: 'Value' },
 	{ field: 'minimum', header: '' },
 	{ field: 'maximum', header: '' }
@@ -293,27 +296,9 @@ function applySelectedValue() {
 
 <style scoped>
 /* Change style for Primevue componment */
-:deep(.p-radiobutton-box[data-pc-section='input']) {
-	border: 2px solid var(--button-color);
-}
-
-:deep(tbody > tr > td:nth-child(6)[role='cell']:has(span)) {
-	border-radius: 5px;
-	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
-}
-
-:deep(tbody > tr > td:nth-child(5)[role='cell']:has(span)) {
-	border-radius: 5px;
-	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
-}
-
-:deep(tbody > tr > td:last-child[role='cell']:has(span)) {
-	border-radius: 5px;
-	box-shadow: inset 0px 0px 0px 1px var(--surface-border-alt);
-}
-
 :deep(td[role='cell'] > div.p-dropdown) {
 	height: 50px;
+	width: 100%;
 }
 
 :deep(input) {

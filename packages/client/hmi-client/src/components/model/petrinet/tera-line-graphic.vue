@@ -1,6 +1,6 @@
 <template>
 	<div :id="graphicId" class="line-graphic-container">
-		<svg>
+		<svg :height="parentHeight">
 			<line x1="0" :y1="parentHeight / 2" :x2="width" :y2="parentHeight / 2" stroke="black" />
 			<rect
 				v-if="distribution.type === DistributionType.Uniform"
