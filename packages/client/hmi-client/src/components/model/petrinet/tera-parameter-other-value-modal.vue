@@ -48,23 +48,23 @@
 						</template>
 						<template v-if="col.field === 'value'">
 							<template v-if="data.distribution.type === DistributionType.Constant">
-								<span>Constants</span>
-								<span class="pl-1">{{ displayNumber(data.distribution.parameters.value.toString()) }}</span>
+								<span class="value-label">Constants</span>
+								<span class="value">{{ getValueString(data.distribution.parameters.value?.toString()) }}</span>
 							</template>
 						</template>
 						<template v-if="col.field === 'minimum'">
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
-									<span>Min</span>
-									<span class="pl-1 pr-1">{{ displayNumber(data.distribution.parameters.minimum.toString()) }}</span>
+									<span class="value-label">Min</span>
+									<span class="value">{{ getValueString(data.distribution.parameters.minimum?.toString()) }}</span>
 								</div>
 							</template>
 						</template>
 						<template v-if="col.field === 'maximum'">
 							<template v-if="data.distribution.type === DistributionType.Uniform">
 								<div>
-									<span>Max</span>
-									<span class="pl-1 pr-1">{{ displayNumber(data.distribution.parameters.maximum.toString()) }}</span>
+									<span class="value-label">Max</span>
+									<span class="value">{{ getValueString(data.distribution.parameters.maximum?.toString()) }}</span>
 								</div>
 							</template>
 						</template>
@@ -227,7 +227,7 @@ const onCustomSelectionChange = (val) => {
 					};
 	} else {
 		selection.value =
-			val.type === DistributionType.Constant
+			val.distribution.type === DistributionType.Constant
 				? {
 						constant: val.distribution.parameters.value,
 						source: val.source,
@@ -241,6 +241,13 @@ const onCustomSelectionChange = (val) => {
 					};
 	}
 };
+
+function getValueString(value) {
+	if (!value) {
+		return '';
+	}
+	return displayNumber(value);
+}
 
 function getColumnWidth(columnField: string) {
 	switch (columnField) {
@@ -294,6 +301,14 @@ function applySelectedValue() {
 </script>
 
 <style scoped>
+.value-label {
+	color: var(--surface-600);
+	padding-right: 1rem;
+}
+.value {
+	color: var(--surface-900);
+}
+
 /* Change style for Primevue componment */
 :deep(td[role='cell'] > div.p-dropdown) {
 	height: 50px;
