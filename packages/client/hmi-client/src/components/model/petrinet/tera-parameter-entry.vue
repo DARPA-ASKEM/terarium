@@ -125,7 +125,7 @@ const concept = getParameter(props.model, props.parameterId)?.grounding?.identif
 const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 
-const otherValueList = ref(
+const otherValueList = computed(() =>
 	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
 );
 
