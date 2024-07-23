@@ -303,7 +303,7 @@ function applySelectedValue() {
 <style scoped>
 .value-label {
 	color: var(--surface-600);
-	padding-right: 1rem;
+	padding-right: var(--gap-4);
 }
 .value {
 	color: var(--surface-900);
@@ -316,6 +316,6 @@ function applySelectedValue() {
 }
 
 :deep(input) {
-	margin-top: 1rem;
+	margin-top: var(--gap-4);
 }
 </style>
