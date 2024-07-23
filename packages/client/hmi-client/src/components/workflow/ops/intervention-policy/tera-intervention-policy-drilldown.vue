@@ -31,8 +31,8 @@
 			<tera-drilldown-section class="px-3">
 				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
-					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy"></Button>
-					<Button @click="onSaveInterventions" label="Save" />
+					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
+					<Button @click="onSaveInterventions" label="Save" :disabled="isSaved" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
@@ -76,7 +76,7 @@
 							<ul class="flex flex-column gap-2">
 								<li v-for="(interventions, appliedTo) in groupedOutputParameters" :key="appliedTo">
 									<h5 class="pb-2">{{ appliedTo }}</h5>
-									<!-- CHARTS HERE-->
+									<vega-chart :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 									<ul>
 										<li class="pb-2" v-for="intervention in interventions" :key="intervention.name">
 											<h6 class="pb-1">{{ intervention.name }}</h6>
@@ -124,7 +124,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
-import { cloneDeep, groupBy, isEmpty } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
@@ -146,6 +146,8 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
 import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { createInterventionChart } from '@/services/charts';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import { InterventionPolicyOperation, InterventionPolicyState } from './tera-intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
@@ -186,6 +188,11 @@ const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
 const isEditingDescription = ref(false);
+const isSaved = computed(
+	() =>
+		knobs.value.transientInterventionPolicy.id !== selectedPolicy.value?.id ||
+		isEqual(knobs.value.transientInterventionPolicy, selectedPolicy.value)
+);
 
 const parameterOptions = computed(() => {
 	if (!model.value) return [];
@@ -204,6 +211,19 @@ const stateOptions = computed(() => {
 });
 
 const groupedOutputParameters = computed(() => groupBy(selectedPolicy.value?.interventions, 'appliedTo'));
+
+const preparedCharts = computed(() =>
+	_.mapValues(groupedOutputParameters.value, (interventions) => {
+		const flattenedData = interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		);
+		return createInterventionChart(flattenedData);
+	})
+);
 
 const initialize = async () => {
 	const state = props.node.state;
@@ -275,13 +295,17 @@ const onSelection = (id: string) => {
 };
 
 const onReplacePolicy = (policy: InterventionPolicy) => {
-	confirm.require({
-		header: 'Are you sure you want to use this intervention policy?',
-		message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
-		accept: () => applyInterventionPolicy(policy),
-		acceptLabel: 'Confirm',
-		rejectLabel: 'Cancel'
-	});
+	if (isSaved.value) {
+		applyInterventionPolicy(policy);
+	} else {
+		confirm.require({
+			header: 'Are you sure you want to use this intervention policy?',
+			message: `All current interventions will be replaced with those in the selected policy, “${policy.name}” This action cannot be undone.`,
+			accept: () => applyInterventionPolicy(policy),
+			acceptLabel: 'Confirm',
+			rejectLabel: 'Cancel'
+		});
+	}
 };
 
 const onAddIntervention = () => {
@@ -291,7 +315,9 @@ const onAddIntervention = () => {
 
 const onDeleteIntervention = (index: number) => {
 	// Create a new array excluding the intervention at the specified index
-	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter((_, i) => i !== index);
+	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
+		(_intervention, i) => i !== index
+	);
 
 	// Reassign the updated interventions array back to the transientInterventionPolicy
 	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change

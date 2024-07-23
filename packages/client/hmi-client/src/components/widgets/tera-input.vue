@@ -124,7 +124,7 @@ const unmask = () => {
 		emit('update:model-value', nistToNumber(maskedValue.value));
 	}
 
-	if (isTextContainingOnlyDigits(props.modelValue)) {
+	if (isTextContainingOnlyDigits(maskedValue.value)) {
 		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
@@ -136,7 +136,7 @@ main {
 	flex: 1 1 0;
 	justify-content: space-between;
 	align-items: center;
-	padding: var(--gap-xsmall) var(--gap-small);
+	padding: var(--gap-1) var(--gap-2);
 	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius);

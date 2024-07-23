@@ -29,14 +29,21 @@
 			:disabled="disabledInputs?.includes('unitExpression')"
 			@focusout="($event) => ($event.target.value = $event.target.value.replace(/[\s.]+/g, ''))"
 		/>
-		<!--TODO: Add support for editing concepts-->
-		<tera-input
-			label="Concept"
-			placeholder="Select a concept"
-			icon="pi pi-search"
-			:disabled="disabledInputs?.includes('concept')"
-			:model-value="''"
-		/>
+
+		<span class="concept">
+			<label>Concept</label>
+			<AutoComplete
+				label="Concept"
+				size="small"
+				placeholder="Search concepts"
+				v-model="query"
+				:suggestions="results"
+				optionLabel="name"
+				:disabled="disabledInputs?.includes('concept')"
+				@complete="async () => (results = await searchCuriesEntities(query))"
+				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
+			/>
+		</span>
 		<katex-element
 			class="expression"
 			v-if="item.expression"
@@ -54,22 +61,31 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
 import { stringToLatex } from '@/services/model';
+import type { DKG } from '@/types/Types';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 
-// import { getCurieFromGroundingIdentifier, getNameOfCurieCached } from '@/services/concept';
-// getNameOfCurieCached(
-// 		new Map<string, string>(),
-// 		getCurieFromGroundingIdentifier(grounding.identifiers)
-// 	)
-
-defineProps<{
+const props = defineProps<{
 	item: ModelPartItem;
 	disabledInputs?: string[];
 }>();
 
 defineEmits(['update-item']);
+
+const query = ref('');
+const results = ref<DKG[]>([]);
+
+watch(
+	() => props.item.grounding?.identifiers,
+	async (identifiers) => {
+		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -115,8 +131,17 @@ div {
 	grid-area: unit;
 }
 
-:deep([label='Concept']) {
+.concept {
 	grid-area: concept;
+	display: flex;
+	align-items: center;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	gap: var(--gap-1);
+}
+
+:deep(.p-autocomplete-input) {
+	padding: var(--gap-1) var(--gap-2);
 }
 
 .expression {

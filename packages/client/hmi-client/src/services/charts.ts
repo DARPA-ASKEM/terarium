@@ -1,8 +1,8 @@
-import { mean, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
-export const CATEGORICAL_SCHEME = ['#5F9E3E', '#4375B0', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export interface ForecastChartOptions {
 	legend: boolean;
@@ -62,7 +62,7 @@ export const createForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -73,6 +73,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = '.3s';
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -83,6 +84,20 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: 4,
+		symbolSize: 200,
+		labelFontSize: 12,
+		labelOffset: 4
+	};
+
+	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -161,16 +176,7 @@ export const createForecastChart = (
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -185,21 +191,12 @@ export const createForecastChart = (
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 
 		// FIXME: variables not aligned, set unique color for now
-		layerSpec.encoding.color.scale.range = ['#333'];
-		/* layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME; // This works until it doesn't */
+		layerSpec.encoding.color.scale.range = ['#1B8073'];
+		// layerSpec.encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
 
 		if (options.legend === true) {
 			layerSpec.encoding.color.legend = {
-				title: null,
-				padding: { value: 0 },
-				strokeColor: null,
-				orient: 'top',
-				direction: 'horizontal',
-				columns: Math.floor(options.width / 100),
-				symbolStrokeWidth: 4,
-				symbolSize: 200,
-				labelFontSize: 12,
-				labelOffset: 4
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
@@ -264,62 +261,63 @@ export interface OptimizeChartOptions {
 
 const binCount = 5;
 
-function formatSuccessChartData(riskResults: any, targetVariable: string, threshold: number, isMinimized: boolean) {
+export function formatSuccessChartData(
+	riskResults: any,
+	targetVariable: string,
+	threshold: number,
+	isMinimized: boolean
+) {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
-
-	const minValue = Math.min(...data);
-	const maxValue = Math.max(...data);
-	const stepSize = (maxValue - minValue) / binCount;
-	const bins: { range: string; count: number; tag: 'in' | 'out' }[] = [];
-	for (let i = binCount; i > 0; i--) {
-		let rangeStart = minValue + stepSize * (i - 1);
-		let rangeEnd = minValue + stepSize * i;
-
-		// Handle edge case where stepSize is 0, and give the range a thickness so it can be seen
-		if (stepSize === 0) {
-			rangeStart = minValue - 1;
-			rangeEnd = maxValue + 1;
-		}
-
-		let tag;
-		if (isMinimized) {
-			tag = rangeEnd < threshold ? 'in' : 'out';
-		} else {
-			tag = rangeStart > threshold ? 'in' : 'out';
-		}
-
-		bins.push({
-			range: `${rangeStart.toFixed(4)}-${rangeEnd.toFixed(4)}`,
-			count: 0,
-			tag
-		});
+	if (isEmpty(data)) {
+		return [];
 	}
 
-	const toBinIndex = (value: number) => {
-		if (value < minValue || value > maxValue) return -1;
-		// return first bin in cases where the max value is the same as the incoming value or when the min and max data values are the same (stepsize = 0)
-		if (stepSize === 0 || value === maxValue) return 0;
-		const index = binCount - 1 - Math.abs(Math.floor((value - minValue) / stepSize));
-		return index;
-	};
+	const min = Math.min(...data);
+	const max = Math.max(...data);
+	const ranges: { range: string; count: number; tag: 'in' | 'out' }[] = [];
 
-	const avgArray: number[] = [];
-
-	// Fill bins:
-	data.forEach((ele) => {
-		const index = toBinIndex(ele);
-		if (index !== -1) {
-			bins[index].count += 1;
-			if (bins[index].tag === 'out') {
-				avgArray.push(ele);
-			}
+	// see whether ranges are in or out of the threshold
+	const determineTag = (
+		start: number,
+		end: number,
+		thresholdValue: number,
+		isMinimizedValue: boolean
+	): 'in' | 'out' => {
+		if (isMinimizedValue) {
+			return end < thresholdValue ? 'in' : 'out';
 		}
-	});
+		return start > thresholdValue ? 'in' : 'out';
+	};
+	if (min === max) {
+		// case where there is only one value or all values are the same. we want to give the bar some thickness so that the user can see it.
+		const start = min - 1;
+		const end = min + 1;
+		const count = data.length;
 
-	const avg = mean(avgArray);
+		ranges.push({
+			range: `${start.toFixed(4)}-${end.toFixed(4)}`,
+			count,
+			tag: determineTag(start, end, threshold, isMinimized)
+		});
+	} else {
+		const rangeSize = (max - min) / binCount;
 
-	return { data: bins, avg };
+		for (let i = 0; i < binCount; i++) {
+			const start = min + i * rangeSize;
+			const end = i === binCount - 1 ? max : start + rangeSize;
+			// count the number of values in the range, some logic here to handle the last bin which is inclusive of the max value
+			const count = data.filter((num) => num >= start && (i === binCount - 1 ? num <= end : num < end)).length;
+
+			ranges.push({
+				range: `${start.toFixed(4)}-${end.toFixed(4)}`,
+				count,
+				tag: determineTag(start, end, threshold, isMinimized)
+			});
+		}
+	}
+
+	return ranges;
 }
 
 export function createOptimizeChart(
@@ -328,7 +326,7 @@ export function createOptimizeChart(
 	threshold: number,
 	isMinimized: boolean
 ): any {
-	const { data } = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
+	const data = formatSuccessChartData(riskResults, targetVariable, threshold, isMinimized);
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -359,14 +357,14 @@ export function createOptimizeChart(
 					y: {
 						field: 'start',
 						type: 'quantitative',
-						title: 'Min value at all times'
+						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all timepoints`
 					},
 					y2: { field: 'end' },
 					x: {
 						aggregate: 'sum',
 						field: 'count',
 						type: 'quantitative',
-						title: 'Count'
+						title: 'Number of samples'
 					},
 					color: {
 						field: 'tag',
@@ -374,7 +372,8 @@ export function createOptimizeChart(
 						scale: {
 							domain: ['out', 'in'],
 							range: ['#FFAB00', '#1B8073']
-						}
+						},
+						legend: { labelExpr: 'datum.value === "in" ? "passing" : "failing"' }
 					}
 				}
 			},
@@ -403,13 +402,31 @@ export function createOptimizeChart(
 }
 
 function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
-	return data.map((ele) => ({
-		data: [{}], // Dummy data to ensure the layer is rendered
+	const markers = data.map((ele) => ({
+		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
 			x: { datum: ele.time }
 		}
 	}));
+
+	const labelsSpec = {
+		data: { values: data },
+		mark: {
+			type: 'text',
+			align: 'left',
+			angle: 90,
+			dx: 5,
+			dy: -10
+		},
+		encoding: {
+			x: { field: 'time', type: 'quantitative' },
+			y: { field: 'value', type: 'quantitative' },
+			text: { field: 'name', type: 'nominal' }
+		}
+	};
+
+	return [...markers, labelsSpec];
 }
 
 function createStatisticLayer(
@@ -578,5 +595,32 @@ export const createOptimizeForecastChart = (
 		});
 	}
 
+	return spec;
+};
+
+export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		width: 400,
+		autosize: {
+			type: 'fit'
+		},
+		layer: []
+	};
+	if (interventionsData && interventionsData.length > 0) {
+		// markers
+		createInterventionChartMarkers(interventionsData).forEach((marker) => {
+			spec.layer.push(marker);
+		});
+		// chart
+		spec.layer.push({
+			data: { values: interventionsData },
+			mark: 'point',
+			encoding: {
+				x: { field: 'time', type: 'quantitative' },
+				y: { field: 'value', type: 'quantitative' }
+			}
+		});
+	}
 	return spec;
 };

@@ -125,8 +125,8 @@ const preparedCharts = computed(() => {
 			legend: false,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable,
 			title: variable
 		})
 	);
@@ -152,6 +152,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
+			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
 		}
 	},

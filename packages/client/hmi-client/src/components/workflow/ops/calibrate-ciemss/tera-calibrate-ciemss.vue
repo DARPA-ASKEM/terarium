@@ -97,7 +97,7 @@
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset" ref="outputPanel">
+					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
 								:variables="Object.keys(pyciemssMap)"
@@ -108,14 +108,7 @@
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-						<Button
-							class="add-chart"
-							text
-							:outlined="true"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						></Button>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
@@ -166,7 +159,8 @@ import {
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
@@ -174,6 +168,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -198,11 +193,19 @@ const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.v
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2].value);
 
-const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
+const cancelRunId = computed(
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressPreForecastId
+);
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
-const runResult = ref<any>(null);
+const runResult = ref<DataArray>([]);
+const runResultPre = ref<DataArray>([]);
+const runResultSummary = ref<DataArray>([]);
+const runResultSummaryPre = ref<DataArray>([]);
 
 const previewChartWidth = ref(120);
 
@@ -240,20 +243,27 @@ const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
 
 	const state = props.node.state;
-	const result = runResult.value;
 
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(
+		runResult.value,
+		runResultPre.value,
+		runResultSummary.value,
+		runResultSummaryPre.value
+	);
+
+	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}`] = key;
+		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
 	});
-
-	// Add dataset mappings to lookup as well
 	state.mapping.forEach((mapObj) => {
-		reverseMap[mapObj.datasetVariable] = mapObj.modelVariable;
+		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	if (csvAsset.value) {
 		const csv = csvAsset.value.csv;
 		const csvRaw = csv.map((d) => d.join(',')).join('\n');
@@ -275,11 +285,15 @@ const preparedCharts = computed(() => {
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
-			null,
+			{
+				dataset: resultSummary,
+				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				timeField: 'timepoint_id'
+			},
 			{
 				dataset: groundTruth,
 				variables: datasetVariables,
@@ -292,7 +306,8 @@ const preparedCharts = computed(() => {
 				legend: true,
 				translationMap: reverseMap,
 				xAxisTitle: 'Time',
-				yAxisTitle: ''
+				yAxisTitle: '',
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
@@ -344,6 +359,7 @@ const runCalibrate = async () => {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		state.inProgressPreForecastId = '';
 
 		emit('update-state', state);
 	}
@@ -476,10 +492,17 @@ watch(
 			}
 
 			const state = props.node.state;
-			const result = await getRunResultCSV(state.forecastId, 'result.csv');
-			pyciemssMap = parsePyCiemssMap(result[0]);
+			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
+			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
 
-			runResult.value = result;
+			runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
+			runResultSummaryPre.value = await getRunResultCSV(
+				state.preForecastId,
+				'result_summary.csv',
+				renameFnGenerator('pre')
+			);
+
+			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
 		}
 	},
 	{ immediate: true }
