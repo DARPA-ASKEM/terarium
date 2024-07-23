@@ -15,7 +15,6 @@
 			<circle v-else :cx="circlePoint" :cy="parentHeight / 2" r="4" stroke="black" fill="black" />
 		</svg>
 	</div>
-	{{ console.log(distribution) }}
 </template>
 
 <script setup lang="ts">
