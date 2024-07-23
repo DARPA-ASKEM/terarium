@@ -167,8 +167,8 @@ const preparedCharts = computed(() => {
 				height: 120,
 				legend: false,
 				translationMap: reverseMap,
-				xAxisTitle: '',
-				yAxisTitle: ''
+				xAxisTitle: 'Time',
+				yAxisTitle: 'Units'
 			}
 		)
 	);
