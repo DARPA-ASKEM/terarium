@@ -9,10 +9,12 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	simulationsInProgress: string[];
 
 	inProgressCalibrationId: string;
+	inProgressPreForecastId: string;
 	inProgressForecastId: string;
 	errorMessage: { name: string; value: string; traceback: string };
 
 	calibrationId: string;
+	preForecastId: string;
 	forecastId: string;
 	numIterations: number;
 	numSamples: number;
@@ -21,7 +23,7 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 
 export const CalibrationOperationCiemss: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION_CIEMSS,
-	displayName: 'Calibrate with PyCIEMSS',
+	displayName: 'Calibrate',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	documentationUrl: DOCUMENTATION_URL,
@@ -45,9 +47,11 @@ export const CalibrationOperationCiemss: Operation = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
+			inProgressPreForecastId: '',
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
 			calibrationId: '',
+			preForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' },
 			numIterations: 100,

@@ -16,6 +16,17 @@
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[PresetTypes.Fast, PresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
+					</div>
+
 					<!-- Start & End -->
 					<div class="input-row">
 						<div class="label-and-input">
@@ -58,7 +69,8 @@
 					@llm-thought-output="(data: any) => llmThoughts.push(data)"
 					@question-asked="updateLlmQuery"
 				>
-					<template #toolbar-right-side>
+					<template #toolbar-right-side
+						>t
 						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" />
 					</template>
 				</tera-notebook-jupyter-input>
@@ -103,23 +115,18 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
-						<template v-for="(cfg, index) of props.node.state.chartConfigs" :key="index">
+						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:variables="Object.keys(pyciemssMap)"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="true"
 								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-
-						<Button
-							class="p-button-sm p-button-text"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						/>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</div>
 					<div v-else-if="view === OutputView.Data">
 						<tera-dataset-datatable
@@ -153,7 +160,8 @@ import {
 	getRunResultCSV,
 	parsePyCiemssMap,
 	makeForecastJobCiemss as makeForecastJob,
-	convertToCsvAsset
+	convertToCsvAsset,
+	DataArray
 } from '@/services/models/simulation-service';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
@@ -209,6 +217,21 @@ enum OutputView {
 	Data = 'Data'
 }
 
+enum PresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
+}
+
+const speedValues = {
+	numSamples: 10,
+	method: ciemssMethodOptions.value[1]
+};
+
+const qualityValues = {
+	numSamples: 100,
+	method: ciemssMethodOptions.value[0]
+};
+
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
 	llmQuery.value = query;
@@ -241,9 +264,9 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = ref(false);
-const runResults = ref<{ [runId: string]: any }>({});
-const runResultsSummary = ref<{ [runId: string]: any }>({});
-const rawContent = ref<{ [runId: string]: CsvAsset | null }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const rawContent = ref<{ [runId: string]: CsvAsset }>({});
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -260,6 +283,18 @@ const outputs = computed(() => {
 	}
 	return [];
 });
+
+const presetType = computed(() => {
+	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
+		return PresetTypes.Fast;
+	}
+	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
+		return PresetTypes.Normal;
+	}
+
+	return '';
+});
+
 const selectedOutputId = ref<string>();
 const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
@@ -270,6 +305,18 @@ const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperationState) => {
 	emit('update-state', state);
 });
+
+const setPresetValues = (data: PresetTypes) => {
+	console.log(data);
+	if (data === PresetTypes.Normal) {
+		numSamples.value = qualityValues.numSamples;
+		method.value = qualityValues.method;
+	}
+	if (data === PresetTypes.Fast) {
+		numSamples.value = speedValues.numSamples;
+		method.value = speedValues.method;
+	}
+};
 
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];

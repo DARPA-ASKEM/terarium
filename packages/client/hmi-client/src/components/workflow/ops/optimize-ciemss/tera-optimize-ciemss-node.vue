@@ -122,11 +122,11 @@ const preparedCharts = computed(() => {
 			height: 120,
 			variables: [pyciemssMap[variable]],
 			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: false,
+			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable,
 			title: variable
 		})
 	);
@@ -152,6 +152,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
+			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
 		}
 	},

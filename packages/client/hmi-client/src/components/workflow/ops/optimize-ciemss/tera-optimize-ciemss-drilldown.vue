@@ -41,7 +41,7 @@
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
 							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
-							:key="idx"
+							:key="cfg.id || '' + idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
@@ -198,6 +198,12 @@
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
+			<div class="result-message-grid">
+				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
+					<div class="label">{{ key }}:</div>
+					<div class="value">{{ formatJsonValue(value) }}</div>
+				</div>
+			</div>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -316,7 +322,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -340,13 +346,15 @@ import {
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
 	Intervention,
 	InterventionPolicy,
 	ModelConfiguration,
+	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss
@@ -506,14 +514,24 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const optimizeRequestPayload = ref<any>('');
 
-const modelParameterOptions = ref<string[]>([]);
+const model = ref<Model | null>(null);
+const modelParameterOptions = computed<string[]>(() =>
+	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
+);
 const modelStateAndObsOptions = ref<string[]>([]);
 
 const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
+
+const timeUnit = computed(() => model.value?.semantics?.ode?.time?.units?.expression);
+const getUnit = (paramId: string) => {
+	const param = (model.value?.semantics?.ode?.parameters ?? []).find((p) => p.id === paramId);
+	return param?.units?.expression;
+};
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -566,15 +584,16 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = await getAsConfiguredModel(modelConfiguration.value);
+	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
+	model.value = await getAsConfiguredModel(modelConfiguration.value);
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
+		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
-	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
-	modelStateAndObsOptions.value = model?.model.states.map((state: any) => state.id);
+	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
 
 	/** Until supported by pyciemss-service, do not show observables.
 	if (model?.semantics?.ode.observables) {
@@ -586,7 +605,7 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyId === interventionPolicy.id) {
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
@@ -595,10 +614,11 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		interventionPolicy.interventions.forEach((intervention) => {
 			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -610,6 +630,8 @@ const runOptimize = async () => {
 		logger.error('no model config id provided');
 		return;
 	}
+
+	setOutputSettingDefaults();
 
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
@@ -703,6 +725,29 @@ const runOptimize = async () => {
 	emit('update-state', state);
 };
 
+const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
+	if (!knobs.value.selectedInterventionVariables.length) {
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
+};
+
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
@@ -750,20 +795,42 @@ const setOutputValues = async () => {
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
 	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
+	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
 const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
-	const data = state.interventionPolicyGroups.flatMap((ele) =>
-		ele.intervention.staticInterventions.map((intervention) => ({
-			name: ele.intervention.appliedTo,
-			value: intervention.value,
-			time: intervention.timestep
+	// Combine before and after interventions
+	const combinedInterventions = [
+		...state.interventionPolicyGroups.flatMap((group) =>
+			group.intervention.staticInterventions.map((intervention) => ({
+				appliedTo: group.intervention.appliedTo,
+				name: group.intervention.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		),
+		...(state.optimizedInterventionPolicy?.interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				appliedTo: intervention.appliedTo,
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
+		interventions.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
 		}))
 	);
 
-	return groupBy(data, 'name');
+	return groupedAndMapped;
 });
 
 onMounted(async () => {
@@ -794,8 +861,8 @@ const preparedInterventionsCharts = computed(() => {
 				legend: true,
 				groupField: 'sample_id',
 				timeField: 'timepoint_id',
-				xAxisTitle: 'Time',
-				yAxisTitle: variable,
+				xAxisTitle: timeUnit.value ?? 'Time',
+				yAxisTitle: getUnit(variable) ?? variable,
 				title: variable
 			}
 		)
@@ -820,8 +887,8 @@ const preparedCharts = computed(() => {
 			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: variable,
+			xAxisTitle: timeUnit.value ?? 'Time',
+			yAxisTitle: getUnit(variable) ?? variable,
 			title: variable
 		})
 	);
@@ -882,11 +949,12 @@ watch(
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+	overflow: auto;
 }
 
 .label {
 	font-weight: bold;
-	width: 150px; /* Adjust the width of the label column as needed */
+	width: 210px; /* Adjust the width of the label column as needed */
 }
 .value {
 	flex-grow: 1;

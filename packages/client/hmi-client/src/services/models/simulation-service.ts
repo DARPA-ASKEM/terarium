@@ -20,6 +20,8 @@ import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
+export type DataArray = Record<string, any>[];
+
 export async function cancelCiemssJob(runId: String) {
 	try {
 		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
@@ -118,23 +120,30 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCSV(runId: string, filename: string) {
+export async function getRunResultCSV(
+	runId: string,
+	filename: string,
+	renameFn?: (s: string) => string
+): Promise<DataArray> {
 	try {
 		const resp = await API.get(`simulations/${runId}/result`, {
 			params: { filename }
 		});
-		const output = csvParse(resp.data, autoType);
 
-		// FIXME: summary need to have time
-		if (filename === 'result_summary.csv') {
-			output.forEach((d: any, idx) => {
-				d.timepoint_id = idx;
-			});
+		// If a rename function is defined, loop over the first row
+		let dataStr = resp.data;
+		if (renameFn) {
+			const lines = dataStr.split(/\n/);
+			const line0 = lines[0].split(/,/).map(renameFn).join(',');
+			lines[0] = line0;
+			dataStr = lines.join('\n');
 		}
+
+		const output = csvParse(dataStr, autoType);
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return [{}];
+		return [];
 	}
 }
 

@@ -40,7 +40,7 @@ import TeraRegriddingDrilldown from '@/components/workflow/ops/regridding/tera-r
 import TeraDatasetTransformer from '@/components/workflow/ops/dataset-transformer/tera-dataset-transformer.vue';
 import TeraCalibrateJulia from '@/components/workflow/ops/calibrate-julia/tera-calibrate-julia.vue';
 import TeraSimulateJulia from '@/components/workflow/ops/simulate-julia/tera-simulate-julia.vue';
-import TeraCalibrateCiemss from '@/components/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss.vue';
+import TeraCalibrateCiemss from '@/components/workflow/ops/calibrate-ciemss/tera-calibrate-ciemss-drilldown.vue';
 import TeraCalibrateEnsembleCiemss from '@/components/workflow/ops/calibrate-ensemble-ciemss/tera-calibrate-ensemble-ciemss.vue';
 import TeraSimulateCiemss from '@/components/workflow/ops/simulate-ciemss/tera-simulate-ciemss.vue';
 import TeraSimulateEnsembleCiemss from '@/components/workflow/ops/simulate-ensemble-ciemss/tera-simulate-ensemble-ciemss.vue';

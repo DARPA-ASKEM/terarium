@@ -54,13 +54,26 @@
 						size="small"
 					/>
 					<span v-else>
-						<tera-input
-							label="Concept"
-							placeholder="Select a concept"
-							icon="pi pi-search"
-							disabled
-							v-model="parentEditingState[index].childrenConcepts"
-						/>
+						<span class="concept">
+							<label>Concept</label>
+							<AutoComplete
+								label="Concept"
+								size="small"
+								placeholder="Search concepts"
+								v-model="parentEditingState[index].childrenConcepts.name"
+								:suggestions="results"
+								optionLabel="name"
+								@complete="
+									async () => (results = await searchCuriesEntities(parentEditingState[index].childrenConcepts.name))
+								"
+								@item-select="
+									($event) => {
+										const { name, curie } = $event.value;
+										parentEditingState[index].childrenConcepts = { name, curie };
+									}
+								"
+							/>
+						</span>
 						<Button
 							icon="pi pi-check"
 							text
@@ -68,7 +81,7 @@
 							size="small"
 							@click="
 								() => {
-									updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts);
+									updateAllChildren(base.id, 'concept', parentEditingState[index].childrenConcepts.curie);
 									parentEditingState[index].isEditingChildrenConcepts = false;
 								}
 							"
@@ -82,7 +95,7 @@
 						/>
 					</span>
 				</section>
-				<ul v-if="parentEditingState[index].showChildren" class="stratified">
+				<ul v-show="parentEditingState[index].showChildren" class="stratified">
 					<li v-for="(child, index) in children" :key="index">
 						<tera-model-part-entry
 							:item="child"
@@ -106,7 +119,10 @@
 import { isEmpty } from 'lodash';
 import { ref, onMounted } from 'vue';
 import type { ModelPartItem } from '@/types/Model';
+import type { DKG } from '@/types/Types';
+import { searchCuriesEntities } from '@/services/concept';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
+import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
 
@@ -129,16 +145,24 @@ const parentEditingState = ref<
 		isEditingChildrenUnits: boolean;
 		isEditingChildrenConcepts: boolean;
 		childrenUnits: string;
-		childrenConcepts: string;
+		childrenConcepts: {
+			name: string;
+			curie: string;
+		};
 	}[]
 >([]);
+const results = ref<DKG[]>([]);
+
 onMounted(() => {
 	parentEditingState.value = Array.from({ length: props.items.length }, () => ({
 		showChildren: false,
 		isEditingChildrenUnits: false,
 		isEditingChildrenConcepts: false,
 		childrenUnits: '',
-		childrenConcepts: ''
+		childrenConcepts: {
+			name: '',
+			curie: ''
+		}
 	}));
 });
 
@@ -172,5 +196,17 @@ li {
 		padding-bottom: 0;
 		border-bottom: none;
 	}
+}
+
+.concept {
+	display: flex;
+	align-items: center;
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	gap: var(--gap-1);
+}
+
+:deep(.p-autocomplete-input) {
+	padding: var(--gap-1) var(--gap-2);
 }
 </style>

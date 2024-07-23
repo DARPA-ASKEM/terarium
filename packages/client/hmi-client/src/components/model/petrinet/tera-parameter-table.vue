@@ -2,9 +2,9 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				<span class="mr-auto"
-					>Parameters<span class="artifact-amount">({{ numParameters }})</span></span
-				>
+				<span class="mr-auto">
+					Parameters<span class="artifact-amount">({{ numParameters }})</span>
+				</span>
 				<Button
 					v-if="!isAddingUncertainty"
 					label="Add uncertainty"

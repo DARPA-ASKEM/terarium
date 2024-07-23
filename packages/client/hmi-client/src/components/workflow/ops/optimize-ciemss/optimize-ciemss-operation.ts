@@ -24,6 +24,8 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroupForm {
+	// The ID of the InterventionPolicy this is portraying
+	id?: string; // // FIXME: This will not be required when some init logic is moved from drilldown -> Node.
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
@@ -66,6 +68,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressPostForecastId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
+	optimizedInterventionPolicy: InterventionPolicy | null;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
@@ -158,6 +161,7 @@ export const OptimizeCiemssOperation: Operation = {
 			preForecastRunId: '',
 			postForecastRunId: '',
 			optimizationRunId: '',
+			optimizedInterventionPolicy: null,
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};
