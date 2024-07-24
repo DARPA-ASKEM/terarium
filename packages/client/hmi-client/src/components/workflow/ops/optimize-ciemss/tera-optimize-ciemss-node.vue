@@ -122,11 +122,11 @@ const preparedCharts = computed(() => {
 			height: 120,
 			variables: [pyciemssMap[variable]],
 			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: false,
+			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable,
 			title: variable
 		})
 	);

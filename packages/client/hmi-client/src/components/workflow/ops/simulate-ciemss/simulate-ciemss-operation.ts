@@ -20,7 +20,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
-	displayName: 'Simulate with PyCIEMSS',
+	displayName: 'Simulate',
 	description: 'given a model id, and configuration id, run a simulation',
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [

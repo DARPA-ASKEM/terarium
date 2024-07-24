@@ -120,12 +120,26 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCSV(runId: string, filename: string): Promise<DataArray> {
+export async function getRunResultCSV(
+	runId: string,
+	filename: string,
+	renameFn?: (s: string) => string
+): Promise<DataArray> {
 	try {
 		const resp = await API.get(`simulations/${runId}/result`, {
 			params: { filename }
 		});
-		const output = csvParse(resp.data, autoType);
+
+		// If a rename function is defined, loop over the first row
+		let dataStr = resp.data;
+		if (renameFn) {
+			const lines = dataStr.split(/\n/);
+			const line0 = lines[0].split(/,/).map(renameFn).join(',');
+			lines[0] = line0;
+			dataStr = lines.join('\n');
+		}
+
+		const output = csvParse(dataStr, autoType);
 		return output;
 	} catch (err) {
 		logger.error(err);
