@@ -67,7 +67,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 		gridOpacity: 1.0
 	};
 	const yaxis = structuredClone(xaxis);
-	yaxis.title = options.yAxisTitle;
+	yaxis.title = options.yAxisTitle || '';
 
 	const legendProperties = {
 		title: null,
@@ -101,7 +101,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 				},
 				tooltip: [
 					{ bin, field: varOption.field, title: varOption.field },
-					{ aggregate, type: 'quantitative', title: 'Count' }
+					{ aggregate, type: 'quantitative', title: yaxis.title }
 				]
 			}
 		}));
