@@ -100,7 +100,7 @@ export const createForecastChart = (
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 250
+		labelLimit: isCompact ? 50 : 150
 	};
 
 	// Start building
