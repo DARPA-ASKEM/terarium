@@ -1,34 +1,36 @@
 <template>
 	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
-			<aside class="panel-container" @scroll="onScroll">
-				<header class="slider-header content sticky" :class="{ 'header-shadow': isScrolled }">
-					<i
-						:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
+			<aside @scroll="onScroll">
+				<header :class="{ shadow: isScrolled }">
+					<Button
+						:icon="`pi ${directionMap[direction].iconOpen}`"
 						@click="emit('update:isOpen', false)"
+						text
+						rounded
+						size="large"
 					/>
-					<slot name="header"></slot>
-					<section>
-						<h4 class="slider-header-item">{{ header }}</h4>
-						<slot name="subHeader"></slot>
-					</section>
+					<h4>{{ header }}</h4>
 				</header>
-				<slot name="content"></slot>
+				<slot name="content" />
 			</aside>
 		</template>
 		<template v-slot:tab>
-			<div :class="`slider-tab-header ${direction}`">
-				<i
-					:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
+			<header :class="`tab ${direction}`">
+				<Button
+					:icon="`pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
+					text
+					rounded
+					size="large"
 				/>
-				<h5 class="slider-header-item">{{ header }}</h5>
-				<Badge v-if="indicatorValue" :value="indicatorValue" class="selected-resources-count" />
-			</div>
-			<slot name="tab"></slot>
+				<h5>{{ header }}</h5>
+				<Badge v-if="indicatorValue" :value="indicatorValue" />
+			</header>
+			<slot name="tab" />
 		</template>
 		<template v-if="$slots.footerButtons" v-slot:footerButtons>
-			<slot name="footerButtons"></slot>
+			<slot name="footerButtons" />
 		</template>
 	</tera-slider>
 </template>
@@ -36,6 +38,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Badge from 'primevue/badge';
+import Button from 'primevue/button';
 import TeraSlider from './tera-slider.vue';
 
 defineProps({
@@ -89,63 +92,43 @@ const onScroll = (event: Event) => {
 </script>
 
 <style scoped>
-.panel-container {
+header {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	flex-direction: row-reverse;
+	justify-content: space-between;
+	padding: var(--gap-2);
+	padding-left: var(--gap);
+	gap: var(--gap);
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(3px);
+	&.shadow {
+		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
+	}
+}
+
+aside {
 	height: 100%;
 	overflow-y: auto;
 }
-i {
-	font-size: 1.25rem;
-	cursor: pointer;
+
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 2.5rem;
 }
 
-.slider-header {
-	display: flex;
-	align-items: start;
-}
-
-.header-shadow {
-	box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-section {
-	display: flex;
+.tab {
 	flex-direction: column;
+	padding: var(--gap-2);
 }
 
-.slider-header.content {
-	flex-direction: row-reverse;
-	justify-content: space-between;
-	padding: 1rem;
-}
-
-.slider-header.tab {
-	justify-content: center;
-}
-
-i.slider-header-item {
-	color: var(--text-color-subdued);
-}
-
-.slider-tab-header {
-	align-items: center;
-	display: flex;
-	flex-direction: column;
-	padding: 1rem;
-	gap: 2rem;
-}
-
-.slider-tab-header h4 {
-	text-align: left;
-	line-height: 1em;
-	margin-bottom: 1rem;
-}
-
-.slider-tab-header h5 {
-	transform: rotate(0deg);
+h5 {
 	writing-mode: vertical-lr;
 }
 
-.selected-resources-count {
+.p-badge {
 	background-color: var(--surface-200);
 	color: var(--text-color-primary);
 	font-size: 1rem;
@@ -153,13 +136,5 @@ i.slider-header-item {
 	height: 2rem;
 	line-height: 2rem;
 	font-weight: var(--font-weight);
-}
-
-.sticky {
-	z-index: 3;
-	position: sticky;
-	top: 0;
-	background-color: rgba(255, 255, 255, 0.8);
-	backdrop-filter: blur(3px);
 }
 </style>

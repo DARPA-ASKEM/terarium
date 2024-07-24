@@ -20,29 +20,30 @@
 				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
 			</ul>
 		</nav>
+		<!-- FIXME: If we are going to use this consider making the chevron navigations work (they should positioned properly)
 		<Button
 			v-if="itemCount > 1"
 			text
 			severity="secondary"
 			icon="pi pi-chevron-left"
-			@click="move(currentPage - 1)"
-			class="carousel-chevron go-back"
+			@click.stop="move(currentPage - 1)"
+			class="back"
 		/>
 		<Button
 			v-if="itemCount > 1"
 			text
 			severity="secondary"
 			icon="pi pi-chevron-right"
-			@click="move(currentPage + 1)"
-			class="carousel-chevron go-forward"
-		/>
+			@click.stop="move(currentPage + 1)"
+			class="forward"
+		/> -->
 	</figure>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted, useSlots } from 'vue';
-import Button from 'primevue/button';
+// import Button from 'primevue/button';
 
 defineProps({
 	height: {
@@ -89,6 +90,7 @@ figure {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	position: relative;
 }
 
 .content {
@@ -183,30 +185,22 @@ nav {
 		}
 	}
 
-	/* May be potentially used later */
-	& .pi-arrow-left,
-	& .pi-arrow-right {
-		border-radius: 24px;
-		font-size: 10px;
+	/* Part of above FIXME
+	&.p-button {
+		position: absolute;
+		top: 1.25rem;
+		opacity: 0;
+		height: 5rem;
+		&:hover {
+			opacity: 0.5;
+		}
 	}
-}
 
-.carousel-chevron {
-	opacity: 0;
-	height: 5rem;
-}
-.carousel-chevron:hover {
-	opacity: 0.5;
-}
-.go-back {
-	position: absolute;
-	top: 1.25rem;
-	left: 8px;
-}
-
-.go-forward {
-	position: absolute;
-	top: 1.25rem;
-	right: 8px;
+	&.back {
+		left: 8px;
+	}
+	&.forward {
+		right: 8px;
+	}*/
 }
 </style>
