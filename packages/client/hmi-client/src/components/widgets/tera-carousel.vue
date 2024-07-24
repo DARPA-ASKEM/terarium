@@ -25,16 +25,16 @@
 			text
 			severity="secondary"
 			icon="pi pi-chevron-left"
-			@click="move(currentPage - 1)"
-			class="carousel-chevron go-back"
+			@click.stop="move(currentPage - 1)"
+			class="go-back"
 		/>
 		<Button
 			v-if="itemCount > 1"
 			text
 			severity="secondary"
 			icon="pi pi-chevron-right"
-			@click="move(currentPage + 1)"
-			class="carousel-chevron go-forward"
+			@click.stop="move(currentPage + 1)"
+			class="go-forward"
 		/>
 	</figure>
 </template>
@@ -89,6 +89,7 @@ figure {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	position: relative;
 }
 
 .content {
@@ -187,26 +188,21 @@ nav {
 	& .pi-arrow-left,
 	& .pi-arrow-right {
 		border-radius: 24px;
-		font-size: 10px;
+		/* font-size: 10px; */
+		/* opacity: 0; */
+		/* height: 5rem; */
+		position: absolute;
+		top: 1.25rem;
+		&:hover {
+			/* opacity: 0.5; */
+		}
 	}
-}
 
-.carousel-chevron {
-	opacity: 0;
-	height: 5rem;
-}
-.carousel-chevron:hover {
-	opacity: 0.5;
-}
-.go-back {
-	position: absolute;
-	top: 1.25rem;
-	left: 8px;
-}
-
-.go-forward {
-	position: absolute;
-	top: 1.25rem;
-	right: 8px;
+	& .pi-arrow-left {
+		left: 0;
+	}
+	& .pi-arrow-right {
+		right: 0;
+	}
 }
 </style>
