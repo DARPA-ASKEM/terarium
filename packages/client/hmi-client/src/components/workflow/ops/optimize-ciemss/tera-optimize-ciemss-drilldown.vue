@@ -213,7 +213,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				:class="{ 'failed-run': optimizationResult.success === 'False' }"
+				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
@@ -960,10 +960,16 @@ watch(
 	flex-grow: 1;
 }
 
-.failed-run {
+:deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
 	color: var(--error-color-text);
+}
+
+.successful-run {
+	border: none;
+	border-radius: none;
+	color: none;
 }
 
 .form-section {

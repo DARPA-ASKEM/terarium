@@ -43,7 +43,12 @@
 				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
 			/>
 		</span>
-		<katex-element class="expression" v-if="item.expression" :expression="item.expression" :throw-on-error="false" />
+		<katex-element
+			class="expression"
+			v-if="item.expression"
+			:expression="stringToLatexExpression(item.expression)"
+			:throw-on-error="false"
+		/>
 		<tera-input
 			title="Description"
 			placeholder="Add a description"
@@ -59,6 +64,7 @@ import { ref, watch } from 'vue';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import AutoComplete from 'primevue/autocomplete';
 import type { ModelPartItem } from '@/types/Model';
+import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 

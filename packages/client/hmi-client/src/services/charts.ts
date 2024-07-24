@@ -218,7 +218,7 @@ export const createForecastChart = (
 			const tip: any = {
 				field: d,
 				type: 'quantitative',
-				format: '.4f'
+				format: NUMBER_FORMAT
 			};
 
 			if (options.translationMap && options.translationMap[d]) {
@@ -445,7 +445,7 @@ function createStatisticLayer(
 	const tooltipContent = statisticalVariables?.map((d) => ({
 		field: d,
 		type: 'quantitative',
-		format: '.4f'
+		format: NUMBER_FORMAT
 	}));
 
 	const isCompact = options.width < 200;
@@ -534,6 +534,7 @@ function createSampleLayer(
 		}
 	};
 }
+
 export const createOptimizeForecastChart = (
 	preSampleRunData: Record<string, any>[],
 	preStatisticData: Record<string, any>[],

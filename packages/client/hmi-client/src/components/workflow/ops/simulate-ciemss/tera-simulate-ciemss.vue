@@ -154,7 +154,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, ModelConfiguration, SimulationRequest, TimeSpan } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -163,6 +163,7 @@ import {
 	convertToCsvAsset,
 	DataArray
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -179,8 +180,6 @@ import { useProjects } from '@/composables/project';
 import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
-import { getUnitsFromModelParts } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -194,6 +193,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
+const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
@@ -346,6 +346,7 @@ const preparedCharts = computed(() => {
 			null,
 			// options
 			{
+				title: `${config.join(',')}`,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
@@ -479,6 +480,19 @@ const initializeAceEditor = (editorInstance: any) => {
 };
 
 watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		const model = await getModelByModelConfigurationId(id);
+		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => props.node.state.inProgressSimulationId,
 	(id) => {
 		if (id === '') showSpinner.value = false;
@@ -502,16 +516,8 @@ watch(
 	{ immediate: true }
 );
 
-const modelVarUnits = ref<{ [key: string]: string }>({});
-
 onMounted(async () => {
 	buildJupyterContext();
-
-	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
-	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
-	const model = await getAsConfiguredModel(modelConfiguration);
-	const modelVariableUnits = getUnitsFromModelParts(model);
-	modelVarUnits.value = modelVariableUnits;
 });
 
 onUnmounted(() => kernelManager.shutdown());
