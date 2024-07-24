@@ -446,7 +446,7 @@ const showSaveDataDialog = ref<boolean>(false);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
-const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
+const cancelRunId = computed(() => props.node.state.inProgressOptimizeId);
 
 const isSaveDisabled = computed<boolean>(() =>
 	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)

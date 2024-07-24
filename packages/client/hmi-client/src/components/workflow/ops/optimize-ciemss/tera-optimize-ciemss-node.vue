@@ -154,6 +154,13 @@ watch(
 			state.inProgressPostForecastId = postForecastId;
 			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
+		} else {
+			// Poller did not complete successfully
+			const state = _.cloneDeep(props.node.state);
+			state.inProgressOptimizeId = '';
+			state.inProgressPreForecastId = '';
+			state.inProgressPostForecastId = '';
+			emit('update-state', state);
 		}
 	},
 	{ immediate: true }
