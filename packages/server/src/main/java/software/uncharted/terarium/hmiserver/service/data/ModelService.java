@@ -106,6 +106,14 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		return elasticConfig.getModelAlias();
 	}
 
+	@Observed(name = "function_profile")
+	public Optional<Model> getModelFromModelConfigurationId(
+		final UUID modelConfigurationId,
+		final Schema.Permission hasReadPermission
+	) {
+		return repository.findModelByModelConfigurationId(modelConfigurationId);
+	}
+
 	@Override
 	@Observed(name = "function_profile")
 	public Model createAsset(final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)

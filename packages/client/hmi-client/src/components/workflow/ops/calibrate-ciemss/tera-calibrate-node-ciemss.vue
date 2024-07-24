@@ -33,12 +33,13 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset, SimulationRequest } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, Model } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -52,6 +53,7 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
+const model = ref<Model | null>(null);
 const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
@@ -105,6 +107,8 @@ const preparedCharts = computed(() => {
 			}
 		});
 
+		const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+
 		return createForecastChart(
 			{
 				dataset: result,
@@ -123,12 +127,13 @@ const preparedCharts = computed(() => {
 				timeField: datasetTimeField as string
 			},
 			{
+				title: `${config.join(',')}`,
 				width: 180,
 				height: 120,
-				legend: false,
+				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: '',
+				xAxisTitle,
+				yAxisTitle: `${config.join(',')}`,
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -170,6 +175,18 @@ const pollResult = async (runId: string) => {
 	emit('update-state', state);
 	return pollerResults;
 };
+
+watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.state.inProgressCalibrationId,

@@ -3,11 +3,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Editor from 'primevue/editor';
-import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
-import { b64DecodeUnicode } from '@/utils/binary';
+import { update } from '@/services/project';
+import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
+import Editor from 'primevue/editor';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const AUTO_SAVE_DELAY = 3000;
 
@@ -32,7 +32,7 @@ const isContentSameAsLastSaved = computed(
 const saveContent = async () => {
 	if (!activeProject.value) return;
 	if (isContentSameAsLastSaved.value) return;
-	const res = await update({ ...activeProject.value, overviewContent: editorContent.value });
+	const res = await update({ ...activeProject.value, overviewContent: b64EncodeUnicode(editorContent.value) });
 	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
 	if (!res) {
 		stopAutoSave();

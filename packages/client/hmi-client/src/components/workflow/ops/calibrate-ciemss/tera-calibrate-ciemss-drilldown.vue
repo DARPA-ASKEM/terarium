@@ -90,9 +90,10 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
+
 				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot" class="loss-chart"></div>
+				<div ref="drilldownLossPlot" class="loss-chart" />
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
@@ -100,9 +101,10 @@
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:variables="Object.keys(pyciemssMap)"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="false"
 								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
@@ -115,10 +117,12 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
+
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
 					<p>Processing...</p>
 				</section>
+
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-preview>
 		</template>
@@ -151,6 +155,7 @@ import {
 	ModelConfiguration
 } from '@/types/Types';
 import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -167,6 +172,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import type { Model } from '@/types/Types';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -188,6 +194,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
+const model = ref<Model | null>(null);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
@@ -282,6 +289,8 @@ const preparedCharts = computed(() => {
 			}
 		});
 
+		const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+
 		return createForecastChart(
 			{
 				dataset: result,
@@ -301,12 +310,13 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
+				title: `${config.join(',')}`,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: '',
+				xAxisTitle,
+				yAxisTitle: `${config.join(',')}`,
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -456,6 +466,18 @@ watch(
 );
 
 watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
 		if (id === '') {
@@ -511,13 +533,13 @@ watch(
 
 <style scoped>
 .mapping-table:deep(td) {
-	padding: 0 0.25rem 0.5rem 0 !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
 }
 
 .mapping-table:deep(th) {
-	padding: 0 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) var(--gap-1) !important;
 	width: 50%;
 }
 
@@ -533,45 +555,40 @@ th {
 }
 
 .emptyState {
+	align-items: center;
 	align-self: center;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	text-align: center;
+	gap: var(--gap-2);
 	margin-top: 15rem;
-	gap: 0.5rem;
+	text-align: center;
 }
 
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-body-small);
+	margin-top: var(--gap-4);
 	width: 90%;
-	margin-top: 1rem;
 }
 
 img {
 	width: 20%;
 }
 
-.form-section {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
+.form-section,
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .input-row {
-	width: 100%;
+	align-items: center;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
+	width: 100%;
 
 	& > * {
 		flex: 1;
@@ -580,7 +597,7 @@ img {
 
 .loss-chart {
 	background: var(--surface-a);
-	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
 }
 </style>

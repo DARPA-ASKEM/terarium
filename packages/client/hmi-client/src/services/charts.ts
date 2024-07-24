@@ -4,6 +4,8 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+export const NUMBER_FORMAT = '.3~s';
+
 export interface ForecastChartOptions {
 	legend: boolean;
 	translationMap?: Record<string, string>;
@@ -73,7 +75,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.format = '.3s';
+	yaxis.format = NUMBER_FORMAT;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -84,17 +86,20 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const isCompact = options.width < 200;
+
 	const legendProperties = {
 		title: null,
 		padding: { value: 0 },
 		strokeColor: null,
 		orient: 'top',
-		direction: 'horizontal',
+		direction: isCompact ? 'vertical' : 'horizontal',
 		columns: Math.floor(options.width / 100),
-		symbolStrokeWidth: 4,
+		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: 12,
-		labelOffset: 4
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150
 	};
 
 	// Start building
@@ -105,7 +110,7 @@ export const createForecastChart = (
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 		config: {
 			font: globalFont
@@ -213,7 +218,7 @@ export const createForecastChart = (
 			const tip: any = {
 				field: d,
 				type: 'quantitative',
-				format: '.4f'
+				format: NUMBER_FORMAT
 			};
 
 			if (options.translationMap && options.translationMap[d]) {
@@ -236,8 +241,8 @@ export const createForecastChart = (
 };
 
 /// /////////////////////////////////////////////////////////////////////////////
+// Optimize charts
 /// /////////////////////////////////////////////////////////////////////////////
-
 export interface OptimizeChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
@@ -440,13 +445,32 @@ function createStatisticLayer(
 	const tooltipContent = statisticalVariables?.map((d) => ({
 		field: d,
 		type: 'quantitative',
-		format: '.4f'
+		format: NUMBER_FORMAT
 	}));
+
+	const isCompact = options.width < 200;
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelExpr: "datum.label === 'before' ? 'Before optimization' : 'After optimization'"
+	};
 
 	const layerSpec: any = {
 		mark: { type: 'line' },
 		data: { values: data },
 		transform: [
+			{
+				calculate: isPreStatistic ? '"before"' : '"after"',
+				as: 'type'
+			},
 			{
 				fold: statisticalVariables,
 				as: ['stat_variable', 'stat_value']
@@ -456,22 +480,14 @@ function createStatisticLayer(
 			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
 			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
 			color: {
-				field: 'stat_variable',
+				field: 'type',
 				type: 'nominal',
 				scale: {
-					domain: statisticalVariables,
-					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
+					domain: ['before', 'after'],
+					range: ['#AAB3C6', '#1B8073']
 				},
-				legend: options.legend
-					? {
-							title: null,
-							orient: 'top',
-							direction: 'horizontal',
-							labelExpr: isPreStatistic
-								? 'datum.value ? "Before Optimization" : ""'
-								: 'datum.value ? "After Optimization" : ""'
-						}
-					: null
+				// we only want to render a legend for the first statistic layer
+				legend: options.legend && isPreStatistic ? legendProperties : null
 			},
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 3.5 },
@@ -518,6 +534,7 @@ function createSampleLayer(
 		}
 	};
 }
+
 export const createOptimizeForecastChart = (
 	preSampleRunData: Record<string, any>[],
 	preStatisticData: Record<string, any>[],
@@ -538,7 +555,7 @@ export const createOptimizeForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -549,6 +566,7 @@ export const createOptimizeForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = NUMBER_FORMAT;
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
@@ -557,7 +575,7 @@ export const createOptimizeForecastChart = (
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 
 		// layers
@@ -603,7 +621,7 @@ export const createInterventionChart = (interventionsData: { name: string; value
 		$schema: VEGALITE_SCHEMA,
 		width: 400,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 		layer: []
 	};

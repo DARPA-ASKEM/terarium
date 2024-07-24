@@ -1,5 +1,5 @@
 # Use Debian 12.2 as the base image
-FROM debian:12.5
+FROM debian:12.6
 
 # Add the GPG key for the repository
 ADD https://apt.fury.io/authzed/gpg.key /authzed-gpg.key

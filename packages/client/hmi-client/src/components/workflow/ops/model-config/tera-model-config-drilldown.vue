@@ -517,6 +517,8 @@ const createConfiguration = async () => {
 		return;
 	}
 
+	knobs.value.transientModelConfig = cloneDeep(data);
+	state.transientModelConfig = knobs.value.transientModelConfig;
 	useToastService().success('', 'Created model configuration');
 	emit('append-output', {
 		type: ModelConfigOperation.outputs[0].type,
