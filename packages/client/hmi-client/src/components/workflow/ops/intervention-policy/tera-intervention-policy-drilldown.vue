@@ -30,7 +30,7 @@
 				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
-					<Button @click="onSaveInterventions" label="Save" :disabled="isSaved" />
+					<Button @click="saveInterventions" label="Save" :disabled="isSaved" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
@@ -238,8 +238,10 @@ const initialize = async () => {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
 
+	// Auto add - should save after the default intervention is added
 	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
 		addIntervention();
+		saveInterventions();
 	}
 };
 
@@ -348,7 +350,7 @@ const onConfirmEditDescription = async () => {
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
-const onSaveInterventions = async () => {
+const saveInterventions = async () => {
 	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
 	policy.name = 'New Intervention Policy';
 	policy.description = 'This is a new intervention policy.';
