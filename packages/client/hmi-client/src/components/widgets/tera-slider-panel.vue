@@ -1,30 +1,36 @@
 <template>
 	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
-			<aside class="panel-container" @scroll="onScroll">
+			<aside @scroll="onScroll">
 				<header :class="{ shadow: isScrolled }">
-					<i
-						:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
+					<Button
+						:icon="`pi ${directionMap[direction].iconOpen}`"
 						@click="emit('update:isOpen', false)"
+						text
+						rounded
+						size="large"
 					/>
 					<h4>{{ header }}</h4>
 				</header>
-				<slot name="content"></slot>
+				<slot name="content" />
 			</aside>
 		</template>
 		<template v-slot:tab>
 			<div :class="`slider-tab-header ${direction}`">
-				<i
-					:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
+				<Button
+					:icon="`pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
+					text
+					rounded
+					size="large"
 				/>
-				<h5 class="slider-header-item">{{ header }}</h5>
+				<h5>{{ header }}</h5>
 				<Badge v-if="indicatorValue" :value="indicatorValue" class="selected-resources-count" />
 			</div>
-			<slot name="tab"></slot>
+			<slot name="tab" />
 		</template>
 		<template v-if="$slots.footerButtons" v-slot:footerButtons>
-			<slot name="footerButtons"></slot>
+			<slot name="footerButtons" />
 		</template>
 	</tera-slider>
 </template>
@@ -32,6 +38,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Badge from 'primevue/badge';
+import Button from 'primevue/button';
 import TeraSlider from './tera-slider.vue';
 
 defineProps({
@@ -85,22 +92,14 @@ const onScroll = (event: Event) => {
 </script>
 
 <style scoped>
-.panel-container {
-	height: 100%;
-	overflow-y: auto;
-}
-i {
-	font-size: 1.25rem;
-	cursor: pointer;
-}
-
 header {
 	display: flex;
-	align-items: start;
+	align-items: center;
 	flex-direction: row-reverse;
 	justify-content: space-between;
-	padding: 1rem;
 	z-index: 3;
+	padding: var(--gap-2);
+	padding-left: var(--gap);
 	position: sticky;
 	top: 0;
 	background-color: rgba(255, 255, 255, 0.8);
@@ -110,25 +109,25 @@ header {
 	}
 }
 
-section {
-	display: flex;
-	flex-direction: column;
+aside {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 2.5rem;
 }
 
 .slider-header.tab {
 	justify-content: center;
 }
 
-i.slider-header-item {
-	color: var(--text-color-subdued);
-}
-
 .slider-tab-header {
 	align-items: center;
 	display: flex;
 	flex-direction: column;
-	padding: 1rem;
-	gap: 2rem;
+	padding: var(--gap-2);
+	gap: var(--gap);
 }
 
 .slider-tab-header h4 {
