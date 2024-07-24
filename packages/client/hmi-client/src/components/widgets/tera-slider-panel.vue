@@ -16,7 +16,7 @@
 			</aside>
 		</template>
 		<template v-slot:tab>
-			<header :class="direction">
+			<header :class="`tab ${direction}`">
 				<Button
 					:icon="`pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
@@ -117,6 +117,11 @@ aside {
 
 .p-button.p-button-icon-only.p-button-rounded {
 	height: 2.5rem;
+}
+
+.tab {
+	flex-direction: column;
+	padding: var(--gap-2);
 }
 
 h5 {
