@@ -16,7 +16,7 @@
 			</aside>
 		</template>
 		<template v-slot:tab>
-			<div :class="`slider-tab-header ${direction}`">
+			<header :class="direction">
 				<Button
 					:icon="`pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
@@ -25,8 +25,8 @@
 					size="large"
 				/>
 				<h5>{{ header }}</h5>
-				<Badge v-if="indicatorValue" :value="indicatorValue" class="selected-resources-count" />
-			</div>
+				<Badge v-if="indicatorValue" :value="indicatorValue" />
+			</header>
 			<slot name="tab" />
 		</template>
 		<template v-if="$slots.footerButtons" v-slot:footerButtons>
@@ -93,15 +93,16 @@ const onScroll = (event: Event) => {
 
 <style scoped>
 header {
+	position: sticky;
+	top: 0;
+	z-index: 3;
 	display: flex;
 	align-items: center;
 	flex-direction: row-reverse;
 	justify-content: space-between;
-	z-index: 3;
 	padding: var(--gap-2);
 	padding-left: var(--gap);
-	position: sticky;
-	top: 0;
+	gap: var(--gap);
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(3px);
 	&.shadow {
@@ -118,30 +119,11 @@ aside {
 	height: 2.5rem;
 }
 
-.slider-header.tab {
-	justify-content: center;
-}
-
-.slider-tab-header {
-	align-items: center;
-	display: flex;
-	flex-direction: column;
-	padding: var(--gap-2);
-	gap: var(--gap);
-}
-
-.slider-tab-header h4 {
-	text-align: left;
-	line-height: 1em;
-	margin-bottom: 1rem;
-}
-
-.slider-tab-header h5 {
-	transform: rotate(0deg);
+h5 {
 	writing-mode: vertical-lr;
 }
 
-.selected-resources-count {
+.p-badge {
 	background-color: var(--surface-200);
 	color: var(--text-color-primary);
 	font-size: 1rem;
