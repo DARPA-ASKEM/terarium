@@ -33,18 +33,12 @@ watch(
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
 		const state = cloneDeep(props.node.state);
 
-		if (!modelId) {
-			// Reset previous model cache
-			state.interventionPolicy = {
-				modelId: '',
-				interventions: []
-			};
-		} else {
-			state.interventionPolicy = {
-				modelId,
-				interventions: []
-			};
-		}
+		// Reset previous model cache
+		state.interventionPolicy = {
+			modelId: modelId ?? '',
+			interventions: []
+		};
+
 		emit('update-state', state);
 	},
 	{ deep: true }

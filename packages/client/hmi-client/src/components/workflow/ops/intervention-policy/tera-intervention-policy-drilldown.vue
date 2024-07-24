@@ -8,10 +8,8 @@
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
 				<template #content>
-					<div class="m-3">
-						<div class="flex flex-column gap-1">
-							<tera-input v-model="filterInterventionsText" placeholder="Filter" />
-						</div>
+					<section>
+						<div class="filter"><tera-input v-model="filterInterventionsText" placeholder="Filter" /></div>
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
@@ -23,7 +21,7 @@
 							</li>
 						</ul>
 						<tera-progress-spinner v-else is-centered />
-					</div>
+					</section>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -45,9 +43,7 @@
 						/>
 					</li>
 				</ul>
-				<span>
-					<Button text label="Add intervention" @click="onAddIntervention" icon="pi pi-plus" size="small" />
-				</span>
+				<span><Button text label="Add intervention" @click="addIntervention" icon="pi pi-plus" size="small" /></span>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
@@ -241,6 +237,10 @@ const initialize = async () => {
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
+
+	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
+		addIntervention();
+	}
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
@@ -295,6 +295,7 @@ const onSelection = (id: string) => {
 };
 
 const onReplacePolicy = (policy: InterventionPolicy) => {
+	if (selectedPolicy.value?.id === policy.id) return;
 	if (isSaved.value) {
 		applyInterventionPolicy(policy);
 	} else {
@@ -308,7 +309,7 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 	}
 };
 
-const onAddIntervention = () => {
+const addIntervention = () => {
 	// by default add the first parameter with a static intervention
 	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
 };
@@ -404,5 +405,16 @@ onMounted(() => {
 <style scoped>
 ul {
 	list-style: none;
+
+	& + span {
+		margin-top: var(--gap-2);
+	}
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	padding: 0 var(--gap);
 }
 </style>
