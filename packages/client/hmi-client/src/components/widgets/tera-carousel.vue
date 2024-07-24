@@ -186,24 +186,21 @@ nav {
 	}
 
 	/* Part of above FIXME
-	& .pi-arrow-left,
-	& .pi-arrow-right {
-		border-radius: 24px;
-		font-size: 10px;
-		opacity: 0;
-		height: 5rem;
+	&.p-button {
 		position: absolute;
 		top: 1.25rem;
+		opacity: 0;
+		height: 5rem;
 		&:hover {
 			opacity: 0.5;
 		}
 	}
 
-	& .pi-arrow-left {
-		left: 0;
+	&.back {
+		left: 8px;
 	}
-	& .pi-arrow-right {
-		right: 0;
-	} */
+	&.forward {
+		right: 8px;
+	}*/
 }
 </style>

@@ -201,9 +201,7 @@ const title = computed(() => {
 	let value = '';
 	if (props.resourceType === ResourceType.XDD) {
 		value =
-			props.source === DocumentSource.XDD
-				? (props.asset as Document).title
-				: ((props.asset as DocumentAsset).name ?? '');
+			props.source === DocumentSource.XDD ? (props.asset as Document).title : (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
 		value = (props.asset as Model).header.name;
 	} else if (props.resourceType === ResourceType.DATASET) {
