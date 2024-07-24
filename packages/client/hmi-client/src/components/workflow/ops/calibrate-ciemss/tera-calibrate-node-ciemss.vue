@@ -107,7 +107,7 @@ const preparedCharts = computed(() => {
 			}
 		});
 
-		const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+		const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 		return createForecastChart(
 			{
