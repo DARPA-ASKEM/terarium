@@ -237,10 +237,6 @@ const initialize = async () => {
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
-
-	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
-		addIntervention();
-	}
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
