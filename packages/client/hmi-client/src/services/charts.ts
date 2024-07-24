@@ -87,7 +87,7 @@ export const createHistogramChart = (dataset: Record<string, any>[], options: Hi
 			range: opts.variables.map((v) => v.color)
 		};
 		return opts.variables.map((varOption) => ({
-			mark: { type: 'bar', width: varOption.width },
+			mark: { type: 'bar', width: varOption.width, tooltip: true },
 			encoding: {
 				x: { bin: { maxbins: maxBins }, field: varOption.field, axis: xaxis, scale: { padding: xPadding } },
 				y: { aggregate: 'count', axis: yaxis },
