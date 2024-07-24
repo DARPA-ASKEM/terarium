@@ -17,6 +17,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { cloneDeep } from 'lodash';
+import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import { InterventionPolicyState } from './tera-intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -31,14 +32,14 @@ watch(
 	() => props.node.inputs,
 	(inputs) => {
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
-		const state = cloneDeep(props.node.state);
+		if (!modelId) return;
 
+		const state = cloneDeep(props.node.state);
 		// Reset previous model cache
 		state.interventionPolicy = {
-			modelId: modelId ?? '',
-			interventions: []
+			modelId,
+			interventions: [blankIntervention]
 		};
-
 		emit('update-state', state);
 	},
 	{ deep: true }

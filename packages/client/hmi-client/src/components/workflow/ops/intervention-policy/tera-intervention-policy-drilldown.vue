@@ -238,10 +238,8 @@ const initialize = async () => {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
 
-	// Auto add - should save after the default intervention is added
 	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
 		addIntervention();
-		saveInterventions();
 	}
 };
 
@@ -325,6 +323,11 @@ const onDeleteIntervention = (index: number) => {
 	// Reassign the updated interventions array back to the transientInterventionPolicy
 	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
 	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
+
+	// If the deleted intervention was the last one, add a new empty one
+	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
+		addIntervention();
+	}
 };
 
 const onChangeName = async (name: string) => {
