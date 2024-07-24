@@ -516,7 +516,7 @@ watch(
 	{ immediate: true }
 );
 
-onMounted(async () => {
+onMounted(() => {
 	buildJupyterContext();
 });
 
