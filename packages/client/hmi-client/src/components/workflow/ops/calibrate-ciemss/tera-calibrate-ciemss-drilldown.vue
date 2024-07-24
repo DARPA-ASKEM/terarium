@@ -368,6 +368,7 @@ const runCalibrate = async () => {
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
+		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
 

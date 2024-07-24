@@ -8,6 +8,7 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
 
+	currentProgress: number;
 	inProgressCalibrationId: string;
 	inProgressPreForecastId: string;
 	inProgressForecastId: string;
@@ -47,6 +48,7 @@ export const CalibrationOperationCiemss: Operation = {
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
+			currentProgress: 0,
 			inProgressPreForecastId: '',
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
