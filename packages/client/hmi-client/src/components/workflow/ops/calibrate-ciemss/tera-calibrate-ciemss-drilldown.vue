@@ -374,13 +374,15 @@ const runCalibrate = async () => {
 
 const messageHandler = (event: ClientEvent<any>) => {
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
-
 	if (drilldownLossPlot.value) {
 		renderLossGraph(drilldownLossPlot.value, lossValues, {
 			width: previewChartWidth.value,
 			height: 120
 		});
 	}
+	const state = props.node.state;
+	state.lossValues = lossValues;
+	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {
@@ -484,6 +486,8 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
+			const state = props.node.state;
+
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(selectedRunId.value);
 			if (simulationObj?.updates) {
@@ -497,9 +501,11 @@ watch(
 						height: 120
 					});
 				}
+
+				state.lossValues = lossValues;
+				emit('update-state', state);
 			}
 
-			const state = props.node.state;
 			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
 			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
 

@@ -1,12 +1,19 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre">
+		<template
+			v-if="
+				!inProgressCalibrationId && runResult && csvAsset && runResultPre && props.node.state.chartConfigs[0]?.length
+			"
+		>
 			<vega-chart
 				v-for="(_config, index) of props.node.state.chartConfigs"
 				:key="index"
 				:are-embed-actions-visible="false"
 				:visualization-spec="preparedCharts[index]"
 			/>
+		</template>
+		<template v-else-if="!props.node.state.chartConfigs[0]?.length && props.node.state.lossValues">
+			<div ref="drilldownLossPlot" class="loss-chart" />
 		</template>
 
 		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%" />
@@ -21,7 +28,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { csvParse, autoType } from 'd3';
-import { computed, watch, ref, shallowRef } from 'vue';
+import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -34,7 +41,7 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelByModelConfigurationId } from '@/services/model';
-import { setupDatasetInput } from '@/services/calibrate-workflow';
+import { renderLossGraph, setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -58,11 +65,40 @@ const runResult = ref<DataArray>([]);
 const runResultPre = ref<DataArray>([]);
 const runResultSummary = ref<DataArray>([]);
 const runResultSummaryPre = ref<DataArray>([]);
+const drilldownLossPlot = ref<HTMLElement>();
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
+
+watch(
+	() => props.node.state.lossValues,
+	async () => {
+		if (props.node.state.lossValues) {
+			// Fetch saved intermediate state
+			if (drilldownLossPlot.value) {
+				renderLossGraph(drilldownLossPlot.value, props.node.state.lossValues, {
+					width: 200,
+					height: 120
+				});
+			}
+		}
+	},
+
+	{ deep: true }
+);
+
+onMounted(() => {
+	if (props.node.active) {
+		if (drilldownLossPlot.value) {
+			renderLossGraph(drilldownLossPlot.value, props.node.state.lossValues, {
+				width: 200,
+				height: 120
+			});
+		}
+	}
+});
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -299,6 +335,23 @@ watch(
 		const state = props.node.state;
 		if (!active) return;
 		if (!state.forecastId) return;
+
+		// Fetch saved intermediate state
+		// if (props.node.active) {
+		// 	const simulationObj = await getSimulation(props.node.active);
+		// 	if (simulationObj?.updates) {
+		// 		const lossValues = simulationObj?.updates.map((d, i) => ({
+		// 			iter: i,
+		// 			loss: d.data.loss
+		// 		}));
+		// 		if (drilldownLossPlot.value) {
+		// 			renderLossGraph(drilldownLossPlot.value, lossValues, {
+		// 				width: 180,
+		// 				height: 120
+		// 			});
+		// 		}
+		// 	}
+		// }
 
 		// Simulates
 		runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
