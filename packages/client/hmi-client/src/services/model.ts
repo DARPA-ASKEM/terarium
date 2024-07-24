@@ -173,6 +173,22 @@ export async function getModelEquation(model: Model): Promise<string> {
 	return latex ?? '';
 }
 
+export const getUnitsFromModelParts = (model: Model) => {
+	const unitMapping: { [key: string]: string } = {
+		_time: model?.semantics?.ode?.time?.units?.expression || ''
+	};
+	[...(model?.model.states ?? []), ...(model?.semantics?.ode?.parameters ?? [])].forEach((v) => {
+		unitMapping[v.id] = v.units?.expression || '';
+	});
+	// Add units for observables
+	(model?.semantics?.ode?.observables || []).forEach((o) => {
+		(o.states ?? []).forEach((s) => {
+			if (!unitMapping[o.id]) unitMapping[o.id] = unitMapping[s] || '';
+		});
+	});
+	return unitMapping;
+};
+
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
 }
