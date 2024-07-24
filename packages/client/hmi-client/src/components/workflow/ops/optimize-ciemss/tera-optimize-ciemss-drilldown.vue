@@ -336,7 +336,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import { getModelVariableUnits } from '@/services/model';
+import { getUnitsFromModelParts } from '@/services/model';
 import {
 	createModelConfiguration,
 	getAsConfiguredModel,
@@ -530,7 +530,7 @@ const showAdditionalOptions = ref(true);
 
 const getUnit = (paramId: string) => {
 	if (!model.value) return '';
-	return getModelVariableUnits(model.value)[paramId] || '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
 };
 
 const onSelection = (id: string) => {

@@ -165,7 +165,7 @@ export async function getModelEquation(model: Model): Promise<string> {
 	return latex ?? '';
 }
 
-export const getModelVariableUnits = (model: Model) => {
+export const getUnitsFromModelParts = (model: Model) => {
 	const modelVariableUnits: { [key: string]: string } = {
 		_time: model?.semantics?.ode?.time?.units?.expression || ''
 	};

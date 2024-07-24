@@ -180,7 +180,7 @@ import { isSaveDatasetDisabled } from '@/components/dataset/utils';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
-import { getModelVariableUnits } from '@/services/model';
+import { getUnitsFromModelParts } from '@/services/model';
 import { logger } from '@/utils/logger';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -510,7 +510,7 @@ onMounted(async () => {
 	const modelConfiguration: ModelConfiguration = await getModelConfigurationById(props.node.inputs[0].value?.[0]);
 	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
 	const model = await getAsConfiguredModel(modelConfiguration);
-	const modelVariableUnits = getModelVariableUnits(model);
+	const modelVariableUnits = getUnitsFromModelParts(model);
 	modelVarUnits.value = modelVariableUnits;
 });
 
