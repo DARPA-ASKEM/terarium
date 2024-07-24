@@ -1,15 +1,20 @@
 <template>
 	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
-			<header class="slider-header content sticky">
-				<i :class="`slider-header-item pi ${directionMap[direction].iconOpen}`" @click="emit('update:isOpen', false)" />
-				<slot name="header"></slot>
-				<section>
-					<h4 class="slider-header-item">{{ header }}</h4>
-					<slot name="subHeader"></slot>
-				</section>
-			</header>
-			<slot name="content"></slot>
+			<aside class="panel-container" @scroll="onScroll">
+				<header class="slider-header content sticky" :class="{ 'header-shadow': isScrolled }">
+					<i
+						:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
+						@click="emit('update:isOpen', false)"
+					/>
+					<slot name="header"></slot>
+					<section>
+						<h4 class="slider-header-item">{{ header }}</h4>
+						<slot name="subHeader"></slot>
+					</section>
+				</header>
+				<slot name="content"></slot>
+			</aside>
 		</template>
 		<template v-slot:tab>
 			<div :class="`slider-tab-header ${direction}`">
@@ -29,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Badge from 'primevue/badge';
 import TeraSlider from './tera-slider.vue';
 
@@ -73,9 +79,20 @@ const directionMap = {
 		iconClosed: 'pi-angle-double-left'
 	}
 };
+
+/* This is for adding a subtle shadow to the header when the panel is scrolled */
+const isScrolled = ref(false);
+const onScroll = (event: Event) => {
+	// Check if the panel is scrolled beyond a certain point
+	isScrolled.value = (event.target as HTMLElement).scrollTop > 0;
+};
 </script>
 
 <style scoped>
+.panel-container {
+	height: 100%;
+	overflow-y: auto;
+}
 i {
 	font-size: 1.25rem;
 	cursor: pointer;
@@ -84,6 +101,10 @@ i {
 .slider-header {
 	display: flex;
 	align-items: start;
+}
+
+.header-shadow {
+	box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 section {
