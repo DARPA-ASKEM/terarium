@@ -4,6 +4,8 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+export const NUMBER_FORMAT = '.3~s';
+
 export interface ForecastChartOptions {
 	legend: boolean;
 	translationMap?: Record<string, string>;
@@ -23,6 +25,102 @@ export interface ForecastChartLayer {
 	timeField: string;
 	groupField?: string;
 }
+
+export interface HistogramChartOptions {
+	title: string;
+	width: number;
+	height: number;
+	xAxisTitle: string;
+	yAxisTitle: string;
+	maxBins?: number;
+	variables: { field: string; label?: string; width: number; color: string }[];
+}
+
+export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
+	const maxBins = options.maxBins ?? 10;
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const barMinGapWidth = 4;
+	const xDiff = 32; // Diff between inner chart content width and the outer box width
+	const maxBarWidth = Math.max(...options.variables.map((v) => v.width));
+	const reaminingXSpace = options.width - xDiff - maxBins * (maxBarWidth + barMinGapWidth);
+	const xPadding = reaminingXSpace < 0 ? barMinGapWidth : reaminingXSpace / 2;
+
+	const xaxis = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle || '';
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: 'horizontal',
+		symbolStrokeWidth: 4,
+		symbolSize: 200,
+		labelFontSize: 12,
+		labelOffset: 4
+	};
+
+	const createLayers = (opts) => {
+		const colorScale = {
+			domain: opts.variables.map((v) => v.label ?? v.field),
+			range: opts.variables.map((v) => v.color)
+		};
+		const bin = { maxbins: maxBins };
+		const aggregate = 'count';
+		return opts.variables.map((varOption) => ({
+			mark: { type: 'bar', width: varOption.width, tooltip: true },
+			encoding: {
+				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding } },
+				y: { aggregate, axis: yaxis },
+				color: {
+					legend: { ...legendProperties },
+					type: 'nominal',
+					datum: varOption.label ?? varOption.field,
+					scale: colorScale
+				},
+				tooltip: [
+					{ bin, field: varOption.field, title: varOption.field },
+					{ aggregate, type: 'quantitative', title: yaxis.title }
+				]
+			}
+		}));
+	};
+
+	const spec = {
+		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		title: titleObj,
+		width: options.width,
+		height: options.height,
+		autosize: { type: 'fit' },
+		data: { values: dataset },
+		layer: createLayers(options),
+		config: {
+			font: globalFont
+		}
+	};
+	return spec;
+};
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
@@ -73,7 +171,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.format = '.3s';
+	yaxis.format = NUMBER_FORMAT;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -84,17 +182,20 @@ export const createForecastChart = (
 		labelExpr += " 'other'";
 	}
 
+	const isCompact = options.width < 200;
+
 	const legendProperties = {
 		title: null,
 		padding: { value: 0 },
 		strokeColor: null,
 		orient: 'top',
-		direction: 'horizontal',
+		direction: isCompact ? 'vertical' : 'horizontal',
 		columns: Math.floor(options.width / 100),
-		symbolStrokeWidth: 4,
+		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: 12,
-		labelOffset: 4
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150
 	};
 
 	// Start building
@@ -105,7 +206,7 @@ export const createForecastChart = (
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 		config: {
 			font: globalFont
@@ -213,7 +314,7 @@ export const createForecastChart = (
 			const tip: any = {
 				field: d,
 				type: 'quantitative',
-				format: '.4f'
+				format: NUMBER_FORMAT
 			};
 
 			if (options.translationMap && options.translationMap[d]) {
@@ -236,8 +337,8 @@ export const createForecastChart = (
 };
 
 /// /////////////////////////////////////////////////////////////////////////////
+// Optimize charts
 /// /////////////////////////////////////////////////////////////////////////////
-
 export interface OptimizeChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
@@ -357,7 +458,7 @@ export function createOptimizeChart(
 					y: {
 						field: 'start',
 						type: 'quantitative',
-						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all times`
+						title: `${isMinimized ? 'Max' : 'Min'} value of ${targetVariable} at all timepoints`
 					},
 					y2: { field: 'end' },
 					x: {
@@ -372,7 +473,8 @@ export function createOptimizeChart(
 						scale: {
 							domain: ['out', 'in'],
 							range: ['#FFAB00', '#1B8073']
-						}
+						},
+						legend: { labelExpr: 'datum.value === "in" ? "passing" : "failing"' }
 					}
 				}
 			},
@@ -439,13 +541,32 @@ function createStatisticLayer(
 	const tooltipContent = statisticalVariables?.map((d) => ({
 		field: d,
 		type: 'quantitative',
-		format: '.4f'
+		format: NUMBER_FORMAT
 	}));
+
+	const isCompact = options.width < 200;
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		columns: Math.floor(options.width / 100),
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelExpr: "datum.label === 'before' ? 'Before optimization' : 'After optimization'"
+	};
 
 	const layerSpec: any = {
 		mark: { type: 'line' },
 		data: { values: data },
 		transform: [
+			{
+				calculate: isPreStatistic ? '"before"' : '"after"',
+				as: 'type'
+			},
 			{
 				fold: statisticalVariables,
 				as: ['stat_variable', 'stat_value']
@@ -455,22 +576,14 @@ function createStatisticLayer(
 			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
 			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
 			color: {
-				field: 'stat_variable',
+				field: 'type',
 				type: 'nominal',
 				scale: {
-					domain: statisticalVariables,
-					range: [isPreStatistic ? '#AAB3C6' : '#1B8073']
+					domain: ['before', 'after'],
+					range: ['#AAB3C6', '#1B8073']
 				},
-				legend: options.legend
-					? {
-							title: null,
-							orient: 'top',
-							direction: 'horizontal',
-							labelExpr: isPreStatistic
-								? 'datum.value ? "Before Optimization" : ""'
-								: 'datum.value ? "After Optimization" : ""'
-						}
-					: null
+				// we only want to render a legend for the first statistic layer
+				legend: options.legend && isPreStatistic ? legendProperties : null
 			},
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 3.5 },
@@ -517,6 +630,7 @@ function createSampleLayer(
 		}
 	};
 }
+
 export const createOptimizeForecastChart = (
 	preSampleRunData: Record<string, any>[],
 	preStatisticData: Record<string, any>[],
@@ -537,7 +651,7 @@ export const createOptimizeForecastChart = (
 			}
 		: null;
 
-	const xaxis = {
+	const xaxis: any = {
 		domainColor: axisColor,
 		tickColor: { value: axisColor },
 		labelColor: { value: labelColor },
@@ -548,6 +662,7 @@ export const createOptimizeForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+	yaxis.format = NUMBER_FORMAT;
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
@@ -556,7 +671,7 @@ export const createOptimizeForecastChart = (
 		width: options.width,
 		height: options.height,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 
 		// layers
@@ -602,7 +717,7 @@ export const createInterventionChart = (interventionsData: { name: string; value
 		$schema: VEGALITE_SCHEMA,
 		width: 400,
 		autosize: {
-			type: 'fit'
+			type: 'fit-x'
 		},
 		layer: []
 	};

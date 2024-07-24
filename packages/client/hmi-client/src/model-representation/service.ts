@@ -6,7 +6,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached, parseCurie } from '@/services/concept';
+import { parseCurie } from '@/services/concept';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContextKeys, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -29,68 +29,6 @@ export const getVariable = (miraModel: MiraModel, variableName: string) => {
 		};
 	}
 	throw new Error(`${variableName} not found`);
-};
-
-export const updateVariable = (
-	amr: Model,
-	variableType: string,
-	variableName: string,
-	value: any,
-	valueMathML: string
-) => {
-	const schemaName = amr.header.schema_name;
-	console.log('updating regnet variable', variableName, schemaName);
-
-	// ======== PETRINET =======
-	if (schemaName === 'petrinet' && amr.semantics?.ode) {
-		const ode = amr.semantics.ode;
-
-		if (variableType === 'initials') {
-			const obj = ode.initials?.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-		if (variableType === 'parameters') {
-			const obj = ode.parameters?.find((d) => d.id === variableName);
-			if (obj) {
-				obj.value = +value;
-			}
-		}
-		if (variableType === 'rates') {
-			const obj = ode.rates?.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-	}
-
-	// ======== REGNET =======
-	if (schemaName === 'regnet') {
-		if (variableType === 'initials') {
-			const obj = amr.model.vertices.find((d) => d.id === variableName);
-			if (obj) {
-				obj.initial = value;
-			}
-		}
-		if (variableType === 'parameters') {
-			const obj = amr.model.parameters.find((d) => d.id === variableName);
-			if (obj) {
-				obj.value = value;
-			}
-		}
-		if (variableType === 'rates') {
-			const obj = amr.semantics?.ode.rates.find((d) => d.target === variableName);
-			if (obj) {
-				obj.expression = value;
-				obj.expression_mathml = valueMathML;
-			}
-		}
-	}
-
-	// FIXME: stocknflow
 };
 
 export const getModelRenderer = (
@@ -192,20 +130,6 @@ export function getParameter(model: Model, parameterId: string): ModelParameter 
 	}
 }
 
-export function setParameters(model: Model, parameters: ModelParameter[]) {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			model.model.parameters = parameters;
-			break;
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			if (model.semantics) model.semantics.ode.parameters = parameters;
-			break;
-	}
-}
-
 export function updateModelPartProperty(modelPart: any, key: string, value: any) {
 	if (key === 'unitExpression') {
 		if (!modelPart.units) modelPart.units = { expression: '', expression_mathml: '' };
@@ -287,30 +211,15 @@ export function getInitialMetadata(model: Model, target: string) {
 }
 
 export function getInitialName(model: Model, target: string): string {
-	return getInitialMetadata(model, target)?.name ?? '';
+	return model.model.states.find((s) => s.id === target)?.name ?? '';
 }
 
 export function getInitialDescription(model: Model, target: string): string {
-	return getInitialMetadata(model, target)?.description ?? '';
+	return model.model.states.find((s) => s.id === target)?.description ?? '';
 }
 
 export function getInitialUnits(model: Model, target: string): string {
-	return getInitialMetadata(model, target)?.units?.expression ?? '';
-}
-
-export async function getInitialConcept(model: Model, target: string): Promise<string> {
-	const identifiers = getInitialMetadata(model, target)?.concept?.grounding?.identifiers;
-	return getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-}
-
-/**
- * Retrieves the metadata for a specific parameter in the model.
- * @param {Model} model - The model object.
- * @param {string} parameterId - The ID of the parameter.
- * @returns {any} - The metadata for the specified parameter or undefined if not found.
- */
-export function getParameterMetadata(model: Model, parameterId: string) {
-	return model.metadata?.parameters?.[parameterId];
+	return model.model.states.find((s) => s.id === target)?.units?.expression ?? '';
 }
 
 /**
@@ -328,40 +237,6 @@ export function getInitials(model: Model): Initial[] {
 		default:
 			return model.semantics?.ode?.initials ?? [];
 	}
-}
-
-/**
- * Returns the model initial with the specified ID.
- * @param {Model} model - The model object.
- * @param {string} target - The target of the initial.
- * @returns {Initial | null} - The model initial or null if not found.
- */
-export function getInitial(model: Model, target: string): Initial | undefined {
-	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.REGNET:
-			return model.model?.vertices.find((i) => i.id === target);
-		case AMRSchemaNames.PETRINET:
-		case AMRSchemaNames.STOCKFLOW:
-		default:
-			return model.semantics?.ode?.initials?.find((i) => i.target === target);
-	}
-}
-
-// cleans a model by removing distributions that are not needed
-export function cleanModel(model: Model): void {
-	const parameters: ModelParameter[] = getParameters(model);
-
-	parameters.forEach((p) => {
-		const max = parseFloat(p.distribution?.parameters.maximum);
-		const min = parseFloat(p.distribution?.parameters.minimum);
-
-		// we delete the distribution when there is partial/no distribution
-
-		if (Number.isNaN(max) || Number.isNaN(min)) {
-			delete p.distribution;
-		}
-	});
 }
 
 export function isModelMissingMetadata(model: Model): boolean {

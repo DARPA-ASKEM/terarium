@@ -213,7 +213,7 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				:class="{ 'failed-run': optimizationResult.success === 'False' }"
+				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
@@ -336,6 +336,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import { getUnitsFromModelParts } from '@/services/model';
 import {
 	createModelConfiguration,
 	getAsConfiguredModel,
@@ -354,6 +355,7 @@ import {
 	Intervention,
 	InterventionPolicy,
 	ModelConfiguration,
+	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss
@@ -515,13 +517,21 @@ const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 const optimizeRequestPayload = ref<any>('');
 
-const modelParameterOptions = ref<string[]>([]);
+const model = ref<Model | null>(null);
+const modelParameterOptions = computed<string[]>(() =>
+	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
+);
 const modelStateAndObsOptions = ref<string[]>([]);
 
 const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
+
+const getUnit = (paramId: string) => {
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
+};
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -574,7 +584,8 @@ const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = await getAsConfiguredModel(modelConfiguration.value);
+	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
+	model.value = await getAsConfiguredModel(modelConfiguration.value);
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
@@ -582,8 +593,7 @@ const initialize = async () => {
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
-	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
-	modelStateAndObsOptions.value = model?.model.states.map((state: any) => state.id);
+	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
 
 	/** Until supported by pyciemss-service, do not show observables.
 	if (model?.semantics?.ode.observables) {
@@ -620,6 +630,8 @@ const runOptimize = async () => {
 		logger.error('no model config id provided');
 		return;
 	}
+
+	setOutputSettingDefaults();
 
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
@@ -711,6 +723,29 @@ const runOptimize = async () => {
 	state.optimizationRunId = '';
 	state.inProgressPostForecastId = '';
 	emit('update-state', state);
+};
+
+const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
+	if (!knobs.value.selectedInterventionVariables.length) {
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
 };
 
 const saveModelConfiguration = async () => {
@@ -826,8 +861,8 @@ const preparedInterventionsCharts = computed(() => {
 				legend: true,
 				groupField: 'sample_id',
 				timeField: 'timepoint_id',
-				xAxisTitle: 'Time',
-				yAxisTitle: variable,
+				xAxisTitle: getUnit('_time') || 'Time',
+				yAxisTitle: getUnit(variable) || variable,
 				title: variable
 			}
 		)
@@ -852,8 +887,8 @@ const preparedCharts = computed(() => {
 			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: variable,
+			xAxisTitle: getUnit('_time') || 'Time',
+			yAxisTitle: getUnit(variable) || variable,
 			title: variable
 		})
 	);
@@ -925,10 +960,16 @@ watch(
 	flex-grow: 1;
 }
 
-.failed-run {
+:deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
 	color: var(--error-color-text);
+}
+
+.successful-run {
+	border: none;
+	border-radius: none;
+	color: none;
 }
 
 .form-section {
