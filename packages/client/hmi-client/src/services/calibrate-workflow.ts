@@ -1,9 +1,9 @@
 import * as d3 from 'd3';
 
-import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
-import { getAsConfiguredModel, getModelConfigurationById, getObservables } from '@/services/model-configurations';
+import type { Dataset, CsvAsset } from '@/types/Types';
+import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { getUnitsFromModelParts } from '@/services/model';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -14,11 +14,13 @@ export interface CalibrateMap {
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
-		const model = await getAsConfiguredModel(modelConfiguration);
+		const [modelConfiguration, model] = await Promise.all([
+			getModelConfigurationById(modelConfigId),
+			getModelByModelConfigurationId(modelConfigId)
+		]);
 
-		const modelVariableUnits = getUnitsFromModelParts(model);
+		const modelVariableUnits = !model ? {} : getUnitsFromModelParts(model);
+
 		const modelOptions: any[] = model?.model.states;
 
 		getObservables(modelConfiguration).forEach((o) => {
