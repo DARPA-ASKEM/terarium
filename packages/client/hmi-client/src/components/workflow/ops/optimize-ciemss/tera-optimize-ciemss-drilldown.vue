@@ -247,7 +247,8 @@
 					</template>
 				</SelectButton>
 				<tera-notebook-error v-bind="node.state.optimizeErrorMessage" />
-				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
+				<tera-notebook-error v-bind="node.state.preSimulateErrorMessage" />
+				<tera-notebook-error v-bind="node.state.postSimulateErrorMessage" />
 				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId]">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="[0, 1, 2]">
