@@ -253,21 +253,21 @@
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="`success_criteria_${key}`">
+									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
 										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="`intervention_${key}`">
+									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
 										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="`simulation_${key}`">
+									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
 										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
 									</li>
 								</ul>
