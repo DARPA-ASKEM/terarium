@@ -20,13 +20,14 @@
 				<li v-if="isNumeric && itemCount > 5">(+{{ itemCount }})</li>
 			</ul>
 		</nav>
+		<!-- FIXME: If we are going to use this consider making the chevron navigations work (they should positioned properly)
 		<Button
 			v-if="itemCount > 1"
 			text
 			severity="secondary"
 			icon="pi pi-chevron-left"
 			@click.stop="move(currentPage - 1)"
-			class="go-back"
+			class="back"
 		/>
 		<Button
 			v-if="itemCount > 1"
@@ -34,15 +35,15 @@
 			severity="secondary"
 			icon="pi pi-chevron-right"
 			@click.stop="move(currentPage + 1)"
-			class="go-forward"
-		/>
+			class="forward"
+		/> -->
 	</figure>
 </template>
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, onMounted, useSlots } from 'vue';
-import Button from 'primevue/button';
+// import Button from 'primevue/button';
 
 defineProps({
 	height: {
@@ -184,17 +185,17 @@ nav {
 		}
 	}
 
-	/* May be potentially used later */
+	/* Part of above FIXME
 	& .pi-arrow-left,
 	& .pi-arrow-right {
 		border-radius: 24px;
-		/* font-size: 10px; */
-		/* opacity: 0; */
-		/* height: 5rem; */
+		font-size: 10px;
+		opacity: 0;
+		height: 5rem;
 		position: absolute;
 		top: 1.25rem;
 		&:hover {
-			/* opacity: 0.5; */
+			opacity: 0.5;
 		}
 	}
 
@@ -203,6 +204,6 @@ nav {
 	}
 	& .pi-arrow-right {
 		right: 0;
-	}
+	} */
 }
 </style>
