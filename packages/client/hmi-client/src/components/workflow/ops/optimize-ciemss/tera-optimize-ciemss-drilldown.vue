@@ -325,6 +325,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import { getUnitsFromModelParts } from '@/services/model';
 import {
 	createModelConfiguration,
 	getAsConfiguredModel,
@@ -516,10 +517,9 @@ const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
 
-const timeUnit = computed(() => model.value?.semantics?.ode?.time?.units?.expression);
 const getUnit = (paramId: string) => {
-	const param = (model.value?.semantics?.ode?.parameters ?? []).find((p) => p.id === paramId);
-	return param?.units?.expression;
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
 };
 
 const onSelection = (id: string) => {
@@ -872,8 +872,8 @@ const preparedInterventionsCharts = computed(() => {
 				legend: true,
 				groupField: 'sample_id',
 				timeField: 'timepoint_id',
-				xAxisTitle: timeUnit.value ?? 'Time',
-				yAxisTitle: getUnit(variable) ?? variable,
+				xAxisTitle: getUnit('_time') || 'Time',
+				yAxisTitle: getUnit(variable) || variable,
 				title: variable
 			}
 		)
@@ -898,8 +898,8 @@ const preparedCharts = computed(() => {
 			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: timeUnit.value ?? 'Time',
-			yAxisTitle: getUnit(variable) ?? variable,
+			xAxisTitle: getUnit('_time') || 'Time',
+			yAxisTitle: getUnit(variable) || variable,
 			title: variable
 		})
 	);

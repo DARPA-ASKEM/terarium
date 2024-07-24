@@ -9,6 +9,7 @@
 		/>
 		<vega-chart :visualization-spec="spec2" />
 		<vega-chart :visualization-spec="specNew" />
+		<vega-chart :visualization-spec="specHistogram" />
 	</div>
 </template>
 
@@ -17,7 +18,7 @@ import { debounce } from 'lodash';
 import { ref, onMounted } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import unchartedVegaTheme from './vega-theme';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart } from '@/services/charts';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -243,6 +244,34 @@ function generateSimulateData() {
 	}
 	return { data, summary, truth };
 }
+const generateHistogramChartData = () => {
+	const data: { varA: number; varB: number }[] = [];
+	const numSamples = 100;
+
+	for (let i = 0; i < numSamples; i++) {
+		const point = {
+			varA: Math.random() * 0.7 + 0.2,
+			varB: Math.random() * 0.7 + 0.2
+		};
+		data.push(point);
+	}
+	return data;
+};
+
+const specHistogram = ref<any>(
+	createHistogramChart(generateHistogramChartData(), {
+		title: 'Kappa',
+		width: 720,
+		height: 250,
+		xAxisTitle: 'Kappa',
+		yAxisTitle: 'Count',
+		maxBins: 10,
+		variables: [
+			{ field: 'varA', label: 'Before calibration', width: 54, color: '#AAB3C6' },
+			{ field: 'varB', label: 'After calibration', width: 24, color: '#1B8073' }
+		]
+	})
+);
 
 onMounted(async () => {
 	// Test
