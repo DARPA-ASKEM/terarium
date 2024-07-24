@@ -9,7 +9,7 @@
 			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
 				<template #content>
 					<section>
-						<div class="filter"><tera-input v-model="filterInterventionsText" placeholder="Filter" /></div>
+						<tera-input v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
