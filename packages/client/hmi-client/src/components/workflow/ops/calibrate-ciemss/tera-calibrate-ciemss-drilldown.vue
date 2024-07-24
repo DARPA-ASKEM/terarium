@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 	>
-		<section :tabName="CalibrateTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
@@ -82,7 +82,7 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<section :tabName="CalibrateTabs.Notebook">
+		<section :tabName="DrilldownTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
 
@@ -173,6 +173,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import type { Model } from '@/types/Types';
+import { DrilldownTabs } from '@/types/common';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -181,11 +182,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['close', 'select-output', 'update-state']);
 const toast = useToastService();
-
-enum CalibrateTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelStateOptions = ref<any[] | undefined>();

@@ -6,7 +6,7 @@
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
 	>
-		<section :tabName="SimulateTabs.Wizard" class="ml-4 mr-2 pt-3">
+		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
 				<template #header-controls-left>
 					<h5>Set simulation parameters</h5>
@@ -22,7 +22,7 @@
 						<Dropdown
 							v-model="presetType"
 							placeholder="Select an option"
-							:options="[PresetTypes.Fast, PresetTypes.Normal]"
+							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
 							@update:model-value="setPresetValues"
 						/>
 					</div>
@@ -60,7 +60,7 @@
 				</div>
 			</tera-drilldown-section>
 		</section>
-		<tera-drilldown-section :tabName="SimulateTabs.Notebook" class="notebook-section">
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
 			<div class="toolbar">
 				<tera-notebook-jupyter-input
 					:kernel-manager="kernelManager"
@@ -185,6 +185,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -209,19 +210,9 @@ const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
 const ciemssMethodOptions = ref(['dopri5', 'euler']);
 
-enum SimulateTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-
 enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
-}
-
-enum PresetTypes {
-	Fast = 'Fast',
-	Normal = 'Normal'
 }
 
 const speedValues = {
@@ -288,10 +279,10 @@ const outputs = computed(() => {
 
 const presetType = computed(() => {
 	if (numSamples.value === speedValues.numSamples && method.value === speedValues.method) {
-		return PresetTypes.Fast;
+		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityValues.numSamples && method.value === qualityValues.method) {
-		return PresetTypes.Normal;
+		return CiemssPresetTypes.Normal;
 	}
 
 	return '';
@@ -308,13 +299,13 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 	emit('update-state', state);
 });
 
-const setPresetValues = (data: PresetTypes) => {
+const setPresetValues = (data: CiemssPresetTypes) => {
 	console.log(data);
-	if (data === PresetTypes.Normal) {
+	if (data === CiemssPresetTypes.Normal) {
 		numSamples.value = qualityValues.numSamples;
 		method.value = qualityValues.method;
 	}
-	if (data === PresetTypes.Fast) {
+	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedValues.numSamples;
 		method.value = speedValues.method;
 	}

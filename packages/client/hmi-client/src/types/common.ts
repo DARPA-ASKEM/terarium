@@ -25,6 +25,11 @@ export enum DrilldownTabs {
 	Notebook = 'Notebook'
 }
 
+export enum CiemssPresetTypes {
+	Fast = 'Fast',
+	Normal = 'Normal'
+}
+
 export enum ParamType {
 	CONSTANT,
 	DISTRIBUTION,
