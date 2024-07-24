@@ -56,7 +56,9 @@
 							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
 						</div>
 					</div>
+					<!--
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
+					-->
 				</div>
 			</tera-drilldown-section>
 		</section>
@@ -185,6 +187,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -197,8 +200,7 @@ const model = ref<Model | null>(null);
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
-const inferredParameters = computed(() => props.node.inputs[1].value);
-const policyInterventionId = computed(() => props.node.inputs[2].value);
+const policyInterventionId = computed(() => props.node.inputs[1].value);
 
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const llmThoughts = ref<any[]>([]);
@@ -393,9 +395,15 @@ const makeForecastRequest = async () => {
 		engine: 'ciemss'
 	};
 
-	if (inferredParameters.value?.[0]) {
-		payload.extra.inferred_parameters = inferredParameters.value[0];
+	const modelConfig = await getModelConfigurationById(modelConfigId);
+	if (modelConfig.simulationId) {
+		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
+
+	// if (inferredParameters.value?.[0]) {
+	// 	payload.extra.inferred_parameters = inferredParameters.value[0];
+	// }
+
 	if (policyInterventionId.value?.[0]) {
 		payload.policyInterventionId = policyInterventionId.value[0];
 	}

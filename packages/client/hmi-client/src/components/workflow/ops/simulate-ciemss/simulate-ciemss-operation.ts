@@ -26,12 +26,6 @@ export const SimulateCiemssOperation: Operation = {
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		},
-		{
 			type: 'policyInterventionId',
 			label: 'Interventions',
 			acceptMultiple: false,

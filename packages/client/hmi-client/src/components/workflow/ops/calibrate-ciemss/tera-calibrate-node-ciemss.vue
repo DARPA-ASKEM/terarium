@@ -39,10 +39,11 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset, SimulationRequest, Model } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { createModelConfiguration } from '@/services/model-configurations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -273,11 +274,24 @@ watch(
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
 
-			const portLabel = props.node.inputs[0].label;
+			const parentModel = await getModelByModelConfigurationId(modelConfigId.value as string);
+			const calibratedModelConfig: ModelConfiguration = {
+				name: 'Calibrated configuration',
+				description: 'Calibrated configuration',
+				simulationId: state.calibrationId,
+				modelId: parentModel?.id as string,
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
+			};
+
+			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
+
+			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
-				type: 'calibrateSimulationId',
-				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId],
+				type: 'modelConfigId',
+				label: nodeOutputLabel(props.node, `Calibration Result`),
+				value: [modelConfigResponse.id],
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
