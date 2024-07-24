@@ -842,7 +842,7 @@ const preparedSuccessCriteriaCharts = computed(() => {
 				height: chartSize.value.height,
 				xAxisTitle: 'Number of samples',
 				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
-				legend: false
+				legend: true
 			}
 		)
 	);

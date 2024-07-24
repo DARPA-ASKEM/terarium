@@ -256,7 +256,6 @@ export interface BaseChartOptions {
 export interface OptimizeChartOptions extends BaseChartOptions {
 	variables?: string[];
 	statisticalVariables?: string[];
-	translationMap?: Record<string, string>;
 	timeField: string;
 	groupField: string;
 }
@@ -351,9 +350,14 @@ export function createSuccessCriteriaChart(
 							domain: ['fail', 'pass', 'best'],
 							range: ['#B00020', '#FFAB00', '#1B8073']
 						},
-						legend: {
-							labelExpr: `datum.label === "fail" ? "Failing" : datum.label === "pass" ? "Passing" : "Best ${alpha}%"`
-						}
+						legend: options.legend
+							? {
+									title: null,
+									orient: 'top',
+									direction: 'horizontal',
+									labelExpr: `datum.label === "fail" ? "Failing" : datum.label === "pass" ? "Passing" : "Best ${alpha}%"`
+								}
+							: null
 					}
 				}
 			},
@@ -395,10 +399,7 @@ export function createSuccessCriteriaChart(
 					y: { datum: +risk }
 				}
 			}
-		],
-		config: {
-			legend: { title: null, orient: 'top', direction: 'horizontal' }
-		}
+		]
 	};
 }
 
