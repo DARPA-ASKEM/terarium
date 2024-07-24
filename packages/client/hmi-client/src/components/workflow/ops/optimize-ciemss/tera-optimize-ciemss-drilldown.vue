@@ -325,12 +325,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import { getUnitsFromModelParts } from '@/services/model';
-import {
-	createModelConfiguration,
-	getAsConfiguredModel,
-	getModelConfigurationById
-} from '@/services/model-configurations';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -572,9 +568,12 @@ const formatJsonValue = (value) => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
-	model.value = await getAsConfiguredModel(modelConfiguration.value);
+	const results = await Promise.all([
+		getModelConfigurationById(modelConfigurationId),
+		getModelByModelConfigurationId(modelConfigurationId)
+	]);
+	modelConfiguration.value = results[0];
+	model.value = results[1];
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
