@@ -1,7 +1,7 @@
 <template>
 	<tera-slider :content-width="contentWidth" :tab-width="tabWidth" :direction="direction" :is-open="isOpen">
 		<template v-slot:content>
-			<div class="panel-container" @scroll="onScroll">
+			<aside class="panel-container" @scroll="onScroll">
 				<header class="slider-header content sticky" :class="{ 'header-shadow': isScrolled }">
 					<i
 						:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
@@ -14,7 +14,7 @@
 					</section>
 				</header>
 				<slot name="content"></slot>
-			</div>
+			</aside>
 		</template>
 		<template v-slot:tab>
 			<div :class="`slider-tab-header ${direction}`">
