@@ -56,7 +56,7 @@
 							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
 						</div>
 					</div>
-					<!--
+					<!-- FIXME: show sampled values ???
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
 					-->
 				</div>
@@ -397,10 +397,6 @@ const makeForecastRequest = async () => {
 	if (modelConfig.simulationId) {
 		payload.extra.inferred_parameters = modelConfig.simulationId;
 	}
-
-	// if (inferredParameters.value?.[0]) {
-	// 	payload.extra.inferred_parameters = inferredParameters.value[0];
-	// }
 
 	if (policyInterventionId.value?.[0]) {
 		payload.policyInterventionId = policyInterventionId.value[0];
