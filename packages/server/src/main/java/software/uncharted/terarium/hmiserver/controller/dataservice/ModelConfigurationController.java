@@ -202,8 +202,11 @@ public class ModelConfigurationController {
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
-			ModelConfigurationService.createAMRFromConfiguration(model.get(), modelConfiguration.get());
-			return ResponseEntity.ok(model.get());
+			final Model newModel = ModelConfigurationService.createAMRFromConfiguration(
+				model.get(),
+				modelConfiguration.get()
+			);
+			return ResponseEntity.ok(newModel);
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
