@@ -120,7 +120,7 @@
 
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
-					<p>Processing...</p>
+					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
 
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />

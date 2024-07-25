@@ -10,7 +10,7 @@
 		</template>
 
 		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
-			<div>{{ props.node.state.currentProgress }}</div>
+			<div>{{ props.node.state.currentProgress }}%</div>
 		</tera-progress-spinner>
 
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -263,7 +263,9 @@ watch(
 
 		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
+			if (state.chartConfigs.length === 0) {
+				state.chartConfigs = [[]];
+			}
 			state.forecastId = state.inProgressForecastId;
 			state.preForecastId = state.inProgressPreForecastId;
 
