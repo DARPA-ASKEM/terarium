@@ -1,19 +1,20 @@
 <template>
-	<Transition name="modal">
-		<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
-			<section>
-				<header>
-					<slot name="header" />
-				</header>
-				<section class="content"><slot /></section>
-				<section><slot name="math-editor" /></section>
-				<footer>
-					<slot name="footer" />
-				</footer>
-			</section>
-			<aside @click.self="emit('modal-mask-clicked')" />
-		</main>
-	</Transition>
+	<Teleport to="body">
+		<Transition name="modal">
+			<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
+				<section>
+					<header>
+						<slot name="header" />
+					</header>
+					<section class="content"><slot /></section>
+					<section><slot name="math-editor" /></section>
+					<footer>
+						<slot name="footer" />
+					</footer>
+				</section>
+				<aside @click.self="emit('modal-mask-clicked')" />
+			</main> </Transition
+	></Teleport>
 </template>
 
 <script setup lang="ts">

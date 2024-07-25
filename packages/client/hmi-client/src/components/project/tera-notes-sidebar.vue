@@ -71,26 +71,24 @@
 			label="Add note"
 			class="p-button-text p-button-flat"
 		/>
-		<Teleport to="body">
-			<tera-modal
-				v-if="isDeleteNoteModal"
-				@modal-mask-clicked="isDeleteNoteModal = false"
-				class="remove-modal"
-				@modal-enter-press="deleteNote"
-			>
-				<template #header>
-					<h4>Delete note</h4>
-				</template>
-				<template #default>
-					<p>Are you sure you want to delete the following note?</p>
-					<p class="note-to-delete">{{ annotations[selectedNoteIndex].content }}</p>
-				</template>
-				<template #footer>
-					<Button label="Delete" class="p-button-danger" @click="deleteNote()" />
-					<Button label="Cancel" class="p-button-secondary" @click="isDeleteNoteModal = false" />
-				</template>
-			</tera-modal>
-		</Teleport>
+		<tera-modal
+			v-if="isDeleteNoteModal"
+			@modal-mask-clicked="isDeleteNoteModal = false"
+			class="remove-modal"
+			@modal-enter-press="deleteNote"
+		>
+			<template #header>
+				<h4>Delete note</h4>
+			</template>
+			<template #default>
+				<p>Are you sure you want to delete the following note?</p>
+				<p class="note-to-delete">{{ annotations[selectedNoteIndex].content }}</p>
+			</template>
+			<template #footer>
+				<Button label="Delete" class="p-button-danger" @click="deleteNote()" />
+				<Button label="Cancel" class="p-button-secondary" @click="isDeleteNoteModal = false" />
+			</template>
+		</tera-modal>
 	</main>
 </template>
 

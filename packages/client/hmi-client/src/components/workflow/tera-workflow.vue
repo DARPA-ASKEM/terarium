@@ -144,19 +144,17 @@
 		</template>
 	</tera-infinite-canvas>
 	<tera-progress-spinner v-else :font-size="2" is-centered />
-	<Teleport to="body">
-		<component
-			v-if="dialogIsOpened && currentActiveNode"
-			:is="registry.getDrilldown(currentActiveNode.operationType)"
-			:node="currentActiveNode"
-			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
-			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
-			@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
-			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@close="addOperatorToRoute(null)"
-			@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
-		/>
-	</Teleport>
+	<component
+		v-if="dialogIsOpened && currentActiveNode"
+		:is="registry.getDrilldown(currentActiveNode.operationType)"
+		:node="currentActiveNode"
+		@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+		@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
+		@update-status="(event: any) => updateWorkflowNodeStatus(currentActiveNode, event)"
+		@select-output="(event: any) => selectOutput(currentActiveNode, event)"
+		@close="addOperatorToRoute(null)"
+		@update-output-port="(event: any) => updateOutputPort(currentActiveNode, event)"
+	/>
 </template>
 
 <script setup lang="ts">

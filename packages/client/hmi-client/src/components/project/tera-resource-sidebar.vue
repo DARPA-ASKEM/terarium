@@ -120,29 +120,27 @@
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
 		</div>
 
-		<Teleport to="body">
-			<tera-modal
-				v-if="isRemovalModal"
-				@modal-mask-clicked="isRemovalModal = false"
-				class="remove-modal"
-				@modal-enter-press="removeAsset"
-			>
-				<template #header>
-					<h4>Confirm remove</h4>
-				</template>
-				<template #default>
-					<p>
-						Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
-						<em>{{ useProjects().activeProject.value?.name }}</em
-						>.
-					</p>
-				</template>
-				<template #footer>
-					<Button label="Remove" class="p-button-danger" @click="removeAsset" />
-					<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
-				</template>
-			</tera-modal>
-		</Teleport>
+		<tera-modal
+			v-if="isRemovalModal"
+			@modal-mask-clicked="isRemovalModal = false"
+			class="remove-modal"
+			@modal-enter-press="removeAsset"
+		>
+			<template #header>
+				<h4>Confirm remove</h4>
+			</template>
+			<template #default>
+				<p>
+					Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
+					<em>{{ useProjects().activeProject.value?.name }}</em
+					>.
+				</p>
+			</template>
+			<template #footer>
+				<Button label="Remove" class="p-button-danger" @click="removeAsset" />
+				<Button label="Cancel" severity="secondary" outlined @click="isRemovalModal = false" />
+			</template>
+		</tera-modal>
 	</nav>
 </template>
 

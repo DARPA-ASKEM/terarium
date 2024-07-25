@@ -84,17 +84,15 @@
 			/>
 		</footer>
 	</div>
-	<Teleport to="body">
-		<tera-paramenter-other-value-modal
-			v-if="showOtherConfigValueModal"
-			:id="parameterId"
-			:otherValueList="otherValueList"
-			@modal-mask-clicked="showOtherConfigValueModal = false"
-			@update-parameter="emit('update-parameter', $event)"
-			@update-source="emit('update-source', $event)"
-			@close-modal="showOtherConfigValueModal = false"
-		/>
-	</Teleport>
+	<tera-parameter-other-value-modal
+		v-if="showOtherConfigValueModal"
+		:id="parameterId"
+		:otherValueList="otherValueList"
+		@modal-mask-clicked="showOtherConfigValueModal = false"
+		@update-parameter="emit('update-parameter', $event)"
+		@update-source="emit('update-source', $event)"
+		@close-modal="showOtherConfigValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -106,7 +104,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { DistributionType, distributionTypeOptions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
-import TeraParamenterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
+import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 
 const props = defineProps<{
 	model: Model;
