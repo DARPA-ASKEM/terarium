@@ -331,7 +331,7 @@ export async function pollAction(id: string) {
 
 	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
 		// TODO: untangle progress
-		return { data: null, progress: null, error: null };
+		return { data: null, progress: simResponse, error: null };
 	}
 
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
