@@ -380,9 +380,6 @@ const messageHandler = (event: ClientEvent<any>) => {
 			height: 120
 		});
 	}
-	const state = props.node.state;
-	state.lossValues = lossValues;
-	emit('update-state', state);
 };
 
 const onSelection = (id: string) => {

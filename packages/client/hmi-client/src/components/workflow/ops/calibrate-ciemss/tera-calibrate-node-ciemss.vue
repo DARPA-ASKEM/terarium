@@ -12,7 +12,7 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<template v-else-if="!props.node.state.chartConfigs[0]?.length && props.node.state.lossValues">
+		<template v-else-if="!props.node.state.chartConfigs[0]?.length && lossValues">
 			<div ref="drilldownLossPlot" class="loss-chart" />
 		</template>
 
@@ -35,6 +35,8 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import {
 	getRunResultCSV,
 	pollAction,
+	subscribeToUpdateMessages,
+	unsubscribeToUpdateMessages,
 	makeForecastJobCiemss,
 	getSimulation,
 	parsePyCiemssMap,
@@ -46,7 +48,7 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset, SimulationRequest, Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, CsvAsset, SimulationRequest, Model } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -72,30 +74,57 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
+const selectedOutputId = ref<string>();
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+
+let lossValues: { [key: string]: number }[] = [];
+
+function drawLossGraph() {
+	if (drilldownLossPlot.value) {
+		renderLossGraph(drilldownLossPlot.value, lossValues, {
+			width: 200,
+			height: 120
+		});
+	}
+}
+
+const messageHandler = (event: ClientEvent<any>) => {
+	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
+	drawLossGraph();
+};
+
 watch(
-	() => props.node.state.lossValues,
-	async () => {
-		if (props.node.state.lossValues) {
-			// Fetch saved intermediate state
-			if (drilldownLossPlot.value) {
-				renderLossGraph(drilldownLossPlot.value, props.node.state.lossValues, {
-					width: 200,
-					height: 120
-				});
-			}
+	() => props.node.state.inProgressCalibrationId,
+	(id) => {
+		if (id === '') {
+			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
+		} else {
+			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
 	},
-
-	{ deep: true }
+	{ immediate: true }
 );
 
-onMounted(() => {
+watch(
+	() => props.node.state.lossValues,
+	(data) => {
+		if (data) {
+			lossValues = data;
+			drawLossGraph();
+		}
+	}
+);
+
+onMounted(async () => {
 	if (props.node.active) {
-		if (drilldownLossPlot.value) {
-			renderLossGraph(drilldownLossPlot.value, props.node.state.lossValues, {
-				width: 200,
-				height: 120
-			});
+		selectedOutputId.value = props.node.active;
+		const simulationObj = await getSimulation(selectedRunId.value);
+		if (simulationObj?.updates) {
+			lossValues = simulationObj?.updates.map((d, i) => ({
+				iter: i,
+				loss: d.data.loss
+			}));
+			drawLossGraph();
 		}
 	}
 });
@@ -335,23 +364,6 @@ watch(
 		const state = props.node.state;
 		if (!active) return;
 		if (!state.forecastId) return;
-
-		// Fetch saved intermediate state
-		// if (props.node.active) {
-		// 	const simulationObj = await getSimulation(props.node.active);
-		// 	if (simulationObj?.updates) {
-		// 		const lossValues = simulationObj?.updates.map((d, i) => ({
-		// 			iter: i,
-		// 			loss: d.data.loss
-		// 		}));
-		// 		if (drilldownLossPlot.value) {
-		// 			renderLossGraph(drilldownLossPlot.value, lossValues, {
-		// 				width: 180,
-		// 				height: 120
-		// 			});
-		// 		}
-		// 	}
-		// }
 
 		// Simulates
 		runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
