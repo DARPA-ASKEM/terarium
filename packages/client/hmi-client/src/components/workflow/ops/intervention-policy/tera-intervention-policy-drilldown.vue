@@ -8,10 +8,8 @@
 		<template #sidebar>
 			<tera-slider-panel v-model:is-open="isSidebarOpen" content-width="360px" header="Intervention policies">
 				<template #content>
-					<div class="m-3">
-						<div class="flex flex-column gap-1">
-							<tera-input v-model="filterInterventionsText" placeholder="Filter" />
-						</div>
+					<section>
+						<tera-input v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
 								<tera-intervention-policy-card
@@ -23,7 +21,7 @@
 							</li>
 						</ul>
 						<tera-progress-spinner v-else is-centered />
-					</div>
+					</section>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -32,7 +30,7 @@
 				<template #header-controls-left> Select an intervention policy or create a new one here. </template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
-					<Button @click="onSaveInterventions" label="Save" :disabled="isSaved" />
+					<Button @click="saveInterventions" label="Save" :disabled="isSaved" />
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions" :key="index">
@@ -45,9 +43,14 @@
 						/>
 					</li>
 				</ul>
-				<span>
-					<Button text label="Add intervention" @click="onAddIntervention" icon="pi pi-plus" size="small" />
-				</span>
+				<Button
+					class="align-self-start mt-2"
+					text
+					label="Add intervention"
+					@click="addIntervention"
+					icon="pi pi-plus"
+					size="small"
+				/>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
@@ -137,7 +140,8 @@ import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import {
 	createInterventionPolicy,
 	getInterventionPolicyById,
-	updateInterventionPolicy
+	updateInterventionPolicy,
+	blankIntervention
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -145,7 +149,6 @@ import Textarea from 'primevue/textarea';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
-import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
@@ -295,6 +298,7 @@ const onSelection = (id: string) => {
 };
 
 const onReplacePolicy = (policy: InterventionPolicy) => {
+	if (selectedPolicy.value?.id === policy.id) return;
 	if (isSaved.value) {
 		applyInterventionPolicy(policy);
 	} else {
@@ -308,7 +312,7 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 	}
 };
 
-const onAddIntervention = () => {
+const addIntervention = () => {
 	// by default add the first parameter with a static intervention
 	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
 };
@@ -322,6 +326,11 @@ const onDeleteIntervention = (index: number) => {
 	// Reassign the updated interventions array back to the transientInterventionPolicy
 	// This ensures that we're not modifying the original array in place and Vue's reactivity system detects the change
 	knobs.value.transientInterventionPolicy.interventions = updatedInterventions;
+
+	// If the deleted intervention was the last one, add a new empty one
+	if (isEmpty(knobs.value.transientInterventionPolicy.interventions)) {
+		addIntervention();
+	}
 };
 
 const onChangeName = async (name: string) => {
@@ -347,7 +356,7 @@ const onConfirmEditDescription = async () => {
 	await fetchInterventionPolicies(selectedPolicy.value.modelId);
 };
 
-const onSaveInterventions = async () => {
+const saveInterventions = async () => {
 	const policy = cloneDeep(knobs.value.transientInterventionPolicy);
 	policy.name = 'New Intervention Policy';
 	policy.description = 'This is a new intervention policy.';
@@ -404,5 +413,12 @@ onMounted(() => {
 <style scoped>
 ul {
 	list-style: none;
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap);
+	padding: 0 var(--gap);
 }
 </style>
