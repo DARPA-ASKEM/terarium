@@ -141,7 +141,6 @@ export const createForecastChart = (
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
-	annotationLayers: any[],
 	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
@@ -302,11 +301,6 @@ export const createForecastChart = (
 			}
 		}
 		spec.layer.push(layerSpec);
-	}
-
-	// Build annotation layers
-	if (!isEmpty(annotationLayers)) {
-		spec.layer.push(...annotationLayers);
 	}
 
 	// Build a transparent layer with fat lines as a better hover target for tooltips

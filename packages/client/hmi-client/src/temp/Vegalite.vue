@@ -178,7 +178,6 @@ const specNew = ref<any>(
 			timeField: 'time'
 		},
 		null,
-		[],
 		{
 			width: 400,
 			height: 200,

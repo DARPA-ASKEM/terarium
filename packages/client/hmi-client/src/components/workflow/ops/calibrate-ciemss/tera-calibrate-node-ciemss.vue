@@ -126,7 +126,6 @@ const preparedCharts = computed(() => {
 				variables: datasetVariables,
 				timeField: datasetTimeField as string
 			},
-			[],
 			{
 				title: `${config.join(',')}`,
 				width: 180,

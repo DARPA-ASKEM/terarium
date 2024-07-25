@@ -306,7 +306,6 @@ const preparedCharts = computed(() => {
 				timeField: datasetTimeField as string,
 				groupField: 'sample_id'
 			},
-			[],
 			{
 				title: `${config.join(',')}`,
 				width: chartSize.value.width,

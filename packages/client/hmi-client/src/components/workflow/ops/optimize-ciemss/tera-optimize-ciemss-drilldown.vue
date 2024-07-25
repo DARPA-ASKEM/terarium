@@ -892,7 +892,7 @@ const preparedForecastCharts = computed(() => {
 	// intervention chart spec
 	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
 		chartOptions.translationMap = translationMap(variable);
-		return createForecastChart(
+		const forecastChart = createForecastChart(
 			{
 				dataset: result,
 				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
@@ -905,9 +905,11 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			createInterventionChartMarkers(preProcessedInterventionsData.value[variable]),
 			chartOptions
 		);
+		// add intervention annotations (rules and text)
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+		return forecastChart;
 	});
 
 	// simulation chart spec
@@ -926,7 +928,6 @@ const preparedForecastCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			[],
 			chartOptions
 		);
 	});

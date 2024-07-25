@@ -135,7 +135,6 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			[],
 			{
 				width: 180,
 				height: 120,

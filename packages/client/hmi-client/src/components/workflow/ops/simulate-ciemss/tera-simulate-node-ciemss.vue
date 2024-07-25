@@ -165,7 +165,6 @@ const preparedCharts = computed(() => {
 				timeField: 'timepoint_id'
 			},
 			null,
-			[],
 			// options
 			{
 				title: `${config.join(',')}`,
