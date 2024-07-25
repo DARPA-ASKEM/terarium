@@ -260,7 +260,7 @@ import TeraInput from '@/components/widgets/tera-input.vue';
 import Dropdown from 'primevue/dropdown';
 import TeraToggleableEdit from '@/components/widgets/tera-toggleable-edit.vue';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
-import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
+import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
 enum ConfigTabs {
 	Wizard = 'Wizard',
@@ -293,15 +293,7 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	transientModelConfig: {
-		name: '',
-		description: '',
-		modelId: '',
-		calibrationRunId: '',
-		observableSemanticList: [],
-		parameterSemanticList: [],
-		initialSemanticList: []
-	}
+	transientModelConfig: blankModelConfig
 });
 
 const sanityCheckErrors = ref<string[]>([]);
@@ -548,10 +540,8 @@ const initialize = async () => {
 
 	model.value = await getModel(modelId);
 
-	// console.log(suggestedConfigurationContext.value);
-
 	if (!state.transientModelConfig.id) {
-		// apply a configuration if one hasn't been applied yet
+		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(suggestedConfigurationContext.value.tableData[0]);
 	} else {
 		knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
@@ -572,12 +562,12 @@ const initialize = async () => {
 	}
 };
 
-const onSelectConfiguration = (configuration: ModelConfiguration) => {
+const onSelectConfiguration = (config: ModelConfiguration) => {
 	confirm.require({
 		header: 'Are you sure you want to select this configuration?',
-		message: `This will apply the configuration "${configuration.name}" to the model.  All current values will be replaced.`,
+		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
 		accept: () => {
-			applyConfigValues(configuration);
+			applyConfigValues(config);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
