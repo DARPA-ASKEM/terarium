@@ -119,7 +119,7 @@
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedVariable: cfg }"
 								:multi-select="true"
 								:show-remove-button="true"
 								:variables="Object.keys(pyciemssMap)"
