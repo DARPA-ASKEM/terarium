@@ -152,7 +152,7 @@ import { sortDatesDesc } from '@/utils/date';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
-import { InterventionPolicyOperation, InterventionPolicyState } from './tera-intervention-policy-operation';
+import { InterventionPolicyOperation, InterventionPolicyState } from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
 const props = defineProps<{
