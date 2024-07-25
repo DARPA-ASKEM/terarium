@@ -297,7 +297,10 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 .intervention-card {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
+	display: flex;
+	flex-direction: column;
 }
 
 ul {
