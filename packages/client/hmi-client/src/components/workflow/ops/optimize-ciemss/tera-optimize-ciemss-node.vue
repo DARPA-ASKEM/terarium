@@ -37,12 +37,12 @@ import { SimulationRequest, InterventionPolicy } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart } from '@/services/charts';
+import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import {
 	OptimizeCiemssOperationState,
 	OptimizeCiemssOperation,
 	createInterventionPolicyFromOptimize
 } from './optimize-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
