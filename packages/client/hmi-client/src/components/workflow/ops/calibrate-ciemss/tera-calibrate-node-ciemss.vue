@@ -33,7 +33,7 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId } from '@/services/model';
+import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
@@ -43,7 +43,6 @@ import type { CsvAsset, SimulationRequest, Model, ModelConfiguration } from '@/t
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createModelConfiguration } from '@/services/model-configurations';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -274,12 +273,13 @@ watch(
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
 
-			const parentModel = await getModelByModelConfigurationId(modelConfigId.value as string);
+			const baseConfig = await getModelConfigurationById(modelConfigId.value as string);
+
 			const calibratedModelConfig: ModelConfiguration = {
-				name: 'Calibrated configuration',
-				description: 'Calibrated configuration',
+				name: `Calibrated: ${baseConfig.name}`,
+				description: `Calibrated: ${baseConfig.description}`,
 				simulationId: state.calibrationId,
-				modelId: parentModel?.id as string,
+				modelId: baseConfig.modelId,
 				observableSemanticList: [],
 				parameterSemanticList: [],
 				initialSemanticList: []
