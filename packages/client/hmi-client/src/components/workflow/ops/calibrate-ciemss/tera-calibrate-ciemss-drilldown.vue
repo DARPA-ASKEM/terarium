@@ -483,8 +483,6 @@ watch(
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
 
-			const state = props.node.state;
-
 			// Fetch saved intermediate state
 			const simulationObj = await getSimulation(selectedRunId.value);
 			if (simulationObj?.updates) {
@@ -500,6 +498,7 @@ watch(
 				}
 			}
 
+			const state = props.node.state;
 			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
 			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
 
