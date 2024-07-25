@@ -155,7 +155,6 @@ import {
 	ModelConfiguration
 } from '@/types/Types';
 import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
-import { getModelByModelConfigurationId } from '@/services/model';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -172,7 +171,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import type { Model } from '@/types/Types';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
@@ -194,7 +192,8 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
-const model = ref<Model | null>(null);
+
+const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
@@ -289,8 +288,6 @@ const preparedCharts = computed(() => {
 			}
 		});
 
-		const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
-
 		return createForecastChart(
 			{
 				dataset: result,
@@ -315,8 +312,8 @@ const preparedCharts = computed(() => {
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle,
-				yAxisTitle: `${config.join(',')}`,
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -443,9 +440,10 @@ onMounted(async () => {
 	}
 
 	// Model configuration input
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions, modelVariableUnits } = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelVarUnits.value = modelVariableUnits ?? {};
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
@@ -464,18 +462,6 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
-);
-
-watch(
-	() => props.node.inputs[0].value,
-	async () => {
-		const input = props.node.inputs[0];
-		if (!input.value) return;
-
-		const id = input.value[0];
-		model.value = await getModelByModelConfigurationId(id);
-	},
-	{ immediate: true }
 );
 
 watch(
