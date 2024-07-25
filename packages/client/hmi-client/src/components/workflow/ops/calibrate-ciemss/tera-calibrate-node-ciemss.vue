@@ -28,15 +28,13 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { csvParse, autoType } from 'd3';
-import { computed, watch, ref, shallowRef, onMounted } from 'vue';
+import { computed, watch, ref, shallowRef } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCSV,
 	pollAction,
-	subscribeToUpdateMessages,
-	unsubscribeToUpdateMessages,
 	makeForecastJobCiemss,
 	getSimulation,
 	parsePyCiemssMap,
@@ -49,15 +47,7 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import {
-	ClientEvent,
-	ClientEventType,
-	CsvAsset,
-	Simulation,
-	SimulationRequest,
-	Model,
-	ModelConfiguration
-} from '@/types/Types';
+import { CsvAsset, Simulation, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -111,34 +101,10 @@ async function updateLossChartWithSimulation() {
 	}
 }
 
-const messageHandler = (event: ClientEvent<any>) => {
-	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
-	drawLossGraph();
-};
-
 watch(
-	() => props.node.state.inProgressCalibrationId,
-	(id) => {
-		if (_.isEmpty(id)) {
-			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
-		} else {
-			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => props.node.state.inProgressPreForecastId,
+	() => props.node.state.calibrationId,
 	() => updateLossChartWithSimulation()
 );
-
-watch(
-	() => props.node.state.inProgressForecastId,
-	() => updateLossChartWithSimulation()
-);
-
-onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
@@ -223,6 +189,13 @@ const pollResult = async (runId: string) => {
 		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
+			if (data?.updates?.length && !props.node.state.calibrationId) {
+				lossValues = data?.updates.map((d, i) => ({
+					iter: i,
+					loss: d.data.loss
+				}));
+				drawLossGraph();
+			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
 				if (checkpoint) {
