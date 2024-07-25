@@ -357,7 +357,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createSuccessCriteriaChart, createOptimizeForecastChart } from '@/services/charts';
+import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -371,6 +371,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
+import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<OptimizeCiemssOperationState>;
@@ -767,7 +768,7 @@ const setOutputValues = async () => {
 
 	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
 
-	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(postResult[0]);
 
@@ -776,7 +777,7 @@ const setOutputValues = async () => {
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
-	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv', renameFnGenerator('pre'));
 	const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
 
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
@@ -856,24 +857,38 @@ const preparedInterventionsCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
+	if (!postResult || !postResultSummary) return [];
+
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
+
 	return knobs.value.selectedInterventionVariables.map((variable) =>
-		createOptimizeForecastChart(
-			preResult,
-			preResultSummary,
-			postResult,
-			postResultSummary,
-			preProcessedInterventionsData.value[variable],
+		createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			createInterventionChartMarkers(preProcessedInterventionsData.value[variable]),
 			{
 				width: chartSize.value.width,
 				height: chartSize.value.height,
-				variables: [pyciemssMap[variable]],
-				statisticalVariables: [`${pyciemssMap[variable]}_mean`],
 				legend: true,
-				groupField: 'sample_id',
-				timeField: 'timepoint_id',
 				xAxisTitle: getUnit('_time') || 'Time',
 				yAxisTitle: getUnit(variable) || variable,
-				title: variable
+				title: variable,
+				translationMap: {
+					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+				},
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		)
 	);
@@ -888,19 +903,39 @@ const preparedCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
+	if (!postResult || !postResultSummary) return [];
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
+
 	return knobs.value.selectedSimulationVariables.map((variable) =>
-		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: [pyciemssMap[variable]],
-			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: true,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: getUnit(variable) || variable,
-			title: variable
-		})
+		createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			[],
+			{
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				legend: true,
+				xAxisTitle: getUnit('_time') || 'Time',
+				yAxisTitle: getUnit(variable) || variable,
+				title: variable,
+				translationMap: {
+					[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+					[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+				},
+				colorscheme: ['#AAB3C6', '#1B8073']
+			}
+		)
 	);
 });
 

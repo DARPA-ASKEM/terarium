@@ -7,17 +7,17 @@ export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '
 
 export const NUMBER_FORMAT = '.3~s';
 
-export interface ForecastChartOptions {
-	legend: boolean;
-	translationMap?: Record<string, string>;
-	colorscheme?: string[];
-
+interface BaseChartOptions {
 	title?: string;
-	xAxisTitle: string;
-	yAxisTitle: string;
-
 	width: number;
 	height: number;
+	xAxisTitle: string;
+	yAxisTitle: string;
+	legend?: boolean;
+}
+export interface ForecastChartOptions extends BaseChartOptions {
+	translationMap?: Record<string, string>;
+	colorscheme?: string[];
 }
 
 export interface ForecastChartLayer {
@@ -27,12 +27,7 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
-export interface HistogramChartOptions {
-	title: string;
-	width: number;
-	height: number;
-	xAxisTitle: string;
-	yAxisTitle: string;
+export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
 }
@@ -146,6 +141,7 @@ export const createForecastChart = (
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
 	groundTruthLayer: ForecastChartLayer | null,
+	annotationLayers: any[],
 	options: ForecastChartOptions
 ) => {
 	const axisColor = '#EEE';
@@ -308,6 +304,11 @@ export const createForecastChart = (
 		spec.layer.push(layerSpec);
 	}
 
+	// Build annotation layers
+	if (!isEmpty(annotationLayers)) {
+		spec.layer.push(...annotationLayers);
+	}
+
 	// Build a transparent layer with fat lines as a better hover target for tooltips
 	// Re-Build statistical layer
 	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
@@ -341,30 +342,13 @@ export const createForecastChart = (
 // Optimize charts
 /// /////////////////////////////////////////////////////////////////////////////
 
-export interface BaseChartOptions {
-	title?: string;
-	width: number;
-	height: number;
-	xAxisTitle: string;
-	yAxisTitle: string;
-	legend: boolean;
-}
-export interface OptimizeChartOptions extends BaseChartOptions {
-	variables?: string[];
-	statisticalVariables?: string[];
-	timeField: string;
-	groupField: string;
-}
-
-export interface SuccessCriteriaChartOptions extends BaseChartOptions {}
-
 export function createSuccessCriteriaChart(
 	riskResults: any,
 	targetVariable: string,
 	threshold: number,
 	isMinimized: boolean,
 	alpha: number,
-	options: SuccessCriteriaChartOptions
+	options: BaseChartOptions
 ): any {
 	const targetState = `${targetVariable}_state`;
 	const data = riskResults[targetState]?.qoi || [];
@@ -499,16 +483,16 @@ export function createSuccessCriteriaChart(
 	};
 }
 
-function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]) {
-	const markers = data.map((ele) => ({
+export function createInterventionChartMarkers(data: { name: string; value: number; time: number }[]): any[] {
+	const markerSpec = {
 		data: { values: data },
 		mark: { type: 'rule', strokeDash: [4, 4], color: 'black' },
 		encoding: {
-			x: { datum: ele.time }
+			x: { field: 'time', type: 'quantitative' }
 		}
-	}));
+	};
 
-	const labelsSpec = {
+	const labelSpec = {
 		data: { values: data },
 		mark: {
 			type: 'text',
@@ -524,190 +508,8 @@ function createInterventionChartMarkers(data: { name: string; value: number; tim
 		}
 	};
 
-	return [...markers, labelsSpec];
+	return [markerSpec, labelSpec];
 }
-
-function createStatisticLayer(
-	data: Record<string, any>[],
-	xaxis,
-	yaxis,
-	options: OptimizeChartOptions,
-	isPreStatistic: boolean
-) {
-	const statisticalVariables = options.statisticalVariables?.map((d) => d);
-	const tooltipContent = statisticalVariables?.map((d) => ({
-		field: d,
-		type: 'quantitative',
-		format: NUMBER_FORMAT
-	}));
-
-	const isCompact = options.width < 200;
-	const legendProperties = {
-		title: null,
-		padding: { value: 0 },
-		strokeColor: null,
-		orient: 'top',
-		direction: isCompact ? 'vertical' : 'horizontal',
-		columns: Math.floor(options.width / 100),
-		symbolStrokeWidth: isCompact ? 2 : 4,
-		symbolSize: 200,
-		labelFontSize: isCompact ? 8 : 12,
-		labelOffset: isCompact ? 2 : 4,
-		labelExpr: "datum.label === 'before' ? 'Before optimization' : 'After optimization'"
-	};
-
-	const layerSpec: any = {
-		mark: { type: 'line' },
-		data: { values: data },
-		transform: [
-			{
-				calculate: isPreStatistic ? '"before"' : '"after"',
-				as: 'type'
-			},
-			{
-				fold: statisticalVariables,
-				as: ['stat_variable', 'stat_value']
-			}
-		],
-		encoding: {
-			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-			y: { field: 'stat_value', type: 'quantitative', axis: yaxis },
-			color: {
-				field: 'type',
-				type: 'nominal',
-				scale: {
-					domain: ['before', 'after'],
-					range: ['#AAB3C6', '#1B8073']
-				},
-				// we only want to render a legend for the first statistic layer
-				legend: options.legend && isPreStatistic ? legendProperties : null
-			},
-			opacity: { value: 1.0 },
-			strokeWidth: { value: 3.5 },
-			tooltip: [{ field: options.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
-		}
-	};
-
-	return layerSpec;
-}
-
-function createSampleLayer(
-	data: Record<string, any>[],
-	xaxis,
-	yaxis,
-	options: OptimizeChartOptions,
-	isPreSample: boolean
-) {
-	const sampleVariables = options.variables?.map((d) => d);
-
-	return {
-		mark: { type: 'line' },
-		data: { values: data },
-		transform: [
-			{
-				fold: sampleVariables,
-				as: ['sample_variable', 'sample_value']
-			}
-		],
-		encoding: {
-			x: { field: options.timeField, type: 'quantitative', axis: xaxis },
-			y: { field: 'sample_value', type: 'quantitative', axis: yaxis },
-			color: {
-				field: 'sample_variable',
-				type: 'nominal',
-				scale: {
-					domain: sampleVariables,
-					range: [isPreSample ? '#AAB3C6' : '#1B8073']
-				},
-				legend: false // No legend for sampling-layer, too noisy
-			},
-			detail: { field: options.groupField, type: 'nominal' },
-			strokeWidth: { value: 1 },
-			opacity: { value: 0.1 }
-		}
-	};
-}
-
-export const createOptimizeForecastChart = (
-	preSampleRunData: Record<string, any>[],
-	preStatisticData: Record<string, any>[],
-	postSampleRunData: Record<string, any>[],
-	postStatisticData: Record<string, any>[],
-	interventionsData: { name: string; value: number; time: number }[],
-	options: OptimizeChartOptions
-) => {
-	const axisColor = '#EEE';
-	const labelColor = '#667085';
-	const labelFontWeight = 'normal'; // Adjust font weight here
-	const titleObj = options.title
-		? {
-				text: options.title,
-				anchor: 'start',
-				subtitle: ' ',
-				subtitlePadding: 4
-			}
-		: null;
-
-	const xaxis: any = {
-		domainColor: axisColor,
-		tickColor: { value: axisColor },
-		labelColor: { value: labelColor },
-		labelFontWeight,
-		title: options.xAxisTitle,
-		gridColor: '#EEE',
-		gridOpacity: 1.0
-	};
-	const yaxis = structuredClone(xaxis);
-	yaxis.title = options.yAxisTitle;
-	yaxis.format = NUMBER_FORMAT;
-
-	const spec: any = {
-		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
-		description: '',
-		width: options.width,
-		height: options.height,
-		autosize: {
-			type: 'fit-x'
-		},
-
-		// layers
-		layer: [],
-
-		// Make layers independent
-		resolve: {
-			legend: { color: 'independent' },
-			scale: { color: 'independent' }
-		}
-	};
-
-	// Build pre sample layer
-	if (preSampleRunData && preSampleRunData.length > 0) {
-		spec.layer.push(createSampleLayer(preSampleRunData, xaxis, yaxis, options, true));
-	}
-
-	// Build post sample layer
-	if (postSampleRunData && postSampleRunData.length > 0) {
-		spec.layer.push(createSampleLayer(postSampleRunData, xaxis, yaxis, options, false));
-	}
-
-	// Build pre statistical layer
-	if (preStatisticData && preStatisticData.length > 0) {
-		spec.layer.push(createStatisticLayer(preStatisticData, xaxis, yaxis, options, true));
-	}
-
-	if (postStatisticData && postStatisticData.length > 0) {
-		spec.layer.push(createStatisticLayer(postStatisticData, xaxis, yaxis, options, false));
-	}
-
-	if (interventionsData && interventionsData.length > 0) {
-		createInterventionChartMarkers(interventionsData).forEach((marker) => {
-			spec.layer.push(marker);
-		});
-	}
-
-	return spec;
-};
 
 export const createInterventionChart = (interventionsData: { name: string; value: number; time: number }[]) => {
 	const spec: any = {
