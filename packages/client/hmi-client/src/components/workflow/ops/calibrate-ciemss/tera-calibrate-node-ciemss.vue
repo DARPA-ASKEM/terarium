@@ -189,7 +189,7 @@ const pollResult = async (runId: string) => {
 		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
-			if (data?.updates?.length && !props.node.state.calibrationId) {
+			if (data?.updates?.length) {
 				lossValues = data?.updates.map((d, i) => ({
 					iter: i,
 					loss: d.data.loss
