@@ -118,7 +118,7 @@ const preparedCharts = computed(() => {
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	if (!postResult || !postResultSummary) return [];
+	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return [];
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
 	return selectedSimulationVariables.map((variable) =>
