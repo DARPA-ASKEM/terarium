@@ -374,6 +374,7 @@ const runCalibrate = async () => {
 
 const messageHandler = (event: ClientEvent<any>) => {
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
+
 	if (drilldownLossPlot.value) {
 		renderLossGraph(drilldownLossPlot.value, lossValues, {
 			width: previewChartWidth.value,
