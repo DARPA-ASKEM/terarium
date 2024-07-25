@@ -1,6 +1,6 @@
 <template>
 	<nav>
-		<header class="resource-panel-toolbar">
+		<header>
 			<div class="p-inputgroup">
 				<InputText
 					v-model="searchAsset"
@@ -120,17 +120,12 @@
 			<Skeleton v-for="i in 10" :key="i" width="85%" />
 		</div>
 
-		<tera-modal
-			v-if="isRemovalModal"
-			@modal-mask-clicked="isRemovalModal = false"
-			class="remove-modal"
-			@modal-enter-press="removeAsset"
-		>
+		<tera-modal v-if="isRemovalModal" @modal-mask-clicked="isRemovalModal = false" @modal-enter-press="removeAsset">
 			<template #header>
 				<h4>Confirm remove</h4>
 			</template>
 			<template #default>
-				<p>
+				<p class="remove">
 					Removing <em>{{ assetToDelete?.assetName }}</em> will permanently remove it from
 					<em>{{ useProjects().activeProject.value?.name }}</em
 					>.
@@ -346,23 +341,11 @@ header {
 	font-size: 4rem;
 }
 
-.remove-modal:deep(main) {
-	max-width: 50rem;
-}
-
-.remove-modal p {
+p.remove {
 	max-width: 40rem;
-}
-
-.remove-modal em {
-	font-weight: var(--font-weight-semibold);
-}
-
-.resource-panel-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--gap-2);
+	& em {
+		font-weight: var(--font-weight-semibold);
+	}
 }
 
 .resource-panel-search {

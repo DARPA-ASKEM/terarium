@@ -1,8 +1,8 @@
 <template>
-	<Teleport to="body">
-		<Transition name="modal">
+	<teleport to="body">
+		<transition name="modal">
 			<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
-				<section>
+				<section :class="$attrs.class">
 					<header>
 						<slot name="header" />
 					</header>
@@ -13,15 +13,16 @@
 					</footer>
 				</section>
 				<aside @click.self="emit('modal-mask-clicked')" />
-			</main> </Transition
-	></Teleport>
+			</main>
+		</transition>
+	</teleport>
 </template>
 
 <script setup lang="ts">
 /**
  * A modal with content slots for a header, body, and footer. Use v-if to control visibility.
  * @example
- * <tera-modal v-if="isModalVisible">
+ * <tera-modal v-if="isModalVisible" class="w-4">
  * 		<template #header>Header content</template>
  * 		<template #default>Body content</template>
  * 		<template #footer>Footer content</template>
@@ -30,9 +31,15 @@
  * Clicking outside the modal will emit the event modalMaskClicked.
  * @example
  * <modal @modal-mask-clicked="closeModal"></modal>
+ *
+ * To easily specify modal width add a tailwind width class by passing it as a prop. eg. `class="w-4"`
+ *
+ * Due to this component being wrapped in a <teleport> tag, :deep() classes specified
+ * in the parent's <style scoped> won't be inherited since this component spawns as a child of the <body>.
+ * :deep() only effects child tags and obviously the <body> tag is not a child of the parent.
  */
 
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, nextTick } from 'vue';
 
 const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
 
@@ -55,6 +62,14 @@ onMounted(() => {
 			detail: { id: element.id ?? '' }
 		});
 		element.dispatchEvent(event);
+
+		// Focus the first input element in the default slot
+		nextTick(() => {
+			const input = element.querySelector('section.content input') ?? element.querySelector('section.content textarea');
+			if (input) {
+				(input as HTMLElement).focus();
+			}
+		});
 	}
 
 	emit('on-modal-open'); // For triggering a parent event when the modal is opened

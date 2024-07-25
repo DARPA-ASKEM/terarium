@@ -74,7 +74,6 @@
 		<tera-modal
 			v-if="isDeleteNoteModal"
 			@modal-mask-clicked="isDeleteNoteModal = false"
-			class="remove-modal"
 			@modal-enter-press="deleteNote"
 		>
 			<template #header>

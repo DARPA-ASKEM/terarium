@@ -48,7 +48,7 @@
 		<tera-modal
 			v-if="isEvaluationScenarioModalVisible"
 			@modal-mask-clicked="isEvaluationScenarioModalVisible = false"
-			class="evaluation-scenario-modal"
+			class="w-7"
 		>
 			<template #header>
 				<div class="flex w-full justify-content-between align-items-center">
@@ -125,7 +125,6 @@
 			v-if="isAboutModalVisible"
 			@modal-mask-clicked="isAboutModalVisible = false"
 			@modal-enter-press="isAboutModalVisible = false"
-			class="about-modal"
 		>
 			<article>
 				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
@@ -515,10 +514,6 @@ nav {
 	}
 }
 
-.about-modal {
-	max-width: 800px;
-}
-
 .modal-footer {
 	display: flex;
 	flex-direction: row;
@@ -586,10 +581,6 @@ nav {
 	}
 }
 
-.about-modal {
-	max-width: 800px;
-}
-
 .about-uncharted-logo {
 	width: 8rem;
 	margin-bottom: 0.5rem;
@@ -605,10 +596,6 @@ nav {
 	justify-content: space-between;
 	width: 100%;
 	color: var(--text-color-subdued);
-}
-
-.evaluation-scenario-modal:deep(section) {
-	width: 60vw;
 }
 
 .evaluation-scenario-modal:deep(footer) {

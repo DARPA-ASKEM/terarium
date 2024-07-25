@@ -1,7 +1,7 @@
 <template>
 	<tera-modal
 		v-if="isVisible"
-		class="save-as-dialog"
+		class="w-4"
 		@modal-mask-clicked="closeModal"
 		@on-modal-open="initializeAsset"
 		@modal-enter-press="save"
@@ -148,10 +148,6 @@ function initializeAsset() {
 </script>
 
 <style scoped>
-.save-as-dialog:deep(section) {
-	width: 40rem;
-}
-
 form {
 	margin-top: var(--gap);
 }
