@@ -43,9 +43,14 @@
 						/>
 					</li>
 				</ul>
-				<span>
-					<Button text label="Add intervention" @click="addIntervention" icon="pi pi-plus" size="small" />
-				</span>
+				<Button
+					class="align-self-start mt-2"
+					text
+					label="Add intervention"
+					@click="addIntervention"
+					icon="pi pi-plus"
+					size="small"
+				/>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template v-if="selectedPolicy?.id">
