@@ -29,7 +29,13 @@
 								@click="resetModel"
 								class="mr-2"
 							/>
-							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
+							<Button
+								:disabled="isStratifyButtonDisabled"
+								label="Stratify"
+								size="small"
+								icon="pi pi-play"
+								@click="stratifyModel"
+							/>
 						</section>
 					</header>
 					<tera-stratification-group-form
@@ -167,6 +173,7 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
+const isStratifyButtonDisabled = ref(false);
 
 const selectedOutputId = ref<string>();
 
@@ -195,6 +202,7 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 };
 
 const stratifyModel = () => {
+	isStratifyButtonDisabled.value = true;
 	stratifyRequest();
 };
 
@@ -266,6 +274,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	isStratifyButtonDisabled.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
