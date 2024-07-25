@@ -149,11 +149,10 @@ const pollResult = async (runId: string) => {
 		.setInterval(3000)
 		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
-		.setProgressAction((data: Simulation, current, max) => {
+		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.first(data.updates);
 				if (checkpoint) {
-					console.log('in progress', checkpoint.data, current, max);
 					const state = _.cloneDeep(props.node.state);
 					state.currentProgress = checkpoint.data.progress;
 					emit('update-state', state);
