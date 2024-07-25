@@ -156,7 +156,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
-import type { CsvAsset, SimulationRequest, TimeSpan, Model } from '@/types/Types';
+import type { CsvAsset, SimulationRequest, TimeSpan } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import {
 	getRunResultCSV,
@@ -165,7 +165,7 @@ import {
 	convertToCsvAsset,
 	DataArray
 } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
@@ -196,7 +196,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['update-state', 'select-output', 'close']);
 
-const model = ref<Model | null>(null);
+const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 
@@ -332,8 +332,6 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-
-	const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
 			{
@@ -355,8 +353,8 @@ const preparedCharts = computed(() => {
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle,
-				yAxisTitle: `${config.join(',')}`
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || ''
 			}
 		)
 	);
@@ -496,7 +494,8 @@ watch(
 		if (!input.value) return;
 
 		const id = input.value[0];
-		model.value = await getModelByModelConfigurationId(id);
+		const model = await getModelByModelConfigurationId(id);
+		if (model) modelVarUnits.value = getUnitsFromModelParts(model);
 	},
 	{ immediate: true }
 );
