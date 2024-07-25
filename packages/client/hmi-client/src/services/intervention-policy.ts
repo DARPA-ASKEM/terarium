@@ -1,5 +1,14 @@
 import API from '@/api/api';
-import { InterventionPolicy } from '@/types/Types';
+import type { Intervention, InterventionPolicy } from '@/types/Types';
+import { InterventionSemanticType } from '@/types/Types';
+
+export const blankIntervention: Intervention = {
+	name: 'New Intervention',
+	appliedTo: '',
+	type: InterventionSemanticType.Parameter,
+	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
+	dynamicInterventions: []
+};
 
 export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy> => {
 	const response = await API.get<InterventionPolicy>(`/interventions/${policyId}`);

@@ -149,7 +149,7 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
-	const xAxisTitle = model.value?.semantics?.ode.time.units?.expression;
+	const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(

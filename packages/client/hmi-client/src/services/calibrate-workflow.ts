@@ -1,8 +1,9 @@
 import * as d3 from 'd3';
 
-import type { Dataset, CsvAsset, ModelConfiguration } from '@/types/Types';
-import { getAsConfiguredModel, getModelConfigurationById, getObservables } from '@/services/model-configurations';
+import type { Dataset, CsvAsset } from '@/types/Types';
+import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
 import { downloadRawFile, getDataset } from '@/services/dataset';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
 
 export interface CalibrateMap {
 	modelVariable: string;
@@ -13,8 +14,13 @@ export interface CalibrateMap {
 // Takes a model config Id and grabs relevant objects
 export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
-		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
-		const model = await getAsConfiguredModel(modelConfiguration);
+		const [modelConfiguration, model] = await Promise.all([
+			getModelConfigurationById(modelConfigId),
+			getModelByModelConfigurationId(modelConfigId)
+		]);
+
+		const modelVariableUnits = !model ? {} : getUnitsFromModelParts(model);
+
 		const modelOptions: any[] = model?.model.states;
 
 		getObservables(modelConfiguration).forEach((o) => {
@@ -22,7 +28,8 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 		});
 
 		modelOptions.push({ id: 'timestamp' });
-		return { modelConfiguration, modelOptions };
+
+		return { modelConfiguration, modelOptions, modelVariableUnits };
 	}
 	return {};
 };
