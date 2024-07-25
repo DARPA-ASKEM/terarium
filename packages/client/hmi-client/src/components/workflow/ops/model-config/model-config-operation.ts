@@ -20,7 +20,7 @@ export const blankModelConfig: ModelConfiguration = {
 	modelId: '',
 	name: '',
 	description: '',
-	calibrationRunId: '',
+	simulationId: '',
 	observableSemanticList: [],
 	parameterSemanticList: [],
 	initialSemanticList: []
