@@ -49,7 +49,7 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import { ClientEvent, ClientEventType, CsvAsset, SimulationRequest, Model } from '@/types/Types';
+import { ClientEvent, ClientEventType, CsvAsset, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
