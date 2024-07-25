@@ -58,7 +58,7 @@ watch(
 					label: config.name,
 					value: config.id,
 					isSelected: false,
-					state: props.node.state
+					state
 				});
 			}
 		} else {
