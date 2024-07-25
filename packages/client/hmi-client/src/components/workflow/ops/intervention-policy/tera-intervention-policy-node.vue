@@ -17,7 +17,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { cloneDeep } from 'lodash';
-import { blankIntervention } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { blankIntervention } from '@/services/intervention-policy';
 import { InterventionPolicyState } from './tera-intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
