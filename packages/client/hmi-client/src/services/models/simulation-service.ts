@@ -20,6 +20,8 @@ import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 
+export type DataArray = Record<string, any>[];
+
 export async function cancelCiemssJob(runId: String) {
 	try {
 		const resp = await API.get(`simulation-request/ciemss/cancel/${runId}`);
@@ -118,23 +120,30 @@ export async function getRunResult(runId: string, filename: string) {
 	}
 }
 
-export async function getRunResultCSV(runId: string, filename: string) {
+export async function getRunResultCSV(
+	runId: string,
+	filename: string,
+	renameFn?: (s: string) => string
+): Promise<DataArray> {
 	try {
 		const resp = await API.get(`simulations/${runId}/result`, {
 			params: { filename }
 		});
-		const output = csvParse(resp.data, autoType);
 
-		// FIXME: summary need to have time
-		if (filename === 'result_summary.csv') {
-			output.forEach((d: any, idx) => {
-				d.timepoint_id = idx;
-			});
+		// If a rename function is defined, loop over the first row
+		let dataStr = resp.data;
+		if (renameFn) {
+			const lines = dataStr.split(/\n/);
+			const line0 = lines[0].split(/,/).map(renameFn).join(',');
+			lines[0] = line0;
+			dataStr = lines.join('\n');
 		}
+
+		const output = csvParse(dataStr, autoType);
 		return output;
 	} catch (err) {
 		logger.error(err);
-		return [{}];
+		return [];
 	}
 }
 
@@ -220,10 +229,7 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 	}
 }
 
-export async function makeCalibrateJobJulia(
-	calibrationParams: CalibrationRequestJulia,
-	metadata?: any
-) {
+export async function makeCalibrateJobJulia(calibrationParams: CalibrationRequestJulia, metadata?: any) {
 	try {
 		EventService.create(
 			EventType.RunCalibrate,
@@ -242,10 +248,7 @@ export async function makeCalibrateJobJulia(
 	}
 }
 
-export async function makeCalibrateJobCiemss(
-	calibrationParams: CalibrationRequestCiemss,
-	metadata?: any
-) {
+export async function makeCalibrateJobCiemss(calibrationParams: CalibrationRequestCiemss, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/calibrate', {
 			payload: calibrationParams,
@@ -273,10 +276,7 @@ export async function makeOptimizeJobCiemss(optimizeParams: OptimizeRequestCiems
 	}
 }
 
-export async function makeEnsembleCiemssSimulation(
-	params: EnsembleSimulationCiemssRequest,
-	metadata?: any
-) {
+export async function makeEnsembleCiemssSimulation(params: EnsembleSimulationCiemssRequest, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-simulate', {
 			payload: params,
@@ -290,10 +290,7 @@ export async function makeEnsembleCiemssSimulation(
 	}
 }
 
-export async function makeEnsembleCiemssCalibration(
-	params: EnsembleCalibrationCiemssRequest,
-	metadata?: any
-) {
+export async function makeEnsembleCiemssCalibration(params: EnsembleCalibrationCiemssRequest, metadata?: any) {
 	try {
 		const resp = await API.post('simulation-request/ciemss/ensemble-calibrate', {
 			payload: params,
@@ -334,7 +331,7 @@ export async function pollAction(id: string) {
 
 	if ([ProgressState.Queued, ProgressState.Running].includes(simResponse.status)) {
 		// TODO: untangle progress
-		return { data: null, progress: null, error: null };
+		return { data: null, progress: simResponse, error: null };
 	}
 
 	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {

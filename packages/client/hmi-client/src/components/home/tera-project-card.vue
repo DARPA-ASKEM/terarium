@@ -4,9 +4,7 @@
 			<header>
 				<div
 					class="flex align-items-center gap-1"
-					v-tooltip.top="
-						`${stats?.contributors} contributor${stats?.contributors === 1 ? '' : 's'}`
-					"
+					v-tooltip.top="`${stats?.contributors} contributor${stats?.contributors === 1 ? '' : 's'}`"
 				>
 					<i class="pi pi-user" /> {{ stats?.contributors }}
 				</div>
@@ -128,8 +126,7 @@ const stats = computed(() => {
 });
 
 const thumbnail = computed(
-	() =>
-		getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
+	() => getImage(`project-thumbnails/${props.project?.thumbnail ?? 'default'}.png`) ?? DefaultThumbnail
 );
 </script>
 

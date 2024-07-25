@@ -108,6 +108,38 @@ export const addNode = (
 	wf.nodes.push(node);
 };
 
+/**
+ * Create an edge between two nodes, and transfer the value from
+ * source-node's output port to target-node's input port
+ *
+ * The terms are used as depicted in the following schematics
+ *
+ *
+ *  ------------             ------------
+ *  | Source    |            | Target    |
+ *  |           |            |           |
+ *  |  [output port] ---> [input port]   |
+ *  |           |            |           |
+ *  ------------             -------------
+ *
+ *
+ * There are several special cases
+ *
+ * The target-input can accept multiple types, but this is more of an exception
+ * rather than the norm. This is resolved by checking one of the accepted type
+ * matches the provided type.
+ *
+ * The second case is when the source produce multiple types, a similar check, but
+ * on the reverse side is performed.
+ *
+ *
+ * Ambiguity arises when the source provide multiple types and the target accepts multiple
+ * types and there is no resolution. For example
+ * - source provides {A, B, C}
+ * - target accepts A or C
+ * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
+ *
+ * */
 export const addEdge = (
 	wf: Workflow,
 	sourceId: string,
@@ -135,26 +167,38 @@ export const addEdge = (
 	if (existingEdge) return;
 
 	// Check if type is compatible
-	const allowedTypes = targetInputPort.type.split('|');
+	const outputTypes = sourceOutputPort.type.split('|').map((d) => d.trim());
+	const allowedInputTypes = targetInputPort.type.split('|').map((d) => d.trim());
+	const intersectionTypes = _.intersection(outputTypes, allowedInputTypes);
+
+	// Not supported if there are more than one match
+	if (intersectionTypes.length > 1) {
+		console.error(`Ambiguous matching types [${outputTypes}] to [${allowedInputTypes}]`);
+		return;
+	}
+
+	// Not supported if there is a mismatch
 	if (
-		!allowedTypes.includes(sourceOutputPort.type) ||
+		intersectionTypes.length === 0 ||
 		(!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED)
 	) {
 		return;
 	}
 
 	// Transfer data value/reference
-	if (targetInputPort.acceptMultiple && targetInputPort.value && sourceOutputPort.value) {
-		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
-		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
+	targetInputPort.label = sourceOutputPort.label;
+	if (outputTypes.length > 1) {
+		const concreteType = intersectionTypes[0];
+		if (sourceOutputPort.value) {
+			targetInputPort.value = [sourceOutputPort.value[0][concreteType]];
+		}
 	} else {
-		targetInputPort.label = sourceOutputPort.label;
 		targetInputPort.value = sourceOutputPort.value;
 	}
 
 	// Transfer concrete type to the input type to match the output type
 	// Saves the original type in case we want to revert when we unlink the edge
-	if (allowedTypes.length > 1) {
+	if (allowedInputTypes.length > 1) {
 		targetInputPort.originalType = targetInputPort.type;
 		targetInputPort.type = sourceOutputPort.type;
 	}
@@ -251,7 +295,7 @@ export function getPortLabel({ label, type, isOptional }: WorkflowPort) {
 	}
 	// Create name if there are multiple types
 	else if (type.includes('|')) {
-		const types = type.split('|');
+		const types = type.split('|').map((d) => d.trim());
 		portLabel = types.map((t) => defaultPortLabels[t] ?? t).join(' or ');
 	}
 
@@ -411,9 +455,7 @@ export function selectOutput(
 
 	selected.status = WorkflowPortStatus.CONNECTED;
 
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.nodes.map((node) => [node.id, node])
-	);
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.nodes.map((node) => [node.id, node]));
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	nodeCache.set(operator.id, []);
 
@@ -474,10 +516,7 @@ export async function generateSummary(
 
 // Check if the current-state matches that of the output-state.
 // Note operatorState subsumes the keys of the outputState
-export const isOperatorStateInSync = (
-	operatorState: Record<string, any>,
-	outputState: Record<string, any>
-) => {
+export const isOperatorStateInSync = (operatorState: Record<string, any>, outputState: Record<string, any>) => {
 	const hasKey = Object.prototype.hasOwnProperty;
 
 	const keys = Object.keys(outputState);

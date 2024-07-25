@@ -2,18 +2,15 @@ import {
 	AssetType,
 	ClientEventType,
 	Dataset,
-	Document,
 	DocumentAsset,
 	Model,
 	ModelGrounding,
 	ProgrammingLanguage,
 	ProgressState,
-	StatusUpdate,
-	XDDFacetsItemResponse
+	StatusUpdate
 } from '@/types/Types';
 import { DatasetSearchParams } from './Dataset';
 import { ModelSearchParams } from './Model';
-import { XDDSearchParams } from './XDD';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -67,23 +64,21 @@ export enum ViewType {
 }
 
 export enum ResourceType {
-	XDD = 'xdd',
+	DOCUMENT = 'document',
 	MODEL = 'model',
 	DATASET = 'dataset',
 	ALL = 'all'
 }
 
 export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
 	[ResourceType.MODEL]?: ModelSearchParams;
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | Document | DocumentAsset;
+export type ResultType = Model | Dataset | DocumentAsset;
 
 export type SearchResults = {
 	results: ResultType[];
-	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	searchSubsystem?: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -244,7 +239,6 @@ export const programmingLanguageOptions = (): { name: string; value: string }[] 
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
-			name:
-				lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
+			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
 			value: ProgrammingLanguageVersion[lang]
 		}));

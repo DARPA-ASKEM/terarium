@@ -2,16 +2,14 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { createInterventionPolicy } from '@/services/intervention-policy';
+import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
-	paramValue = 'param_value' // provide a statr time to get a better parameter value.
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909 Impliment this in pyciemss service
-	// ,paramValueAndStartTime = 'param_value_and_start_time'
+	paramValue = 'param_value', // provide a start time to get a better parameter value.
+	paramValueAndStartTime = 'start_time_param_value'
 }
 
 export enum InterventionObjectiveFunctions {
@@ -26,6 +24,8 @@ export enum ContextMethods {
 }
 
 export interface InterventionPolicyGroupForm {
+	// The ID of the InterventionPolicy this is portraying
+	id?: string; // // FIXME: This will not be required when some init logic is moved from drilldown -> Node.
 	startTime: number;
 	endTime: number;
 	startTimeGuess: number;
@@ -68,6 +68,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressPostForecastId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
+	optimizedInterventionPolicy: InterventionPolicy | null;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
@@ -75,9 +76,11 @@ export interface OptimizeCiemssOperationState extends BaseState {
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
 export const OPTIMIZATION_TYPE_MAP = [
 	{ label: 'new value', value: OptimizationInterventionObjective.paramValue },
-	{ label: 'new start time', value: OptimizationInterventionObjective.startTime }
-	// TODO https://github.com/DARPA-ASKEM/terarium/issues/3909
-	// ,{ label: 'new value and start time', value: OptimizationInterventionObjective.paramValueAndStartTime }
+	{ label: 'new start time', value: OptimizationInterventionObjective.startTime },
+	{
+		label: 'new value and start time',
+		value: OptimizationInterventionObjective.paramValueAndStartTime
+	}
 ];
 
 // This is used as a map between dropdown labels and the inner values used by pyciemss-service.
@@ -86,14 +89,6 @@ export const OBJECTIVE_FUNCTION_MAP = [
 	{ label: 'lower bound', value: InterventionObjectiveFunctions.lowerBound },
 	{ label: 'upper bound', value: InterventionObjectiveFunctions.upperbound }
 ];
-
-export const blankIntervention: Intervention = {
-	name: 'New Intervention',
-	appliedTo: '',
-	type: InterventionSemanticType.Parameter,
-	staticInterventions: [{ timestep: Number.NaN, value: Number.NaN }],
-	dynamicInterventions: []
-};
 
 export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	startTime: 0,
@@ -158,6 +153,7 @@ export const OptimizeCiemssOperation: Operation = {
 			preForecastRunId: '',
 			postForecastRunId: '',
 			optimizationRunId: '',
+			optimizedInterventionPolicy: null,
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};
@@ -175,8 +171,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
 	const simulation = await getSimulation(optimizeRunId);
 
-	const simulationStaticInterventions: any[] =
-		simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
+	const simulationStaticInterventions: any[] = simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
 	const optimizeInterventions = simulation?.executionPayload?.optimize_interventions;
 
 	// From snake case -> camel case.
@@ -199,7 +194,6 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	const startTimes: number[] = optimizeInterventions.start_time ?? [];
 
 	const policyResult = await getRunResult(optimizeRunId, 'policy.json');
-
 	// TODO: https://github.com/DARPA-ASKEM/terarium/issues/3909
 	// This will need to be updated to allow multiple intervention types. This is not allowed at the moment.
 	if (interventionType === OptimizationInterventionObjective.startTime && startTimes.length !== 0) {
@@ -218,10 +212,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
-	} else if (
-		interventionType === OptimizationInterventionObjective.paramValue &&
-		paramValues.length !== 0
-	) {
+	} else if (interventionType === OptimizationInterventionObjective.paramValue && paramValues.length !== 0) {
 		// If we our intervention type is start time our policyResult will provide a parameter value.
 		for (let i = 0; i < paramNames.length; i++) {
 			allInterventions.push({
@@ -237,9 +228,26 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 				dynamicInterventions: []
 			});
 		}
+	} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
+		// If our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
+		// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
+		for (let i = 0; i < paramNames.length; i++) {
+			allInterventions.push({
+				name: `Optimized ${paramNames[i]}`,
+				appliedTo: paramNames[i],
+				type: InterventionSemanticType.Parameter,
+				staticInterventions: [
+					{
+						timestep: policyResult[i * 2],
+						value: policyResult[i * 2 + 1]
+					}
+				],
+				dynamicInterventions: []
+			});
+		}
 	} else {
 		// Should realistically not be hit unless we change the interface and do not update
-		console.error(`Unable to find the intevention for optimization run: ${optimizeRunId}`);
+		console.error(`Unable to find the intevention type for optimization run: ${optimizeRunId}`);
 	}
 	return allInterventions;
 }
@@ -250,10 +258,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
  *
  *
  */
-export async function createInterventionPolicyFromOptimize(
-	modelConfigId: string,
-	optimizeRunId: string
-) {
+export async function createInterventionPolicyFromOptimize(modelConfigId: string, optimizeRunId: string) {
 	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
 	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
 

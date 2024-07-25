@@ -26,26 +26,25 @@ public class DecapodesContextService {
 
 	@Observed(name = "function_profile")
 	public List<DecapodesContext> getDecapodesContexts(final Integer page, final Integer pageSize) throws IOException {
-
 		final SearchRequest req = new SearchRequest.Builder()
-				.index(elasticConfig.getDecapodesContextIndex())
-				.size(pageSize)
-				.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
-				.sort(new SortOptions.Builder()
-						.field(new FieldSort.Builder()
-								.field("timestamp")
-								.order(SortOrder.Asc)
-								.build())
-						.build())
-				.build();
+			.index(elasticConfig.getDecapodesContextIndex())
+			.size(pageSize)
+			.query(q -> q.bool(b -> b.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))))
+			.sort(
+				new SortOptions.Builder().field(new FieldSort.Builder().field("timestamp").order(SortOrder.Asc).build()).build()
+			)
+			.build();
 
 		return elasticService.search(req, DecapodesContext.class);
 	}
 
 	@Observed(name = "function_profile")
 	public Optional<DecapodesContext> getDecapodesContext(final UUID id) throws IOException {
-		final DecapodesContext doc =
-				elasticService.get(elasticConfig.getDecapodesContextIndex(), id.toString(), DecapodesContext.class);
+		final DecapodesContext doc = elasticService.get(
+			elasticConfig.getDecapodesContextIndex(),
+			id.toString(),
+			DecapodesContext.class
+		);
 		if (doc != null && doc.getDeletedOn() == null) {
 			return Optional.of(doc);
 		}
@@ -66,25 +65,24 @@ public class DecapodesContextService {
 	public DecapodesContext createDecapodesContext(final DecapodesContext decapodesContext) throws IOException {
 		decapodesContext.setCreatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(
-				elasticConfig.getDecapodesContextIndex(),
-				decapodesContext.setId(UUID.randomUUID()).getId().toString(),
-				decapodesContext);
+			elasticConfig.getDecapodesContextIndex(),
+			decapodesContext.setId(UUID.randomUUID()).getId().toString(),
+			decapodesContext
+		);
 		return decapodesContext;
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<DecapodesContext> updateDecapodesContext(final DecapodesContext decapodesContext)
-			throws IOException {
-		if (!elasticService.documentExists(
-				elasticConfig.getDecapodesContextIndex(),
-				decapodesContext.getId().toString())) {
+	public Optional<DecapodesContext> updateDecapodesContext(final DecapodesContext decapodesContext) throws IOException {
+		if (!elasticService.documentExists(elasticConfig.getDecapodesContextIndex(), decapodesContext.getId().toString())) {
 			return Optional.empty();
 		}
 		decapodesContext.setUpdatedOn(Timestamp.from(Instant.now()));
 		elasticService.index(
-				elasticConfig.getDecapodesContextIndex(),
-				decapodesContext.getId().toString(),
-				decapodesContext);
+			elasticConfig.getDecapodesContextIndex(),
+			decapodesContext.getId().toString(),
+			decapodesContext
+		);
 		return Optional.of(decapodesContext);
 	}
 }

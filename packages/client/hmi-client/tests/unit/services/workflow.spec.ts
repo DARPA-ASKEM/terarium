@@ -57,12 +57,8 @@ const plusNode = (id: string) =>
 		id,
 		workflowId: '0',
 		operationType: 'add',
-		inputs: operationLib
-			.get('add')
-			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
-		outputs: operationLib
-			.get('add')
-			?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
+		inputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
+		outputs: operationLib.get('add')?.inputs.map((d, i) => ({ id: `${i}`, type: d.type, value: null })),
 		x: 0,
 		y: 0,
 		width: 0,
@@ -295,5 +291,115 @@ describe('workflow copying branch >- fork', () => {
 		expect(testWf.edges.filter((edge) => edge.source === n1.id).length).to.eq(2);
 		expect(testWf.edges.filter((edge) => edge.source === n2.id).length).to.eq(2);
 		expect(sanityCheck(wf)).to.eq(true);
+	});
+});
+
+describe('workflow operator with multiple output types', () => {
+	const commonFields = {
+		name: 'test' as any,
+		displayName: 'test',
+		description: 'test',
+		isRunnable: true
+	};
+
+	const multiOutputOp: Operation = {
+		...commonFields,
+		inputs: [],
+		outputs: [{ type: 'datasetId|modelId' }]
+	};
+
+	const datasetOp: Operation = {
+		...commonFields,
+		inputs: [{ type: 'datasetId' }],
+		outputs: []
+	};
+
+	const modelConfigOp: Operation = {
+		...commonFields,
+		inputs: [{ type: 'modelId' }],
+		outputs: []
+	};
+
+	const edgeCaseOp: Operation = {
+		...commonFields,
+		inputs: [{ type: 'modelId|datasetId|number' }],
+		outputs: []
+	};
+
+	const wf = workflowService.emptyWorkflow('test', 'test');
+	workflowService.addNode(wf, multiOutputOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, datasetOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, modelConfigOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, testOp, { x: 0, y: 0 }, {});
+	workflowService.addNode(wf, edgeCaseOp, { x: 0, y: 0 }, {});
+
+	const multiOutputNode = wf.nodes[0];
+	multiOutputNode.outputs[0].value = [
+		{
+			datasetId: 'dataset xyz',
+			modelId: 'model abc'
+		}
+	];
+
+	const datasetNode = wf.nodes[1];
+	const modelNode = wf.nodes[2];
+	const testNode = wf.nodes[3];
+	const edgeCaseNode = wf.nodes[4];
+
+	it('dataset|model => dataset', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			datasetNode.id,
+			datasetNode.inputs[0].id,
+			[]
+		);
+
+		expect(datasetNode.inputs[0].value).toMatchObject(['dataset xyz']);
+		expect(wf.edges.length).eq(1);
+		workflowService.removeEdge(wf, wf.edges[0].id);
+	});
+
+	it('dataset|model => model', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			modelNode.id,
+			modelNode.inputs[0].id,
+			[]
+		);
+
+		expect(modelNode.inputs[0].value).toMatchObject(['model abc']);
+		expect(wf.edges.length).eq(1);
+		workflowService.removeEdge(wf, wf.edges[0].id);
+	});
+
+	it('dataset|model => test', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			testNode.id,
+			testNode.inputs[0].id,
+			[]
+		);
+
+		expect(testNode.inputs[0].value).toBeNull();
+		expect(wf.edges.length).eq(0);
+	});
+
+	it('edge case many to many', () => {
+		workflowService.addEdge(
+			wf,
+			multiOutputNode.id,
+			multiOutputNode.outputs[0].id,
+			edgeCaseNode.id,
+			edgeCaseNode.inputs[0].id,
+			[]
+		);
+		expect(edgeCaseNode.inputs[0].value).toBeNull();
+		expect(wf.edges.length).eq(0);
 	});
 });

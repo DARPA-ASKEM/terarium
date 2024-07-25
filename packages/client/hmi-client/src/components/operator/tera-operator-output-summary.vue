@@ -17,9 +17,7 @@
 			</div>
 		</template>
 		<div v-else-if="isLoading === false" class="summary">
-			<p else @click="isEditing = true">
-				{{ summaryText }}<span class="pi pi-pencil ml-2 text-xs" />
-			</p>
+			<p else @click="isEditing = true">{{ summaryText }}<span class="pi pi-pencil ml-2 text-xs" /></p>
 		</div>
 		<div v-else-if="isLoading" class="summary">
 			<img src="@assets/svg/icons/magic.svg" alt="Magic icon" />

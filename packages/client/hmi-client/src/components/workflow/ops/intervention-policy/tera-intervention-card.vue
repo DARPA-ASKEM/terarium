@@ -87,12 +87,7 @@
 									placeholder="timestep"
 								/>
 								.
-								<Button
-									class="ml-auto"
-									icon="pi pi-times"
-									text
-									@click="onRemoveStaticIntervention(index)"
-								/>
+								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
 							</div>
 							<Divider />
 						</li>
@@ -169,11 +164,11 @@ const props = defineProps<{
 
 const interventionSemanticOptions = [
 	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
-	{ label: 'Variable', value: InterventionSemanticType.Variable }
+	{ label: 'State', value: InterventionSemanticType.State }
 ];
 
 const semanticOptions = computed(() => {
-	if (props.intervention.type === InterventionSemanticType.Variable) {
+	if (props.intervention.type === InterventionSemanticType.State) {
 		return props.stateOptions;
 	}
 	return props.parameterOptions;
@@ -281,7 +276,7 @@ const onComparisonOperatorChange = (event: DropdownChangeEvent) => {
 const onSemanticChange = (event: DropdownChangeEvent) => {
 	const intervention = cloneDeep(props.intervention);
 	intervention.type = event.value;
-	if (event.value === InterventionSemanticType.Variable) {
+	if (event.value === InterventionSemanticType.State) {
 		intervention.appliedTo = '';
 	} else {
 		intervention.appliedTo = '';
@@ -302,7 +297,10 @@ const onSemanticChange = (event: DropdownChangeEvent) => {
 .intervention-card {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap);
+	padding: var(--gap-2) var(--gap);
+	gap: var(--gap-2);
+	display: flex;
+	flex-direction: column;
 }
 
 ul {

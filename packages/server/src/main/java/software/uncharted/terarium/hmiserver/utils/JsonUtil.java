@@ -8,11 +8,13 @@ import java.util.Map;
 public class JsonUtil {
 
 	public static void setAll(final ObjectNode dest, final JsonNode src) {
-		src.fields().forEachRemaining(entry -> {
-			final String fieldName = entry.getKey();
-			final JsonNode fieldValue = entry.getValue();
-			dest.set(fieldName, fieldValue);
-		});
+		src
+			.fields()
+			.forEachRemaining(entry -> {
+				final String fieldName = entry.getKey();
+				final JsonNode fieldValue = entry.getValue();
+				dest.set(fieldName, fieldValue);
+			});
 	}
 
 	public static void recursiveSetAll(final ObjectNode dest, final JsonNode src) {

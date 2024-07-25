@@ -17,12 +17,7 @@
 						aria-labelledby="annotation"
 					/>
 					<div class="save-cancel-buttons">
-						<Button
-							@click="isEditingNote = false"
-							label="Cancel"
-							class="p-button p-button-secondary"
-							size="small"
-						/>
+						<Button @click="isEditingNote = false" label="Cancel" class="p-button p-button-secondary" size="small" />
 						<Button @click="updateNote" label="Save" class="p-button" size="small" />
 					</div>
 				</template>
@@ -63,20 +58,9 @@
 				:options="noteOptions"
 				v-model="newNoteSection"
 			/>
-			<Textarea
-				v-model="annotationContent"
-				ref="annotationTextInput"
-				rows="5"
-				cols="30"
-				aria-labelledby="annotation"
-			/>
+			<Textarea v-model="annotationContent" ref="annotationTextInput" rows="5" cols="30" aria-labelledby="annotation" />
 			<div class="save-cancel-buttons">
-				<Button
-					@click="toggleAnnotationInput"
-					label="Cancel"
-					class="p-button p-button-secondary"
-					size="small"
-				/>
+				<Button @click="toggleAnnotationInput" label="Cancel" class="p-button p-button-secondary" size="small" />
 				<Button @click="addNote" label=" Save" class="p-button" size="small" />
 			</div>
 		</section>
@@ -117,12 +101,7 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
-import {
-	createAnnotation,
-	deleteAnnotation,
-	getAnnotations,
-	updateAnnotation
-} from '@/services/models/annotations';
+import { createAnnotation, deleteAnnotation, getAnnotations, updateAnnotation } from '@/services/models/annotations';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { ProjectPages } from '@/types/Project';
 import { AssetType, Annotation } from '@/types/Types';
@@ -195,12 +174,7 @@ function toggle(event) {
 }
 
 const addNote = async () => {
-	await createAnnotation(
-		newNoteSection.value,
-		annotationContent.value,
-		props.assetId,
-		props.pageType
-	);
+	await createAnnotation(newNoteSection.value, annotationContent.value, props.assetId, props.pageType);
 	annotationContent.value = '';
 	newNoteSection.value = NoteSection.Unassigned;
 	await getAndPopulateAnnotations();

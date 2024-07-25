@@ -48,7 +48,7 @@
 					<template #body="{ data }">
 						<katex-element
 							v-if="data.rate_expression"
-							:expression="data.rate_expression"
+							:expression="stringToLatexExpression(data.rate_expression)"
 							:throw-on-error="false"
 						/>
 						<template v-else>--</template>
@@ -92,14 +92,8 @@
 				</Column>
 				<Column field="payload.groundings" header="Concept">
 					<template #body="{ data }">
-						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1"
-							>--</template
-						>
-						<template
-							v-else
-							v-for="grounding in data?.payload?.groundings"
-							:key="grounding.grounding_id"
-						>
+						<template v-if="!data?.payload?.groundings || data?.payload?.groundings.length < 1">--</template>
+						<template v-else v-for="grounding in data?.payload?.groundings" :key="grounding.grounding_id">
 							{{ grounding.grounding_text }}
 							<a
 								target="_blank"
@@ -132,13 +126,10 @@ import AccordionTab from 'primevue/accordiontab';
 import { computed } from 'vue';
 import { Dictionary } from 'vue-gtag';
 import { getCurieUrl } from '@/services/concept';
+import { stringToLatexExpression } from '@/services/model';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import type {
-	MiraModel,
-	MiraTemplateParams,
-	ObservableSummary
-} from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
 import TeraStates from '@/components/model/model-parts/tera-states.vue';
 import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
 import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
@@ -156,14 +147,10 @@ const emit = defineEmits(['update-state', 'update-parameter', 'update-observable
 
 const initialsLength = computed(() => props.model?.semantics?.ode?.initials?.length ?? 0);
 const parametersLength = computed(
-	() =>
-		(props.model?.semantics?.ode.parameters?.length ?? 0) +
-		(props.model?.model?.auxiliaries?.length ?? 0)
+	() => (props.model?.semantics?.ode.parameters?.length ?? 0) + (props.model?.model?.auxiliaries?.length ?? 0)
 );
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
-const time = computed(() =>
-	props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []
-);
+const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 const extractions = computed(() => {
 	const attributes = props.model?.metadata?.attributes ?? [];
 	return groupBy(attributes, 'amr_element_id');
@@ -179,9 +166,7 @@ const otherConcepts = computed(() => {
 	let unalignedExtractions: Dictionary<any>[] = [];
 	unalignedKeys.forEach((key) => {
 		unalignedExtractions = unalignedExtractions.concat(
-			extractions.value[key.toString()].filter((e) =>
-				['anchored_extraction', 'anchored_entity'].includes(e.type)
-			)
+			extractions.value[key.toString()].filter((e) => ['anchored_extraction', 'anchored_entity'].includes(e.type))
 		);
 	});
 

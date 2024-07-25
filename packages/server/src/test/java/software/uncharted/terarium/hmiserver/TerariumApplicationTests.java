@@ -17,8 +17,9 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @AutoConfigureMockMvc
 @SpringBootTest
 @Transactional
-@ActiveProfiles({"local", "test"})
+@ActiveProfiles({ "local", "test" })
 public class TerariumApplicationTests {
+
 	@Autowired
 	private WebApplicationContext context;
 
@@ -27,9 +28,7 @@ public class TerariumApplicationTests {
 
 	@BeforeEach
 	public void beforeEach() {
-		mockMvc = MockMvcBuilders.webAppContextSetup(this.context)
-				.apply(springSecurity())
-				.build();
+		mockMvc = MockMvcBuilders.webAppContextSetup(this.context).apply(springSecurity()).build();
 	}
 
 	/** To allow the tests to run easily grant write permissions (wihtout chacking against the ReBAC service) */

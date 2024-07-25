@@ -2,7 +2,6 @@
 	<tera-model-part
 		:items="parameterList"
 		:collapsed-items="collapsedParameters"
-		:disabled-inputs="['concept']"
 		show-matrix
 		@open-matrix="(id: string) => (matrixModalId = id)"
 		@update-item="emit('update-parameter', $event)"

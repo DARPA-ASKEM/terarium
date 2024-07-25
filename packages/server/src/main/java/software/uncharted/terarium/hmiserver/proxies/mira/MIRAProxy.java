@@ -22,10 +22,10 @@ public interface MIRAProxy {
 
 	@GetMapping("/search")
 	ResponseEntity<List<DKG>> search(
-			@RequestParam("q") final String q,
-			@RequestParam("limit") final Integer limit,
-			@RequestParam("offset") final Integer offset)
-			throws FeignException;
+		@RequestParam("q") final String q,
+		@RequestParam("limit") final Integer limit,
+		@RequestParam("offset") final Integer offset
+	) throws FeignException;
 
 	@GetMapping("/entities/{curies}")
 	ResponseEntity<List<DKG>> getEntities(@PathVariable("curies") final String curies) throws FeignException;

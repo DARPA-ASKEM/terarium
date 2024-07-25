@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 @AMRSchemaType
 @Accessors(chain = true)
 public class ModelMetadata extends SupportAdditionalProperties implements Serializable {
+
 	@Serial
 	private static final long serialVersionUID = 1847034755264399454L;
 

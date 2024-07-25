@@ -1,11 +1,5 @@
 <template>
-	<Button
-		icon="pi pi-ellipsis-v"
-		rounded
-		text
-		@click.stop="toggle"
-		:disabled="isEmpty(projectMenuItems)"
-	/>
+	<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" :disabled="isEmpty(projectMenuItems)" />
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
 
@@ -23,8 +17,7 @@ const props = defineProps<{ project: Project | null }>();
 const emit = defineEmits(['forked-project']);
 
 // Triggers modals from tera-common-modal-dialogs.vue to open
-const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } =
-	useProjectMenu();
+const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
 const menu = ref();
 const renameMenuItem = {

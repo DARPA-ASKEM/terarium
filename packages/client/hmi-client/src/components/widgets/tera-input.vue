@@ -4,16 +4,16 @@
 		<main :class="{ error: getErrorMessage }" @click.self.stop="focusInput">
 			<i v-if="icon" :class="icon" />
 			<input
-				@click.stop
 				ref="inputField"
 				:disabled="getDisabled"
-				:value="getValue()"
-				@input="updateValue"
-				:style="inputStyle"
-				@blur="unmask"
-				@focusout="$emit('focusout', $event)"
-				:type="getType"
 				:placeholder="placeholder"
+				:style="inputStyle"
+				:type="getType"
+				:value="getValue()"
+				@blur="unmask"
+				@click.stop
+				@focusout="$emit('focusout', $event)"
+				@input="updateValue"
 			/>
 		</main>
 	</div>
@@ -21,7 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { nistToNumber, numberToNist, scrubAndParse } from '@/utils/number';
+import { isString } from 'lodash';
+import { nistToNumber, nistToString, numberToNist, scrubAndParse } from '@/utils/number';
 import { CSSProperties, InputTypeHTMLAttribute, computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -70,7 +71,15 @@ const inputStyle = computed(() => {
 
 const getErrorMessage = computed(() => props.errorMessage || error.value);
 
-const getValue = () => (isNistType ? maskedValue.value : props.modelValue);
+// If the input is a string composed only of digits, display as NIST number
+function isTextContainingOnlyDigits(value: string | number | undefined): boolean {
+	return isString(value) && /^\d+(\s\d+)?$/.test(value);
+}
+
+function getValue() {
+	if (isNistType || isTextContainingOnlyDigits(props.modelValue)) return maskedValue.value;
+	return props.modelValue;
+}
 
 const updateValue = (event: Event) => {
 	const target = event.target as HTMLInputElement;
@@ -85,6 +94,8 @@ const updateValue = (event: Event) => {
 		} else {
 			error.value = 'Invalid number';
 		}
+	} else if (isTextContainingOnlyDigits(value)) {
+		maskedValue.value = numberToNist(value);
 	} else if (props.type === 'number') {
 		emit('update:model-value', parseFloat(value));
 	} else {
@@ -95,14 +106,14 @@ const updateValue = (event: Event) => {
 watch(
 	() => props.modelValue,
 	(newValue) => {
-		if (isNistType) {
+		if (isNistType || isTextContainingOnlyDigits(newValue)) {
 			maskedValue.value = numberToNist(newValue?.toString() ?? '');
 		}
 	}
 );
 
 onMounted(() => {
-	if (isNistType) {
+	if (isNistType || isTextContainingOnlyDigits(props.modelValue)) {
 		maskedValue.value = numberToNist(props.modelValue?.toString() ?? '');
 	}
 });
@@ -111,6 +122,10 @@ const unmask = () => {
 	// convert back to a number when finished
 	if (isNistType && !getErrorMessage.value) {
 		emit('update:model-value', nistToNumber(maskedValue.value));
+	}
+
+	if (isTextContainingOnlyDigits(maskedValue.value)) {
+		emit('update:model-value', nistToString(maskedValue.value));
 	}
 };
 </script>
@@ -121,13 +136,13 @@ main {
 	flex: 1 1 0;
 	justify-content: space-between;
 	align-items: center;
-	padding: var(--gap-xsmall) var(--gap-small);
+	padding: var(--gap-1) var(--gap-2);
 	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-alt);
 	border-radius: var(--border-radius);
 	cursor: text;
 	transition: border-color 0.3s ease-in-out;
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 
 	&:has(*:disabled) {
 		opacity: 0.5;
@@ -150,7 +165,7 @@ main {
 }
 
 label {
-	background-color: none;
+	background: none;
 	color: var(--text-color-secondary);
 	cursor: text;
 	padding-right: var(--gap-1-5);
@@ -158,11 +173,11 @@ label {
 }
 
 input {
-	font-family: var(--font-family);
+	font-family: var(--font-family), sans-serif;
 	font-feature-settings: 'tnum';
 	flex-grow: 1;
 	border: none;
-	background-color: none;
+	background: none;
 	&::-webkit-inner-spin-button,
 	&::-webkit-outer-spin-button {
 		-webkit-appearance: none;
@@ -177,7 +192,7 @@ aside {
 	display: flex;
 	align-items: center;
 	i {
-		margin-right: var(--gap-small);
+		margin-right: var(--gap-2);
 	}
 }
 

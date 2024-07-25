@@ -15,8 +15,8 @@
 					<!-- Model weights -->
 					<AccordionTab header="Model weights">
 						<p class="subheader">
-							How do you want to distribute weights of the attached models? You can distribute them
-							equally or set custom weights using the input boxes.
+							How do you want to distribute weights of the attached models? You can distribute them equally or set
+							custom weights using the input boxes.
 						</p>
 						<div class="model-weights">
 							<table class="p-datatable-table">
@@ -65,13 +65,7 @@
 										/>
 									</td>
 									<td>
-										<Button
-											class="p-button-sm"
-											icon="pi pi-times"
-											rounded
-											text
-											@click="deleteMapping(key)"
-										/>
+										<Button class="p-button-sm" icon="pi pi-times" rounded text @click="deleteMapping(key)" />
 									</td>
 								</tr>
 							</table>
@@ -127,9 +121,7 @@
 
 					<!-- Time span -->
 					<AccordionTab header="Time span">
-						<p class="subheader">
-							Set the time span and number of samples for the ensemble simulation.
-						</p>
+						<p class="subheader">Set the time span and number of samples for the ensemble simulation.</p>
 						<table class="w-full">
 							<thead class="p-datatable-thead">
 								<th>Units</th>
@@ -166,10 +158,7 @@
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
 			>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
-					v-bind="node.state.errorMessage"
-				/>
+				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 				<section ref="outputPanel">
 					<tera-simulate-chart
 						v-for="(cfg, index) of node.state.chartConfigs"
@@ -214,23 +203,12 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 
-import {
-	getRunResultCiemss,
-	makeEnsembleCiemssSimulation
-} from '@/services/models/simulation-service';
-import {
-	getModelConfigurationById,
-	getObservables,
-	getInitials
-} from '@/services/model-configurations';
+import { getRunResultCiemss, makeEnsembleCiemssSimulation } from '@/services/models/simulation-service';
+import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 
 import type { WorkflowNode } from '@/types/workflow';
-import type {
-	TimeSpan,
-	EnsembleModelConfigs,
-	EnsembleSimulationCiemssRequest
-} from '@/types/Types';
+import type { TimeSpan, EnsembleModelConfigs, EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -336,17 +314,13 @@ onMounted(async () => {
 	});
 	if (!modelConfigurationIds) return;
 
-	const allModelConfigurations = await Promise.all(
-		modelConfigurationIds.map((id) => getModelConfigurationById(id))
-	);
+	const allModelConfigurations = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
 
 	allModelOptions.value = {};
 	for (let i = 0; i < allModelConfigurations.length; i++) {
 		const tempList: string[] = [];
 		getInitials(allModelConfigurations[i]).forEach((element) => tempList.push(element.target));
-		getObservables(allModelConfigurations[i]).forEach((element) =>
-			tempList.push(element.referenceId)
-		);
+		getObservables(allModelConfigurations[i]).forEach((element) => tempList.push(element.referenceId));
 		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
 	}
 	listModelLabels.value = allModelConfigurations.map((ele) => ele.name ?? '');

@@ -87,8 +87,5 @@ export const highlight = <V, E>(
 };
 
 // Short cuts
-export const highlightNode = <V, E>(
-	G: Renderer<V, E>,
-	id: string,
-	options: HighlightOptions
-): string => highlight(G, [id], [], options);
+export const highlightNode = <V, E>(G: Renderer<V, E>, id: string, options: HighlightOptions): string =>
+	highlight(G, [id], [], options);

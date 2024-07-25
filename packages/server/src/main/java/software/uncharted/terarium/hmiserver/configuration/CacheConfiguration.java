@@ -14,21 +14,26 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.uncharted.terarium.hmiserver.models.CacheName;
 
 @Configuration
 @EnableCaching
-@ImportAutoConfiguration(classes = {CacheAutoConfiguration.class, RedisAutoConfiguration.class})
+@ImportAutoConfiguration(classes = { CacheAutoConfiguration.class, RedisAutoConfiguration.class })
 @Slf4j
 public class CacheConfiguration implements CachingConfigurer {
 
+	@Override
 	@Bean
 	public CacheManager cacheManager() {
-		SimpleCacheManager cacheManager = new SimpleCacheManager();
-		Cache usersCache = new ConcurrentMapCache("users");
-		Cache rolesCache = new ConcurrentMapCache("roles");
-		Cache authoriesCache = new ConcurrentMapCache("authorities");
-		Cache projectContributorsCache = new ConcurrentMapCache("projectcontributors");
-		cacheManager.setCaches(Arrays.asList(usersCache, rolesCache, authoriesCache, projectContributorsCache));
+		final SimpleCacheManager cacheManager = new SimpleCacheManager();
+		final Cache usersCache = new ConcurrentMapCache("users");
+		final Cache rolesCache = new ConcurrentMapCache("roles");
+		final Cache authoriesCache = new ConcurrentMapCache("authorities");
+		final Cache projectContributorsCache = new ConcurrentMapCache("projectcontributors");
+		final Cache userRepresentationCache = new ConcurrentMapCache(CacheName.USER_REPRESENTATION);
+		cacheManager.setCaches(
+			Arrays.asList(usersCache, rolesCache, authoriesCache, projectContributorsCache, userRepresentationCache)
+		);
 		return cacheManager;
 	}
 
@@ -38,14 +43,14 @@ public class CacheConfiguration implements CachingConfigurer {
 	 *
 	 * @return the {@link KeyGenerator} for caching
 	 */
+	@Override
 	@Bean
 	public KeyGenerator keyGenerator() {
 		return (target, method, params) -> {
-
 			// Generate a unique key based on the calling method and parameters supplied
 			String key = target.getClass().getName();
 			key += "_" + method.getName();
-			for (Object o : params) {
+			for (final Object o : params) {
 				key += "_" + (o != null ? String.valueOf(o.toString().hashCode()) : "null");
 			}
 

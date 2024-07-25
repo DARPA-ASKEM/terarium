@@ -9,18 +9,12 @@
 				rows="1"
 				@keydown.enter.prevent="initiateSearch"
 			/>
-			<i>
-				<Button :class="{ hidden: !query }" rounded text icon="pi pi-times" @click="clearQuery"
-			/></i>
+			<i> <Button :class="{ hidden: !query }" rounded text icon="pi pi-times" @click="clearQuery" /></i>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
 			<header>
 				<h4>Search by example</h4>
-				<Button
-					class="p-button-rounded"
-					icon="pi pi-times"
-					@click="searchByExampleToggle = !searchByExampleToggle"
-				/>
+				<Button class="p-button-rounded" icon="pi pi-times" @click="searchByExampleToggle = !searchByExampleToggle" />
 			</header>
 			<section
 				class="search-drag-drop-area"
@@ -55,35 +49,19 @@
 			</section>
 			<footer v-if="isAssetDropped">
 				<div class="field-checkbox">
-					<Checkbox
-						name="similarContent"
-						binary
-						v-model="selectedSearchByExampleOptions.similarContent"
-					/>
+					<Checkbox name="similarContent" binary v-model="selectedSearchByExampleOptions.similarContent" />
 					<label for="similarContent">Similar content</label>
 				</div>
 				<div class="field-checkbox">
-					<Checkbox
-						name="forwardCitation"
-						binary
-						v-model="selectedSearchByExampleOptions.forwardCitation"
-					/>
+					<Checkbox name="forwardCitation" binary v-model="selectedSearchByExampleOptions.forwardCitation" />
 					<label for="forwardCitation">Forward citations</label>
 				</div>
 				<div class="field-checkbox">
-					<Checkbox
-						name="backwardCitation"
-						binary
-						v-model="selectedSearchByExampleOptions.backwardCitation"
-					/>
+					<Checkbox name="backwardCitation" binary v-model="selectedSearchByExampleOptions.backwardCitation" />
 					<label for="backwardCitation">Backward citation</label>
 				</div>
 				<div class="field-checkbox">
-					<Checkbox
-						name="relatedContent"
-						binary
-						v-model="selectedSearchByExampleOptions.relatedContent"
-					/>
+					<Checkbox name="relatedContent" binary v-model="selectedSearchByExampleOptions.relatedContent" />
 					<label for="relatedContent">Related resources</label>
 				</div>
 				<Button label="Search" @click="initiateSearchByExample()" />
@@ -106,10 +84,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
-import {
-	useSearchByExampleOptions,
-	extractResourceName
-} from '@/page/data-explorer/search-by-example';
+import { useSearchByExampleOptions, extractResourceName } from '@/page/data-explorer/search-by-example';
 import { getResourceID } from '@/utils/data-util';
 import { useProjects } from '@/composables/project';
 
@@ -118,8 +93,6 @@ defineProps<{
 	source: string;
 	placeholder?: string;
 }>();
-
-const emit = defineEmits(['query-changed']);
 
 const route = useRoute();
 const router = useRouter();
@@ -143,11 +116,9 @@ const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOption
 
 function clearQuery() {
 	query.value = '';
-	emit('query-changed');
 }
 
 const initiateSearch = () => {
-	emit('query-changed', query.value);
 	router.push({ name: RouteName.DataExplorer, query: { q: query.value } });
 	EventService.create(EventType.Search, useProjects().activeProject.value?.id, query.value);
 };
@@ -190,12 +161,8 @@ defineExpose({ addToQuery });
 // 	});
 // };
 
-const isSearchByExampleVisible = computed(
-	() => getDragData('asset') || searchByExampleToggle.value
-);
-const isAssetDropped = computed(
-	() => searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value
-);
+const isSearchByExampleVisible = computed(() => getDragData('asset') || searchByExampleToggle.value);
+const isAssetDropped = computed(() => searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value);
 
 const dragOverStyle = computed(() => {
 	let borderStyle: string = '';

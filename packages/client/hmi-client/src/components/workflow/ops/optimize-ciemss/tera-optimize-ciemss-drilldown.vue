@@ -40,21 +40,15 @@
 					</h5>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-static-intervention-policy-group
-							v-if="
-								cfg.intervention?.staticInterventions &&
-								cfg.intervention?.staticInterventions.length > 0
-							"
-							:key="idx"
+							v-if="cfg.intervention?.staticInterventions && cfg.intervention?.staticInterventions.length > 0"
+							:key="cfg.id || '' + idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 						/>
 					</template>
 					<template v-for="(cfg, idx) in props.node.state.interventionPolicyGroups">
 						<tera-dynamic-intervention-policy-group
-							v-if="
-								cfg.intervention?.dynamicInterventions &&
-								cfg.intervention?.dynamicInterventions.length > 0
-							"
+							v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
 							:key="idx"
 							:config="cfg"
 							@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
@@ -204,6 +198,12 @@
 		</section>
 		<section :tabName="OptimizeTabs.Notebook" class="ml-4 mr-2 pt-3">
 			<p>Under construction. Use the wizard for now.</p>
+			<div class="result-message-grid">
+				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
+					<div class="label">{{ key }}:</div>
+					<div class="value">{{ formatJsonValue(value) }}</div>
+				</div>
+			</div>
 		</section>
 		<template #preview>
 			<tera-drilldown-preview
@@ -213,18 +213,12 @@
 				@update:selection="onSelection"
 				:is-loading="showSpinner"
 				is-selectable
-				:class="{ 'failed-run': optimizationResult.success === 'False' }"
+				:class="{ 'failed-run': optimizationResult.success === 'False' ?? 'successful-run' }"
 			>
-				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
-					:summary-id="node.state.summaryId"
-				/>
+				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
 				<!-- Optimize result.json display: -->
-				<div
-					v-if="optimizationResult && displayOptimizationResultMessage"
-					class="result-message-grid"
-				>
+				<div v-if="optimizationResult && displayOptimizationResultMessage" class="result-message-grid">
 					<span class="flex flex-row">
 						<h6>Response</h6>
 						<Button
@@ -259,45 +253,22 @@
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
-										<h5>{{ constraint.name }}</h5>
-										<vega-chart
-											v-if="riskResults[knobs.postForecastRunId]"
-											:visualization-spec="
-												createOptimizeChart(
-													riskResults[knobs.postForecastRunId],
-													constraint.targetVariable,
-													constraint.threshold,
-													constraint.isMinimized
-												)
-											"
-										/>
+									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li
-										v-for="(_, key) of knobs.selectedInterventionVariables"
-										:key="`intervention_${key}`"
-									>
-										<vega-chart
-											are-embed-actions-visible
-											:visualization-spec="preparedInterventionsCharts[key]"
-										/>
+									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li
-										v-for="(_, key) of knobs.selectedSimulationVariables"
-										:key="`simulation_${key}`"
-									>
-										<vega-chart
-											are-embed-actions-visible
-											:visualization-spec="preparedCharts[key]"
-										/>
+									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
@@ -321,12 +292,7 @@
 			/>
 		</template>
 	</tera-drilldown>
-	<Dialog
-		v-model:visible="showModelModal"
-		modal
-		header="Save as new model configuration"
-		class="save-dialog w-4"
-	>
+	<Dialog v-model:visible="showModelModal" modal header="Save as new model configuration" class="save-dialog w-4">
 		<div class="label-and-input">
 			<label> Model config name</label>
 			<tera-input v-model="modelConfigName" />
@@ -345,7 +311,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, Dictionary, groupBy } from 'lodash';
+import _, { cloneDeep, Dictionary } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -359,23 +325,22 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import {
-	createModelConfiguration,
-	getAsConfiguredModel,
-	getModelConfigurationById
-} from '@/services/model-configurations';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	getSimulation
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
 	Intervention,
 	InterventionPolicy,
 	ModelConfiguration,
+	Model,
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss
@@ -392,7 +357,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
+import { createSuccessCriteriaChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -467,21 +432,15 @@ const showSaveDataDialog = ref<boolean>(false);
 const outputPanel = ref(null);
 const chartSize = computed(() => drilldownChartSize(outputPanel.value));
 const inferredParameters = computed(() => props.node.inputs[1].value);
-const cancelRunId = computed(
-	() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId
-);
+const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
 
 const isSaveDisabled = computed<boolean>(() =>
 	isSaveDatasetDisabled(props.node.state.postForecastRunId, useProjects().activeProject.value?.id)
 );
 
-const activePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive)
-);
+const activePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => ele.isActive));
 
-const inactivePolicyGroups = computed(() =>
-	props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive)
-);
+const inactivePolicyGroups = computed(() => props.node.state.interventionPolicyGroups.filter((ele) => !ele.isActive));
 let pyciemssMap: Record<string, string> = {};
 
 const menuItems = computed(() => [
@@ -504,8 +463,7 @@ const menuItems = computed(() => [
 ]);
 
 const showSpinner = computed<boolean>(
-	() =>
-		props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
+	() => props.node.state.inProgressOptimizeId !== '' || props.node.state.inProgressPostForecastId !== ''
 );
 
 const showModelModal = ref(false);
@@ -542,17 +500,23 @@ const runResultsSummary = ref<{ [runId: string]: any }>({});
 const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
+const optimizeRequestPayload = ref<any>('');
 
-const modelParameterOptions = ref<string[]>([]);
+const model = ref<Model | null>(null);
+const modelParameterOptions = computed<string[]>(() =>
+	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
+);
 const modelStateAndObsOptions = ref<string[]>([]);
 
-const simulationChartOptions = computed(() => [
-	...modelParameterOptions.value,
-	...modelStateAndObsOptions.value
-]);
+const simulationChartOptions = computed(() => [...modelParameterOptions.value, ...modelStateAndObsOptions.value]);
 const modelConfiguration = ref<ModelConfiguration>();
 
 const showAdditionalOptions = ref(true);
+
+const getUnit = (paramId: string) => {
+	if (!model.value) return '';
+	return getUnitsFromModelParts(model.value)[paramId] || '';
+};
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -604,18 +568,20 @@ const formatJsonValue = (value) => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	const model = await getAsConfiguredModel(modelConfiguration.value);
+	const results = await Promise.all([
+		getModelConfigurationById(modelConfigurationId),
+		getModelByModelConfigurationId(modelConfigurationId)
+	]);
+	modelConfiguration.value = results[0];
+	model.value = results[1];
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
-		getInterventionPolicyById(policyId).then((interventionPolicy) =>
-			setInterventionPolicyGroups(interventionPolicy)
-		);
+		// FIXME: This should be done in the node this should not be done in the drill down.
+		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
 	}
 
-	modelParameterOptions.value = model?.semantics?.ode.parameters?.map((ele) => ele.id) ?? [];
-	modelStateAndObsOptions.value = model?.model.states.map((state: any) => state.id);
+	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
 
 	/** Until supported by pyciemss-service, do not show observables.
 	if (model?.semantics?.ode.observables) {
@@ -627,21 +593,20 @@ const initialize = async () => {
 const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
 	const state = _.cloneDeep(props.node.state);
 	// If already set + not changed since set, do not reset.
-	if (state.interventionPolicyId === interventionPolicy.id) {
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return;
 	}
 	state.interventionPolicyId = interventionPolicy.id ?? '';
 	state.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
-			const isNotActive =
-				intervention.dynamicInterventions?.length > 0 ||
-				intervention.staticInterventions?.length > 1;
+			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			newIntervention.intervention = intervention;
 			newIntervention.isActive = !isNotActive;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0].timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0].value;
+			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
+			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
 			state.interventionPolicyGroups.push(newIntervention);
 		});
 	}
@@ -654,6 +619,8 @@ const runOptimize = async () => {
 		return;
 	}
 
+	setOutputSettingDefaults();
+
 	const paramNames: string[] = [];
 	const paramValues: number[] = [];
 	const startTime: number[] = [];
@@ -664,7 +631,7 @@ const runOptimize = async () => {
 	activePolicyGroups.value.forEach((ele) => {
 		paramNames.push(ele.intervention.appliedTo);
 		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.startTime);
+		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		objectiveFunctionOption.push(ele.objectiveFunctionOption);
 
 		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
@@ -672,6 +639,11 @@ const runOptimize = async () => {
 			listBoundsInterventions.push([ele.startTime]);
 			listBoundsInterventions.push([ele.endTime]);
 		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
+			initialGuess.push(ele.initialGuessValue);
+			listBoundsInterventions.push([ele.lowerBoundValue]);
+			listBoundsInterventions.push([ele.upperBoundValue]);
+		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime) {
+			initialGuess.push(ele.startTimeGuess);
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);
@@ -741,6 +713,29 @@ const runOptimize = async () => {
 	emit('update-state', state);
 };
 
+const setOutputSettingDefaults = () => {
+	const selectedInterventionVariables: Array<string> = [];
+	const selectedSimulationVariables: Array<string> = [];
+
+	if (!knobs.value.selectedInterventionVariables.length) {
+		props.node.state.interventionPolicyGroups.forEach((intervention) =>
+			selectedInterventionVariables.push(intervention.intervention.appliedTo)
+		);
+		knobs.value.selectedInterventionVariables = [...new Set(selectedInterventionVariables)];
+	}
+
+	if (!knobs.value.selectedSimulationVariables.length) {
+		props.node.state.constraintGroups.forEach((constraint) => {
+			if (constraint.targetVariable) {
+				selectedSimulationVariables.push(constraint.targetVariable);
+			}
+		});
+		if (selectedSimulationVariables.length) {
+			knobs.value.selectedSimulationVariables = [...new Set(selectedSimulationVariables)];
+		}
+	}
+};
+
 const saveModelConfiguration = async () => {
 	if (!modelConfiguration.value) return;
 
@@ -770,20 +765,14 @@ const setOutputValues = async () => {
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
 
-	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(
-		knobs.value.postForecastRunId,
-		'risk.json'
-	);
+	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
 
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(postResult[0]);
 
 	// FIXME: only show the post optimize data for now...
-	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
-		postResult,
-		Object.values(pyciemssMap)
-	);
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
@@ -793,30 +782,69 @@ const setOutputValues = async () => {
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
 	runResultsSummary.value[postForecastRunId] = postResultSummary;
 
-	optimizationResult.value = await getRunResult(
-		knobs.value.optimizationRunId,
-		'optimize_results.json'
-	);
+	optimizationResult.value = await getRunResult(knobs.value.optimizationRunId, 'optimize_results.json');
+	optimizeRequestPayload.value = (await getSimulation(knobs.value.optimizationRunId))?.executionPayload || '';
 };
 
-const preProcessedInterventionsData = computed<
-	Dictionary<{ name: string; value: number; time: number }[]>
->(() => {
+const preProcessedInterventionsData = computed<Dictionary<{ name: string; value: number; time: number }[]>>(() => {
 	const state = _.cloneDeep(props.node.state);
 
-	const data = state.interventionPolicyGroups.flatMap((ele) =>
-		ele.intervention.staticInterventions.map((intervention) => ({
-			name: ele.intervention.appliedTo,
-			value: intervention.value,
-			time: intervention.timestep
+	// Combine before and after interventions
+	const combinedInterventions = [
+		...state.interventionPolicyGroups.flatMap((group) =>
+			group.intervention.staticInterventions.map((intervention) => ({
+				appliedTo: group.intervention.appliedTo,
+				name: group.intervention.name,
+				value: intervention.value,
+				time: intervention.timestep
+			}))
+		),
+		...(state.optimizedInterventionPolicy?.interventions.flatMap((intervention) =>
+			intervention.staticInterventions.map((staticIntervention) => ({
+				appliedTo: intervention.appliedTo,
+				name: intervention.name,
+				value: staticIntervention.value,
+				time: staticIntervention.timestep
+			}))
+		) || [])
+	];
+
+	// Group by appliedTo and map to exclude 'appliedTo' from final objects
+	const groupedAndMapped = _.mapValues(_.groupBy(combinedInterventions, 'appliedTo'), (interventions) =>
+		interventions.map(({ name, value, time }) => ({
+			name,
+			value,
+			time
 		}))
 	);
 
-	return groupBy(data, 'name');
+	return groupedAndMapped;
 });
 
 onMounted(async () => {
 	initialize();
+});
+
+const preparedSuccessCriteriaCharts = computed(() => {
+	const postForecastRunId = props.node.state.postForecastRunId;
+
+	return props.node.state.constraintGroups.map((constraint) =>
+		createSuccessCriteriaChart(
+			riskResults.value[postForecastRunId],
+			constraint.targetVariable,
+			constraint.threshold,
+			constraint.isMinimized,
+			constraint.riskTolerance,
+			{
+				title: constraint.name,
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				xAxisTitle: 'Number of samples',
+				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+				legend: true
+			}
+		)
+	);
 });
 
 const preparedInterventionsCharts = computed(() => {
@@ -843,8 +871,8 @@ const preparedInterventionsCharts = computed(() => {
 				legend: true,
 				groupField: 'sample_id',
 				timeField: 'timepoint_id',
-				xAxisTitle: 'Time',
-				yAxisTitle: variable,
+				xAxisTitle: getUnit('_time') || 'Time',
+				yAxisTitle: getUnit(variable) || variable,
 				title: variable
 			}
 		)
@@ -869,8 +897,8 @@ const preparedCharts = computed(() => {
 			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: 'Time',
-			yAxisTitle: variable,
+			xAxisTitle: getUnit('_time') || 'Time',
+			yAxisTitle: getUnit(variable) || variable,
 			title: variable
 		})
 	);
@@ -931,20 +959,27 @@ watch(
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-small);
+	overflow: auto;
 }
 
 .label {
 	font-weight: bold;
-	width: 150px; /* Adjust the width of the label column as needed */
+	width: 210px; /* Adjust the width of the label column as needed */
 }
 .value {
 	flex-grow: 1;
 }
 
-.failed-run {
+:deep(.failed-run main .content-container) {
 	border: 2px solid var(--error-color);
 	border-radius: var(--border-radius-big);
 	color: var(--error-color-text);
+}
+
+.successful-run {
+	border: none;
+	border-radius: none;
+	color: none;
 }
 
 .form-section {

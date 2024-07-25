@@ -48,21 +48,13 @@
 						class="white-space-nowrap"
 					/>
 					<!--ContextMenu is used instead of TieredMenu for the submenus to appear on the left (not get cut off on the right)-->
-					<ContextMenu
-						ref="addComponentMenu"
-						:model="contextMenuItems"
-						style="white-space: nowrap; width: auto"
-					/>
+					<ContextMenu ref="addComponentMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 				</div>
 			</div>
 		</template>
 		<!-- data -->
 		<template #data>
-			<ContextMenu
-				ref="contextMenu"
-				:model="contextMenuItems"
-				style="white-space: nowrap; width: auto"
-			/>
+			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
 			<tera-canvas-item
 				v-for="node in wf.nodes"
 				:key="node.id"
@@ -77,10 +69,7 @@
 					ref="teraOperatorRefs"
 					:node="node"
 					@resize="resizeHandler"
-					@port-selected="
-						(port: WorkflowPort, direction: WorkflowDirection) =>
-							createNewEdge(node, port, direction)
-					"
+					@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 					@port-mouseover="onPortMouseover"
 					@port-mouseleave="onPortMouseleave"
 					@remove-operator="(event) => removeNode(event)"
@@ -117,10 +106,7 @@
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0 0 L 8 8 L 0 16 z"
-					style="fill: var(--text-color-secondary); fill-opacity: 1"
-				></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--text-color-secondary); fill-opacity: 1"></path>
 			</marker>
 			<marker
 				id="smallArrow"
@@ -179,14 +165,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
-import type {
-	Operation,
-	Workflow,
-	WorkflowEdge,
-	WorkflowNode,
-	WorkflowOutput,
-	WorkflowPort
-} from '@/types/workflow';
+import type { Operation, Workflow, WorkflowEdge, WorkflowNode, WorkflowOutput, WorkflowPort } from '@/types/workflow';
 import { WorkflowDirection, WorkflowPortStatus, OperatorStatus } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -216,7 +195,6 @@ import * as DatasetOp from '@/components/workflow/ops/dataset/mod';
 import * as FunmanOp from '@/components/workflow/ops/funman/mod';
 import * as SimulateEnsembleCiemssOp from '@/components/workflow/ops/simulate-ensemble-ciemss/mod';
 import * as ModelFromCodeOp from '@/components/workflow/ops/model-from-code/mod';
-import * as SimulateJuliaOp from '@/components/workflow/ops/simulate-julia/mod';
 import * as ModelOp from '@/components/workflow/ops/model/mod';
 import * as ModelEditOp from '@/components/workflow/ops/model-edit/mod';
 import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
@@ -224,7 +202,6 @@ import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/m
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
 import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
-import * as CalibrateJuliaOp from '@/components/workflow/ops/calibrate-julia/mod';
 import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
@@ -236,7 +213,6 @@ import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-po
 const WORKFLOW_SAVE_INTERVAL = 8000;
 
 const registry = new workflowService.WorkflowRegistry();
-registry.registerOp(SimulateJuliaOp);
 registry.registerOp(SimulateCiemssOp);
 registry.registerOp(StratifyMiraOp);
 registry.registerOp(ModelFromCodeOp);
@@ -251,7 +227,6 @@ registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
 registry.registerOp(CodeAssetOp);
 registry.registerOp(SubsetDataOp);
-registry.registerOp(CalibrateJuliaOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
@@ -313,10 +288,7 @@ async function updateWorkflowName() {
 	wf.value = await workflowService.getWorkflow(props.assetId);
 }
 
-function appendInputPort(
-	node: WorkflowNode<any>,
-	port: { type: string; label?: string; value: any }
-) {
+function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
 	node.inputs.push({
 		id: uuidv4(),
 		type: port.type,
@@ -561,15 +533,6 @@ const contextMenuItems: MenuItem[] = [
 		label: 'Run model',
 		items: [
 			{
-				label: SimulateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(SimulateJuliaOp)
-			},
-			{
-				label: CalibrateJuliaOp.operation.displayName,
-				command: addOperatorToWorkflow(CalibrateJuliaOp)
-			},
-			{ separator: true },
-			{
 				label: SimulateCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(SimulateCiemssOp)
 			},
@@ -655,9 +618,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
-const isCreatingNewEdge = computed(
-	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
-);
+const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
 function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
@@ -693,9 +654,7 @@ function removeEdges(portId: string) {
 	);
 
 	// Build a traversal map before we do actual removal
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.value.nodes.map((node) => [node.id, node])
-	);
+	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(wf.value.nodes.map((node) => [node.id, node]));
 	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
 	wf.value.edges.forEach((edge) => {
 		if (!edge.source || !edge.target) return;
@@ -717,10 +676,7 @@ function removeEdges(portId: string) {
 
 	// cascade invalid status to downstream operators
 	if (startingNodeId !== '') {
-		workflowService.cascadeInvalidateDownstream(
-			nodeMap.get(startingNodeId) as WorkflowNode<any>,
-			nodeCache
-		);
+		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
 	}
 }
 
@@ -763,8 +719,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 	const allEdges = wf.value.edges;
 
 	// Note id can start with numerals, so we need [id=...]
-	const getPortElement = (id: string) =>
-		d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
+	const getPortElement = (id: string) => d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
 
 	// Relink heuristic, this will modify source
 	const relink = (source: Position, target: Position) => {

@@ -1,29 +1,17 @@
 <template>
 	<main>
-		<tera-operator-placeholder
-			v-if="!showSpinner && !runResults"
-			:operation-type="node.operationType"
-		>
+		<tera-operator-placeholder v-if="!showSpinner && !runResults" :operation-type="node.operationType">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
 			<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%" />
 			<div v-if="!showSpinner && runResults">
 				<template v-for="(_, index) of node.state.selectedSimulationVariables" :key="index">
-					<vega-chart
-						:visualization-spec="preparedCharts[index]"
-						:are-embed-actions-visible="false"
-					/>
+					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
 				</template>
 			</div>
 			<div class="flex gap-2">
-				<Button
-					@click="emit('open-drilldown')"
-					label="Edit"
-					severity="secondary"
-					outlined
-					class="w-full"
-				/>
+				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -134,11 +122,11 @@ const preparedCharts = computed(() => {
 			height: 120,
 			variables: [pyciemssMap[variable]],
 			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: false,
+			legend: true,
 			groupField: 'sample_id',
 			timeField: 'timepoint_id',
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: 'Time',
+			yAxisTitle: variable,
 			title: variable
 		})
 	);
@@ -152,10 +140,7 @@ watch(
 		const response = await pollResult(optId);
 		if (response.state === PollerState.Done) {
 			// Start 2nd simulation to get sample simulation from dill
-			const newInterventionResponse = await createInterventionPolicyFromOptimize(
-				modelConfigId.value as string,
-				optId
-			);
+			const newInterventionResponse = await createInterventionPolicyFromOptimize(modelConfigId.value as string, optId);
 
 			const preForecastResponce = await startForecast(undefined);
 			const preForecastId = preForecastResponce.id;
@@ -167,6 +152,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
+			state.optimizedInterventionPolicy = newInterventionResponse;
 			emit('update-state', state);
 		}
 	},
@@ -187,10 +173,7 @@ watch(
 			const state = _.cloneDeep(props.node.state);
 
 			// Generate output summary, collect key facts and get agent to summarize
-			const optimizationResult = await getRunResult(
-				state.optimizationRunId,
-				'optimize_results.json'
-			);
+			const optimizationResult = await getRunResult(state.optimizationRunId, 'optimize_results.json');
 			const prompt = `
 The following are the key attributes and findings of an optimization process for a ODE epidemilogy model, the goal is to find the best values or time points that satisfy a set of constraints.
 

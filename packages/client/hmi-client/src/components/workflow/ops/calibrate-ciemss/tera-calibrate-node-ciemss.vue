@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<template v-if="!inProgressCalibrationId && runResult && csvAsset">
+		<template v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre">
 			<vega-chart
 				v-for="(_config, index) of props.node.state.chartConfigs"
 				:key="index"
@@ -9,20 +9,11 @@
 			/>
 		</template>
 
-		<tera-progress-spinner
-			v-if="inProgressCalibrationId"
-			:font-size="2"
-			is-centered
-			style="height: 100%"
-		/>
+		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
+			<div>{{ props.node.state.currentProgress }}%</div>
+		</tera-progress-spinner>
 
-		<Button
-			v-if="areInputsFilled"
-			label="Edit"
-			@click="emit('open-drilldown')"
-			severity="secondary"
-			outlined
-		/>
+		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :operation-type="node.operationType">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -39,21 +30,24 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import {
 	getRunResultCSV,
 	pollAction,
-	getCalibrateBlobURL,
 	makeForecastJobCiemss,
 	getSimulation,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
+import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { setupDatasetInput } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { CsvAsset } from '@/types/Types';
+import type { CsvAsset, Simulation, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -62,35 +56,50 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-const runResult = ref<any>(null);
+const model = ref<Model | null>(null);
+const runResult = ref<DataArray>([]);
+const runResultPre = ref<DataArray>([]);
+const runResultSummary = ref<DataArray>([]);
+const runResultSummaryPre = ref<DataArray>([]);
+
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
 let pyciemssMap: Record<string, string> = {};
+
 const preparedCharts = computed(() => {
 	const state = props.node.state;
 
-	if (!runResult.value || !csvAsset.value) return [];
+	if (!runResult.value || !csvAsset.value || !runResultPre.value) return [];
 
-	const result = runResult.value;
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(
+		runResult.value,
+		runResultPre.value,
+		runResultSummary.value,
+		runResultSummaryPre.value
+	);
 
+	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}`] = key;
+		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
+	});
+	state.mapping.forEach((mapObj) => {
+		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	const csv = csvAsset.value.csv;
 	const csvRaw = csv.map((d) => d.join(',')).join('\n');
 	groundTruth = csvParse(csvRaw, autoType);
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find(
-		(d) => d.modelVariable === 'timestamp'
-	)?.datasetVariable;
+	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	return state.chartConfigs.map((config) => {
 		const datasetVariables: string[] = [];
@@ -101,27 +110,34 @@ const preparedCharts = computed(() => {
 			}
 		});
 
+		const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
+
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
-			null,
+			{
+				dataset: resultSummary,
+				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				timeField: 'timepoint_id'
+			},
 			{
 				dataset: groundTruth,
 				variables: datasetVariables,
-				timeField: datasetTimeField as string,
-				groupField: 'sample_id'
+				timeField: datasetTimeField as string
 			},
 			{
+				title: `${config.join(',')}`,
 				width: 180,
 				height: 120,
-				legend: false,
+				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: '',
-				yAxisTitle: ''
+				xAxisTitle,
+				yAxisTitle: `${config.join(',')}`,
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
@@ -130,9 +146,20 @@ const preparedCharts = computed(() => {
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(4000)
+		.setInterval(3000)
 		.setThreshold(350)
-		.setPollAction(async () => pollAction(runId));
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction((data: Simulation) => {
+			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
+				const checkpoint = _.first(data.updates);
+				if (checkpoint) {
+					const state = _.cloneDeep(props.node.state);
+					state.currentProgress = checkpoint.data.progress;
+					emit('update-state', state);
+				}
+			}
+		});
+
 	const pollerResults = await poller.start();
 	let state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
@@ -164,38 +191,53 @@ const pollResult = async (runId: string) => {
 };
 
 watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+	},
+	{ immediate: true }
+);
+
+watch(
 	() => props.node.state.inProgressCalibrationId,
 	async (id) => {
 		if (!id || id === '') return;
 
 		const response = await pollResult(id);
+		const state = _.cloneDeep(props.node.state);
+
+		const baseRequestPayload: SimulationRequest = {
+			modelConfigId: modelConfigId.value as string,
+			timespan: {
+				start: 0,
+				end: state.endTime
+			},
+			extra: {
+				num_samples: state.numSamples,
+				method: 'dopri5'
+			},
+			engine: 'ciemss'
+		};
+
+		// Calibration has finished, now kick of two forecast jobs to do comparison
+		// - using the default configuration ()
+		// - using the calibfrated configuration
 		if (response.state === PollerState.Done) {
-			// Start 2nd simulation to get sample simulation from dill
-			const dillURL = await getCalibrateBlobURL(id);
-			console.log('dill URL is', dillURL);
+			// Default (Pre)
+			let forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressPreForecastId = forecastResponse.id;
 
-			const forecastResponse = await makeForecastJobCiemss(
-				{
-					modelConfigId: modelConfigId.value as string,
-					timespan: {
-						start: 0,
-						end: props.node.state.endTime
-					},
-					extra: {
-						num_samples: props.node.state.numSamples,
-						method: 'dopri5',
-						inferred_parameters: id
-					},
-					engine: 'ciemss'
-				},
-				nodeMetadata(props.node)
-			);
-			const forecastId = forecastResponse.id;
+			// With calibrated result
+			baseRequestPayload.extra.inferred_parameters = id;
+			forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
+			state.inProgressForecastId = forecastResponse.id;
 
-			const state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';
 			state.calibrationId = id;
-			state.inProgressForecastId = forecastId;
 			emit('update-state', state);
 		}
 	},
@@ -203,16 +245,31 @@ watch(
 );
 
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressPreForecastId,
 	async (id) => {
 		if (!id || id === '') return;
 
-		const response = await pollResult(id);
-		if (response.state === PollerState.Done) {
+		let doneProcess = true;
+		let response = await pollResult(props.node.state.inProgressPreForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		response = await pollResult(props.node.state.inProgressForecastId);
+		if (response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (doneProcess) {
 			const state = _.cloneDeep(props.node.state);
-			state.chartConfigs = [[]];
+			if (state.chartConfigs.length === 0) {
+				state.chartConfigs = [[]];
+			}
+			state.forecastId = state.inProgressForecastId;
+			state.preForecastId = state.inProgressPreForecastId;
+
 			state.inProgressForecastId = '';
-			state.forecastId = id;
+			state.inProgressPreForecastId = '';
 			emit('update-state', state);
 
 			// Get the calibrate losses to generate a run summary
@@ -232,14 +289,29 @@ watch(
 			`;
 			const summaryResponse = await createLLMSummary(prompt);
 
-			const portLabel = props.node.inputs[0].label;
+			const baseConfig = await getModelConfigurationById(modelConfigId.value as string);
+
+			const calibratedModelConfig: ModelConfiguration = {
+				name: `Calibrated: ${baseConfig.name}`,
+				description: `Calibrated: ${baseConfig.description}`,
+				simulationId: state.calibrationId,
+				modelId: baseConfig.modelId,
+				observableSemanticList: [],
+				parameterSemanticList: [],
+				initialSemanticList: []
+			};
+
+			const modelConfigResponse = await createModelConfiguration(calibratedModelConfig);
+
+			// const portLabel = props.node.inputs[0].label;
 			emit('append-output', {
-				type: 'calibrateSimulationId',
-				label: nodeOutputLabel(props.node, `${portLabel} Result`),
-				value: [state.calibrationId],
+				type: 'modelConfigId',
+				label: nodeOutputLabel(props.node, `Calibration Result`),
+				value: [modelConfigResponse.id],
 				state: {
 					calibrationId: state.calibrationId,
 					forecastId: state.forecastId,
+					preForecastId: state.preForecastId,
 					numIterations: state.numIterations,
 					numSamples: state.numSamples,
 					summaryId: summaryResponse?.id
@@ -258,10 +330,18 @@ watch(
 		if (!active) return;
 		if (!state.forecastId) return;
 
-		// Simulate
-		const result = await getRunResultCSV(state.forecastId, 'result.csv');
-		pyciemssMap = parsePyCiemssMap(result[0]);
-		runResult.value = result;
+		// Simulates
+		runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
+		runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
+
+		runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
+		runResultSummaryPre.value = await getRunResultCSV(
+			state.preForecastId,
+			'result_summary.csv',
+			renameFnGenerator('pre')
+		);
+
+		pyciemssMap = parsePyCiemssMap(runResult.value[0]);
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];

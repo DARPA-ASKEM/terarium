@@ -1,27 +1,19 @@
 <template>
-	<Editor
-		v-model="editorContent"
-		:class="{ readonly: !hasEditPermission }"
-		:readonly="!hasEditPermission"
-	/>
+	<Editor v-model="editorContent" :class="{ readonly: !hasEditPermission }" :readonly="!hasEditPermission" />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Editor from 'primevue/editor';
-import { update } from '@/services/project';
 import { useProjects } from '@/composables/project';
-import { b64DecodeUnicode } from '@/utils/binary';
+import { update } from '@/services/project';
+import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
+import Editor from 'primevue/editor';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const AUTO_SAVE_DELAY = 3000;
 
 const { activeProject, refresh } = useProjects();
-const lastSavedContent = computed(() =>
-	b64DecodeUnicode(activeProject.value?.overviewContent ?? '')
-);
-const hasEditPermission = computed(() =>
-	['creator', 'writer'].includes(activeProject.value?.userPermission ?? '')
-);
+const lastSavedContent = computed(() => b64DecodeUnicode(activeProject.value?.overviewContent ?? ''));
+const hasEditPermission = computed(() => ['creator', 'writer'].includes(activeProject.value?.userPermission ?? ''));
 const editorContent = ref('');
 
 let autoSaveIntervalId: number | null = null;
@@ -35,14 +27,12 @@ const stopAutoSave = () => {
 };
 
 const isContentSameAsLastSaved = computed(
-	() =>
-		lastSavedContent.value.length === editorContent.value.length &&
-		lastSavedContent.value === editorContent.value
+	() => lastSavedContent.value.length === editorContent.value.length && lastSavedContent.value === editorContent.value
 );
 const saveContent = async () => {
 	if (!activeProject.value) return;
 	if (isContentSameAsLastSaved.value) return;
-	const res = await update({ ...activeProject.value, overviewContent: editorContent.value });
+	const res = await update({ ...activeProject.value, overviewContent: b64EncodeUnicode(editorContent.value) });
 	// Note that an error has happened when res is null since the `update` function's swallowing the error and returning null instead of throwing it.
 	if (!res) {
 		stopAutoSave();

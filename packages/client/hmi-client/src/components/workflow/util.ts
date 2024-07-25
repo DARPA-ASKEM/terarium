@@ -5,9 +5,6 @@ import type { WorkflowNode } from '@/types/workflow';
 import type { CalibrateMap } from '@/services/calibrate-workflow';
 import { useProjects } from '@/composables/project';
 
-// export const previewChartSize= (element: HTMLElement) => {
-// }
-
 export const drilldownChartSize = (element: HTMLElement | null) => {
 	if (!element) return { width: 100, height: 270 };
 

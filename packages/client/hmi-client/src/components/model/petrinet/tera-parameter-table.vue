@@ -2,9 +2,9 @@
 	<Accordion multiple :active-index="[0]">
 		<AccordionTab>
 			<template #header>
-				<span class="mr-auto"
-					>Parameters<span class="artifact-amount">({{ numParameters }})</span></span
-				>
+				<span class="mr-auto">
+					Parameters<span class="artifact-amount">({{ numParameters }})</span>
+				</span>
 				<Button
 					v-if="!isAddingUncertainty"
 					label="Add uncertainty"
@@ -25,9 +25,7 @@
 					v-model="uncertaintyType"
 					option-label="name"
 					option-value="value"
-					:options="
-						distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)
-					"
+					:options="distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)"
 				>
 					<template #value>
 						{{ DistributionTypeLabel[uncertaintyType].toLowerCase() }}
@@ -37,34 +35,20 @@
 					</template>
 				</Dropdown>
 				uncertainty with ±
-				<InputNumber
-					class="uncertainty-percentage"
-					v-model="uncertaintyPercentage"
-					suffix="%"
-					:min="0"
-					:max="100"
-				/>
+				<InputNumber class="uncertainty-percentage" v-model="uncertaintyPercentage" suffix="%" :min="0" :max="100" />
 				bounds on the value of the selected constant parameters.
 				<Button text small icon="pi pi-check" @click="onUpdateDistributions" />
 				<Button text small icon="pi pi-times" @click="isAddingUncertainty = false" />
 			</span>
 
 			<ul>
-				<li
-					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
-					:key="baseParameter"
-				>
+				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
 					<Accordion v-if="isVirtual" multiple>
 						<AccordionTab>
 							<template #header>
 								<span>{{ baseParameter }}</span>
-								<Button
-									label="Open Matrix"
-									text
-									size="small"
-									@click.stop="matrixModalId = baseParameter"
-								/>
+								<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
 							</template>
 							<div class="flex">
 								<Divider layout="vertical" type="solid" />
@@ -74,8 +58,7 @@
 											<Checkbox
 												v-if="
 													isAddingUncertainty &&
-													getParameterDistribution(modelConfiguration, referenceId).type ===
-														DistributionType.Constant
+													getParameterDistribution(modelConfiguration, referenceId).type === DistributionType.Constant
 												"
 												binary
 												:model-value="selectedParameters.includes(referenceId)"
@@ -101,8 +84,7 @@
 						<Checkbox
 							v-if="
 								isAddingUncertainty &&
-								getParameterDistribution(modelConfiguration, baseParameter).type ===
-									DistributionType.Constant
+								getParameterDistribution(modelConfiguration, baseParameter).type === DistributionType.Constant
 							"
 							binary
 							:model-value="selectedParameters.includes(baseParameter)"
@@ -158,11 +140,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import {
-	DistributionType,
-	DistributionTypeLabel,
-	distributionTypeOptions
-} from '@/services/distribution';
+import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
@@ -189,33 +167,30 @@ const selectedParameters = ref<string[]>([]);
 const filterText = ref('');
 
 const numParameters = computed(() => parameterList.value.length);
-const parameterList = computed<
-	{ baseParameter: string; childParameters: ParameterSemantic[]; isVirtual: boolean }[]
->(() => {
-	const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-	const parameters = getParameters(props.modelConfiguration);
-	return Array.from(collapsedParameters.keys())
-		.map((id) => {
-			const childIds = collapsedParameters.get(id) ?? [];
-			const childParameters = childIds
-				.map((childId) => parameters.find((p) => p.referenceId === childId))
-				.filter(Boolean) as ParameterSemantic[];
-			const isVirtual = childIds.length > 1;
-			const baseParameter = id;
+const parameterList = computed<{ baseParameter: string; childParameters: ParameterSemantic[]; isVirtual: boolean }[]>(
+	() => {
+		const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
+		const parameters = getParameters(props.modelConfiguration);
+		return Array.from(collapsedParameters.keys())
+			.map((id) => {
+				const childIds = collapsedParameters.get(id) ?? [];
+				const childParameters = childIds
+					.map((childId) => parameters.find((p) => p.referenceId === childId))
+					.filter(Boolean) as ParameterSemantic[];
+				const isVirtual = childIds.length > 1;
+				const baseParameter = id;
 
-			return { baseParameter, childParameters, isVirtual };
-		})
-		.filter(({ baseParameter }) =>
-			baseParameter.toLowerCase().includes(filterText.value.toLowerCase())
-		);
-});
+				return { baseParameter, childParameters, isVirtual };
+			})
+			.filter(({ baseParameter }) => baseParameter.toLowerCase().includes(filterText.value.toLowerCase()));
+	}
+);
 
 const matrixModalId = ref('');
 
 const onAddUncertainty = () => {
 	const selected = Object.keys(props.mmt.parameters).filter(
-		(paramId) =>
-			getParameterDistribution(props.modelConfiguration, paramId).type === DistributionType.Constant
+		(paramId) => getParameterDistribution(props.modelConfiguration, paramId).type === DistributionType.Constant
 	);
 	selectedParameters.value = selected;
 	isAddingUncertainty.value = true;

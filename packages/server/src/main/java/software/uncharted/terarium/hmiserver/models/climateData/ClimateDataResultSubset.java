@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class ClimateDataResultSubset {
+
 	private String status;
 
 	@JsonProperty("dataset_id")

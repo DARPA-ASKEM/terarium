@@ -18,20 +18,24 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UsersController {
+
 	private final ReBACService reBACService;
 
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionUser>> getUsers(
-			@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
-			@RequestParam(name = "page", defaultValue = "0") final Integer page) {
+		@RequestParam(name = "page_size", defaultValue = "1000") final Integer pageSize,
+		@RequestParam(name = "page", defaultValue = "0") final Integer page
+	) {
 		return ResponseEntity.ok(reBACService.getUsers());
 	}
 
 	@DeleteMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> deleteRoleFromUser(
-			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
+		@PathVariable("userId") final String userId,
+		@PathVariable("roleName") final String roleName
+	) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}
@@ -58,7 +62,9 @@ public class UsersController {
 	@PostMapping("/{userId}/roles/{roleName}")
 	@Secured(Roles.ADMIN)
 	public ResponseEntity<Void> addRoleToUser(
-			@PathVariable("userId") final String userId, @PathVariable("roleName") final String roleName) {
+		@PathVariable("userId") final String userId,
+		@PathVariable("roleName") final String roleName
+	) {
 		if (roleName == null) {
 			return ResponseEntity.badRequest().build();
 		}

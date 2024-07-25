@@ -73,11 +73,7 @@ export async function configureModelFromDatasets(
 	return data;
 }
 
-export async function compareModels(
-	modelIds: string[],
-	workflowId?: string,
-	nodeId?: string
-): Promise<TaskResponse> {
+export async function compareModels(modelIds: string[], workflowId?: string, nodeId?: string): Promise<TaskResponse> {
 	const { data } = await API.get<TaskResponse>('/gollm/compare-models', {
 		params: {
 			'model-ids': modelIds.join(','),
@@ -100,10 +96,7 @@ export async function cancelTask(taskId: string): Promise<void> {
  * Handles task for a given task ID.
  * @param {string} id - The task ID.
  */
-export async function handleTaskById(
-	id: string,
-	handlers: TaskEventHandlers
-): Promise<TaskHandler> {
+export async function handleTaskById(id: string, handlers: TaskEventHandlers): Promise<TaskHandler> {
 	const taskHandler = new TaskHandler(`/gollm/${id}`, handlers);
 	await taskHandler.start();
 	return taskHandler;

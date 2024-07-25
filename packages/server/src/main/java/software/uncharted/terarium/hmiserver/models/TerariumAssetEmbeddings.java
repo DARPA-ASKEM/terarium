@@ -9,6 +9,7 @@ public class TerariumAssetEmbeddings {
 
 	@Data
 	public static class Embeddings {
+
 		private String embeddingId;
 		private double[] vector;
 		private long[] spans;

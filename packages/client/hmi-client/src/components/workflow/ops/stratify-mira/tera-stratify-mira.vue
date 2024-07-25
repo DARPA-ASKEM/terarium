@@ -29,7 +29,13 @@
 								@click="resetModel"
 								class="mr-2"
 							/>
-							<Button label="Stratify" size="small" icon="pi pi-play" @click="stratifyModel" />
+							<Button
+								:disabled="isStratifyButtonDisabled"
+								:label="stratifyButtonLabel"
+								size="small"
+								icon="pi pi-play"
+								@click="stratifyModel"
+							/>
 						</section>
 					</header>
 					<tera-stratification-group-form
@@ -135,22 +141,12 @@ import { nodeOutputLabel } from '@/components/workflow/util';
 
 /* Jupyter imports */
 import { KernelSessionManager } from '@/services/jupyter';
-import {
-	blankStratifyGroup,
-	StratifyGroup,
-	StratifyOperationStateMira
-} from './stratify-mira-operation';
+import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits([
-	'append-output',
-	'update-state',
-	'close',
-	'update-output-port',
-	'select-output'
-]);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'update-output-port', 'select-output']);
 
 const menuItems = computed(() => [
 	{
@@ -177,6 +173,9 @@ const executeResponse = ref({
 });
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
+const isStratifyButtonDisabled = ref(false);
+
+const stratifyButtonLabel = computed(() => (isStratifyButtonDisabled.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
@@ -205,6 +204,7 @@ const updateStratifyGroupForm = (config: StratifyGroup) => {
 };
 
 const stratifyModel = () => {
+	isStratifyButtonDisabled.value = true;
 	stratifyRequest();
 };
 
@@ -276,6 +276,7 @@ const handleStratifyResponse = (data: any) => {
 
 const handleModelPreview = async (data: any) => {
 	stratifiedAmr.value = data.content['application/json'];
+	isStratifyButtonDisabled.value = false;
 	if (!stratifiedAmr.value) {
 		logger.error('Error getting updated model from beaker');
 		return;
@@ -320,10 +321,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
-	if (
-		(modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) &&
-		semantics?.ode
-	) {
+	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
 		initials?.forEach((i) => {

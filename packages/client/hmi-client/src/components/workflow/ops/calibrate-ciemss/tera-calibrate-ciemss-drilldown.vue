@@ -9,21 +9,11 @@
 			<tera-drilldown-section>
 				<template #header-controls-right>
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-					<Button
-						label="Run"
-						icon="pi pi-play"
-						@click="runCalibrate"
-						:disabled="disableRunButton"
-					/>
+					<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 				</template>
 				<div class="form-section">
 					<h5>Mapping</h5>
 					<DataTable class="mapping-table" :value="mapping">
-						<Button
-							class="p-button-sm p-button-text"
-							label="Delete all mapping"
-							@click="deleteMapping"
-						/>
 						<Column field="modelVariable">
 							<template #header>
 								<span class="column-header">Model variable</span>
@@ -55,48 +45,34 @@
 								<span class="column-header"></span>
 							</template>
 							<template #body="{ index }">
-								<Button
-									class="p-button-sm p-button-text"
-									label="Delete"
-									@click="deleteMapRow(index)"
-								/>
+								<Button class="p-button-sm p-button-text" label="Delete" @click="deleteMapRow(index)" />
 							</template>
 						</Column>
 					</DataTable>
-					<div>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-						<Button
-							class="p-button-sm p-button-text"
-							icon="pi pi-plus"
-							label="Auto map"
-							@click="getAutoMapping"
-						/>
+					<div class="flex justify-content-between">
+						<div>
+							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-sparkles"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
+						</div>
+						<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteMapping" />
 					</div>
 				</div>
 
-				<div class="form-section">
-					<h4>Calibration settings</h4>
+				<div class="form-section mt-4">
+					<h5>Calibration settings</h5>
 					<div class="input-row">
 						<div class="label-and-input">
 							<label for="num-samples">Number of samples</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numSamples"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numSamples" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-iterations">Number of solver iterations</label>
-							<InputNumber
-								class="p-inputtext-sm"
-								inputId="integeronly"
-								v-model="knobs.numIterations"
-							/>
+							<InputNumber class="p-inputtext-sm" inputId="integeronly" v-model="knobs.numIterations" />
 						</div>
 						<div class="label-and-input">
 							<label for="num-samples">End time for forecast</label>
@@ -109,55 +85,45 @@
 		<section :tabName="CalibrateTabs.Notebook">
 			<h5>Notebook</h5>
 		</section>
+
+		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-preview>
-				<tera-operator-output-summary
-					v-if="node.state.summaryId && !showSpinner"
-					:summary-id="node.state.summaryId"
-				/>
+				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 
+				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot"></div>
+				<div ref="drilldownLossPlot" class="loss-chart" />
+
+				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
-					<section
-						v-if="modelConfig && node.state.chartConfigs.length && csvAsset"
-						ref="outputPanel"
-					>
+					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:variables="Object.keys(pyciemssMap)"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="false"
 								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
-							<vega-chart
-								:are-embed-actions-visible="true"
-								:visualization-spec="preparedCharts[index]"
-							/>
+							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-						<Button
-							class="add-chart"
-							text
-							:outlined="true"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						></Button>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-				<section v-else>
-					<tera-progress-spinner :font-size="2" is-centered style="height: 100%" />
+
+				<section v-else class="emptyState">
+					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
+					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
-				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback)"
-					v-bind="node.state.errorMessage"
-				/>
+
+				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
@@ -172,12 +138,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import InputNumber from 'primevue/inputnumber';
-import {
-	CalibrateMap,
-	renderLossGraph,
-	setupDatasetInput,
-	setupModelInput
-} from '@/services/calibrate-workflow';
+import { CalibrateMap, renderLossGraph, setupDatasetInput, setupModelInput } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
@@ -193,12 +154,7 @@ import {
 	DatasetColumn,
 	ModelConfiguration
 } from '@/types/Types';
-import {
-	getTimespan,
-	chartActionsProxy,
-	drilldownChartSize,
-	nodeMetadata
-} from '@/components/workflow/util';
+import { getTimespan, chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -207,7 +163,8 @@ import {
 	makeCalibrateJobCiemss,
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
-	parsePyCiemssMap
+	parsePyCiemssMap,
+	DataArray
 } from '@/services/models/simulation-service';
 
 import type { WorkflowNode } from '@/types/workflow';
@@ -215,6 +172,7 @@ import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
+import { renameFnGenerator, mergeResults } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -235,17 +193,25 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
 
+const modelVarUnits = ref<{ [key: string]: string }>({});
+
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
 const policyInterventionId = computed(() => props.node.inputs[2].value);
 
 const cancelRunId = computed(
-	() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressPreForecastId
 );
 const currentDatasetFileName = ref<string>();
 
 const drilldownLossPlot = ref<HTMLElement>();
-const runResult = ref<any>(null);
+const runResult = ref<DataArray>([]);
+const runResultPre = ref<DataArray>([]);
+const runResultSummary = ref<DataArray>([]);
+const runResultSummaryPre = ref<DataArray>([]);
 
 const previewChartWidth = ref(120);
 
@@ -255,8 +221,7 @@ let lossValues: { [key: string]: number }[] = [];
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const mappingDropdownPlaceholder = computed(() => {
-	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value))
-		return 'Select variable';
+	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
 
@@ -277,29 +242,34 @@ const disableRunButton = computed(
 );
 
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(
-	() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]
-);
+const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedCharts = computed(() => {
 	if (!selectedRunId.value) return [];
 
 	const state = props.node.state;
-	const result = runResult.value;
 
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(
+		runResult.value,
+		runResultPre.value,
+		runResultSummary.value,
+		runResultSummaryPre.value
+	);
+
+	// Build lookup map for calibration, include before/afer and dataset (observations)
 	const reverseMap: Record<string, string> = {};
 	Object.keys(pyciemssMap).forEach((key) => {
-		reverseMap[`${pyciemssMap[key]}`] = key;
+		reverseMap[`${pyciemssMap[key]}_mean`] = `${key} after calibration`;
+		reverseMap[`${pyciemssMap[key]}_mean:pre`] = `${key} before calibration`;
 	});
-
-	// Add dataset mappings to lookup as well
 	state.mapping.forEach((mapObj) => {
-		reverseMap[mapObj.datasetVariable] = mapObj.modelVariable;
+		reverseMap[mapObj.datasetVariable] = 'Observations';
 	});
 
 	// FIXME: Hacky re-parse CSV with correct data types
-	let groundTruth: Record<string, any>[] = [];
+	let groundTruth: DataArray = [];
 	if (csvAsset.value) {
 		const csv = csvAsset.value.csv;
 		const csvRaw = csv.map((d) => d.join(',')).join('\n');
@@ -307,9 +277,7 @@ const preparedCharts = computed(() => {
 	}
 
 	// Need to get the dataset's time field
-	const datasetTimeField = state.mapping.find(
-		(d) => d.modelVariable === 'timestamp'
-	)?.datasetVariable;
+	const datasetTimeField = state.mapping.find((d) => d.modelVariable === 'timestamp')?.datasetVariable;
 
 	return state.chartConfigs.map((config) => {
 		const datasetVariables: string[] = [];
@@ -323,11 +291,15 @@ const preparedCharts = computed(() => {
 		return createForecastChart(
 			{
 				dataset: result,
-				variables: config.map((d) => pyciemssMap[d]),
+				variables: [...config.map((d) => `${pyciemssMap[d]}:pre`), ...config.map((d) => pyciemssMap[d])],
 				timeField: 'timepoint_id',
 				groupField: 'sample_id'
 			},
-			null,
+			{
+				dataset: resultSummary,
+				variables: [...config.map((d) => `${pyciemssMap[d]}_mean:pre`), ...config.map((d) => `${pyciemssMap[d]}_mean`)],
+				timeField: 'timepoint_id'
+			},
 			{
 				dataset: groundTruth,
 				variables: datasetVariables,
@@ -335,12 +307,14 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
+				title: `${config.join(',')}`,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: ''
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
+				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
 	});
@@ -391,7 +365,9 @@ const runCalibrate = async () => {
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
+		state.currentProgress = 0;
 		state.inProgressForecastId = '';
+		state.inProgressPreForecastId = '';
 
 		emit('update-state', state);
 	}
@@ -451,10 +427,7 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = (await autoCalibrationMapping(
-		modelStateOptions.value,
-		datasetColumns.value
-	)) as CalibrateMap[];
+	mapping.value = (await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value)) as CalibrateMap[];
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
@@ -467,9 +440,10 @@ onMounted(async () => {
 	}
 
 	// Model configuration input
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions, modelVariableUnits } = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelVarUnits.value = modelVariableUnits ?? {};
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
@@ -527,10 +501,17 @@ watch(
 			}
 
 			const state = props.node.state;
-			const result = await getRunResultCSV(state.forecastId, 'result.csv');
-			pyciemssMap = parsePyCiemssMap(result[0]);
+			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
+			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
 
-			runResult.value = result;
+			runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
+			runResultSummaryPre.value = await getRunResultCSV(
+				state.preForecastId,
+				'result_summary.csv',
+				renameFnGenerator('pre')
+			);
+
+			pyciemssMap = parsePyCiemssMap(runResult.value[0]);
 		}
 	},
 	{ immediate: true }
@@ -539,13 +520,13 @@ watch(
 
 <style scoped>
 .mapping-table:deep(td) {
-	padding: 0 0.25rem 0.5rem 0 !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
 }
 
 .mapping-table:deep(th) {
-	padding: 0 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) var(--gap-1) !important;
 	width: 50%;
 }
 
@@ -557,51 +538,53 @@ th {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
+	padding-top: var(--gap-2);
 }
 
 .emptyState {
+	align-items: center;
 	align-self: center;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	text-align: center;
+	gap: var(--gap-2);
 	margin-top: 15rem;
-	gap: 0.5rem;
+	text-align: center;
 }
 
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-body-small);
+	margin-top: var(--gap-4);
 	width: 90%;
-	margin-top: 1rem;
 }
 
 img {
 	width: 20%;
 }
 
-.form-section {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
+.form-section,
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .input-row {
-	width: 100%;
+	align-items: center;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
+	width: 100%;
 
 	& > * {
 		flex: 1;
 	}
+}
+
+.loss-chart {
+	background: var(--surface-a);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
 }
 </style>

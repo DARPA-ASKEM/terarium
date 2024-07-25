@@ -5,11 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<tera-drilldown-section>
-			<tera-code
-				:asset-id="node.state?.codeAssetId ?? ''"
-				is-preview
-				@apply-changes="onApplyChanges"
-			/>
+			<tera-code :asset-id="node.state?.codeAssetId ?? ''" is-preview @apply-changes="onApplyChanges" />
 		</tera-drilldown-section>
 	</tera-drilldown>
 </template>

@@ -1,8 +1,7 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 
-const DOCUMENTATION_URL =
-	'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
+const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
 
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
@@ -21,17 +20,11 @@ export interface SimulateCiemssOperationState extends BaseState {
 
 export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
-	displayName: 'Simulate with PyCIEMSS',
+	displayName: 'Simulate',
 	description: 'given a model id, and configuration id, run a simulation',
 	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
-		{
-			type: 'calibrateSimulationId',
-			label: 'Calibration',
-			acceptMultiple: false,
-			isOptional: true
-		},
 		{
 			type: 'policyInterventionId',
 			label: 'Interventions',

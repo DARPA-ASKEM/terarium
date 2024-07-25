@@ -37,9 +37,4 @@ function snakeToCapitalSentence(snakeCaseString) {
 	return startCase(toLower(snakeCaseString));
 }
 
-export {
-	highlightText as highlight,
-	pascalCaseToCapitalSentence,
-	snakeToCapitalized,
-	snakeToCapitalSentence
-};
+export { highlightText as highlight, pascalCaseToCapitalSentence, snakeToCapitalized, snakeToCapitalSentence };

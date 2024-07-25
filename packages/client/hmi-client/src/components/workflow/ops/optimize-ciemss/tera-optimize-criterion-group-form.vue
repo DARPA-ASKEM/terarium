@@ -55,16 +55,13 @@
 				@update:model-value="emit('update-self', config)"
 			/>
 			in
-			<tera-input
-				v-model="config.riskTolerance"
-				@update:model-value="emit('update-self', config)"
-			/>% of simulate outcomes
+			<tera-input v-model="config.riskTolerance" @update:model-value="emit('update-self', config)" />% of simulated
+			outcomes
 		</div>
 		<div v-else class="section-row">
-			Ensure <b>{{ config.targetVariable }}</b> is
-			<b>{{ config.isMinimized ? 'below' : 'above' }}</b> a threshold of
-			<b>{{ config.threshold }}</b> at <b>{{ config.qoiMethod }}</b> in
-			<b>{{ config.riskTolerance }}%</b> of simulate outcomes
+			Ensure <b>{{ config.targetVariable }}</b> is <b>{{ config.isMinimized ? 'below' : 'above' }}</b> a threshold of
+			<b>{{ config.threshold }}</b> at <b>{{ config.qoiMethod }}</b> in <b>{{ config.riskTolerance }}%</b> of simulate
+			outcomes
 		</div>
 	</div>
 </template>
