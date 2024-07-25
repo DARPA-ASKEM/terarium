@@ -7,7 +7,6 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
-	lossValues?: { [key: string]: number }[];
 
 	inProgressCalibrationId: string;
 	inProgressPreForecastId: string;

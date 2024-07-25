@@ -498,9 +498,6 @@ watch(
 						height: 120
 					});
 				}
-
-				state.lossValues = lossValues;
-				emit('update-state', state);
 			}
 
 			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');

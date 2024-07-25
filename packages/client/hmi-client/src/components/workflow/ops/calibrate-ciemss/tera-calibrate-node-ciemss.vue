@@ -12,7 +12,7 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<template v-else-if="!props.node.state.chartConfigs[0]?.length && lossValues">
+		<template v-else>
 			<div ref="drilldownLossPlot" class="loss-chart" />
 		</template>
 
@@ -88,6 +88,20 @@ function drawLossGraph() {
 	}
 }
 
+async function updateLossChartWithSimulation() {
+	if (props.node.active) {
+		selectedOutputId.value = props.node.active;
+		const simulationObj = await getSimulation(selectedRunId.value);
+		if (simulationObj?.updates) {
+			lossValues = simulationObj?.updates.map((d, i) => ({
+				iter: i,
+				loss: d.data.loss
+			}));
+			drawLossGraph();
+		}
+	}
+}
+
 const messageHandler = (event: ClientEvent<any>) => {
 	lossValues.push({ iter: lossValues.length, loss: event.data.loss });
 	drawLossGraph();
@@ -106,28 +120,11 @@ watch(
 );
 
 watch(
-	() => props.node.state.lossValues,
-	(data) => {
-		if (data) {
-			lossValues = data;
-			drawLossGraph();
-		}
-	}
+	() => props.node.state.inProgressPreForecastId,
+	() => updateLossChartWithSimulation()
 );
 
-onMounted(async () => {
-	if (props.node.active) {
-		selectedOutputId.value = props.node.active;
-		const simulationObj = await getSimulation(selectedRunId.value);
-		if (simulationObj?.updates) {
-			lossValues = simulationObj?.updates.map((d, i) => ({
-				iter: i,
-				loss: d.data.loss
-			}));
-			drawLossGraph();
-		}
-	}
-});
+onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
