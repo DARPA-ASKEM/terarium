@@ -253,32 +253,21 @@
 						<Accordion multiple :active-index="[0, 1, 2]">
 							<AccordionTab header="Success criteria">
 								<ul>
-									<li v-for="(constraint, i) in node.state.constraintGroups" :key="i">
-										<h5>{{ constraint.name }}</h5>
-										<vega-chart
-											v-if="riskResults[knobs.postForecastRunId]"
-											:visualization-spec="
-												createOptimizeChart(
-													riskResults[knobs.postForecastRunId],
-													constraint.targetVariable,
-													constraint.threshold,
-													constraint.isMinimized
-												)
-											"
-										/>
+									<li v-for="(_constraint, key) in node.state.constraintGroups" :key="key">
+										<vega-chart are-embed-actions-visible :visualization-spec="preparedSuccessCriteriaCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Interventions">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="`intervention_${key}`">
+									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
 										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
-									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="`simulation_${key}`">
+									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
 										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
 									</li>
 								</ul>
@@ -336,12 +325,8 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import { getUnitsFromModelParts } from '@/services/model';
-import {
-	createModelConfiguration,
-	getAsConfiguredModel,
-	getModelConfigurationById
-} from '@/services/model-configurations';
+import { getUnitsFromModelParts, getModelByModelConfigurationId } from '@/services/model';
+import { createModelConfiguration, getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -372,7 +357,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createOptimizeChart, createOptimizeForecastChart } from '@/services/charts';
+import { createSuccessCriteriaChart, createOptimizeForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -583,9 +568,12 @@ const formatJsonValue = (value) => {
 const initialize = async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
-	modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
-	// FIXME: #getAsConfiguredModel or GET /model-configurations/as-configured-model/{id} isn't intended to be used here, switch to use the api endpoint to fetch the model metadata by model config id.
-	model.value = await getAsConfiguredModel(modelConfiguration.value);
+	const results = await Promise.all([
+		getModelConfigurationById(modelConfigurationId),
+		getModelByModelConfigurationId(modelConfigurationId)
+	]);
+	modelConfiguration.value = results[0];
+	model.value = results[1];
 
 	const policyId = props.node.inputs[2]?.value?.[0];
 	if (policyId) {
@@ -835,6 +823,28 @@ const preProcessedInterventionsData = computed<Dictionary<{ name: string; value:
 
 onMounted(async () => {
 	initialize();
+});
+
+const preparedSuccessCriteriaCharts = computed(() => {
+	const postForecastRunId = props.node.state.postForecastRunId;
+
+	return props.node.state.constraintGroups.map((constraint) =>
+		createSuccessCriteriaChart(
+			riskResults.value[postForecastRunId],
+			constraint.targetVariable,
+			constraint.threshold,
+			constraint.isMinimized,
+			constraint.riskTolerance,
+			{
+				title: constraint.name,
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				xAxisTitle: 'Number of samples',
+				yAxisTitle: `${constraint.isMinimized ? 'Max' : 'Min'} value of ${constraint.targetVariable} at all timepoints`,
+				legend: true
+			}
+		)
+	);
 });
 
 const preparedInterventionsCharts = computed(() => {
