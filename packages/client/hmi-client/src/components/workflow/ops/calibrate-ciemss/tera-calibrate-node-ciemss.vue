@@ -12,9 +12,7 @@
 				:visualization-spec="preparedCharts[index]"
 			/>
 		</template>
-		<template v-else>
-			<div ref="drilldownLossPlot" class="loss-chart" />
-		</template>
+		<div v-else ref="drilldownLossPlot" class="loss-chart" />
 
 		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
 			<div>{{ props.node.state.currentProgress }}%</div>
@@ -51,7 +49,15 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
-import type { ClientEvent, ClientEventType, CsvAsset, Simulation, SimulationRequest, Model, ModelConfiguration } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	CsvAsset,
+	Simulation,
+	SimulationRequest,
+	Model,
+	ModelConfiguration
+} from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -113,7 +119,7 @@ const messageHandler = (event: ClientEvent<any>) => {
 watch(
 	() => props.node.state.inProgressCalibrationId,
 	(id) => {
-		if (id === '') {
+		if (_.isEmpty(id)) {
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
@@ -124,6 +130,11 @@ watch(
 
 watch(
 	() => props.node.state.inProgressPreForecastId,
+	() => updateLossChartWithSimulation()
+);
+
+watch(
+	() => props.node.state.inProgressForecastId,
 	() => updateLossChartWithSimulation()
 );
 
