@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { csvParse, autoType } from 'd3';
-import { computed, watch, ref, shallowRef } from 'vue';
+import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -73,9 +73,6 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 
-const selectedOutputId = ref<string>();
-const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-
 let lossValues: { [key: string]: number }[] = [];
 
 function drawLossGraph() {
@@ -89,8 +86,7 @@ function drawLossGraph() {
 
 async function updateLossChartWithSimulation() {
 	if (props.node.active) {
-		selectedOutputId.value = props.node.active;
-		const simulationObj = await getSimulation(selectedRunId.value);
+		const simulationObj = await getSimulation(props.node.state.calibrationId);
 		if (simulationObj?.updates) {
 			lossValues = simulationObj?.updates.map((d, i) => ({
 				iter: i,
@@ -101,10 +97,7 @@ async function updateLossChartWithSimulation() {
 	}
 }
 
-watch(
-	() => props.node.state.calibrationId,
-	() => updateLossChartWithSimulation()
-);
+onMounted(async () => updateLossChartWithSimulation());
 
 let pyciemssMap: Record<string, string> = {};
 
