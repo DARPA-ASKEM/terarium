@@ -31,7 +31,7 @@
 							/>
 							<Button
 								:disabled="isStratifyButtonDisabled"
-								label="Stratify"
+								:label="stratifyButtonLabel"
 								size="small"
 								icon="pi pi-play"
 								@click="stratifyModel"
@@ -174,6 +174,8 @@ const executeResponse = ref({
 const modelNodeOptions = ref<string[]>([]);
 const showSaveModelModal = ref(false);
 const isStratifyButtonDisabled = ref(false);
+
+const stratifyButtonLabel = computed(() => (isStratifyButtonDisabled.value ? 'Loading...' : 'Stratify'));
 
 const selectedOutputId = ref<string>();
 
