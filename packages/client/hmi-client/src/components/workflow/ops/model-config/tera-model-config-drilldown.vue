@@ -534,11 +534,9 @@ const onSelection = (id: string) => {
 };
 
 const fetchConfigurations = async (modelId: string) => {
-	if (modelId) {
-		isFetching.value = true;
-		suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
-		isFetching.value = false;
-	}
+	isFetching.value = true;
+	suggestedConfigurationContext.value.tableData = await getModelConfigurationsForModel(modelId);
+	isFetching.value = false;
 };
 
 // Fill the form with the config data
@@ -549,6 +547,8 @@ const initialize = async () => {
 	await fetchConfigurations(modelId);
 
 	model.value = await getModel(modelId);
+
+	// console.log(suggestedConfigurationContext.value);
 
 	if (!state.transientModelConfig.id) {
 		// apply a configuration if one hasn't been applied yet

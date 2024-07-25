@@ -19,7 +19,7 @@ import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { ModelConfigOperationState } from './model-config-operation';
+import { ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
@@ -36,20 +36,7 @@ watch(
 		const inputs = props.node.inputs;
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
-
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
-		if (!modelInputs[0].value) {
-			// Reset previous model cache
-			const state = cloneDeep(props.node.state);
-			state.transientModelConfig = {
-				id: '',
-				modelId: '',
-				observableSemanticList: [],
-				parameterSemanticList: [],
-				initialSemanticList: []
-			};
-			emit('update-state', state);
-		}
 
 		if (modelInputs?.[0]?.value?.[0]) {
 			const modelId = modelInputs?.[0]?.value?.[0];
@@ -63,6 +50,13 @@ watch(
 					});
 				}
 			});
+			console.log(8);
+		} else {
+			// Reset previous model cache
+			const state = cloneDeep(props.node.state);
+			state.transientModelConfig = blankModelConfig;
+			emit('update-state', state);
+			console.log(9);
 		}
 
 		// If all document inputs are connected, add a new document input port
