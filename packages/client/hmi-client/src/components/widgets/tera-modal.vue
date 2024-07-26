@@ -41,7 +41,6 @@
 
 import { onMounted, ref, nextTick } from 'vue';
 
-// Removes warning about attribute inheritance, for some reason even when specified in the section after main it still complains
 defineOptions({
 	inheritAttrs: false
 });

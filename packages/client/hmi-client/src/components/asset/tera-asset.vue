@@ -16,7 +16,7 @@
 				icon="pi pi-times"
 				rounded
 				text
-				@click="emit('close-preview')"
+				@click="$emit('close-preview')"
 			/>
 		</div>
 		<!--For naming asset such as model or code file-->
@@ -32,7 +32,7 @@
 				icon="pi pi-times"
 				rounded
 				text
-				@click="emit('close-preview')"
+				@click="$emit('close-preview')"
 			/>
 		</div>
 		<!--put model contributors here too-->
@@ -49,7 +49,7 @@
 			<slot name="bottom-header-buttons" />
 		</div>
 		<slot name="summary" />
-		<TabView v-if="tabs.length > 1" :active-index="selectedTabIndex" @tab-change="(e) => emit('tab-change', e)">
+		<TabView v-if="tabs.length > 1" :active-index="selectedTabIndex" @tab-change="(e) => $emit('tab-change', e)">
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
@@ -130,7 +130,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'tab-change']);
+defineEmits(['close-preview', 'tab-change']);
 
 const slots = useSlots();
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
