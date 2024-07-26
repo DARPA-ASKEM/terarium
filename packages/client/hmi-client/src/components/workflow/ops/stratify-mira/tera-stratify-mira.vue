@@ -511,8 +511,4 @@ onUnmounted(() => {
 	flex-direction: column;
 	gap: var(--gap-small);
 }
-
-.save-as-dialog:deep(section) {
-	width: 40rem;
-}
 </style>
