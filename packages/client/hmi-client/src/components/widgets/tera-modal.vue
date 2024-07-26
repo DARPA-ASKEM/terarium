@@ -2,7 +2,7 @@
 	<teleport to="body">
 		<transition name="modal">
 			<main ref="modalRef" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
-				<section :class="$attrs.class">
+				<section v-bind="$attrs">
 					<header>
 						<slot name="header" />
 					</header>
@@ -41,13 +41,18 @@
 
 import { onMounted, ref, nextTick } from 'vue';
 
-const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
-
-const modalRef = ref<HTMLElement | null>(null);
+// Removes warning about attribute inheritance, for some reason even when specified in the section after main it still complains
+defineOptions({
+	inheritAttrs: false
+});
 
 defineProps<{
 	zIndex?: number;
 }>();
+
+const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
+
+const modalRef = ref<HTMLElement | null>(null);
 
 onMounted(async () => {
 	await nextTick();
