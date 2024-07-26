@@ -101,7 +101,7 @@
 					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: 'fixme', selectedVariable: cfg }"
 								:multi-select="false"
 								:show-remove-button="true"
 								:variables="Object.keys(pyciemssMap)"
@@ -242,13 +242,12 @@ const disableRunButton = computed(
 );
 
 const selectedOutputId = ref<string>();
-const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
 let pyciemssMap: Record<string, string> = {};
 const preparedCharts = computed(() => {
-	if (!selectedRunId.value) return [];
-
 	const state = props.node.state;
+
+	if (!state.calibrationId) return [];
 
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(
@@ -486,7 +485,7 @@ watch(
 			selectedOutputId.value = props.node.active;
 
 			// Fetch saved intermediate state
-			const simulationObj = await getSimulation(selectedRunId.value);
+			const simulationObj = await getSimulation(props.node.state.calibrationId);
 			if (simulationObj?.updates) {
 				lossValues = simulationObj?.updates.map((d, i) => ({
 					iter: i,
