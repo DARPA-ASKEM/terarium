@@ -8,24 +8,15 @@
 	>
 		<section :tabName="DrilldownTabs.Wizard" class="ml-4 mr-2 pt-3">
 			<tera-drilldown-section>
-				<template #header-controls-left>
-					<h5>Set simulation parameters</h5>
-				</template>
 				<template #header-controls-right>
 					<Button label="Run" icon="pi pi-play" @click="run" :disabled="showSpinner" />
 					<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 				</template>
 				<div class="form-section">
-					<!-- Presets -->
-					<div class="label-and-input">
-						<label for="4">Preset (optional)</label>
-						<Dropdown
-							v-model="presetType"
-							placeholder="Select an option"
-							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-							@update:model-value="setPresetValues"
-						/>
-					</div>
+					<h5>
+						Simulation settings
+						<i v-tooltip="simulationSettingsToolTip" class="pi pi-info-circle" />
+					</h5>
 
 					<!-- Start & End -->
 					<div class="input-row">
@@ -37,6 +28,17 @@
 							<label for="3">End time</label>
 							<InputNumber id="3" v-model="timespan.end" inputId="integeronly" @update:model-value="updateState" />
 						</div>
+					</div>
+
+					<!-- Presets -->
+					<div class="label-and-input">
+						<label for="4">Preset (optional)</label>
+						<Dropdown
+							v-model="presetType"
+							placeholder="Select an option"
+							:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+							@update:model-value="setPresetValues"
+						/>
 					</div>
 
 					<!-- Number of Samples & Method -->
@@ -53,7 +55,12 @@
 						</div>
 						<div class="label-and-input">
 							<label for="5">Method</label>
-							<Dropdown id="5" v-model="method" :options="ciemssMethodOptions" @update:model-value="updateState" />
+							<Dropdown
+								id="5"
+								v-model="method"
+								:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+								@update:model-value="updateState"
+							/>
 						</div>
 					</div>
 					<div v-if="inferredParameters">Using inferred parameters from calibration: {{ inferredParameters[0] }}</div>
@@ -185,7 +192,7 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { CiemssMethodOptions, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import TeraChartControl from '../../tera-chart-control.vue';
 
@@ -208,7 +215,8 @@ const llmQuery = ref('');
 // extras
 const numSamples = ref<number>(props.node.state.numSamples);
 const method = ref(props.node.state.method);
-const ciemssMethodOptions = ref(['dopri5', 'euler']);
+
+const simulationSettingsToolTip: string = 'TODO';
 
 enum OutputView {
 	Charts = 'Charts',
@@ -217,12 +225,12 @@ enum OutputView {
 
 const speedValues = {
 	numSamples: 10,
-	method: ciemssMethodOptions.value[1]
+	method: CiemssMethodOptions.euler
 };
 
 const qualityValues = {
 	numSamples: 100,
-	method: ciemssMethodOptions.value[0]
+	method: CiemssMethodOptions.dopri5
 };
 
 const updateLlmQuery = (query: string) => {
@@ -300,7 +308,6 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateCiemssOperation
 });
 
 const setPresetValues = (data: CiemssPresetTypes) => {
-	console.log(data);
 	if (data === CiemssPresetTypes.Normal) {
 		numSamples.value = qualityValues.numSamples;
 		method.value = qualityValues.method;
@@ -526,9 +533,15 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .form-section {
+	background-color: var(--surface-50);
+	border-radius: var(--border-radius-medium);
+	box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.25) inset;
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	flex-grow: 1;
+	gap: var(--gap-1);
+	margin: 0 var(--gap) var(--gap) var(--gap);
+	padding: var(--gap);
 }
 
 .label-and-input {

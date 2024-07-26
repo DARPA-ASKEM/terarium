@@ -4,6 +4,7 @@ import { CalibrateMap } from '@/services/calibrate-workflow';
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
 
 export interface CalibrationOperationStateCiemss extends BaseState {
+	method: string;
 	chartConfigs: string[][];
 	mapping: CalibrateMap[];
 	simulationsInProgress: string[];
@@ -19,6 +20,8 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	numIterations: number;
 	numSamples: number;
 	endTime: number;
+	stepSize: number;
+	learningRate: number;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -44,6 +47,7 @@ export const CalibrationOperationCiemss: Operation = {
 
 	initState: () => {
 		const init: CalibrationOperationStateCiemss = {
+			method: 'dopri5',
 			chartConfigs: [],
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
@@ -56,7 +60,9 @@ export const CalibrationOperationCiemss: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' },
 			numIterations: 100,
 			numSamples: 100,
-			endTime: 100
+			endTime: 100,
+			stepSize: 1,
+			learningRate: 0.1
 		};
 		return init;
 	}

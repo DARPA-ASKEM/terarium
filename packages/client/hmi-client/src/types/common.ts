@@ -30,6 +30,11 @@ export enum CiemssPresetTypes {
 	Normal = 'Normal'
 }
 
+export enum CiemssMethodOptions {
+	dopri5 = 'dopri5',
+	euler = 'euler'
+}
+
 export enum ParamType {
 	CONSTANT,
 	DISTRIBUTION,
