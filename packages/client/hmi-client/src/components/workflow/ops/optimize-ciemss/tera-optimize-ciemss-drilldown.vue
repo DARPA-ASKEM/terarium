@@ -261,14 +261,20 @@
 							<AccordionTab header="Interventions">
 								<ul>
 									<li v-for="(_, key) of knobs.selectedInterventionVariables" :key="key">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedInterventionsCharts[key]" />
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedForecastCharts.interventionCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
 							<AccordionTab header="Simulation plots">
 								<ul>
 									<li v-for="(_, key) of knobs.selectedSimulationVariables" :key="key">
-										<vega-chart are-embed-actions-visible :visualization-spec="preparedCharts[key]" />
+										<vega-chart
+											are-embed-actions-visible
+											:visualization-spec="preparedForecastCharts.simulationCharts[key]"
+										/>
 									</li>
 								</ul>
 							</AccordionTab>
@@ -357,9 +363,10 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { createSuccessCriteriaChart, createOptimizeForecastChart } from '@/services/charts';
+import { createSuccessCriteriaChart, createForecastChart, createInterventionChartMarkers } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import MultiSelect from 'primevue/multiselect';
+import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
 import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
 import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
@@ -767,7 +774,7 @@ const setOutputValues = async () => {
 
 	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
 
-	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv');
+	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
 	pyciemssMap = parsePyCiemssMap(postResult[0]);
 
@@ -776,7 +783,7 @@ const setOutputValues = async () => {
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
-	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv');
+	const preResultSummary = await getRunResultCSV(preForecastRunId, 'result_summary.csv', renameFnGenerator('pre'));
 	const postResultSummary = await getRunResultCSV(postForecastRunId, 'result_summary.csv');
 
 	runResultsSummary.value[preForecastRunId] = preResultSummary;
@@ -847,61 +854,84 @@ const preparedSuccessCriteriaCharts = computed(() => {
 	);
 });
 
-const preparedInterventionsCharts = computed(() => {
+// Creates forecast charts for interventions and simulation charts, based on the selected variables
+const preparedForecastCharts = computed(() => {
+	const charts: { interventionCharts: any[]; simulationCharts: any[] } = {
+		interventionCharts: [],
+		simulationCharts: []
+	};
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
-	if (!postForecastRunId || !preForecastRunId) return [];
+	if (!postForecastRunId || !preForecastRunId) return charts;
 	const preResult = runResults.value[preForecastRunId];
 	const preResultSummary = runResultsSummary.value[preForecastRunId];
 	const postResult = runResults.value[postForecastRunId];
 	const postResultSummary = runResultsSummary.value[postForecastRunId];
 
-	return knobs.value.selectedInterventionVariables.map((variable) =>
-		createOptimizeForecastChart(
-			preResult,
-			preResultSummary,
-			postResult,
-			postResultSummary,
-			preProcessedInterventionsData.value[variable],
+	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return charts;
+
+	// Merge before/after for chart
+	const { result, resultSummary } = mergeResults(postResult, preResult, postResultSummary, preResultSummary);
+
+	const chartOptions = {
+		width: chartSize.value.width,
+		height: chartSize.value.height,
+		legend: true,
+		xAxisTitle: getUnit('_time') || 'Time',
+		yAxisTitle: getUnit('') || '',
+		title: '',
+		colorscheme: ['#AAB3C6', '#1B8073'],
+		translationMap: {}
+	};
+
+	const translationMap = (variable: string) => ({
+		[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
+		[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
+	});
+
+	// intervention chart spec
+	charts.interventionCharts = knobs.value.selectedInterventionVariables.map((variable) => {
+		chartOptions.translationMap = translationMap(variable);
+		const forecastChart = createForecastChart(
 			{
-				width: chartSize.value.width,
-				height: chartSize.value.height,
-				variables: [pyciemssMap[variable]],
-				statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-				legend: true,
-				groupField: 'sample_id',
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
 				timeField: 'timepoint_id',
-				xAxisTitle: getUnit('_time') || 'Time',
-				yAxisTitle: getUnit(variable) || variable,
-				title: variable
-			}
-		)
-	);
-});
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			chartOptions
+		);
+		// add intervention annotations (rules and text)
+		forecastChart.layer.push(...createInterventionChartMarkers(preProcessedInterventionsData.value[variable]));
+		return forecastChart;
+	});
 
-const preparedCharts = computed(() => {
-	const preForecastRunId = knobs.value.preForecastRunId;
-	const postForecastRunId = knobs.value.postForecastRunId;
-	if (!postForecastRunId || !preForecastRunId) return [];
-	const preResult = runResults.value[preForecastRunId];
-	const preResultSummary = runResultsSummary.value[preForecastRunId];
-	const postResult = runResults.value[postForecastRunId];
-	const postResultSummary = runResultsSummary.value[postForecastRunId];
-
-	return knobs.value.selectedSimulationVariables.map((variable) =>
-		createOptimizeForecastChart(preResult, preResultSummary, postResult, postResultSummary, [], {
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			variables: [pyciemssMap[variable]],
-			statisticalVariables: [`${pyciemssMap[variable]}_mean`],
-			legend: true,
-			groupField: 'sample_id',
-			timeField: 'timepoint_id',
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: getUnit(variable) || variable,
-			title: variable
-		})
-	);
+	// simulation chart spec
+	charts.simulationCharts = knobs.value.selectedSimulationVariables.map((variable) => {
+		chartOptions.translationMap = translationMap(variable);
+		return createForecastChart(
+			{
+				dataset: result,
+				variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
+				timeField: 'timepoint_id',
+				groupField: 'sample_id'
+			},
+			{
+				dataset: resultSummary,
+				variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
+				timeField: 'timepoint_id'
+			},
+			null,
+			chartOptions
+		);
+	});
+	return charts;
 });
 
 watch(
