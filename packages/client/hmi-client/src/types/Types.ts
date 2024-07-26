@@ -239,16 +239,6 @@ export interface ObservableSemantic extends Semantic {
     expressionMathml: string;
 }
 
-export interface OtherValues {
-    name: string;
-    referenceId?: string;
-    distribution?: ModelDistribution;
-    default?: boolean;
-    target?: string;
-    expression?: string;
-    expressionMathml?: string;
-}
-
 export interface ParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
