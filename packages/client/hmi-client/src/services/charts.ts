@@ -6,6 +6,9 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
 export const NUMBER_FORMAT = '.3~s';
+export const LABEL_EXPR = `
+datum.value > -1 && datum.value < 1 ? format(datum.value, '.3~f') : format(datum.value, '${NUMBER_FORMAT}')
+`;
 
 interface BaseChartOptions {
 	title?: string;
@@ -167,7 +170,7 @@ export const createForecastChart = (
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.format = NUMBER_FORMAT;
+	yaxis.labelExpr = LABEL_EXPR;
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -309,8 +312,7 @@ export const createForecastChart = (
 		const tooltipContent = statisticsLayer.variables?.map((d) => {
 			const tip: any = {
 				field: d,
-				type: 'quantitative',
-				format: NUMBER_FORMAT
+				type: 'quantitative'
 			};
 
 			if (options.translationMap && options.translationMap[d]) {
@@ -322,7 +324,7 @@ export const createForecastChart = (
 
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		Object.assign(layerSpec.encoding, {
-			opacity: { value: 0 },
+			opacity: { value: 0.00000001 },
 			strokeWidth: { value: 16 },
 			tooltip: [{ field: statisticsLayer.timeField, type: 'quantitative' }, ...(tooltipContent || [])]
 		});
@@ -372,7 +374,7 @@ export function createSuccessCriteriaChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-	yaxis.format = NUMBER_FORMAT;
+	yaxis.labelExpr = LABEL_EXPR;
 
 	return {
 		$schema: VEGALITE_SCHEMA,

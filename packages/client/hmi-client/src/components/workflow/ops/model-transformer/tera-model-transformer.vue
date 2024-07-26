@@ -41,7 +41,7 @@ const emit = defineEmits(['append-output', 'update-state', 'close']);
 
 const modelId = computed(() => {
 	// for now we are only using 1 model configuration for the llm at a time, this can be expanded in the future
-	const modelConfirgurationList = props.node?.inputs
+	const modelConfirgurationList = props.node.inputs
 		.filter((inputNode) => inputNode.status === WorkflowPortStatus.CONNECTED && inputNode.value)
 		.map((inputNode) => inputNode.value![0]);
 

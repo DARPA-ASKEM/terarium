@@ -51,7 +51,7 @@ jobs:
         run: make image-hmi-client
 
       - name: Create image and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: packages/client/hmi-client/docker
           platforms: linux/amd64
@@ -87,7 +87,7 @@ jobs:
         run: make image-hmi-client
 
       - name: Create image and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: packages/client/hmi-client/docker
           platforms: linux/arm64

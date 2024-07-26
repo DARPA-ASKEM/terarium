@@ -43,83 +43,81 @@
 		</Column>
 	</DataTable>
 
-	<Teleport to="body">
-		<tera-modal v-if="isAssignmentModalVisible" @modal-mask-clicked="onCloseAssignemntModal">
-			<template #header>
-				<h3>Assign metadata</h3>
-			</template>
-			<DataTable
-				v-model:selection="selectedAssignmentRows"
-				data-key="name"
-				:value="assignmentTableData"
-				tableStyle="min-width: 50rem"
-			>
-				<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-				<Column field="name" />
-				<Column field="suggestedValue" header="Suggested new values">
-					<template #body="{ data }">
-						<span v-if="data.key === ComparisonKey.GROUNDING">
-							{{ data.suggestedValue?.grounding_text }}
-							<a
-								v-if="data.suggestedValue"
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(data.suggestedValue?.grounding_id)"
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</span>
-						<span v-else>
-							{{ data.suggestedValue }}
-						</span>
-					</template>
-				</Column>
-				<Column field="currentValue">
-					<template #header>
-						Current values for:
-						<AutoComplete
-							v-model="semanticSearchTerm"
-							placeholder="Select a variable or parameter"
-							:suggestions="filteredSemantics"
-							@complete="onSearch"
-							@item-select="onItemSelect"
-							optionLabel="id"
-							optionGroupLabel="label"
-							optionGroupChildren="items"
-							dropdown
-						/>
-					</template>
-					<template #body="{ data }">
-						<span v-if="data.key === ComparisonKey.GROUNDING && data.currentValue?.identifiers">
-							<!--FIXME: Determine concept script-->
-							{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.currentValue.identifiers)) }}
-							<a
-								v-if="data.currentValue"
-								target="_blank"
-								rel="noopener noreferrer"
-								:href="getCurieUrl(getCurieFromGroundingIdentifier(data.currentValue.identifiers))"
-								aria-label="Open Concept"
-							>
-								<i class="pi pi-external-link" />
-							</a>
-						</span>
-						<span v-else>
-							{{ data.currentValue }}
-						</span>
-					</template>
-				</Column>
-			</DataTable>
-			<template #footer>
-				<Button
-					:disabled="isEmpty(selectedAssignmentRows) || isEmpty(selectedCurrentSemantic)"
-					label="Replace current with selected"
-					@click="updateModel"
-				/>
-				<Button outlined label="Cancel" @click="onCloseAssignemntModal" />
-			</template>
-		</tera-modal>
-	</Teleport>
+	<tera-modal v-if="isAssignmentModalVisible" @modal-mask-clicked="onCloseAssignemntModal">
+		<template #header>
+			<h3>Assign metadata</h3>
+		</template>
+		<DataTable
+			v-model:selection="selectedAssignmentRows"
+			data-key="name"
+			:value="assignmentTableData"
+			tableStyle="min-width: 50rem"
+		>
+			<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+			<Column field="name" />
+			<Column field="suggestedValue" header="Suggested new values">
+				<template #body="{ data }">
+					<span v-if="data.key === ComparisonKey.GROUNDING">
+						{{ data.suggestedValue?.grounding_text }}
+						<a
+							v-if="data.suggestedValue"
+							target="_blank"
+							rel="noopener noreferrer"
+							:href="getCurieUrl(data.suggestedValue?.grounding_id)"
+							aria-label="Open Concept"
+						>
+							<i class="pi pi-external-link" />
+						</a>
+					</span>
+					<span v-else>
+						{{ data.suggestedValue }}
+					</span>
+				</template>
+			</Column>
+			<Column field="currentValue">
+				<template #header>
+					Current values for:
+					<AutoComplete
+						v-model="semanticSearchTerm"
+						placeholder="Select a variable or parameter"
+						:suggestions="filteredSemantics"
+						@complete="onSearch"
+						@item-select="onItemSelect"
+						optionLabel="id"
+						optionGroupLabel="label"
+						optionGroupChildren="items"
+						dropdown
+					/>
+				</template>
+				<template #body="{ data }">
+					<span v-if="data.key === ComparisonKey.GROUNDING && data.currentValue?.identifiers">
+						<!--FIXME: Determine concept script-->
+						{{ getNameOfCurieCached(getCurieFromGroundingIdentifier(data.currentValue.identifiers)) }}
+						<a
+							v-if="data.currentValue"
+							target="_blank"
+							rel="noopener noreferrer"
+							:href="getCurieUrl(getCurieFromGroundingIdentifier(data.currentValue.identifiers))"
+							aria-label="Open Concept"
+						>
+							<i class="pi pi-external-link" />
+						</a>
+					</span>
+					<span v-else>
+						{{ data.currentValue }}
+					</span>
+				</template>
+			</Column>
+		</DataTable>
+		<template #footer>
+			<Button
+				:disabled="isEmpty(selectedAssignmentRows) || isEmpty(selectedCurrentSemantic)"
+				label="Replace current with selected"
+				@click="updateModel"
+			/>
+			<Button outlined label="Cancel" @click="onCloseAssignemntModal" />
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">

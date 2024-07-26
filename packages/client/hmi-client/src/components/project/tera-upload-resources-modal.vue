@@ -1,79 +1,77 @@
 <template>
-	<Teleport to="body">
-		<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
-			<template #header>
-				<h4>Upload resources</h4>
-			</template>
-			<template #default>
-				<section class="main-section">
-					<section>
-						<label class="subheader">Add documents, models or datasets to your project here.</label>
-						<div class="supported-resources">
-							<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
-							<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
-							<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
-						</div>
-						<tera-drag-and-drop-importer
-							:accept-types="[
-								AcceptedTypes.PDF,
-								AcceptedTypes.CSV,
-								AcceptedTypes.TXT,
-								AcceptedTypes.MD,
-								AcceptedTypes.PY,
-								AcceptedTypes.R,
-								AcceptedTypes.JL,
-								AcceptedTypes.NC,
-								AcceptedTypes.JSON,
-								AcceptedTypes.XML,
-								AcceptedTypes.SBML,
-								AcceptedTypes.MDL,
-								AcceptedTypes.XMILE,
-								AcceptedTypes.ITMX,
-								AcceptedTypes.STMX
-							]"
-							:accept-extensions="[
-								AcceptedExtensions.PDF,
-								AcceptedExtensions.CSV,
-								AcceptedExtensions.TXT,
-								AcceptedExtensions.MD,
-								AcceptedExtensions.PY,
-								AcceptedExtensions.R,
-								AcceptedExtensions.JL,
-								AcceptedExtensions.NC,
-								AcceptedExtensions.JSON,
-								AcceptedExtensions.XML,
-								AcceptedExtensions.SBML,
-								AcceptedExtensions.MDL,
-								AcceptedExtensions.XMILE,
-								AcceptedExtensions.ITMX,
-								AcceptedExtensions.STMX
-							]"
-							:import-action="processFiles"
-							:progress="progress"
-							@import-completed="importCompleted"
-							@imported-files-updated="(value) => (importedFiles = value)"
-						></tera-drag-and-drop-importer>
-					</section>
-					<section v-if="importedFiles.length < 1">
-						<label>Or upload from a Github repository URL</label>
-						<InputText v-model="urlToUpload" class="upload-from-github-url"></InputText>
-					</section>
-					<tera-import-github-file
-						:visible="isImportGithubFileModalVisible"
-						:url-string="urlToUpload"
-						@close="
-							isImportGithubFileModalVisible = false;
-							emit('close');
-						"
-					/>
+	<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
+		<template #header>
+			<h4>Upload resources</h4>
+		</template>
+		<template #default>
+			<section class="main-section">
+				<section>
+					<label class="subheader">Add documents, models or datasets to your project here.</label>
+					<div class="supported-resources">
+						<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
+						<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
+						<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
+					</div>
+					<tera-drag-and-drop-importer
+						:accept-types="[
+							AcceptedTypes.PDF,
+							AcceptedTypes.CSV,
+							AcceptedTypes.TXT,
+							AcceptedTypes.MD,
+							AcceptedTypes.PY,
+							AcceptedTypes.R,
+							AcceptedTypes.JL,
+							AcceptedTypes.NC,
+							AcceptedTypes.JSON,
+							AcceptedTypes.XML,
+							AcceptedTypes.SBML,
+							AcceptedTypes.MDL,
+							AcceptedTypes.XMILE,
+							AcceptedTypes.ITMX,
+							AcceptedTypes.STMX
+						]"
+						:accept-extensions="[
+							AcceptedExtensions.PDF,
+							AcceptedExtensions.CSV,
+							AcceptedExtensions.TXT,
+							AcceptedExtensions.MD,
+							AcceptedExtensions.PY,
+							AcceptedExtensions.R,
+							AcceptedExtensions.JL,
+							AcceptedExtensions.NC,
+							AcceptedExtensions.JSON,
+							AcceptedExtensions.XML,
+							AcceptedExtensions.SBML,
+							AcceptedExtensions.MDL,
+							AcceptedExtensions.XMILE,
+							AcceptedExtensions.ITMX,
+							AcceptedExtensions.STMX
+						]"
+						:import-action="processFiles"
+						:progress="progress"
+						@import-completed="importCompleted"
+						@imported-files-updated="(value) => (importedFiles = value)"
+					></tera-drag-and-drop-importer>
 				</section>
-			</template>
-			<template #footer>
-				<Button label="Upload" class="p-button-primary" @click="upload" />
-				<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
-			</template>
-		</tera-modal>
-	</Teleport>
+				<section v-if="importedFiles.length < 1">
+					<label>Or upload from a Github repository URL</label>
+					<InputText v-model="urlToUpload" class="upload-from-github-url"></InputText>
+				</section>
+				<tera-import-github-file
+					:visible="isImportGithubFileModalVisible"
+					:url-string="urlToUpload"
+					@close="
+						isImportGithubFileModalVisible = false;
+						emit('close');
+					"
+				/>
+			</section>
+		</template>
+		<template #footer>
+			<Button label="Upload" class="p-button-primary" @click="upload" />
+			<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
+		</template>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">

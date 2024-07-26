@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<tera-operator-placeholder v-if="!showSpinner && !runResults" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!showSpinner" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
@@ -172,7 +172,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
-			state.optimizedInterventionPolicy = newInterventionResponse;
+			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
 			emit('update-state', state);
 		}
 	},
