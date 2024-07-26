@@ -5,9 +5,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
@@ -24,22 +27,27 @@ public class NotificationService {
 	final NotificationEventRepository notificationEventRepository;
 	final CurrentUserService currentUserService;
 
+	@Observed(name = "function_profile")
 	public List<NotificationGroup> getNotificationGroupsForUser(final String userId) {
 		return notificationGroupRepository.findAllByUserIdOrderByCreatedOnDesc(userId);
 	}
 
+	@Observed(name = "function_profile")
 	public List<NotificationGroup> getUnAckedNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
 		return notificationGroupRepository.findAllUnackedByUserReturnAllEvents(userId, since);
 	}
 
+	@Observed(name = "function_profile")
 	public List<NotificationGroup> getNotificationGroupsCreatedSince(final String userId, final Timestamp since) {
 		return notificationGroupRepository.findAllByUserIdAndCreatedOnGreaterThanOrderByCreatedOnDesc(userId, since);
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<NotificationGroup> getNotificationGroup(final UUID id) {
 		return notificationGroupRepository.findById(id);
 	}
 
+	@Observed(name = "function_profile")
 	public NotificationGroup createNotificationGroup(final NotificationGroup notificationGroup) {
 		if (notificationGroup.getUserId() == null || notificationGroup.getUserId().isEmpty()) {
 			try {
@@ -52,6 +60,7 @@ public class NotificationService {
 		return notificationGroupRepository.save(notificationGroup);
 	}
 
+	@Observed(name = "function_profile")
 	public NotificationEvent createNotificationEvent(final UUID groupId, final NotificationEvent notificationEvent) {
 		final NotificationGroup group = notificationGroupRepository.findById(groupId).orElseThrow();
 
@@ -64,10 +73,12 @@ public class NotificationService {
 		return notificationEvent;
 	}
 
+	@Observed(name = "function_profile")
 	public void acknowledgeNotificationGroup(final UUID groupId) {
 		notificationEventRepository.setAcknowledgedOnWhereNotificationGroupIdEquals(groupId, Timestamp.from(Instant.now()));
 	}
 
+	@Observed(name = "function_profile")
 	public Optional<NotificationGroup> delete(final UUID id) {
 		final Optional<NotificationGroup> notificationGroup = getNotificationGroup(id);
 		if (notificationGroup.isEmpty()) {
