@@ -172,7 +172,7 @@ watch(
 			state.optimizationRunId = optId;
 			state.inProgressPreForecastId = preForecastId;
 			state.inProgressPostForecastId = postForecastId;
-			state.optimizedInterventionPolicy = newInterventionResponse;
+			state.optimizedInterventionPolicyId = newInterventionResponse.id ?? '';
 			emit('update-state', state);
 		}
 	},
