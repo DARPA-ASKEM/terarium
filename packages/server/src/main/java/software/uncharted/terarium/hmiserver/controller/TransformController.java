@@ -31,28 +31,6 @@ public class TransformController {
 	final SimulationServiceProxy simulationServiceProxy;
 	final Messages messages;
 
-	@PostMapping("/mathml-to-acset")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> mathML2ACSet(@RequestBody final List<String> list) {
-		try {
-			return skemaProxy.convertMathML2ACSet(list);
-		} catch (final FeignException error) {
-			final HttpStatus statusCode = HttpStatus.resolve(error.status());
-			if (statusCode != null && statusCode.is4xxClientError()) {
-				log.warn(String.format("SKEMA can't transform MathML equations to an ACSet: %s", list), error);
-				throw new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
-			} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-				log.warn("SKEMA is currently unavailable");
-				throw new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
-			} else if (statusCode != null && statusCode.is5xxServerError()) {
-				log.error("an error occurred while SKEMA was transforming MathML equations to an ACSet", error);
-				throw new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
-			}
-			log.error("an error occurred while SKEMA was transforming MathML equations to an ACSet", error);
-			throw new ResponseStatusException(statusCode, messages.get("generic.unknown"));
-		}
-	}
-
 	@GetMapping("/model-to-latex/{id}")
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> model2Latex(@PathVariable("id") final UUID id) {
