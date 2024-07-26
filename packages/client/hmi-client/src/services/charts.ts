@@ -32,6 +32,169 @@ export interface HistogramChartOptions extends BaseChartOptions {
 	variables: { field: string; label?: string; width: number; color: string }[];
 }
 
+export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
+	maxBins?: number;
+	height?: number;
+	areaChartHeight?: number;
+	boxPlotHeight?: number;
+	variables: { field: string; label?: string }[];
+}
+
+export const createErrorChart = (dataset: Record<string, any>[], options: ErrorChartOptions) => {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+
+	const width = options.width;
+	const height = options.height ?? 100;
+	const boxPlotHeight = options.boxPlotHeight ?? 20;
+	const areaChartHeight = options.areaChartHeight ?? 50;
+	const gap = 15;
+
+	const areaChartRange = [areaChartHeight, 0];
+	const dotChartRange = [areaChartHeight + gap, areaChartHeight + gap + boxPlotHeight];
+	const boxPlotYPosition = (dotChartRange[0] + dotChartRange[1]) / 2;
+
+	const variables = options.variables.map((v) => v.field);
+	const maxbins = options.maxBins ?? 30;
+
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const brushParamName = 'brush';
+
+	const areaChartColor = '#1B8073';
+	const dotColor = '#67B5AC';
+
+	const config = {
+		padding: 0,
+		facet: { spacing: 2 },
+		font: globalFont,
+		mark: { opacity: 1 },
+		// view: { stroke: "transparent" },
+		axis: {
+			domainColor: axisColor,
+			tickColor: { value: axisColor },
+			labelColor: { value: labelColor },
+			labelFontWeight,
+			gridOpacity: 0,
+			labels: false
+		},
+		area: {
+			line: true,
+			fillOpacity: 0.33
+		},
+		point: {
+			color: dotColor,
+			filled: true
+		},
+		boxplot: {
+			size: boxPlotHeight,
+			median: { color: 'black' },
+			outliers: false,
+			box: {
+				fill: 'transparent',
+				stroke: 'black',
+				strokeWidth: 1
+			}
+		}
+	};
+
+	return {
+		$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+		config,
+		title: titleObj,
+		data: { values: dataset },
+		transform: [{ fold: variables, as: ['_variable', '_value'] }],
+		facet: { row: { field: '_variable' } },
+		resolve: { scale: { y: 'independent' } },
+		spec: {
+			width,
+			height,
+			transform: [
+				{ calculate: 'random()', as: 'jitter' },
+				{ calculate: '0', as: 'zero' }
+			],
+			encoding: {
+				x: {
+					field: '_value',
+					type: 'quantitative',
+					title: options.xAxisTitle,
+					axis: { labels: true, stroke: 'black' }
+				},
+				y: {
+					title: ''
+				}
+			},
+			layer: [
+				{
+					transform: [
+						{ bin: { maxbins }, field: '_value', as: ['binnedValueStart', 'binnedValueEnd'] },
+						{ calculate: '(datum.binnedValueStart + datum.binnedValueEnd) / 2', as: 'binnedValueCenter' }
+					],
+					mark: {
+						type: 'area',
+						interpolate: 'monotone'
+					},
+					encoding: {
+						x: {
+							field: 'binnedValueCenter'
+						},
+						y: {
+							aggregate: 'count',
+							type: 'quantitative',
+							scale: { range: areaChartRange }
+						},
+						color: {
+							value: areaChartColor
+						}
+					}
+				},
+				{
+					mark: {
+						type: 'point'
+					},
+					encoding: {
+						y: {
+							field: 'jitter',
+							type: 'quantitative',
+							scale: { range: dotChartRange }
+						},
+						color: {
+							condition: { param: brushParamName },
+							value: 'lightgray'
+						}
+					},
+					params: [
+						{
+							name: brushParamName,
+							select: { type: 'interval', encodings: ['_variable', 'x'], resolve: 'global' }
+						}
+					]
+				},
+				{
+					mark: {
+						type: 'boxplot'
+					},
+					encoding: {
+						y: {
+							field: 'zero',
+							scale: { range: [boxPlotYPosition, boxPlotYPosition] }
+						}
+					}
+				}
+			]
+		}
+	};
+};
+
 export const createHistogramChart = (dataset: Record<string, any>[], options: HistogramChartOptions) => {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';

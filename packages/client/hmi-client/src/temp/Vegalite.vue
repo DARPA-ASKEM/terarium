@@ -18,7 +18,7 @@ import { debounce } from 'lodash';
 import { ref, onMounted } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import unchartedVegaTheme from './vega-theme';
-import { createForecastChart, createHistogramChart } from '@/services/charts';
+import { createForecastChart, createHistogramChart, createErrorChart } from '@/services/charts';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -37,12 +37,15 @@ for (let j = 0; j < numPoints; j++) {
 
 for (let i = 0; i < numSamples; i++) {
 	let error = 0;
+	let error2 = 0;
 	for (let j = 0; j < numPoints; j++) {
 		const v = rand(valueRange);
-		dataChart2.push({ sample: i, timestep: j, value: v });
+		const v2 = rand(valueRange);
+		dataChart2.push({ sample: i, timestep: j, value: v, value2: v2 });
 		error += Math.abs(trueValues[j] - v);
+		error2 += Math.abs(trueValues[j] - v2);
 	}
-	dataChart1.push({ sample: i, error: error });
+	dataChart1.push({ sample: i, error, error2 });
 }
 
 const makeLineChart = (data: any[]) => {
@@ -75,64 +78,13 @@ const makeLineChart = (data: any[]) => {
 	};
 };
 
-const spec = ref<any>({
-	$schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-	data: { values: dataChart1 },
-	transform: [
-		{
-			aggregate: [{ op: 'count', field: '*', as: 'count' }],
-			groupby: ['error']
-		},
-		{ calculate: 'random()', as: 'jitter' }
-	],
-	vconcat: [
-		{
-			mark: 'area',
-			width: 500,
-			height: 100,
-			encoding: {
-				x: {
-					field: 'error',
-					type: 'quantitative',
-					scale: { domain: [0, 120] }
-				},
-				y: {
-					field: 'count',
-					type: 'quantitative'
-				}
-			}
-		},
-		{
-			mark: 'point',
-			width: 500,
-			height: 80,
-			encoding: {
-				data: { value: dataChart1 },
-				color: { value: '#f80' },
-				opacity: { value: 0.8 },
-				size: { value: 15 },
-				x: {
-					field: 'error',
-					type: 'quantitative',
-					title: '',
-					scale: { domain: [0, 120] }
-				},
-				y: {
-					field: 'jitter',
-					type: 'quantitative',
-					title: '',
-					axis: null
-				}
-			},
-			params: [
-				{
-					name: 'brush',
-					select: { type: 'interval', encodings: ['x'] }
-				}
-			]
-		}
-	]
-});
+const spec = ref<any>(
+	createErrorChart(dataChart1, {
+		width: 500,
+		variables: [{ field: 'error' }, { field: 'error2' }],
+		xAxisTitle: 'Error'
+	})
+);
 
 const spec2 = ref<any>(makeLineChart(dataChart2));
 
@@ -144,7 +96,7 @@ const handleIntervalSelect = (name: any, valueRange: any) => {
 	console.log('>>', name, valueRange);
 	let samples = dataChart1
 		.filter((d) => {
-			return d.error >= valueRange.error[0] && d.error <= valueRange.error[1];
+			return d.error >= valueRange._value[0] && d.error <= valueRange._value[1];
 		})
 		.map((d) => d.sample);
 
@@ -244,9 +196,8 @@ function generateSimulateData() {
 	}
 	return { data, summary, truth };
 }
-const generateHistogramChartData = () => {
+const generateSampleData = (numSamples = 100) => {
 	const data: { varA: number; varB: number }[] = [];
-	const numSamples = 100;
 
 	for (let i = 0; i < numSamples; i++) {
 		const point = {
@@ -259,7 +210,7 @@ const generateHistogramChartData = () => {
 };
 
 const specHistogram = ref<any>(
-	createHistogramChart(generateHistogramChartData(), {
+	createHistogramChart(generateSampleData(), {
 		title: 'Kappa',
 		width: 720,
 		height: 250,
