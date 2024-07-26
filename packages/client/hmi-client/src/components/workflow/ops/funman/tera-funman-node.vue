@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!inProgressId" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!inProgressId" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 
