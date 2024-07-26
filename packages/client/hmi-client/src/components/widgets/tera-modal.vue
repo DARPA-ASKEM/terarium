@@ -1,7 +1,7 @@
 <template>
 	<teleport to="body">
 		<transition name="modal">
-			<main ref="modal" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
+			<main ref="modalRef" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
 				<section :class="$attrs.class">
 					<header>
 						<slot name="header" />
@@ -43,34 +43,29 @@ import { onMounted, ref, nextTick } from 'vue';
 
 const emit = defineEmits(['modal-mask-clicked', 'modal-enter-press', 'on-modal-open']);
 
-const modal = ref(null);
+const modalRef = ref<HTMLElement | null>(null);
 
 defineProps<{
 	zIndex?: number;
 }>();
 
-onMounted(() => {
-	if (modal.value) {
-		/**
-		 * Dispatch an event `modal-open` when the modal is opened.
-		 * The `detail.id` property of the event is modal id if available.
-		 * This is used by the Guided Tour to help show the user information.
-		 */
-		const element = modal.value as HTMLElement;
-		const event = new CustomEvent('modal-open', {
-			bubbles: true,
-			detail: { id: element.id ?? '' }
-		});
-		element.dispatchEvent(event);
+onMounted(async () => {
+	await nextTick();
+	if (!modalRef.value) return;
+	/**
+	 * Dispatch an event `modal-open` when the modal is opened.
+	 * The `detail.id` property of the event is modal id if available.
+	 * This is used by the Guided Tour to help show the user information.
+	 */
+	const event = new CustomEvent('modal-open', {
+		bubbles: true,
+		detail: { id: modalRef.value.id ?? '' }
+	});
+	modalRef.value.dispatchEvent(event);
 
-		// Focus the first input element in the default slot
-		nextTick(() => {
-			const input = element.querySelector('section.content input') ?? element.querySelector('section.content textarea');
-			if (input) {
-				(input as HTMLElement).focus();
-			}
-		});
-	}
+	// Focus the first input element in the default slot
+	const input = modalRef.value.querySelector('.content input, .content textarea');
+	if (input) (input as HTMLElement).focus();
 
 	emit('on-modal-open'); // For triggering a parent event when the modal is opened
 });
