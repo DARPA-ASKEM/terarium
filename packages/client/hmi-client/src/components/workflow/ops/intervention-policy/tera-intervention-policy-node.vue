@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder :operation-type="node.operationType" />
+		<tera-operator-placeholder :node="node" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"

@@ -94,7 +94,7 @@
 						<tera-model-parts :model="stratifiedAmr" :is-editable="false" />
 					</template>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :operation-type="node.operationType" />
+						<tera-operator-placeholder :node="node" />
 					</div>
 				</div>
 			</tera-drilldown-preview>

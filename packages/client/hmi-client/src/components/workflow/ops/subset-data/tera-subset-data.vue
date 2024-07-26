@@ -445,7 +445,7 @@ watch(
 	async () => {
 		if (props.node.active) {
 			selectedOutputId.value = props.node.active;
-			const subsetId = props.node?.outputs?.find((output) => output.id === selectedOutputId.value)?.value?.[0];
+			const subsetId = props.node.outputs.find((output) => output.id === selectedOutputId.value)?.value?.[0];
 			if (!isEmpty(subsetId) && subsetId) {
 				subset.value = await loadSubset(subsetId);
 			}

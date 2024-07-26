@@ -113,7 +113,7 @@
 						:generating-card="isGeneratingCard"
 					/>
 				</section>
-				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
+				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 			</tera-drilldown-preview>
 		</tera-columnar-panel>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook">

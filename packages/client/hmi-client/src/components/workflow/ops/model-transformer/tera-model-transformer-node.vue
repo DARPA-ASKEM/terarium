@@ -6,7 +6,7 @@
 			<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
 		</template>
 		<template v-else>
-			<tera-operator-placeholder :operation-type="node.operationType"> Attach a model </tera-operator-placeholder>
+			<tera-operator-placeholder :node="node"> Attach a model </tera-operator-placeholder>
 		</template>
 	</section>
 </template>
@@ -39,7 +39,7 @@ onMounted(async () => {
 	await fetchModel();
 });
 watch(
-	() => props.node?.inputs,
+	() => props.node.inputs,
 	async () => {
 		await fetchModel();
 	}
