@@ -1,68 +1,66 @@
 <template>
-	<Teleport to="body">
-		<aside class="overlay-container">
-			<section :class="{ popover: props.popover }">
-				<tera-drilldown-header
-					:active-index="selectedViewIndex"
-					:views="views"
-					:tooltip="tooltip"
-					:documentation-url="node.documentationUrl"
-					@tab-change="handleTabChange"
-					@close="emit('on-close-clicked')"
-				>
-					{{ title ?? node.displayName }}
-					<template #top-header-actions>
-						<aside class="flex gap-1 ml-3 mr-auto">
-							<Chip
-								v-for="(input, index) in node.inputs.filter((input) => input.value)"
-								:key="index"
-								:label="input.label"
-							>
-								<template #icon>
-									<tera-operator-port-icon v-if="input.type" :portType="input.type" />
-								</template>
-							</Chip>
-						</aside>
-						<template v-if="outputOptions && selectedOutputId">
-							<tera-output-dropdown
-								class="mx-2"
-								:options="outputOptions"
-								:output="selectedOutputId"
-								@update:selection="(e) => emit('update:selection', e)"
-							/>
-							<section v-if="!isEmpty(menuItems)" class="mx-2">
-								<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
-								<Menu ref="menu" :model="menuItems" :popup="true" />
-							</section>
-						</template>
+	<aside class="overlay-container">
+		<section :class="{ popover: props.popover }">
+			<tera-drilldown-header
+				:active-index="selectedViewIndex"
+				:views="views"
+				:tooltip="tooltip"
+				:documentation-url="node.documentationUrl"
+				@tab-change="handleTabChange"
+				@close="emit('on-close-clicked')"
+			>
+				{{ title ?? node.displayName }}
+				<template #top-header-actions>
+					<aside class="flex gap-1 ml-3 mr-auto">
+						<Chip
+							v-for="(input, index) in node.inputs.filter((input) => input.value)"
+							:key="index"
+							:label="input.label"
+						>
+							<template #icon>
+								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
+							</template>
+						</Chip>
+					</aside>
+					<template v-if="outputOptions && selectedOutputId">
+						<tera-output-dropdown
+							class="mx-2"
+							:options="outputOptions"
+							:output="selectedOutputId"
+							@update:selection="(e) => emit('update:selection', e)"
+						/>
+						<section v-if="!isEmpty(menuItems)" class="mx-2">
+							<Button icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" />
+							<Menu ref="menu" :model="menuItems" :popup="true" />
+						</section>
 					</template>
-					<template #actions>
-						<slot name="header-actions" />
-						<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
-					</template>
-				</tera-drilldown-header>
-				<main class="flex overflow-hidden h-full">
-					<slot name="sidebar" />
-					<tera-columnar-panel class="flex-1">
-						<template v-for="(tab, index) in tabs" :key="index">
-							<!--
+				</template>
+				<template #actions>
+					<slot name="header-actions" />
+					<tera-operator-annotation :state="node.state" @update-state="(state: any) => emit('update-state', state)" />
+				</template>
+			</tera-drilldown-header>
+			<main class="flex overflow-hidden h-full">
+				<slot name="sidebar" />
+				<tera-columnar-panel class="flex-1">
+					<template v-for="(tab, index) in tabs" :key="index">
+						<!--
 							TODO: We used to use v-show here but it ruined the rendering of tera-model-diagram
 							if it was in the unselected tab. For now we are using v-if but we may want to
 							use css to hide the unselected tab content instead.
 						-->
-							<component :is="tab" v-if="selectedViewIndex === index" />
-						</template>
-						<section v-if="slots.preview">
-							<slot name="preview" />
-						</section>
-					</tera-columnar-panel>
-				</main>
-				<footer v-if="slots.footer">
-					<slot name="footer" />
-				</footer>
-			</section>
-		</aside>
-	</Teleport>
+						<component :is="tab" v-if="selectedViewIndex === index" />
+					</template>
+					<section v-if="slots.preview">
+						<slot name="preview" />
+					</section>
+				</tera-columnar-panel>
+			</main>
+			<footer v-if="slots.footer">
+				<slot name="footer" />
+			</footer>
+		</section>
+	</aside>
 </template>
 
 <script setup lang="ts">
