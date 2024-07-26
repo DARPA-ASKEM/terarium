@@ -159,8 +159,8 @@ const props = defineProps<{
 
 const otherValueList = ref(props.otherValueList);
 
-const minValue = extent(otherValueList.value, (element) => element?.distribution?.parameters?.minimum)[0];
-const maxValue = extent(otherValueList.value, (element) => element?.distribution?.parameters?.maximum)[1];
+const minValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.minimum)[0];
+const maxValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.maximum)[1];
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },

@@ -23,9 +23,9 @@ import { onMounted, ref } from 'vue';
 import { DistributionType } from '@/services/distribution';
 
 const props = defineProps<{
-	maxValue: any;
-	minValue: any;
-	distribution: any;
+	maxValue: number;
+	minValue: number;
+	distribution: { type: DistributionType; parameters: any };
 }>();
 const lineGraphic = ref<HTMLElement>();
 const parentHeight = ref<number>(0);
