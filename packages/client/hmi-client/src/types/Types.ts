@@ -245,16 +245,6 @@ export interface ParameterSemantic extends Semantic {
     default: boolean;
 }
 
-export interface SemanticOtherValues {
-    name: string;
-    target?: string;
-    expression?: string;
-    expressionMathml?: string;
-    referenceId?: string;
-    distribution?: ModelDistribution;
-    default?: boolean;
-}
-
 export interface Semantic extends TerariumEntity {
     source: string;
     type: SemanticType;
