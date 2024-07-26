@@ -39,7 +39,7 @@ onMounted(async () => {
 	await fetchModel();
 });
 watch(
-	() => props.node?.inputs,
+	() => props.node.inputs,
 	async () => {
 		await fetchModel();
 	}

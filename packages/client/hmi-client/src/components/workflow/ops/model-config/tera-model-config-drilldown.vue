@@ -457,10 +457,10 @@ useClientEvent(ClientEventType.TaskGollmConfigureModel, configModelEventHandler)
 useClientEvent(ClientEventType.TaskGollmConfigureFromDataset, configModelEventHandler);
 
 const selectedOutputId = ref<string>('');
-const selectedConfigId = computed(() => props.node.outputs?.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
+const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
 
-const documentId = computed(() => props.node.inputs?.[1]?.value?.[0]?.documentId);
-const datasetIds = computed(() => props.node.inputs?.[2]?.value);
+const documentId = computed(() => props.node.inputs[1]?.value?.[0]?.documentId);
+const datasetIds = computed(() => props.node.inputs[2]?.value);
 
 const suggestedConfigurationContext = ref<{
 	isOpen: boolean;
