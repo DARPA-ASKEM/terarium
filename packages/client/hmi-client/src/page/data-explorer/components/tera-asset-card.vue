@@ -69,7 +69,6 @@ const foundInProjects = computed(() => [] /* ['project 1', 'project 2'] */);
 
 const title = computed(() => {
 	let value = '';
-
 	if (props.resourceType === ResourceType.DOCUMENT) {
 		value = (props.asset as DocumentAsset).name ?? '';
 	} else if (props.resourceType === ResourceType.MODEL) {
