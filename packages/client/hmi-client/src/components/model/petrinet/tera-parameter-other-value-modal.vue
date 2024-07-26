@@ -139,7 +139,7 @@
 import { displayNumber } from '@/utils/number';
 import { extent } from 'd3';
 import { DistributionType } from '@/services/distribution';
-import type { SemanticOtherValues } from '@/types/Types';
+import { SemanticOtherValues } from '@/services/model-configurations';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
