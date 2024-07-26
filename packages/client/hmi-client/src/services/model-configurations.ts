@@ -5,12 +5,21 @@ import type {
 	ModelConfiguration,
 	ModelDistribution,
 	ObservableSemantic,
-	SemanticOtherValues,
 	ParameterSemantic
 } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import { DistributionType } from './distribution';
+
+export interface SemanticOtherValues {
+	name: string;
+	target?: string;
+	expression?: string;
+	expressionMathml?: string;
+	referenceId?: string;
+	distribution?: ModelDistribution;
+	default?: boolean;
+}
 
 export const getAllModelConfigurations = async (): Promise<ModelConfiguration[]> => {
 	const response = await API.get(`/model-configurations`);
