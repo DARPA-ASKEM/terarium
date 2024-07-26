@@ -99,6 +99,7 @@
 					<li v-for="(child, index) in children" :key="index">
 						<tera-model-part-entry
 							:item="child"
+							:feature-config="featureConfig"
 							:disabled-inputs="disabledInputs"
 							@update-item="$emit('update-item', { id: child.id, ...$event })"
 						/>
@@ -108,6 +109,7 @@
 			<tera-model-part-entry
 				v-else
 				:item="base"
+				:feature-config="featureConfig"
 				:disabled-inputs="disabledInputs"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
@@ -125,6 +127,7 @@ import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-e
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import TeraInput from '@/components/widgets/tera-input.vue';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	items: {
@@ -132,6 +135,7 @@ const props = defineProps<{
 		children: ModelPartItem[];
 		isParent: boolean;
 	}[];
+	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	disabledInputs?: string[];
 	showMatrix?: boolean;

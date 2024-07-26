@@ -4,7 +4,7 @@
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
-		:feature-config="props.featureConfig"
+		:feature-config="featureConfig"
 		@update-model="$emit('update-model', $event)"
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash';
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch, PropType } from 'vue';
 import type { Model } from '@/types/Types';
 import TeraPetrinetTables from '@/components/model/petrinet/tera-petrinet-tables.vue';
 import TeraRegnetTables from '@/components/model/regnet/tera-regnet-tables.vue';
@@ -34,10 +34,16 @@ import {
 } from '@/model-representation/service';
 import type { FeatureConfig } from '@/types/common';
 
-const props = defineProps<{
-	model: Model;
-	featureConfig: FeatureConfig;
-}>();
+const props = defineProps({
+	model: {
+		type: Object as PropType<Model>,
+		required: true
+	},
+	featureConfig: {
+		type: Object as PropType<FeatureConfig>,
+		default: { isPreview: false } as FeatureConfig
+	}
+});
 
 defineEmits(['update-model']);
 

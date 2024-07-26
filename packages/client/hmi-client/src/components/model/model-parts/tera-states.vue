@@ -2,6 +2,7 @@
 	<tera-model-part
 		:items="stateList"
 		:collapsed-items="collapsedInitials"
+		:feature-config="featureConfig"
 		@update-item="emit('update-state', $event)"
 	/>
 </template>

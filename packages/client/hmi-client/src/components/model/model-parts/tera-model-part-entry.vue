@@ -67,9 +67,11 @@ import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	item: ModelPartItem;
+	featureConfig: FeatureConfig;
 	disabledInputs?: string[];
 }>();
 
