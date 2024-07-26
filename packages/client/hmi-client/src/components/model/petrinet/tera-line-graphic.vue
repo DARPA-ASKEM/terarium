@@ -1,5 +1,5 @@
 <template>
-	<div :id="graphicId">
+	<div ref="lineGraphic">
 		<svg :height="parentHeight">
 			<line x1="0" :y1="parentHeight / 2" :x2="width" :y2="parentHeight / 2" stroke="black" />
 			<rect
@@ -23,19 +23,16 @@ import { onMounted, ref } from 'vue';
 import { DistributionType } from '@/services/distribution';
 
 const props = defineProps<{
-	id: any;
 	maxValue: any;
 	minValue: any;
 	distribution: any;
 }>();
-const graphicId = 'graphic-'.concat(props.id);
-const parentWidth = ref<number>(0);
+const lineGraphic = ref<HTMLElement>();
 const parentHeight = ref<number>(0);
 const width = ref<string>('100%');
 const rectWidth = ref<number>(0);
 const rectX = ref<number>(0);
 const circlePoint = ref<number>(0);
-const range = ref<Array<number>>([1, 100]);
 
 const max: number = props.maxValue;
 const min: number = props.minValue;
@@ -43,13 +40,14 @@ const min: number = props.minValue;
 const isUniformType = () => props.distribution.type === DistributionType.Uniform;
 
 onMounted(() => {
-	parentWidth.value = document.getElementById(graphicId)?.getBoundingClientRect().width ?? 0;
-	parentHeight.value = document.getElementById(graphicId)?.getBoundingClientRect().height ?? 0;
-	if (parentWidth.value) {
-		range.value = [0, parentWidth.value];
+	let range = [1, 100];
+	const parentWidth = lineGraphic.value?.getBoundingClientRect().width ?? 0;
+	parentHeight.value = lineGraphic.value?.getBoundingClientRect().height ?? 0;
+	if (parentWidth) {
+		range = [0, parentWidth];
 	}
 
-	const scale = d3.scaleLinear().domain([min, max]).range(range.value);
+	const scale = d3.scaleLinear().domain([min, max]).range(range);
 
 	if (!isUniformType()) {
 		const maxScaled = scale(max);

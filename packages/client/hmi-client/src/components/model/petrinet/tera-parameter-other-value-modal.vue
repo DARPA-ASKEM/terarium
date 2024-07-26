@@ -38,14 +38,12 @@
 						<template v-if="col.field === 'source'">
 							{{ data.referenceId }}
 						</template>
-						<template v-if="col.field === 'range'">
-							<tera-line-graphic
-								:id="data.index"
-								:max-value="maxValue"
-								:min-value="minValue"
-								:distribution="data.distribution"
-							/>
-						</template>
+						<tera-line-graphic
+							v-if="col.field === 'range'"
+							:max-value="maxValue"
+							:min-value="minValue"
+							:distribution="data.distribution"
+						/>
 						<template v-if="col.field === 'value'">
 							<template v-if="data.distribution.type === DistributionType.Constant">
 								<span class="value-label">Constants</span>
@@ -139,8 +137,9 @@
 
 <script setup lang="ts">
 import { displayNumber } from '@/utils/number';
-import { max, min } from 'd3';
+import { extent } from 'd3';
 import { DistributionType } from '@/services/distribution';
+import type { OtherValues } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
@@ -155,28 +154,13 @@ import TeraLineGraphic from './tera-line-graphic.vue';
 
 const props = defineProps<{
 	id: any;
-	otherValueList: any;
+	otherValueList: OtherValues[];
 }>();
 
-const otherValueList = ref(
-	props.otherValueList.map((value, index) => {
-		value.index = index + 1;
-		return value;
-	})
-);
+const otherValueList = ref(props.otherValueList);
 
-const minValues: Array<number> = [];
-const maxValues: Array<number> = [];
-otherValueList.value.forEach((element) => {
-	if (element.distribution?.parameters?.maximum) {
-		maxValues.push(element.distribution?.parameters?.maximum);
-	}
-	if (element.distribution?.parameters?.minimum) {
-		minValues.push(element.distribution?.parameters?.minimum);
-	}
-});
-const minValue: number = min(minValues) ?? 0;
-const maxValue: number = max(maxValues) ?? 0;
+const minValue = extent(otherValueList.value, (element) => element?.distribution?.parameters?.minimum)[0];
+const maxValue = extent(otherValueList.value, (element) => element?.distribution?.parameters?.maximum)[1];
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
@@ -243,10 +227,7 @@ const onCustomSelectionChange = (val) => {
 };
 
 function getValueString(value) {
-	if (!value) {
-		return '';
-	}
-	return displayNumber(value);
+	return value ? displayNumber(value) : '';
 }
 
 function getColumnWidth(columnField: string) {
