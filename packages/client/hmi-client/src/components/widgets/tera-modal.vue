@@ -2,7 +2,7 @@
 	<teleport to="body">
 		<transition name="modal">
 			<main ref="modalRef" :style="{ '--z-index': zIndex }" @keyup.enter="emit('modal-enter-press')">
-				<section v-bind="$attrs">
+				<section :class="$attrs.class">
 					<header>
 						<slot name="header" />
 					</header>
