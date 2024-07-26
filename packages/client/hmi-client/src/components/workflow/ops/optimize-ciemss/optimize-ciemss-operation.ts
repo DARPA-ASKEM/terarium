@@ -69,7 +69,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	inProgressPostForecastId: string;
 	postForecastRunId: string;
 	optimizationRunId: string;
-	optimizedInterventionPolicy: InterventionPolicy | null;
+	optimizedInterventionPolicyId: string;
 	optimizeErrorMessage: { name: string; value: string; traceback: string };
 	simulateErrorMessage: { name: string; value: string; traceback: string };
 }
@@ -155,7 +155,7 @@ export const OptimizeCiemssOperation: Operation = {
 			preForecastRunId: '',
 			postForecastRunId: '',
 			optimizationRunId: '',
-			optimizedInterventionPolicy: null,
+			optimizedInterventionPolicyId: '',
 			optimizeErrorMessage: { name: '', value: '', traceback: '' },
 			simulateErrorMessage: { name: '', value: '', traceback: '' }
 		};

@@ -508,6 +508,7 @@ const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 const optimizeRequestPayload = ref<any>('');
+const optimizedInterventionPolicy = ref<InterventionPolicy | null>(null);
 
 const model = ref<Model | null>(null);
 const modelParameterOptions = computed<string[]>(() =>
@@ -586,6 +587,11 @@ const initialize = async () => {
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
+	}
+
+	const optimizedPolicyId = props.node.state.optimizedInterventionPolicyId;
+	if (optimizedPolicyId) {
+		optimizedInterventionPolicy.value = await getInterventionPolicyById(optimizedPolicyId);
 	}
 
 	modelStateAndObsOptions.value = model.value?.model.states.map((state: any) => state.id);
@@ -806,7 +812,7 @@ const preProcessedInterventionsData = computed<Dictionary<{ name: string; value:
 				time: intervention.timestep
 			}))
 		),
-		...(state.optimizedInterventionPolicy?.interventions.flatMap((intervention) =>
+		...(optimizedInterventionPolicy.value?.interventions.flatMap((intervention) =>
 			intervention.staticInterventions.map((staticIntervention) => ({
 				appliedTo: intervention.appliedTo,
 				name: intervention.name,
