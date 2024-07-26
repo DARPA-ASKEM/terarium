@@ -133,7 +133,7 @@ import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
+import type { FeatureConfig, ExtractionStatusUpdate } from '@/types/common';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import type { ClientEvent, DocumentAsset } from '@/types/Types';

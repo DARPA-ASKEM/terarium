@@ -4,7 +4,7 @@
 		:model="transientModel"
 		:mmt="mmt"
 		:mmt-params="mmtParams"
-		:readonly="readonly"
+		:feature-config="props.featureConfig"
 		@update-model="$emit('update-model', $event)"
 		@update-state="(e: any) => onUpdate('state', e)"
 		@update-parameter="(e: any) => onUpdate('parameter', e)"
@@ -32,10 +32,11 @@ import {
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
+import type { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
-	readonly?: boolean;
+	featureConfig: FeatureConfig;
 }>();
 
 defineEmits(['update-model']);

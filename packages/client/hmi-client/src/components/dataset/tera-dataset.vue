@@ -66,7 +66,7 @@ import { downloadRawFile, getClimateDataset, getDataset, getDownloadURL, updateD
 import { AssetType, type CsvAsset, type Dataset, type DatasetColumn, PresignedURL } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { FeatureConfig } from '@/types/common';
+import type { FeatureConfig } from '@/types/common';
 import type { Source } from '@/types/search';
 import { DatasetSource } from '@/types/search';
 import { useProjects } from '@/composables/project';
