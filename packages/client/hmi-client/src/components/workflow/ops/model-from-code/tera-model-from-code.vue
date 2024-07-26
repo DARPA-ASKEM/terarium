@@ -104,7 +104,7 @@
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
-				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
+				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 				<template #footer>
 					<Button
 						:loading="savingAsset"
