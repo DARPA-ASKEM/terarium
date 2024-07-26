@@ -4,7 +4,7 @@
 		<!-- <tera-carousel>
 			<img v-for="(image, index) in images" :src="image" alt="alt" :key="index" />
 		</tera-carousel> -->
-		<tera-operator-placeholder :operation-type="WorkflowOperationTypes.MODEL_FROM_CODE">
+		<tera-operator-placeholder :node="node">
 			Attach a code asset or open the drilldown to configure
 		</tera-operator-placeholder>
 
@@ -17,7 +17,11 @@
 // import terarium from '@/assets/svg/terarium-icon.svg';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
+
+defineProps<{
+	node: WorkflowNode<any>;
+}>();
 
 const emit = defineEmits(['open-drilldown']);
 

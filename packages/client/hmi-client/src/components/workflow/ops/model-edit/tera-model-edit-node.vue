@@ -1,7 +1,7 @@
 <template>
 	<section>
 		<tera-operator-model-preview v-if="model" :model="model" />
-		<tera-operator-placeholder v-else :operation-type="node.operationType">
+		<tera-operator-placeholder v-else :node="node">
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">

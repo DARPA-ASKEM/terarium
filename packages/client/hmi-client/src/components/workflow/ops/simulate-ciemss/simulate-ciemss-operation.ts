@@ -1,5 +1,6 @@
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
+import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
 
@@ -23,6 +24,7 @@ export const SimulateCiemssOperation: Operation = {
 	displayName: 'Simulate',
 	description: 'given a model id, and configuration id, run a simulation',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: simulateProbabilistic,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{

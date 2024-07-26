@@ -3,6 +3,7 @@ import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/ty
 import { getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
 
@@ -118,6 +119,7 @@ export const OptimizeCiemssOperation: Operation = {
 	displayName: 'Optimize intervention policy',
 	description: 'Optimize intervention policy',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: optimizeModel,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false },
 		{

@@ -1,5 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { EnsembleModelConfigs, TimeSpan } from '@/types/Types';
+import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 
 const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35';
 
@@ -17,6 +18,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	displayName: 'Simulate ensemble',
 	description: '',
 	documentationUrl: DOCUMENTATION_URL,
+	imageUrl: simulateEnsembleCiemss,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration', acceptMultiple: false }],
 	outputs: [{ type: 'simulationId' }],
 	isRunnable: true,
