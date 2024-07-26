@@ -134,7 +134,7 @@
 						@update:trajectoryState="updateTrajectorystate"
 					/>
 					<div v-else class="flex flex-column h-full justify-content-center">
-						<tera-operator-placeholder :operation-type="node.operationType" />
+						<tera-operator-placeholder :node="node" />
 					</div>
 				</template>
 			</tera-drilldown-preview>
