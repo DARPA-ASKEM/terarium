@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!outputPreview" :operation-type="node.operationType">
+		<tera-operator-placeholder v-if="!outputPreview" :node="node">
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :is-editable="false" is-preview />

@@ -22,7 +22,7 @@
 				placeholder="Select a model"
 				@update:model-value="onModelChange"
 			/>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
 </template>

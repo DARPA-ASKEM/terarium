@@ -12,7 +12,7 @@
 				@update:model-value="onCodeChange"
 				placeholder="Select a code asset"
 			/>
-			<tera-operator-placeholder :operation-type="node.operationType" />
+			<tera-operator-placeholder :node="node" />
 		</template>
 	</main>
 </template>

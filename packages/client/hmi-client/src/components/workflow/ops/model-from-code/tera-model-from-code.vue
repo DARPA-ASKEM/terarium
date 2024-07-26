@@ -52,11 +52,7 @@
 						/>
 					</section>
 				</header>
-				<tera-operator-placeholder
-					v-if="allCodeBlocks.length === 0"
-					:operation-type="node.operationType"
-					style="height: 100%"
-				>
+				<tera-operator-placeholder v-if="allCodeBlocks.length === 0" :node="node" style="height: 100%">
 					Please attach a code asset.
 				</tera-operator-placeholder>
 				<template v-else>
@@ -108,7 +104,7 @@
 						<span>Decapodes created: {{ selectedModel?.id ?? '' }}</span>
 					</template>
 				</section>
-				<tera-operator-placeholder v-else :operation-type="node.operationType" style="height: 100%" />
+				<tera-operator-placeholder v-else :node="node" style="height: 100%" />
 				<template #footer>
 					<Button
 						:loading="savingAsset"

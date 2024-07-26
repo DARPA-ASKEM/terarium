@@ -12,9 +12,7 @@
 	</section>
 
 	<Button v-if="node.inputs[0].value" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-	<tera-operator-placeholder v-else :operation-type="node.operationType">
-		Connect a model configuration
-	</tera-operator-placeholder>
+	<tera-operator-placeholder v-else :node="node">Connect a model configuration</tera-operator-placeholder>
 	<tera-progress-spinner v-if="inProgressSimulationId" :font-size="2" is-centered style="height: 100%" />
 </template>
 

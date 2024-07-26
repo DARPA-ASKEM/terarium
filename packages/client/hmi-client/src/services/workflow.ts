@@ -71,6 +71,7 @@ export const addNode = (
 		operationType: op.name,
 		displayName: op.displayName,
 		documentationUrl: op.documentationUrl,
+		imageUrl: op.imageUrl,
 		x: pos.x,
 		y: pos.y,
 		state: options.state ?? {},

@@ -1,6 +1,7 @@
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
+import configureModel from '@assets/svg/operator-images/configure-model.svg';
 
 export const name = 'ModelConfigOperation';
 
@@ -30,6 +31,7 @@ export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
+	imageUrl: configureModel,
 	isRunnable: true,
 	inputs: [
 		{ type: 'modelId', label: 'Model' },
