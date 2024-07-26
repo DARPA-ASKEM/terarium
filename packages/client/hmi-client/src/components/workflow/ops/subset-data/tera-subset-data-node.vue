@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<tera-operator-placeholder v-if="!node.inputs[0].value" :node="node"> Attach a dataset </tera-operator-placeholder>
+		<tera-operator-placeholder v-if="!node.inputs[0].value" :node="node">Attach a dataset</tera-operator-placeholder>
 		<Button v-else label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
