@@ -12,19 +12,19 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { computed, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { ModelConfigOperationState } from './model-config-operation';
+import { ModelConfigOperation, ModelConfigOperationState, blankModelConfig } from './model-config-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
-const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state']);
+const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
 
 const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
 const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
@@ -32,37 +32,39 @@ const isModelInputConnected = computed(() => modelInput?.status === WorkflowPort
 // Update the node with the new input ports
 watch(
 	() => props.node.inputs,
-	() => {
+	async () => {
+		const state = cloneDeep(props.node.state);
 		const inputs = props.node.inputs;
+
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
-
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
-		if (!modelInputs[0].value) {
-			// Reset previous model cache
-			const state = cloneDeep(props.node.state);
-			state.transientModelConfig = {
-				id: '',
-				modelId: '',
-				observableSemanticList: [],
-				parameterSemanticList: [],
-				initialSemanticList: []
-			};
-			emit('update-state', state);
-		}
+		const modelId = modelInputs?.[0]?.value?.[0];
 
-		if (modelInputs?.[0]?.value?.[0]) {
-			const modelId = modelInputs?.[0]?.value?.[0];
-			getModelConfigurationsForModel(modelId).then((modelConfigurations) => {
-				if (isEmpty(modelConfigurations)) {
-					// Create a model configuration if it does not exist
-					getModel(modelId).then((model) => {
-						if (model) {
-							postAsConfiguredModel(model);
-						}
-					});
-				}
-			});
+		if (modelId) {
+			let configs = await getModelConfigurationsForModel(modelId);
+			if (!configs[0].id) {
+				const model = await getModel(modelId);
+				if (model) await postAsConfiguredModel(model); // Create a model configuration if it does not exist
+				configs = await getModelConfigurationsForModel(modelId);
+			}
+			// Auto append output
+			if (configs[0].id) {
+				const config = configs[0];
+				state.transientModelConfig = config;
+				emit('update-state', state);
+				emit('append-output', {
+					type: ModelConfigOperation.outputs[0].type,
+					label: config.name,
+					value: config.id,
+					isSelected: false,
+					state
+				});
+			}
+		} else {
+			// Reset previous model cache
+			state.transientModelConfig = blankModelConfig;
+			emit('update-state', state);
 		}
 
 		// If all document inputs are connected, add a new document input port

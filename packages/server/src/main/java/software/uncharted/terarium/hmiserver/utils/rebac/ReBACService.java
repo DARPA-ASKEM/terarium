@@ -10,6 +10,7 @@ import com.authzed.grpcutil.BearerToken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -226,10 +227,12 @@ public class ReBACService {
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public PermissionGroup createGroup(final String name) {
 		return this.createGroup(null, name);
 	}
 
+	@Observed(name = "function_profile")
 	public PermissionUser getUser(final String id) {
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(id);
@@ -242,6 +245,7 @@ public class ReBACService {
 		);
 	}
 
+	@Observed(name = "function_profile")
 	public List<PermissionUser> getUsers() {
 		final List<PermissionUser> response = new ArrayList<>();
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
@@ -277,6 +281,7 @@ public class ReBACService {
 		return response;
 	}
 
+	@Observed(name = "function_profile")
 	public List<PermissionRole> getRoles() {
 		final List<PermissionRole> response = new ArrayList<>();
 
@@ -306,6 +311,7 @@ public class ReBACService {
 		return response;
 	}
 
+	@Observed(name = "function_profile")
 	public List<PermissionGroup> getGroups() {
 		final List<PermissionGroup> response = new ArrayList<>();
 
@@ -318,6 +324,7 @@ public class ReBACService {
 		return response;
 	}
 
+	@Observed(name = "function_profile")
 	public PermissionGroup getGroup(final String id) {
 		final GroupResource groupResource = keycloak.realm(REALM_NAME).groups().group(id);
 		final GroupRepresentation groupRepresentation = groupResource.toRepresentation();
@@ -332,12 +339,14 @@ public class ReBACService {
 	/**
 	 * Determines if user `who` has `permission` on resource `what`
 	 *
-	 * @param who User requesting access
+	 * @param who        User requesting access
 	 * @param permission Granted permission
-	 * @param what Resource being questioned
+	 * @param what       Resource being questioned
 	 * @return true if resource grants permission for user, otherwise false
-	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is unavailable
+	 * @throws Exception some sort of ReBAC error, most likely SpiceDB is
+	 *                   unavailable
 	 */
+	@Observed(name = "function_profile")
 	public boolean can(final SchemaObject who, final Schema.Permission permission, final SchemaObject what)
 		throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
@@ -347,16 +356,19 @@ public class ReBACService {
 		return rebac.checkPermission(who, permission, what, getCurrentConsistency());
 	}
 
+	@Observed(name = "function_profile")
 	public boolean isMemberOf(final SchemaObject who, final SchemaObject what) throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.checkPermission(who, Schema.Permission.MEMBERSHIP, what, getCurrentConsistency());
 	}
 
+	@Observed(name = "function_profile")
 	public boolean isCreator(final SchemaObject who, final SchemaObject what) throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.hasRelationship(who, Schema.Relationship.CREATOR, what, getCurrentConsistency());
 	}
 
+	@Observed(name = "function_profile")
 	public void createRelationship(
 		final SchemaObject who,
 		final SchemaObject what,
@@ -366,6 +378,7 @@ public class ReBACService {
 		CURRENT_ZED_TOKEN = rebac.createRelationship(who, relationship, what);
 	}
 
+	@Observed(name = "function_profile")
 	public void removeRelationship(
 		final SchemaObject who,
 		final SchemaObject what,
@@ -383,11 +396,13 @@ public class ReBACService {
 		return Consistency.newBuilder().setAtLeastAsFresh(zedToken).build();
 	}
 
+	@Observed(name = "function_profile")
 	public List<RebacPermissionRelationship> getRelationships(final SchemaObject what) throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.getRelationship(what, getCurrentConsistency());
 	}
 
+	@Observed(name = "function_profile")
 	public ResponseEntity<Void> deleteRoleFromUser(final String roleName, final String userId) {
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
@@ -431,6 +446,7 @@ public class ReBACService {
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public ResponseEntity<Void> addRoleToUser(final String roleName, final String userId) {
 		final UsersResource usersResource = keycloak.realm(REALM_NAME).users();
 		final UserResource userResource = usersResource.get(userId);
@@ -480,12 +496,14 @@ public class ReBACService {
 		}
 	}
 
+	@Observed(name = "function_profile")
 	public List<UUID> lookupResources(final SchemaObject who, final Schema.Permission permission, final Schema.Type type)
 		throws Exception {
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
 		return rebac.lookupResources(type, permission, who, getCurrentConsistency());
 	}
 
+	@Observed(name = "function_profile")
 	public static boolean isServiceUser(final String id) {
 		return API_SERVICE_USER_ID != null && API_SERVICE_USER_ID.equals(id);
 	}

@@ -29,6 +29,7 @@ import {
 	parsePyCiemssMap,
 	DataArray
 } from '@/services/models/simulation-service';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { Poller, PollerState } from '@/api/api';
 import { logger } from '@/utils/logger';
 import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
@@ -37,6 +38,7 @@ import type { WorkflowNode } from '@/types/workflow';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import type { Model } from '@/types/Types';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 
 const props = defineProps<{
@@ -44,6 +46,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
+const model = ref<Model | null>(null);
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 
@@ -146,6 +149,7 @@ const preparedCharts = computed(() => {
 	Object.keys(pyciemssMap).forEach((key) => {
 		reverseMap[`${pyciemssMap[key]}_mean`] = key;
 	});
+	const xAxisTitle = model.value?.semantics?.ode.time?.units?.expression ?? 'time';
 
 	return props.node.state.chartConfigs.map((config) =>
 		createForecastChart(
@@ -163,16 +167,29 @@ const preparedCharts = computed(() => {
 			null,
 			// options
 			{
+				title: `${config.join(',')}`,
 				width: 180,
 				height: 120,
-				legend: false,
+				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: 'Units'
+				xAxisTitle,
+				yAxisTitle: `${config.join(',')}`
 			}
 		)
 	);
 });
+
+watch(
+	() => props.node.inputs[0].value,
+	async () => {
+		const input = props.node.inputs[0];
+		if (!input.value) return;
+
+		const id = input.value[0];
+		model.value = await getModelByModelConfigurationId(id);
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => props.node.state.inProgressSimulationId,

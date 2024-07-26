@@ -6,7 +6,6 @@ import API from '@/api/api';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
 import { AssetType, EventType, PermissionRelationships, Project } from '@/types/Types';
-import { b64EncodeUnicode } from '@/utils/binary';
 import { logger } from '@/utils/logger';
 import { Component } from 'vue';
 
@@ -42,7 +41,7 @@ async function update(project: Project): Promise<Project | null> {
 			name,
 			description,
 			thumbnail,
-			overviewContent: b64EncodeUnicode(overviewContent)
+			overviewContent // this should already be base64 encoded!
 		});
 		const { status, data } = response;
 		if (status !== 200) {

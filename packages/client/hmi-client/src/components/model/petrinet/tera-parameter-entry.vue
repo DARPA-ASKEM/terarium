@@ -76,7 +76,7 @@
 				<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
 			</section>
 		</main>
-		<footer v-if="isSourceOpen">
+		<footer v-if="isSourceOpen" class="mb-2">
 			<tera-input
 				placeholder="Add a source"
 				:model-value="getParameterSource(modelConfiguration, parameterId)"

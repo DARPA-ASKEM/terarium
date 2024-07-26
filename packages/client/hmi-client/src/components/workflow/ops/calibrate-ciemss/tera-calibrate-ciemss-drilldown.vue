@@ -90,42 +90,39 @@
 		<template #preview>
 			<tera-drilldown-preview>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
+
 				<!-- Loss chart -->
 				<h5>Loss</h5>
-				<div ref="drilldownLossPlot" class="loss-chart"></div>
+				<div ref="drilldownLossPlot" class="loss-chart" />
 
 				<!-- Variable charts -->
 				<div v-if="!showSpinner" class="form-section">
 					<h5>Variables</h5>
-					<section v-if="modelConfig && node.state.chartConfigs.length && csvAsset" ref="outputPanel">
+					<section v-if="modelConfig && csvAsset" ref="outputPanel">
 						<template v-for="(cfg, index) of node.state.chartConfigs" :key="index">
 							<tera-chart-control
-								:variables="Object.keys(pyciemssMap)"
-								:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:chart-config="{ selectedRun: selectedRunId, selectedVariable: cfg }"
+								:multi-select="false"
 								:show-remove-button="true"
+								:variables="Object.keys(pyciemssMap)"
 								@configuration-change="chartProxy.configurationChange(index, $event)"
 								@remove="chartProxy.removeChart(index)"
 							/>
 							<vega-chart :are-embed-actions-visible="true" :visualization-spec="preparedCharts[index]" />
 						</template>
-						<Button
-							class="add-chart"
-							text
-							:outlined="true"
-							@click="chartProxy.addChart()"
-							label="Add chart"
-							icon="pi pi-plus"
-						></Button>
+						<Button size="small" text @click="chartProxy.addChart()" label="Add chart" icon="pi pi-plus" />
 					</section>
 					<section v-else-if="!modelConfig" class="emptyState">
 						<img src="@assets/svg/seed.svg" alt="" draggable="false" />
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
+
 				<section v-else class="emptyState">
 					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
-					<p>Processing...</p>
+					<p>Processing...{{ props.node.state.currentProgress }}%</p>
 				</section>
+
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 			</tera-drilldown-preview>
 		</template>
@@ -195,6 +192,8 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const modelConfig = ref<ModelConfiguration>();
+
+const modelVarUnits = ref<{ [key: string]: string }>({});
 
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0]?.value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value?.[0]);
@@ -308,12 +307,13 @@ const preparedCharts = computed(() => {
 				groupField: 'sample_id'
 			},
 			{
+				title: `${config.join(',')}`,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
 				legend: true,
 				translationMap: reverseMap,
-				xAxisTitle: 'Time',
-				yAxisTitle: '',
+				xAxisTitle: modelVarUnits.value._time || 'Time',
+				yAxisTitle: _.uniq(config.map((v) => modelVarUnits.value[v]).filter((v) => !!v)).join(',') || '',
 				colorscheme: ['#AAB3C6', '#1B8073']
 			}
 		);
@@ -365,6 +365,7 @@ const runCalibrate = async () => {
 	if (response?.simulationId) {
 		const state = _.cloneDeep(props.node.state);
 		state.inProgressCalibrationId = response?.simulationId;
+		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
 
@@ -439,9 +440,10 @@ onMounted(async () => {
 	}
 
 	// Model configuration input
-	const { modelConfiguration, modelOptions } = await setupModelInput(modelConfigId.value);
+	const { modelConfiguration, modelOptions, modelVariableUnits } = await setupModelInput(modelConfigId.value);
 	modelConfig.value = modelConfiguration;
 	modelStateOptions.value = modelOptions;
+	modelVarUnits.value = modelVariableUnits ?? {};
 
 	// dataset input
 	const { filename, csv, datasetOptions } = await setupDatasetInput(datasetId.value);
@@ -518,13 +520,13 @@ watch(
 
 <style scoped>
 .mapping-table:deep(td) {
-	padding: 0 0.25rem 0.5rem 0 !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) 0 !important;
 }
 
 .mapping-table:deep(th) {
-	padding: 0 0.25rem 0.5rem 0.25rem !important;
 	border: none !important;
+	padding: 0 var(--gap-1) var(--gap-2) var(--gap-1) !important;
 	width: 50%;
 }
 
@@ -540,45 +542,40 @@ th {
 }
 
 .emptyState {
+	align-items: center;
 	align-self: center;
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	text-align: center;
+	gap: var(--gap-2);
 	margin-top: 15rem;
-	gap: 0.5rem;
+	text-align: center;
 }
 
 .helpMessage {
 	color: var(--text-color-subdued);
 	font-size: var(--font-body-small);
+	margin-top: var(--gap-4);
 	width: 90%;
-	margin-top: 1rem;
 }
 
 img {
 	width: 20%;
 }
 
-.form-section {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
+.form-section,
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 }
 
 .input-row {
-	width: 100%;
+	align-items: center;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.5rem;
+	gap: var(--gap-2);
+	width: 100%;
 
 	& > * {
 		flex: 1;
@@ -587,7 +584,7 @@ img {
 
 .loss-chart {
 	background: var(--surface-a);
-	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
 }
 </style>
