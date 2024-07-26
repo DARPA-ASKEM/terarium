@@ -13,7 +13,7 @@ const props = defineProps<{
 	node: WorkflowNode<any>;
 }>();
 
-const placeholderGraphic = props.node?.imageUrl ?? plants;
+const placeholderGraphic = props.node.imageUrl ?? plants;
 </script>
 
 <style scoped>

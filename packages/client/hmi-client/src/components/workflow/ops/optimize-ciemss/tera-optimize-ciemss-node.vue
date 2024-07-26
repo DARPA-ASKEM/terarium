@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<tera-operator-placeholder v-if="!showSpinner && !runResults" :node="node">
+		<tera-operator-placeholder v-if="!showSpinner" :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model configuration </template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
