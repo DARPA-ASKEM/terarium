@@ -139,7 +139,7 @@
 import { displayNumber } from '@/utils/number';
 import { extent } from 'd3';
 import { DistributionType } from '@/services/distribution';
-import type { OtherValues } from '@/types/Types';
+import type { SemanticOtherValues } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
 import TeraInput from '@/components/widgets/tera-input.vue';
 import { ref } from 'vue';
@@ -154,7 +154,7 @@ import TeraLineGraphic from './tera-line-graphic.vue';
 
 const props = defineProps<{
 	id: any;
-	otherValueList: OtherValues[];
+	otherValueList: SemanticOtherValues[];
 }>();
 
 const otherValueList = ref(props.otherValueList);
